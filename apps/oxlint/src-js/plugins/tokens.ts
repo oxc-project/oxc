@@ -3,12 +3,12 @@
  */
 
 import { ast, buffer, initAst, initSourceText, sourceText } from "./source_code.ts";
-import { getNodeLoc } from "./location.ts";
+import { computeLoc } from "./location.ts";
 import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
-import type { Span } from "./location.ts";
+import type { Location, Span } from "./location.ts";
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -50,7 +50,7 @@ export type FilterFn = (token: TokenOrComment) => boolean;
 /**
  * AST token type.
  */
-export type Token =
+type TokenType =
   | BooleanToken
   | IdentifierToken
   | JSXIdentifierToken
@@ -63,6 +63,9 @@ export type Token =
   | RegularExpressionToken
   | StringToken
   | TemplateToken;
+
+// Export type as `Token` for external consumers
+export type { TokenType as Token };
 
 interface BaseToken extends Span {
   value: string;
@@ -122,27 +125,15 @@ export interface TemplateToken extends BaseToken {
   type: "Template";
 }
 
-type TokenOrComment = Token | Comment;
+type TokenOrComment = TokenType | Comment;
 
 // `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
 // This object is reused over and over to avoid creating a new options object on each call.
 const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
 
-// Prototype for `Token` objects, which calculates `loc` property lazily.
-const TokenProto = Object.create(Object.prototype, {
-  loc: {
-    // Note: Not configurable
-    get() {
-      tokensWithLoc.push(this);
-      return getNodeLoc(this);
-    },
-    enumerable: true,
-  },
-});
-
 // Tokens for the current file.
 // Created lazily only when needed.
-export let tokens: Token[] | null = null;
+export let tokens: TokenType[] | null = null;
 let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
 
@@ -166,6 +157,45 @@ const regexObjects: RegularExpressionToken["regex"][] = [];
 // for the next regex descriptor object which can be reused.
 const tokensWithRegex: Token[] = [];
 
+// Reset `#loc` field on a `Token` class instance
+let resetLoc: (token: Token) => void;
+
+/**
+ * Token implementation with lazy `loc` caching via private field.
+ *
+ * Using a class with a private `#loc` field avoids hidden class transitions that would occur
+ * with `Object.defineProperty` / `delete` on plain objects.
+ * All `Token` instances always have the same V8 hidden class, keeping property access monomorphic.
+ */
+class Token {
+  type: TokenType["type"] = "" as TokenType["type"]; // Overwritten later
+  value: string = "";
+  regex: RegularExpressionToken["regex"] | undefined;
+  start: number = 0;
+  end: number = 0;
+  range: [number, number] = [0, 0];
+
+  #loc: Location | null = null;
+
+  get loc(): Location {
+    const loc = this.#loc;
+    if (loc !== null) return loc;
+
+    tokensWithLoc.push(this);
+    return (this.#loc = computeLoc(this.start, this.end));
+  }
+
+  static {
+    // Defined in static block to avoid exposing this as a public method
+    resetLoc = (token: Token) => {
+      token.#loc = null;
+    };
+  }
+}
+
+// Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
+Object.defineProperty(Token.prototype, "loc", { enumerable: true });
+
 let uint32: Uint32Array | null = null;
 
 // `ESTreeKind` discriminants (set by Rust side)
@@ -173,7 +203,7 @@ const PRIVATE_IDENTIFIER_KIND = 2;
 const REGEXP_KIND = 8;
 
 // Indexed by `ESTreeKind` discriminant (matches `ESTreeKind` enum in `estree_kind.rs`)
-const TOKEN_TYPES: Token["type"][] = [
+const TOKEN_TYPES: TokenType["type"][] = [
   "Identifier",
   "Keyword",
   "PrivateIdentifier",
@@ -210,16 +240,7 @@ export function initTokens() {
 
   // Grow cache if needed (one-time cost as cache warms up)
   while (cachedTokens.length < tokensLen) {
-    cachedTokens.push({
-      // @ts-expect-error - TS doesn't understand `__proto__`
-      __proto__: TokenProto,
-      type: "" as Token["type"], // Overwritten later
-      value: "",
-      regex: undefined,
-      start: 0,
-      end: 0,
-      range: [0, 0],
-    });
+    cachedTokens.push(new Token());
   }
 
   // Deserialize into cached token objects
@@ -237,9 +258,9 @@ export function initTokens() {
   // Assuming random distribution of file sizes, this cheaper branch should be hit on 50% of files.
   if (previousTokens.length >= tokensLen) {
     previousTokens.length = tokensLen;
-    tokens = previousTokens;
+    tokens = previousTokens as TokenType[];
   } else {
-    tokens = previousTokens = cachedTokens.slice(0, tokensLen);
+    tokens = (previousTokens = cachedTokens.slice(0, tokensLen)) as TokenType[];
   }
 
   uint32 = null;
@@ -461,12 +482,12 @@ function debugCheckTokensAndComments() {
 /**
  * Reset tokens after file has been linted.
  *
- * Deletes cached `loc` from tokens that had it accessed, so the prototype getter
+ * Clears cached `loc` on tokens that had it accessed, so the getter
  * will recalculate it when the token is reused for a different file.
  */
 export function resetTokens() {
   for (let i = 0, len = tokensWithLoc.length; i < len; i++) {
-    delete (tokensWithLoc[i] as { loc?: unknown }).loc;
+    resetLoc(tokensWithLoc[i]);
   }
   tokensWithLoc.length = 0;
 
