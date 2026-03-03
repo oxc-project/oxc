@@ -245,8 +245,19 @@ pub struct WarningOptions {
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
-    #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
+    #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+}
+
+#[expect(clippy::unnecessary_wraps)]
+fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+    if cfg!(debug_assertions) {
+        Ok(OutputFormat::Default)
+    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Github)
+    } else {
+        Ok(OutputFormat::Default)
+    }
 }
 
 /// Enable/Disable Plugins
