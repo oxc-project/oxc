@@ -1,0 +1,9 @@
+{
+  // Intentionally JSONC to verify auto config detection supports .jsonc.
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-debugger": "error"
+  }
+}

@@ -730,6 +730,14 @@ mod test {
     }
 
     #[test]
+    fn oxlint_config_auto_detection_jsonc() {
+        let args = &["debugger.js"];
+        Tester::new()
+            .with_cwd("fixtures/auto_config_detection_jsonc".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     #[cfg(not(target_os = "windows"))] // Skipped on Windows due to snapshot diffs from path separators (`/` vs `\`)
     fn oxlint_config_auto_detection_parse_error() {
         let args = &["debugger.js"];
