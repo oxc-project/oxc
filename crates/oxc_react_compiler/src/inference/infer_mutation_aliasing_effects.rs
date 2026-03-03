@@ -1036,7 +1036,9 @@ fn infer_instruction_effects(
         // MutateTransitiveConditionally effects are correctly dropped (they only apply to
         // Mutable/Context values), preventing spurious mutable range extensions.
         InstructionValue::PropertyLoad(v) => {
-            if let Some(val) = state.get(&v.object) {
+            if instr.lvalue.identifier.is_primitive_type() {
+                state.define(&instr.lvalue, AbstractValue::primitive());
+            } else if let Some(val) = state.get(&v.object) {
                 let result_kind = match val.kind {
                     ValueKind::Primitive | ValueKind::Global => val.kind,
                     ValueKind::Frozen | ValueKind::MaybeFrozen => ValueKind::MaybeFrozen,
@@ -1058,7 +1060,9 @@ fn infer_instruction_effects(
         }
 
         InstructionValue::ComputedLoad(v) => {
-            if let Some(val) = state.get(&v.object) {
+            if instr.lvalue.identifier.is_primitive_type() {
+                state.define(&instr.lvalue, AbstractValue::primitive());
+            } else if let Some(val) = state.get(&v.object) {
                 state.define(&instr.lvalue, val.clone());
                 state.add_alias(v.object.identifier.id, lvalue_id);
             } else {
