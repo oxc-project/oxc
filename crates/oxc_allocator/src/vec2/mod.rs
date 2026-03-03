@@ -1459,6 +1459,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
     /// Appends an element to the back of a vector.
     ///
+    /// See also [`push_fast`].
+    ///
     /// # Panics
     ///
     /// Panics if the number of elements in the vector overflows a `u32`.
@@ -1474,6 +1476,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.push(3);
     /// assert_eq!(vec, [1, 2, 3]);
     /// ```text
+    ///
+    /// [`push_fast`]: Self::push_fast
     #[inline]
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
@@ -1485,6 +1489,62 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
             let end = self.buf.ptr().add(self.len_usize());
             ptr::write(end, value);
             self.buf.increase_len(1);
+        }
+    }
+
+    /// Appends an element to the back of a vector, when it's likely that there's sufficient capacity.
+    ///
+    /// This method is equivalent to [`push`] except that it is optimized for the case where there's
+    /// capacity for at least one more element, without needing to grow.
+    ///
+    /// When you're dealing with a large `Vec` which grows infrequently, this method can be faster.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```text
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// vec.pop();
+    /// vec.push_fast(4);
+    /// assert_eq!(vec, [1, 2, 4]);
+    /// ```text
+    ///
+    /// [`push`]: Self::push
+    #[inline]
+    pub fn push_fast(&mut self, value: T) {
+        #[expect(clippy::if_not_else)]
+        if self.len_u32() != self.capacity_u32() {
+            // Capacity for at least 1 more element. Write it.
+            unsafe {
+                let end = self.buf.ptr().add(self.len_usize());
+                ptr::write(end, value);
+                self.buf.increase_len(1);
+            }
+        } else {
+            // At capacity. Grow.
+            // This branch is rarely taken, so marked as `#[cold]` and `#[inline(never)]`.
+            #[cold]
+            #[inline(never)]
+            fn push_slow<T, A: Alloc>(v: &mut Vec<'_, T, A>, value: T) {
+                // This will panic or abort if we would allocate > `isize::MAX` bytes
+                // or if the length increment would overflow for zero-sized types.
+                v.buf.grow_one();
+
+                unsafe {
+                    let end = v.buf.ptr().add(v.len_usize());
+                    ptr::write(end, value);
+                    v.buf.increase_len(1);
+                }
+            }
+
+            push_slow(self, value);
         }
     }
 
