@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8613
 expression: snapshot
 ---
-Codegen conformance: 1337/1338 passed (99.9%)
+Codegen conformance: 1338/1338 passed (100.0%)
 Flow files skipped: 38
 FBT lowering skipped: 33
 
@@ -12,8 +13,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:1
+  output_mismatch:0
   no_expected:    0
 
 Failed fixtures:
-  [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
