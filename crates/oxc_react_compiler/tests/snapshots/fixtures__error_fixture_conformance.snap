@@ -1,31 +1,23 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8975
 expression: snapshot
 ---
-Error fixture conformance: 188/275 (68.4%)
+Error fixture conformance: 207/275 (75.3%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 87
+  unexpected_success: 68
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
-  [unexpected_success] error._todo.computed-lval-in-destructure.js
   [unexpected_success] error.assign-global-in-jsx-children.js
   [unexpected_success] error.assign-ref-in-effect-hint.js
-  [unexpected_success] error.bug-invariant-codegen-methodcall.js
-  [unexpected_success] error.bug-invariant-couldnt-find-binding-for-decl.js
   [unexpected_success] error.bug-invariant-local-or-context-references.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
   [unexpected_success] error.call-args-destructuring-asignment-complex.js
-  [unexpected_success] error.capitalized-function-call-aliased.js
-  [unexpected_success] error.capitalized-function-call.js
-  [unexpected_success] error.capitalized-method-call.js
   [unexpected_success] error.default-param-accesses-local.js
   [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.handle-unexpected-exception-pipeline.ts
-  [unexpected_success] error.hoisting-simple-function-declaration.js
   [unexpected_success] error.hook-property-load-local-hook.js
   [unexpected_success] error.invalid-array-push-frozen.js
   [unexpected_success] error.invalid-eval-unsupported.js
@@ -63,24 +55,13 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
   [unexpected_success] error.todo-allow-assigning-to-inferred-ref-prop-in-callback.js
-  [unexpected_success] error.todo-for-await-loops.js
   [unexpected_success] error.todo-functiondecl-hoisting.tsx
-  [unexpected_success] error.todo-hoist-function-decls.js
-  [unexpected_success] error.todo-hoisted-function-in-unreachable-code.js
-  [unexpected_success] error.todo-hoisting-simple-var-declaration.js
   [unexpected_success] error.todo-hook-call-spreads-mutable-iterator.js
-  [unexpected_success] error.todo-kitchensink.js
   [unexpected_success] error.todo-missing-source-locations.js
-  [unexpected_success] error.todo-nested-method-calls-lower-property-load-into-temporary.js
-  [unexpected_success] error.todo-new-target-meta-property.js
-  [unexpected_success] error.todo-object-expression-get-syntax.js
-  [unexpected_success] error.todo-object-expression-set-syntax.js
   [unexpected_success] error.todo-optional-call-chain-in-optional.ts
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
-  [unexpected_success] error.todo.try-catch-with-throw.js
-  [unexpected_success] error.useMemo-callback-generator.js
   [unexpected_success] error.validate-object-entries-mutation.js
   [unexpected_success] error.validate-object-values-mutation.js
   [unexpected_success] exhaustive-deps/error.exhaustive-deps-effect-events.js
@@ -97,4 +78,3 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
   [unexpected_success] preserve-memo-validation/error.invalid-useCallback-captures-reassigned-context.ts
   [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts
-  [unexpected_success] todo.error.object-pattern-computed-key.js

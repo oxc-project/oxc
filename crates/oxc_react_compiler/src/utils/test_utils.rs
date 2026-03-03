@@ -159,6 +159,12 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     }
                 }
             }
+            "validateNoCapitalizedCalls" => {
+                // When the pragma is present (with or without value), enable the
+                // validation with an empty allow list. The TS config uses an array
+                // of allowed function names; here we just use an empty vec.
+                env_config.validate_no_capitalized_calls = Some(Vec::new());
+            }
             "validateExhaustiveMemoizationDependencies" => {
                 env_config.validate_exhaustive_memoization_dependencies =
                     parse_bool_value(entry.value.as_ref(), true);

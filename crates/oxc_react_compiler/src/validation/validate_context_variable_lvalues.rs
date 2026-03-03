@@ -75,6 +75,12 @@ pub fn validate_context_variable_lvalues(func: &HIRFunction) -> Result<(), Compi
                         )?;
                     }
                 }
+                // NOTE: The TS implementation recurses into FunctionExpression
+                // and ObjectMethod with a shared identifierKinds map. We cannot
+                // do the same because our Rust implementation uses different
+                // IdentifierIds for inner functions (each function gets its own
+                // HirBuilder with separate ID space). Sharing the map would
+                // cause false conflicts between outer and inner function IDs.
                 _ => {}
             }
         }
@@ -90,10 +96,12 @@ fn visit(
     if let Some(&existing) = kinds.get(&id) {
         if existing != expected {
             return Err(CompilerError::invariant(
-                "Inconsistent variable kind",
+                "Expected all references to a variable to be consistently local or context references",
                 Some(&format!(
-                    "Identifier #{} was previously {:?} but used as {:?}",
-                    id.0, existing, expected
+                    "Identifier #{} is referenced as a {} variable, but was previously referenced as a {} variable.",
+                    id.0,
+                    kind_tag_name(expected),
+                    kind_tag_name(existing),
                 )),
                 GENERATED_SOURCE,
             ));
@@ -102,4 +110,11 @@ fn visit(
         kinds.insert(id, expected);
     }
     Ok(())
+}
+
+fn kind_tag_name(tag: IdentifierKindTag) -> &'static str {
+    match tag {
+        IdentifierKindTag::Local => "local",
+        IdentifierKindTag::Context => "context",
+    }
 }

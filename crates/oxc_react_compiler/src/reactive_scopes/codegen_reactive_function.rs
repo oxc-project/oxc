@@ -273,6 +273,10 @@ pub struct CodegenContext {
     /// is consulted to produce a proper `CodegenStatement::FunctionDeclaration`
     /// instead of an expression statement.
     fn_decl_data: FxHashMap<DeclarationId, CodegenFunction>,
+    /// Accumulated invariant errors during codegen.
+    /// These match TS `CompilerError.invariant()` calls in CodegenReactiveFunction.
+    /// Uses RefCell to allow pushing errors from functions that take `&self`.
+    codegen_errors: std::cell::RefCell<Vec<CompilerError>>,
 }
 
 impl CodegenContext {
@@ -305,6 +309,7 @@ impl CodegenContext {
             ternary_temps: FxHashSet::default(),
             inside_optional_chain: false,
             fn_decl_data: FxHashMap::default(),
+            codegen_errors: std::cell::RefCell::new(Vec::new()),
         }
     }
 
@@ -406,18 +411,17 @@ pub fn codegen_function(
 
     // Function-level hook guard: wrap the entire body in a try-finally with
     // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
-    if cx.output_mode == CompilerOutputMode::Client {
-        if let Some(specifier_name) =
+    if cx.output_mode == CompilerOutputMode::Client
+        && let Some(specifier_name) =
             cx.enable_emit_hook_guards.as_ref().map(|g| g.import_specifier_name.clone())
-        {
-            let guard_fn_name = cx.synthesize_name(&specifier_name);
-            body = vec![create_hook_guard(
-                &guard_fn_name,
-                body,
-                GuardKind::PushHookGuard,
-                GuardKind::PopHookGuard,
-            )];
-        }
+    {
+        let guard_fn_name = cx.synthesize_name(&specifier_name);
+        body = vec![create_hook_guard(
+            &guard_fn_name,
+            body,
+            GuardKind::PushHookGuard,
+            GuardKind::PopHookGuard,
+        )];
     }
 
     // Count memo blocks/values
@@ -516,6 +520,12 @@ pub fn codegen_function(
     }
 
     let params = convert_params(&reactive_fn.params);
+
+    // Check for invariant errors accumulated during codegen.
+    // These match TS `CompilerError.invariant()` calls in CodegenReactiveFunction.
+    if let Some(first_error) = cx.codegen_errors.into_inner().into_iter().next() {
+        return Err(first_error);
+    }
 
     Ok(CodegenFunction {
         id: reactive_fn.id.clone(),
@@ -763,19 +773,19 @@ fn create_call_expression_string(
 ) -> String {
     let call_expr = format!("{callee_str}({args_str})");
 
-    if is_hook && cx.output_mode == CompilerOutputMode::Client {
-        if let Some(specifier_name) =
+    if is_hook
+        && cx.output_mode == CompilerOutputMode::Client
+        && let Some(specifier_name) =
             cx.enable_emit_hook_guards.as_ref().map(|g| g.import_specifier_name.clone())
-        {
-            let guard_fn_name = cx.synthesize_name(&specifier_name);
-            // Generate an IIFE with try-finally:
-            // (() => { try { guardFn(2); return callExpr; } finally { guardFn(3); } })()
-            return format!(
-                "(() => {{ try {{ {guard_fn_name}({}); return {call_expr}; }} finally {{ {guard_fn_name}({}); }} }})()",
-                GuardKind::AllowHook as u8,
-                GuardKind::DisallowHook as u8,
-            );
-        }
+    {
+        let guard_fn_name = cx.synthesize_name(&specifier_name);
+        // Generate an IIFE with try-finally:
+        // (() => { try { guardFn(2); return callExpr; } finally { guardFn(3); } })()
+        return format!(
+            "(() => {{ try {{ {guard_fn_name}({}); return {call_expr}; }} finally {{ {guard_fn_name}({}); }} }})()",
+            GuardKind::AllowHook as u8,
+            GuardKind::DisallowHook as u8,
+        );
     }
 
     call_expr
@@ -957,7 +967,7 @@ fn codegen_reactive_scope(
             first_output_index = Some(index);
         }
         let name = match &reassignment_ident.name {
-            Some(crate::hir::IdentifierName::Named(n)) => n.to_string(),
+            Some(crate::hir::IdentifierName::Named(n)) => n.clone(),
             Some(crate::hir::IdentifierName::Promoted(n)) => n.clone(),
             None => format!("t{}", reassignment_ident.id.0),
         };
@@ -1294,10 +1304,10 @@ fn codegen_instruction_nullable(
                     cx.fn_expr_temps.insert(lval.identifier.declaration_id);
                 }
                 let (value_str, fn_decl) = codegen_function_expression(cx, func_expr);
-                if let Some(fn_data) = fn_decl {
-                    if let Some(lval) = &instr.lvalue {
-                        cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
-                    }
+                if let Some(fn_data) = fn_decl
+                    && let Some(lval) = &instr.lvalue
+                {
+                    cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
                 }
                 codegen_instruction_to_statement(cx, instr, &value_str)
             }
@@ -1328,19 +1338,17 @@ fn codegen_instruction_nullable(
                         | InstructionValue::ComputedStore(_)
                         | InstructionValue::StoreGlobal(_)
                 );
-                if is_store_instr {
-                    if let Some(lval) = instr.lvalue.as_ref() {
-                        if lval.identifier.name.is_none() {
-                            // Unnamed temp: store as assignment temp for deferred wrapping
-                            cx.temp.insert(lval.identifier.declaration_id, Some(value_str));
-                            cx.assignment_temps.insert(lval.identifier.declaration_id);
-                            return None;
-                        }
-                        // Named lval: emit as `t = (lhs = rhs)` — no parens needed since
-                        // assignment expressions are right-associative and valid as rvalue
-                        // in a `let t = lhs = rhs` statement without parens (matching TS output).
-                        return codegen_instruction_to_statement(cx, instr, &value_str);
+                if is_store_instr && let Some(lval) = instr.lvalue.as_ref() {
+                    if lval.identifier.name.is_none() {
+                        // Unnamed temp: store as assignment temp for deferred wrapping
+                        cx.temp.insert(lval.identifier.declaration_id, Some(value_str));
+                        cx.assignment_temps.insert(lval.identifier.declaration_id);
+                        return None;
                     }
+                    // Named lval: emit as `t = (lhs = rhs)` — no parens needed since
+                    // assignment expressions are right-associative and valid as rvalue
+                    // in a `let t = lhs = rhs` statement without parens (matching TS output).
+                    return codegen_instruction_to_statement(cx, instr, &value_str);
                 }
                 codegen_instruction_to_statement(cx, instr, &value_str)
             }
@@ -1349,10 +1357,10 @@ fn codegen_instruction_nullable(
             let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
             // Track logical operator on temps so that parent logical expressions
             // can detect when `??` is mixed with `||`/`&&` and add mandatory parens.
-            if let Some(lval) = &instr.lvalue {
-                if lval.identifier.name.is_none() {
-                    cx.logical_temps.insert(lval.identifier.declaration_id, logical.operator);
-                }
+            if let Some(lval) = &instr.lvalue
+                && lval.identifier.name.is_none()
+            {
+                cx.logical_temps.insert(lval.identifier.declaration_id, logical.operator);
             }
             codegen_instruction_to_statement(cx, instr, &value_str)
         }
@@ -1374,27 +1382,25 @@ fn codegen_instruction_nullable(
             // Track these temps for arrow-body parenthesisation: Babel's printer
             // auto-wraps ConditionalExpression / SequenceExpression in parens when
             // used as a concise arrow body; we must do it explicitly.
-            if let Some(lval) = &instr.lvalue {
-                if lval.identifier.name.is_none() {
-                    cx.arrow_paren_temps.insert(lval.identifier.declaration_id);
-                    // Track ternary temps specifically: they need parens when used
-                    // as binary expression operands (e.g. `x + (cond ? a : b)`).
-                    if matches!(&instr.value, ReactiveValue::Ternary(_)) {
-                        cx.ternary_temps.insert(lval.identifier.declaration_id);
-                    }
+            if let Some(lval) = &instr.lvalue
+                && lval.identifier.name.is_none()
+            {
+                cx.arrow_paren_temps.insert(lval.identifier.declaration_id);
+                // Track ternary temps specifically: they need parens when used
+                // as binary expression operands (e.g. `x + (cond ? a : b)`).
+                if matches!(&instr.value, ReactiveValue::Ternary(_)) {
+                    cx.ternary_temps.insert(lval.identifier.declaration_id);
                 }
             }
             // For Sequence values, the inner sequence may contain a Logical expression
             // that was stored as a temp. Propagate the logical operator tracking to
             // this instruction's lvalue so parent logical expressions can detect mixing.
-            if matches!(&instr.value, ReactiveValue::Sequence(_)) {
-                if let Some(lval) = &instr.lvalue {
-                    if lval.identifier.name.is_none() {
-                        if let Some(op) = find_logical_operator_in_value(&instr.value) {
-                            cx.logical_temps.insert(lval.identifier.declaration_id, op);
-                        }
-                    }
-                }
+            if matches!(&instr.value, ReactiveValue::Sequence(_))
+                && let Some(lval) = &instr.lvalue
+                && lval.identifier.name.is_none()
+                && let Some(op) = find_logical_operator_in_value(&instr.value)
+            {
+                cx.logical_temps.insert(lval.identifier.declaration_id, op);
             }
             codegen_instruction_to_statement(cx, instr, &value_str)
         }
@@ -1443,16 +1449,16 @@ fn codegen_store_or_declare(
             // Look up the structured CodegenFunction data stored when the
             // FunctionExpression instruction was processed. If available, emit
             // a FunctionDeclaration; otherwise fall back to ExpressionStatement.
-            if let Some(vp) = value_place {
-                if let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id) {
-                    return Some(CodegenStatement::FunctionDeclaration {
-                        name,
-                        params: fn_data.params,
-                        body: fn_data.body,
-                        generator: fn_data.generator,
-                        is_async: fn_data.is_async,
-                    });
-                }
+            if let Some(vp) = value_place
+                && let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id)
+            {
+                return Some(CodegenStatement::FunctionDeclaration {
+                    name,
+                    params: fn_data.params,
+                    body: fn_data.body,
+                    generator: fn_data.generator,
+                    is_async: fn_data.is_async,
+                });
             }
             if let Some(val) = value {
                 Some(CodegenStatement::ExpressionStatement(val.to_string()))
@@ -1682,6 +1688,18 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             // TS: the property Place is a PropertyLoad result (e.g. "console.log"),
             // already a member expression string. Use it directly as the callee.
             let callee = codegen_place_to_expression(cx, &method.property);
+            // TS invariant: MethodCall::property must be an unpromoted + unmemoized
+            // MemberExpression. If the property was promoted/memoized, it resolves
+            // to a bare Identifier instead of a member expression.
+            let property_decl_id = method.property.identifier.declaration_id;
+            let is_member_expr = cx.temp.get(&property_decl_id).is_some_and(|v| v.is_some());
+            if !is_member_expr {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
+                    Some("Got: 'Identifier'"),
+                    method.loc,
+                ));
+            }
             let args = codegen_args(cx, &method.args);
             create_call_expression_string(cx, &callee, &args, is_hook)
         }
@@ -2100,10 +2118,10 @@ fn find_logical_operator_in_value(value: &ReactiveValue) -> Option<LogicalOperat
         ReactiveValue::Logical(logical) => Some(logical.operator),
         ReactiveValue::Sequence(seq) => {
             // Check if the last instruction in the sequence is/contains a Logical
-            if let Some(last_instr) = seq.instructions.last() {
-                if let Some(op) = find_logical_operator_in_value(&last_instr.value) {
-                    return Some(op);
-                }
+            if let Some(last_instr) = seq.instructions.last()
+                && let Some(op) = find_logical_operator_in_value(&last_instr.value)
+            {
+                return Some(op);
             }
             find_logical_operator_in_value(&seq.value)
         }
@@ -2126,27 +2144,24 @@ fn effective_value(value: &ReactiveValue) -> &ReactiveValue {
             // If the sequence's final value is a plain instruction (LoadLocal) and
             // the last instruction in the sequence produced a Logical/Ternary value,
             // use that instruction's value for precedence instead of the LoadLocal.
-            if let ReactiveValue::Instruction(_) = &*seq.value {
-                if let Some(last_instr) = seq.instructions.last() {
-                    match &last_instr.value {
-                        ReactiveValue::Logical(_) | ReactiveValue::Ternary(_) => {
-                            return &last_instr.value;
-                        }
-                        // The last instruction's value may itself be a Sequence
-                        // (e.g., when `??` is nested inside `||`, the `??` result
-                        // appears as a Sequence-wrapped value in the `||`'s test
-                        // block). Recursively resolve it to find the effective value.
-                        ReactiveValue::Sequence(_) => {
-                            let inner = effective_value(&last_instr.value);
-                            if matches!(
-                                inner,
-                                ReactiveValue::Logical(_) | ReactiveValue::Ternary(_)
-                            ) {
-                                return inner;
-                            }
-                        }
-                        _ => {}
+            if let ReactiveValue::Instruction(_) = &*seq.value
+                && let Some(last_instr) = seq.instructions.last()
+            {
+                match &last_instr.value {
+                    ReactiveValue::Logical(_) | ReactiveValue::Ternary(_) => {
+                        return &last_instr.value;
                     }
+                    // The last instruction's value may itself be a Sequence
+                    // (e.g., when `??` is nested inside `||`, the `??` result
+                    // appears as a Sequence-wrapped value in the `||`'s test
+                    // block). Recursively resolve it to find the effective value.
+                    ReactiveValue::Sequence(_) => {
+                        let inner = effective_value(&last_instr.value);
+                        if matches!(inner, ReactiveValue::Logical(_) | ReactiveValue::Ternary(_)) {
+                            return inner;
+                        }
+                    }
+                    _ => {}
                 }
             }
             effective_value(&seq.value)
@@ -2369,7 +2384,7 @@ fn codegen_jsx_attribute(cx: &CodegenContext, attr: &JsxAttribute) -> String {
             // JsxText values are raw decoded text that need to be quoted when used
             // as attribute values (vs JSX children where they render as raw text).
             let value = if cx.jsx_text_temps.contains(&decl_id)
-                && cx.temp.get(&decl_id).is_some_and(|v| v.is_some())
+                && cx.temp.get(&decl_id).is_some_and(std::option::Option::is_some)
             {
                 let raw = codegen_place_to_expression(cx, place);
                 // Wrap as a proper string literal, escaping any embedded quotes
@@ -2471,7 +2486,16 @@ fn codegen_place_to_expression(cx: &CodegenContext, place: &Place) -> String {
         return expr.clone();
     }
 
-    // Must be a named identifier
+    // TS invariant: convertIdentifier checks that the identifier has a name.
+    // If unnamed, this is an invariant violation indicating the identifier
+    // was not promoted by an earlier pass (PromoteUsedTemporaries).
+    if place.identifier.name.is_none() {
+        cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+            "Expected temporaries to be promoted to named identifiers in an earlier pass",
+            Some(&format!("identifier {} is unnamed.", place.identifier.id.0)),
+            crate::compiler_error::GENERATED_SOURCE,
+        ));
+    }
     identifier_name(&place.identifier)
 }
 
@@ -3220,12 +3244,10 @@ fn codegen_for_of_in_init(
 fn codegen_for_of_collection(cx: &mut CodegenContext, init: &ReactiveValue) -> String {
     if let ReactiveValue::Sequence(seq) = init
         && let Some(first) = seq.instructions.first()
+        && let ReactiveValue::Instruction(boxed) = &first.value
+        && let InstructionValue::GetIterator(iter) = boxed.as_ref()
     {
-        if let ReactiveValue::Instruction(boxed) = &first.value {
-            if let InstructionValue::GetIterator(iter) = boxed.as_ref() {
-                return codegen_place_to_expression(cx, &iter.collection);
-            }
-        }
+        return codegen_place_to_expression(cx, &iter.collection);
     }
     codegen_reactive_value_to_expression(cx, init)
 }
