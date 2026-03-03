@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 220/275 (80.0%)
+Error fixture conformance: 224/275 (81.5%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 55
+  unexpected_success: 51
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -38,10 +38,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-reassign-variable-in-usememo.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
-  [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook-namespace.js
-  [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook.js
-  [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
-  [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
   [unexpected_success] error.modify-state-2.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
