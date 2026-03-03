@@ -112,7 +112,12 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic(
+        &self,
+        _uri: &Uri,
+        _language_id: &LanguageId,
+        _content: Option<&str>,
+    ) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -123,7 +128,12 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(
+        &self,
+        _uri: &Uri,
+        _language_id: &LanguageId,
+        _content: Option<&str>,
+    ) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -134,7 +144,12 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(
+        &self,
+        _uri: &Uri,
+        _language_id: &LanguageId,
+        _content: Option<&str>,
+    ) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
