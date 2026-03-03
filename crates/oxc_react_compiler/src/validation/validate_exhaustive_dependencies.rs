@@ -10,13 +10,18 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     compiler_error::{
-        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
+        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
+        GENERATED_SOURCE, SourceLocation,
     },
     hir::{
-        BlockId, DependencyPath, DependencyPathEntry, HIRFunction, Identifier, IdentifierId,
-        IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
+        BlockId, CallArg, DependencyPath, DependencyPathEntry, Effect, HIRFunction, Identifier,
+        IdentifierId, IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
         ManualMemoDependencyRoot, Place, Terminal,
-        object_shape::BUILT_IN_USE_EFFECT_EVENT_ID,
+        environment::ExhaustiveEffectDepsMode,
+        object_shape::{
+            BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
+            BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
+        },
         types::{FunctionType, ObjectType, Type},
         visitors::{
             each_instruction_lvalue, each_instruction_value_lvalue, each_instruction_value_operand,
@@ -78,7 +83,7 @@ struct LocalDep {
 enum Temporary {
     Global { binding_name: String },
     Local(LocalDep),
-    Aggregate { dependencies: Vec<Temporary> },
+    Aggregate { dependencies: Vec<Temporary>, loc: Option<SourceLocation> },
 }
 
 // =====================================================================================
@@ -113,6 +118,17 @@ fn is_use_ref_type(identifier: &Identifier) -> bool {
     matches!(
         &identifier.type_,
         Type::Object(ObjectType { shape_id: Some(id) }) if id == "BuiltInUseRefId"
+    )
+}
+
+/// Returns `true` if the identifier is a useEffect / useLayoutEffect / useInsertionEffect hook.
+fn is_effect_hook(identifier: &Identifier) -> bool {
+    matches!(
+        &identifier.type_,
+        Type::Function(FunctionType { shape_id: Some(id), .. })
+        if id == BUILT_IN_USE_EFFECT_HOOK_ID
+            || id == BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID
+            || id == BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID
     )
 }
 
@@ -157,8 +173,7 @@ fn find_optional_places(func: &HIRFunction) -> FxHashMap<IdentifierId, bool> {
                             if let Some(last) = consequent_block.instructions.last() {
                                 if let InstructionValue::StoreLocal(store) = &last.value {
                                     if let Some(is_opt) = is_optional {
-                                        optionals
-                                            .insert(store.value.identifier.id, is_opt);
+                                        optionals.insert(store.value.identifier.id, is_opt);
                                     }
                                 }
                             }
@@ -202,7 +217,7 @@ fn add_dependency(
     locals: &FxHashSet<IdentifierId>,
 ) {
     match dep {
-        Temporary::Aggregate { dependencies: inner_deps } => {
+        Temporary::Aggregate { dependencies: inner_deps, .. } => {
             for d in inner_deps {
                 add_dependency(d, dependencies, locals);
             }
@@ -261,6 +276,18 @@ fn collect_dependencies_with_memos(
                 &optionals,
             );
 
+            // Handle effect hooks (useEffect, useLayoutEffect, useInsertionEffect)
+            let effect_mode = env.config.validate_exhaustive_effect_dependencies;
+            if effect_mode != ExhaustiveEffectDepsMode::Off {
+                handle_effect_hook_call(
+                    &instr.value,
+                    temporaries,
+                    reactive,
+                    errors,
+                    effect_mode,
+                );
+            }
+
             // Handle memoization callbacks
             if let InstructionValue::StartMemoize(v) = &instr.value {
                 start_memo = Some(v.clone());
@@ -279,6 +306,7 @@ fn collect_dependencies_with_memos(
                         manual,
                         reactive,
                         ErrorCategory::MemoDependencies,
+                        ExhaustiveEffectDepsMode::All,
                     ) {
                         errors.push_diagnostic(diagnostic);
                     }
@@ -300,6 +328,92 @@ fn collect_dependencies_with_memos(
     }
 }
 
+/// Detect effect hook calls and validate their dependency arrays.
+///
+/// For calls like `useEffect(fn, deps)`, we extract the function's inferred
+/// dependencies and the manually specified dependencies, then validate them.
+fn handle_effect_hook_call(
+    value: &InstructionValue,
+    temporaries: &FxHashMap<IdentifierId, Temporary>,
+    reactive: &FxHashSet<IdentifierId>,
+    errors: &mut CompilerError,
+    effect_mode: ExhaustiveEffectDepsMode,
+) {
+    let (receiver, args) = match value {
+        InstructionValue::CallExpression(call) => (&call.callee, &call.args),
+        InstructionValue::MethodCall(method) => (&method.property, &method.args),
+        _ => return,
+    };
+
+    if !is_effect_hook(&receiver.identifier) {
+        return;
+    }
+
+    // Effect hooks expect (fn, deps) — we need both arguments
+    if args.len() < 2 {
+        return;
+    }
+
+    let fn_place = match &args[0] {
+        CallArg::Place(p) => p,
+        CallArg::Spread(_) => return,
+    };
+    let deps_place = match &args[1] {
+        CallArg::Place(p) => p,
+        CallArg::Spread(_) => return,
+    };
+
+    let fn_deps = temporaries.get(&fn_place.identifier.id);
+    let manual_deps = temporaries.get(&deps_place.identifier.id);
+
+    let (fn_deps, manual_deps) = match (fn_deps, manual_deps) {
+        (
+            Some(Temporary::Aggregate { dependencies: fn_deps, .. }),
+            Some(Temporary::Aggregate { dependencies: manual_deps, loc: manual_loc }),
+        ) => (fn_deps, (manual_deps, manual_loc)),
+        _ => return,
+    };
+
+    // Convert manual deps (Temporary) to ManualMemoDependency format
+    let manual_memo_deps: Vec<ManualMemoDependency> = manual_deps
+        .0
+        .iter()
+        .filter_map(|dep| match dep {
+            Temporary::Local(local) => Some(ManualMemoDependency {
+                root: ManualMemoDependencyRoot::NamedLocal {
+                    value: Place {
+                        identifier: local.identifier.clone(),
+                        effect: Effect::Read,
+                        reactive: reactive.contains(&local.identifier.id),
+                        loc: local.loc,
+                    },
+                    constant: false,
+                },
+                path: local.path.clone(),
+                loc: local.loc,
+            }),
+            Temporary::Global { binding_name } => Some(ManualMemoDependency {
+                root: ManualMemoDependencyRoot::Global {
+                    identifier_name: binding_name.clone(),
+                },
+                path: Vec::new(),
+                loc: GENERATED_SOURCE,
+            }),
+            Temporary::Aggregate { .. } => None,
+        })
+        .collect();
+
+    if let Some(diagnostic) = validate_dependencies(
+        fn_deps.clone(),
+        &manual_memo_deps,
+        reactive,
+        ErrorCategory::EffectExhaustiveDependencies,
+        effect_mode,
+    ) {
+        errors.push_diagnostic(diagnostic);
+    }
+}
+
 fn process_phi_nodes(
     block: &crate::hir::BasicBlock,
     temporaries: &mut FxHashMap<IdentifierId, Temporary>,
@@ -309,7 +423,7 @@ fn process_phi_nodes(
         for operand in phi.operands.values() {
             if let Some(dep) = temporaries.get(&operand.identifier.id) {
                 match dep {
-                    Temporary::Aggregate { dependencies: inner } => {
+                    Temporary::Aggregate { dependencies: inner, .. } => {
                         deps.extend(inner.iter().cloned());
                     }
                     other => {
@@ -327,7 +441,7 @@ fn process_phi_nodes(
             }
         } else {
             temporaries
-                .insert(phi.place.identifier.id, Temporary::Aggregate { dependencies: deps });
+                .insert(phi.place.identifier.id, Temporary::Aggregate { dependencies: deps, loc: None });
         }
     }
 }
@@ -504,7 +618,7 @@ fn process_instruction(
                 if let Some(place) = place {
                     if let Some(dep) = temporaries.get(&place.identifier.id) {
                         match dep {
-                            Temporary::Aggregate { dependencies: inner } => {
+                            Temporary::Aggregate { dependencies: inner, .. } => {
                                 array_deps.extend(inner.iter().cloned());
                             }
                             other => {
@@ -515,7 +629,7 @@ fn process_instruction(
                     visit_candidate_dependency(place, temporaries, dependencies, locals);
                 }
             }
-            temporaries.insert(lvalue_id, Temporary::Aggregate { dependencies: array_deps });
+            temporaries.insert(lvalue_id, Temporary::Aggregate { dependencies: array_deps, loc: Some(v.loc) });
         }
         InstructionValue::CallExpression(_) | InstructionValue::MethodCall(_) => {
             for operand in each_instruction_value_operand(value) {
@@ -585,7 +699,7 @@ fn collect_dependencies_inner(
         }
     }
 
-    Temporary::Aggregate { dependencies }
+    Temporary::Aggregate { dependencies, loc: None }
 }
 
 // =====================================================================================
@@ -597,6 +711,7 @@ fn validate_dependencies(
     manual_dependencies: &[ManualMemoDependency],
     reactive: &FxHashSet<IdentifierId>,
     category: ErrorCategory,
+    report_mode: ExhaustiveEffectDepsMode,
 ) -> Option<CompilerDiagnostic> {
     // Sort
     inferred.sort_by_key(dep_name);
@@ -659,22 +774,33 @@ fn validate_dependencies(
         extra.push(dep);
     }
 
-    if missing.is_empty() && extra.is_empty() {
+    // Filter based on report mode
+    let filtered_missing: Vec<Temporary> = match report_mode {
+        ExhaustiveEffectDepsMode::ExtraOnly => Vec::new(),
+        _ => missing,
+    };
+    let filtered_extra: Vec<&ManualMemoDependency> = match report_mode {
+        ExhaustiveEffectDepsMode::MissingOnly => Vec::new(),
+        _ => extra,
+    };
+
+    if filtered_missing.is_empty() && filtered_extra.is_empty() {
         return None;
     }
 
-    let (reason, description) = create_diagnostic_message(category, &missing, &extra);
+    let (reason, description) =
+        create_diagnostic_message(category, &filtered_missing, &filtered_extra);
 
     let mut diagnostic = CompilerDiagnostic::create(category, reason, Some(description), None);
 
-    for dep in &missing {
+    for dep in &filtered_missing {
         diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
             loc: Some(dep_loc(dep)),
             message: Some(format!("Missing dependency `{}`", print_inferred_dependency(dep))),
         });
     }
 
-    for dep in &extra {
+    for dep in &filtered_extra {
         let dep_str = print_manual_memo_dependency(dep);
         let message = if let ManualMemoDependencyRoot::Global { .. } = &dep.root {
             format!(
@@ -683,13 +809,62 @@ fn validate_dependencies(
                  will not re-render if they change"
             )
         } else {
-            format!("Unnecessary dependency `{dep_str}`")
+            // Check if the extra dep matches an inferred dep that is an effect event function
+            let root = match &dep.root {
+                ManualMemoDependencyRoot::NamedLocal { value, .. } => Some(value),
+                _ => None,
+            };
+            let matching_inferred = root.and_then(|root_val| {
+                inferred.iter().find(|inferred_dep| {
+                    if let Temporary::Local(local) = inferred_dep {
+                        local.identifier.id == root_val.identifier.id
+                            && is_sub_path_ignoring_optionals(&local.path, &dep.path)
+                    } else {
+                        false
+                    }
+                })
+            });
+
+            if let Some(Temporary::Local(matched_local)) = matching_inferred {
+                if is_effect_event_function_type(&matched_local.identifier.type_) {
+                    format!(
+                        "Functions returned from `useEffectEvent` must not be included \
+                         in the dependency array. Remove `{dep_str}` from the dependencies."
+                    )
+                } else if !is_optional_dependency(&matched_local.identifier, reactive) {
+                    format!(
+                        "Overly precise dependency `{dep_str}`, use `{}` instead",
+                        print_inferred_dependency(&Temporary::Local(matched_local.clone()))
+                    )
+                } else {
+                    format!("Unnecessary dependency `{dep_str}`")
+                }
+            } else {
+                format!("Unnecessary dependency `{dep_str}`")
+            }
         };
         diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
             loc: Some(dep.loc),
             message: Some(message),
         });
     }
+
+    // Add inferred dependencies hint
+    let inferred_hint: Vec<String> = inferred
+        .iter()
+        .filter(|dep| {
+            if let Temporary::Local(local) = dep {
+                !is_optional_dependency(&local.identifier, reactive)
+                    && !is_effect_event_function_type(&local.identifier.type_)
+            } else {
+                false
+            }
+        })
+        .map(|dep| print_inferred_dependency(dep))
+        .collect();
+    diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
+        message: format!("Inferred dependencies: `[{}]`", inferred_hint.join(", ")),
+    });
 
     Some(diagnostic)
 }
@@ -754,7 +929,7 @@ fn is_effect_event_function_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function(FunctionType { shape_id: Some(id), .. })
-        if id == BUILT_IN_USE_EFFECT_EVENT_ID
+        if id == BUILT_IN_EFFECT_EVENT_ID
     )
 }
 

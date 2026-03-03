@@ -228,7 +228,8 @@ pub fn run_pipeline(
     // ValidateExhaustiveDependencies (optional, relies on reactivity inference)
     if env.enable_validations
         && (env.config.validate_exhaustive_memoization_dependencies
-            || env.config.validate_exhaustive_effect_dependencies)
+            || env.config.validate_exhaustive_effect_dependencies
+                != crate::hir::environment::ExhaustiveEffectDepsMode::Off)
     {
         crate::validation::validate_exhaustive_dependencies::validate_exhaustive_dependencies(
             func,
