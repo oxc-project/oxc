@@ -1082,11 +1082,8 @@ mod test {
     fn test_jsonc_config_discovery() {
         let root_dir = tempfile::tempdir().unwrap();
         // Create only a .oxlintrc.jsonc file
-        std::fs::write(
-            root_dir.path().join(".oxlintrc.jsonc"),
-            r#"{ /* comment */ "rules": {} }"#,
-        )
-        .unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.jsonc"), r#"{ /* comment */ "rules": {} }"#)
+            .unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
@@ -1106,11 +1103,8 @@ mod test {
         let root_dir = tempfile::tempdir().unwrap();
         // Create both .oxlintrc.json and .oxlintrc.jsonc
         std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
-        std::fs::write(
-            root_dir.path().join(".oxlintrc.jsonc"),
-            r#"{ /* comment */ "rules": {} }"#,
-        )
-        .unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.jsonc"), r#"{ /* comment */ "rules": {} }"#)
+            .unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
@@ -1138,11 +1132,8 @@ mod test {
     #[test]
     fn test_jsonc_and_ts_conflict() {
         let root_dir = tempfile::tempdir().unwrap();
-        std::fs::write(
-            root_dir.path().join(".oxlintrc.jsonc"),
-            r#"{ /* comment */ "rules": {} }"#,
-        )
-        .unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.jsonc"), r#"{ /* comment */ "rules": {} }"#)
+            .unwrap();
         std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
