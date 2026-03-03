@@ -7,7 +7,7 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    ops::{self, Deref},
+    ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 
@@ -149,7 +149,7 @@ impl<T: ?Sized> Box<'_, T> {
     }
 }
 
-impl<T: ?Sized> ops::Deref for Box<'_, T> {
+impl<T: ?Sized> Deref for Box<'_, T> {
     type Target = T;
 
     #[inline]
@@ -159,7 +159,7 @@ impl<T: ?Sized> ops::Deref for Box<'_, T> {
     }
 }
 
-impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
+impl<T: ?Sized> DerefMut for Box<'_, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
