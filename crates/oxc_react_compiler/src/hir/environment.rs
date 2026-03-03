@@ -148,6 +148,21 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `enableAssumeHooksFollowRulesOfReact` in the TS version.
     pub enable_assume_hooks_follow_rules_of_react: bool,
+
+    /// Treat identifiers as SetState type if both:
+    /// - they are named with a "set-" prefix
+    /// - they are called somewhere
+    ///
+    /// Corresponds to `enableTreatSetIdentifiersAsStateSetters` in the TS version.
+    pub enable_treat_set_identifiers_as_state_setters: bool,
+
+    /// List of module names whose imports are blocklisted.
+    ///
+    /// If set, the compiler will bail out if any import declaration
+    /// imports from a module in this list.
+    ///
+    /// Corresponds to `validateBlocklistedImports` in the TS version.
+    pub validate_blocklisted_imports: Option<Vec<String>>,
 }
 
 impl Default for EnvironmentConfig {
@@ -182,6 +197,8 @@ impl Default for EnvironmentConfig {
             enable_custom_type_definition_for_reanimated: false,
             enable_shared_runtime_type_provider: false,
             enable_assume_hooks_follow_rules_of_react: true,
+            enable_treat_set_identifiers_as_state_setters: false,
+            validate_blocklisted_imports: None,
         }
     }
 }
@@ -314,6 +331,11 @@ impl Environment {
         if config.enable_shared_runtime_type_provider {
             let shared_runtime_type = super::globals::get_shared_runtime_module_type(&mut shapes);
             module_types.insert("shared-runtime".to_string(), shared_runtime_type);
+
+            let known_incompatible_type =
+                super::globals::get_known_incompatible_test_module_type(&mut shapes);
+            module_types
+                .insert("ReactCompilerKnownIncompatibleTest".to_string(), known_incompatible_type);
         }
 
         Self {
@@ -489,11 +511,10 @@ impl Environment {
                     }
                 } else {
                     // Check module type registry (e.g., react-native-reanimated)
-                    if let Some(module_type) = self.resolve_module_type(module) {
-                        if let Some(imported_type) = self.get_property_type(&module_type, imported)
-                        {
-                            return Some(Global::Typed(imported_type));
-                        }
+                    if let Some(module_type) = self.resolve_module_type(module)
+                        && let Some(imported_type) = self.get_property_type(&module_type, imported)
+                    {
+                        return Some(Global::Typed(imported_type));
                     }
 
                     // Fall back to hook name pattern
@@ -515,11 +536,10 @@ impl Environment {
                     }
                 } else {
                     // Check module type registry for default export
-                    if let Some(module_type) = self.resolve_module_type(module) {
-                        if let Some(default_type) = self.get_property_type(&module_type, "default")
-                        {
-                            return Some(Global::Typed(default_type));
-                        }
+                    if let Some(module_type) = self.resolve_module_type(module)
+                        && let Some(default_type) = self.get_property_type(&module_type, "default")
+                    {
+                        return Some(Global::Typed(default_type));
                     }
                     if is_hook_name(name) { Some(self.get_custom_hook_type()) } else { None }
                 }
@@ -568,20 +588,20 @@ impl Environment {
             _ => None,
         };
 
-        if let Some(shape_id) = shape_id {
-            if let Some(shape) = self.shapes.get(shape_id) {
-                // Try exact property name, then wildcard, then hook pattern
-                if let Some(t) = shape.properties.get(property) {
-                    return Some(t.clone());
-                }
-                if let Some(t) = shape.properties.get("*") {
-                    return Some(t.clone());
-                }
-                if is_hook_name(property) {
-                    return Some(Global::to_type(&self.get_custom_hook_type()));
-                }
-                return None;
+        if let Some(shape_id) = shape_id
+            && let Some(shape) = self.shapes.get(shape_id)
+        {
+            // Try exact property name, then wildcard, then hook pattern
+            if let Some(t) = shape.properties.get(property) {
+                return Some(t.clone());
             }
+            if let Some(t) = shape.properties.get("*") {
+                return Some(t.clone());
+            }
+            if is_hook_name(property) {
+                return Some(Global::to_type(&self.get_custom_hook_type()));
+            }
+            return None;
         }
 
         // No shape: only check hook pattern for string properties
@@ -603,10 +623,10 @@ impl Environment {
             _ => None,
         };
 
-        if let Some(shape_id) = shape_id {
-            if let Some(shape) = self.shapes.get(shape_id) {
-                return shape.properties.get("*").cloned();
-            }
+        if let Some(shape_id) = shape_id
+            && let Some(shape) = self.shapes.get(shape_id)
+        {
+            return shape.properties.get("*").cloned();
         }
         None
     }
@@ -620,10 +640,10 @@ impl Environment {
             _ => None,
         };
 
-        if let Some(shape_id) = shape_id {
-            if let Some(shape) = self.shapes.get(shape_id) {
-                return shape.function_type.as_ref();
-            }
+        if let Some(shape_id) = shape_id
+            && let Some(shape) = self.shapes.get(shape_id)
+        {
+            return shape.function_type.as_ref();
         }
         None
     }

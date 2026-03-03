@@ -316,7 +316,7 @@ pub fn default_shapes() -> ShapeRegistry {
                     callee_effect: Effect::Store,
                     ..FunctionSignature::default()
                 },
-                set_type.clone(),
+                set_type,
             ),
         ));
 
@@ -477,7 +477,7 @@ pub fn default_shapes() -> ShapeRegistry {
                     callee_effect: Effect::Store,
                     ..FunctionSignature::default()
                 },
-                map_type.clone(),
+                map_type,
             ),
         ));
 
@@ -651,7 +651,7 @@ pub fn default_shapes() -> ShapeRegistry {
         let mut props = Vec::new();
 
         // Wildcard — recursive MixedReadonly
-        props.push(("*".to_string(), mixed_readonly_type.clone()));
+        props.push(("*".to_string(), mixed_readonly_type));
 
         // toString, indexOf, includes, join — read-only
         for name in &["toString", "indexOf", "includes", "join"] {
@@ -1522,6 +1522,121 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
     ));
 
     let module_shape_id = add_object(shapes, "SharedRuntimeModule", props);
+    Type::Object(ObjectType { shape_id: Some(module_shape_id) })
+}
+
+/// Create type definitions for the `ReactCompilerKnownIncompatibleTest` test module.
+///
+/// Port of the `ReactCompilerKnownIncompatibleTest` case in
+/// `packages/snap/src/sprout/shared-runtime-type-provider.ts`.
+///
+/// This fake module is used for testing validation of known incompatible API detection.
+pub fn get_known_incompatible_test_module_type(shapes: &mut ShapeRegistry) -> Type {
+    let mut props: Vec<(String, Type)> = Vec::new();
+
+    // --- useKnownIncompatible: hook, knownIncompatible ---
+    let use_known_incompatible_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            known_incompatible: Some(
+                "useKnownIncompatible is known to be incompatible".to_string(),
+            ),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "useKnownIncompatible".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(use_known_incompatible_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- useKnownIncompatibleIndirect: hook, returns object with incompatible function ---
+    // The return type has a property `incompatible` which is a function with knownIncompatible.
+    let incompatible_fn_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            known_incompatible: Some(
+                "useKnownIncompatibleIndirect returns an incompatible() function that is known incompatible"
+                    .to_string(),
+            ),
+            ..FunctionSignature::default()
+        },
+    );
+    let return_obj_props = vec![(
+        "incompatible".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(incompatible_fn_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    )];
+    let return_obj_id = add_object(shapes, "KnownIncompatibleIndirectReturn", return_obj_props);
+    let use_known_incompatible_indirect_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            return_type: Type::Object(ObjectType { shape_id: Some(return_obj_id.clone()) }),
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "useKnownIncompatibleIndirect".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(use_known_incompatible_indirect_id),
+            return_type: Box::new(Type::Object(ObjectType { shape_id: Some(return_obj_id) })),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- knownIncompatible: function, knownIncompatible ---
+    let known_incompatible_fn_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            known_incompatible: Some(
+                "useKnownIncompatible is known to be incompatible".to_string(),
+            ),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "knownIncompatible".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(known_incompatible_fn_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    let module_shape_id = add_object(shapes, "ReactCompilerKnownIncompatibleTestModule", props);
     Type::Object(ObjectType { shape_id: Some(module_shape_id) })
 }
 
