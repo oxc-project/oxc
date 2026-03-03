@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 207/275 (75.3%)
+Error fixture conformance: 209/275 (76.0%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 68
+  unexpected_success: 66
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -20,7 +20,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.handle-unexpected-exception-pipeline.ts
   [unexpected_success] error.hook-property-load-local-hook.js
   [unexpected_success] error.invalid-array-push-frozen.js
-  [unexpected_success] error.invalid-eval-unsupported.js
   [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
   [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
@@ -39,7 +38,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-prop-mutation-indirect.js
   [unexpected_success] error.invalid-props-mutation-in-effect-indirect.js
   [unexpected_success] error.invalid-read-ref-prop-in-render-property-load.js
-  [unexpected_success] error.invalid-reassign-const.js
   [unexpected_success] error.invalid-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-reassign-variable-in-usememo.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
