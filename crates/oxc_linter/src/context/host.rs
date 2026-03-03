@@ -7,6 +7,8 @@ use std::{
     sync::Arc,
 };
 
+use oxc_module_graph as mg;
+
 use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
@@ -156,6 +158,10 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// The shared module graph for cross-module analysis (import rules).
+    module_graph: Option<Arc<mg::graph::ModuleGraph>>,
+    /// This file's index in the module graph.
+    module_idx: Option<mg::types::ModuleIdx>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -192,6 +198,8 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            module_graph: None,
+            module_idx: None,
         }
         .sniff_for_frameworks()
     }
@@ -490,6 +498,27 @@ impl<'a> ContextHost<'a> {
 
     pub fn frameworks_options(&self) -> FrameworkOptions {
         self.current_sub_host().framework_options
+    }
+
+    /// Returns the shared module graph, if available.
+    pub fn module_graph(&self) -> Option<&mg::graph::ModuleGraph> {
+        self.module_graph.as_deref()
+    }
+
+    /// Returns this file's index in the module graph, if available.
+    pub fn module_idx(&self) -> Option<mg::types::ModuleIdx> {
+        self.module_idx
+    }
+
+    /// Set the module graph and this file's index in it.
+    pub fn with_module_graph(
+        mut self,
+        graph: Arc<mg::graph::ModuleGraph>,
+        idx: mg::types::ModuleIdx,
+    ) -> Self {
+        self.module_graph = Some(graph);
+        self.module_idx = Some(idx);
+        self
     }
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {

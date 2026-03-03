@@ -1,24 +1,20 @@
-use std::{
-    ffi::OsStr,
-    path::{Component, Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_module_graph::{self as mg, NormalModule};
+use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    ModuleRecord,
     context::LintContext,
-    module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, stack: &[(String, PathBuf)], cwd: &Path) -> OxcDiagnostic {
     let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
         .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
@@ -36,7 +32,7 @@ fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnost
         .with_label(span.primary_label("this module references itself"))
 }
 
-fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+fn format_cycle(stack: &[(String, PathBuf)], cwd: &Path) -> String {
     let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
 
     for (i, (specifier, path)) in stack.iter().enumerate() {
@@ -140,97 +136,241 @@ impl Rule for NoCycle {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.module_record();
+        let Some(module) = ctx.current_module() else {
+            return;
+        };
+        let Some(my_idx) = ctx.current_module_idx() else {
+            return;
+        };
+        let graph = match ctx.module_graph() {
+            Some(g) => g,
+            None => return,
+        };
 
-        let needle = &module_record.resolved_absolute_path;
+        let needle = my_idx;
         let cwd = std::env::current_dir().unwrap();
-
-        let mut stack = Vec::new();
         let ignore_types = self.ignore_types;
-        let visitor_result = ModuleGraphVisitorBuilder::default()
-            .max_depth(self.max_depth)
-            .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
-                let path = &val.resolved_absolute_path;
+        let max_depth = self.max_depth;
 
-                let is_node_module = path
-                    .components()
-                    .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+        // For each import record in this module, do a DFS to see if we can
+        // reach back to `needle`.
+        for record in &module.import_records {
+            let Some(target_idx) = record.resolved_module else {
+                continue;
+            };
 
-                if is_node_module {
-                    return false;
+            // Filter: ignore type-only imports if configured.
+            if ignore_types {
+                let all_type_only = self.all_type_only_for_specifier(&record.specifier, module);
+                if all_type_only {
+                    continue;
                 }
+            }
 
-                if ignore_types {
-                    let import_entries = parent
-                        .import_entries
-                        .iter()
-                        .filter(|entry| entry.module_request.name() == key)
-                        .collect::<Vec<_>>();
+            // Skip node_modules.
+            if let Some(target) = graph.normal_module(target_idx) {
+                if target.path.to_string_lossy().contains("node_modules") {
+                    continue;
+                }
+            }
 
-                    let indirect_export_entries = parent
-                        .indirect_export_entries
-                        .iter()
-                        .filter(|entry| {
-                            entry
-                                .module_request
-                                .as_ref()
-                                .is_some_and(|module_request| module_request.name() == key)
-                        })
-                        .collect::<Vec<_>>();
-
-                    if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                        && import_entries.iter().all(|entry| entry.is_type)
-                        && indirect_export_entries.iter().all(|entry| entry.is_type)
-                    {
-                        return false;
+            // Allow self referencing named export.
+            if target_idx == needle {
+                if let Some(target) = graph.normal_module(target_idx) {
+                    if target.indirect_export_entries.iter().any(|e| {
+                        e.module_request.as_str() == record.specifier.as_str()
+                            && !e.exported_name.is_empty()
+                            && e.exported_name.as_str() != "*"
+                    }) {
+                        continue;
                     }
                 }
+            }
 
-                // Allow self referencing named export.
-                // In test.js:
-                // ```
-                // export function example1() { }
-                // export * as Example from './test.js';
-                // ```
-                if path == &parent.resolved_absolute_path
-                    && let Some(e) = val
-                        .indirect_export_entries
-                        .iter()
-                        .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
-                    && e.export_name.is_name()
-                {
-                    return false;
-                }
+            // DFS from target_idx looking for needle.
+            let mut stack: Vec<(String, PathBuf)> = Vec::new();
+            let mut visited = FxHashSet::default();
+            visited.insert(my_idx); // don't revisit ourselves
 
-                true
-            })
-            .event(|event, (key, val), _| match event {
-                ModuleGraphVisitorEvent::Enter => {
-                    stack.push((key.clone(), val.resolved_absolute_path.clone()));
-                }
-                ModuleGraphVisitorEvent::Leave => {
-                    stack.pop();
-                }
-            })
-            .visit_fold(false, module_record, |_, (_, val), _| {
-                let path = &val.resolved_absolute_path;
-                if path == needle {
-                    VisitFoldWhile::Stop(true)
+            let found = dfs_find_cycle(
+                graph,
+                target_idx,
+                needle,
+                &record.specifier,
+                &mut stack,
+                &mut visited,
+                0,
+                max_depth,
+                ignore_types,
+                ctx,
+            );
+
+            if found {
+                let span = record.specifier_span;
+                if stack.len() == 1 && stack[0].1 == module.path {
+                    // Self-referencing cycle.
+                    ctx.diagnostic(self_referencing_cycle_diagnostic(span, record.is_import));
                 } else {
-                    VisitFoldWhile::Next(false)
+                    ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
                 }
-            });
-
-        if visitor_result.result {
-            let requested_module = module_record.requested_modules[&stack[0].0][0];
-            let span = requested_module.span;
-            if stack.len() == 1 {
-                ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
-            } else {
-                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
+                // Only report the first cycle found for this module.
+                return;
             }
         }
     }
+}
+
+impl NoCycle {
+    /// Check if ALL import entries and indirect export entries for a given
+    /// specifier are type-only.
+    fn all_type_only_for_specifier(&self, specifier: &str, module: &NormalModule) -> bool {
+        // If any non-type indirect export entry references this specifier,
+        // the import is not fully type-only.
+        let has_value_indirect_export = module
+            .indirect_export_entries
+            .iter()
+            .any(|entry| entry.module_request.as_str() == specifier && !entry.is_type);
+        if has_value_indirect_export {
+            return false;
+        }
+
+        // Check named imports that reference this specifier (via record_idx).
+        // All of them must be type-only, and there must be at least one.
+        let matching_imports: Vec<_> = module
+            .named_imports
+            .values()
+            .filter(|import| {
+                module
+                    .import_records
+                    .get(import.record_idx.index())
+                    .is_some_and(|rec| rec.specifier.as_str() == specifier)
+            })
+            .collect();
+
+        !matching_imports.is_empty() && matching_imports.iter().all(|import| import.is_type)
+    }
+}
+
+/// DFS to find if `needle` is reachable from `current`.
+fn dfs_find_cycle(
+    graph: &mg::graph::ModuleGraph,
+    current: mg::types::ModuleIdx,
+    needle: mg::types::ModuleIdx,
+    specifier: &str,
+    stack: &mut Vec<(String, PathBuf)>,
+    visited: &mut FxHashSet<mg::types::ModuleIdx>,
+    depth: u32,
+    max_depth: u32,
+    ignore_types: bool,
+    ctx: &LintContext<'_>,
+) -> bool {
+    if depth > max_depth {
+        return false;
+    }
+
+    let current_path = match graph.normal_module(current) {
+        Some(m) => m.path.clone(),
+        None => return false,
+    };
+
+    stack.push((specifier.to_string(), current_path));
+
+    // Check if we've reached the needle (cycle found) BEFORE the visited check.
+    if current == needle {
+        return true;
+    }
+
+    if !visited.insert(current) {
+        stack.pop();
+        return false;
+    }
+
+    let Some(current_module) = graph.normal_module(current) else {
+        stack.pop();
+        return false;
+    };
+
+    // Skip node_modules.
+    if current_module.path.to_string_lossy().contains("node_modules") {
+        stack.pop();
+        return false;
+    }
+
+    for rec in &current_module.import_records {
+        let Some(dep_idx) = rec.resolved_module else {
+            continue;
+        };
+
+        // Filter type-only.
+        if ignore_types {
+            let has_value_import = current_module.named_imports.values().any(|imp| {
+                if let Some(r) = current_module.import_records.get(imp.record_idx.index()) {
+                    r.specifier == rec.specifier && !imp.is_type
+                } else {
+                    false
+                }
+            });
+            let has_value_indirect = current_module
+                .indirect_export_entries
+                .iter()
+                .any(|e| e.module_request.as_str() == rec.specifier.as_str() && !e.is_type);
+            // If there are no value imports and no value indirect exports,
+            // it's entirely type-only — skip it. But only if there IS at least
+            // one type-only link (to avoid skipping side-effect-only imports).
+            if !has_value_import && !has_value_indirect {
+                let has_any_type_link = current_module.named_imports.values().any(|imp| {
+                    if let Some(r) = current_module.import_records.get(imp.record_idx.index()) {
+                        r.specifier == rec.specifier && imp.is_type
+                    } else {
+                        false
+                    }
+                }) || current_module
+                    .indirect_export_entries
+                    .iter()
+                    .any(|e| e.module_request.as_str() == rec.specifier.as_str() && e.is_type);
+                if has_any_type_link {
+                    continue;
+                }
+            }
+        }
+
+        // Skip node_modules.
+        if let Some(dep) = graph.normal_module(dep_idx) {
+            if dep.path.to_string_lossy().contains("node_modules") {
+                continue;
+            }
+        }
+
+        // Allow self referencing named export.
+        if dep_idx == current
+            && let Some(dep) = graph.normal_module(dep_idx)
+            && dep.indirect_export_entries.iter().any(|e| {
+                e.module_request.as_str() == rec.specifier.as_str()
+                    && !e.exported_name.is_empty()
+                    && e.exported_name.as_str() != "*"
+            })
+        {
+            continue;
+        }
+
+        if dfs_find_cycle(
+            graph,
+            dep_idx,
+            needle,
+            &rec.specifier,
+            stack,
+            visited,
+            depth + 1,
+            max_depth,
+            ignore_types,
+            ctx,
+        ) {
+            return true;
+        }
+    }
+
+    stack.pop();
+    false
 }
 
 #[test]

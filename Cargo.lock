@@ -2025,6 +2025,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_index",
  "oxc_macros",
+ "oxc_module_graph",
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_resolver",
@@ -2149,6 +2150,24 @@ dependencies = [
  "pico-args",
  "rustc-hash",
  "similar-asserts",
+]
+
+[[package]]
+name = "oxc_module_graph"
+version = "0.115.0"
+dependencies = [
+ "bitflags",
+ "compact_str",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_index",
+ "oxc_parser",
+ "oxc_resolver",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
 ]
 
 [[package]]

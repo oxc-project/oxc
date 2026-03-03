@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Span, VALID_EXTENSIONS};
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn default_diagnostic(imported_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No default export found in imported module {imported_name:?}"))
@@ -53,31 +53,40 @@ declare_oxc_lint!(
 
 impl Rule for Default {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.module_record();
-        for import_entry in &module_record.import_entries {
-            let ImportImportName::Default(default_span) = import_entry.import_name else {
-                continue;
-            };
+        let Some(module) = ctx.current_module() else {
+            return;
+        };
 
-            let specifier = import_entry.module_request.name();
-            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
-                continue;
-            };
-            if !remote_module_record.has_module_syntax {
+        for import in module.named_imports.values() {
+            if !import.is_default_import {
                 continue;
             }
-            if !remote_module_record
-                .resolved_absolute_path
+
+            let Some(record) = module.import_records.get(import.record_idx.index()) else {
+                continue;
+            };
+            let Some(target_idx) = record.resolved_module else {
+                continue;
+            };
+            let Some(remote) = ctx.resolve_module(target_idx) else {
+                continue;
+            };
+            if !remote.has_module_syntax {
+                continue;
+            }
+            if !remote
+                .path
                 .extension()
                 .and_then(|ext| ext.to_str())
                 .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
             {
                 continue;
             }
-            if remote_module_record.export_default.is_none()
-                && !remote_module_record.exported_bindings.contains_key("default")
+            // Check if the remote module has a "default" export.
+            if !remote.named_exports.contains_key("default")
+                && !remote.resolved_exports.contains_key("default")
             {
-                ctx.diagnostic(default_diagnostic(specifier, default_span));
+                ctx.diagnostic(default_diagnostic(&record.specifier, import.span));
             }
         }
     }

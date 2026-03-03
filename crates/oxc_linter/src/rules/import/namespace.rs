@@ -1,11 +1,10 @@
-use std::sync::Arc;
-
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_module_graph::NormalModule;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
@@ -13,7 +12,6 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -117,55 +115,139 @@ impl Rule for Namespace {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.module_record();
+        let Some(module) = ctx.current_module() else {
+            return;
+        };
+        let Some(graph) = ctx.module_graph() else {
+            return;
+        };
 
-        if !module_record.has_module_syntax {
+        if !module.has_module_syntax {
             return;
         }
 
-        for entry in &module_record.import_entries {
-            let (source, module) = match &entry.import_name {
-                ImportImportName::NamespaceObject => {
-                    let source = entry.module_request.name();
-                    let Some(module) = module_record.get_loaded_module(source) else {
-                        return;
-                    };
-                    (source.to_string(), module)
+        for import in module.named_imports.values() {
+            let is_namespace = import.imported_name.as_str() == "*";
+            if !is_namespace {
+                // Also handle the case where a named import refers to a
+                // re-exported namespace (e.g. `import { b } from './a'` where
+                // b.js does `export * as b from './c'`).
+                let Some(record) = module.import_records.get(import.record_idx.index()) else {
+                    continue;
+                };
+                let Some(target_idx) = record.resolved_module else {
+                    continue;
+                };
+                let Some(loaded) = ctx.resolve_module(target_idx) else {
+                    continue;
+                };
+                let Some(ns_source) =
+                    get_namespace_module_request(import.imported_name.as_str(), loaded, ctx)
+                else {
+                    continue;
+                };
+                let Some(ns_module) = ns_source else {
+                    continue;
+                };
+                if !ns_module.has_module_syntax {
+                    continue;
                 }
-                ImportImportName::Name(name) => {
-                    let Some(loaded_module) =
-                        module_record.get_loaded_module(entry.module_request.name())
-                    else {
-                        return;
-                    };
-                    let Some(source) = get_module_request_name(name.name(), &loaded_module) else {
-                        return;
-                    };
-                    let Some(loaded_module_for_source) =
-                        loaded_module.get_loaded_module(source.as_str())
-                    else {
-                        return;
-                    };
-                    (source, loaded_module_for_source)
-                }
-                ImportImportName::Default(_) => {
-                    // TODO: Hard to confirm if it's a namespace object
-                    return;
-                }
-            };
 
-            if !module.has_module_syntax {
-                return;
+                // Look up the local binding by name: graph stores the local
+                // name, then find the matching SymbolId in scoping.
+                let local_name = graph.symbol_name(import.local_symbol);
+                let Some(symbol_id) = ctx.scoping().get_root_binding(local_name.into()) else {
+                    continue;
+                };
+
+                let source_str = record.specifier.to_string();
+                let local_name = local_name.to_string();
+                ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
+                    let parent = ctx.nodes().parent_node(reference.node_id());
+                    let name = local_name.as_str();
+
+                    match parent.kind() {
+                        member if member.is_member_expression_kind() => {
+                            let parent_kind = ctx.nodes().parent_kind(parent.id());
+                            let is_assignment = match parent_kind {
+                                AstKind::AssignmentExpression(assign_expr) => {
+                                    assign_expr.left.span() == parent.span()
+                                }
+                                _ => false,
+                            };
+                            if is_assignment
+                                || matches!(parent_kind, AstKind::IdentifierReference(_))
+                            {
+                                ctx.diagnostic(assignment(member.span(), name));
+                            }
+
+                            if !self.allow_computed
+                                && matches!(member, AstKind::ComputedMemberExpression(_))
+                            {
+                                return ctx.diagnostic(computed_reference(member.span(), name));
+                            }
+
+                            check_deep_namespace_for_node(
+                                parent,
+                                &source_str,
+                                vec![name.to_string()].as_slice(),
+                                ns_module,
+                                ctx,
+                            );
+                        }
+                        AstKind::JSXMemberExpression(expr) => {
+                            check_binding_exported_mg(
+                                &expr.property.name,
+                                || no_export(expr.property.span, &expr.property.name, &source_str),
+                                ns_module,
+                                ctx,
+                            );
+                        }
+                        AstKind::VariableDeclarator(decl) => {
+                            let BindingPattern::ObjectPattern(pattern) = &decl.id else {
+                                return;
+                            };
+                            check_deep_namespace_for_object_pattern(
+                                pattern,
+                                &source_str,
+                                &[name.to_string()],
+                                ns_module,
+                                ctx,
+                            );
+                        }
+                        _ => {}
+                    }
+                });
+
+                continue;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into())
-            else {
-                return;
+            // Namespace import: `import * as ns from './foo'`
+            let Some(record) = module.import_records.get(import.record_idx.index()) else {
+                continue;
             };
+            let Some(target_idx) = record.resolved_module else {
+                continue;
+            };
+            let Some(remote) = ctx.resolve_module(target_idx) else {
+                continue;
+            };
+            if !remote.has_module_syntax {
+                continue;
+            }
 
+            let source = record.specifier.to_string();
+
+            // Look up the local binding by name: graph stores the local
+            // name, then find the matching SymbolId in scoping.
+            let local_name_str = graph.symbol_name(import.local_symbol);
+            let Some(symbol_id) = ctx.scoping().get_root_binding(local_name_str.into()) else {
+                continue;
+            };
+            let local_name = local_name_str.to_string();
             ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
                 let parent = ctx.nodes().parent_node(reference.node_id());
-                let name = entry.local_name.name();
+                let name = local_name.as_str();
 
                 match parent.kind() {
                     member if member.is_member_expression_kind() => {
@@ -189,16 +271,16 @@ impl Rule for Namespace {
                         check_deep_namespace_for_node(
                             parent,
                             &source,
-                            vec![entry.local_name.name().to_string()].as_slice(),
-                            &module,
+                            vec![name.to_string()].as_slice(),
+                            remote,
                             ctx,
                         );
                     }
                     AstKind::JSXMemberExpression(expr) => {
-                        check_binding_exported(
+                        check_binding_exported_mg(
                             &expr.property.name,
                             || no_export(expr.property.span, &expr.property.name, &source),
-                            &module,
+                            remote,
                             ctx,
                         );
                     }
@@ -210,8 +292,8 @@ impl Rule for Namespace {
                         check_deep_namespace_for_object_pattern(
                             pattern,
                             &source,
-                            &[entry.local_name.name().to_string()],
-                            &module,
+                            &[name.to_string()],
+                            remote,
                             ctx,
                         );
                     }
@@ -222,53 +304,55 @@ impl Rule for Namespace {
     }
 }
 
-/// If the name is a namespace object in imported module, return the module request name.
-///
-/// For example
-/// ```ts
-/// // ./a.js
-/// import { b } from './b';
-///
-/// // ./b.js
-/// export * as b from './c';
-/// ```
-/// b is a namespace in b.js so the return value is Some("./c")
-///
-fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<String> {
-    if let Some(entry) =
-        module_record.indirect_export_entries.iter().find(|e| match &e.import_name {
-            ExportImportName::All => {
-                if let ExportExportName::Name(name_span) = &e.export_name {
-                    return name_span.name() == name;
-                }
-
-                false
-            }
-            ExportImportName::Name(name_span) => {
-                name_span.name() == name
-                    && module_record.import_entries.iter().any(|entry| {
-                        entry.local_name.name() == name && entry.import_name.is_namespace_object()
-                    })
-            }
-            _ => false,
-        })
-    {
-        return entry.module_request.as_ref().map(|name| name.name().to_string());
+/// If the name is a namespace object in imported module, return the resolved
+/// `NormalModule` for that namespace. Returns `Some(None)` when the name
+/// is found as a namespace re-export but the target cannot be resolved.
+fn get_namespace_module_request<'a>(
+    name: &str,
+    module: &'a NormalModule,
+    ctx: &'a LintContext<'_>,
+) -> Option<Option<&'a NormalModule>> {
+    // Check indirect export entries for `export * as name from '...'`.
+    for entry in &module.indirect_export_entries {
+        if entry.imported_name.as_str() == "*" && entry.exported_name.as_str() == name {
+            let target = entry.resolved_module.and_then(|idx| ctx.resolve_module(idx));
+            return Some(target);
+        }
     }
 
-    module_record
-        .import_entries
-        .iter()
-        .find(|entry| entry.local_name.name() == name && entry.import_name.is_namespace_object())
-        .map(|entry| entry.module_request.name().to_string())
+    let graph = ctx.module_graph()?;
+
+    // Check if name is imported as a namespace in this module and then
+    // re-exported (via indirect_export_entries or named_exports).
+    for import in module.named_imports.values() {
+        if import.imported_name.as_str() == "*" {
+            // Check if re-exported via indirect_export_entries.
+            for entry in &module.indirect_export_entries {
+                if entry.exported_name.as_str() == name {
+                    let target = entry.resolved_module.and_then(|idx| ctx.resolve_module(idx));
+                    return Some(target);
+                }
+            }
+
+            // Check if re-exported via named_exports (e.g., `import * as b from './b'; export { b }`).
+            let import_local_name = graph.symbol_name(import.local_symbol);
+            if module.named_exports.contains_key(name) && import_local_name == name {
+                let record = module.import_records.get(import.record_idx.index())?;
+                let target = record.resolved_module.and_then(|idx| ctx.resolve_module(idx));
+                return Some(target);
+            }
+        }
+    }
+
+    None
 }
 
-fn check_deep_namespace_for_node(
+fn check_deep_namespace_for_node<'a>(
     node: &AstNode,
     source: &str,
     namespaces: &[String],
-    module: &Arc<ModuleRecord>,
-    ctx: &LintContext<'_>,
+    module: &'a NormalModule,
+    ctx: &'a LintContext<'_>,
 ) -> Option<()> {
     let (span, name) = match node.kind() {
         AstKind::StaticMemberExpression(mem_expr) => mem_expr.static_property_info(),
@@ -276,14 +360,15 @@ fn check_deep_namespace_for_node(
         _ => return None,
     };
 
-    if let Some(module_source) = get_module_request_name(name, module) {
-        let parent_node = ctx.nodes().parent_node(node.id());
-        let module_record = module.get_loaded_module(module_source.as_str())?;
-        let mut namespaces = namespaces.to_owned();
-        namespaces.push(name.into());
-        check_deep_namespace_for_node(parent_node, source, &namespaces, &module_record, ctx);
+    if let Some(ns_target) = get_namespace_module_request(name, module, ctx) {
+        if let Some(ns_module) = ns_target {
+            let parent_node = ctx.nodes().parent_node(node.id());
+            let mut namespaces = namespaces.to_owned();
+            namespaces.push(name.into());
+            check_deep_namespace_for_node(parent_node, source, &namespaces, ns_module, ctx);
+        }
     } else {
-        check_binding_exported(
+        check_binding_exported_mg(
             name,
             || {
                 if namespaces.len() > 1 {
@@ -300,12 +385,12 @@ fn check_deep_namespace_for_node(
     None
 }
 
-fn check_deep_namespace_for_object_pattern(
+fn check_deep_namespace_for_object_pattern<'a>(
     pattern: &ObjectPattern,
     source: &str,
     namespaces: &[String],
-    module: &Arc<ModuleRecord>,
-    ctx: &LintContext<'_>,
+    module: &'a NormalModule,
+    ctx: &'a LintContext<'_>,
 ) {
     for property in &pattern.properties {
         let Some(name) = property.key.name() else {
@@ -313,7 +398,8 @@ fn check_deep_namespace_for_object_pattern(
         };
 
         if let BindingPattern::ObjectPattern(pattern) = &property.value
-            && let Some(module_source) = get_module_request_name(&name, module)
+            && let Some(ns_target) = get_namespace_module_request(&name, module, ctx)
+            && let Some(ns_module) = ns_target
         {
             let mut next_namespaces = namespaces.to_owned();
             next_namespaces.push(name.to_string());
@@ -322,13 +408,13 @@ fn check_deep_namespace_for_object_pattern(
                 pattern,
                 source,
                 next_namespaces.as_slice(),
-                &module.get_loaded_module(module_source.as_str()).unwrap(),
+                ns_module,
                 ctx,
             );
             continue;
         }
 
-        check_binding_exported(
+        check_binding_exported_mg(
             &name,
             || {
                 if namespaces.len() > 1 {
@@ -347,21 +433,19 @@ fn check_deep_namespace_for_object_pattern(
     }
 }
 
-fn check_binding_exported(
+fn check_binding_exported_mg(
     name: &str,
     get_diagnostic: impl FnOnce() -> OxcDiagnostic,
-    module: &ModuleRecord,
+    module: &NormalModule,
     ctx: &LintContext<'_>,
 ) {
-    if module.exported_bindings.contains_key(name)
-        || (name == "default" && module.export_default.is_some())
-        || module
-            .exported_bindings_from_star_export()
-            .iter()
-            .any(|(_, value)| value.iter().any(|s| s.as_str() == name))
+    if module.named_exports.contains_key(name)
+        || module.resolved_exports.contains_key(name)
+        || module.indirect_export_entries.iter().any(|e| e.exported_name.as_str() == name)
     {
         return;
     }
+    let _ = ctx; // suppress unused warning
     ctx.diagnostic(get_diagnostic());
 }
 
