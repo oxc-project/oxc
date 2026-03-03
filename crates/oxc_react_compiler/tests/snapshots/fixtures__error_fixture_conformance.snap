@@ -1,49 +1,35 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8996
 expression: snapshot
 ---
-Error fixture conformance: 228/275 (82.9%)
+Error fixture conformance: 243/275 (88.4%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 47
+  unexpected_success: 32
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
   [unexpected_success] error.assign-global-in-jsx-children.js
-  [unexpected_success] error.assign-ref-in-effect-hint.js
   [unexpected_success] error.bug-invariant-local-or-context-references.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
   [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.hook-property-load-local-hook.js
-  [unexpected_success] error.invalid-array-push-frozen.js
-  [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
   [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
-  [unexpected_success] error.invalid-mutate-after-aliased-freeze.js
-  [unexpected_success] error.invalid-mutate-after-freeze.js
-  [unexpected_success] error.invalid-mutate-context-in-callback.js
   [unexpected_success] error.invalid-mutate-global-in-render-helper-phi-return-prop.js
   [unexpected_success] error.invalid-mutate-global-in-render-helper-prop.js
-  [unexpected_success] error.invalid-mutate-phi-which-could-be-frozen.js
   [unexpected_success] error.invalid-mutate-props-in-effect-fixpoint.js
   [unexpected_success] error.invalid-mutate-props-via-for-of-iterator.js
-  [unexpected_success] error.invalid-mutation-in-closure.js
   [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
-  [unexpected_success] error.invalid-nested-function-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
-  [unexpected_success] error.invalid-prop-mutation-indirect.js
-  [unexpected_success] error.invalid-props-mutation-in-effect-indirect.js
   [unexpected_success] error.invalid-read-ref-prop-in-render-property-load.js
-  [unexpected_success] error.invalid-reassign-local-variable-in-effect.js
-  [unexpected_success] error.invalid-reassign-variable-in-usememo.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
-  [unexpected_success] error.modify-state-2.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
-  [unexpected_success] error.todo-allow-assigning-to-inferred-ref-prop-in-callback.js
   [unexpected_success] error.todo-functiondecl-hoisting.tsx
   [unexpected_success] error.todo-hook-call-spreads-mutable-iterator.js
   [unexpected_success] error.todo-missing-source-locations.js
