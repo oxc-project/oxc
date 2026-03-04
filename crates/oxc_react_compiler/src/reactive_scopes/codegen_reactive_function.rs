@@ -26,7 +26,8 @@ use sha2::Sha256;
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
-        ArrayExpressionElement, ArrayPatternElement, CallArg, DeclarationId,
+        ArrayExpressionElement as HirArrayExpressionElement,
+        ArrayPatternElement, CallArg, DeclarationId,
         FunctionExpressionType, HIRFunction, IdentifierId,
         IdentifierName as HirIdentifierName, InstructionKind,
         InstructionValue, JsxAttribute, JsxTag, ObjectExpression, ObjectMethodValue,
@@ -312,6 +313,51 @@ fn make_simple_target<'a>(cx: &CodegenContext<'a>, name: &str) -> AssignmentTarg
     let target =
         cx.ast.simple_assignment_target_assignment_target_identifier(SPAN, cx.ast.atom(name));
     AssignmentTarget::from(target)
+}
+
+/// Create an assignment target from a static member expression: `object.property`
+fn make_member_assignment_target<'a>(
+    cx: &CodegenContext<'a>,
+    object: Expression<'a>,
+    property: &str,
+) -> AssignmentTarget<'a> {
+    let prop = cx.ast.identifier_name(SPAN, cx.ast.atom(property));
+    let member = cx.ast.alloc_static_member_expression(SPAN, object, prop, false);
+    AssignmentTarget::from(SimpleAssignmentTarget::StaticMemberExpression(member))
+}
+
+/// Create an assignment target from a computed member expression: `object[property]`
+fn make_computed_member_assignment_target<'a>(
+    cx: &CodegenContext<'a>,
+    object: Expression<'a>,
+    property: Expression<'a>,
+) -> AssignmentTarget<'a> {
+    let member = cx.ast.alloc_computed_member_expression(SPAN, object, property, false);
+    AssignmentTarget::from(SimpleAssignmentTarget::ComputedMemberExpression(member))
+}
+
+/// Create an assignment target from a property literal (string or number).
+fn make_property_assignment_target<'a>(
+    cx: &CodegenContext<'a>,
+    object: Expression<'a>,
+    property: &crate::hir::types::PropertyLiteral,
+) -> AssignmentTarget<'a> {
+    match property {
+        crate::hir::types::PropertyLiteral::String(name) => {
+            make_member_assignment_target(cx, object, name)
+        }
+        crate::hir::types::PropertyLiteral::Number(n) => {
+            make_computed_member_assignment_target(cx, object, make_number(cx, *n as f64))
+        }
+    }
+}
+
+/// Create a `SimpleAssignmentTarget` from an identifier name (for update expressions).
+fn make_simple_assignment_target_id<'a>(
+    cx: &CodegenContext<'a>,
+    name: &str,
+) -> SimpleAssignmentTarget<'a> {
+    cx.ast.simple_assignment_target_assignment_target_identifier(SPAN, cx.ast.atom(name))
 }
 
 /// Create a binary expression.
@@ -891,7 +937,312 @@ fn codegen_instruction_value<'a>(
     cx: &mut CodegenContext<'a>,
     value: &InstructionValue,
 ) -> Expression<'a> {
-    todo!()
+    match value {
+        InstructionValue::ArrayExpression(arr) => {
+            let mut elements = cx.ast.vec_with_capacity(arr.elements.len());
+            for elem in &arr.elements {
+                match elem {
+                    HirArrayExpressionElement::Place(p) => {
+                        let expr = codegen_place_to_expression(cx, p);
+                        elements.push(ArrayExpressionElement::from(expr));
+                    }
+                    HirArrayExpressionElement::Spread(s) => {
+                        let expr = codegen_place_to_expression(cx, &s.place);
+                        elements.push(
+                            cx.ast.array_expression_element_spread_element(SPAN, expr),
+                        );
+                    }
+                    HirArrayExpressionElement::Hole => {
+                        elements.push(cx.ast.array_expression_element_elision(SPAN));
+                    }
+                }
+            }
+            cx.ast.expression_array(SPAN, elements)
+        }
+        InstructionValue::BinaryExpression(bin) => {
+            let left = codegen_place_to_expression(cx, &bin.left);
+            let right = codegen_place_to_expression(cx, &bin.right);
+            make_binary(cx, left, bin.operator, right)
+        }
+        InstructionValue::UnaryExpression(unary) => {
+            let operand = codegen_place_to_expression(cx, &unary.value);
+            make_unary(cx, unary.operator, operand)
+        }
+        InstructionValue::Primitive(prim) => codegen_primitive(cx, &prim.value),
+        InstructionValue::JsxText(text) => make_string(cx, &text.value),
+        InstructionValue::CallExpression(call) => {
+            let is_hook = get_hook_kind(&cx.shapes, &call.callee.identifier);
+            let callee = codegen_place_to_expression(cx, &call.callee);
+            let args = codegen_args(cx, &call.args);
+            create_call_expression(cx, callee, args, is_hook)
+        }
+        InstructionValue::MethodCall(method) => {
+            let is_hook = get_hook_kind(&cx.shapes, &method.property.identifier);
+            let callee = codegen_place_to_expression(cx, &method.property);
+            let property_decl_id = method.property.identifier.declaration_id;
+            let is_member_expr = cx.temp.get(&property_decl_id).is_some_and(|v| v.is_some());
+            if !is_member_expr {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
+                    Some("Got: 'Identifier'"),
+                    method.loc,
+                ));
+            }
+            let args = codegen_args(cx, &method.args);
+            create_call_expression(cx, callee, args, is_hook)
+        }
+        InstructionValue::NewExpression(new) => {
+            let callee = codegen_place_to_expression(cx, &new.callee);
+            let args = codegen_args(cx, &new.args);
+            cx.ast.expression_new(SPAN, callee, NONE, args)
+        }
+        InstructionValue::ObjectExpression(obj) => codegen_object_expression(cx, obj),
+        InstructionValue::PropertyLoad(load) => {
+            let object = codegen_place_to_expression(cx, &load.object);
+            codegen_member_access(cx, object, &load.property)
+        }
+        InstructionValue::PropertyStore(store) => {
+            let object = codegen_place_to_expression(cx, &store.object);
+            let target = make_property_assignment_target(cx, object, &store.property);
+            let value = codegen_place_to_expression(cx, &store.value);
+            make_assignment(cx, target, value)
+        }
+        InstructionValue::PropertyDelete(del) => {
+            let object = codegen_place_to_expression(cx, &del.object);
+            let member = codegen_member_access(cx, object, &del.property);
+            make_unary(cx, UnaryOperator::Delete, member)
+        }
+        InstructionValue::ComputedLoad(load) => {
+            let object = codegen_place_to_expression(cx, &load.object);
+            let property = codegen_place_to_expression(cx, &load.property);
+            make_computed_member(cx, object, property)
+        }
+        InstructionValue::ComputedStore(store) => {
+            let object = codegen_place_to_expression(cx, &store.object);
+            let property = codegen_place_to_expression(cx, &store.property);
+            let target = make_computed_member_assignment_target(cx, object, property);
+            let value = codegen_place_to_expression(cx, &store.value);
+            make_assignment(cx, target, value)
+        }
+        InstructionValue::ComputedDelete(del) => {
+            let object = codegen_place_to_expression(cx, &del.object);
+            let property = codegen_place_to_expression(cx, &del.property);
+            let computed = make_computed_member(cx, object, property);
+            make_unary(cx, UnaryOperator::Delete, computed)
+        }
+        InstructionValue::LoadLocal(load) => codegen_place_to_expression(cx, &load.place),
+        InstructionValue::LoadContext(load) => codegen_place_to_expression(cx, &load.place),
+        InstructionValue::LoadGlobal(load) => make_id(cx, &load.binding.name()),
+        InstructionValue::StoreGlobal(store) => {
+            let value = codegen_place_to_expression(cx, &store.value);
+            make_assignment(cx, make_simple_target(cx, &store.name), value)
+        }
+        InstructionValue::FunctionExpression(func_expr) => {
+            codegen_function_expression(cx, func_expr).0
+        }
+        InstructionValue::RegExpLiteral(re) => {
+            let mut flags = RegExpFlags::empty();
+            for c in re.flags.chars() {
+                if let Ok(f) = RegExpFlags::try_from(c) {
+                    flags |= f;
+                }
+            }
+            let pattern = RegExpPattern {
+                text: cx.ast.atom(&re.pattern),
+                pattern: None,
+            };
+            let regex = RegExp { pattern, flags };
+            let raw = cx.ast.atom(&format!("/{}/{}", re.pattern, re.flags));
+            cx.ast.expression_reg_exp_literal(SPAN, regex, Some(raw))
+        }
+        InstructionValue::TemplateLiteral(tmpl) => {
+            let mut quasis = cx.ast.vec_with_capacity(tmpl.quasis.len());
+            let mut expressions = cx.ast.vec_with_capacity(tmpl.subexprs.len());
+            for (i, quasi) in tmpl.quasis.iter().enumerate() {
+                let tail = i == tmpl.quasis.len() - 1;
+                let value = TemplateElementValue {
+                    raw: cx.ast.atom(&quasi.raw),
+                    cooked: quasi.cooked.as_ref().map(|c| cx.ast.atom(c.as_str())),
+                };
+                quasis.push(cx.ast.template_element(SPAN, value, tail, false));
+                if i < tmpl.subexprs.len() {
+                    expressions.push(codegen_place_to_expression(cx, &tmpl.subexprs[i]));
+                }
+            }
+            cx.ast.expression_template_literal(SPAN, quasis, expressions)
+        }
+        InstructionValue::TaggedTemplateExpression(tagged) => {
+            let tag = codegen_place_to_expression(cx, &tagged.tag);
+            let value = TemplateElementValue {
+                raw: cx.ast.atom(&tagged.value.raw),
+                cooked: tagged.value.cooked.as_ref().map(|c| cx.ast.atom(c.as_str())),
+            };
+            let quasi_elem = cx.ast.template_element(SPAN, value, true, false);
+            let quasis = cx.ast.vec1(quasi_elem);
+            let expressions = cx.ast.vec();
+            let quasi = cx.ast.template_literal(SPAN, quasis, expressions);
+            cx.ast.expression_tagged_template(SPAN, tag, NONE, quasi)
+        }
+        InstructionValue::TypeCastExpression(cast) => {
+            codegen_place_to_expression(cx, &cast.value)
+        }
+        InstructionValue::JsxExpression(jsx) => {
+            let tag_name = codegen_jsx_tag_to_element_name(cx, &jsx.tag);
+            let mut attrs = cx.ast.vec_with_capacity(jsx.props.len());
+            for attr in &jsx.props {
+                attrs.push(codegen_jsx_attribute(cx, attr));
+            }
+            let opening = cx.ast.jsx_opening_element(SPAN, tag_name, NONE, attrs);
+            match &jsx.children {
+                None => {
+                    // Self-closing: <Tag ... />
+                    let children = cx.ast.vec();
+                    cx.ast.expression_jsx_element(SPAN, opening, children, NONE)
+                }
+                Some(children) => {
+                    let mut child_nodes = cx.ast.vec_with_capacity(children.len());
+                    for c in children {
+                        child_nodes.push(codegen_jsx_child(cx, c));
+                    }
+                    let closing_name = codegen_jsx_tag_to_element_name(cx, &jsx.tag);
+                    let closing = cx.ast.jsx_closing_element(SPAN, closing_name);
+                    cx.ast.expression_jsx_element(SPAN, opening, child_nodes, Some(closing))
+                }
+            }
+        }
+        InstructionValue::JsxFragment(frag) => {
+            let opening = cx.ast.jsx_opening_fragment(SPAN);
+            let mut children = cx.ast.vec_with_capacity(frag.children.len());
+            for c in &frag.children {
+                children.push(codegen_jsx_child(cx, c));
+            }
+            let closing = cx.ast.jsx_closing_fragment(SPAN);
+            cx.ast.expression_jsx_fragment(SPAN, opening, children, closing)
+        }
+        InstructionValue::GetIterator(iter) => {
+            codegen_place_to_expression(cx, &iter.collection)
+        }
+        InstructionValue::IteratorNext(iter) => {
+            codegen_place_to_expression(cx, &iter.iterator)
+        }
+        InstructionValue::NextPropertyOf(next) => {
+            codegen_place_to_expression(cx, &next.value)
+        }
+        InstructionValue::PrefixUpdate(update) => {
+            let name = identifier_name(&update.lvalue.identifier);
+            let target = make_simple_assignment_target_id(cx, &name);
+            cx.ast.expression_update(SPAN, update.operation, true, target)
+        }
+        InstructionValue::PostfixUpdate(update) => {
+            let name = identifier_name(&update.lvalue.identifier);
+            let target = make_simple_assignment_target_id(cx, &name);
+            cx.ast.expression_update(SPAN, update.operation, false, target)
+        }
+        InstructionValue::Await(aw) => {
+            let value = codegen_place_to_expression(cx, &aw.value);
+            cx.ast.expression_await(SPAN, value)
+        }
+        InstructionValue::MetaProperty(meta) => {
+            let meta_ident = cx.ast.identifier_name(SPAN, cx.ast.atom(&meta.meta));
+            let property_ident = cx.ast.identifier_name(SPAN, cx.ast.atom(&meta.property));
+            cx.ast.expression_meta_property(SPAN, meta_ident, property_ident)
+        }
+        // StoreLocal in expression context: assignment expression
+        InstructionValue::StoreLocal(store) => {
+            let lval_name = identifier_name(&store.lvalue.place.identifier);
+            let target = make_simple_target(cx, &lval_name);
+            let value = codegen_place_to_expression(cx, &store.value);
+            make_assignment(cx, target, value)
+        }
+        // These are handled in codegen_instruction_nullable, not here.
+        InstructionValue::StoreContext(_)
+        | InstructionValue::DeclareLocal(_)
+        | InstructionValue::DeclareContext(_)
+        | InstructionValue::Destructure(_)
+        | InstructionValue::StartMemoize(_)
+        | InstructionValue::FinishMemoize(_)
+        | InstructionValue::Debugger(_)
+        | InstructionValue::ObjectMethod(_) => make_undefined(cx),
+        InstructionValue::UnsupportedNode(_) => {
+            make_string(cx, "/* unsupported */")
+        }
+    }
+}
+
+/// Convert a JSX tag to a `JSXElementName`.
+fn codegen_jsx_tag_to_element_name<'a>(
+    cx: &CodegenContext<'a>,
+    tag: &JsxTag,
+) -> JSXElementName<'a> {
+    match tag {
+        JsxTag::BuiltIn(builtin) => {
+            // Built-in HTML tags (lowercase) use JSXIdentifier
+            cx.ast.jsx_element_name_identifier(SPAN, cx.ast.atom(&builtin.name))
+        }
+        JsxTag::Place(place) => {
+            // Component tags resolve through the temp map to expressions.
+            // Convert the expression to a JSXElementName.
+            let name = identifier_name(&place.identifier);
+            // Check if this is a member expression stored in temp
+            if let Some(Some(expr)) = cx.temp.get(&place.identifier.declaration_id) {
+                return expression_to_jsx_element_name(cx, expr);
+            }
+            // Simple identifier — use IdentifierReference for component names
+            cx.ast.jsx_element_name_identifier_reference(SPAN, cx.ast.atom(&name))
+        }
+    }
+}
+
+/// Convert an `Expression` to a `JSXElementName`.
+/// Handles identifier references and static member expressions (e.g., `Foo.Bar`).
+fn expression_to_jsx_element_name<'a>(
+    cx: &CodegenContext<'a>,
+    expr: &Expression<'a>,
+) -> JSXElementName<'a> {
+    match expr {
+        Expression::Identifier(ident) => {
+            cx.ast.jsx_element_name_identifier_reference(SPAN, cx.ast.atom(&ident.name))
+        }
+        Expression::StaticMemberExpression(member) => {
+            let property = cx.ast.jsx_identifier(SPAN, cx.ast.atom(&member.property.name));
+            let object = expression_to_jsx_member_object(cx, &member.object);
+            let jsx_member = cx.ast.alloc(cx.ast.jsx_member_expression(SPAN, object, property));
+            JSXElementName::MemberExpression(jsx_member)
+        }
+        _ => {
+            // Fallback: use the expression as an identifier name.
+            // This shouldn't normally happen in well-formed code.
+            cx.ast.jsx_element_name_identifier(SPAN, cx.ast.atom("unknown"))
+        }
+    }
+}
+
+/// Convert an `Expression` to a `JSXMemberExpressionObject`.
+fn expression_to_jsx_member_object<'a>(
+    cx: &CodegenContext<'a>,
+    expr: &Expression<'a>,
+) -> JSXMemberExpressionObject<'a> {
+    match expr {
+        Expression::Identifier(ident) => {
+            let id_ref = cx.ast.alloc_identifier_reference(SPAN, cx.ast.atom(&ident.name));
+            JSXMemberExpressionObject::IdentifierReference(id_ref)
+        }
+        Expression::StaticMemberExpression(member) => {
+            let property = cx.ast.jsx_identifier(SPAN, cx.ast.atom(&member.property.name));
+            let object = expression_to_jsx_member_object(cx, &member.object);
+            let jsx_member = cx.ast.alloc(cx.ast.jsx_member_expression(SPAN, object, property));
+            JSXMemberExpressionObject::MemberExpression(jsx_member)
+        }
+        Expression::ThisExpression(_) => {
+            let this = cx.ast.alloc_this_expression(SPAN);
+            JSXMemberExpressionObject::ThisExpression(this)
+        }
+        _ => {
+            // Fallback
+            let id_ref = cx.ast.alloc_identifier_reference(SPAN, cx.ast.atom("unknown"));
+            JSXMemberExpressionObject::IdentifierReference(id_ref)
+        }
+    }
 }
 
 // =====================================================================================
@@ -1161,7 +1512,20 @@ fn codegen_args<'a>(
     cx: &CodegenContext<'a>,
     args: &[CallArg],
 ) -> AVec<'a, Argument<'a>> {
-    todo!()
+    let mut result = cx.ast.vec_with_capacity(args.len());
+    for arg in args {
+        match arg {
+            CallArg::Place(p) => {
+                result.push(Argument::from(codegen_place_to_expression(cx, p)));
+            }
+            CallArg::Spread(s) => {
+                let expr = codegen_place_to_expression(cx, &s.place);
+                let spread = cx.ast.alloc(cx.ast.spread_element(SPAN, expr));
+                result.push(Argument::SpreadElement(spread));
+            }
+        }
+    }
+    result
 }
 
 /// Generate a destructure pattern.
