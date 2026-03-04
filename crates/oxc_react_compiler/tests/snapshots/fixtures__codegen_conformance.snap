@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1344/1346 passed (99.9%)
+Codegen conformance: 1346/1346 passed (100.0%)
 Flow files skipped: 38
 FBT lowering skipped: 33
 
@@ -10,11 +10,9 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 1
+  pipeline_error: 0
   panic:          0
-  output_mismatch:1
+  output_mismatch:0
   no_expected:    0
 
 Failed fixtures:
-  [output_mismatch] jsx-lowercase-localvar-memberexpr-in-lambda.jsx
-  [pipeline_error] reanimated-shared-value-writes.jsx
