@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::fmt::Write as _;
 
+use cow_utils::CowUtils;
+
 /// Normalize JSDoc tag aliases to their canonical form.
 /// Matches prettier-plugin-jsdoc's `TAGS_SYNONYMS` from `roles.ts`.
 pub fn normalize_tag_kind(kind: &str) -> &str {
@@ -362,12 +364,11 @@ fn replace_placeholders(input: &str, prefix: &str, originals: &[&str]) -> String
 
 /// Core type normalization (without quote conversion).
 fn normalize_type_inner(type_str: &str) -> String {
+    // Replace `*` with `any` everywhere (matching upstream's
+    // `type.replace(/\*/g, " any ")` inside convertToModernType()).
+    // This runs inside without_strings() so string literals are protected.
+    let type_str: Cow<'_, str> = type_str.cow_replace('*', " any ");
     let trimmed = type_str.trim();
-
-    // `*` alone means `any`
-    if trimmed == "*" {
-        return "any".to_string();
-    }
 
     // String literal types (e.g. `"some text"`, `'foo'`) — return as-is.
     // The outer without_strings() already protects these with placeholders,
@@ -416,10 +417,6 @@ fn normalize_type_inner(type_str: &str) -> String {
 /// For union types, normalize each member independently.
 fn normalize_type_core(type_str: &str) -> String {
     let trimmed = type_str.trim();
-
-    if trimmed == "*" {
-        return "any".to_string();
-    }
 
     // Check for top-level union: split at `|`, normalize each part, then join
     let parts = split_at_top_level_pipe(trimmed);
