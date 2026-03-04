@@ -63,6 +63,16 @@ impl ReactCompiler {
             return;
         }
 
+        // Check for already-compiled marker import: `import { c } from "react/compiler-runtime"`.
+        // If found, skip compilation entirely to prevent double-compilation.
+        for stmt in program.body.iter() {
+            if let Statement::ImportDeclaration(import) = stmt {
+                if import.source.value == "react/compiler-runtime" {
+                    return;
+                }
+            }
+        }
+
         self.outer_bindings = collect_import_bindings(&program.body);
 
         // Phase 1: Compile all candidate functions, collecting results by statement index.
@@ -135,6 +145,7 @@ impl ReactCompiler {
                     function.id.as_ref().map(|id| id.name.as_str()),
                     &directives,
                     function.span,
+                    false,
                     ctx,
                 )
             }
@@ -165,6 +176,7 @@ impl ReactCompiler {
                                 function_name,
                                 &directives,
                                 function.span,
+                                false,
                                 ctx,
                             );
                             if result.is_some() {
@@ -179,10 +191,22 @@ impl ReactCompiler {
                                 binding_name,
                                 &directives,
                                 arrow.span,
+                                false,
                                 ctx,
                             );
                             if result.is_some() {
                                 return result;
+                            }
+                        }
+                        Expression::CallExpression(call)
+                            if is_memo_or_forwardref_call(&call.callee) =>
+                        {
+                            if let Some(result) = self.compile_memo_or_forwardref_arg(
+                                call,
+                                binding_name,
+                                ctx,
+                            ) {
+                                return Some(result);
                             }
                         }
                         _ => {}
@@ -201,6 +225,7 @@ impl ReactCompiler {
                             function.id.as_ref().map(|id| id.name.as_str()),
                             &directives,
                             function.span,
+                            false,
                             ctx,
                         )
                     }
@@ -212,8 +237,14 @@ impl ReactCompiler {
                             None,
                             &directives,
                             arrow.span,
+                            false,
                             ctx,
                         )
+                    }
+                    ExportDefaultDeclarationKind::CallExpression(call)
+                        if is_memo_or_forwardref_call(&call.callee) =>
+                    {
+                        self.compile_memo_or_forwardref_arg(call, None, ctx)
                     }
                     _ => None,
                 }
@@ -231,6 +262,7 @@ impl ReactCompiler {
                             function.id.as_ref().map(|id| id.name.as_str()),
                             &directives,
                             function.span,
+                            false,
                             ctx,
                         )
                     }
@@ -261,6 +293,7 @@ impl ReactCompiler {
                                         function_name,
                                         &directives,
                                         function.span,
+                                        false,
                                         ctx,
                                     );
                                     if result.is_some() {
@@ -276,10 +309,22 @@ impl ReactCompiler {
                                         binding_name,
                                         &directives,
                                         arrow.span,
+                                        false,
                                         ctx,
                                     );
                                     if result.is_some() {
                                         return result;
+                                    }
+                                }
+                                Expression::CallExpression(call)
+                                    if is_memo_or_forwardref_call(&call.callee) =>
+                                {
+                                    if let Some(result) = self.compile_memo_or_forwardref_arg(
+                                        call,
+                                        binding_name,
+                                        ctx,
+                                    ) {
+                                        return Some(result);
                                     }
                                 }
                                 _ => {}
@@ -304,13 +349,14 @@ impl ReactCompiler {
         name: Option<&str>,
         directives: &[String],
         fallback_span: Span,
+        is_memo_or_forwardref_arg: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<CodegenOutput<'a>> {
         let fn_type = should_compile_function(
             name,
             directives,
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
-            false,
+            is_memo_or_forwardref_arg,
         )?;
 
         let environment =
@@ -351,6 +397,46 @@ impl ReactCompiler {
         }
     }
 
+    /// Try to compile the inner function of a memo/forwardRef call expression.
+    fn compile_memo_or_forwardref_arg<'a>(
+        &self,
+        call: &CallExpression<'a>,
+        binding_name: Option<&str>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<CodegenOutput<'a>> {
+        let arg = call.arguments.first()?;
+        let expr = arg.as_expression()?;
+        match expr {
+            Expression::FunctionExpression(function) => {
+                let directives = function_directives(function);
+                let function_name =
+                    function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+                let lowerable_function = LowerableFunction::Function(function);
+                self.compile_function(
+                    &lowerable_function,
+                    function_name,
+                    &directives,
+                    function.span,
+                    true,
+                    ctx,
+                )
+            }
+            Expression::ArrowFunctionExpression(arrow) => {
+                let directives = arrow_directives(arrow);
+                let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                self.compile_function(
+                    &lowerable_function,
+                    binding_name,
+                    &directives,
+                    arrow.span,
+                    true,
+                    ctx,
+                )
+            }
+            _ => None,
+        }
+    }
+
     fn report_compiler_error(
         error: &CompilerError,
         fallback_span: Span,
@@ -361,6 +447,18 @@ impl ReactCompiler {
             ctx.state
                 .error(OxcDiagnostic::warn(format!("React Compiler: {entry}")).with_label(span));
         }
+    }
+}
+
+/// Check if a call expression's callee is `memo`/`React.memo`/`forwardRef`/`React.forwardRef`.
+fn is_memo_or_forwardref_call(callee: &Expression<'_>) -> bool {
+    match callee {
+        Expression::Identifier(id) => id.name == "memo" || id.name == "forwardRef",
+        Expression::StaticMemberExpression(member) => {
+            matches!(&member.object, Expression::Identifier(obj) if obj.name == "React")
+                && (member.property.name == "memo" || member.property.name == "forwardRef")
+        }
+        _ => false,
     }
 }
 
@@ -417,6 +515,30 @@ fn build_compiled_body<'a>(
     ctx.ast.alloc_function_body(SPAN, directives, body)
 }
 
+/// Replace the inner function body of a memo/forwardRef call expression with compiled output.
+fn replace_memo_inner_function_body<'a>(
+    call: &mut CallExpression<'a>,
+    compiled: &mut CodegenOutput<'a>,
+    ctx: &TraverseCtx<'a>,
+) {
+    if let Some(arg) = call.arguments.first_mut() {
+        if let Some(expr) = arg.as_expression_mut() {
+            match expr {
+                Expression::FunctionExpression(function) => {
+                    function.body = Some(build_compiled_body(compiled, ctx));
+                }
+                Expression::ArrowFunctionExpression(arrow) => {
+                    let directives = build_directives(&compiled.directives, ctx);
+                    let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
+                    arrow.body = ctx.ast.alloc_function_body(SPAN, directives, body);
+                    arrow.expression = false;
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
 /// Replace the function body within a statement with compiled output.
 ///
 /// Handles `FunctionDeclaration`, `VariableDeclaration` (with function/arrow
@@ -448,6 +570,12 @@ fn replace_statement_function<'a>(
                         arrow.expression = false;
                         break;
                     }
+                    Expression::CallExpression(call)
+                        if is_memo_or_forwardref_call(&call.callee) =>
+                    {
+                        replace_memo_inner_function_body(call, &mut compiled, ctx);
+                        break;
+                    }
                     _ => {}
                 }
             }
@@ -463,6 +591,11 @@ fn replace_statement_function<'a>(
                     let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                     arrow.body = ctx.ast.alloc_function_body(SPAN, directives, body);
                     arrow.expression = false;
+                }
+                ExportDefaultDeclarationKind::CallExpression(call)
+                    if is_memo_or_forwardref_call(&call.callee) =>
+                {
+                    replace_memo_inner_function_body(call, &mut compiled, ctx);
                 }
                 _ => {}
             }
@@ -489,6 +622,12 @@ fn replace_statement_function<'a>(
                                     arrow.body =
                                         ctx.ast.alloc_function_body(SPAN, directives, body);
                                     arrow.expression = false;
+                                    break;
+                                }
+                                Expression::CallExpression(call)
+                                    if is_memo_or_forwardref_call(&call.callee) =>
+                                {
+                                    replace_memo_inner_function_body(call, &mut compiled, ctx);
                                     break;
                                 }
                                 _ => {}
