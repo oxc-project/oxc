@@ -16,8 +16,7 @@ use super::{
     mdast_serialize::format_description_mdast,
     normalize::{
         capitalize_first, normalize_markdown_emphasis, normalize_tag_kind, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
-        strip_optional_type_suffix,
+        normalize_type_preserve_quotes, normalize_type_return, strip_optional_type_suffix,
     },
     wrap::{tokenize_words, wrap_text},
 };
@@ -187,39 +186,36 @@ fn reorder_param_tags(
         return;
     }
 
-    // Check that ALL @param tags have type annotations
-    let param_names: Vec<&str> = effective_tags[param_start..param_end]
-        .iter()
-        .filter_map(|(tag, _)| {
-            let (type_part, name_part, _) = tag.type_name_comment();
-            // Must have both type and name
-            type_part?;
-            name_part.map(|n| n.parsed())
-        })
-        .collect();
-
-    if param_names.len() != param_end - param_start {
+    // Check that ALL @param tags have type annotations and names
+    let param_tags = &effective_tags[param_start..param_end];
+    let has_all_types_and_names = param_tags.iter().all(|(tag, _)| {
+        let (type_part, name_part, _) = tag.type_name_comment();
+        type_part.is_some() && name_part.is_some()
+    });
+    if !has_all_types_and_names {
         return; // Some params lack types or names — don't reorder
     }
 
     // Extract function parameter names from the source text after the comment
     let fn_params = extract_function_params(comment, source_text);
-    if fn_params.is_empty() {
-        return;
-    }
-
-    // Only reorder if param names exactly match the function params (same set)
-    if param_names.len() != fn_params.len() {
+    if fn_params.len() != param_tags.len() {
         return;
     }
 
     // Already in order?
-    if param_names.iter().zip(fn_params.iter()).all(|(a, b)| *a == *b) {
+    if param_tags.iter().zip(fn_params.iter()).all(|((tag, _), p)| {
+        let (_, name_part, _) = tag.type_name_comment();
+        name_part.map_or("", |n| n.parsed()) == *p
+    }) {
         return;
     }
 
     // Check same set of names (lengths already verified equal, param lists are small)
-    if !param_names.iter().all(|name| fn_params.iter().any(|p| p == name)) {
+    if !param_tags.iter().all(|(tag, _)| {
+        let (_, name_part, _) = tag.type_name_comment();
+        let name = name_part.map_or("", |n| n.parsed());
+        fn_params.contains(&name)
+    }) {
         return;
     }
 
@@ -955,16 +951,6 @@ fn wrap_type_expression(
     // Check if the type contains `|` at the top level for union wrapping
     let parts = split_type_at_top_level_pipe(type_str);
     if parts.len() <= 1 {
-        // Check for object type `{{ ... }}` wrapping
-        if type_str.starts_with('{') && type_str.ends_with('}') {
-            return wrap_object_type(
-                tag_prefix,
-                type_str,
-                name_and_rest,
-                wrap_width,
-                content_lines,
-            );
-        }
         // Check for generic type `Foo<...>` wrapping at top-level angle bracket
         if let Some(wrapped) = wrap_generic_type(tag_prefix, type_str, name_and_rest, content_lines)
         {
@@ -1015,198 +1001,6 @@ fn wrap_type_expression(
     }
 
     true
-}
-
-/// Wrap an object type literal across multiple lines.
-fn wrap_object_type(
-    tag_prefix: &str,
-    type_str: &str,
-    name_and_rest: &str,
-    _wrap_width: usize,
-    content_lines: &mut Vec<String>,
-) -> bool {
-    // type_str is like `{ userId: string; title: string; ... }`
-    let inner = type_str[1..type_str.len() - 1].trim();
-    if inner.is_empty() {
-        return false;
-    }
-
-    // Split at `;` or `,` while respecting nested brackets
-    let fields = split_object_fields(inner);
-    if fields.len() <= 1 {
-        return false;
-    }
-
-    let indent = "  ";
-    // First line: tag + opening brace
-    {
-        let mut s = String::with_capacity(tag_prefix.len() + 4);
-        s.push_str(tag_prefix);
-        s.push_str(" {{");
-        content_lines.push(s);
-    }
-
-    // Each field on its own line, always using semicolons (matching TS convention)
-    for field in &fields {
-        let field = field.trim();
-        if field.is_empty() {
-            continue;
-        }
-        // Normalize delimiter: strip trailing `,` or `;` and always use `;`
-        let field = field.strip_suffix(',').or_else(|| field.strip_suffix(';')).unwrap_or(field);
-        // Normalize field value: `*` → `any`
-        let field = normalize_object_field(field);
-        // Check if the field value is a nested object that should be expanded
-        if let Some((key, nested_inner)) = extract_nested_object(&field) {
-            let nested_fields = split_object_fields(nested_inner);
-            if nested_fields.len() > 1 {
-                // Recursively format nested object
-                let nested_indent = "    ";
-                {
-                    let mut s = String::with_capacity(indent.len() + key.len() + 3);
-                    s.push_str(indent);
-                    s.push_str(key);
-                    s.push_str(": {");
-                    content_lines.push(s);
-                }
-                for nf in &nested_fields {
-                    let nf = nf.trim();
-                    if nf.is_empty() {
-                        continue;
-                    }
-                    let nf = nf.strip_suffix(',').or_else(|| nf.strip_suffix(';')).unwrap_or(nf);
-                    let nf = normalize_object_field(nf);
-                    let fws = field_with_semicolon(&nf);
-                    let mut s = String::with_capacity(nested_indent.len() + fws.len());
-                    s.push_str(nested_indent);
-                    s.push_str(&fws);
-                    content_lines.push(s);
-                }
-                {
-                    let mut s = String::with_capacity(indent.len() + 2);
-                    s.push_str(indent);
-                    s.push_str("};");
-                    content_lines.push(s);
-                }
-                continue;
-            }
-        }
-        let fws = field_with_semicolon(&field);
-        let mut s = String::with_capacity(indent.len() + fws.len());
-        s.push_str(indent);
-        s.push_str(&fws);
-        content_lines.push(s);
-    }
-
-    // Closing brace + name
-    if name_and_rest.is_empty() {
-        content_lines.push("}}".to_string());
-    } else {
-        content_lines.push(format!("}}}} {name_and_rest}"));
-    }
-
-    true
-}
-
-/// Append a semicolon to a field, inserting it before any `// comment` suffix.
-/// `"foo: string // comment"` → `"foo: string; // comment"`
-/// `"foo: string"` → `"foo: string;"`
-fn field_with_semicolon(field: &str) -> String {
-    // Find `//` that's not inside brackets or quotes
-    if let Some(comment_pos) = find_line_comment(field) {
-        let before = field[..comment_pos].trim_end();
-        let comment = &field[comment_pos..];
-        format!("{before}; {comment}")
-    } else {
-        format!("{field};")
-    }
-}
-
-/// Find position of a `// ` line comment in a field string, skipping nested contexts.
-fn find_line_comment(field: &str) -> Option<usize> {
-    let bytes = field.as_bytes();
-    let len = bytes.len();
-    let mut depth = 0i32;
-    let mut i = 0;
-    while i < len {
-        match bytes[i] {
-            b'(' | b'<' | b'[' | b'{' => depth += 1,
-            b')' | b'>' | b']' | b'}' => depth = depth.saturating_sub(1),
-            b'"' | b'\'' => {
-                let q = bytes[i];
-                i += 1;
-                while i < len && bytes[i] != q {
-                    if bytes[i] == b'\\' {
-                        i += 1;
-                    }
-                    i += 1;
-                }
-            }
-            b'/' if depth == 0 && i + 1 < len && bytes[i + 1] == b'/' => {
-                return Some(i);
-            }
-            _ => {}
-        }
-        i += 1;
-    }
-    None
-}
-
-/// Normalize a single object field's value: `*` → `any`, whitespace cleanup.
-fn normalize_object_field(field: &str) -> Cow<'_, str> {
-    if let Some(colon_pos) = find_field_colon(field) {
-        let key = field[..colon_pos].trim();
-        let value = field[colon_pos + 1..].trim();
-        let normalized_value: Cow<'_, str> =
-            if value == "*" { Cow::Borrowed("any") } else { normalize_type_whitespace(value) };
-        // Preserve inline comments
-        Cow::Owned(format!("{key}: {normalized_value}"))
-    } else {
-        Cow::Borrowed(field)
-    }
-}
-
-/// Find the position of the `:` that separates a field name from its value.
-/// Skips `:` inside nested brackets and quoted strings.
-fn find_field_colon(field: &str) -> Option<usize> {
-    let mut depth = 0i32;
-    let bytes = field.as_bytes();
-    let len = bytes.len();
-    let mut i = 0;
-    while i < len {
-        match bytes[i] {
-            b'(' | b'<' | b'[' | b'{' => depth += 1,
-            b')' | b'>' | b']' | b'}' => depth -= 1,
-            b'\'' | b'"' | b'`' => {
-                // Skip quoted strings
-                let quote = bytes[i];
-                i += 1;
-                while i < len && bytes[i] != quote {
-                    if bytes[i] == b'\\' {
-                        i += 1;
-                    }
-                    i += 1;
-                }
-            }
-            b':' if depth == 0 => return Some(i),
-            _ => {}
-        }
-        i += 1;
-    }
-    None
-}
-
-/// Check if a field value is a nested object `{ ... }` and extract the key and inner content.
-fn extract_nested_object(field: &str) -> Option<(&str, &str)> {
-    let colon_pos = find_field_colon(field)?;
-    let key = field[..colon_pos].trim();
-    let value = field[colon_pos + 1..].trim();
-    if value.starts_with('{') && value.ends_with('}') {
-        let inner = value[1..value.len() - 1].trim();
-        Some((key, inner))
-    } else {
-        None
-    }
 }
 
 /// Wrap a generic type `Foo<Bar>` across multiple lines at the top-level angle bracket.
@@ -1292,84 +1086,6 @@ fn split_type_at_top_level_pipe(type_str: &str) -> Vec<&str> {
     }
     parts.push(&type_str[start..]);
     parts
-}
-
-/// Split an object type's inner content at `;` or `,` delimiters, respecting nesting.
-/// Also handles `// ...` line comments by preserving them with the preceding field.
-fn split_object_fields(inner: &str) -> Vec<String> {
-    let mut fields: Vec<String> = Vec::new();
-    let bytes = inner.as_bytes();
-    let len = bytes.len();
-    let mut depth = 0i32;
-    let mut start = 0;
-    let mut i = 0;
-    // Pending inline comment to attach to the preceding field
-    let mut pending_comment: Option<String> = None;
-
-    while i < len {
-        match bytes[i] {
-            b'(' | b'<' | b'[' | b'{' => {
-                depth += 1;
-                i += 1;
-            }
-            b')' | b'>' | b']' | b'}' => {
-                depth -= 1;
-                i += 1;
-            }
-            b'/' if depth == 0 && i + 1 < len && bytes[i + 1] == b'/' => {
-                // Line comment: capture text from `//` to end of line
-                let comment_start = i;
-                while i < len && bytes[i] != b'\n' {
-                    i += 1;
-                }
-                pending_comment = Some(inner[comment_start..i].trim().to_string());
-                if i < len {
-                    i += 1; // skip newline
-                }
-                // Skip past the comment so it's not included in the next field
-                start = i;
-            }
-            b';' | b',' if depth == 0 => {
-                let field = inner[start..i].trim().to_string();
-                if !field.is_empty() {
-                    // Attach any pending inline comment to the previous field
-                    if let Some(comment) = pending_comment.take()
-                        && let Some(last) = fields.last_mut()
-                    {
-                        last.push(' ');
-                        last.push_str(&comment);
-                    }
-                    fields.push(field);
-                } else if let Some(comment) = pending_comment.take() {
-                    // Field text was empty (comment was between two delimiters)
-                    // Attach to previous field if available
-                    if let Some(last) = fields.last_mut() {
-                        last.push(' ');
-                        last.push_str(&comment);
-                    }
-                }
-                start = i + 1;
-                i += 1;
-            }
-            _ => {
-                i += 1;
-            }
-        }
-    }
-
-    // Attach any trailing pending comment
-    if let Some(comment) = pending_comment.take()
-        && let Some(last) = fields.last_mut()
-    {
-        last.push(' ');
-        last.push_str(&comment);
-    }
-
-    let last = inner[start..].trim();
-    if !last.is_empty() {
-        fields.push(last.to_string());
-    }
-    fields
 }
 
 /// Format a `@default` / `@defaultValue` value.
