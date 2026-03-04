@@ -245,13 +245,14 @@ impl FormatRunner {
                 print_stats(stdout);
                 CliRunResult::FormatMismatch
             }
-            // Default (write) does not output anything
+            // Default (write) outputs only stats
             (OutputMode::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,
                     "In write mode, changed_count should not be counted"
                 );
+                print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
         }
