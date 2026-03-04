@@ -7,7 +7,7 @@
 use crate::entrypoint::options::{
     CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold, PluginOptions,
 };
-use crate::hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode};
+use crate::hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction};
 
 /// Parse a config pragma string from a test fixture's first line.
 ///
@@ -199,6 +199,21 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                         ExhaustiveEffectDepsMode::All;
                 }
             }
+            "gating" => {
+                if let Some(val) = &entry.value {
+                    // @gating:{"source":"shared-runtime","importSpecifierName":"getTrue"}
+                    if let Some(ext_fn) = parse_external_function_value(val) {
+                        options.gating = Some(ext_fn);
+                    }
+                } else {
+                    // @gating with no value — use the test complex defaults
+                    // (matches TS testComplexPluginOptionDefaults.gating)
+                    options.gating = Some(ExternalFunction {
+                        source: "ReactForgetFeatureFlag".to_string(),
+                        import_specifier_name: "isForgetEnabled_Fixtures".to_string(),
+                    });
+                }
+            }
             "eslintSuppressionRules" => {
                 if let Some(val) = &entry.value {
                     if let Some(arr) = parse_json_string_array(val) {
@@ -311,6 +326,36 @@ fn parse_dynamic_gating_value(val: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// Parse an `ExternalFunction` from a JSON-like pragma value.
+///
+/// Expected format: `{"source":"module-name","importSpecifierName":"fnName"}`
+///
+/// Returns `None` if parsing fails. Both `source` and `importSpecifierName`
+/// must be present.
+fn parse_external_function_value(val: &str) -> Option<ExternalFunction> {
+    let trimmed = val.trim();
+    let inner = trimmed.strip_prefix('{')?.strip_suffix('}')?;
+    let mut source = None;
+    let mut import_specifier_name = None;
+    for part in inner.split(',') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("\"source\"") {
+            let rest = rest.trim().strip_prefix(':')?;
+            let rest = rest.trim().trim_matches('"');
+            if !rest.is_empty() {
+                source = Some(rest.to_string());
+            }
+        } else if let Some(rest) = part.strip_prefix("\"importSpecifierName\"") {
+            let rest = rest.trim().strip_prefix(':')?;
+            let rest = rest.trim().trim_matches('"');
+            if !rest.is_empty() {
+                import_specifier_name = Some(rest.to_string());
+            }
+        }
+    }
+    Some(ExternalFunction { source: source?, import_specifier_name: import_specifier_name? })
 }
 
 fn parse_bool_value(value: Option<&String>, default: bool) -> bool {
@@ -445,5 +490,40 @@ mod tests {
         );
         // No value provided — target stays at default (React19)
         assert_eq!(options.target, CompilerReactTarget::React19);
+    }
+
+    #[test]
+    fn parses_gating_without_value_uses_defaults() {
+        let options = parse_config_pragma_for_tests(
+            "@gating",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        let gating = options.gating.expect("gating should be set");
+        assert_eq!(gating.source, "ReactForgetFeatureFlag");
+        assert_eq!(gating.import_specifier_name, "isForgetEnabled_Fixtures");
+    }
+
+    #[test]
+    fn parses_gating_with_json_value() {
+        let options = parse_config_pragma_for_tests(
+            r#"@gating:{"source":"shared-runtime","importSpecifierName":"getTrue"}"#,
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        let gating = options.gating.expect("gating should be set");
+        assert_eq!(gating.source, "shared-runtime");
+        assert_eq!(gating.import_specifier_name, "getTrue");
+    }
+
+    #[test]
+    fn parses_gating_with_other_pragmas() {
+        let options = parse_config_pragma_for_tests(
+            "@gating @panicThreshold:\"none\" @compilationMode:\"infer\"",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        let gating = options.gating.expect("gating should be set");
+        assert_eq!(gating.source, "ReactForgetFeatureFlag");
+        assert_eq!(gating.import_specifier_name, "isForgetEnabled_Fixtures");
+        assert_eq!(options.panic_threshold, PanicThreshold::None);
+        assert_eq!(options.compilation_mode, CompilationMode::Infer);
     }
 }
