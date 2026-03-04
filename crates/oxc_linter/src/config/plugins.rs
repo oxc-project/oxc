@@ -255,6 +255,7 @@ impl JsonSchema for LintPlugins {
             JsxA11y,
             Nextjs,
             ReactPerf,
+            ReactCompiler,
             Promise,
             Node,
             Vue,
