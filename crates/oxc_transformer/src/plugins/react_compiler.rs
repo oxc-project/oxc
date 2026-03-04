@@ -5,9 +5,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        options::CompilationMode,
+        options::{CompilationMode, PanicThreshold},
         pipeline::{run_codegen, run_pipeline},
-        program::should_compile_function,
+        program::{ErrorAction, handle_compilation_error, should_compile_function},
     },
     hir::{
         NonLocalBinding,
@@ -42,6 +42,7 @@ pub struct ReactCompilerOptions {
 /// `react/compiler-runtime` import when memoization is used.
 pub struct ReactCompiler {
     options: ReactCompilerOptions,
+    panic_threshold: PanicThreshold,
     outer_bindings: FxHashMap<String, NonLocalBinding>,
 }
 
@@ -55,7 +56,8 @@ struct CompileResult<'a> {
 
 impl ReactCompiler {
     pub fn new(options: ReactCompilerOptions) -> Self {
-        Self { options, outer_bindings: FxHashMap::default() }
+        let panic_threshold = parse_panic_threshold(options.panic_threshold.as_deref());
+        Self { options, panic_threshold, outer_bindings: FxHashMap::default() }
     }
 
     pub fn enter_program<'a>(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -70,6 +72,14 @@ impl ReactCompiler {
                 if import.source.value == "react/compiler-runtime" {
                     return;
                 }
+            }
+        }
+
+        // Check for module-level opt-out directives
+        for directive in &program.directives {
+            let value = directive.directive.as_str();
+            if value == "use no memo" || value == "use no forget" {
+                return;
             }
         }
 
@@ -366,7 +376,7 @@ impl ReactCompiler {
             match lower(&environment, fn_type, function, self.outer_bindings.clone()) {
                 Ok(hir_function) => hir_function,
                 Err(error) => {
-                    Self::report_compiler_error(&error, fallback_span, ctx);
+                    Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
                     return None;
                 }
             };
@@ -374,10 +384,10 @@ impl ReactCompiler {
         let pipeline_output = match run_pipeline(&mut hir_function, &environment) {
             Ok(output) => output,
             Err(error) => {
-                Self::report_compiler_error(&error, fallback_span, ctx);
+                Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
                 // Report accumulated diagnostics even on pipeline failure.
                 for diagnostic in hir_function.env.take_diagnostics() {
-                    Self::report_compiler_error(&diagnostic, fallback_span, ctx);
+                    Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
                 }
                 return None;
             }
@@ -385,13 +395,13 @@ impl ReactCompiler {
 
         // Report accumulated non-fatal diagnostics from the pipeline.
         for diagnostic in hir_function.env.take_diagnostics() {
-            Self::report_compiler_error(&diagnostic, fallback_span, ctx);
+            Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
         }
 
         match run_codegen(pipeline_output, &environment, ctx.ast) {
             Ok(codegen_output) => Some(codegen_output),
             Err(error) => {
-                Self::report_compiler_error(&error, fallback_span, ctx);
+                Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
                 None
             }
         }
@@ -440,12 +450,17 @@ impl ReactCompiler {
     fn report_compiler_error(
         error: &CompilerError,
         fallback_span: Span,
+        panic_threshold: PanicThreshold,
         ctx: &mut TraverseCtx<'_>,
     ) {
+        let action = handle_compilation_error(error, panic_threshold);
         for entry in &error.details {
             let span = compiler_error_entry_span(entry).unwrap_or(fallback_span);
-            ctx.state
-                .error(OxcDiagnostic::warn(format!("React Compiler: {entry}")).with_label(span));
+            let diagnostic = match action {
+                ErrorAction::Panic => OxcDiagnostic::error(format!("React Compiler: {entry}")),
+                ErrorAction::Skip => OxcDiagnostic::warn(format!("React Compiler: {entry}")),
+            };
+            ctx.state.error(diagnostic.with_label(span));
         }
     }
 }
@@ -468,6 +483,14 @@ fn parse_compilation_mode(mode: Option<&str>) -> CompilationMode {
         Some("annotation") => CompilationMode::Annotation,
         Some("syntax") => CompilationMode::Syntax,
         _ => CompilationMode::Infer,
+    }
+}
+
+fn parse_panic_threshold(threshold: Option<&str>) -> PanicThreshold {
+    match threshold {
+        Some("all_errors") => PanicThreshold::AllErrors,
+        Some("critical_errors") => PanicThreshold::CriticalErrors,
+        _ => PanicThreshold::None,
     }
 }
 
