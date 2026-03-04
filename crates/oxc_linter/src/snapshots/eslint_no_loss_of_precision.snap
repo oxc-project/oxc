@@ -51,48 +51,48 @@ source: crates/oxc_linter/src/tester.rs
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:9]
- 1 │ var x = 900719925474099_3
-   ·         ─────────────────
+   ╭─[no_loss_of_precision.tsx:1:12]
+ 1 │ const x = -9_00719_9254_740993
+   ·            ───────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:9]
- 1 │ var x = 90_0719925_4740.9_93e3
-   ·         ──────────────────────
+   ╭─[no_loss_of_precision.tsx:1:12]
+ 1 │ const x = -900_719.92_5474_0994
+   ·            ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:9]
- 1 │ var x = 9.0_0719925_474099_3e15
-   ·         ───────────────────────
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 9.0_0719925_474099_3e15
+   ·           ───────────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 900_719.92_54740_994
+   ·           ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:10]
- 1 │ var x = -9_00719_9254_740993
+ 1 │ let x = -9_00719_9254_740993
    ·          ───────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:9]
- 1 │ var x = 900_719.92_54740_994
-   ·         ────────────────────
-   ╰────
-  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
-  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
-
-  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:10]
- 1 │ var x = -900_719.92_5474_0994
+ 1 │ let x = -900_719.92_5474_0994
    ·          ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
@@ -107,14 +107,6 @@ source: crates/oxc_linter/src/tester.rs
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:10]
- 1 │ let x = -9_00719_9254_740993
-   ·          ───────────────────
-   ╰────
-  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
-  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
-
-  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:9]
  1 │ let x = 900_719.92_54740_994
    ·         ────────────────────
@@ -124,40 +116,72 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:10]
- 1 │ let x = -900_719.92_5474_0994
+ 1 │ var x = -9_00719_9254_740993
+   ·          ───────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:10]
+ 1 │ var x = -900_719.92_5474_0994
    ·          ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:11]
- 1 │ const x = 9.0_0719925_474099_3e15
-   ·           ───────────────────────
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = .9007199254740993e16
+   ·         ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:12]
- 1 │ const x = -9_00719_9254_740993
-   ·            ───────────────────
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 9.0_0719925_474099_3e15
+   ·         ───────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:11]
- 1 │ const x = 900_719.92_54740_994
-   ·           ────────────────────
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 90_0719925_4740.9_93e3
+   ·         ──────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
 
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
-   ╭─[no_loss_of_precision.tsx:1:12]
- 1 │ const x = -900_719.92_5474_0994
-   ·            ────────────────────
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 900_719.92_54740_994
+   ·         ────────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 900719925474099_3
+   ·         ─────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 900719925474099.30e1
+   ·         ────────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:9]
+ 1 │ var x = 90071992547409930e-1
+   ·         ────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
@@ -374,6 +398,38 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_loss_of_precision.tsx:1:9]
  1 │ var x = 0X200000_0000000_1
    ·         ──────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 9007199254740993;
+   ·           ────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 9_007_199_254_740_993;
+   ·           ─────────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 9_007_199_254_740.993e3;
+   ·           ───────────────────────
+   ╰────
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
+
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:11]
+ 1 │ const x = 0b100_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_000_001;
+   ·           ─────────────────────────────────────────────────────────────────────────
    ╰────
   help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
   note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.
