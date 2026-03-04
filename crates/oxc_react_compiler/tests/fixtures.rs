@@ -14,7 +14,9 @@ use oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenFunct
 use oxc_react_compiler::utils::test_utils::{PragmaDefaults, parse_config_pragma_for_tests};
 
 fn is_js_ts_tsx(path: &Path) -> bool {
-    path.extension().and_then(|e| e.to_str()).is_some_and(|ext| matches!(ext, "js" | "jsx" | "ts" | "tsx" | "mjs"))
+    path.extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|ext| matches!(ext, "js" | "jsx" | "ts" | "tsx" | "mjs"))
 }
 
 /// Returns `true` if the file is a Flow file that cannot be parsed by oxc_parser.

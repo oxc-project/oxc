@@ -203,18 +203,17 @@ fn name_function_args(
         if let crate::hir::CallArg::Spread(_) = arg {
             continue;
         }
-        if let crate::hir::CallArg::Place(place) = arg {
-            if let Some(&idx) = functions.get(&place.identifier.id) {
-                if nodes[idx].generated_name.is_none() {
-                    let generated_name = if fn_arg_count > 1 {
-                        format!("{callee_name}(arg{i})")
-                    } else {
-                        format!("{callee_name}()")
-                    };
-                    nodes[idx].generated_name = Some(generated_name);
-                    functions.remove(&place.identifier.id);
-                }
-            }
+        if let crate::hir::CallArg::Place(place) = arg
+            && let Some(&idx) = functions.get(&place.identifier.id)
+            && nodes[idx].generated_name.is_none()
+        {
+            let generated_name = if fn_arg_count > 1 {
+                format!("{callee_name}(arg{i})")
+            } else {
+                format!("{callee_name}()")
+            };
+            nodes[idx].generated_name = Some(generated_name);
+            functions.remove(&place.identifier.id);
         }
     }
 }

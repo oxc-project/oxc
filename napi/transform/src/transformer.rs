@@ -468,11 +468,42 @@ pub struct StyledComponentsOptions {
     pub top_level_import_paths: Option<Vec<String>>,
 }
 
+/// Configure React Compiler behavior in the transformer pipeline.
+#[napi(object)]
+#[derive(Default)]
+pub struct ReactCompilerOptions {
+    /// Enables the React Compiler plugin.
+    ///
+    /// @default true
+    pub enabled: Option<bool>,
+
+    /// Strategy used to decide which functions to compile.
+    ///
+    /// - "infer" - infer components/hooks by naming convention
+    /// - "annotation" - compile only opt-in directives
+    /// - "all" - compile all functions
+    /// - "syntax" - compile only syntax-marked functions
+    ///
+    /// @default "infer"
+    pub compilation_mode: Option<String>,
+
+    /// Panic threshold for compilation failures.
+    ///
+    /// - "none"
+    /// - "critical_errors"
+    /// - "all_errors"
+    ///
+    /// @default "none"
+    pub panic_threshold: Option<String>,
+}
+
 #[napi(object)]
 #[derive(Default)]
 pub struct PluginsOptions {
     pub styled_components: Option<StyledComponentsOptions>,
     pub tagged_template_escape: Option<bool>,
+    #[napi(ts_type = "boolean | ReactCompilerOptions")]
+    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
 }
 
 impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
@@ -482,6 +513,12 @@ impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
                 .styled_components
                 .map(oxc::transformer::StyledComponentsOptions::from),
             tagged_template_transform: options.tagged_template_escape.unwrap_or(false),
+            react_compiler: options.react_compiler.map(|react_compiler| match react_compiler {
+                Either::A(enabled) => {
+                    oxc::transformer::ReactCompilerOptions { enabled, ..Default::default() }
+                }
+                Either::B(options) => oxc::transformer::ReactCompilerOptions::from(options),
+            }),
         }
     }
 }
@@ -506,6 +543,16 @@ impl From<StyledComponentsOptions> for oxc::transformer::StyledComponentsOptions
             top_level_import_paths: options
                 .top_level_import_paths
                 .unwrap_or(ops.top_level_import_paths),
+        }
+    }
+}
+
+impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
+    fn from(options: ReactCompilerOptions) -> Self {
+        oxc::transformer::ReactCompilerOptions {
+            enabled: options.enabled.unwrap_or(true),
+            compilation_mode: options.compilation_mode,
+            panic_threshold: options.panic_threshold,
         }
     }
 }

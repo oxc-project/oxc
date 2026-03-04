@@ -146,12 +146,12 @@ fn validate_impl(
                                     Some(description),
                                     None,
                                 )
-                                .with_detail(CompilerDiagnosticDetail::Error {
-                                    loc: Some(v.callee.loc),
-                                    message: Some(
-                                        "Found setState() in render".to_string(),
-                                    ),
-                                }),
+                                .with_detail(
+                                    CompilerDiagnosticDetail::Error {
+                                        loc: Some(v.callee.loc),
+                                        message: Some("Found setState() in render".to_string()),
+                                    },
+                                ),
                             );
                         }
                     }

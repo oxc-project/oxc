@@ -34,6 +34,7 @@ oxc_data_structures = { workspace = true, features = [
 ] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
+oxc_react_compiler = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }

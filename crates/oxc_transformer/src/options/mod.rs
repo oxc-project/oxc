@@ -270,6 +270,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             plugins.styled_components = Some(styled_components.clone());
         }
         plugins.tagged_template_transform = options.plugins.tagged_template_escape;
+        plugins.react_compiler.clone_from(&options.plugins.react_compiler);
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),

@@ -5,7 +5,6 @@
 /// Detects ESLint disable comments that suppress React-related rules,
 /// which indicates the code may be breaking React rules and should be
 /// skipped during compilation.
-
 use oxc_ast::ast::Comment;
 
 /// A suppression range from an eslint-disable comment pair.
@@ -85,8 +84,7 @@ fn matches_flow_suppression(text: &str) -> bool {
             let after = &trimmed[pos + prefix.len()..];
             // For $FlowFixMe, skip any word chars (e.g. $FlowFixMeSomething)
             let after = if *prefix == "$FlowFixMe" {
-                let skip =
-                    after.chars().take_while(|c| c.is_alphanumeric() || *c == '_').count();
+                let skip = after.chars().take_while(|c| c.is_alphanumeric() || *c == '_').count();
                 &after[skip..]
             } else {
                 after

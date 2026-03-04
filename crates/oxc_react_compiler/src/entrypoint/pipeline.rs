@@ -86,8 +86,15 @@ pub fn run_pipeline(
     // 3. ValidateContextVariableLValues
     crate::validation::validate_context_variable_lvalues::validate_context_variable_lvalues(func)?;
 
-    // 4. ValidateUseMemo — logged as non-fatal warnings (matching TS env.logErrors)
-    func.env.log_errors(crate::validation::validate_use_memo::validate_use_memo(func));
+    // 4. ValidateUseMemo — context variable reassignment errors are fatal (thrown
+    //    via `.unwrap()` in TS), while void-memo errors are non-fatal (logged via
+    //    `fn.env.logErrors`).
+    {
+        let (fatal_errors, void_memo_errors) =
+            crate::validation::validate_use_memo::validate_use_memo(func);
+        fatal_errors?;
+        func.env.log_errors(void_memo_errors);
+    }
 
     // 5. DropManualMemoization (when memoization is enabled)
     if env.enable_drop_manual_memoization {
@@ -474,7 +481,7 @@ pub fn run_pipeline(
 
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
-        crate::validation::validate_source_locations::validate_source_locations(&ast);
+        crate::validation::validate_source_locations::validate_source_locations(&ast)?;
     }
 
     // [TESTING ONLY] Simulate an unexpected exception during compilation.

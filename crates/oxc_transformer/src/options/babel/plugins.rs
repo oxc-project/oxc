@@ -1,9 +1,12 @@
 use serde::Deserialize;
 
 use crate::{
-    DecoratorOptions, TypeScriptOptions, es2015::ArrowFunctionsOptions,
-    es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions, jsx::JsxOptions,
-    plugins::StyledComponentsOptions,
+    DecoratorOptions, TypeScriptOptions,
+    es2015::ArrowFunctionsOptions,
+    es2018::ObjectRestSpreadOptions,
+    es2022::ClassPropertiesOptions,
+    jsx::JsxOptions,
+    plugins::{ReactCompilerOptions, StyledComponentsOptions},
 };
 
 use super::PluginPresetEntries;
@@ -80,6 +83,7 @@ pub struct BabelPlugins {
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
     pub tagged_template_escape: bool,
+    pub react_compiler: Option<ReactCompilerOptions>,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -177,6 +181,16 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 }
                 "tagged-template-transform" => {
                     p.tagged_template_escape = true;
+                }
+                "react-compiler" => {
+                    p.react_compiler = entry
+                        .value::<ReactCompilerOptions>()
+                        .map(|mut options| {
+                            options.enabled = true;
+                            options
+                        })
+                        .map_err(|err| p.errors.push(err))
+                        .ok();
                 }
                 s => p.unsupported.push(s.to_string()),
             }

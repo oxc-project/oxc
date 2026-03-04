@@ -37,6 +37,7 @@ struct SsaBuilder {
     env: Environment,
     unknown: FxHashSet<IdentifierId>,
     context: FxHashSet<IdentifierId>,
+    errors: CompilerError,
 }
 
 impl SsaBuilder {
@@ -49,6 +50,7 @@ impl SsaBuilder {
             env,
             unknown: FxHashSet::default(),
             context: FxHashSet::default(),
+            errors: CompilerError::new(),
         }
     }
 
@@ -87,8 +89,23 @@ impl SsaBuilder {
         let old_id = old_place.identifier.id;
 
         if self.unknown.contains(&old_id) {
-            // In TS this throws a Todo error; we return the original place
-            // to avoid panicking in the port
+            // Port of EnterSSA.ts line 102-107: identifier used before defined
+            let name = old_place
+                .identifier
+                .name
+                .as_ref()
+                .map_or_else(|| format!("#{}", old_id.0), |n| n.value().to_string());
+            self.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                crate::compiler_error::CompilerErrorDetailOptions {
+                    category: crate::compiler_error::ErrorCategory::Todo,
+                    reason:
+                        "[hoisting] EnterSSA: Expected identifier to be defined before being used"
+                            .to_string(),
+                    description: Some(format!("Identifier {name} is undefined")),
+                    loc: Some(old_place.loc.into()),
+                    suggestions: None,
+                },
+            ));
             return old_place;
         }
 
@@ -236,7 +253,8 @@ pub fn enter_ssa(func: &mut HIRFunction, _env: &Environment) -> Result<(), Compi
     // promotion in PromoteUsedTemporaries.
     func.env.advance_counters_past(&builder.env);
 
-    Ok(())
+    // Return any accumulated errors (e.g. hoisting Todo errors)
+    builder.errors.into_result()
 }
 
 fn enter_ssa_impl(
