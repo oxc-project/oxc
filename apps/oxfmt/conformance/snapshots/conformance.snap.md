@@ -41,3 +41,17 @@
 | File | Note |
 | :--- | :--- |
 | comment-tag.js | `/* GraphQL */` comment tag not yet supported |
+
+## svelte
+
+### Option 1: 75/75 (100.00%)
+
+```json
+{"printWidth":80}
+```
+
+### Option 2: 75/75 (100.00%)
+
+```json
+{"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
+```
