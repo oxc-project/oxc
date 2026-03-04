@@ -1,5 +1,147 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function Component() {
+ 3 │ │                 const result = cond ?? useConditionalHook();
+ 4 │ │                 return <>{result}</>;
+ 5 │ ╰─▶             }
+ 6 │                 
+   ╰────
 
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function useConditional1() {
+ 3 │ │                 'use memo';
+ 4 │ │                 return cond ?? useConditionalHook();
+ 5 │ ╰─▶             }
+ 6 │                 function useConditional2(props) {
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+    ╭─[react_compiler_rule.tsx:6:13]
+  5 │                 }
+  6 │ ╭─▶             function useConditional2(props) {
+  7 │ │                 'use memo';
+  8 │ │                 return props.cond && useConditionalHook();
+  9 │ ╰─▶             }
+ 10 │                 
+    ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:3:13]
+ 2 │                 let count = 0;
+ 3 │ ╭─▶             function Component() {
+ 4 │ │                 'use no forget';
+ 5 │ │                 return cond ?? useConditionalHook();
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: useMemo/useCallback result is unused. The return value of useMemo/useCallback should be used.
+    ╭─[react_compiler_rule.tsx:8:15]
+  7 │     
+  8 │ ╭─▶               useMemo(() => {
+  9 │ │                   if (cond) {
+ 10 │ │                     setPrevItem(item);
+ 11 │ │                     setState(0);
+ 12 │ │                   }
+ 13 │ ╰─▶               }, [cond, item, init]);
+ 14 │     
+    ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function useConditional() {
+ 3 │ │                 if (cond) {
+ 4 │ │                   useConditionalHook();
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function useConditional() {
+ 3 │ │                 cond ?? useConditionalHook();
+ 4 │ │                 props.cond && useConditionalHook();
+ 5 │ │                 return <div>Hello world</div>;
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function useConditional() {
+ 3 │ │                 cond ?? useConditionalHook();
+ 4 │ │                 props.cond && useConditionalHook();
+ 5 │ │                 return <div>Hello world</div>;
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+   ╭─[react_compiler_rule.tsx:5:18]
+ 4 │               return <>
+ 5 │                 {Child()}
+   ·                  ───────
+ 6 │               </>;
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+   ╭─[react_compiler_rule.tsx:5:18]
+ 4 │               return <>
+ 5 │                 {myModule.Child()}
+   ·                  ────────────────
+ 6 │               </>;
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Cannot call impure function during render. `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function Component() {
+ 3 │ │                 const date = Date.now();
+ 4 │ │                 const now = performance.now();
+ 5 │ │                 const rand = Math.random();
+ 6 │ │                 return <Foo date={date} now={now} rand={rand} />;
+ 7 │ ╰─▶             }
+ 8 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Avoid constructing JSX within try/catch. React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-
+  │ error-boundary).
+   ╭─[react_compiler_rule.tsx:5:22]
+ 4 │               try {
+ 5 │                 el = <Child />;
+   ·                      ─────────
+ 6 │               } catch {
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Cannot access refs during render. React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function Component(props) {
+ 3 │ │                 const ref = useRef(null);
+ 4 │ │                 const value = ref.current;
+ 5 │ │                 return value;
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: This value cannot be modified. This modifies a variable that React considers immutable.
+   ╭─[react_compiler_rule.tsx:3:13]
+ 2 │                 import { useState } from 'react';
+ 3 │ ╭─▶             function Component(props) {
+ 4 │ │                 const x: `foo${1}` = 'foo1';
+ 5 │ │                 const [state, setState] = useState({a: 0});
+ 6 │ │                 state.a = 1;
+ 7 │ │                 return <div>{props.foo}</div>;
+ 8 │ ╰─▶             }
+ 9 │                 
+   ╰────
