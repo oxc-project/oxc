@@ -858,9 +858,12 @@ fn fix_object_commas(type_str: &str) -> Cow<'_, str> {
             && (bytes[i + 2].is_ascii_alphanumeric() || bytes[i + 2] == b'_')
         {
             result.push(',');
-            // keep the space and next char
+            // keep the space and next char — just replace ';' with ','
         } else {
-            result.push(bytes[i] as char);
+            let ch = trimmed[i..].chars().next().unwrap();
+            result.push(ch);
+            i += ch.len_utf8();
+            continue;
         }
         i += 1;
     }

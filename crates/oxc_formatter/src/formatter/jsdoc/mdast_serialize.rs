@@ -199,6 +199,7 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
     }
 
     let mut result = String::with_capacity(text.len());
+    let mut changed = false;
 
     for line in text.lines() {
         if !result.is_empty() {
@@ -221,6 +222,7 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
                     result.push_str(number);
                     result.push_str(". ");
                     result.push_str(rest);
+                    changed = true;
                     continue;
                 }
             }
@@ -229,7 +231,7 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
         result.push_str(line);
     }
 
-    Cow::Owned(result)
+    if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
 }
 
 /// Replace `{@link ...}`, `{@linkcode ...}`, `{@linkplain ...}`, `{@tutorial ...}`
@@ -317,8 +319,9 @@ fn replace_placeholders(s: &str, placeholders: &[String]) -> String {
                 continue;
             }
             // Not a valid placeholder, copy the prefix character and advance
-            result.push(s[i..].chars().next().unwrap());
-            i += 1;
+            let ch = s[i..].chars().next().unwrap();
+            result.push(ch);
+            i += ch.len_utf8();
         } else {
             let ch = s[i..].chars().next().unwrap();
             result.push(ch);
