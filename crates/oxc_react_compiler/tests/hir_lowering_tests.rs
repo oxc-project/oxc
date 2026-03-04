@@ -381,7 +381,10 @@ export const FIXTURE_ENTRYPOINT = {
                 let ast = oxc_ast::AstBuilder::new(&allocator);
                 match run_codegen(pipeline_output, &env, ast) {
                     Ok(codegen_func) => {
-                        let actual_full = format!("function Component(props) {{\n{}}}", print_codegen_body(&codegen_func));
+                        let actual_full = format!(
+                            "function Component(props) {{\n{}}}",
+                            print_codegen_body(&codegen_func)
+                        );
                         println!("=== {name} ===");
                         println!("--- Actual output ---");
                         println!("{}", actual_full);
@@ -392,7 +395,9 @@ export const FIXTURE_ENTRYPOINT = {
                         let expected_lines: Vec<&str> = expected_func.lines().collect();
                         if actual_lines != expected_lines {
                             println!("--- Differences ---");
-                            for (i, (a, e)) in actual_lines.iter().zip(expected_lines.iter()).enumerate() {
+                            for (i, (a, e)) in
+                                actual_lines.iter().zip(expected_lines.iter()).enumerate()
+                            {
                                 if a != e {
                                     println!("Line {}: actual=|{}| expected=|{}|", i, a, e);
                                 }
@@ -1825,8 +1830,9 @@ function Component({a, b}) {
         .expect("lowering failed");
 
     // Run the full pipeline
-    let pipeline_output = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
-        .expect("pipeline failed");
+    let pipeline_output =
+        oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
+            .expect("pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
     let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env, ast)
         .expect("codegen failed");
@@ -1840,4 +1846,3 @@ function Component({a, b}) {
         codegen.memo_slots_used,
     );
 }
-

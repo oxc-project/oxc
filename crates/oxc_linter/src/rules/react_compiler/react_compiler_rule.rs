@@ -348,11 +348,8 @@ fn lint_function<'a>(
     // so that validation still runs on opted-out functions.
     // This matches the ESLint plugin's behavior where the lint rule always
     // validates, even if the compiler won't transform the function.
-    let lint_directives: Vec<String> = directives
-        .iter()
-        .filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str()))
-        .cloned()
-        .collect();
+    let lint_directives: Vec<String> =
+        directives.iter().filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str())).cloned().collect();
     let Some(fn_type) =
         should_compile_function(name, &lint_directives, config.compilation_mode.into(), false)
     else {

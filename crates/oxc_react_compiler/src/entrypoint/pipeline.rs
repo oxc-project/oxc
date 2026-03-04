@@ -485,8 +485,7 @@ pub fn run_codegen<'a>(
 
     // 50. CodegenFunction
     let fbt_operands_for_outlined = fbt_operands.clone();
-    let enable_reset_cache =
-        env.config.enable_reset_cache_on_source_file_changes == Some(true);
+    let enable_reset_cache = env.config.enable_reset_cache_on_source_file_changes == Some(true);
     let source_code = env.code.clone();
     let codegen_options = CodegenOptions {
         unique_identifiers,
@@ -528,10 +527,7 @@ pub fn run_codegen<'a>(
             outlined_codegen_options,
             ast,
         )?;
-        outlined_fns.push(OutlinedOutput {
-            fn_: outlined_ast,
-            fn_type: entry.fn_type,
-        });
+        outlined_fns.push(OutlinedOutput { fn_: outlined_ast, fn_type: entry.fn_type });
     }
     codegen_output.outlined = outlined_fns;
 
