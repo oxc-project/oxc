@@ -139,6 +139,10 @@ pub struct ForbidComponentPropsConfig {
 #[serde(from = "ForbidComponentPropsConfig")]
 pub struct ForbidComponentProps {
     #[serde(skip)]
+    #[expect(
+        clippy::box_collection,
+        reason = "Keeps RuleEnum small, uses same pattern as `react/forbid-dom-props`"
+    )]
     forbid: Box<Vec<(CompactStr, ForbidOption)>>,
 }
 
