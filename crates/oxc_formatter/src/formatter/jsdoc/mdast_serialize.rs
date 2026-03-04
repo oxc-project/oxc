@@ -2,6 +2,8 @@ use std::borrow::Cow;
 
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
+use crate::{ExternalCallbacks, FormatOptions};
+
 use super::wrap::{format_table_block, wrap_paragraph, wrap_plain_paragraphs};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
@@ -76,7 +78,13 @@ fn needs_mdast_parsing(text: &str) -> bool {
 /// text with proper indentation, wrapping, and emphasis normalization.
 /// This replaces the manual normalize+wrap pipeline with an approach matching
 /// the upstream prettier-plugin-jsdoc's use of `fromMarkdown` + `stringify`.
-pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) -> Vec<String> {
+pub fn format_description_mdast(
+    text: &str,
+    max_width: usize,
+    capitalize: bool,
+    format_options: Option<&FormatOptions>,
+    external_callbacks: Option<&ExternalCallbacks>,
+) -> Vec<String> {
     if text.trim().is_empty() {
         return Vec::new();
     }
@@ -132,8 +140,14 @@ pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) 
     };
 
     let mut lines = Vec::new();
-    let opts =
-        SerializeOptions { max_width, capitalize, placeholders: &placeholders, source: &protected };
+    let opts = SerializeOptions {
+        max_width,
+        capitalize,
+        placeholders: &placeholders,
+        source: &protected,
+        format_options,
+        external_callbacks,
+    };
     serialize_children(&root, 0, &opts, &mut lines);
 
     // Restore any remaining placeholders in output lines
@@ -152,6 +166,8 @@ struct SerializeOptions<'a> {
     capitalize: bool,
     placeholders: &'a [String],
     source: &'a str,
+    format_options: Option<&'a FormatOptions>,
+    external_callbacks: Option<&'a ExternalCallbacks>,
 }
 
 // ──────────────────────────────────────────────────
@@ -375,7 +391,7 @@ fn serialize_node(
         // ListItems are handled by serialize_list; thematic breaks are dropped (matches upstream)
         Node::ListItem(_) | Node::ThematicBreak(_) => {}
         Node::Code(code) => {
-            serialize_code(code, lines);
+            serialize_code(code, opts, lines);
         }
         Node::Blockquote(bq) => {
             serialize_blockquote(bq, opts, lines);
@@ -746,31 +762,76 @@ fn serialize_node_for_list_item(
 // Code block serialization
 // ──────────────────────────────────────────────────
 
-fn serialize_code(code: &markdown::mdast::Code, lines: &mut Vec<String>) {
+fn serialize_code(
+    code: &markdown::mdast::Code,
+    opts: &SerializeOptions<'_>,
+    lines: &mut Vec<String>,
+) {
+    // Blank line before code block
+    if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
+        lines.push(String::new());
+    }
+
+    let code_width = opts.max_width.saturating_sub(4);
+    let formatted_value = format_code_value(&code.value, code.lang.as_deref(), code_width, opts);
+
     if let Some(lang) = &code.lang
         && !lang.is_empty()
     {
         // Fenced code block with language
-        if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-            lines.push(String::new());
-        }
         lines.push(format!("```{lang}"));
-        for line in code.value.lines() {
+        for line in formatted_value.lines() {
             lines.push(line.to_string());
         }
         lines.push("```".to_string());
-        return;
+    } else {
+        // No language: indented code block (4-space prefix)
+        for line in formatted_value.lines() {
+            if line.is_empty() {
+                lines.push(String::new());
+            } else {
+                lines.push(format!("    {line}"));
+            }
+        }
     }
+}
 
-    // No language: convert to indented code block (matches upstream behavior)
-    if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-        lines.push(String::new());
-    }
-    for line in code.value.lines() {
-        if line.is_empty() {
-            lines.push(String::new());
+/// Try to format the code value using the appropriate formatter.
+/// Returns the formatted code if successful, or the original code as-is.
+fn format_code_value<'a>(
+    code: &'a str,
+    lang: Option<&str>,
+    width: usize,
+    opts: &SerializeOptions<'_>,
+) -> Cow<'a, str> {
+    let Some(format_options) = opts.format_options else {
+        return Cow::Borrowed(code);
+    };
+
+    if let Some(lang) = lang {
+        // JS/TS: native formatter
+        if super::serialize::is_js_ts_lang(lang)
+            && let Some(formatted) =
+                super::serialize::format_embedded_js(code, width, format_options)
+        {
+            return Cow::Owned(formatted);
+        }
+        // CSS/HTML/GraphQL/MD: external formatter
+        if let Some(ext_lang) = super::serialize::fenced_lang_to_external_language(lang)
+            && let Some(cbs) = opts.external_callbacks
+            && let Some(formatted) =
+                super::serialize::format_external_language(code, ext_lang, width, cbs)
+        {
+            return Cow::Owned(formatted);
+        }
+        // Unknown language or formatting failed: pass through
+        Cow::Borrowed(code)
+    } else {
+        // No language: try as JS (matches upstream default "babel" parser)
+        if let Some(formatted) = super::serialize::format_embedded_js(code, width, format_options) {
+            Cow::Owned(formatted)
         } else {
-            lines.push(format!("    {line}"));
+            Cow::Borrowed(code)
         }
     }
 }
