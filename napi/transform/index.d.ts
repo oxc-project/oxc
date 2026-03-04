@@ -347,6 +347,16 @@ export interface ReactCompilerOptions {
    * @default "none"
    */
   panicThreshold?: string
+  /**
+   * Target React version.
+   *
+   * Controls which runtime module to import:
+   * - "react-17" / "react-18" -> "react-compiler-runtime" (npm package)
+   * - "react-19" (default)    -> "react/compiler-runtime" (from react namespace)
+   *
+   * @default "react-19"
+   */
+  target?: string
 }
 
 export interface ReactRefreshOptions {
