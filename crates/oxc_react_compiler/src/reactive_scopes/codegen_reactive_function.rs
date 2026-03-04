@@ -26,17 +26,15 @@ use sha2::Sha256;
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
-        ArrayExpressionElement as HirArrayExpressionElement,
-        ArrayPatternElement, CallArg, DeclarationId,
-        FunctionExpressionType, HIRFunction, IdentifierId,
-        IdentifierName as HirIdentifierName, InstructionKind,
-        InstructionValue, JsxAttribute, JsxTag, ObjectExpression, ObjectMethodValue,
-        ObjectPatternProperty, ObjectPropertyKey, ObjectPropertyType, Pattern, Place,
-        PrimitiveValueKind, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
-        ReactiveFunction, ReactiveInstruction, ReactiveInstructionStatement, ReactiveParam,
-        ReactiveScope,
-        ReactiveScopeDeclaration, ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal,
-        ReactiveTerminalTargetKind, ReactiveValue,
+        ArrayExpressionElement as HirArrayExpressionElement, ArrayPatternElement, CallArg,
+        DeclarationId, FunctionExpressionType, HIRFunction, IdentifierId,
+        IdentifierName as HirIdentifierName, InstructionKind, InstructionValue, JsxAttribute,
+        JsxTag, ObjectExpression, ObjectMethodValue, ObjectPatternProperty, ObjectPropertyKey,
+        ObjectPropertyType, Pattern, Place, PrimitiveValueKind, ReactiveBlock,
+        ReactiveBreakTerminal, ReactiveContinueTerminal, ReactiveFunction, ReactiveInstruction,
+        ReactiveInstructionStatement, ReactiveParam, ReactiveScope, ReactiveScopeDeclaration,
+        ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal, ReactiveTerminalTargetKind,
+        ReactiveValue,
         environment::{CompilerOutputMode, ExternalFunction, InstrumentationConfig},
         object_shape::ShapeRegistry,
         types::Type,
@@ -425,7 +423,10 @@ fn binding_pattern_to_assignment_target<'a>(
                 let target = binding_pattern_to_assignment_target(cx, prop.value);
                 let binding: AssignmentTargetMaybeDefault<'a> = target.into();
                 let property = cx.ast.assignment_target_property_property(
-                    SPAN, prop.key, binding, prop.computed,
+                    SPAN,
+                    prop.key,
+                    binding,
+                    prop.computed,
                 );
                 properties.push(AssignmentTargetProperty::AssignmentTargetPropertyProperty(
                     cx.ast.alloc(property),
@@ -438,9 +439,9 @@ fn binding_pattern_to_assignment_target<'a>(
                     cx.ast.alloc(cx.ast.assignment_target_rest(SPAN, target))
                 });
             let obj_target = cx.ast.object_assignment_target(SPAN, properties, rest);
-            AssignmentTarget::from(
-                AssignmentTargetPattern::ObjectAssignmentTarget(cx.ast.alloc(obj_target)),
-            )
+            AssignmentTarget::from(AssignmentTargetPattern::ObjectAssignmentTarget(
+                cx.ast.alloc(obj_target),
+            ))
         }
         BindingPattern::ArrayPattern(arr) => {
             let arr = arr.unbox();
@@ -463,9 +464,9 @@ fn binding_pattern_to_assignment_target<'a>(
                     cx.ast.alloc(cx.ast.assignment_target_rest(SPAN, target))
                 });
             let arr_target = cx.ast.array_assignment_target(SPAN, elements, rest);
-            AssignmentTarget::from(
-                AssignmentTargetPattern::ArrayAssignmentTarget(cx.ast.alloc(arr_target)),
-            )
+            AssignmentTarget::from(AssignmentTargetPattern::ArrayAssignmentTarget(
+                cx.ast.alloc(arr_target),
+            ))
         }
         BindingPattern::AssignmentPattern(_) => {
             // Assignment patterns with defaults should not appear in reassignment context
@@ -493,9 +494,12 @@ fn build_formal_params<'a>(
             let fp_rest = cx.ast.formal_parameter_rest(SPAN, cx.ast.vec(), rest_elem, NONE);
             rest = Some(oxc_allocator::Box::new_in(fp_rest, cx.ast.allocator));
         } else {
-            let binding = cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(param_str.as_str()));
+            let binding =
+                cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(param_str.as_str()));
             let decorators = cx.ast.vec();
-            let fp = cx.ast.formal_parameter(SPAN, decorators, binding, NONE, NONE, false, None, false, false);
+            let fp = cx
+                .ast
+                .formal_parameter(SPAN, decorators, binding, NONE, NONE, false, None, false, false);
             items.push(fp);
         }
     }
@@ -532,9 +536,7 @@ fn expression_to_chain_element(expr: Expression<'_>) -> Option<ChainElement<'_>>
     match expr {
         Expression::CallExpression(call) => Some(ChainElement::CallExpression(call)),
         Expression::StaticMemberExpression(m) => Some(ChainElement::StaticMemberExpression(m)),
-        Expression::ComputedMemberExpression(m) => {
-            Some(ChainElement::ComputedMemberExpression(m))
-        }
+        Expression::ComputedMemberExpression(m) => Some(ChainElement::ComputedMemberExpression(m)),
         Expression::PrivateFieldExpression(f) => Some(ChainElement::PrivateFieldExpression(f)),
         _ => None,
     }
@@ -548,9 +550,7 @@ fn expression_to_chain_element(expr: Expression<'_>) -> Option<ChainElement<'_>>
 /// therefore needs to be wrapped in a `ChainExpression`.
 fn contains_optional_access(expr: &Expression<'_>) -> bool {
     match expr {
-        Expression::StaticMemberExpression(m) => {
-            m.optional || contains_optional_access(&m.object)
-        }
+        Expression::StaticMemberExpression(m) => m.optional || contains_optional_access(&m.object),
         Expression::ComputedMemberExpression(m) => {
             m.optional || contains_optional_access(&m.object)
         }
@@ -607,10 +607,7 @@ fn set_optional_flag<'a>(
 
 /// Wrap an expression in a `ChainExpression` if it (or any of its nested sub-expressions)
 /// contains an optional access. This is the single wrapping point for optional chains.
-fn wrap_in_chain_if_needed<'a>(
-    cx: &CodegenContext<'a>,
-    expr: Expression<'a>,
-) -> Expression<'a> {
+fn wrap_in_chain_if_needed<'a>(cx: &CodegenContext<'a>, expr: Expression<'a>) -> Expression<'a> {
     if !contains_optional_access(&expr) {
         return expr;
     }
@@ -624,7 +621,6 @@ fn wrap_in_chain_if_needed<'a>(
     }
 }
 
-
 /// Clone an expression from the temp map (arena-allocated copy).
 fn clone_expr<'a>(cx: &CodegenContext<'a>, expr: &Expression<'a>) -> Expression<'a> {
     expr.clone_in(cx.ast.allocator)
@@ -636,9 +632,7 @@ fn resolve_temp<'a>(cx: &CodegenContext<'a>, decl_id: DeclarationId) -> Option<E
 }
 
 /// Clone the temp map (deep-cloning all expressions into the arena).
-fn clone_temp_map<'a>(
-    cx: &CodegenContext<'a>,
-) -> FxHashMap<DeclarationId, Option<Expression<'a>>> {
+fn clone_temp_map<'a>(cx: &CodegenContext<'a>) -> FxHashMap<DeclarationId, Option<Expression<'a>>> {
     cx.temp
         .iter()
         .map(|(k, v)| (*k, v.as_ref().map(|expr| expr.clone_in(cx.ast.allocator))))
@@ -723,9 +717,11 @@ pub fn codegen_function<'a>(
 
     // Insert `const $ = _c(N);` preamble if there are cache slots
     if cache_count > 0 {
-        let call = make_call(&cx, make_id(&cx, "_c"), cx.ast.vec1(Argument::from(
-            make_number(&cx, f64::from(cache_count)),
-        )));
+        let call = make_call(
+            &cx,
+            make_id(&cx, "_c"),
+            cx.ast.vec1(Argument::from(make_number(&cx, f64::from(cache_count)))),
+        );
         let preamble = make_var_decl(&cx, VariableDeclarationKind::Const, "$", Some(call));
         body.insert(0, preamble);
     }
@@ -1087,8 +1083,7 @@ fn codegen_block_no_reset<'a>(
                     // No label: flatten BlockStatement body, otherwise push directly
                     // (matches TS: statement.type === 'BlockStatement' ? ...statement.body : statement)
                     if term_stmts.len() == 1 {
-                        let stmt =
-                            term_stmts.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN));
+                        let stmt = term_stmts.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN));
                         match stmt {
                             Statement::BlockStatement(block_alloc) => {
                                 statements.extend(block_alloc.unbox().body);
@@ -1152,11 +1147,8 @@ fn codegen_reactive_scope<'a>(
         let index = cx.alloc_cache_index();
 
         // Build change test: $[idx] !== dep_expr
-        let cache_access = make_computed_member(
-            cx,
-            make_id(cx, &cache_name),
-            make_number(cx, f64::from(index)),
-        );
+        let cache_access =
+            make_computed_member(cx, make_id(cx, &cache_name), make_number(cx, f64::from(index)));
         let dep_expr = codegen_dependency(cx, dep);
         let comparison = make_binary(cx, cache_access, BinaryOperator::StrictInequality, dep_expr);
         change_expressions.push(comparison);
@@ -1205,8 +1197,9 @@ fn codegen_reactive_scope<'a>(
             first_output_index = Some(index);
         }
         let name = match &reassignment_ident.name {
-            Some(crate::hir::IdentifierName::Named(n)
-            | crate::hir::IdentifierName::Promoted(n)) => n.clone(),
+            Some(
+                crate::hir::IdentifierName::Named(n) | crate::hir::IdentifierName::Promoted(n),
+            ) => n.clone(),
             None => format!("t{}", reassignment_ident.id.0),
         };
         cache_loads.push(CacheLoad { name, index });
@@ -1279,9 +1272,8 @@ fn codegen_reactive_scope<'a>(
             make_sentinel_call(cx, EARLY_RETURN_SENTINEL),
         );
         let return_stmt = make_return(cx, Some(make_id(cx, &name)));
-        let return_block = Statement::BlockStatement(
-            stmts_to_block_body(cx, cx.ast.vec1(return_stmt)),
-        );
+        let return_block =
+            Statement::BlockStatement(stmts_to_block_body(cx, cx.ast.vec1(return_stmt)));
         statements.push(cx.ast.statement_if(SPAN, test, return_block, None));
     }
 }
@@ -1358,9 +1350,8 @@ fn codegen_terminal<'a>(
                             cx.ast.vec()
                         } else {
                             // Wrap in a BlockStatement like TS does
-                            let block = Statement::BlockStatement(
-                                stmts_to_block_body(cx, block_stmts),
-                            );
+                            let block =
+                                Statement::BlockStatement(stmts_to_block_body(cx, block_stmts));
                             cx.ast.vec1(block)
                         }
                     })
@@ -1379,8 +1370,7 @@ fn codegen_terminal<'a>(
         }
         ReactiveTerminal::ForOf(t) => {
             let (kind, binding) = codegen_for_of_in_init(cx, &t.init, &t.test);
-            let declarator =
-                cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
+            let declarator = cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
             let decl = cx.ast.variable_declaration(SPAN, kind, cx.ast.vec1(declarator), false);
             let left = ForStatementLeft::VariableDeclaration(cx.ast.alloc(decl));
             let right = codegen_for_of_collection(cx, &t.init);
@@ -1390,8 +1380,7 @@ fn codegen_terminal<'a>(
         }
         ReactiveTerminal::ForIn(t) => {
             let (kind, binding) = codegen_for_in_init(cx, &t.init);
-            let declarator =
-                cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
+            let declarator = cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
             let decl = cx.ast.variable_declaration(SPAN, kind, cx.ast.vec1(declarator), false);
             let left = ForStatementLeft::VariableDeclaration(cx.ast.alloc(decl));
             let right = codegen_for_in_collection(cx, &t.init);
@@ -1444,10 +1433,7 @@ fn codegen_terminal<'a>(
     }
 }
 
-fn codegen_break<'a>(
-    cx: &CodegenContext<'a>,
-    t: &ReactiveBreakTerminal,
-) -> Option<Statement<'a>> {
+fn codegen_break<'a>(cx: &CodegenContext<'a>, t: &ReactiveBreakTerminal) -> Option<Statement<'a>> {
     if t.target_kind == ReactiveTerminalTargetKind::Implicit {
         return None;
     }
@@ -1492,8 +1478,7 @@ fn codegen_instruction_nullable<'a>(
                     && !matches!(
                         store.lvalue.kind,
                         InstructionKind::Function | InstructionKind::HoistedFunction
-                    )
-                {
+                    ) {
                     InstructionKind::Reassign
                 } else {
                     store.lvalue.kind
@@ -1654,9 +1639,10 @@ fn codegen_store_or_declare<'a>(
             // FunctionExpression instruction was processed.
             if let Some(vp) = value_place {
                 if let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id) {
-                    let fn_name = fn_data.id.as_ref().map(|n| {
-                        cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str()))
-                    });
+                    let fn_name = fn_data
+                        .id
+                        .as_ref()
+                        .map(|n| cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str())));
                     let params = build_formal_params(cx, &fn_data.params);
                     let body = build_function_body(cx, &fn_data.directives, fn_data.body);
                     let decl = cx.ast.function(
@@ -1669,7 +1655,7 @@ fn codegen_store_or_declare<'a>(
                         NONE,  // type_parameters
                         NONE,  // this_param
                         params,
-                        NONE,  // return_type
+                        NONE, // return_type
                         Some(body),
                     );
                     stmts.push(Statement::FunctionDeclaration(cx.ast.alloc(decl)));
@@ -1730,7 +1716,8 @@ fn codegen_destructure_statement<'a>(
                 ));
             }
             let var_kind = VariableDeclarationKind::Const;
-            let declarator = cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
+            let declarator =
+                cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
             let declarators = cx.ast.vec1(declarator);
             let decl = cx.ast.variable_declaration(SPAN, var_kind, declarators, false);
             stmts.push(Statement::VariableDeclaration(cx.ast.alloc(decl)));
@@ -1744,7 +1731,8 @@ fn codegen_destructure_statement<'a>(
                 ));
             }
             let var_kind = VariableDeclarationKind::Let;
-            let declarator = cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
+            let declarator =
+                cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
             let declarators = cx.ast.vec1(declarator);
             let decl = cx.ast.variable_declaration(SPAN, var_kind, declarators, false);
             stmts.push(Statement::VariableDeclaration(cx.ast.alloc(decl)));
@@ -1826,7 +1814,12 @@ fn codegen_instruction_to_statement<'a>(
                 } else {
                     // First declaration
                     cx.declare(lval.identifier.declaration_id);
-                    stmts.push(make_var_decl(cx, VariableDeclarationKind::Const, &name, Some(value)));
+                    stmts.push(make_var_decl(
+                        cx,
+                        VariableDeclarationKind::Const,
+                        &name,
+                        Some(value),
+                    ));
                 }
             }
         }
@@ -1853,9 +1846,7 @@ fn codegen_instruction_value<'a>(
                     }
                     HirArrayExpressionElement::Spread(s) => {
                         let expr = codegen_place_to_expression(cx, &s.place);
-                        elements.push(
-                            cx.ast.array_expression_element_spread_element(SPAN, expr),
-                        );
+                        elements.push(cx.ast.array_expression_element_spread_element(SPAN, expr));
                     }
                     HirArrayExpressionElement::Hole => {
                         elements.push(cx.ast.array_expression_element_elision(SPAN));
@@ -1952,10 +1943,7 @@ fn codegen_instruction_value<'a>(
                     flags |= f;
                 }
             }
-            let pattern = RegExpPattern {
-                text: cx.ast.atom(&re.pattern),
-                pattern: None,
-            };
+            let pattern = RegExpPattern { text: cx.ast.atom(&re.pattern), pattern: None };
             let regex = RegExp { pattern, flags };
             let raw = cx.ast.atom(&format!("/{}/{}", re.pattern, re.flags));
             cx.ast.expression_reg_exp_literal(SPAN, regex, Some(raw))
@@ -1988,9 +1976,7 @@ fn codegen_instruction_value<'a>(
             let quasi = cx.ast.template_literal(SPAN, quasis, expressions);
             cx.ast.expression_tagged_template(SPAN, tag, NONE, quasi)
         }
-        InstructionValue::TypeCastExpression(cast) => {
-            codegen_place_to_expression(cx, &cast.value)
-        }
+        InstructionValue::TypeCastExpression(cast) => codegen_place_to_expression(cx, &cast.value),
         InstructionValue::JsxExpression(jsx) => {
             let tag_name = codegen_jsx_tag_to_element_name(cx, &jsx.tag);
             let mut attrs = cx.ast.vec_with_capacity(jsx.props.len());
@@ -2024,15 +2010,9 @@ fn codegen_instruction_value<'a>(
             let closing = cx.ast.jsx_closing_fragment(SPAN);
             cx.ast.expression_jsx_fragment(SPAN, opening, children, closing)
         }
-        InstructionValue::GetIterator(iter) => {
-            codegen_place_to_expression(cx, &iter.collection)
-        }
-        InstructionValue::IteratorNext(iter) => {
-            codegen_place_to_expression(cx, &iter.iterator)
-        }
-        InstructionValue::NextPropertyOf(next) => {
-            codegen_place_to_expression(cx, &next.value)
-        }
+        InstructionValue::GetIterator(iter) => codegen_place_to_expression(cx, &iter.collection),
+        InstructionValue::IteratorNext(iter) => codegen_place_to_expression(cx, &iter.iterator),
+        InstructionValue::NextPropertyOf(next) => codegen_place_to_expression(cx, &next.value),
         InstructionValue::PrefixUpdate(update) => {
             let name = identifier_name(&update.lvalue.identifier);
             let target = make_simple_assignment_target_id(cx, &name);
@@ -2068,9 +2048,7 @@ fn codegen_instruction_value<'a>(
         | InstructionValue::FinishMemoize(_)
         | InstructionValue::Debugger(_)
         | InstructionValue::ObjectMethod(_) => make_undefined(cx),
-        InstructionValue::UnsupportedNode(_) => {
-            make_string(cx, "/* unsupported */")
-        }
+        InstructionValue::UnsupportedNode(_) => make_string(cx, "/* unsupported */"),
     }
 }
 
@@ -2224,22 +2202,22 @@ fn codegen_function_expression<'a>(
                         let fb = build_function_body(cx, &inner_fn.directives, stmts);
                         cx.ast.expression_arrow_function(
                             SPAN,
-                            true,              // expression (concise body)
+                            true, // expression (concise body)
                             inner_fn.is_async,
-                            NONE,              // type_parameters
+                            NONE, // type_parameters
                             params,
-                            NONE,              // return_type
+                            NONE, // return_type
                             fb,
                         )
                     } else {
                         let fb = build_function_body(cx, &inner_fn.directives, body_stmts);
                         cx.ast.expression_arrow_function(
                             SPAN,
-                            false,             // expression (block body)
+                            false, // expression (block body)
                             inner_fn.is_async,
-                            NONE,              // type_parameters
+                            NONE, // type_parameters
                             params,
-                            NONE,              // return_type
+                            NONE, // return_type
                             fb,
                         )
                     }
@@ -2248,9 +2226,10 @@ fn codegen_function_expression<'a>(
                 | FunctionExpressionType::FunctionDeclaration => {
                     let params = build_formal_params(cx, &inner_fn.params);
                     let body = build_function_body(cx, &inner_fn.directives, inner_fn.body);
-                    let id = func_expr.name.as_ref().map(|n| {
-                        cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str()))
-                    });
+                    let id = func_expr
+                        .name
+                        .as_ref()
+                        .map(|n| cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str())));
 
                     cx.ast.expression_function(
                         SPAN,
@@ -2258,11 +2237,11 @@ fn codegen_function_expression<'a>(
                         id,
                         inner_fn.generator,
                         inner_fn.is_async,
-                        false,           // declare
-                        NONE,            // type_parameters
-                        NONE,            // this_param
+                        false, // declare
+                        NONE,  // type_parameters
+                        NONE,  // this_param
                         params,
-                        NONE,            // return_type
+                        NONE, // return_type
                         Some(body),
                     )
                 }
@@ -2277,17 +2256,19 @@ fn codegen_function_expression<'a>(
             {
                 let hint = func_expr.name_hint.as_ref().map_or("", String::as_str);
                 // Build: {hint: value}[hint]
-                let key = PropertyKey::StringLiteral(
-                    cx.ast.alloc(cx.ast.string_literal(SPAN, cx.ast.atom(hint), None)),
-                );
+                let key = PropertyKey::StringLiteral(cx.ast.alloc(cx.ast.string_literal(
+                    SPAN,
+                    cx.ast.atom(hint),
+                    None,
+                )));
                 let obj_prop = cx.ast.object_property(
                     SPAN,
                     PropertyKind::Init,
                     key,
                     value,
-                    false,  // method
-                    false,  // shorthand
-                    false,  // computed
+                    false, // method
+                    false, // shorthand
+                    false, // computed
                 );
                 let props = cx.ast.vec1(ObjectPropertyKind::ObjectProperty(cx.ast.alloc(obj_prop)));
                 let obj = cx.ast.expression_object(SPAN, props);
@@ -2332,15 +2313,16 @@ fn codegen_object_expression<'a>(
                     let method = cx.object_methods.get(&p.place.identifier.id).cloned();
                     if let Some(method) = method {
                         let method_key = codegen_object_property_key(cx, &p.key);
-                        let method_expr = codegen_object_method_expression(cx, &method, method_key, is_computed);
+                        let method_expr =
+                            codegen_object_method_expression(cx, &method, method_key, is_computed);
                         // Build ObjectProperty with method: true, kind: Init
                         let obj_prop = cx.ast.object_property(
                             SPAN,
                             PropertyKind::Init,
                             key,
                             method_expr,
-                            true,      // method
-                            false,     // shorthand
+                            true,  // method
+                            false, // shorthand
                             is_computed,
                         );
                         properties.push(ObjectPropertyKind::ObjectProperty(cx.ast.alloc(obj_prop)));
@@ -2373,7 +2355,7 @@ fn codegen_object_expression<'a>(
                         PropertyKind::Init,
                         key,
                         value,
-                        false,        // method
+                        false, // method
                         is_shorthand,
                         is_computed,
                     );
@@ -2414,14 +2396,14 @@ fn codegen_object_method_expression<'a>(
             cx.ast.expression_function(
                 SPAN,
                 FunctionType::FunctionExpression,
-                None,               // id (methods don't need a name here)
+                None, // id (methods don't need a name here)
                 inner_fn.generator,
                 inner_fn.is_async,
-                false,              // declare
-                NONE,               // type_parameters
-                NONE,               // this_param
+                false, // declare
+                NONE,  // type_parameters
+                NONE,  // this_param
                 params,
-                NONE,               // return_type
+                NONE, // return_type
                 Some(body),
             )
         }
@@ -2568,10 +2550,7 @@ fn join_jsx_children_multiline(children: &[String]) -> String {
 /// Matches TS `codegenJsxAttribute`: StringLiteral values that don't need
 /// escaping are emitted directly as JSX attribute strings; all other values
 /// are wrapped in expression containers.
-fn codegen_jsx_attribute<'a>(
-    cx: &CodegenContext<'a>,
-    attr: &JsxAttribute,
-) -> JSXAttributeItem<'a> {
+fn codegen_jsx_attribute<'a>(cx: &CodegenContext<'a>, attr: &JsxAttribute) -> JSXAttributeItem<'a> {
     match attr {
         JsxAttribute::Attribute { name, place } => {
             // Build attribute name, handling namespaced names like xmlns:xlink
@@ -2596,9 +2575,7 @@ fn codegen_jsx_attribute<'a>(
                         || cx.is_fbt_operand(place.identifier.id) =>
                 {
                     // Use string literal directly as JSX attribute value
-                    let Expression::StringLiteral(lit) = inner_value else {
-                        unreachable!()
-                    };
+                    let Expression::StringLiteral(lit) = inner_value else { unreachable!() };
                     JSXAttributeValue::StringLiteral(lit)
                 }
                 _ => {
@@ -2663,38 +2640,30 @@ fn codegen_jsx_child<'a>(cx: &CodegenContext<'a>, place: &Place) -> JSXChild<'a>
             // use the heuristic; Primitive::String-origin strings always wrap.
             if is_jsx_text {
                 if jsx_text_child_requires_expr_container(&lit.value) {
-                    let container = cx.ast.jsx_expression_container(
-                        SPAN,
-                        JSXExpression::StringLiteral(lit),
-                    );
+                    let container =
+                        cx.ast.jsx_expression_container(SPAN, JSXExpression::StringLiteral(lit));
                     JSXChild::ExpressionContainer(cx.ast.alloc(container))
                 } else {
                     let text = cx.ast.jsx_text(SPAN, lit.value.clone(), None);
                     JSXChild::Text(cx.ast.alloc(text))
                 }
             } else {
-                let container = cx.ast.jsx_expression_container(
-                    SPAN,
-                    JSXExpression::StringLiteral(lit),
-                );
+                let container =
+                    cx.ast.jsx_expression_container(SPAN, JSXExpression::StringLiteral(lit));
                 JSXChild::ExpressionContainer(cx.ast.alloc(container))
             }
         }
         Expression::JSXElement(elem) => JSXChild::Element(elem),
         Expression::JSXFragment(frag) => JSXChild::Fragment(frag),
         _ => {
-            let container =
-                cx.ast.jsx_expression_container(SPAN, JSXExpression::from(value));
+            let container = cx.ast.jsx_expression_container(SPAN, JSXExpression::from(value));
             JSXChild::ExpressionContainer(cx.ast.alloc(container))
         }
     }
 }
 
 /// Convert a Place to an expression.
-fn codegen_place_to_expression<'a>(
-    cx: &CodegenContext<'a>,
-    place: &Place,
-) -> Expression<'a> {
+fn codegen_place_to_expression<'a>(cx: &CodegenContext<'a>, place: &Place) -> Expression<'a> {
     let decl_id = place.identifier.declaration_id;
     if let Some(expr) = resolve_temp(cx, decl_id) {
         return expr;
@@ -2717,10 +2686,7 @@ fn codegen_place_to_expression<'a>(
 /// Convert a Place to an expression WITHOUT wrapping assignment expressions.
 /// With AST-based codegen, there is no string-level paren wrapping needed,
 /// so this is identical to `codegen_place_to_expression`.
-fn codegen_place_to_expression_raw<'a>(
-    cx: &CodegenContext<'a>,
-    place: &Place,
-) -> Expression<'a> {
+fn codegen_place_to_expression_raw<'a>(cx: &CodegenContext<'a>, place: &Place) -> Expression<'a> {
     codegen_place_to_expression(cx, place)
 }
 
@@ -2748,10 +2714,7 @@ fn codegen_label(id: crate::hir::BlockId) -> String {
 }
 
 /// Generate a primitive value expression.
-fn codegen_primitive<'a>(
-    cx: &CodegenContext<'a>,
-    value: &PrimitiveValueKind,
-) -> Expression<'a> {
+fn codegen_primitive<'a>(cx: &CodegenContext<'a>, value: &PrimitiveValueKind) -> Expression<'a> {
     match value {
         PrimitiveValueKind::Number(n) => {
             let n = *n;
@@ -2828,9 +2791,7 @@ fn codegen_member_access<'a>(
     property: &crate::hir::types::PropertyLiteral,
 ) -> Expression<'a> {
     match property {
-        crate::hir::types::PropertyLiteral::String(name) => {
-            make_member(cx, object, name)
-        }
+        crate::hir::types::PropertyLiteral::String(name) => make_member(cx, object, name),
         crate::hir::types::PropertyLiteral::Number(n) => {
             make_computed_member(cx, object, make_number(cx, *n as f64))
         }
@@ -2864,27 +2825,24 @@ fn codegen_object_property_key<'a>(
     key: &ObjectPropertyKey,
 ) -> PropertyKey<'a> {
     match key {
-        ObjectPropertyKey::Identifier(name) => {
-            PropertyKey::StaticIdentifier(cx.ast.alloc(cx.ast.identifier_name(SPAN, cx.ast.atom(name))))
-        }
-        ObjectPropertyKey::String(s) => {
-            PropertyKey::StringLiteral(cx.ast.alloc(cx.ast.string_literal(SPAN, cx.ast.atom(s), None)))
-        }
+        ObjectPropertyKey::Identifier(name) => PropertyKey::StaticIdentifier(
+            cx.ast.alloc(cx.ast.identifier_name(SPAN, cx.ast.atom(name))),
+        ),
+        ObjectPropertyKey::String(s) => PropertyKey::StringLiteral(
+            cx.ast.alloc(cx.ast.string_literal(SPAN, cx.ast.atom(s), None)),
+        ),
         ObjectPropertyKey::Computed(place) => {
             let expr = codegen_place_to_expression(cx, place);
             PropertyKey::from(expr)
         }
-        ObjectPropertyKey::Number(n) => {
-            PropertyKey::NumericLiteral(cx.ast.alloc(cx.ast.numeric_literal(SPAN, *n, None, NumberBase::Decimal)))
-        }
+        ObjectPropertyKey::Number(n) => PropertyKey::NumericLiteral(
+            cx.ast.alloc(cx.ast.numeric_literal(SPAN, *n, None, NumberBase::Decimal)),
+        ),
     }
 }
 
 /// Generate call arguments.
-fn codegen_args<'a>(
-    cx: &CodegenContext<'a>,
-    args: &[CallArg],
-) -> AVec<'a, Argument<'a>> {
+fn codegen_args<'a>(cx: &CodegenContext<'a>, args: &[CallArg]) -> AVec<'a, Argument<'a>> {
     let mut result = cx.ast.vec_with_capacity(args.len());
     for arg in args {
         match arg {
@@ -2906,10 +2864,7 @@ fn codegen_args<'a>(
 /// Port of `codegen_pattern` — builds `BindingPattern` from HIR `Pattern`.
 /// - Array: `ArrayPattern` with elements (BindingPattern or None for holes) and optional rest
 /// - Object: `ObjectPattern` with properties (BindingProperty with key/value) and optional rest
-fn codegen_pattern<'a>(
-    cx: &CodegenContext<'a>,
-    pattern: &Pattern,
-) -> BindingPattern<'a> {
+fn codegen_pattern<'a>(cx: &CodegenContext<'a>, pattern: &Pattern) -> BindingPattern<'a> {
     match pattern {
         Pattern::Array(arr) => {
             let mut elements: AVec<'a, Option<BindingPattern<'a>>> =
@@ -2919,18 +2874,14 @@ fn codegen_pattern<'a>(
                 match item {
                     ArrayPatternElement::Place(p) => {
                         let name = identifier_name(&p.identifier);
-                        let binding = cx.ast.binding_pattern_binding_identifier(
-                            SPAN,
-                            cx.ast.atom(&name),
-                        );
+                        let binding =
+                            cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         elements.push(Some(binding));
                     }
                     ArrayPatternElement::Spread(s) => {
                         let name = identifier_name(&s.place.identifier);
-                        let binding = cx.ast.binding_pattern_binding_identifier(
-                            SPAN,
-                            cx.ast.atom(&name),
-                        );
+                        let binding =
+                            cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         let rest_elem = cx.ast.binding_rest_element(SPAN, binding);
                         rest = Some(cx.ast.alloc(rest_elem));
                     }
@@ -2951,10 +2902,8 @@ fn codegen_pattern<'a>(
                     ObjectPatternProperty::Property(p) => {
                         let key = codegen_object_property_key(cx, &p.key);
                         let name = identifier_name(&p.place.identifier);
-                        let value = cx.ast.binding_pattern_binding_identifier(
-                            SPAN,
-                            cx.ast.atom(&name),
-                        );
+                        let value =
+                            cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
                         // Check if shorthand: key is an identifier and the value has the same name
                         let is_shorthand = if !is_computed {
@@ -2962,17 +2911,14 @@ fn codegen_pattern<'a>(
                         } else {
                             false
                         };
-                        let binding_prop = cx.ast.binding_property(
-                            SPAN, key, value, is_shorthand, is_computed,
-                        );
+                        let binding_prop =
+                            cx.ast.binding_property(SPAN, key, value, is_shorthand, is_computed);
                         properties.push(binding_prop);
                     }
                     ObjectPatternProperty::Spread(s) => {
                         let name = identifier_name(&s.place.identifier);
-                        let binding = cx.ast.binding_pattern_binding_identifier(
-                            SPAN,
-                            cx.ast.atom(&name),
-                        );
+                        let binding =
+                            cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         let rest_elem = cx.ast.binding_rest_element(SPAN, binding);
                         rest = Some(cx.ast.alloc(rest_elem));
                     }
@@ -3036,9 +2982,12 @@ fn codegen_dependency<'a>(
                     // `t.optionalMemberExpression(object, property, computed, path.optional)`
                     // is called for ALL entries.
                     let ident = cx.ast.identifier_name(SPAN, cx.ast.atom(name.as_str()));
-                    result = Expression::from(
-                        cx.ast.member_expression_static(SPAN, result, ident, entry.optional),
-                    );
+                    result = Expression::from(cx.ast.member_expression_static(
+                        SPAN,
+                        result,
+                        ident,
+                        entry.optional,
+                    ));
                 } else {
                     result = make_member(cx, result, name);
                 }
@@ -3046,9 +2995,12 @@ fn codegen_dependency<'a>(
             crate::hir::types::PropertyLiteral::Number(n) => {
                 let index = make_number(cx, *n as f64);
                 if has_optional {
-                    result = Expression::from(
-                        cx.ast.member_expression_computed(SPAN, result, index, entry.optional),
-                    );
+                    result = Expression::from(cx.ast.member_expression_computed(
+                        SPAN,
+                        result,
+                        index,
+                        entry.optional,
+                    ));
                 } else {
                     result = make_computed_member(cx, result, index);
                 }
@@ -3076,10 +3028,7 @@ fn codegen_dependency<'a>(
 /// declarators. For non-sequence inits, delegates to expression codegen.
 ///
 /// Port of `codegenForInit` from `CodegenReactiveFunction.ts` lines 1194-1244.
-fn codegen_for_init<'a>(
-    cx: &mut CodegenContext<'a>,
-    init: &ReactiveValue,
-) -> ForStatementInit<'a> {
+fn codegen_for_init<'a>(cx: &mut CodegenContext<'a>, init: &ReactiveValue) -> ForStatementInit<'a> {
     if let ReactiveValue::Sequence(seq) = init {
         // Convert each instruction in the sequence to statements via codegen_block.
         // This mirrors the TS: codegenBlock(cx, init.instructions.map(i => ({kind:'instruction', instruction:i})))
@@ -3204,10 +3153,8 @@ fn codegen_for_of_in_init<'a>(
                             };
                             let name = identifier_name(&store.lvalue.place.identifier);
                             cx.declare(store.lvalue.place.identifier.declaration_id);
-                            let binding = cx.ast.binding_pattern_binding_identifier(
-                                SPAN,
-                                cx.ast.atom(&name),
-                            );
+                            let binding =
+                                cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                             return (kind, binding);
                         }
                     }
@@ -3267,10 +3214,8 @@ fn codegen_for_in_init<'a>(
                         };
                         let name = identifier_name(&store.lvalue.place.identifier);
                         cx.declare(store.lvalue.place.identifier.declaration_id);
-                        let binding = cx.ast.binding_pattern_binding_identifier(
-                            SPAN,
-                            cx.ast.atom(&name),
-                        );
+                        let binding =
+                            cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         return (kind, binding);
                     }
                     InstructionValue::Destructure(destr) => {
