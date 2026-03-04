@@ -421,11 +421,11 @@ fn sync_identifier_scope(
     identifier: &mut crate::hir::hir_types::Identifier,
     scope_range_map: &FxHashMap<ScopeId, MutableRange>,
 ) {
-    if let Some(scope) = &mut identifier.scope {
-        if let Some(&new_range) = scope_range_map.get(&scope.id) {
-            scope.range = new_range;
-            identifier.mutable_range = new_range;
-        }
+    if let Some(scope) = &mut identifier.scope
+        && let Some(&new_range) = scope_range_map.get(&scope.id)
+    {
+        scope.range = new_range;
+        identifier.mutable_range = new_range;
     }
 }
 

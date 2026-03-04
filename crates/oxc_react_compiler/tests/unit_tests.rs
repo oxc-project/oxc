@@ -573,9 +573,7 @@ fn test_console_method_type_resolution() {
     // 1. Verify direct `console` global
     let console_global = env
         .get_global_declaration(
-            &oxc_react_compiler::hir::NonLocalBinding::Global {
-                name: "console".to_string(),
-            },
+            &oxc_react_compiler::hir::NonLocalBinding::Global { name: "console".to_string() },
             generated_loc,
         )
         .expect("should not error")
@@ -586,9 +584,7 @@ fn test_console_method_type_resolution() {
     // 2. Verify `global.console` resolves correctly
     let global_global = env
         .get_global_declaration(
-            &oxc_react_compiler::hir::NonLocalBinding::Global {
-                name: "global".to_string(),
-            },
+            &oxc_react_compiler::hir::NonLocalBinding::Global { name: "global".to_string() },
             generated_loc,
         )
         .expect("should not error")
@@ -601,9 +597,7 @@ fn test_console_method_type_resolution() {
     // 3. Verify `globalThis.console` resolves correctly
     let global_this = env
         .get_global_declaration(
-            &oxc_react_compiler::hir::NonLocalBinding::Global {
-                name: "globalThis".to_string(),
-            },
+            &oxc_react_compiler::hir::NonLocalBinding::Global { name: "globalThis".to_string() },
             generated_loc,
         )
         .expect("should not error")

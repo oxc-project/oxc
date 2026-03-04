@@ -1990,8 +1990,9 @@ fn codegen_function_expression(
 
             (value, fn_decl)
         }
-        Err(_) => {
-            // Fallback for inner function compilation errors
+        Err(e) => {
+            // Propagate inner function compilation errors to the outer context
+            cx.codegen_errors.borrow_mut().push(e);
             ("/* error compiling inner function */".to_string(), None)
         }
     }
@@ -2068,7 +2069,8 @@ fn codegen_object_method_expression(
             let key_str = if is_computed { format!("[{key}]") } else { key.to_string() };
             format!("{async_prefix}{star}{key_str}({params_str}) {{{body_str}}}")
         }
-        Err(_) => {
+        Err(e) => {
+            cx.codegen_errors.borrow_mut().push(e);
             format!("{key}() {{ /* error compiling method */ }}")
         }
     }

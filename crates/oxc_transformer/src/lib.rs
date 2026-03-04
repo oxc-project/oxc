@@ -78,7 +78,7 @@ pub use crate::{
         ESFeature, ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
-    plugins::{PluginsOptions, StyledComponentsOptions},
+    plugins::{PluginsOptions, ReactCompilerOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };

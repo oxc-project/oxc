@@ -125,12 +125,14 @@ impl InferenceState {
             return false;
         }
 
-        // Collect all connected identifiers (transitively aliased) so we can freeze them all.
-        // This simulates the TS behavior where all aliases share the same InstructionValue.
+        // Collect all connected identifiers via identity aliases only.
+        // Identity aliases represent LoadLocal/StoreLocal and phi-node connections where
+        // values share the same InstructionValue in the TS (shared object identity).
+        // Regular aliases (PropertyLoad, Call args) represent capture relationships
+        // where the target is a DIFFERENT value — freezing should NOT propagate through them.
         let mut to_freeze = Vec::new();
         to_freeze.push(id);
-        self.collect_alias_group(id, &mut to_freeze);
-
+        self.collect_identity_group(id, &mut to_freeze);
         // Freeze all collected identifiers
         let mut reasons = FxHashSet::default();
         reasons.insert(reason);
@@ -227,33 +229,6 @@ impl InferenceState {
         }
 
         true
-    }
-
-    /// Collect all identifiers transitively connected to `id` via the alias graph.
-    /// Traverses both directions: aliases[x] contains y means x aliases y.
-    fn collect_alias_group(&self, id: IdentifierId, group: &mut Vec<IdentifierId>) {
-        let mut visited = FxHashSet::default();
-        visited.insert(id);
-        let mut stack = vec![id];
-
-        while let Some(current) = stack.pop() {
-            // Forward: current's alias set (aliases[current] = {a, b, ...})
-            if let Some(alias_set) = self.aliases.get(&current) {
-                for &aliased in alias_set {
-                    if visited.insert(aliased) {
-                        group.push(aliased);
-                        stack.push(aliased);
-                    }
-                }
-            }
-            // Reverse: find any identifier whose alias set contains current
-            for (&other_id, other_set) in &self.aliases {
-                if other_set.contains(&current) && visited.insert(other_id) {
-                    group.push(other_id);
-                    stack.push(other_id);
-                }
-            }
-        }
     }
 
     /// Collect all identifiers transitively connected to `id` via identity aliases only.
@@ -602,6 +577,26 @@ fn is_ref_or_ref_value(id: &Identifier) -> bool {
     )
 }
 
+/// Check if a type is a function returning JSX (or a phi containing a JSX return).
+/// Used to identify render helper props in JSX expressions that should get Render effects.
+fn is_render_function_type(ty: &crate::hir::types::Type) -> bool {
+    match ty {
+        crate::hir::types::Type::Function(func_type) => is_jsx_or_phi_jsx(&func_type.return_type),
+        _ => false,
+    }
+}
+
+/// Check if a type is JSX or a phi containing JSX.
+fn is_jsx_or_phi_jsx(ty: &crate::hir::types::Type) -> bool {
+    match ty {
+        crate::hir::types::Type::Object(obj) => {
+            obj.shape_id.as_deref() == Some(crate::hir::object_shape::BUILT_IN_JSX_ID)
+        }
+        crate::hir::types::Type::Phi(phi) => phi.operands.iter().any(is_jsx_or_phi_jsx),
+        _ => false,
+    }
+}
+
 /// Infer mutation/aliasing effects for the given function.
 pub fn infer_mutation_aliasing_effects(
     func: &mut HIRFunction,
@@ -656,7 +651,12 @@ pub fn infer_mutation_aliasing_effects(
     let non_mutating_spreads = find_non_mutating_spreads(func);
 
     // Fixpoint iteration over the CFG
-    // Map of blocks to the last (merged) outgoing state that was processed.
+    // Port of TS fixpoint loop from InferMutationAliasingEffects.ts lines 186-211.
+    //
+    // `states_by_block` stores the INCOMING state for each block (before inferBlock).
+    // This matches the TS: `statesByBlock.set(blockId, incomingState)` at line 203.
+    // The queue function compares NEW outgoing state against OLD incoming state to
+    // detect whether re-processing is needed.
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     // Map of blocks to the incoming state (after merge/phis, before instructions).
     // Used for effect annotation replay to compute per-instruction state.
@@ -664,6 +664,35 @@ pub fn infer_mutation_aliasing_effects(
     // Pending incoming states for each block. Merged incrementally as predecessors complete.
     let mut queued_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     queued_states.insert(func.body.entry, initial_state);
+
+    /// Port of TS `queue()` function (InferMutationAliasingEffects.ts lines 157-174).
+    /// Enqueues a successor block with the outgoing state from the current block.
+    /// If the block is already queued, merges the states. If not, checks whether
+    /// the new state has changed relative to the last incoming state for that block.
+    fn queue_block(
+        queued_states: &mut FxHashMap<BlockId, InferenceState>,
+        states_by_block: &FxHashMap<BlockId, InferenceState>,
+        block_id: BlockId,
+        state: &InferenceState,
+    ) {
+        if let Some(existing) = queued_states.get_mut(&block_id) {
+            // Already queued — merge the new state into the existing queued state
+            existing.merge(state);
+        } else {
+            // First queue for this block — check if there's new info vs last incoming state
+            if let Some(prev_state) = states_by_block.get(&block_id) {
+                let mut merged = prev_state.clone();
+                if merged.merge(state) {
+                    // New info found — queue the merged state
+                    queued_states.insert(block_id, merged);
+                }
+                // else: no change, don't re-queue
+            } else {
+                // Never processed — queue unconditionally
+                queued_states.insert(block_id, state.clone());
+            }
+        }
+    }
 
     let mut iteration_count = 0;
     let max_iterations = 1000; // Safety limit
@@ -684,15 +713,8 @@ pub fn infer_mutation_aliasing_effects(
                 None => continue,
             };
 
-            // Check if the state has changed since last visit.
-            // If the incoming state is already dominated by the last processed state,
-            // no new information → skip this block.
-            if let Some(prev_state) = states_by_block.get(&block_id)
-                && !state.merge(prev_state)
-            {
-                // state already contains everything from prev_state — no change.
-                continue;
-            }
+            // Store the incoming state (before phis/instructions) — matches TS line 203.
+            states_by_block.insert(block_id, state.clone());
 
             let block = match func.body.blocks.get(&block_id) {
                 Some(b) => b.clone(),
@@ -718,20 +740,14 @@ pub fn infer_mutation_aliasing_effects(
                     options,
                     &func.env,
                     &non_mutating_spreads,
-                );
+                    false, // fixpoint phase: don't check invariants
+                )?;
             }
 
-            // Store the outgoing state for this block.
-            states_by_block.insert(block_id, state.clone());
-
-            // Queue successor blocks.
+            // Queue successor blocks — port of TS lines 207-209.
             let successors = each_terminal_successor(&block.terminal);
             for succ_id in successors {
-                if let Some(existing) = queued_states.get_mut(&succ_id) {
-                    existing.merge(&state);
-                } else {
-                    queued_states.insert(succ_id, state.clone());
-                }
+                queue_block(&mut queued_states, &states_by_block, succ_id, &state);
             }
         }
     }
@@ -821,7 +837,8 @@ pub fn infer_mutation_aliasing_effects(
                     options,
                     &func.env,
                     &non_mutating_spreads,
-                );
+                    true, // replay phase: check invariants
+                )?;
             }
         } else {
             // Unreachable block: set empty effects so downstream passes don't skip
@@ -843,25 +860,37 @@ pub struct InferOptions {
 }
 
 /// Infer effects of a single instruction on the abstract state.
+///
+/// When `check_invariants` is true (replay phase), additional invariant checks
+/// are enabled that detect invalid states like uninitialized named identifiers.
 fn infer_instruction_effects(
     state: &mut InferenceState,
     instr: &Instruction,
     _options: &InferOptions,
     env: &crate::hir::environment::Environment,
     non_mutating_spreads: &FxHashSet<IdentifierId>,
-) {
+    check_invariants: bool,
+) -> Result<(), CompilerError> {
     let lvalue_id = instr.lvalue.identifier.id;
 
     match &instr.value {
-        // Primitives, update expressions, binary/unary, and template literals produce primitives
+        // Primitives, binary/unary, and template literals produce primitives
         InstructionValue::Primitive(_)
         | InstructionValue::JsxText(_)
-        | InstructionValue::PrefixUpdate(_)
-        | InstructionValue::PostfixUpdate(_)
         | InstructionValue::BinaryExpression(_)
         | InstructionValue::UnaryExpression(_)
         | InstructionValue::TemplateLiteral(_) => {
             state.define(&instr.lvalue, AbstractValue::primitive());
+        }
+
+        // PostfixUpdate/PrefixUpdate: result is primitive, and the updated lvalue is also primitive
+        InstructionValue::PostfixUpdate(v) => {
+            state.define(&instr.lvalue, AbstractValue::primitive());
+            state.define(&v.lvalue, AbstractValue::primitive());
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            state.define(&instr.lvalue, AbstractValue::primitive());
+            state.define(&v.lvalue, AbstractValue::primitive());
         }
 
         // Object/array/function/regexp/iterator values create mutable values
@@ -869,9 +898,27 @@ fn infer_instruction_effects(
         | InstructionValue::ArrayExpression(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::GetIterator(_)
-        | InstructionValue::IteratorNext(_)
         | InstructionValue::NextPropertyOf(_) => {
             state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
+        // IteratorNext: propagate collection's kind (CreateFrom effect)
+        // In TS, CreateFrom copies the source value's kind to the target.
+        // If the collection is Frozen/MaybeFrozen, the iterator element is MaybeFrozen.
+        InstructionValue::IteratorNext(v) => {
+            if let Some(val) = state.get(&v.collection) {
+                let result_kind = match val.kind {
+                    ValueKind::Primitive | ValueKind::Global => val.kind,
+                    ValueKind::Frozen | ValueKind::MaybeFrozen => ValueKind::MaybeFrozen,
+                    _ => ValueKind::Mutable,
+                };
+                state.define(
+                    &instr.lvalue,
+                    AbstractValue { kind: result_kind, reason: val.reason.clone() },
+                );
+            } else {
+                state.define(&instr.lvalue, AbstractValue::mutable());
+            }
         }
 
         // FunctionExpression / ObjectMethod: mutable or frozen depending on captures.
@@ -924,6 +971,15 @@ fn infer_instruction_effects(
             if let Some(val) = state.get(&v.place).cloned() {
                 state.define(&instr.lvalue, val);
                 state.add_identity_alias(v.place.identifier.id, lvalue_id);
+            } else if check_invariants && v.place.identifier.name.is_some() {
+                // Invariant: named identifiers should be initialized in the state
+                // after fixpoint converges. If they aren't, it means something went
+                // wrong with shadowing or function declaration hoisting.
+                return Err(CompilerError::invariant(
+                    "[InferMutationAliasingEffects] Expected value kind to be initialized",
+                    Some(&format!("{:?}", v.place.identifier.name)),
+                    v.place.loc,
+                ));
             }
             // Propagate function value tracking through LoadLocal
             if let Some(fn_val) = state.function_values.get(&v.place.identifier.id).cloned() {
@@ -942,6 +998,9 @@ fn infer_instruction_effects(
             if let Some(val) = state.get(&v.value).cloned() {
                 state.define(&v.lvalue.place, val);
                 state.add_identity_alias(v.value.identifier.id, v.lvalue.place.identifier.id);
+            } else {
+                // Fallback: if the value isn't in the state yet, define lvalue as mutable
+                state.define(&v.lvalue.place, AbstractValue::mutable());
             }
             // Propagate function value tracking through StoreLocal
             if let Some(fn_val) = state.function_values.get(&v.value.identifier.id).cloned() {
@@ -1209,6 +1268,7 @@ fn infer_instruction_effects(
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
     }
+    Ok(())
 }
 
 /// Apply freeze effects from a function signature to the abstract state.
@@ -1385,19 +1445,17 @@ fn effects_from_signature(
                 Effect::Mutate | Effect::ConditionallyMutate => sig_effect,
                 Effect::Freeze => {
                     let mut errors = CompilerError::new();
-                    errors.push_error_detail(
-                        crate::compiler_error::CompilerErrorDetail::new(
-                            crate::compiler_error::CompilerErrorDetailOptions {
-                                category: crate::compiler_error::ErrorCategory::Todo,
-                                reason: "Support spread syntax for hook arguments".to_string(),
-                                description: Some(
-                                    "Support spread syntax for hook arguments".to_string(),
-                                ),
-                                loc: Some(place.loc.into()),
-                                suggestions: None,
-                            },
-                        ),
-                    );
+                    errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                        crate::compiler_error::CompilerErrorDetailOptions {
+                            category: crate::compiler_error::ErrorCategory::Todo,
+                            reason: "Support spread syntax for hook arguments".to_string(),
+                            description: Some(
+                                "Support spread syntax for hook arguments".to_string(),
+                            ),
+                            loc: Some(place.loc.into()),
+                            suggestions: None,
+                        },
+                    ));
                     return Err(errors);
                 }
                 _ => Effect::Read,
@@ -1534,7 +1592,15 @@ fn emit_conservative_call_effects(
         }
         // TS: MaybeAlias(from=operand, into=lvalue)
         effects.push(AliasingEffect::MaybeAlias { from: operand.clone(), into: lvalue.clone() });
-        // TS: cross-argument Capture(from=operand, into=other) for all other operands
+        // TS: cross-argument Capture(from=operand, into=other) for all other operands.
+        // In TS, each Capture goes through applyEffect which filters based on abstract
+        // value kinds (lines 810-878). We replicate that filtering here:
+        // - frozen source -> ImmutableCapture
+        // - global/primitive source -> drop
+        // - context source + any known dest -> MaybeAlias
+        // - mutable source + mutable/maybeFrozen dest -> Capture (keep)
+        // - mutable source + context dest -> MaybeAlias
+        // - mutable source + other dest -> drop
         for (other_idx, &(other_ptr, other, _)) in operands.iter().enumerate() {
             if other_idx == idx {
                 continue;
@@ -1543,7 +1609,52 @@ fn emit_conservative_call_effects(
             if std::ptr::eq(self_ptr, other_ptr) {
                 continue;
             }
-            effects.push(AliasingEffect::Capture { from: operand.clone(), into: other.clone() });
+            // Apply Capture filtering matching TS applyEffect behavior
+            let from_kind = state.get(operand).map(|av| av.kind);
+            let into_kind = state.get(other).map(|av| av.kind);
+            match from_kind {
+                Some(ValueKind::Global | ValueKind::Primitive) => {
+                    // Drop: global/primitive sources don't need data flow tracking
+                }
+                Some(ValueKind::Frozen | ValueKind::MaybeFrozen) => {
+                    effects.push(AliasingEffect::ImmutableCapture {
+                        from: operand.clone(),
+                        into: other.clone(),
+                    });
+                }
+                Some(ValueKind::Context) => {
+                    if into_kind.is_some() {
+                        effects.push(AliasingEffect::MaybeAlias {
+                            from: operand.clone(),
+                            into: other.clone(),
+                        });
+                    }
+                }
+                Some(ValueKind::Mutable) => match into_kind {
+                    Some(ValueKind::Mutable | ValueKind::MaybeFrozen) => {
+                        effects.push(AliasingEffect::Capture {
+                            from: operand.clone(),
+                            into: other.clone(),
+                        });
+                    }
+                    Some(ValueKind::Context) => {
+                        effects.push(AliasingEffect::MaybeAlias {
+                            from: operand.clone(),
+                            into: other.clone(),
+                        });
+                    }
+                    _ => {
+                        // destination is frozen/global/primitive/unknown -> drop
+                    }
+                },
+                None => {
+                    // Unknown source: conservatively keep as Capture
+                    effects.push(AliasingEffect::Capture {
+                        from: operand.clone(),
+                        into: other.clone(),
+                    });
+                }
+            }
         }
     }
 }
@@ -2110,14 +2221,9 @@ fn emit_inner_function_frozen_mutation_errors(
         inner_func.context.iter().map(|p| p.identifier.id).collect();
 
     for effect in aliasing_effects {
-        // Only check unconditional Mutate effects (local mutations like PropertyStore).
-        // We intentionally exclude MutateTransitive because the Rust port's
-        // infer_mutation_aliasing_ranges BFS may incorrectly upgrade conditional
-        // transitive mutations (e.g., from conservative call effects) to unconditional,
-        // causing false positives. The TS compiler checks both Mutate and MutateTransitive,
-        // but in practice all genuine frozen-value mutations produce local Mutate effects.
         let (value, reason) = match effect {
             AliasingEffect::Mutate { value, reason } => (value, reason.clone()),
+            AliasingEffect::MutateTransitive { value } => (value, None),
             _ => continue,
         };
         if !context_ids.contains(&value.identifier.id) {
@@ -2125,7 +2231,7 @@ fn emit_inner_function_frozen_mutation_errors(
         }
         // Check the OUTER state for this context variable
         if let Some(av) = state.get(value) {
-            if av.kind == ValueKind::Frozen {
+            if matches!(av.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
                 // Create MutateFrozen error matching TS behavior
                 let error_reason = get_write_error_reason(av);
                 let variable = match &value.identifier.name {
@@ -2147,10 +2253,8 @@ fn emit_inner_function_frozen_mutation_errors(
                         message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string(),
                     });
                 }
-                effects.push(AliasingEffect::MutateFrozen {
-                    place: value.clone(),
-                    error: diagnostic,
-                });
+                effects
+                    .push(AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic });
             }
         }
     }
@@ -2817,11 +2921,7 @@ fn compute_instruction_effects(
             // The inner function's aliasingEffects contain Mutate/MutateTransitive
             // for context variables that are mutated inside the callback. We check
             // the OUTER state to see if those context variables are Frozen.
-            emit_inner_function_frozen_mutation_errors(
-                state,
-                &v.lowered_func.func,
-                &mut effects,
-            );
+            emit_inner_function_frozen_mutation_errors(state, &v.lowered_func.func, &mut effects);
 
             // Match TS applyEffect for CreateFunction: if a context operand has kind
             // Primitive, Frozen, or Global in the outer state, demote it from Capture to Read
@@ -2864,11 +2964,7 @@ fn compute_instruction_effects(
         InstructionValue::ObjectMethod(v) => {
             // Same as FunctionExpression: check inner function's aliasing effects
             // for mutations of frozen context variables.
-            emit_inner_function_frozen_mutation_errors(
-                state,
-                &v.lowered_func.func,
-                &mut effects,
-            );
+            emit_inner_function_frozen_mutation_errors(state, &v.lowered_func.func, &mut effects);
 
             let captures: Vec<Place> = v
                 .lowered_func
@@ -3201,6 +3297,20 @@ fn compute_instruction_effects(
             if let crate::hir::JsxTag::Place(tag_place) = &jsx.tag {
                 effects.push(AliasingEffect::Render { place: tag_place.clone() });
             }
+            // Render effects for children
+            if let Some(ref children) = jsx.children {
+                for child in children {
+                    effects.push(AliasingEffect::Render { place: child.clone() });
+                }
+            }
+            // Render effects for props that are functions returning JSX
+            for prop in &jsx.props {
+                if let crate::hir::JsxAttribute::Attribute { place, .. } = prop {
+                    if is_render_function_type(&place.identifier.type_) {
+                        effects.push(AliasingEffect::Render { place: place.clone() });
+                    }
+                }
+            }
         }
 
         // JsxFragment: Create(Frozen) + Freeze + Capture per child
@@ -3291,7 +3401,12 @@ fn compute_instruction_effects(
                         continue; // mutate-ref: drop
                     }
                     match state.get(value) {
-                        Some(av) if matches!(av.kind, ValueKind::Frozen | ValueKind::Global) => {
+                        Some(av)
+                            if matches!(
+                                av.kind,
+                                ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global
+                            ) =>
+                        {
                             processed.push(make_mutation_error_effect(value, av, reason));
                         }
                         _ => {
@@ -3304,7 +3419,12 @@ fn compute_instruction_effects(
                         continue; // mutate-ref: drop
                     }
                     match state.get(value) {
-                        Some(av) if matches!(av.kind, ValueKind::Frozen | ValueKind::Global) => {
+                        Some(av)
+                            if matches!(
+                                av.kind,
+                                ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global
+                            ) =>
+                        {
                             processed.push(make_mutation_error_effect(value, av, &None));
                         }
                         _ => {

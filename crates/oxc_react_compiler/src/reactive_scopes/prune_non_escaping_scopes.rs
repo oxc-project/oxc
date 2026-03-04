@@ -544,11 +544,9 @@ fn collect_in_block(
                 }
 
                 // For non-custom cases, add the outer lvalue with the classified level
-                if !custom_rvalues {
-                    if let Some(lvalue) = &instr.lvalue {
-                        let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
-                        lvalue_entries.push((lvalue_id, level));
-                    }
+                if !custom_rvalues && let Some(lvalue) = &instr.lvalue {
+                    let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                    lvalue_entries.push((lvalue_id, level));
                 }
 
                 // For StoreLocal/DeclareLocal/StoreContext/DeclareContext/Destructure,
@@ -674,13 +672,13 @@ fn collect_in_block(
 
                 // Handle LoadLocal definitions
                 if let ReactiveValue::Instruction(iv) = &instr.value {
-                    if let InstructionValue::LoadLocal(v) = iv.as_ref() {
-                        if let Some(lvalue) = &instr.lvalue {
-                            state.definitions.insert(
-                                lvalue.identifier.declaration_id,
-                                v.place.identifier.declaration_id,
-                            );
-                        }
+                    if let InstructionValue::LoadLocal(v) = iv.as_ref()
+                        && let Some(lvalue) = &instr.lvalue
+                    {
+                        state.definitions.insert(
+                            lvalue.identifier.declaration_id,
+                            v.place.identifier.declaration_id,
+                        );
                     }
 
                     // Handle hook arguments escaping.
@@ -904,15 +902,14 @@ fn collect_embedded_sequence_instructions(
                     }
                 }
                 // Handle LoadLocal definitions inside sequences
-                if let ReactiveValue::Instruction(iv) = &embedded_instr.value {
-                    if let InstructionValue::LoadLocal(v) = iv.as_ref() {
-                        if let Some(lvalue) = &embedded_instr.lvalue {
-                            state.definitions.insert(
-                                lvalue.identifier.declaration_id,
-                                v.place.identifier.declaration_id,
-                            );
-                        }
-                    }
+                if let ReactiveValue::Instruction(iv) = &embedded_instr.value
+                    && let InstructionValue::LoadLocal(v) = iv.as_ref()
+                    && let Some(lvalue) = &embedded_instr.lvalue
+                {
+                    state.definitions.insert(
+                        lvalue.identifier.declaration_id,
+                        v.place.identifier.declaration_id,
+                    );
                 }
                 // Recurse into nested sequences/ternaries/logicals within embedded instructions
                 collect_embedded_sequence_instructions(
@@ -1111,36 +1108,30 @@ fn prune_in_block(
                 }
 
                 // Check FinishMemoize: set pruned=true if all decls' scopes were pruned
-                if let ReactiveValue::Instruction(iv) = &instr_stmt.instruction.value {
-                    if let InstructionValue::FinishMemoize(fm) = iv.as_ref() {
-                        let decls: Vec<crate::hir::Identifier> =
-                            if fm.decl.identifier.scope.is_none() {
-                                reassignments.get(&fm.decl.identifier.declaration_id).map_or_else(
-                                    || vec![fm.decl.identifier.clone()],
-                                    |ids| ids.clone(),
-                                )
-                            } else {
-                                vec![fm.decl.identifier.clone()]
-                            };
+                if let ReactiveValue::Instruction(iv) = &instr_stmt.instruction.value
+                    && let InstructionValue::FinishMemoize(fm) = iv.as_ref()
+                {
+                    let decls: Vec<crate::hir::Identifier> = if fm.decl.identifier.scope.is_none() {
+                        reassignments.get(&fm.decl.identifier.declaration_id).map_or_else(
+                            || vec![fm.decl.identifier.clone()],
+                            std::clone::Clone::clone,
+                        )
+                    } else {
+                        vec![fm.decl.identifier.clone()]
+                    };
 
-                        let all_pruned = decls.iter().all(|decl| {
-                            decl.scope.is_none()
-                                || decl
-                                    .scope
-                                    .as_ref()
-                                    .is_some_and(|s| pruned_scopes.contains(&s.id))
-                        });
+                    let all_pruned = decls.iter().all(|decl| {
+                        decl.scope.is_none()
+                            || decl.scope.as_ref().is_some_and(|s| pruned_scopes.contains(&s.id))
+                    });
 
-                        if all_pruned {
-                            // Set pruned=true on the FinishMemoize instruction
-                            // We need to get a mutable reference to the InstructionValue
-                            if let ReactiveValue::Instruction(iv) =
-                                &mut instr_stmt.instruction.value
-                            {
-                                if let InstructionValue::FinishMemoize(fm) = iv.as_mut() {
-                                    fm.pruned = true;
-                                }
-                            }
+                    if all_pruned {
+                        // Set pruned=true on the FinishMemoize instruction
+                        // We need to get a mutable reference to the InstructionValue
+                        if let ReactiveValue::Instruction(iv) = &mut instr_stmt.instruction.value
+                            && let InstructionValue::FinishMemoize(fm) = iv.as_mut()
+                        {
+                            fm.pruned = true;
                         }
                     }
                 }

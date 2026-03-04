@@ -107,8 +107,9 @@ fn lower_with_mutation_aliasing(func: &mut HIRFunction) -> Result<(), CompilerEr
     }
 
     for operand in &mut func.context {
-        if captured_or_mutated.contains(&operand.identifier.id) || operand.effect == Effect::Capture
-        {
+        let was_captured = captured_or_mutated.contains(&operand.identifier.id);
+        let was_effect_capture = operand.effect == Effect::Capture;
+        if was_captured || was_effect_capture {
             operand.effect = Effect::Capture;
         } else {
             operand.effect = Effect::Read;

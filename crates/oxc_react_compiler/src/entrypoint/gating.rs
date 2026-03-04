@@ -206,24 +206,12 @@ impl GatingOutput {
         let param_list: Vec<String> = params
             .iter()
             .enumerate()
-            .map(|(i, p)| {
-                if p.is_rest {
-                    format!("...arg{i}")
-                } else {
-                    format!("arg{i}")
-                }
-            })
+            .map(|(i, p)| if p.is_rest { format!("...arg{i}") } else { format!("arg{i}") })
             .collect();
         let arg_list: Vec<String> = params
             .iter()
             .enumerate()
-            .map(|(i, p)| {
-                if p.is_rest {
-                    format!("...arg{i}")
-                } else {
-                    format!("arg{i}")
-                }
-            })
+            .map(|(i, p)| if p.is_rest { format!("...arg{i}") } else { format!("arg{i}") })
             .collect();
         let params_str = param_list.join(", ");
         let args_str = arg_list.join(", ");
@@ -289,10 +277,7 @@ impl fmt::Display for GatingOutput {
             }
             GatingOutput::Ternary { gating_fn_name, wrap } => match wrap {
                 TernaryWrap::ConstDeclaration { name } => {
-                    write!(
-                        f,
-                        "const {name} = {gating_fn_name}()\n  ? [compiled]\n  : [original];"
-                    )
+                    write!(f, "const {name} = {gating_fn_name}()\n  ? [compiled]\n  : [original];")
                 }
                 TernaryWrap::ExportDefaultThenConst { name } => {
                     writeln!(
@@ -403,11 +388,15 @@ mod tests {
             "function Foo_unoptimized({ prop1 }) { /* original */ }",
             &params,
         );
-        assert!(result.contains("const isForgetEnabled_Fixtures_result = isForgetEnabled_Fixtures();"));
+        assert!(
+            result.contains("const isForgetEnabled_Fixtures_result = isForgetEnabled_Fixtures();")
+        );
         assert!(result.contains("function Foo_optimized(t0) { /* compiled */ }"));
         assert!(result.contains("function Foo_unoptimized({ prop1 }) { /* original */ }"));
         assert!(result.contains("function Foo(arg0)"));
-        assert!(result.contains("if (isForgetEnabled_Fixtures_result) return Foo_optimized(arg0);"));
+        assert!(
+            result.contains("if (isForgetEnabled_Fixtures_result) return Foo_optimized(arg0);")
+        );
         assert!(result.contains("else return Foo_unoptimized(arg0);"));
     }
 
@@ -471,12 +460,7 @@ mod tests {
             &mut ctx,
         );
         match output {
-            GatingOutput::Hoisted {
-                original_name,
-                optimized_name,
-                unoptimized_name,
-                ..
-            } => {
+            GatingOutput::Hoisted { original_name, optimized_name, unoptimized_name, .. } => {
                 assert_eq!(original_name, "Foo");
                 assert_eq!(optimized_name, "Foo_optimized");
                 assert_eq!(unoptimized_name, "Foo_unoptimized");

@@ -172,7 +172,7 @@ struct CollectContext<'a> {
 struct LoweredFunctionKey(*const HIRFunction);
 
 fn lowered_fn_key(lf: &LoweredFunction) -> LoweredFunctionKey {
-    LoweredFunctionKey(&*lf.func as *const HIRFunction)
+    LoweredFunctionKey(&raw const *lf.func)
 }
 
 // =============================================================================
@@ -238,15 +238,15 @@ pub fn key_by_scope_id_with_registry(
 ) -> FxHashMap<ScopeId, Vec<ReactiveScopeDependency>> {
     let mut keyed = FxHashMap::default();
     for (_block_id, block) in &func.body.blocks {
-        if let Terminal::Scope(t) = &block.terminal {
-            if let Some(info) = hoistable.block_infos.get(&t.block) {
-                let paths: Vec<ReactiveScopeDependency> = info
-                    .assumed_non_null_objects
-                    .iter()
-                    .map(|&node| hoistable.registry.get_full_path(node).clone())
-                    .collect();
-                keyed.insert(t.scope.id, paths);
-            }
+        if let Terminal::Scope(t) = &block.terminal
+            && let Some(info) = hoistable.block_infos.get(&t.block)
+        {
+            let paths: Vec<ReactiveScopeDependency> = info
+                .assumed_non_null_objects
+                .iter()
+                .map(|&node| hoistable.registry.get_full_path(node).clone())
+                .collect();
+            keyed.insert(t.scope.id, paths);
         }
     }
     keyed
@@ -336,12 +336,10 @@ fn collect_non_nulls_in_blocks(
     if func.fn_type == ReactFunctionType::Component
         && !func.params.is_empty()
         && matches!(&func.params[0], ReactiveParam::Place(_))
+        && let ReactiveParam::Place(place) = &func.params[0]
     {
-        if let ReactiveParam::Place(place) = &func.params[0] {
-            let node =
-                context.registry.get_or_create_identifier(&place.identifier, true, place.loc);
-            known_non_null_identifiers.insert(node);
-        }
+        let node = context.registry.get_or_create_identifier(&place.identifier, true, place.loc);
+        known_non_null_identifiers.insert(node);
     }
 
     let mut nodes = FxHashMap::default();
@@ -430,34 +428,31 @@ fn collect_non_nulls_in_blocks(
                         }
                     }
                 }
-            } else if func.env.config.enable_preserve_existing_memoization_guarantees {
-                if let InstructionValue::StartMemoize(sm) = &instr.value {
-                    if let Some(deps) = &sm.deps {
-                        for dep in deps {
-                            if let super::hir_types::ManualMemoDependencyRoot::NamedLocal {
-                                value,
-                                ..
-                            } = &dep.root
-                            {
-                                if !is_immutable_at_instr(&value.identifier, instr.id, context) {
-                                    continue;
-                                }
-                                for i in 0..dep.path.len() {
-                                    let path_entry = &dep.path[i];
-                                    if path_entry.optional {
-                                        break;
-                                    }
-                                    let sub_dep = ReactiveScopeDependency {
-                                        identifier: value.identifier.clone(),
-                                        path: dep.path[..i].to_vec(),
-                                        reactive: value.reactive,
-                                        loc: dep.loc,
-                                    };
-                                    let dep_node =
-                                        context.registry.get_or_create_property(&sub_dep);
-                                    assumed_non_null_objects.insert(dep_node);
-                                }
+            } else if func.env.config.enable_preserve_existing_memoization_guarantees
+                && let InstructionValue::StartMemoize(sm) = &instr.value
+                && let Some(deps) = &sm.deps
+            {
+                for dep in deps {
+                    if let super::hir_types::ManualMemoDependencyRoot::NamedLocal {
+                        value, ..
+                    } = &dep.root
+                    {
+                        if !is_immutable_at_instr(&value.identifier, instr.id, context) {
+                            continue;
+                        }
+                        for i in 0..dep.path.len() {
+                            let path_entry = &dep.path[i];
+                            if path_entry.optional {
+                                break;
                             }
+                            let sub_dep = ReactiveScopeDependency {
+                                identifier: value.identifier.clone(),
+                                path: dep.path[..i].to_vec(),
+                                reactive: value.reactive,
+                                loc: dep.loc,
+                            };
+                            let dep_node = context.registry.get_or_create_property(&sub_dep);
+                            assumed_non_null_objects.insert(dep_node);
                         }
                     }
                 }
@@ -756,10 +751,10 @@ fn get_assumed_invoked_functions_inner(
                     } else if maybe_hook.is_some() {
                         // Assume arguments to all hooks are safe to invoke
                         for arg in &call.args {
-                            if let CallArg::Place(place) = arg {
-                                if let Some(existing) = temporaries.get(&place.identifier.id) {
-                                    hoistable_functions.insert(existing.lowered_fn);
-                                }
+                            if let CallArg::Place(place) = arg
+                                && let Some(existing) = temporaries.get(&place.identifier.id)
+                            {
+                                hoistable_functions.insert(existing.lowered_fn);
                             }
                         }
                     }
@@ -799,10 +794,10 @@ fn get_assumed_invoked_functions_inner(
         }
 
         // Return terminal: assume directly returned functions are safe to call
-        if let Terminal::Return(ret) = &block.terminal {
-            if let Some(existing) = temporaries.get(&ret.value.identifier.id) {
-                hoistable_functions.insert(existing.lowered_fn);
-            }
+        if let Terminal::Return(ret) = &block.terminal
+            && let Some(existing) = temporaries.get(&ret.value.identifier.id)
+        {
+            hoistable_functions.insert(existing.lowered_fn);
         }
     }
 

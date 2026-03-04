@@ -33,7 +33,7 @@ pub fn stabilize_block_ids(func: &mut ReactiveFunction) {
 }
 
 fn collect_referenced_labels(block: &ReactiveBlock, referenced: &mut Vec<BlockId>) {
-    for stmt in block.iter() {
+    for stmt in block {
         match stmt {
             ReactiveStatement::Instruction(_) => {}
             ReactiveStatement::Terminal(term) => {

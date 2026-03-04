@@ -390,10 +390,8 @@ impl Environment {
 
             let use_default_not_hook_type =
                 super::globals::get_use_default_export_not_typed_as_hook_module_type(&mut shapes);
-            module_types.insert(
-                "useDefaultExportNotTypedAsHook".to_string(),
-                use_default_not_hook_type,
-            );
+            module_types
+                .insert("useDefaultExportNotTypedAsHook".to_string(), use_default_not_hook_type);
         }
 
         Self {
@@ -582,8 +580,7 @@ impl Environment {
                         // Port of the validation in TS `installTypeConfig` for "object" kind.
                         self.validate_module_type_properties(&module_type, module, loc)?;
 
-                        if let Some(imported_type) =
-                            self.get_property_type(&module_type, imported)
+                        if let Some(imported_type) = self.get_property_type(&module_type, imported)
                         {
                             return Ok(Some(Global::Typed(imported_type)));
                         }
@@ -612,27 +609,24 @@ impl Environment {
                         // Validate all properties of the module for hook name/type consistency.
                         self.validate_module_type_properties(&module_type, module, loc)?;
 
-                        if let Some(default_type) =
-                            self.get_property_type(&module_type, "default")
+                        if let Some(default_type) = self.get_property_type(&module_type, "default")
                         {
                             // Check that hook-like module names have hook types, and vice versa.
                             let expect_hook = is_hook_name(module);
                             let is_hook = get_hook_kind_for_type(self, &default_type).is_some();
                             if expect_hook != is_hook {
-                                return Err(
-                                    crate::compiler_error::CompilerError::invalid_config(
-                                        "Invalid type configuration for module",
-                                        Some(&format!(
-                                            "Expected type for `import ... from '{module}'` {} based on the module name",
-                                            if expect_hook {
-                                                "to be a hook"
-                                            } else {
-                                                "not to be a hook"
-                                            }
-                                        )),
-                                        Some(loc),
-                                    ),
-                                );
+                                return Err(crate::compiler_error::CompilerError::invalid_config(
+                                    "Invalid type configuration for module",
+                                    Some(&format!(
+                                        "Expected type for `import ... from '{module}'` {} based on the module name",
+                                        if expect_hook {
+                                            "to be a hook"
+                                        } else {
+                                            "not to be a hook"
+                                        }
+                                    )),
+                                    Some(loc),
+                                ));
                             }
                             return Ok(Some(Global::Typed(default_type)));
                         }
@@ -663,20 +657,14 @@ impl Environment {
                         let expect_hook = is_hook_name(module);
                         let is_hook = get_hook_kind_for_type(self, &module_type).is_some();
                         if expect_hook != is_hook {
-                            return Err(
-                                crate::compiler_error::CompilerError::invalid_config(
-                                    "Invalid type configuration for module",
-                                    Some(&format!(
-                                        "Expected type for `import ... from '{module}'` {} based on the module name",
-                                        if expect_hook {
-                                            "to be a hook"
-                                        } else {
-                                            "not to be a hook"
-                                        }
-                                    )),
-                                    Some(loc),
-                                ),
-                            );
+                            return Err(crate::compiler_error::CompilerError::invalid_config(
+                                "Invalid type configuration for module",
+                                Some(&format!(
+                                    "Expected type for `import ... from '{module}'` {} based on the module name",
+                                    if expect_hook { "to be a hook" } else { "not to be a hook" }
+                                )),
+                                Some(loc),
+                            ));
                         }
                         return Ok(Some(Global::Typed(module_type)));
                     }

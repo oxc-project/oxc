@@ -87,8 +87,7 @@ pub fn validate_no_set_state_in_effects(func: &HIRFunction) -> CompilerError {
                         && let Some(CallArg::Place(arg)) = args.first()
                         && let Some(set_state) = set_state_functions.get(&arg.identifier.id)
                     {
-                        let enable_verbose =
-                            func.env.config.enable_verbose_no_set_state_in_effect;
+                        let enable_verbose = func.env.config.enable_verbose_no_set_state_in_effect;
                         let description = if enable_verbose {
                             "Effects are intended to synchronize state between \
                              React and external systems. Calling setState \
@@ -177,10 +176,7 @@ fn is_ref_value_type(identifier: &Identifier) -> bool {
 }
 
 /// Check if a place is derived from a ref.
-fn is_derived_from_ref(
-    place: &Place,
-    ref_derived_values: &FxHashSet<IdentifierId>,
-) -> bool {
+fn is_derived_from_ref(place: &Place, ref_derived_values: &FxHashSet<IdentifierId>) -> bool {
     ref_derived_values.contains(&place.identifier.id)
         || is_use_ref_type(&place.identifier)
         || is_ref_value_type(&place.identifier)

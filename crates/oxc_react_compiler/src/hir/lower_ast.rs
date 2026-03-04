@@ -9,8 +9,8 @@ use oxc_span::GetSpan;
 
 use super::build_hir::{
     LowerableArrayElement, LowerableExpression, LowerableJsxAttribute, LowerableJsxChild,
-    LowerableJsxTag, LowerableObjectProperty, LowerableObjectPropertyKey, LowerableStatement,
-    OptionalMemberProperty,
+    LowerableJsxTag, LowerableObjectProperty, LowerableObjectPropertyKey, LowerablePropertyKind,
+    LowerableStatement, OptionalMemberProperty,
 };
 
 /// Convert an oxc_ast Expression to a LowerableExpression.
@@ -90,12 +90,18 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
                     ast::ObjectPropertyKind::ObjectProperty(prop) => {
                         let key = convert_property_key(&prop.key);
                         let value = convert_expression(&prop.value);
+                        let kind = match prop.kind {
+                            ast::PropertyKind::Init => LowerablePropertyKind::Init,
+                            ast::PropertyKind::Get => LowerablePropertyKind::Get,
+                            ast::PropertyKind::Set => LowerablePropertyKind::Set,
+                        };
                         LowerableObjectProperty::Property {
                             key,
                             value,
                             computed: prop.computed,
                             shorthand: prop.shorthand,
                             method: prop.method,
+                            kind,
                             span: prop.span,
                         }
                     }
@@ -306,8 +312,29 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
             span: ts_ta.span,
         },
 
-        // Default: treat as undefined for unsupported expressions
-        _ => LowerableExpression::Undefined(expr.span()),
+        // YieldExpression — unsupported (generators are not supported)
+        ast::Expression::YieldExpression(yield_expr) => {
+            LowerableExpression::UnsupportedExpression {
+                kind: "YieldExpression".to_string(),
+                span: yield_expr.span,
+            }
+        }
+
+        // Default: treat as unsupported for unknown expression types
+        _ => LowerableExpression::UnsupportedExpression {
+            kind: expression_type_name(expr).to_string(),
+            span: expr.span(),
+        },
+    }
+}
+
+/// Get a human-readable type name for an expression, matching Babel's node type names.
+fn expression_type_name(expr: &ast::Expression<'_>) -> &'static str {
+    match expr {
+        ast::Expression::YieldExpression(_) => "YieldExpression",
+        ast::Expression::ImportExpression(_) => "ImportExpression",
+        ast::Expression::PrivateInExpression(_) => "PrivateInExpression",
+        _ => "UnknownExpression",
     }
 }
 
@@ -512,7 +539,7 @@ fn convert_jsx_tag_name<'a>(name: &'a ast::JSXElementName<'a>) -> LowerableJsxTa
             let tag_name = ident.name.to_string();
             // Lowercase tags are built-in HTML elements
             if tag_name.starts_with(|c: char| c.is_ascii_lowercase()) {
-                LowerableJsxTag::BuiltIn(tag_name)
+                LowerableJsxTag::BuiltIn(tag_name, ident.span)
             } else {
                 LowerableJsxTag::Expression(Box::new(LowerableExpression::Identifier(
                     tag_name, ident.span,
@@ -522,7 +549,7 @@ fn convert_jsx_tag_name<'a>(name: &'a ast::JSXElementName<'a>) -> LowerableJsxTa
         ast::JSXElementName::IdentifierReference(ident) => {
             let tag_name = ident.name.to_string();
             if tag_name.starts_with(|c: char| c.is_ascii_lowercase()) {
-                LowerableJsxTag::BuiltIn(tag_name)
+                LowerableJsxTag::BuiltIn(tag_name, ident.span)
             } else {
                 LowerableJsxTag::Expression(Box::new(LowerableExpression::Identifier(
                     tag_name, ident.span,
@@ -530,7 +557,7 @@ fn convert_jsx_tag_name<'a>(name: &'a ast::JSXElementName<'a>) -> LowerableJsxTa
             }
         }
         ast::JSXElementName::NamespacedName(ns) => {
-            LowerableJsxTag::BuiltIn(format!("{}:{}", ns.namespace.name, ns.name.name))
+            LowerableJsxTag::BuiltIn(format!("{}:{}", ns.namespace.name, ns.name.name), ns.span)
         }
         ast::JSXElementName::MemberExpression(member) => {
             LowerableJsxTag::Expression(Box::new(convert_jsx_member_to_expression(member)))
@@ -619,13 +646,14 @@ fn convert_jsx_child<'a>(child: &'a ast::JSXChild<'a>) -> Option<LowerableJsxChi
             let expr = convert_jsx_element_to_expression(element);
             Some(LowerableJsxChild::Element(expr))
         }
-        ast::JSXChild::ExpressionContainer(container) => match &container.expression {
-            ast::JSXExpression::EmptyExpression(_) => None,
-            _ => {
+        ast::JSXChild::ExpressionContainer(container) => {
+            if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
+                None
+            } else {
                 let expr = convert_expression(container.expression.to_expression());
                 Some(LowerableJsxChild::ExpressionContainer(expr, container.span))
             }
-        },
+        }
         ast::JSXChild::Fragment(fragment) => {
             let children = fragment.children.iter().filter_map(convert_jsx_child).collect();
             Some(LowerableJsxChild::Fragment { children, span: fragment.span })

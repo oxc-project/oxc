@@ -460,14 +460,12 @@ fn apply_operand_merges(
         // processes its own operands transitively.
         let scope_to_propagate = Box::new(expanded_scope);
         for operand_info in operand_infos {
-            if let Some(&(def_block_id, def_instr_idx)) = lvalue_defs.get(&operand_info.id) {
-                if let Some(def_block) = func.body.blocks.get_mut(&def_block_id) {
-                    if let Some(def_instr) = def_block.instructions.get_mut(def_instr_idx) {
-                        if def_instr.lvalue.identifier.id == operand_info.id {
-                            def_instr.lvalue.identifier.scope = Some(scope_to_propagate.clone());
-                        }
-                    }
-                }
+            if let Some(&(def_block_id, def_instr_idx)) = lvalue_defs.get(&operand_info.id)
+                && let Some(def_block) = func.body.blocks.get_mut(&def_block_id)
+                && let Some(def_instr) = def_block.instructions.get_mut(def_instr_idx)
+                && def_instr.lvalue.identifier.id == operand_info.id
+            {
+                def_instr.lvalue.identifier.scope = Some(scope_to_propagate.clone());
             }
         }
     }

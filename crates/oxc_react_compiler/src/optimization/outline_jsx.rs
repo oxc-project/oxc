@@ -171,7 +171,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                 continue;
             };
             let mut new_instrs = Vec::new();
-            for instr in block.instructions.iter() {
+            for instr in &block.instructions {
                 if let Some(replacement) = rewrite_instr.get(&instr.id) {
                     new_instrs.extend(replacement.iter().cloned());
                 } else {

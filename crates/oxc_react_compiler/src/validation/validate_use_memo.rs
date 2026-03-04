@@ -22,7 +22,9 @@ use crate::{
 /// In the TS compiler, the fatal errors are returned via `errors.asResult()` and
 /// unwrapped (thrown on error), while the void memo errors are logged via
 /// `fn.env.logErrors(voidMemoErrors.asResult())` as non-fatal warnings.
-pub fn validate_use_memo(func: &HIRFunction) -> (Result<(), CompilerError>, Result<(), CompilerError>) {
+pub fn validate_use_memo(
+    func: &HIRFunction,
+) -> (Result<(), CompilerError>, Result<(), CompilerError>) {
     let mut errors = CompilerError::new();
     let mut void_memo_errors = CompilerError::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();

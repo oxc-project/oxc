@@ -4,7 +4,7 @@
 ///
 /// Infers types for HIR identifiers using a union-find based unification approach.
 /// Generates type equations from instructions and unifies them to determine types.
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     HIRFunction, IdentifierId, IdentifierName, Instruction, InstructionKind, InstructionValue,
@@ -31,12 +31,15 @@ struct TypeEquation {
 /// Union-find based type unifier.
 struct Unifier<'a> {
     substitutions: FxHashMap<TypeId, Type>,
+    /// Phi types stored separately to avoid recursive unification issues.
+    /// These are merged into ResolvedTypes during the apply phase.
+    phi_substitutions: FxHashMap<TypeId, Type>,
     env: &'a Environment,
 }
 
 impl<'a> Unifier<'a> {
     fn new(env: &'a Environment) -> Self {
-        Self { substitutions: FxHashMap::default(), env }
+        Self { substitutions: FxHashMap::default(), phi_substitutions: FxHashMap::default(), env }
     }
 
     /// Unify two types, recording any substitutions needed.
@@ -129,19 +132,24 @@ impl<'a> Unifier<'a> {
         // to prevent storing Phi types in substitutions. If we stored `x → Phi([...])`,
         // subsequent resolves of TypeVars chaining to x would return a Phi, causing
         // (Type::Phi, _) match arm recursion that can overflow the stack.
-        if let (Type::Var(_), Type::Phi(phi_b)) = (&left, right.clone()) {
+        if let (Type::Var(id), Type::Phi(phi_b)) = (&left, right.clone()) {
             let consensus = self.phi_consensus_type(&phi_b.operands);
             if let Some(consensus_type) = consensus {
                 self.unify(left, consensus_type);
+            } else {
+                // No consensus: store the raw Phi so resolve_deep can expand it later.
+                // We store in phi_substitutions to avoid recursive unification issues.
+                self.phi_substitutions.insert(*id, Type::Phi(phi_b));
             }
-            // If no consensus, leave the TypeVar unresolved (don't store Phi).
             return;
         }
         // Symmetrical case: (Phi, Var) - each phi operand unifies with the var.
-        if let (Type::Phi(phi_a), Type::Var(_)) = (left.clone(), &right) {
+        if let (Type::Phi(phi_a), Type::Var(id)) = (left.clone(), &right) {
             let consensus = self.phi_consensus_type(&phi_a.operands);
             if let Some(consensus_type) = consensus {
                 self.unify(consensus_type, right);
+            } else {
+                self.phi_substitutions.insert(*id, Type::Phi(phi_a));
             }
             return;
         }
@@ -248,19 +256,48 @@ struct ResolvedTypes {
 
 impl ResolvedTypes {
     /// Resolve a type by following substitutions (iterative to avoid stack overflow).
-    fn resolve(&self, mut ty: Type) -> Type {
+    fn resolve(&self, ty: Type) -> Type {
+        let mut visited = FxHashSet::default();
+        self.resolve_inner(ty, &mut visited)
+    }
+
+    fn resolve_inner(&self, mut ty: Type, visited: &mut FxHashSet<TypeId>) -> Type {
         // Iteratively follow Var → substitution chains to avoid stack overflow
         // for deep chains that can arise from phi node type equations.
         loop {
             match ty {
-                Type::Var(id) => match self.substitutions.get(&id) {
-                    Some(resolved) => {
-                        ty = resolved.clone();
+                Type::Var(id) => {
+                    if !visited.insert(id) {
+                        // Cycle detected: stop resolving
+                        return Type::Var(id);
                     }
-                    None => return Type::Var(id),
-                },
-                other => return other,
+                    match self.substitutions.get(&id) {
+                        Some(resolved) => {
+                            ty = resolved.clone();
+                        }
+                        None => return Type::Var(id),
+                    }
+                }
+                other => return self.resolve_deep(other, visited),
             }
+        }
+    }
+
+    /// Recursively resolve type variables inside compound types.
+    fn resolve_deep(&self, ty: Type, visited: &mut FxHashSet<TypeId>) -> Type {
+        match ty {
+            Type::Function(mut func_type) => {
+                *func_type.return_type = self.resolve_inner(*func_type.return_type, visited);
+                Type::Function(func_type)
+            }
+            Type::Phi(mut phi) => {
+                for operand in &mut phi.operands {
+                    *operand =
+                        self.resolve_inner(std::mem::replace(operand, Type::Primitive), visited);
+                }
+                Type::Phi(phi)
+            }
+            other => other,
         }
     }
 
@@ -270,9 +307,7 @@ impl ResolvedTypes {
 }
 
 /// Run type inference on the given function.
-pub fn infer_types(
-    func: &mut HIRFunction,
-) -> Result<(), crate::compiler_error::CompilerError> {
+pub fn infer_types(func: &mut HIRFunction) -> Result<(), crate::compiler_error::CompilerError> {
     let mut unifier = Unifier::new(&func.env);
 
     // Generate type equations
@@ -287,8 +322,13 @@ pub fn infer_types(
         unifier.unify(eq.left, eq.right);
     }
 
-    // Extract substitutions so we can release the env borrow
-    let resolved = ResolvedTypes { substitutions: unifier.substitutions };
+    // Extract substitutions so we can release the env borrow.
+    // Merge phi_substitutions for TypeVars that have no primary substitution.
+    let mut substitutions = unifier.substitutions;
+    for (id, phi_type) in unifier.phi_substitutions {
+        substitutions.entry(id).or_insert(phi_type);
+    }
+    let resolved = ResolvedTypes { substitutions };
 
     // Apply resolved types back to the function
     apply(func, &resolved);
@@ -569,9 +609,7 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
     }
 }
 
-fn generate(
-    func: &HIRFunction,
-) -> (Vec<TypeEquation>, Vec<crate::compiler_error::CompilerError>) {
+fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error::CompilerError>) {
     let mut equations = Vec::new();
     let mut errors = Vec::new();
 

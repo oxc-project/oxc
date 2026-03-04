@@ -12,7 +12,8 @@ pub use styled_components::StyledComponentsOptions;
 use crate::{
     context::TraverseCtx,
     plugins::{
-        styled_components::StyledComponents, tagged_template_transform::TaggedTemplateTransform,
+        react_compiler::ReactCompiler, styled_components::StyledComponents,
+        tagged_template_transform::TaggedTemplateTransform,
     },
     state::TransformState,
 };
@@ -20,6 +21,7 @@ use crate::{
 pub struct Plugins<'a> {
     styled_components: Option<StyledComponents<'a>>,
     tagged_template_escape: Option<TaggedTemplateTransform>,
+    react_compiler: Option<ReactCompiler>,
 }
 
 impl Plugins<'_> {
@@ -31,6 +33,10 @@ impl Plugins<'_> {
             } else {
                 None
             },
+            react_compiler: options
+                .react_compiler
+                .and_then(|react_compiler| react_compiler.enabled.then_some(react_compiler))
+                .map(ReactCompiler::new),
         }
     }
 }
@@ -39,6 +45,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_program(node, ctx);
+        }
+        if let Some(react_compiler) = &mut self.react_compiler {
+            react_compiler.enter_program(node, ctx);
         }
     }
 

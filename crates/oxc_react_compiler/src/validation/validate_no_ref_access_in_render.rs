@@ -145,11 +145,10 @@ fn ty_equal(a: &RefAccessType, b: &RefAccessType) -> bool {
 
 fn join_ref_access_ref_types(a: RefAccessRefType, b: RefAccessRefType) -> RefAccessRefType {
     match (a, b) {
-        (RefAccessRefType::RefValue { ref_id: a_id, .. }, RefAccessRefType::RefValue { ref_id: b_id, .. })
-            if a_id == b_id =>
-        {
-            RefAccessRefType::RefValue { loc: Option::None, ref_id: a_id }
-        }
+        (
+            RefAccessRefType::RefValue { ref_id: a_id, .. },
+            RefAccessRefType::RefValue { ref_id: b_id, .. },
+        ) if a_id == b_id => RefAccessRefType::RefValue { loc: Option::None, ref_id: a_id },
         (a @ RefAccessRefType::RefValue { .. }, _) => a,
         (_, b @ RefAccessRefType::RefValue { .. }) => b,
         (RefAccessRefType::Ref { ref_id: a_id }, RefAccessRefType::Ref { ref_id: b_id })
@@ -230,11 +229,7 @@ struct Env {
 
 impl Env {
     fn new() -> Self {
-        Self {
-            changed: false,
-            data: FxHashMap::default(),
-            temporaries: FxHashMap::default(),
-        }
+        Self { changed: false, data: FxHashMap::default(), temporaries: FxHashMap::default() }
     }
 
     fn lookup<'a>(&'a self, place: &'a Place) -> &'a Place {
@@ -254,26 +249,16 @@ impl Env {
     }
 
     fn get(&self, key: IdentifierId) -> Option<&RefAccessType> {
-        let operand_id = self
-            .temporaries
-            .get(&key)
-            .map(|p| p.identifier.id)
-            .unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map(|p| p.identifier.id).unwrap_or(key);
         self.data.get(&operand_id)
     }
 
     fn set(&mut self, key: IdentifierId, value: RefAccessType) {
-        let operand_id = self
-            .temporaries
-            .get(&key)
-            .map(|p| p.identifier.id)
-            .unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map(|p| p.identifier.id).unwrap_or(key);
         let cur = self.data.get(&operand_id);
         let cur_none = cur.is_none();
-        let widened_value = join_ref_access_types(
-            value,
-            cur.cloned().unwrap_or(RefAccessType::None),
-        );
+        let widened_value =
+            join_ref_access_types(value, cur.cloned().unwrap_or(RefAccessType::None));
         if !(cur_none && matches!(widened_value, RefAccessType::None))
             && (cur_none || !ty_equal(cur.map_or(&RefAccessType::None, |v| v), &widened_value))
         {
@@ -330,8 +315,7 @@ fn collect_temporaries_sidemap(func: &HIRFunction, env: &mut Env) {
                     env.define(&v.lvalue.place, temp);
                 }
                 InstructionValue::PropertyLoad(v) => {
-                    if is_use_ref_type(&v.object.identifier)
-                        && v.property.to_string() == "current"
+                    if is_use_ref_type(&v.object.identifier) && v.property.to_string() == "current"
                     {
                         continue;
                     }
@@ -361,11 +345,7 @@ fn destructure(ty: Option<RefAccessType>) -> Option<RefAccessType> {
 // Validation helpers
 // =====================================================================================
 
-fn validate_no_direct_ref_value_access(
-    errors: &mut CompilerError,
-    operand: &Place,
-    env: &Env,
-) {
+fn validate_no_direct_ref_value_access(errors: &mut CompilerError, operand: &Place, env: &Env) {
     let ty = destructure(env.get(operand.identifier.id).cloned());
     if let Some(RefAccessType::RefValue { loc, .. }) = &ty {
         errors.push_diagnostic(
@@ -383,11 +363,7 @@ fn validate_no_direct_ref_value_access(
     }
 }
 
-fn validate_no_ref_value_access(
-    errors: &mut CompilerError,
-    env: &Env,
-    operand: &Place,
-) {
+fn validate_no_ref_value_access(errors: &mut CompilerError, env: &Env, operand: &Place) {
     let ty = destructure(env.get(operand.identifier.id).cloned());
     match &ty {
         Some(RefAccessType::RefValue { loc, .. }) => {
@@ -404,9 +380,7 @@ fn validate_no_ref_value_access(
                 }),
             );
         }
-        Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. })
-            if fn_ty.read_ref_effect =>
-        {
+        Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. }) if fn_ty.read_ref_effect => {
             errors.push_diagnostic(
                 CompilerDiagnostic::create(
                     ErrorCategory::Refs,
@@ -464,9 +438,7 @@ fn validate_no_ref_passed_to_function(
                 }),
             );
         }
-        Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. })
-            if fn_ty.read_ref_effect =>
-        {
+        Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. }) if fn_ty.read_ref_effect => {
             errors.push_diagnostic(
                 CompilerDiagnostic::create(
                     ErrorCategory::Refs,
@@ -615,9 +587,7 @@ fn validate_no_ref_access_in_render_impl(
                     .operands
                     .values()
                     .map(|operand| {
-                        env.get(operand.identifier.id)
-                            .cloned()
-                            .unwrap_or(RefAccessType::None)
+                        env.get(operand.identifier.id).cloned().unwrap_or(RefAccessType::None)
                     })
                     .collect();
                 env.set(phi.place.identifier.id, join_ref_access_types_vec(types));
@@ -645,12 +615,10 @@ fn validate_no_ref_access_in_render_impl(
                             Some(RefAccessType::Structure { value: Some(val), .. }) => {
                                 Some(val.clone().into_access_type())
                             }
-                            Some(RefAccessType::Ref { ref_id }) => {
-                                Some(RefAccessType::RefValue {
-                                    loc: Some(instr.loc),
-                                    ref_id: Some(*ref_id),
-                                })
-                            }
+                            Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
+                                loc: Some(instr.loc),
+                                ref_id: Some(*ref_id),
+                            }),
                             _ => Option::None,
                         };
                         env.set(
@@ -718,16 +686,12 @@ fn validate_no_ref_access_in_render_impl(
                         };
                         env.set(
                             instr.lvalue.identifier.id,
-                            lookup_type
-                                .clone()
-                                .unwrap_or_else(|| ref_type_of_type(&instr.lvalue)),
+                            lookup_type.clone().unwrap_or_else(|| ref_type_of_type(&instr.lvalue)),
                         );
                         for lval in each_pattern_operand(&v.lvalue.pattern) {
                             env.set(
                                 lval.identifier.id,
-                                lookup_type
-                                    .clone()
-                                    .unwrap_or_else(|| ref_type_of_type(lval)),
+                                lookup_type.clone().unwrap_or_else(|| ref_type_of_type(lval)),
                             );
                         }
                     }
@@ -745,10 +709,7 @@ fn validate_no_ref_access_in_render_impl(
                         env.set(
                             instr.lvalue.identifier.id,
                             RefAccessType::Structure {
-                                fn_type: Some(Box::new(RefFnType {
-                                    read_ref_effect,
-                                    return_type,
-                                })),
+                                fn_type: Some(Box::new(RefFnType { read_ref_effect, return_type })),
                                 value: Option::None,
                             },
                         );
@@ -767,10 +728,7 @@ fn validate_no_ref_access_in_render_impl(
                         env.set(
                             instr.lvalue.identifier.id,
                             RefAccessType::Structure {
-                                fn_type: Some(Box::new(RefFnType {
-                                    read_ref_effect,
-                                    return_type,
-                                })),
+                                fn_type: Some(Box::new(RefFnType { read_ref_effect, return_type })),
                                 value: Option::None,
                             },
                         );
@@ -781,15 +739,12 @@ fn validate_no_ref_access_in_render_impl(
                             InstructionValue::MethodCall(v) => &v.property,
                             _ => unreachable!(),
                         };
-                        let hook_kind =
-                            get_hook_kind_for_type(&func.env, &callee.identifier.type_);
+                        let hook_kind = get_hook_kind_for_type(&func.env, &callee.identifier.type_);
                         let mut return_type = RefAccessType::None;
                         let fn_type = env.get(callee.identifier.id).cloned();
                         let mut did_error = false;
-                        if let Some(RefAccessType::Structure {
-                            fn_type: Some(fn_ty),
-                            ..
-                        }) = &fn_type
+                        if let Some(RefAccessType::Structure { fn_type: Some(fn_ty), .. }) =
+                            &fn_type
                         {
                             return_type = fn_ty.return_type.clone();
                             if fn_ty.read_ref_effect {
@@ -801,12 +756,14 @@ fn validate_no_ref_access_in_render_impl(
                                         Some(ERROR_DESCRIPTION.to_string()),
                                         Option::None,
                                     )
-                                    .with_detail(CompilerDiagnosticDetail::Error {
-                                        loc: Some(callee.loc),
-                                        message: Some(
-                                            "This function accesses a ref value".to_string(),
-                                        ),
-                                    }),
+                                    .with_detail(
+                                        CompilerDiagnosticDetail::Error {
+                                            loc: Some(callee.loc),
+                                            message: Some(
+                                                "This function accesses a ref value".to_string(),
+                                            ),
+                                        },
+                                    ),
                                 );
                             }
                         }
@@ -820,11 +777,8 @@ fn validate_no_ref_access_in_render_impl(
                                         Some(hk) if !matches!(hk, HookKind::UseState | HookKind::UseReducer)
                                     )
                                 {
-                                    validate_no_direct_ref_value_access(
-                                        &mut errors, operand, env,
-                                    );
-                                } else if interpolated_as_jsx
-                                    .contains(&instr.lvalue.identifier.id)
+                                    validate_no_direct_ref_value_access(&mut errors, operand, env);
+                                } else if interpolated_as_jsx.contains(&instr.lvalue.identifier.id)
                                 {
                                     validate_no_ref_value_access(&mut errors, env, operand);
                                 } else {
@@ -884,9 +838,7 @@ fn validate_no_ref_access_in_render_impl(
                         let mut safe_found: Option<usize> = Option::None;
                         if let InstructionValue::PropertyStore(_) = &instr.value {
                             if let Some(RefAccessType::Ref { ref_id }) = &target {
-                                safe_found = safe_blocks
-                                    .iter()
-                                    .position(|(_, r)| r == ref_id);
+                                safe_found = safe_blocks.iter().position(|(_, r)| r == ref_id);
                             }
                         }
                         if let Some(idx) = safe_found {
@@ -910,10 +862,10 @@ fn validate_no_ref_access_in_render_impl(
                                 validate_no_direct_ref_value_access(&mut errors, &v.value, env);
                                 let val_type = env.get(v.value.identifier.id).cloned();
                                 if let Some(RefAccessType::Structure { .. }) = &val_type {
-                                    let mut object_type = val_type.clone().unwrap_or(RefAccessType::None);
+                                    let mut object_type =
+                                        val_type.clone().unwrap_or(RefAccessType::None);
                                     if let Some(t) = &target {
-                                        object_type =
-                                            join_ref_access_types(object_type, t.clone());
+                                        object_type = join_ref_access_types(object_type, t.clone());
                                     }
                                     env.set(object.identifier.id, object_type);
                                 }
@@ -922,10 +874,10 @@ fn validate_no_ref_access_in_render_impl(
                                 validate_no_direct_ref_value_access(&mut errors, &v.value, env);
                                 let val_type = env.get(v.value.identifier.id).cloned();
                                 if let Some(RefAccessType::Structure { .. }) = &val_type {
-                                    let mut object_type = val_type.clone().unwrap_or(RefAccessType::None);
+                                    let mut object_type =
+                                        val_type.clone().unwrap_or(RefAccessType::None);
                                     if let Some(t) = &target {
-                                        object_type =
-                                            join_ref_access_types(object_type, t.clone());
+                                        object_type = join_ref_access_types(object_type, t.clone());
                                     }
                                     env.set(object.identifier.id, object_type);
                                 }
@@ -941,8 +893,10 @@ fn validate_no_ref_access_in_render_impl(
                     }
                     InstructionValue::Primitive(v) => {
                         use crate::hir::PrimitiveValueKind;
-                        if matches!(v.value, PrimitiveValueKind::Null | PrimitiveValueKind::Undefined)
-                        {
+                        if matches!(
+                            v.value,
+                            PrimitiveValueKind::Null | PrimitiveValueKind::Undefined
+                        ) {
                             env.set(instr.lvalue.identifier.id, RefAccessType::Nullable);
                         }
                     }
@@ -950,9 +904,9 @@ fn validate_no_ref_access_in_render_impl(
                         if v.operator == oxc_syntax::operator::UnaryOperator::LogicalNot {
                             let value = env.get(v.value.identifier.id).cloned();
                             let ref_id = match &value {
-                                Some(RefAccessType::RefValue {
-                                    ref_id: Some(rid), ..
-                                }) => Some(*rid),
+                                Some(RefAccessType::RefValue { ref_id: Some(rid), .. }) => {
+                                    Some(*rid)
+                                }
                                 _ => Option::None,
                             };
                             if let Some(rid) = ref_id {
@@ -993,14 +947,10 @@ fn validate_no_ref_access_in_render_impl(
                         let right = env.get(v.right.identifier.id).cloned();
                         let mut nullish = false;
                         let mut ref_id: Option<RefId> = Option::None;
-                        if let Some(RefAccessType::RefValue {
-                            ref_id: Some(rid), ..
-                        }) = &left
-                        {
+                        if let Some(RefAccessType::RefValue { ref_id: Some(rid), .. }) = &left {
                             ref_id = Some(*rid);
-                        } else if let Some(RefAccessType::RefValue {
-                            ref_id: Some(rid), ..
-                        }) = &right
+                        } else if let Some(RefAccessType::RefValue { ref_id: Some(rid), .. }) =
+                            &right
                         {
                             ref_id = Some(*rid);
                         }
@@ -1037,12 +987,13 @@ fn validate_no_ref_access_in_render_impl(
 
                 // Ensure useRef-typed lvalues are tracked as Ref
                 if is_use_ref_type(&instr.lvalue.identifier)
-                    && !matches!(env.get(instr.lvalue.identifier.id), Some(RefAccessType::Ref { .. }))
+                    && !matches!(
+                        env.get(instr.lvalue.identifier.id),
+                        Some(RefAccessType::Ref { .. })
+                    )
                 {
-                    let cur = env
-                        .get(instr.lvalue.identifier.id)
-                        .cloned()
-                        .unwrap_or(RefAccessType::None);
+                    let cur =
+                        env.get(instr.lvalue.identifier.id).cloned().unwrap_or(RefAccessType::None);
                     env.set(
                         instr.lvalue.identifier.id,
                         join_ref_access_types(cur, RefAccessType::Ref { ref_id: next_ref_id() }),
@@ -1055,18 +1006,13 @@ fn validate_no_ref_access_in_render_impl(
                         Some(RefAccessType::RefValue { .. })
                     )
                 {
-                    let cur = env
-                        .get(instr.lvalue.identifier.id)
-                        .cloned()
-                        .unwrap_or(RefAccessType::None);
+                    let cur =
+                        env.get(instr.lvalue.identifier.id).cloned().unwrap_or(RefAccessType::None);
                     env.set(
                         instr.lvalue.identifier.id,
                         join_ref_access_types(
                             cur,
-                            RefAccessType::RefValue {
-                                loc: Some(instr.loc),
-                                ref_id: Option::None,
-                            },
+                            RefAccessType::RefValue { loc: Some(instr.loc), ref_id: Option::None },
                         ),
                     );
                 }
