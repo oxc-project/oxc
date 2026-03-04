@@ -1047,18 +1047,43 @@ fn codegen_block_no_reset<'a>(
                         // Explicit label: wrap in LabeledStatement
                         let label_name = codegen_label(label.id);
                         let label_id = cx.ast.label_identifier(SPAN, cx.ast.atom(&label_name));
-                        // Wrap terminal output in a block, then label it
+                        // Combine terminal output into a single statement
                         let body = if term_stmts.len() == 1 {
                             term_stmts.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN))
                         } else {
                             let block = cx.ast.alloc_block_statement(SPAN, term_stmts);
                             Statement::BlockStatement(block)
                         };
+                        // If the body is a BlockStatement with exactly one statement, unwrap it
+                        // (matches TS: statement.type === 'BlockStatement' && statement.body.length === 1)
+                        let body = match body {
+                            Statement::BlockStatement(block_alloc)
+                                if block_alloc.body.len() == 1 =>
+                            {
+                                let mut block = block_alloc.unbox();
+                                block.body.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN))
+                            }
+                            other => other,
+                        };
                         statements.push(cx.ast.statement_labeled(SPAN, label_id, body));
                     }
                 } else {
-                    // No label: flatten statements
-                    statements.extend(term_stmts);
+                    // No label: flatten BlockStatement body, otherwise push directly
+                    // (matches TS: statement.type === 'BlockStatement' ? ...statement.body : statement)
+                    if term_stmts.len() == 1 {
+                        let stmt =
+                            term_stmts.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN));
+                        match stmt {
+                            Statement::BlockStatement(block_alloc) => {
+                                statements.extend(block_alloc.unbox().body);
+                            }
+                            other => {
+                                statements.push(other);
+                            }
+                        }
+                    } else {
+                        statements.extend(term_stmts);
+                    }
                 }
             }
         }

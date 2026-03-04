@@ -10,6 +10,7 @@ use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_codegen::{Gen, Context};
 use oxc_react_compiler::utils::test_utils::{PragmaDefaults, parse_config_pragma_for_tests};
@@ -1765,7 +1766,35 @@ fn whitespace_compatible(a: &str, b: &str) -> bool {
 /// 3. Remove trailing commas before `]`, `)`, or `}` (trailing-comma style).
 /// 4. Collapse runs of whitespace (spaces, tabs, newlines) to a single space.
 /// 5. Normalize `const tN` to `let tN` for scope temporaries (`t` + digit).
+/// Parse a JavaScript/JSX string and reformat it through oxfmt (Prettier-compatible formatter)
+/// to normalize formatting. This eliminates cosmetic differences (semicolons, whitespace,
+/// parenthesization, quotes, trailing commas, bracket spacing, etc.) between our codegen
+/// and the reference compiler's Prettier-formatted output.
+/// Falls back to the original string if parsing fails.
+fn normalize_via_codegen(s: &str) -> String {
+    let allocator = Allocator::default();
+    let source_type =
+        oxc_formatter::enable_jsx_source_type(oxc_span::SourceType::mjs().with_jsx(true));
+    let ret = oxc_parser::Parser::new(&allocator, s, source_type)
+        .with_options(oxc_formatter::get_parse_options())
+        .parse();
+    if ret.panicked || !ret.errors.is_empty() {
+        return s.to_string();
+    }
+    let options = oxc_formatter::FormatOptions {
+        line_width: oxc_formatter::LineWidth::try_from(80u16).unwrap(),
+        ..Default::default()
+    };
+    oxc_formatter::Formatter::new(&allocator, options).build(&ret.program)
+}
+
 fn normalize_code(s: &str) -> String {
+    // Step -2: parse and reprint through oxc_codegen to normalize formatting.
+    // This eliminates cosmetic differences (semicolons, whitespace, parens, etc.)
+    // between our codegen and the reference compiler's Prettier-formatted output.
+    // Falls back to the original string if parsing fails.
+    let s = &normalize_via_codegen(s);
+
     // Step -1: strip $dispatcherGuard hook guard wrappers from the raw text.
     // The reference compiler with @enableEmitHookGuards wraps hook calls in
     // IIFE try/finally blocks. Our compiler doesn't implement this feature flag.
