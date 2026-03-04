@@ -516,87 +516,76 @@ fn build_function_body<'a>(
 /// Takes a CallExpression, StaticMemberExpression, ComputedMemberExpression,
 /// or ChainExpression and produces a `ChainElement` with `optional: true`.
 /// Used for building `ChainExpression` nodes for optional chains (`?.`).
-fn make_optional_chain_element<'a>(
+/// Convert an `Expression` to a `ChainElement` without changing the optional flag.
+///
+/// This is used when wrapping an optional chain: the expression already has the
+/// correct `optional` flag set, and we just need to convert it to a `ChainElement`
+/// so it can be wrapped in a `ChainExpression`.
+fn expression_to_chain_element(expr: Expression<'_>) -> Option<ChainElement<'_>> {
+    match expr {
+        Expression::CallExpression(call) => Some(ChainElement::CallExpression(call)),
+        Expression::StaticMemberExpression(m) => Some(ChainElement::StaticMemberExpression(m)),
+        Expression::ComputedMemberExpression(m) => {
+            Some(ChainElement::ComputedMemberExpression(m))
+        }
+        Expression::PrivateFieldExpression(f) => Some(ChainElement::PrivateFieldExpression(f)),
+        _ => None,
+    }
+}
+
+/// Check if an expression (or any of its nested object/callee sub-expressions)
+/// contains an optional member access or optional call (`optional=true`).
+///
+/// This is used by the `OptionalCall(optional=false)` handler to determine whether
+/// the inner expression is a non-optional continuation of an optional chain and
+/// therefore needs to be wrapped in a `ChainExpression`.
+fn contains_optional_access(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::StaticMemberExpression(m) => {
+            m.optional || contains_optional_access(&m.object)
+        }
+        Expression::ComputedMemberExpression(m) => {
+            m.optional || contains_optional_access(&m.object)
+        }
+        Expression::CallExpression(c) => c.optional || contains_optional_access(&c.callee),
+        Expression::ChainExpression(_) => true,
+        _ => false,
+    }
+}
+
+/// Set the `optional` flag to `true` on a `CallExpression`, `StaticMemberExpression`,
+/// or `ComputedMemberExpression`, returning the modified expression.
+///
+/// In ESTree/OXC AST, optional chain segments (`?.`) are represented by setting the
+/// `optional` flag on the member/call expression, NOT by wrapping in `ChainExpression`.
+/// The `ChainExpression` wrapper is added only once around the entire chain.
+fn set_optional_flag<'a>(
     cx: &CodegenContext<'a>,
     expr: Expression<'a>,
     loc: crate::compiler_error::SourceLocation,
-) -> Option<ChainElement<'a>> {
+) -> Expression<'a> {
     match expr {
         Expression::CallExpression(call) => {
             let call = call.unbox();
-            let chain_call = cx.ast.chain_element_call_expression(
-                SPAN,
-                call.callee,
-                NONE,
-                call.arguments,
-                true, // optional
-            );
-            Some(chain_call)
+            cx.ast.expression_call(SPAN, call.callee, NONE, call.arguments, true)
         }
         Expression::StaticMemberExpression(member) => {
             let member = member.unbox();
-            let new_member = cx.ast.alloc_static_member_expression(
+            Expression::from(cx.ast.member_expression_static(
                 SPAN,
                 member.object,
                 member.property,
-                true, // optional
-            );
-            Some(ChainElement::StaticMemberExpression(new_member))
+                true,
+            ))
         }
         Expression::ComputedMemberExpression(member) => {
             let member = member.unbox();
-            let new_member = cx.ast.alloc_computed_member_expression(
+            Expression::from(cx.ast.member_expression_computed(
                 SPAN,
                 member.object,
                 member.expression,
-                true, // optional
-            );
-            Some(ChainElement::ComputedMemberExpression(new_member))
-        }
-        Expression::ChainExpression(chain) => {
-            // Already a chain expression (nested optional) — extract inner and rewrap
-            let chain = chain.unbox();
-            match chain.expression {
-                ChainElement::CallExpression(call) => {
-                    let call = call.unbox();
-                    let chain_call = cx.ast.chain_element_call_expression(
-                        SPAN,
-                        call.callee,
-                        NONE,
-                        call.arguments,
-                        true,
-                    );
-                    Some(chain_call)
-                }
-                ChainElement::StaticMemberExpression(member) => {
-                    let member = member.unbox();
-                    let new_member = cx.ast.alloc_static_member_expression(
-                        SPAN,
-                        member.object,
-                        member.property,
-                        true,
-                    );
-                    Some(ChainElement::StaticMemberExpression(new_member))
-                }
-                ChainElement::ComputedMemberExpression(member) => {
-                    let member = member.unbox();
-                    let new_member = cx.ast.alloc_computed_member_expression(
-                        SPAN,
-                        member.object,
-                        member.expression,
-                        true,
-                    );
-                    Some(ChainElement::ComputedMemberExpression(new_member))
-                }
-                _ => {
-                    cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
-                        "Expected an optional value to resolve to a call or member expression",
-                        None,
-                        loc,
-                    ));
-                    None
-                }
-            }
+                true,
+            ))
         }
         _ => {
             cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
@@ -604,10 +593,30 @@ fn make_optional_chain_element<'a>(
                 None,
                 loc,
             ));
-            None
+            expr
         }
     }
 }
+
+/// Wrap an expression in a `ChainExpression` if it (or any of its nested sub-expressions)
+/// contains an optional access. This is the single wrapping point for optional chains.
+fn wrap_in_chain_if_needed<'a>(
+    cx: &CodegenContext<'a>,
+    expr: Expression<'a>,
+) -> Expression<'a> {
+    if !contains_optional_access(&expr) {
+        return expr;
+    }
+    // The expression contains optional accesses. Wrap the outermost
+    // member/call in a ChainExpression. If the expression is not a
+    // convertible type (shouldn't happen for well-formed optional chains),
+    // return it as-is.
+    match expression_to_chain_element(expr) {
+        Some(elem) => cx.ast.expression_chain(SPAN, elem),
+        None => make_undefined(cx),
+    }
+}
+
 
 /// Clone an expression from the temp map (arena-allocated copy).
 fn clone_expr<'a>(cx: &CodegenContext<'a>, expr: &Expression<'a>) -> Expression<'a> {
@@ -1597,6 +1606,9 @@ fn codegen_store_or_declare<'a>(
     let name = identifier_name(&lvalue_place.identifier);
     let decl_id = lvalue_place.identifier.declaration_id;
 
+    // Wrap optional chains in ChainExpression at the final usage point.
+    let value = value.map(|v| wrap_in_chain_if_needed(cx, v));
+
     match kind {
         InstructionKind::Const | InstructionKind::HoistedConst => {
             // TS: CompilerError.invariant(instr.lvalue === null, ...)
@@ -1752,11 +1764,14 @@ fn try_store_as_temporary<'a>(
     if let Some(lval) = lvalue {
         let name = identifier_name(&lval.identifier);
         if name.is_empty() || lval.identifier.name.is_none() {
-            // Unnamed temp — store for inline substitution
+            // Unnamed temp — store for inline substitution.
+            // Do NOT wrap in ChainExpression here (see codegen_instruction_to_statement).
             cx.temp.insert(lval.identifier.declaration_id, Some(expr));
             return;
         }
     }
+    // Final usage — wrap optional chains.
+    let expr = wrap_in_chain_if_needed(cx, expr);
     stmts.push(make_expr_stmt(cx, expr));
 }
 
@@ -1770,14 +1785,24 @@ fn codegen_instruction_to_statement<'a>(
     let lvalue = instr.lvalue.as_ref();
     match lvalue {
         None => {
-            // No lvalue — just emit expression statement
+            // No lvalue — just emit expression statement.
+            // Wrap optional chains: expressions with optional flags need a
+            // ChainExpression wrapper when used as a standalone expression.
+            let value = wrap_in_chain_if_needed(cx, value);
             stmts.push(make_expr_stmt(cx, value));
         }
         Some(lval) => {
             if lval.identifier.name.is_none() {
-                // Unnamed temp — store for inline substitution
+                // Unnamed temp — store for inline substitution.
+                // Do NOT wrap in ChainExpression here: the temp may be used as
+                // an object in a subsequent PropertyLoad (optional chain
+                // continuation), and ChainExpression as an object would cause
+                // extra parentheses.
                 cx.temp.insert(lval.identifier.declaration_id, Some(value));
             } else {
+                // Named variable — this is a final usage point. Wrap optional
+                // chains in ChainExpression for correct output.
+                let value = wrap_in_chain_if_needed(cx, value);
                 let name = identifier_name(&lval.identifier);
                 if cx.has_declared(lval.identifier.declaration_id) {
                     // Already declared — reassignment
@@ -2472,21 +2497,30 @@ fn codegen_reactive_value_to_expression<'a>(
         ReactiveValue::OptionalCall(optional) => {
             // TS reference: case 'OptionalExpression' (lines 1550-1593)
             //
-            // The inner value is generated first, then wrapped in an optional
-            // call or member expression based on the result type.
+            // In Babel AST, `OptionalMemberExpression` / `OptionalCallExpression` are
+            // self-contained node types (no wrapper needed). In ESTree/OXC AST, there
+            // must be exactly ONE `ChainExpression` wrapping the ENTIRE optional chain,
+            // with inner member/call nodes using `optional` flags.
+            //
+            // Strategy:
+            // - `optional=true`: Set the `optional` flag on the inner expression.
+            //   Do NOT wrap in `ChainExpression` — the wrapper is deferred to the
+            //   final usage point (variable declaration, return value, etc.).
+            // - `optional=false`: Non-optional continuation of an optional chain
+            //   (e.g., `.c` in `a?.b.c`). Return the inner expression as-is; the
+            //   optional flags on sub-expressions are already set correctly.
+            //
+            // The single `ChainExpression` wrapper is added by `wrap_in_chain_if_needed`
+            // at the point where the value is stored to a named variable or used
+            // directly (see `codegen_instruction_to_statement` and scope dependency
+            // codegen).
             let inner = codegen_reactive_value_to_expression(cx, &optional.value);
 
             if optional.optional {
-                // Wrap the inner expression in an optional chain.
-                // The inner expression should be either a CallExpression or
-                // a MemberExpression (static or computed).
-                let chain_elem = make_optional_chain_element(cx, inner, optional.loc);
-                match chain_elem {
-                    Some(elem) => cx.ast.expression_chain(SPAN, elem),
-                    None => make_undefined(cx),
-                }
+                // Set the optional flag on the call/member expression.
+                set_optional_flag(cx, inner, optional.loc)
             } else {
-                // Not optional — just return the inner expression as-is.
+                // Non-optional continuation — return as-is.
                 inner
             }
         }
@@ -2954,20 +2988,30 @@ fn collect_pattern_operands<'b>(pattern: &'b Pattern, places: &mut Vec<&'b Place
 }
 
 /// Generate a dependency expression.
+///
+/// Port of `codegenDependency` from `CodegenReactiveFunction.ts` lines 1246-1272.
+///
+/// When any path entry is optional, ALL entries use member expressions with the
+/// `optional` flag (matching Babel's `optionalMemberExpression`). The final result
+/// is wrapped in a single `ChainExpression` per ESTree convention.
 fn codegen_dependency<'a>(
     cx: &CodegenContext<'a>,
     dep: &ReactiveScopeDependency,
 ) -> Expression<'a> {
     let name = identifier_name(&dep.identifier);
     let mut result: Expression<'a> = make_id(cx, &name);
+    let has_optional = dep.path.iter().any(|e| e.optional);
     for entry in &dep.path {
         match &entry.property {
             crate::hir::types::PropertyLiteral::String(name) => {
-                if entry.optional {
-                    // object?.property - optional member expression
+                if has_optional {
+                    // When any entry is optional, all entries use optional member expressions
+                    // with their respective optional flags. This matches TS behavior where
+                    // `t.optionalMemberExpression(object, property, computed, path.optional)`
+                    // is called for ALL entries.
                     let ident = cx.ast.identifier_name(SPAN, cx.ast.atom(name.as_str()));
                     result = Expression::from(
-                        cx.ast.member_expression_static(SPAN, result, ident, true),
+                        cx.ast.member_expression_static(SPAN, result, ident, entry.optional),
                     );
                 } else {
                     result = make_member(cx, result, name);
@@ -2975,9 +3019,9 @@ fn codegen_dependency<'a>(
             }
             crate::hir::types::PropertyLiteral::Number(n) => {
                 let index = make_number(cx, *n as f64);
-                if entry.optional {
+                if has_optional {
                     result = Expression::from(
-                        cx.ast.member_expression_computed(SPAN, result, index, true),
+                        cx.ast.member_expression_computed(SPAN, result, index, entry.optional),
                     );
                 } else {
                     result = make_computed_member(cx, result, index);
@@ -2985,7 +3029,18 @@ fn codegen_dependency<'a>(
             }
         }
     }
-    result
+    // If any entry was optional, wrap the entire chain in a single ChainExpression
+    if has_optional {
+        match expression_to_chain_element(result) {
+            Some(elem) => cx.ast.expression_chain(SPAN, elem),
+            None => {
+                // Shouldn't happen: the loop above always produces member expressions
+                make_id(cx, &name)
+            }
+        }
+    } else {
+        result
+    }
 }
 
 /// Generate the init part of a for statement.
