@@ -510,6 +510,15 @@ pub struct ReactCompilerOptions {
     ///
     /// @default "none"
     pub panic_threshold: Option<String>,
+
+    /// Target React version.
+    ///
+    /// Controls which runtime module to import:
+    /// - "react-17" / "react-18" -> "react-compiler-runtime" (npm package)
+    /// - "react-19" (default)    -> "react/compiler-runtime" (from react namespace)
+    ///
+    /// @default "react-19"
+    pub target: Option<String>,
 }
 
 #[napi(object)]
@@ -568,6 +577,8 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             enabled: options.enabled.unwrap_or(true),
             compilation_mode: options.compilation_mode,
             panic_threshold: options.panic_threshold,
+            target: options.target,
+            ..Default::default()
         }
     }
 }
