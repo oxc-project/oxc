@@ -18,6 +18,18 @@ use oxc_react_compiler::hir::{
     BasicBlock, BlockId, HIRFunction, InstructionValue, ReactFunctionType, Terminal,
 };
 
+/// Print codegen output body to a string using oxc_codegen.
+fn print_codegen_body(
+    output: &oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenOutput<'_>,
+) -> String {
+    use oxc_codegen::{Codegen, Context, Gen};
+    let mut codegen = Codegen::new();
+    for stmt in output.body.iter() {
+        stmt.print(&mut codegen, Context::default());
+    }
+    codegen.into_source_text()
+}
+
 // =====================================================================================
 // Debug: check scope deps for aliased mutation lambda
 // =====================================================================================
@@ -127,10 +139,11 @@ fn debug_aliased_mutation_lambda_deps() {
 
     match result {
         Ok(pipeline_output) => {
-            match run_codegen(pipeline_output, &env) {
+            let ast = oxc_ast::AstBuilder::new(&allocator);
+            match run_codegen(pipeline_output, &env, ast) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
-                    println!("{}", codegen_func);
+                    println!("{}", print_codegen_body(&codegen_func));
                 }
                 Err(e) => {
                     println!("Codegen error: {:?}", e);
@@ -365,9 +378,10 @@ export const FIXTURE_ENTRYPOINT = {
 
         match result {
             Ok(pipeline_output) => {
-                match run_codegen(pipeline_output, &env) {
+                let ast = oxc_ast::AstBuilder::new(&allocator);
+                match run_codegen(pipeline_output, &env, ast) {
                     Ok(codegen_func) => {
-                        let actual_full = format!("function Component(props) {{\n{}}}", codegen_func);
+                        let actual_full = format!("function Component(props) {{\n{}}}", print_codegen_body(&codegen_func));
                         println!("=== {name} ===");
                         println!("--- Actual output ---");
                         println!("{}", actual_full);
@@ -466,14 +480,15 @@ fn debug_normalized_comparison() {
 
     match result {
         Ok(pipeline_output) => {
-            match run_codegen(pipeline_output, &env) {
+            let ast = oxc_ast::AstBuilder::new(&allocator);
+            match run_codegen(pipeline_output, &env, ast) {
                 Ok(codegen_func) => {
                     let actual_full = {
                         let async_prefix = if codegen_func.is_async { "async " } else { "" };
                         let star = if codegen_func.generator { "*" } else { "" };
                         let name = codegen_func.id.as_deref().unwrap_or("anonymous");
                         let params = codegen_func.params.join(", ");
-                        let body = format!("{codegen_func}");
+                        let body = print_codegen_body(&codegen_func);
                         if body.trim().is_empty() {
                             format!("{async_prefix}function {star}{name}({params}) {{}}")
                         } else {
@@ -544,10 +559,11 @@ function Component(props) {
 
     match result {
         Ok(pipeline_output) => {
-            match run_codegen(pipeline_output, &env) {
+            let ast = oxc_ast::AstBuilder::new(&allocator);
+            match run_codegen(pipeline_output, &env, ast) {
                 Ok(codegen_func) => {
                     println!("=== Codegen output ===");
-                    println!("{}", codegen_func);
+                    println!("{}", print_codegen_body(&codegen_func));
                 }
                 Err(e) => {
                     println!("Codegen error: {:?}", e);
@@ -1811,7 +1827,8 @@ function Component({a, b}) {
     // Run the full pipeline
     let pipeline_output = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
         .expect("pipeline failed");
-    let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env)
+    let ast = oxc_ast::AstBuilder::new(&allocator);
+    let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env, ast)
         .expect("codegen failed");
 
     // Should produce _c(3): 2 dependency slots (a, b) + 1 output slot (the array [y, z]).
