@@ -1840,3 +1840,4 @@ function Component({a, b}) {
         codegen.memo_slots_used,
     );
 }
+
