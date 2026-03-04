@@ -23,6 +23,7 @@ struct CodegenResult {
     params: Vec<String>,
     generator: bool,
     is_async: bool,
+    directives: Vec<String>,
     body_text: String,
     outlined: Vec<OutlinedResult>,
 }
@@ -32,6 +33,7 @@ struct OutlinedResult {
     params: Vec<String>,
     generator: bool,
     is_async: bool,
+    directives: Vec<String>,
     body_text: String,
 }
 
@@ -57,6 +59,7 @@ fn codegen_output_to_result(
             params: o.fn_.params.clone(),
             generator: o.fn_.generator,
             is_async: o.fn_.is_async,
+            directives: o.fn_.directives,
             body_text: print_stmts_to_string(&o.fn_.body),
         })
         .collect();
@@ -65,6 +68,7 @@ fn codegen_output_to_result(
         params: output.params,
         generator: output.generator,
         is_async: output.is_async,
+        directives: output.directives,
         body_text,
         outlined,
     }
@@ -1667,6 +1671,17 @@ fn run_pipeline_for_codegen_impl(
     Err(last_err)
 }
 
+/// Format directive strings as a prologue for a function body.
+/// Each directive is emitted as `"directive_text";\n` matching the reference
+/// compiler's output format.
+fn format_directives(directives: &[String]) -> String {
+    let mut s = String::new();
+    for d in directives {
+        s.push_str(&format!("\"{d}\";\n"));
+    }
+    s
+}
+
 /// Reconstruct the full function source from a `CodegenResult`, including
 /// the function declaration wrapper (but not imports).
 /// When `wrapper` is provided, the output is wrapped in the appropriate
@@ -1675,7 +1690,15 @@ fn format_full_function(func: &CodegenResult, wrapper: Option<&WrapperInfo>) -> 
     let async_prefix = if func.is_async { "async " } else { "" };
     let star = if func.generator { "*" } else { "" };
     let params = func.params.join(", ");
-    let body = &func.body_text;
+
+    // Build directive prologue: each directive becomes `"directive_text";\n`
+    // These are emitted at the top of the function body, before the compiled code.
+    let directives_prefix = format_directives(&func.directives);
+    let body = if directives_prefix.is_empty() {
+        func.body_text.clone()
+    } else {
+        format!("{directives_prefix}{}", func.body_text)
+    };
 
     let mut result = if let Some(w) = wrapper {
         // Format the inner function according to the original style (arrow vs function expr).
@@ -1723,7 +1746,12 @@ fn format_full_function(func: &CodegenResult, wrapper: Option<&WrapperInfo>) -> 
         let o_star = if outlined.generator { "*" } else { "" };
         let o_name = outlined.id.as_deref().unwrap_or("_temp");
         let o_params = outlined.params.join(", ");
-        let o_body = &outlined.body_text;
+        let o_directives_prefix = format_directives(&outlined.directives);
+        let o_body = if o_directives_prefix.is_empty() {
+            outlined.body_text.clone()
+        } else {
+            format!("{o_directives_prefix}{}", outlined.body_text)
+        };
         if o_body.trim().is_empty() {
             result.push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{}}"));
         } else {
