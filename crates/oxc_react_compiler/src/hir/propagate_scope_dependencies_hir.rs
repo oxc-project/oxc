@@ -822,12 +822,12 @@ impl<'a> DependencyCollectionContext<'a> {
             .or_else(|| self.declarations.get(&maybe_dep.identifier.declaration_id));
 
         let current_scope = self.scopes.value();
-        let result = match (current_scope, current_declaration) {
+
+        match (current_scope, current_declaration) {
             (Some(scope), Some(decl)) => decl.id < scope.range.start,
             (None, _) => false,
             (_, None) => false,
-        };
-        result
+        }
     }
 
     fn is_scope_active_in_stack(&self, scope: &ReactiveScope) -> bool {
@@ -1141,14 +1141,14 @@ fn collect_dependencies(
     temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     processed_instrs_in_optional: FxHashSet<InstructionId>,
     intermediate_optional_results: &FxHashSet<IdentifierId>,
-) -> CollectDependenciesResult {
+) -> Result<CollectDependenciesResult, crate::compiler_error::CompilerError> {
     fn handle_function(
         func: &HIRFunction,
         context: &mut DependencyCollectionContext,
         scope_traversal: &mut ScopeBlockTraversal,
         temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
         intermediate_optional_results: &FxHashSet<IdentifierId>,
-    ) {
+    ) -> Result<(), crate::compiler_error::CompilerError> {
         let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
         for &block_id in &block_ids {
             let Some(block) = func.body.blocks.get(&block_id) else { continue };
@@ -1215,7 +1215,7 @@ fn collect_dependencies(
                         // function), so each function level needs its own set to
                         // avoid false-positive deferrals.
                         let inner_opt_chain =
-                            super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(inner_func);
+                            super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(inner_func)?;
                         let saved_processed = std::mem::replace(
                             &mut context.processed_instrs_in_optional,
                             inner_opt_chain.processed_instrs_in_optional,
@@ -1229,7 +1229,7 @@ fn collect_dependencies(
                             scope_traversal,
                             temporaries,
                             intermediate_optional_results,
-                        );
+                        )?;
                         context.exit_inner_fn(was_none);
 
                         // Restore the outer function's processed instructions.
@@ -1247,6 +1247,7 @@ fn collect_dependencies(
                 }
             }
         }
+        Ok(())
     }
 
     let mut context = DependencyCollectionContext::new(temporaries, processed_instrs_in_optional);
@@ -1276,12 +1277,12 @@ fn collect_dependencies(
         &mut scope_traversal,
         temporaries,
         intermediate_optional_results,
-    );
-    CollectDependenciesResult {
+    )?;
+    Ok(CollectDependenciesResult {
         deps: context.deps,
         scope_declaration_mutations: context.scope_declaration_mutations,
         scope_reassignment_mutations: context.scope_reassignment_mutations,
-    }
+    })
 }
 
 // =====================================================================================
@@ -1293,14 +1294,16 @@ fn collect_dependencies(
 /// For each reactive scope, computes the set of external values (dependencies)
 /// that are read inside the scope. The result is stored on each scope's
 /// `dependencies` field.
-pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
+pub fn propagate_scope_dependencies_hir(
+    func: &mut HIRFunction,
+) -> Result<(), crate::compiler_error::CompilerError> {
     let used_outside_declaring_scope = find_temporaries_used_outside_declaring_scope(func);
 
     let temporaries = collect_temporaries_sidemap(func, &used_outside_declaring_scope);
 
     // Collect optional chain sidemap
     let opt_chain =
-        super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func);
+        super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func)?;
 
     // Merge temporaries with optional chain temporaries.
     //
@@ -1398,7 +1401,9 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
                             // Find the root variable's declaration_id from the test block's
                             // LoadLocal/LoadContext instruction. The Branch tests a temporary
                             // created by LoadLocal, but we need the ORIGINAL variable.
-                            let root_decl = if !test_block.instructions.is_empty() {
+                            let root_decl = if test_block.instructions.is_empty() {
+                                None
+                            } else {
                                 match &test_block.instructions[0].value {
                                     InstructionValue::LoadLocal(v) => {
                                         Some(v.place.identifier.declaration_id)
@@ -1408,8 +1413,6 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
                                     }
                                     _ => None,
                                 }
-                            } else {
-                                None
                             };
                             break root_decl.map(|decl| (decl, branch.consequent));
                         }
@@ -1457,12 +1460,11 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
                     // Walk up predecessors: the Optional(optional=true) block's pred is
                     // an Optional(optional=false) block.
                     for &pred_id in &block.preds {
-                        if let Some(pred_block) = func.body.blocks.get(&pred_id) {
-                            if let Terminal::Optional(parent_opt) = &pred_block.terminal {
-                                if !parent_opt.optional {
-                                    pf = Some(parent_opt.fallthrough);
-                                }
-                            }
+                        if let Some(pred_block) = func.body.blocks.get(&pred_id)
+                            && let Terminal::Optional(parent_opt) = &pred_block.terminal
+                            && !parent_opt.optional
+                        {
+                            pf = Some(parent_opt.fallthrough);
                         }
                     }
                     pf
@@ -1555,7 +1557,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             for &(scope_id, range_start, range_end) in &scope_ranges {
                 if block_instr_id >= range_start && block_instr_id < range_end {
                     let range_len = range_end.0.saturating_sub(range_start.0);
-                    if best.map_or(true, |(_, best_len)| range_len < best_len) {
+                    if best.is_none_or(|(_, best_len)| range_len < best_len) {
                         best = Some((scope_id, range_len));
                     }
                 }
@@ -1583,7 +1585,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
         &merged_temporaries,
         processed_instrs,
         &intermediate_optional_results,
-    );
+    )?;
 
     // Phase 3: Derive minimal dependency set for each scope
     // We need to write dependencies back to the scopes in the terminals.
@@ -1657,4 +1659,5 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             }
         }
     }
+    Ok(())
 }

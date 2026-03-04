@@ -229,19 +229,19 @@ fn merge_in_block(
                 merge_in_block(&mut scope.instructions, Some(&scope_deps), last_usage, temporaries);
 
                 // Nested scope flattening: if parent deps match this scope's deps, flatten
-                if let Some(pdeps) = parent_deps {
-                    if are_equal_dependencies(pdeps, &scope.scope.dependencies) {
-                        // Replace this scope with its instructions
-                        let instructions =
-                            std::mem::take(&mut block[i].as_scope_mut().unwrap().instructions);
-                        block.remove(i);
-                        let count = instructions.len();
-                        for (j, instr) in instructions.into_iter().enumerate() {
-                            block.insert(i + j, instr);
-                        }
-                        i += count;
-                        continue;
+                if let Some(pdeps) = parent_deps
+                    && are_equal_dependencies(pdeps, &scope.scope.dependencies)
+                {
+                    // Replace this scope with its instructions
+                    let instructions =
+                        std::mem::take(&mut block[i].as_scope_mut().unwrap().instructions);
+                    block.remove(i);
+                    let count = instructions.len();
+                    for (j, instr) in instructions.into_iter().enumerate() {
+                        block.insert(i + j, instr);
                     }
+                    i += count;
+                    continue;
                 }
                 i += 1;
             }
@@ -285,10 +285,10 @@ fn merge_in_block(
     let mut merged: Vec<MergedScope> = Vec::new();
 
     let reset = |current: &mut Option<MergedScope>, merged: &mut Vec<MergedScope>| {
-        if let Some(c) = current.take() {
-            if c.to > c.from + 1 {
-                merged.push(c);
-            }
+        if let Some(c) = current.take()
+            && c.to > c.from + 1
+        {
+            merged.push(c);
         }
     };
 
@@ -676,10 +676,10 @@ fn are_lvalues_last_used_by_scope(
     last_usage: &FxHashMap<DeclarationId, InstructionId>,
 ) -> bool {
     for lvalue in lvalues {
-        if let Some(&last_used_at) = last_usage.get(lvalue) {
-            if last_used_at >= scope.range.end {
-                return false;
-            }
+        if let Some(&last_used_at) = last_usage.get(lvalue)
+            && last_used_at >= scope.range.end
+        {
+            return false;
         }
     }
     true

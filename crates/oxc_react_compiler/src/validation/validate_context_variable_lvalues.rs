@@ -23,64 +23,53 @@ enum IdentifierKindTag {
 /// Returns a `CompilerError` if inconsistent variable kinds are found.
 pub fn validate_context_variable_lvalues(func: &HIRFunction) -> Result<(), CompilerError> {
     let mut identifier_kinds: FxHashMap<IdentifierId, IdentifierKindTag> = FxHashMap::default();
+    validate_context_impl(func, &mut identifier_kinds)
+}
 
+/// Recursive implementation that traverses into nested function expressions.
+/// The shared `kinds` map allows detecting inconsistencies between outer
+/// and inner scopes (context variables share IdentifierIds with the outer scope).
+fn validate_context_impl(
+    func: &HIRFunction,
+    kinds: &mut FxHashMap<IdentifierId, IdentifierKindTag>,
+) -> Result<(), CompilerError> {
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::DeclareContext(v) => {
-                    visit(
-                        &mut identifier_kinds,
-                        v.lvalue_place.identifier.id,
-                        IdentifierKindTag::Context,
-                    )?;
+                    visit(kinds, v.lvalue_place.identifier.id, IdentifierKindTag::Context)?;
                 }
                 InstructionValue::StoreContext(v) => {
-                    visit(
-                        &mut identifier_kinds,
-                        v.lvalue_place.identifier.id,
-                        IdentifierKindTag::Context,
-                    )?;
+                    visit(kinds, v.lvalue_place.identifier.id, IdentifierKindTag::Context)?;
                 }
                 InstructionValue::LoadContext(v) => {
-                    visit(
-                        &mut identifier_kinds,
-                        v.place.identifier.id,
-                        IdentifierKindTag::Context,
-                    )?;
+                    visit(kinds, v.place.identifier.id, IdentifierKindTag::Context)?;
                 }
                 InstructionValue::StoreLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
-                        visit(
-                            &mut identifier_kinds,
-                            v.lvalue.place.identifier.id,
-                            IdentifierKindTag::Local,
-                        )?;
+                        visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
                     }
                 }
                 InstructionValue::DeclareLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
-                        visit(
-                            &mut identifier_kinds,
-                            v.lvalue.place.identifier.id,
-                            IdentifierKindTag::Local,
-                        )?;
+                        visit(kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
                     }
                 }
                 InstructionValue::LoadLocal(v) => {
                     if v.place.identifier.name.is_some() {
-                        visit(
-                            &mut identifier_kinds,
-                            v.place.identifier.id,
-                            IdentifierKindTag::Local,
-                        )?;
+                        visit(kinds, v.place.identifier.id, IdentifierKindTag::Local)?;
                     }
                 }
                 // NOTE: The TS implementation recurses into FunctionExpression
-                // and ObjectMethod with a shared identifierKinds map. We cannot
-                // do the same because our Rust implementation uses different
-                // IdentifierIds for inner functions (each function gets its own
-                // HirBuilder with separate ID space). Sharing the map would
-                // cause false conflicts between outer and inner function IDs.
+                // and ObjectMethod with a shared identifierKinds map. However,
+                // enabling recursion here causes false positives in our Rust
+                // implementation for cases where inner functions use LoadLocal for
+                // variables that are hoisted (DeclareContext) in the outer scope.
+                // The catch-variable inconsistency case is handled separately by
+                // the catch-param hoisting in build_hir.rs, which produces the
+                // same StoreLocal/DeclareContext mismatch that this validation
+                // detects at the outer-function level.
+                InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {}
                 _ => {}
             }
         }

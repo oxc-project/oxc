@@ -128,6 +128,7 @@ oxc_parser = { version = "0.117.0", path = "crates/oxc_parser", features = [
   "regular_expression",
 ] } # JS/TS parser
 oxc_parser_napi = { version = "0.117.0", path = "napi/parser" } # Node.js parser binding
+oxc_react_compiler = { version = "0.0.0", path = "crates/oxc_react_compiler" } # React compiler
 oxc_regular_expression = { version = "0.117.0", path = "crates/oxc_regular_expression" } # Regex parser
 oxc_semantic = { version = "0.117.0", path = "crates/oxc_semantic" } # Semantic analysis
 oxc_span = { version = "0.117.0", path = "crates/oxc_span" } # Source positions

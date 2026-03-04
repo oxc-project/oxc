@@ -279,13 +279,7 @@ fn collect_dependencies_with_memos(
             // Handle effect hooks (useEffect, useLayoutEffect, useInsertionEffect)
             let effect_mode = env.config.validate_exhaustive_effect_dependencies;
             if effect_mode != ExhaustiveEffectDepsMode::Off {
-                handle_effect_hook_call(
-                    &instr.value,
-                    temporaries,
-                    reactive,
-                    errors,
-                    effect_mode,
-                );
+                handle_effect_hook_call(&instr.value, temporaries, reactive, errors, effect_mode);
             }
 
             // Handle memoization callbacks
@@ -393,9 +387,7 @@ fn handle_effect_hook_call(
                 loc: local.loc,
             }),
             Temporary::Global { binding_name } => Some(ManualMemoDependency {
-                root: ManualMemoDependencyRoot::Global {
-                    identifier_name: binding_name.clone(),
-                },
+                root: ManualMemoDependencyRoot::Global { identifier_name: binding_name.clone() },
                 path: Vec::new(),
                 loc: GENERATED_SOURCE,
             }),
@@ -440,8 +432,10 @@ fn process_phi_nodes(
                 temporaries.insert(phi.place.identifier.id, first);
             }
         } else {
-            temporaries
-                .insert(phi.place.identifier.id, Temporary::Aggregate { dependencies: deps, loc: None });
+            temporaries.insert(
+                phi.place.identifier.id,
+                Temporary::Aggregate { dependencies: deps, loc: None },
+            );
         }
     }
 }
@@ -629,7 +623,10 @@ fn process_instruction(
                     visit_candidate_dependency(place, temporaries, dependencies, locals);
                 }
             }
-            temporaries.insert(lvalue_id, Temporary::Aggregate { dependencies: array_deps, loc: Some(v.loc) });
+            temporaries.insert(
+                lvalue_id,
+                Temporary::Aggregate { dependencies: array_deps, loc: Some(v.loc) },
+            );
         }
         InstructionValue::CallExpression(_) | InstructionValue::MethodCall(_) => {
             for operand in each_instruction_value_operand(value) {

@@ -503,12 +503,11 @@ pub fn infer_mutation_aliasing_ranges(
                 InstructionValue::StoreContext(v) => Some(&v.lvalue_place),
                 _ => None,
             };
-            if let Some(place) = ctx_place {
-                if let Some(&original_id) = ctx_decl_to_id.get(&place.identifier.declaration_id) {
-                    if place.identifier.id != original_id {
-                        ctx_ssa_remap.insert(place.identifier.id, original_id);
-                    }
-                }
+            if let Some(place) = ctx_place
+                && let Some(&original_id) = ctx_decl_to_id.get(&place.identifier.declaration_id)
+                && place.identifier.id != original_id
+            {
+                ctx_ssa_remap.insert(place.identifier.id, original_id);
             }
         }
     }
@@ -1268,15 +1267,11 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
                 }
             }
         }
-        InstructionValue::FunctionExpression(v) => {
-            for ctx in &mut v.lowered_func.func.context {
-                ctx.effect = effect;
-            }
-        }
-        InstructionValue::ObjectMethod(v) => {
-            for ctx in &mut v.lowered_func.func.context {
-                ctx.effect = effect;
-            }
+        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
+            // Do NOT override context variable effects. Their effects were carefully
+            // set by analyse_functions (Phase 2) and infer_mutation_aliasing_effects
+            // demotion logic. They will be restored by fix_operand/apply_operand_effects
+            // using the instruction's aliasing effects.
         }
         InstructionValue::TaggedTemplateExpression(v) => {
             v.tag.effect = effect;
@@ -1333,6 +1328,16 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
 }
 
 /// Compute the operand effect overrides from instruction effects.
+///
+/// In the TS compiler, effects from built-in hook aliasing signatures go through
+/// `applyEffect` which updates the abstract state between effects. For example,
+/// a `Freeze` effect marks the value as Frozen, causing a subsequent `Capture`
+/// from that value to be downgraded to `ImmutableCapture` (a no-op here).
+///
+/// In Rust, the effects for built-in hooks are not filtered through abstract state,
+/// so both `Freeze` and `Capture` effects may appear for the same identifier.
+/// To match TS behavior, `Effect::Freeze` is treated as the highest priority:
+/// once set for an identifier, it cannot be overwritten by a weaker effect.
 fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<IdentifierId, Effect> {
     let mut operand_effects: FxHashMap<IdentifierId, Effect> = FxHashMap::default();
     let instr_id = instr.id;
@@ -1340,6 +1345,22 @@ fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<Identif
     let Some(effects) = &instr.effects else {
         return operand_effects;
     };
+
+    /// Insert an effect into the map, but never overwrite `Effect::Freeze`.
+    /// In the TS compiler, `Freeze` always takes priority because `applyEffect`
+    /// converts subsequent `Capture` effects on frozen values to `ImmutableCapture`.
+    fn insert_if_not_frozen(
+        map: &mut FxHashMap<IdentifierId, Effect>,
+        id: IdentifierId,
+        effect: Effect,
+    ) {
+        if let Some(existing) = map.get(&id) {
+            if *existing == Effect::Freeze {
+                return; // Freeze takes priority
+            }
+        }
+        map.insert(id, effect);
+    }
 
     for effect in effects {
         match effect {
@@ -1350,22 +1371,27 @@ fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<Identif
             | AliasingEffect::MaybeAlias { from, into } => {
                 let is_mutated_or_reassigned = into.identifier.mutable_range.end > instr_id;
                 if is_mutated_or_reassigned {
-                    operand_effects.insert(from.identifier.id, Effect::Capture);
-                    operand_effects.insert(into.identifier.id, Effect::Store);
+                    insert_if_not_frozen(&mut operand_effects, from.identifier.id, Effect::Capture);
+                    insert_if_not_frozen(&mut operand_effects, into.identifier.id, Effect::Store);
                 } else {
-                    operand_effects.insert(from.identifier.id, Effect::Read);
-                    operand_effects.insert(into.identifier.id, Effect::Store);
+                    insert_if_not_frozen(&mut operand_effects, from.identifier.id, Effect::Read);
+                    insert_if_not_frozen(&mut operand_effects, into.identifier.id, Effect::Store);
                 }
             }
             AliasingEffect::Mutate { value, .. } => {
-                operand_effects.insert(value.identifier.id, Effect::Store);
+                insert_if_not_frozen(&mut operand_effects, value.identifier.id, Effect::Store);
             }
             AliasingEffect::MutateTransitive { value, .. }
             | AliasingEffect::MutateConditionally { value, .. }
             | AliasingEffect::MutateTransitiveConditionally { value, .. } => {
-                operand_effects.insert(value.identifier.id, Effect::ConditionallyMutate);
+                insert_if_not_frozen(
+                    &mut operand_effects,
+                    value.identifier.id,
+                    Effect::ConditionallyMutate,
+                );
             }
             AliasingEffect::Freeze { value, .. } => {
+                // Freeze always wins: unconditionally set
                 operand_effects.insert(value.identifier.id, Effect::Freeze);
             }
             AliasingEffect::CreateFunction { .. }
@@ -1667,15 +1693,12 @@ fn apply_operand_effects_to_value(
                 }
             }
         }
-        InstructionValue::FunctionExpression(v) => {
-            for ctx in &mut v.lowered_func.func.context {
-                fix_operand(ctx, instr_id, operand_effects);
-            }
-        }
-        InstructionValue::ObjectMethod(v) => {
-            for ctx in &mut v.lowered_func.func.context {
-                fix_operand(ctx, instr_id, operand_effects);
-            }
+        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
+            // Do NOT apply operand effects to context variables. Their effects
+            // were carefully set by analyse_functions Phase 2 and preserved by
+            // infer_mutation_aliasing_effects demotion logic. Overwriting them
+            // here would lose the Capture/Read distinction needed by
+            // validate_no_freezing_known_mutable_functions.
         }
         InstructionValue::TaggedTemplateExpression(v) => {
             fix_operand(&mut v.tag, instr_id, operand_effects);
@@ -2181,10 +2204,9 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
         canonical
             .entry(id)
             .and_modify(|existing| {
-                if range.start.0 > 0 {
-                    if existing.start.0 == 0 || range.start.0 < existing.start.0 {
-                        existing.start = range.start;
-                    }
+                if range.start.0 > 0 && (existing.start.0 == 0 || range.start.0 < existing.start.0)
+                {
+                    existing.start = range.start;
                 }
                 if range.end.0 > existing.end.0 {
                     existing.end = range.end;

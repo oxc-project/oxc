@@ -122,21 +122,20 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 InstructionValue::StoreLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
                         let decl_id = v.lvalue.place.identifier.declaration_id;
-                        if declarations.contains_key(&decl_id) {
+                        if let std::collections::hash_map::Entry::Vacant(e) =
+                            declarations.entry(decl_id)
+                        {
+                            // First definition
+                            e.insert(DeclLocation {
+                                block_id: *block_id,
+                                instr_index,
+                                decl_type: DeclType::StoreLocal,
+                            });
+                            v.lvalue.kind = InstructionKind::Const;
+                        } else {
                             // This is a reassignment — mark original as needing Let
                             needs_let.insert(decl_id);
                             v.lvalue.kind = InstructionKind::Reassign;
-                        } else {
-                            // First definition
-                            declarations.insert(
-                                decl_id,
-                                DeclLocation {
-                                    block_id: *block_id,
-                                    instr_index,
-                                    decl_type: DeclType::StoreLocal,
-                                },
-                            );
-                            v.lvalue.kind = InstructionKind::Const;
                         }
                     }
                 }
@@ -223,20 +222,20 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
             if loc.block_id == BlockId(u32::MAX) {
                 continue;
             }
-            if let Some(block) = func.body.blocks.get_mut(&loc.block_id) {
-                if let Some(instr) = block.instructions.get_mut(loc.instr_index) {
-                    match (&mut instr.value, &loc.decl_type) {
-                        (InstructionValue::DeclareLocal(v), DeclType::DeclareLocal) => {
-                            v.lvalue.kind = InstructionKind::Let;
-                        }
-                        (InstructionValue::StoreLocal(v), DeclType::StoreLocal) => {
-                            v.lvalue.kind = InstructionKind::Let;
-                        }
-                        (InstructionValue::Destructure(v), DeclType::Destructure) => {
-                            v.lvalue.kind = InstructionKind::Let;
-                        }
-                        _ => {}
+            if let Some(block) = func.body.blocks.get_mut(&loc.block_id)
+                && let Some(instr) = block.instructions.get_mut(loc.instr_index)
+            {
+                match (&mut instr.value, &loc.decl_type) {
+                    (InstructionValue::DeclareLocal(v), DeclType::DeclareLocal) => {
+                        v.lvalue.kind = InstructionKind::Let;
                     }
+                    (InstructionValue::StoreLocal(v), DeclType::StoreLocal) => {
+                        v.lvalue.kind = InstructionKind::Let;
+                    }
+                    (InstructionValue::Destructure(v), DeclType::Destructure) => {
+                        v.lvalue.kind = InstructionKind::Let;
+                    }
+                    _ => {}
                 }
             }
         }

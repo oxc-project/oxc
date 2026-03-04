@@ -177,7 +177,7 @@ fn declare_pattern_bindings(state: &mut FindContextState, pattern: &ast::Binding
 }
 
 /// Visit a statement.
-fn visit_statement<'a>(state: &mut FindContextState, stmt: &ast::Statement<'a>) {
+fn visit_statement(state: &mut FindContextState, stmt: &ast::Statement<'_>) {
     match stmt {
         ast::Statement::VariableDeclaration(decl) => {
             for declarator in &decl.declarations {
@@ -328,7 +328,7 @@ fn visit_statement<'a>(state: &mut FindContextState, stmt: &ast::Statement<'a>) 
 }
 
 /// Visit an expression.
-fn visit_expression<'a>(state: &mut FindContextState, expr: &ast::Expression<'a>) {
+fn visit_expression(state: &mut FindContextState, expr: &ast::Expression<'_>) {
     match expr {
         ast::Expression::Identifier(ident) => {
             if ident.name != "undefined" {
@@ -481,7 +481,7 @@ fn visit_expression<'a>(state: &mut FindContextState, expr: &ast::Expression<'a>
 }
 
 /// Visit a chain element (optional chaining).
-fn visit_chain_element<'a>(state: &mut FindContextState, element: &ast::ChainElement<'a>) {
+fn visit_chain_element(state: &mut FindContextState, element: &ast::ChainElement<'_>) {
     match element {
         ast::ChainElement::CallExpression(call) => {
             visit_expression(state, &call.callee);
@@ -511,7 +511,7 @@ fn visit_chain_element<'a>(state: &mut FindContextState, element: &ast::ChainEle
 }
 
 /// Visit a JSX element.
-fn visit_jsx_element<'a>(state: &mut FindContextState, element: &ast::JSXElement<'a>) {
+fn visit_jsx_element(state: &mut FindContextState, element: &ast::JSXElement<'_>) {
     visit_jsx_opening_name(state, &element.opening_element.name);
     for attr in &element.opening_element.attributes {
         match attr {
@@ -531,7 +531,7 @@ fn visit_jsx_element<'a>(state: &mut FindContextState, element: &ast::JSXElement
 }
 
 /// Visit a JSX opening element name (to handle component identifiers).
-fn visit_jsx_opening_name<'a>(state: &mut FindContextState, name: &ast::JSXElementName<'a>) {
+fn visit_jsx_opening_name(state: &mut FindContextState, name: &ast::JSXElementName<'_>) {
     match name {
         ast::JSXElementName::Identifier(ident) => {
             // Only reference-like if it starts with uppercase (component)
@@ -552,10 +552,7 @@ fn visit_jsx_opening_name<'a>(state: &mut FindContextState, name: &ast::JSXEleme
 }
 
 /// Visit a JSX member expression object.
-fn visit_jsx_member_object<'a>(
-    state: &mut FindContextState,
-    obj: &ast::JSXMemberExpressionObject<'a>,
-) {
+fn visit_jsx_member_object(state: &mut FindContextState, obj: &ast::JSXMemberExpressionObject<'_>) {
     match obj {
         ast::JSXMemberExpressionObject::IdentifierReference(ident) => {
             handle_identifier_reference(state, &ident.name);
@@ -568,7 +565,7 @@ fn visit_jsx_member_object<'a>(
 }
 
 /// Visit a JSX attribute value.
-fn visit_jsx_attribute_value<'a>(state: &mut FindContextState, value: &ast::JSXAttributeValue<'a>) {
+fn visit_jsx_attribute_value(state: &mut FindContextState, value: &ast::JSXAttributeValue<'_>) {
     match value {
         ast::JSXAttributeValue::ExpressionContainer(container) => {
             if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
@@ -590,7 +587,7 @@ fn visit_jsx_attribute_value<'a>(state: &mut FindContextState, value: &ast::JSXA
 }
 
 /// Visit a JSX child.
-fn visit_jsx_child<'a>(state: &mut FindContextState, child: &ast::JSXChild<'a>) {
+fn visit_jsx_child(state: &mut FindContextState, child: &ast::JSXChild<'_>) {
     match child {
         ast::JSXChild::ExpressionContainer(container) => {
             if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
@@ -615,7 +612,7 @@ fn visit_jsx_child<'a>(state: &mut FindContextState, child: &ast::JSXChild<'a>) 
 }
 
 /// Visit the body of a function (entering an inner function scope).
-fn visit_function_body<'a>(state: &mut FindContextState, func: &ast::Function<'a>) {
+fn visit_function_body(state: &mut FindContextState, func: &ast::Function<'_>) {
     state.fn_depth += 1;
     state.push_scope();
 
@@ -639,7 +636,7 @@ fn visit_function_body<'a>(state: &mut FindContextState, func: &ast::Function<'a
 }
 
 /// Visit the body of an arrow function (entering an inner function scope).
-fn visit_arrow_body<'a>(state: &mut FindContextState, arrow: &ast::ArrowFunctionExpression<'a>) {
+fn visit_arrow_body(state: &mut FindContextState, arrow: &ast::ArrowFunctionExpression<'_>) {
     state.fn_depth += 1;
     state.push_scope();
 
@@ -688,7 +685,7 @@ fn handle_identifier_assignment(state: &mut FindContextState, name: &str) {
 }
 
 /// Visit an assignment target (LHS of assignment).
-fn visit_assignment_target<'a>(state: &mut FindContextState, target: &ast::AssignmentTarget<'a>) {
+fn visit_assignment_target(state: &mut FindContextState, target: &ast::AssignmentTarget<'_>) {
     match target {
         ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
             handle_identifier_assignment(state, &ident.name);
@@ -729,9 +726,9 @@ fn visit_assignment_target<'a>(state: &mut FindContextState, target: &ast::Assig
 }
 
 /// Visit an assignment target that may have a default value.
-fn visit_assignment_target_maybe_default<'a>(
+fn visit_assignment_target_maybe_default(
     state: &mut FindContextState,
-    target: &ast::AssignmentTargetMaybeDefault<'a>,
+    target: &ast::AssignmentTargetMaybeDefault<'_>,
 ) {
     match target {
         ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
@@ -745,9 +742,9 @@ fn visit_assignment_target_maybe_default<'a>(
 }
 
 /// Visit a simple assignment target as an assignment (for update expressions).
-fn visit_simple_assignment_target_as_assignment<'a>(
+fn visit_simple_assignment_target_as_assignment(
     state: &mut FindContextState,
-    target: &ast::SimpleAssignmentTarget<'a>,
+    target: &ast::SimpleAssignmentTarget<'_>,
 ) {
     match target {
         ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {

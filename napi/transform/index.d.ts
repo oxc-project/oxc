@@ -315,6 +315,38 @@ export declare function moduleRunnerTransformSync(filename: string, sourceText: 
 export interface PluginsOptions {
   styledComponents?: StyledComponentsOptions
   taggedTemplateEscape?: boolean
+  reactCompiler?: boolean | ReactCompilerOptions
+}
+
+/** Configure React Compiler behavior in the transformer pipeline. */
+export interface ReactCompilerOptions {
+  /**
+   * Enables the React Compiler plugin.
+   *
+   * @default true
+   */
+  enabled?: boolean
+  /**
+   * Strategy used to decide which functions to compile.
+   *
+   * - "infer" - infer components/hooks by naming convention
+   * - "annotation" - compile only opt-in directives
+   * - "all" - compile all functions
+   * - "syntax" - compile only syntax-marked functions
+   *
+   * @default "infer"
+   */
+  compilationMode?: string
+  /**
+   * Panic threshold for compilation failures.
+   *
+   * - "none"
+   * - "critical_errors"
+   * - "all_errors"
+   *
+   * @default "none"
+   */
+  panicThreshold?: string
 }
 
 export interface ReactRefreshOptions {
