@@ -879,19 +879,13 @@ fn run_pre_pipeline_checks(source: &str, source_type: oxc_span::SourceType) -> b
     );
 
     // 1. Blocklisted imports check (port of `validateRestrictedImports` from Imports.ts)
-    if let Some(ref blocklisted) = plugin_options.environment.validate_blocklisted_imports {
-        if !blocklisted.is_empty() {
-            use oxc_ast::ast::Statement;
-            let restricted: std::collections::HashSet<&str> =
-                blocklisted.iter().map(|s| s.as_str()).collect();
-            for stmt in &parser_result.program.body {
-                if let Statement::ImportDeclaration(import_decl) = stmt {
-                    if restricted.contains(import_decl.source.value.as_str()) {
-                        return true;
-                    }
-                }
-            }
-        }
+    if oxc_react_compiler::entrypoint::imports::validate_restricted_imports(
+        &parser_result.program.body,
+        plugin_options.environment.validate_blocklisted_imports.as_deref(),
+    )
+    .is_some()
+    {
+        return true;
     }
 
     // 2. ESLint/Flow suppression check (port of `findProgramSuppressions` from Suppression.ts)
