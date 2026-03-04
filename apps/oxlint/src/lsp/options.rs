@@ -29,7 +29,7 @@ pub struct LintOptions {
     pub config_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
-    pub unused_disable_directives: UnusedDisableDirectives,
+    pub unused_disable_directives: Option<UnusedDisableDirectives>,
     pub type_aware: Option<bool>,
     pub disable_nested_config: bool,
     pub fix_kind: LintFixKindFlag,
@@ -103,13 +103,9 @@ impl TryFrom<Value> for LintOptions {
                 .get("run")
                 .map(|run| serde_json::from_value::<Run>(run.clone()).unwrap_or_default())
                 .unwrap_or_default(),
-            unused_disable_directives: object
-                .get("unusedDisableDirectives")
-                .map(|key| {
-                    serde_json::from_value::<UnusedDisableDirectives>(key.clone())
-                        .unwrap_or_default()
-                })
-                .unwrap_or_default(),
+            unused_disable_directives: object.get("unusedDisableDirectives").and_then(|key| {
+                serde_json::from_value::<UnusedDisableDirectives>(key.clone()).ok()
+            }),
             config_path: object
                 .get("configPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
@@ -161,7 +157,7 @@ mod test {
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnSave);
         assert_eq!(options.config_path, Some("./custom.json".into()));
-        assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
+        assert_eq!(options.unused_disable_directives, Some(UnusedDisableDirectives::Warn));
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
@@ -174,7 +170,7 @@ mod test {
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnType);
         assert_eq!(options.config_path, None);
-        assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
+        assert_eq!(options.unused_disable_directives, None);
         assert_eq!(options.type_aware, None);
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFix);
@@ -190,6 +186,19 @@ mod test {
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnType); // fallback
         assert_eq!(options.config_path, Some("./custom.json".into()));
+    }
+
+    #[test]
+    fn test_null_options_json() {
+        let json = json!({
+            "configPath": null,
+            "tsConfigPath": null,
+            "typeAware": null,
+            "unusedDisableDirectives": null
+        });
+
+        let options = LintOptions::try_from(json).unwrap();
+        assert_eq!(options.type_aware, None); // null should be treated as None
     }
 
     #[test]
@@ -228,7 +237,7 @@ mod test {
             let options = LintOptions::try_from(json).unwrap();
             assert_eq!(options.run, Run::OnSave);
             assert_eq!(options.config_path, Some("./custom.json".into()));
-            assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
+            assert_eq!(options.unused_disable_directives, Some(UnusedDisableDirectives::Warn));
             assert_eq!(options.type_aware, Some(true));
             assert!(options.disable_nested_config);
             assert_eq!(options.fix_kind, LintFixKindFlag::DangerousFix);

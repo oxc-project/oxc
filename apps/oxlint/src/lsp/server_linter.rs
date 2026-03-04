@@ -151,20 +151,25 @@ impl ServerLinterBuilder {
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
-        let lint_options = LintOptions {
-            fix: fix_kind,
-            report_unused_directive: match options.unused_disable_directives {
-                UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
-                UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
-                UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
-            },
-            ..Default::default()
-        };
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
-
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+
+        let lint_options = LintOptions {
+            fix: fix_kind,
+            report_unused_directive: match options.unused_disable_directives {
+                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
+                Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
+                None => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
+            },
+            ..Default::default()
+        };
+
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
