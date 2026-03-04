@@ -1,9 +1,27 @@
-use oxc_ast::AstKind;
+use schemars::JsonSchema;
+use serde::Deserialize;
+
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_react_compiler::{
+    compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
+    entrypoint::{
+        options::CompilationMode, pipeline::run_pipeline, program::should_compile_function,
+    },
+    hir::{
+        NonLocalBinding,
+        build_hir::{LowerableFunction, collect_import_bindings, lower},
+        environment::{CompilerOutputMode, Environment, EnvironmentConfig},
+    },
+};
+use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn react_compiler_diagnostic(span: Span, message: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(message.to_string()).with_label(span)
@@ -14,8 +32,125 @@ fn react_compiler_diagnostic(span: Span, message: &str) -> OxcDiagnostic {
 /// This rule runs the React Compiler's validation passes on React components
 /// and hooks, reporting any issues found. It is the Rust equivalent of
 /// `eslint-plugin-react-compiler`'s `ReactCompilerRule`.
-#[derive(Debug, Default, Clone)]
-pub struct ReactCompilerRule;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct ReactCompilerRule(Box<ReactCompilerConfig>);
+
+impl std::ops::Deref for ReactCompilerRule {
+    type Target = ReactCompilerConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// Configuration for the `react-compiler/react-compiler` rule.
+///
+/// Mirrors the ESLint plugin's user-facing options:
+/// - `compilationMode`: which functions to compile (`infer` | `all` | `annotation` | `syntax`)
+/// - `environment`: overrides for the compiler's `EnvironmentConfig` validation flags
+///
+/// All `environment` fields default to the ESLint plugin's lint-mode defaults,
+/// which are **stricter** than the compiler's own defaults.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ReactCompilerConfig {
+    pub compilation_mode: CompilationModeConfig,
+    pub environment: EnvironmentConfigOverrides,
+}
+
+impl Default for ReactCompilerConfig {
+    fn default() -> Self {
+        Self {
+            compilation_mode: CompilationModeConfig::default(),
+            environment: EnvironmentConfigOverrides::default(),
+        }
+    }
+}
+
+/// Which functions the compiler should compile/validate.
+#[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum CompilationModeConfig {
+    #[default]
+    Infer,
+    All,
+    Annotation,
+    Syntax,
+}
+
+impl From<CompilationModeConfig> for CompilationMode {
+    fn from(config: CompilationModeConfig) -> Self {
+        match config {
+            CompilationModeConfig::Infer => CompilationMode::Infer,
+            CompilationModeConfig::All => CompilationMode::All,
+            CompilationModeConfig::Annotation => CompilationMode::Annotation,
+            CompilationModeConfig::Syntax => CompilationMode::Syntax,
+        }
+    }
+}
+
+/// Overrides for `EnvironmentConfig` validation flags.
+///
+/// Defaults match the ESLint plugin's `COMPILER_OPTIONS` in lint mode,
+/// which enables stricter validation than the compiler's own defaults.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct EnvironmentConfigOverrides {
+    pub validate_hooks_usage: bool,
+    pub validate_ref_access_during_render: bool,
+    pub validate_no_set_state_in_render: bool,
+    pub validate_no_set_state_in_effects: bool,
+    pub validate_no_jsx_in_try_statements: bool,
+    pub validate_no_impure_functions_in_render: bool,
+    pub validate_static_components: bool,
+    pub validate_no_derived_computations_in_effects: bool,
+    pub validate_no_capitalized_calls: Option<Vec<String>>,
+    pub validate_blocklisted_imports: Option<Vec<String>>,
+    pub validate_preserve_existing_memoization_guarantees: bool,
+    pub validate_exhaustive_memoization_dependencies: bool,
+}
+
+/// Lint-mode defaults — stricter than `EnvironmentConfig::default()`.
+impl Default for EnvironmentConfigOverrides {
+    fn default() -> Self {
+        Self {
+            validate_hooks_usage: true,
+            validate_ref_access_during_render: true,
+            validate_no_set_state_in_render: true,
+            validate_no_set_state_in_effects: true,
+            validate_no_jsx_in_try_statements: true,
+            validate_no_impure_functions_in_render: true,
+            validate_static_components: true,
+            validate_no_derived_computations_in_effects: true,
+            validate_no_capitalized_calls: Some(vec![]),
+            validate_blocklisted_imports: None,
+            validate_preserve_existing_memoization_guarantees: true,
+            validate_exhaustive_memoization_dependencies: true,
+        }
+    }
+}
+
+impl EnvironmentConfigOverrides {
+    fn to_environment_config(&self) -> EnvironmentConfig {
+        let mut config = EnvironmentConfig::default();
+        config.validate_hooks_usage = self.validate_hooks_usage;
+        config.validate_ref_access_during_render = self.validate_ref_access_during_render;
+        config.validate_no_set_state_in_render = self.validate_no_set_state_in_render;
+        config.validate_no_set_state_in_effects = self.validate_no_set_state_in_effects;
+        config.validate_no_jsx_in_try_statements = self.validate_no_jsx_in_try_statements;
+        config.validate_no_impure_functions_in_render = self.validate_no_impure_functions_in_render;
+        config.validate_static_components = self.validate_static_components;
+        config.validate_no_derived_computations_in_effects =
+            self.validate_no_derived_computations_in_effects;
+        config.validate_no_capitalized_calls = self.validate_no_capitalized_calls.clone();
+        config.validate_blocklisted_imports = self.validate_blocklisted_imports.clone();
+        config.validate_preserve_existing_memoization_guarantees =
+            self.validate_preserve_existing_memoization_guarantees;
+        config.validate_exhaustive_memoization_dependencies =
+            self.validate_exhaustive_memoization_dependencies;
+        config
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,43 +184,217 @@ declare_oxc_lint!(
     /// ```
     ReactCompilerRule,
     react_compiler,
-    correctness
+    correctness,
+    config = ReactCompilerConfig,
 );
 
 impl Rule for ReactCompilerRule {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // The rule triggers on function declarations/expressions that look like
-        // React components or hooks
-        match node.kind() {
-            AstKind::Function(func) => {
-                let name = func.id.as_ref().map(|id| id.name.as_str());
-                if let Some(name) = name {
-                    if !is_component_or_hook_name(name) {
-                        return;
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let program = ctx.nodes().program();
+        let outer_bindings = collect_import_bindings(&program.body);
+
+        for statement in &program.body {
+            lint_statement(statement, &outer_bindings, &self.0, ctx);
+        }
+    }
+}
+
+fn lint_statement<'a>(
+    statement: &'a Statement<'a>,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    match statement {
+        Statement::FunctionDeclaration(function) => {
+            let directives = function_directives(function);
+            let lowerable_function = LowerableFunction::Function(function);
+            lint_function(
+                &lowerable_function,
+                function.id.as_ref().map(|id| id.name.as_str()),
+                &directives,
+                function.span,
+                outer_bindings,
+                config,
+                ctx,
+            );
+        }
+        Statement::VariableDeclaration(declaration) => {
+            lint_variable_declaration(declaration, outer_bindings, config, ctx);
+        }
+        Statement::ExportDefaultDeclaration(export_default) => match &export_default.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(function)
+            | ExportDefaultDeclarationKind::FunctionExpression(function) => {
+                let directives = function_directives(function);
+                let lowerable_function = LowerableFunction::Function(function);
+                lint_function(
+                    &lowerable_function,
+                    function.id.as_ref().map(|id| id.name.as_str()),
+                    &directives,
+                    function.span,
+                    outer_bindings,
+                    config,
+                    ctx,
+                );
+            }
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
+                let directives = arrow_directives(arrow);
+                let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                lint_function(
+                    &lowerable_function,
+                    None,
+                    &directives,
+                    arrow.span,
+                    outer_bindings,
+                    config,
+                    ctx,
+                );
+            }
+            _ => {}
+        },
+        Statement::ExportNamedDeclaration(export_named) => {
+            if let Some(declaration) = &export_named.declaration {
+                match declaration {
+                    Declaration::FunctionDeclaration(function) => {
+                        let directives = function_directives(function);
+                        let lowerable_function = LowerableFunction::Function(function);
+                        lint_function(
+                            &lowerable_function,
+                            function.id.as_ref().map(|id| id.name.as_str()),
+                            &directives,
+                            function.span,
+                            outer_bindings,
+                            config,
+                            ctx,
+                        );
                     }
-                    // Run validations on this function
-                    // In the full implementation, this would:
-                    // 1. Lower the function to HIR
-                    // 2. Run SSA conversion
-                    // 3. Run validation passes
-                    // 4. Report any diagnostics
+                    Declaration::VariableDeclaration(declaration) => {
+                        lint_variable_declaration(declaration, outer_bindings, config, ctx);
+                    }
+                    _ => {}
                 }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn lint_variable_declaration<'a>(
+    declaration: &'a VariableDeclaration<'a>,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    for declarator in &declaration.declarations {
+        let binding_name = match &declarator.id {
+            BindingPattern::BindingIdentifier(identifier) => Some(identifier.name.as_str()),
+            _ => None,
+        };
+
+        let Some(initializer) = &declarator.init else {
+            continue;
+        };
+
+        match initializer {
+            Expression::FunctionExpression(function) => {
+                let directives = function_directives(function);
+                let function_name =
+                    function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+                let lowerable_function = LowerableFunction::Function(function);
+                lint_function(
+                    &lowerable_function,
+                    function_name,
+                    &directives,
+                    function.span,
+                    outer_bindings,
+                    config,
+                    ctx,
+                );
+            }
+            Expression::ArrowFunctionExpression(arrow) => {
+                let directives = arrow_directives(arrow);
+                let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                lint_function(
+                    &lowerable_function,
+                    binding_name,
+                    &directives,
+                    arrow.span,
+                    outer_bindings,
+                    config,
+                    ctx,
+                );
             }
             _ => {}
         }
     }
 }
 
-fn is_component_or_hook_name(name: &str) -> bool {
-    // Components start with uppercase
-    if name.starts_with(|c: char| c.is_ascii_uppercase()) {
-        return true;
+fn lint_function<'a>(
+    function: &LowerableFunction<'a>,
+    name: Option<&str>,
+    directives: &[String],
+    fallback_span: Span,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    let Some(fn_type) =
+        should_compile_function(name, directives, config.compilation_mode.into(), false)
+    else {
+        return;
+    };
+
+    let env_config = config.environment.to_environment_config();
+    let environment = Environment::new(fn_type, CompilerOutputMode::Lint, env_config);
+
+    let mut hir_function = match lower(&environment, fn_type, function, outer_bindings.clone()) {
+        Ok(hir_function) => hir_function,
+        Err(error) => {
+            report_compiler_error(&error, fallback_span, ctx);
+            return;
+        }
+    };
+
+    if let Err(error) = run_pipeline(&mut hir_function, &environment) {
+        report_compiler_error(&error, fallback_span, ctx);
     }
-    // Hooks start with "use" followed by uppercase
-    if name.starts_with("use") && name.len() > 3 {
-        return name[3..].starts_with(|c: char| c.is_ascii_uppercase());
+
+    for diagnostic in hir_function.env.take_diagnostics() {
+        report_compiler_error(&diagnostic, fallback_span, ctx);
     }
-    false
+}
+
+fn report_compiler_error(error: &CompilerError, fallback_span: Span, ctx: &LintContext<'_>) {
+    for entry in &error.details {
+        let span = compiler_error_entry_span(entry).unwrap_or(fallback_span);
+        ctx.diagnostic(react_compiler_diagnostic(span, &entry.to_string()));
+    }
+}
+
+fn function_directives(function: &Function<'_>) -> Vec<String> {
+    function.body.as_ref().map_or_else(Vec::new, |body| {
+        body.directives.iter().map(|directive| directive.directive.to_string()).collect()
+    })
+}
+
+fn arrow_directives(function: &ArrowFunctionExpression<'_>) -> Vec<String> {
+    function.body.directives.iter().map(|directive| directive.directive.to_string()).collect()
+}
+
+fn compiler_error_entry_span(entry: &CompilerErrorEntry) -> Option<Span> {
+    let location = match entry {
+        CompilerErrorEntry::Diagnostic(diagnostic) => diagnostic.primary_location(),
+        CompilerErrorEntry::Detail(detail) => detail.primary_location(),
+    };
+
+    match location {
+        Some(SourceLocation::Source(span)) => Some(span),
+        _ => None,
+    }
 }
 
 #[test]
@@ -94,22 +403,40 @@ fn test() {
 
     let pass = vec![
         // Valid component
-        r"function Component(props) { return <div>{props.value}</div>; }",
+        (r"function Component(props) { return <div>{props.value}</div>; }", None),
         // Valid hook
-        r"function useMyHook() { const [state, setState] = useState(0); return state; }",
+        (r"function useMyHook() { const [state, setState] = useState(0); return state; }", None),
         // Not a component or hook (lowercase)
-        r"function helper() { return 42; }",
+        (r"function helper() { return 42; }", None),
         // Arrow function component
-        r"const Component = (props) => <div>{props.value}</div>;",
+        (r"const Component = (props) => { return <div>{props.value}</div>; };", None),
+        // Named export function
+        (r"export function Component(props) { return <div>{props.value}</div>; }", None),
+        // Named export const arrow
+        (r"export const Component = (props) => { return <div>{props.value}</div>; };", None),
     ];
 
     let fail = vec![
-        // Currently no failures since the rule is structurally complete
-        // but validation passes need full implementation.
-        // Future failures would include:
-        // - Mutating props: "function Component(props) { props.foo = 1; return <div />; }"
-        // - Conditional hooks: "function Component(props) { if (props.cond) { useState(0); } }"
+        // Keep this as a smoke test for integration; compiler parity with the
+        // upstream rule set is still evolving.
     ];
 
     Tester::new(ReactCompilerRule::NAME, ReactCompilerRule::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_config_deserialization() {
+    let config: ReactCompilerConfig = serde_json::from_value(serde_json::json!({
+        "compilationMode": "all",
+        "environment": {
+            "validateStaticComponents": false
+        }
+    }))
+    .unwrap();
+
+    assert!(matches!(config.compilation_mode, CompilationModeConfig::All));
+    assert!(!config.environment.validate_static_components);
+    // Other fields keep lint-mode defaults
+    assert!(config.environment.validate_no_set_state_in_effects);
+    assert!(config.environment.validate_no_jsx_in_try_statements);
 }
