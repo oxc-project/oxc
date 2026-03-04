@@ -25,7 +25,7 @@ use oxc_react_compiler::hir::{
 #[test]
 #[ignore = "debug only"]
 fn debug_aliased_mutation_lambda_deps() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
     use oxc_react_compiler::hir::InstructionValue as IV;
 
     let source = r#"function Component(props) {
@@ -126,9 +126,16 @@ fn debug_aliased_mutation_lambda_deps() {
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
-        Ok(codegen_func) => {
-            println!("=== Codegen output ===");
-            println!("{}", codegen_func);
+        Ok(pipeline_output) => {
+            match run_codegen(pipeline_output, &env) {
+                Ok(codegen_func) => {
+                    println!("=== Codegen output ===");
+                    println!("{}", codegen_func);
+                }
+                Err(e) => {
+                    println!("Codegen error: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("Pipeline error: {:?}", e);
@@ -293,7 +300,7 @@ function Component(props) {
 #[test]
 #[ignore = "debug only"]
 fn debug_conformance_comparison() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 
     let sources = [(
         "reduce-reactive-deps/conditional-member-expr",
@@ -357,32 +364,39 @@ export const FIXTURE_ENTRYPOINT = {
         let result = run_pipeline(&mut hir_func, &env);
 
         match result {
-            Ok(codegen_func) => {
-                let actual_full = format!("function Component(props) {{\n{}}}", codegen_func);
-                println!("=== {name} ===");
-                println!("--- Actual output ---");
-                println!("{}", actual_full);
-                println!("--- Expected ---");
-                println!("{}", expected_func);
-                // Print diff to see what differs
-                let actual_lines: Vec<&str> = actual_full.lines().collect();
-                let expected_lines: Vec<&str> = expected_func.lines().collect();
-                if actual_lines != expected_lines {
-                    println!("--- Differences ---");
-                    for (i, (a, e)) in actual_lines.iter().zip(expected_lines.iter()).enumerate() {
-                        if a != e {
-                            println!("Line {}: actual=|{}| expected=|{}|", i, a, e);
+            Ok(pipeline_output) => {
+                match run_codegen(pipeline_output, &env) {
+                    Ok(codegen_func) => {
+                        let actual_full = format!("function Component(props) {{\n{}}}", codegen_func);
+                        println!("=== {name} ===");
+                        println!("--- Actual output ---");
+                        println!("{}", actual_full);
+                        println!("--- Expected ---");
+                        println!("{}", expected_func);
+                        // Print diff to see what differs
+                        let actual_lines: Vec<&str> = actual_full.lines().collect();
+                        let expected_lines: Vec<&str> = expected_func.lines().collect();
+                        if actual_lines != expected_lines {
+                            println!("--- Differences ---");
+                            for (i, (a, e)) in actual_lines.iter().zip(expected_lines.iter()).enumerate() {
+                                if a != e {
+                                    println!("Line {}: actual=|{}| expected=|{}|", i, a, e);
+                                }
+                            }
+                            if actual_lines.len() != expected_lines.len() {
+                                println!(
+                                    "Lengths differ: actual={} expected={}",
+                                    actual_lines.len(),
+                                    expected_lines.len()
+                                );
+                            }
+                        } else {
+                            println!("EXACT MATCH!");
                         }
                     }
-                    if actual_lines.len() != expected_lines.len() {
-                        println!(
-                            "Lengths differ: actual={} expected={}",
-                            actual_lines.len(),
-                            expected_lines.len()
-                        );
+                    Err(e) => {
+                        println!("Codegen error for {name}: {:?}", e);
                     }
-                } else {
-                    println!("EXACT MATCH!");
                 }
             }
             Err(e) => {
@@ -401,7 +415,7 @@ export const FIXTURE_ENTRYPOINT = {
 fn debug_normalized_comparison() {
     // This test directly uses the same logic as the conformance test
     // to understand why conditional-member-expr is failing
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 
     let fixtures_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -451,24 +465,31 @@ fn debug_normalized_comparison() {
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
-        Ok(codegen_func) => {
-            let actual_full = {
-                let async_prefix = if codegen_func.is_async { "async " } else { "" };
-                let star = if codegen_func.generator { "*" } else { "" };
-                let name = codegen_func.id.as_deref().unwrap_or("anonymous");
-                let params = codegen_func.params.join(", ");
-                let body = format!("{codegen_func}");
-                if body.trim().is_empty() {
-                    format!("{async_prefix}function {star}{name}({params}) {{}}")
-                } else {
-                    format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+        Ok(pipeline_output) => {
+            match run_codegen(pipeline_output, &env) {
+                Ok(codegen_func) => {
+                    let actual_full = {
+                        let async_prefix = if codegen_func.is_async { "async " } else { "" };
+                        let star = if codegen_func.generator { "*" } else { "" };
+                        let name = codegen_func.id.as_deref().unwrap_or("anonymous");
+                        let params = codegen_func.params.join(", ");
+                        let body = format!("{codegen_func}");
+                        if body.trim().is_empty() {
+                            format!("{async_prefix}function {star}{name}({params}) {{}}")
+                        } else {
+                            format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+                        }
+                    };
+                    println!("=== Actual full ===\n{}\n", actual_full);
+                    println!(
+                        "=== Expected content (first 500 chars) ===\n{}\n",
+                        &expect_content[..expect_content.len().min(500)]
+                    );
                 }
-            };
-            println!("=== Actual full ===\n{}\n", actual_full);
-            println!(
-                "=== Expected content (first 500 chars) ===\n{}\n",
-                &expect_content[..expect_content.len().min(500)]
-            );
+                Err(e) => {
+                    println!("Codegen error: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("Pipeline error: {:?}", e);
@@ -484,7 +505,7 @@ fn debug_normalized_comparison() {
 #[test]
 #[ignore = "debug only"]
 fn debug_conditional_member_expr_deps() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 
     let source = r#"// @enablePropagateDepsInHIR
 function Component(props) {
@@ -522,9 +543,16 @@ function Component(props) {
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
-        Ok(codegen_func) => {
-            println!("=== Codegen output ===");
-            println!("{}", codegen_func);
+        Ok(pipeline_output) => {
+            match run_codegen(pipeline_output, &env) {
+                Ok(codegen_func) => {
+                    println!("=== Codegen output ===");
+                    println!("{}", codegen_func);
+                }
+                Err(e) => {
+                    println!("Codegen error: {:?}", e);
+                }
+            }
         }
         Err(e) => {
             println!("Pipeline error: {:?}", e);
@@ -1781,8 +1809,10 @@ function Component({a, b}) {
         .expect("lowering failed");
 
     // Run the full pipeline
-    let codegen = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
+    let pipeline_output = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
         .expect("pipeline failed");
+    let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env)
+        .expect("codegen failed");
 
     // Should produce _c(3): 2 dependency slots (a, b) + 1 output slot (the array [y, z]).
     // Previously produced _c(5) because y and z were incorrectly kept as separate declarations.
