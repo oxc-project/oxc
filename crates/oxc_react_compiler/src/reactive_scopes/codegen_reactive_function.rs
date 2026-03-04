@@ -397,6 +397,75 @@ fn make_sequence<'a>(
     cx.ast.expression_sequence(SPAN, expressions)
 }
 
+/// Convert a `BindingPattern` to an `AssignmentTarget`.
+///
+/// Used for destructuring reassignments where the pattern was built as a
+/// `BindingPattern` but needs to be an `AssignmentTarget` for the assignment expression.
+fn binding_pattern_to_assignment_target<'a>(
+    cx: &CodegenContext<'a>,
+    pattern: BindingPattern<'a>,
+) -> AssignmentTarget<'a> {
+    match pattern {
+        BindingPattern::BindingIdentifier(ident) => {
+            let ident = ident.unbox();
+            make_simple_target(cx, ident.name.as_str())
+        }
+        BindingPattern::ObjectPattern(obj) => {
+            let obj = obj.unbox();
+            let mut properties = cx.ast.vec_with_capacity(obj.properties.len());
+            for prop in obj.properties.into_iter() {
+                let target = binding_pattern_to_assignment_target(cx, prop.value);
+                let binding: AssignmentTargetMaybeDefault<'a> = target.into();
+                let property = cx.ast.assignment_target_property_property(
+                    SPAN, prop.key, binding, prop.computed,
+                );
+                properties.push(AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                    cx.ast.alloc(property),
+                ));
+            }
+            let rest: Option<oxc_allocator::Box<'a, AssignmentTargetRest<'a>>> =
+                obj.rest.map(|rest| {
+                    let rest: BindingRestElement<'a> = rest.unbox();
+                    let target = binding_pattern_to_assignment_target(cx, rest.argument);
+                    cx.ast.alloc(cx.ast.assignment_target_rest(SPAN, target))
+                });
+            let obj_target = cx.ast.object_assignment_target(SPAN, properties, rest);
+            AssignmentTarget::from(
+                AssignmentTargetPattern::ObjectAssignmentTarget(cx.ast.alloc(obj_target)),
+            )
+        }
+        BindingPattern::ArrayPattern(arr) => {
+            let arr = arr.unbox();
+            let mut elements: AVec<'a, Option<AssignmentTargetMaybeDefault<'a>>> =
+                cx.ast.vec_with_capacity(arr.elements.len());
+            for elem in arr.elements.into_iter() {
+                match elem {
+                    Some(pat) => {
+                        let target = binding_pattern_to_assignment_target(cx, pat);
+                        let maybe_default: AssignmentTargetMaybeDefault<'a> = target.into();
+                        elements.push(Some(maybe_default));
+                    }
+                    None => elements.push(None),
+                }
+            }
+            let rest: Option<oxc_allocator::Box<'a, AssignmentTargetRest<'a>>> =
+                arr.rest.map(|rest| {
+                    let rest: BindingRestElement<'a> = rest.unbox();
+                    let target = binding_pattern_to_assignment_target(cx, rest.argument);
+                    cx.ast.alloc(cx.ast.assignment_target_rest(SPAN, target))
+                });
+            let arr_target = cx.ast.array_assignment_target(SPAN, elements, rest);
+            AssignmentTarget::from(
+                AssignmentTargetPattern::ArrayAssignmentTarget(cx.ast.alloc(arr_target)),
+            )
+        }
+        BindingPattern::AssignmentPattern(_) => {
+            // Assignment patterns with defaults should not appear in reassignment context
+            make_simple_target(cx, "unknown")
+        }
+    }
+}
+
 /// Build `FormalParameters` from param name strings and an optional rest param.
 ///
 /// Each param string becomes a simple `BindingIdentifier` parameter.
@@ -955,8 +1024,33 @@ fn codegen_block_no_reset<'a>(
                 cx.temp = saved_temp;
             }
             ReactiveStatement::Terminal(term_stmt) => {
-                codegen_terminal(cx, &term_stmt.terminal, &mut statements);
-                // TODO: handle labels (implicit/explicit)
+                // Generate terminal statements into a temporary buffer
+                let mut term_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+                codegen_terminal(cx, &term_stmt.terminal, &mut term_stmts);
+
+                if term_stmts.is_empty() {
+                    // Terminal produced nothing — skip
+                } else if let Some(ref label) = term_stmt.label {
+                    if label.implicit {
+                        // Implicit label: flatten statements
+                        statements.extend(term_stmts);
+                    } else {
+                        // Explicit label: wrap in LabeledStatement
+                        let label_name = codegen_label(label.id);
+                        let label_id = cx.ast.label_identifier(SPAN, cx.ast.atom(&label_name));
+                        // Wrap terminal output in a block, then label it
+                        let body = if term_stmts.len() == 1 {
+                            term_stmts.pop().unwrap_or_else(|| cx.ast.statement_empty(SPAN))
+                        } else {
+                            let block = cx.ast.alloc_block_statement(SPAN, term_stmts);
+                            Statement::BlockStatement(block)
+                        };
+                        statements.push(cx.ast.statement_labeled(SPAN, label_id, body));
+                    }
+                } else {
+                    // No label: flatten statements
+                    statements.extend(term_stmts);
+                }
             }
         }
     }
@@ -1001,14 +1095,30 @@ fn codegen_break<'a>(
     cx: &CodegenContext<'a>,
     t: &ReactiveBreakTerminal,
 ) -> Option<Statement<'a>> {
-    todo!()
+    if t.target_kind == ReactiveTerminalTargetKind::Implicit {
+        return None;
+    }
+    let label = if t.target_kind == ReactiveTerminalTargetKind::Labeled {
+        Some(cx.ast.label_identifier(SPAN, cx.ast.atom(&codegen_label(t.target))))
+    } else {
+        None
+    };
+    Some(cx.ast.statement_break(SPAN, label))
 }
 
 fn codegen_continue<'a>(
     cx: &CodegenContext<'a>,
     t: &ReactiveContinueTerminal,
 ) -> Option<Statement<'a>> {
-    todo!()
+    if t.target_kind == ReactiveTerminalTargetKind::Implicit {
+        return None;
+    }
+    let label = if t.target_kind == ReactiveTerminalTargetKind::Labeled {
+        Some(cx.ast.label_identifier(SPAN, cx.ast.atom(&codegen_label(t.target))))
+    } else {
+        None
+    };
+    Some(cx.ast.statement_continue(SPAN, label))
 }
 
 // =====================================================================================
@@ -1022,7 +1132,119 @@ fn codegen_instruction_nullable<'a>(
     instr: &ReactiveInstruction,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    match &instr.value {
+        ReactiveValue::Instruction(boxed) => match boxed.as_ref() {
+            InstructionValue::StoreLocal(store) => {
+                let kind = if cx.has_declared(store.lvalue.place.identifier.declaration_id)
+                    && !matches!(
+                        store.lvalue.kind,
+                        InstructionKind::Function | InstructionKind::HoistedFunction
+                    )
+                {
+                    InstructionKind::Reassign
+                } else {
+                    store.lvalue.kind
+                };
+                let value_expr = codegen_place_to_expression(cx, &store.value);
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    kind,
+                    &store.lvalue.place,
+                    Some(value_expr),
+                    Some(&store.value),
+                    stmts,
+                );
+            }
+            InstructionValue::StoreContext(store) => {
+                let kind = store.lvalue_kind;
+                let value_expr = codegen_place_to_expression(cx, &store.value);
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    kind,
+                    &store.lvalue_place,
+                    Some(value_expr),
+                    Some(&store.value),
+                    stmts,
+                );
+            }
+            InstructionValue::DeclareLocal(decl) => {
+                if cx.has_declared(decl.lvalue.place.identifier.declaration_id) {
+                    return;
+                }
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    decl.lvalue.kind,
+                    &decl.lvalue.place,
+                    None,
+                    None,
+                    stmts,
+                );
+            }
+            InstructionValue::DeclareContext(decl) => {
+                if cx.has_declared(decl.lvalue_place.identifier.declaration_id) {
+                    return;
+                }
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    decl.lvalue_kind,
+                    &decl.lvalue_place,
+                    None,
+                    None,
+                    stmts,
+                );
+            }
+            InstructionValue::Destructure(destr) => {
+                let kind = destr.lvalue.kind;
+                // Register unnamed pattern places as temporaries
+                for place in each_pattern_operand(&destr.lvalue.pattern) {
+                    if kind != InstructionKind::Reassign && place.identifier.name.is_none() {
+                        cx.temp.insert(place.identifier.declaration_id, None);
+                    }
+                }
+                let value_expr = codegen_place_to_expression(cx, &destr.value);
+                let lval = codegen_pattern(cx, &destr.lvalue.pattern);
+                codegen_destructure_statement(cx, instr, kind, lval, value_expr, stmts);
+            }
+            InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => {
+                // Memoization markers are consumed by codegen_reactive_scope
+            }
+            InstructionValue::Debugger(_) => {
+                stmts.push(cx.ast.statement_debugger(SPAN));
+            }
+            InstructionValue::ObjectMethod(method) => {
+                // Store object method for later use by ObjectExpression codegen.
+                if let Some(lval) = &instr.lvalue {
+                    cx.object_methods.insert(lval.identifier.id, method.clone());
+                }
+            }
+            InstructionValue::FunctionExpression(func_expr) => {
+                // Handle FunctionExpression separately so we can store structured
+                // CodegenOutput data for FunctionDeclaration types.
+                let (value_expr, fn_decl) = codegen_function_expression(cx, func_expr);
+                if let Some(fn_data) = fn_decl {
+                    if let Some(lval) = &instr.lvalue {
+                        cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
+                    }
+                }
+                codegen_instruction_to_statement(cx, instr, value_expr, stmts);
+            }
+            other => {
+                let value_expr = codegen_instruction_value(cx, other);
+                codegen_instruction_to_statement(cx, instr, value_expr, stmts);
+            }
+        },
+        ReactiveValue::Logical(_)
+        | ReactiveValue::Ternary(_)
+        | ReactiveValue::Sequence(_)
+        | ReactiveValue::OptionalCall(_) => {
+            let value_expr = codegen_reactive_value_to_expression(cx, &instr.value);
+            codegen_instruction_to_statement(cx, instr, value_expr, stmts);
+        }
+    }
 }
 
 /// Handle StoreLocal/StoreContext/DeclareLocal/DeclareContext
@@ -1035,7 +1257,92 @@ fn codegen_store_or_declare<'a>(
     value_place: Option<&Place>,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    let name = identifier_name(&lvalue_place.identifier);
+    let decl_id = lvalue_place.identifier.declaration_id;
+
+    match kind {
+        InstructionKind::Const | InstructionKind::HoistedConst => {
+            // TS: CompilerError.invariant(instr.lvalue === null, ...)
+            if kind == InstructionKind::Const && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
+            cx.declare(decl_id);
+            stmts.push(make_var_decl(cx, VariableDeclarationKind::Const, &name, value));
+        }
+        InstructionKind::Let | InstructionKind::HoistedLet => {
+            if kind == InstructionKind::Let && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
+            cx.declare(decl_id);
+            stmts.push(make_var_decl(cx, VariableDeclarationKind::Let, &name, value));
+        }
+        InstructionKind::Function | InstructionKind::HoistedFunction => {
+            cx.declare(decl_id);
+            // Try to emit a proper function declaration statement.
+            // Look up the structured CodegenOutput data stored when the
+            // FunctionExpression instruction was processed.
+            if let Some(vp) = value_place {
+                if let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id) {
+                    let fn_name = fn_data.id.as_ref().map(|n| {
+                        cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str()))
+                    });
+                    let params = build_formal_params(cx, &fn_data.params);
+                    let body = build_function_body(cx, &fn_data.directives, fn_data.body);
+                    let decl = cx.ast.function(
+                        SPAN,
+                        FunctionType::FunctionDeclaration,
+                        fn_name,
+                        fn_data.generator,
+                        fn_data.is_async,
+                        false, // declare
+                        NONE,  // type_parameters
+                        NONE,  // this_param
+                        params,
+                        NONE,  // return_type
+                        Some(body),
+                    );
+                    stmts.push(Statement::FunctionDeclaration(cx.ast.alloc(decl)));
+                    return;
+                }
+            }
+            // Fallback: emit as const declaration or expression statement
+            if let Some(val) = value {
+                stmts.push(make_var_decl(cx, VariableDeclarationKind::Const, &name, Some(val)));
+            } else {
+                stmts.push(make_var_decl(cx, VariableDeclarationKind::Const, &name, None));
+            }
+        }
+        InstructionKind::Reassign => {
+            if let Some(val) = value {
+                // If there's an lvalue on the instruction (i.e., it's used as an expression),
+                // store as temporary.
+                if let Some(lval) = instr.lvalue.as_ref() {
+                    if lval.identifier.name.is_none() {
+                        let target = make_simple_target(cx, &name);
+                        let assign = make_assignment(cx, target, val);
+                        cx.temp.insert(lval.identifier.declaration_id, Some(assign));
+                        return;
+                    }
+                }
+                // Named reassignment: emit `name = value` as expression statement
+                let target = make_simple_target(cx, &name);
+                let assign = make_assignment(cx, target, val);
+                try_store_as_temporary(cx, None, assign, stmts);
+            }
+        }
+        InstructionKind::Catch => {
+            // Catch bindings: emit empty statement
+            stmts.push(cx.ast.statement_empty(SPAN));
+        }
+    }
 }
 
 /// Handle destructure statements.
@@ -1047,7 +1354,55 @@ fn codegen_destructure_statement<'a>(
     value: Expression<'a>,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    match kind {
+        InstructionKind::Const
+        | InstructionKind::HoistedConst
+        | InstructionKind::Function
+        | InstructionKind::HoistedFunction => {
+            if kind == InstructionKind::Const && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
+            let var_kind = VariableDeclarationKind::Const;
+            let declarator = cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
+            let declarators = cx.ast.vec1(declarator);
+            let decl = cx.ast.variable_declaration(SPAN, var_kind, declarators, false);
+            stmts.push(Statement::VariableDeclaration(cx.ast.alloc(decl)));
+        }
+        InstructionKind::Let | InstructionKind::HoistedLet => {
+            if kind == InstructionKind::Let && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
+            let var_kind = VariableDeclarationKind::Let;
+            let declarator = cx.ast.variable_declarator(SPAN, var_kind, lval, NONE, Some(value), false);
+            let declarators = cx.ast.vec1(declarator);
+            let decl = cx.ast.variable_declaration(SPAN, var_kind, declarators, false);
+            stmts.push(Statement::VariableDeclaration(cx.ast.alloc(decl)));
+        }
+        InstructionKind::Reassign => {
+            // Convert BindingPattern to AssignmentTarget for destructuring assignment
+            let target = binding_pattern_to_assignment_target(cx, lval);
+            let assign = make_assignment(cx, target, value);
+            // If there's an lvalue on the instruction used as expression, store as temp
+            if let Some(lval_place) = instr.lvalue.as_ref() {
+                if lval_place.identifier.name.is_none() {
+                    cx.temp.insert(lval_place.identifier.declaration_id, Some(assign));
+                    return;
+                }
+            }
+            stmts.push(make_expr_stmt(cx, assign));
+        }
+        InstructionKind::Catch => {
+            stmts.push(cx.ast.statement_empty(SPAN));
+        }
+    }
 }
 
 /// Store an expression as a temporary if the lvalue is unnamed, otherwise emit as expression statement.
@@ -1057,7 +1412,15 @@ fn try_store_as_temporary<'a>(
     expr: Expression<'a>,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    if let Some(lval) = lvalue {
+        let name = identifier_name(&lval.identifier);
+        if name.is_empty() || lval.identifier.name.is_none() {
+            // Unnamed temp — store for inline substitution
+            cx.temp.insert(lval.identifier.declaration_id, Some(expr));
+            return;
+        }
+    }
+    stmts.push(make_expr_stmt(cx, expr));
 }
 
 /// Convert a codegen value into a statement, handling temporaries and named lvalues.
@@ -1067,7 +1430,31 @@ fn codegen_instruction_to_statement<'a>(
     value: Expression<'a>,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    let lvalue = instr.lvalue.as_ref();
+    match lvalue {
+        None => {
+            // No lvalue — just emit expression statement
+            stmts.push(make_expr_stmt(cx, value));
+        }
+        Some(lval) => {
+            if lval.identifier.name.is_none() {
+                // Unnamed temp — store for inline substitution
+                cx.temp.insert(lval.identifier.declaration_id, Some(value));
+            } else {
+                let name = identifier_name(&lval.identifier);
+                if cx.has_declared(lval.identifier.declaration_id) {
+                    // Already declared — reassignment
+                    let target = make_simple_target(cx, &name);
+                    let assign = make_assignment(cx, target, value);
+                    stmts.push(make_expr_stmt(cx, assign));
+                } else {
+                    // First declaration
+                    cx.declare(lval.identifier.declaration_id);
+                    stmts.push(make_var_decl(cx, VariableDeclarationKind::Const, &name, Some(value)));
+                }
+            }
+        }
+    }
 }
 
 // =====================================================================================
@@ -2028,12 +2415,87 @@ fn codegen_args<'a>(
     result
 }
 
-/// Generate a destructure pattern.
+/// Generate a destructure pattern as a `BindingPattern`.
+///
+/// Port of `codegen_pattern` — builds `BindingPattern` from HIR `Pattern`.
+/// - Array: `ArrayPattern` with elements (BindingPattern or None for holes) and optional rest
+/// - Object: `ObjectPattern` with properties (BindingProperty with key/value) and optional rest
 fn codegen_pattern<'a>(
     cx: &CodegenContext<'a>,
     pattern: &Pattern,
 ) -> BindingPattern<'a> {
-    todo!()
+    match pattern {
+        Pattern::Array(arr) => {
+            let mut elements: AVec<'a, Option<BindingPattern<'a>>> =
+                cx.ast.vec_with_capacity(arr.items.len());
+            let mut rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>> = None;
+            for item in &arr.items {
+                match item {
+                    ArrayPatternElement::Place(p) => {
+                        let name = identifier_name(&p.identifier);
+                        let binding = cx.ast.binding_pattern_binding_identifier(
+                            SPAN,
+                            cx.ast.atom(&name),
+                        );
+                        elements.push(Some(binding));
+                    }
+                    ArrayPatternElement::Spread(s) => {
+                        let name = identifier_name(&s.place.identifier);
+                        let binding = cx.ast.binding_pattern_binding_identifier(
+                            SPAN,
+                            cx.ast.atom(&name),
+                        );
+                        let rest_elem = cx.ast.binding_rest_element(SPAN, binding);
+                        rest = Some(cx.ast.alloc(rest_elem));
+                    }
+                    ArrayPatternElement::Hole => {
+                        elements.push(None);
+                    }
+                }
+            }
+            let arr_pat = cx.ast.array_pattern(SPAN, elements, rest);
+            BindingPattern::ArrayPattern(cx.ast.alloc(arr_pat))
+        }
+        Pattern::Object(obj) => {
+            let mut properties: AVec<'a, BindingProperty<'a>> =
+                cx.ast.vec_with_capacity(obj.properties.len());
+            let mut rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>> = None;
+            for prop in &obj.properties {
+                match prop {
+                    ObjectPatternProperty::Property(p) => {
+                        let key = codegen_object_property_key(cx, &p.key);
+                        let name = identifier_name(&p.place.identifier);
+                        let value = cx.ast.binding_pattern_binding_identifier(
+                            SPAN,
+                            cx.ast.atom(&name),
+                        );
+                        let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
+                        // Check if shorthand: key is an identifier and the value has the same name
+                        let is_shorthand = if !is_computed {
+                            matches!(&p.key, ObjectPropertyKey::Identifier(k) if *k == name)
+                        } else {
+                            false
+                        };
+                        let binding_prop = cx.ast.binding_property(
+                            SPAN, key, value, is_shorthand, is_computed,
+                        );
+                        properties.push(binding_prop);
+                    }
+                    ObjectPatternProperty::Spread(s) => {
+                        let name = identifier_name(&s.place.identifier);
+                        let binding = cx.ast.binding_pattern_binding_identifier(
+                            SPAN,
+                            cx.ast.atom(&name),
+                        );
+                        let rest_elem = cx.ast.binding_rest_element(SPAN, binding);
+                        rest = Some(cx.ast.alloc(rest_elem));
+                    }
+                }
+            }
+            let obj_pat = cx.ast.object_pattern(SPAN, properties, rest);
+            BindingPattern::ObjectPattern(cx.ast.alloc(obj_pat))
+        }
+    }
 }
 
 /// Iterate over all Place operands in a pattern.
@@ -2101,20 +2563,66 @@ fn codegen_dependency<'a>(
 }
 
 /// Generate the init part of a for statement.
+///
+/// For a for-loop init like `let i = 0, length = items.length`, this processes
+/// the sequence of instructions. For now, delegates to `codegen_reactive_value_to_expression`.
+/// Full variable-declaration support will be added with `codegen_terminal`.
 fn codegen_for_init<'a>(
     cx: &mut CodegenContext<'a>,
     init: &ReactiveValue,
 ) -> Expression<'a> {
-    todo!()
+    codegen_reactive_value_to_expression(cx, init)
 }
 
-/// Extract left and right for for-of from reactive init/test values.
+/// Extract the loop variable declaration kind and binding pattern for for-of.
+///
+/// Searches the test value's sequence instructions in reverse for the
+/// StoreLocal/Destructure that defines the loop variable.
 fn codegen_for_of_in_init<'a>(
     cx: &mut CodegenContext<'a>,
-    init: &ReactiveValue,
+    _init: &ReactiveValue,
     test: &ReactiveValue,
 ) -> (VariableDeclarationKind, BindingPattern<'a>) {
-    todo!()
+    if let ReactiveValue::Sequence(seq) = test {
+        for item_instr in seq.instructions.iter().rev() {
+            if let ReactiveValue::Instruction(boxed) = &item_instr.value {
+                match boxed.as_ref() {
+                    InstructionValue::StoreLocal(store) => {
+                        // Only use this StoreLocal if it has a named binding (not a temp)
+                        if store.lvalue.place.identifier.name.is_some() {
+                            let kind = match store.lvalue.kind {
+                                InstructionKind::Const | InstructionKind::HoistedConst => {
+                                    VariableDeclarationKind::Const
+                                }
+                                _ => VariableDeclarationKind::Let,
+                            };
+                            let name = identifier_name(&store.lvalue.place.identifier);
+                            cx.declare(store.lvalue.place.identifier.declaration_id);
+                            let binding = cx.ast.binding_pattern_binding_identifier(
+                                SPAN,
+                                cx.ast.atom(&name),
+                            );
+                            return (kind, binding);
+                        }
+                    }
+                    InstructionValue::Destructure(destr) => {
+                        let kind = match destr.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VariableDeclarationKind::Const
+                            }
+                            _ => VariableDeclarationKind::Let,
+                        };
+                        let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
+                        return (kind, pattern);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    // Fallback
+    let binding = cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom("item"));
+    (VariableDeclarationKind::Const, binding)
 }
 
 /// Extract the collection expression for for-of from the init value.
@@ -2132,12 +2640,51 @@ fn codegen_for_of_collection<'a>(
     codegen_reactive_value_to_expression(cx, init)
 }
 
-/// Extract left and collection for for-in from the init value.
+/// Extract the loop variable declaration kind and binding pattern for for-in.
+///
+/// Searches the init value's sequence instructions in reverse for the
+/// StoreLocal/Destructure that defines the loop variable.
 fn codegen_for_in_init<'a>(
     cx: &mut CodegenContext<'a>,
     init: &ReactiveValue,
 ) -> (VariableDeclarationKind, BindingPattern<'a>) {
-    todo!()
+    if let ReactiveValue::Sequence(seq) = init {
+        for item_instr in seq.instructions.iter().rev() {
+            if let ReactiveValue::Instruction(boxed) = &item_instr.value {
+                match boxed.as_ref() {
+                    InstructionValue::StoreLocal(store) => {
+                        let kind = match store.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VariableDeclarationKind::Const
+                            }
+                            _ => VariableDeclarationKind::Let,
+                        };
+                        let name = identifier_name(&store.lvalue.place.identifier);
+                        cx.declare(store.lvalue.place.identifier.declaration_id);
+                        let binding = cx.ast.binding_pattern_binding_identifier(
+                            SPAN,
+                            cx.ast.atom(&name),
+                        );
+                        return (kind, binding);
+                    }
+                    InstructionValue::Destructure(destr) => {
+                        let kind = match destr.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VariableDeclarationKind::Const
+                            }
+                            _ => VariableDeclarationKind::Let,
+                        };
+                        let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
+                        return (kind, pattern);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    // Fallback
+    let binding = cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom("key"));
+    (VariableDeclarationKind::Const, binding)
 }
 
 /// Extract the collection expression for for-in from the init value.
