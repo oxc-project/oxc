@@ -1,3 +1,4 @@
+use oxc_ast::AstBuilder;
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
     },
     inference::infer_mutation_aliasing_effects::InferOptions,
     inference::infer_mutation_aliasing_ranges::InferRangesOptions,
-    reactive_scopes::codegen_reactive_function::{CodegenFunction, CodegenOptions},
+    reactive_scopes::codegen_reactive_function::{CodegenOptions, CodegenOutput, OutlinedOutput},
 };
 
 /// The result of running the compiler pipeline.
@@ -469,15 +470,16 @@ pub fn run_pipeline(
 
 /// Run the codegen phase on the output of `run_pipeline()`.
 ///
-/// Takes the analysis output and the environment, and produces the final
-/// `CodegenFunction` with all outlined functions attached.
+/// Takes the analysis output, the environment, and an AST builder, and produces
+/// the final `CodegenOutput` with all outlined functions attached.
 ///
 /// # Errors
 /// Returns a `CompilerError` if codegen or post-codegen validation fails.
-pub fn run_codegen(
+pub fn run_codegen<'a>(
     pipeline_output: PipelineOutput,
     env: &Environment,
-) -> Result<CodegenFunction, CompilerError> {
+    ast: AstBuilder<'a>,
+) -> Result<CodegenOutput<'a>, CompilerError> {
     let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined } =
         pipeline_output;
 
@@ -499,9 +501,10 @@ pub fn run_codegen(
         shapes: env.shapes.clone(),
         enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
     };
-    let mut ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
+    let mut codegen_output = crate::reactive_scopes::codegen_reactive_function::codegen_function(
         &reactive_function,
         codegen_options,
+        ast,
     )?;
 
     // 51. Codegen outlined functions
@@ -523,21 +526,21 @@ pub fn run_codegen(
         let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
             &entry.reactive_function,
             outlined_codegen_options,
+            ast,
         )?;
-        outlined_fns.push(crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
+        outlined_fns.push(OutlinedOutput {
             fn_: outlined_ast,
             fn_type: entry.fn_type,
         });
     }
-    ast.outlined = outlined_fns;
+    codegen_output.outlined = outlined_fns;
 
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
-        crate::validation::validate_source_locations::validate_source_locations(&ast)?;
+        crate::validation::validate_source_locations::validate_source_locations(&codegen_output)?;
     }
 
     // [TESTING ONLY] Simulate an unexpected exception during compilation.
-    // Port of Pipeline.ts lines 511-518.
     if env.config.throw_unknown_exception_testonly {
         return Err(crate::compiler_error::CompilerError::invalid_config(
             "unexpected error",
@@ -546,7 +549,7 @@ pub fn run_codegen(
         ));
     }
 
-    Ok(ast)
+    Ok(codegen_output)
 }
 
 /// Resolve the output mode for compilation.
