@@ -1850,8 +1850,16 @@ fn normalize_code(s: &str) -> String {
     // Handles optional whitespace between the comma and the bracket.
     let no_trailing_comma = remove_trailing_commas(&no_semi);
 
+    // Step 3b: preserve literal tab characters from whitespace collapse.
+    // Our codegen (oxc_codegen) prints literal tab chars (U+0009) inside string
+    // literals, while the reference compiler (Babel) prints the escape sequence `\t`.
+    // The whitespace collapse step (step 4) would turn a literal tab into a space,
+    // losing the information. Replace literal tabs with the two-char escape `\t`
+    // so both sides compare equal after normalization.
+    let preserved_tabs = no_trailing_comma.replace('\t', "\\t");
+
     // Step 4: collapse multiple whitespace to a single space.
-    let collapsed = collapse_whitespace(&no_trailing_comma);
+    let collapsed = collapse_whitespace(&preserved_tabs);
     // Step 4b: normalize empty blocks `{ }` → `{}` for comparison purposes.
     // Our codegen emits `{}` (no space) but the reference may emit `{ }` (with space).
     // Both are semantically identical empty blocks; normalize to `{}` to avoid spurious
@@ -2093,10 +2101,18 @@ fn normalize_code(s: &str) -> String {
     // Normalize all `_cN(` patterns to `_c(` so the exact suffix doesn't matter.
     let normalized_cache_fn = normalize_memo_cache_fn_name(&normalized_const_let);
 
+    // Step 28c: normalize cache variable name.
+    // The reference compiler (Babel) renames `$` to `$0`, `$1`, etc. when the user
+    // code has a conflicting `$` variable (e.g., `const $ = identity('jQuery')`).
+    // Our codegen may keep `$` or use a different numbered suffix. Normalize all
+    // numbered cache variable forms (`$N`) back to plain `$` so the comparison
+    // is naming-agnostic.
+    let normalized_cache_var = normalize_cache_variable_name(&normalized_cache_fn);
+
     // Step 29: normalize single quotes to double quotes.
     // The reference compiler (TS) converts single quotes to double quotes in output.
     // Our codegen may use either. Normalize to double quotes for comparison.
-    let normalized_quotes = normalized_cache_fn.replace('\'', "\"");
+    let normalized_quotes = normalized_cache_var.replace('\'', "\"");
 
     // Step 30: normalize arrow function single-parameter parentheses.
     // The reference compiler always emits `(param) =>` while source may have `param =>`.
@@ -6619,9 +6635,6 @@ fn strip_directive_strings(s: &str) -> String {
 /// Normalize `const` to `let` for ALL variable declarations.
 /// This handles the case where the reference compiler uses `const` for bindings
 /// that our compiler declares with `let`, or vice versa.
-/// Special cases preserved:
-/// - `const $ = _c(` (cache declaration) is NOT normalized because it's a
-///   structural part of the memoization pattern and should match exactly.
 fn normalize_all_const_to_let(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let bytes = s.as_bytes();
@@ -6638,22 +6651,9 @@ fn normalize_all_const_to_let(s: &str) -> String {
             };
 
             if at_word_boundary {
-                // Check if this is `const $ = _c(` — preserve that pattern
-                let after = &s[i + 6..];
-                // Match `$ = _c(`, `$ = _c0(`, `$ = _c2(`, etc.
-                let is_cache_decl = after.starts_with("$ = _c(")
-                    || after.strip_prefix("$ = _c").is_some_and(|rest| {
-                        rest.bytes().take_while(|b| b.is_ascii_digit()).count() > 0
-                            && rest
-                                .as_bytes()
-                                .get(rest.bytes().take_while(|b| b.is_ascii_digit()).count())
-                                == Some(&b'(')
-                    });
-                if !is_cache_decl {
-                    result.push_str("let ");
-                    i += 6;
-                    continue;
-                }
+                result.push_str("let ");
+                i += 6;
+                continue;
             }
         }
         i = push_utf8_byte(&mut result, s, i);
@@ -6693,6 +6693,113 @@ fn normalize_memo_cache_fn_name(s: &str) -> String {
             }
         }
         i = push_utf8_byte(&mut result, s, i);
+    }
+    result
+}
+
+/// Normalize the memo cache variable name from `$N` to plain `$`.
+///
+/// When the user code contains a `$` variable (e.g., `const $ = identity('jQuery')`),
+/// the TS reference compiler renames its cache variable from `$` to `$0` (or `$1`, etc.)
+/// to avoid the name conflict. Our Rust compiler may keep the declaration as `$` but rename
+/// accesses to `$0` via SSA, or vice versa. This function detects `$N` patterns that are
+/// used for cache access (`$N[`) and normalizes them to plain `$`.
+///
+/// Two cases handled:
+/// 1. `let $N = _c(` — the declaration itself is numbered (TS reference side)
+/// 2. `let $ = _c(` with `$N[` in code — declaration is plain but accesses are numbered (Rust side)
+fn normalize_cache_variable_name(s: &str) -> String {
+    // Collect all `$N` variants (where N is digits) that appear in the code.
+    // We only normalize when the code contains cache infrastructure (`_c(`).
+    if !s.contains("_c(") {
+        return s.to_string();
+    }
+
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+
+    // Find all unique `$N` patterns (at word boundaries) used with cache-like access `[`.
+    // Also check for `$N = _c(` (declaration) or `$N[` (access) patterns.
+    let mut numbered_vars: Vec<String> = Vec::new();
+    let mut i = 0;
+    while i < len {
+        if bytes[i] == b'$' {
+            // Check word boundary before `$`
+            let at_start = i == 0 || {
+                let prev = bytes[i - 1];
+                !prev.is_ascii_alphanumeric() && prev != b'_' && prev != b'$'
+            };
+            if at_start {
+                // Read digits after `$`
+                let mut j = i + 1;
+                while j < len && bytes[j].is_ascii_digit() {
+                    j += 1;
+                }
+                let has_digits = j > i + 1;
+                if has_digits {
+                    // Check word boundary after digits
+                    let at_end = j >= len || !bytes[j].is_ascii_alphanumeric() && bytes[j] != b'_';
+                    if at_end {
+                        let var_name = s[i..j].to_string();
+                        if !numbered_vars.contains(&var_name) {
+                            numbered_vars.push(var_name);
+                        }
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+
+    if numbered_vars.is_empty() {
+        return s.to_string();
+    }
+
+    // For each numbered `$N`, check if it's used in cache context:
+    // - `$N = _c(` (cache declaration)
+    // - `$N[` (cache access)
+    // If any `$N` matches, rename ALL `$N` occurrences to `$`.
+    let has_cache_usage = numbered_vars.iter().any(|var| {
+        let access_pattern = format!("{var}[");
+        let decl_pattern = format!("{var} = _c(");
+        s.contains(&access_pattern) || s.contains(&decl_pattern)
+    });
+
+    if !has_cache_usage {
+        return s.to_string();
+    }
+
+    // Replace all numbered `$N` at word boundaries with plain `$`.
+    // Sort by length descending so `$10` is matched before `$1`.
+    numbered_vars.sort_by(|a, b| b.len().cmp(&a.len()));
+
+    let mut result = String::with_capacity(len);
+    i = 0;
+    while i < len {
+        let mut matched = false;
+        for var in &numbered_vars {
+            let var_bytes = var.as_bytes();
+            let var_len = var_bytes.len();
+            if i + var_len <= len && &bytes[i..i + var_len] == var_bytes {
+                // Check word boundary before
+                let at_start = i == 0 || {
+                    let prev = bytes[i - 1];
+                    !prev.is_ascii_alphanumeric() && prev != b'_' && prev != b'$'
+                };
+                // Check word boundary after (no more digits)
+                let at_end =
+                    i + var_len >= len || !bytes[i + var_len].is_ascii_digit();
+                if at_start && at_end {
+                    result.push('$');
+                    i += var_len;
+                    matched = true;
+                    break;
+                }
+            }
+        }
+        if !matched {
+            i = push_utf8_byte(&mut result, s, i);
+        }
     }
     result
 }
