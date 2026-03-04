@@ -69,14 +69,14 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
  * Get all tokens that are related to the given node.
  * @param node - The AST node.
  * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 /**
  * Get all tokens that are related to the given node.
  * @param node - The AST node.
  * @param beforeCount? - The number of tokens before the node to retrieve.
  * @param afterCount? - The number of tokens after the node to retrieve.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
@@ -192,7 +192,7 @@ export function getTokens<Options extends CountOptions | number | FilterFn | nul
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getFirstToken<Options extends SkipOptions | number | FilterFn | null | undefined>(
   node: Node,
@@ -290,7 +290,7 @@ export function getFirstToken<Options extends SkipOptions | number | FilterFn | 
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getFirstTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
@@ -385,7 +385,7 @@ export function getFirstTokens<Options extends CountOptions | number | FilterFn 
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getLastToken<Options extends SkipOptions | number | FilterFn | null | undefined>(
   node: Node,
@@ -483,7 +483,7 @@ export function getLastToken<Options extends SkipOptions | number | FilterFn | n
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getLastTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
@@ -583,7 +583,7 @@ export function getLastTokens<Options extends CountOptions | number | FilterFn |
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getTokenBefore<Options extends SkipOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
@@ -679,7 +679,7 @@ export function getTokenBefore<Options extends SkipOptions | number | FilterFn |
  *
  * @param nodeOrToken The AST node or token.
  * @param skip - Number of tokens to skip.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `TokenOrComment | null`.
  */
 export function getTokenOrCommentBefore(
   nodeOrToken: NodeOrToken,
@@ -697,7 +697,7 @@ export function getTokenOrCommentBefore(
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getTokensBefore<
   Options extends CountOptions | number | FilterFn | null | undefined,
@@ -783,7 +783,7 @@ export function getTokensBefore<
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getTokenAfter<Options extends SkipOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
@@ -874,7 +874,7 @@ export function getTokenAfter<Options extends SkipOptions | number | FilterFn | 
  *
  * @param nodeOrToken The AST node or token.
  * @param skip - Number of tokens to skip.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `TokenOrComment | null`.
  */
 export function getTokenOrCommentAfter(
   nodeOrToken: NodeOrToken,
@@ -892,7 +892,7 @@ export function getTokenOrCommentAfter(
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getTokensAfter<Options extends CountOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
@@ -972,14 +972,14 @@ export function getTokensAfter<Options extends CountOptions | number | FilterFn 
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param countOptions? - Options object. If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s between `left` and `right`.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 /**
  * Get all of the tokens between two non-overlapping nodes.
  * @param left - Node or token before the desired token range.
  * @param right - Node or token after the desired token range.
  * @param padding - Number of extra tokens on either side of center.
- * @returns Array of `Token`s between `left` and `right`.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getTokensBetween<
   Options extends CountOptions | number | FilterFn | null | undefined,
@@ -1078,7 +1078,7 @@ export function getTokensBetween<
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getFirstTokenBetween<
   Options extends SkipOptions | number | FilterFn | null | undefined,
@@ -1175,7 +1175,7 @@ export function getFirstTokenBetween<
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s between `left` and `right`.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getFirstTokensBetween<
   Options extends CountOptions | number | FilterFn | null | undefined,
@@ -1273,7 +1273,7 @@ export function getFirstTokensBetween<
  * @param skipOptions? - Options object.
  *   If is a number, equivalent to `{ skip: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns `Token`, or `null` if all were skipped.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getLastTokenBetween<
   Options extends SkipOptions | number | FilterFn | null | undefined,
@@ -1371,7 +1371,7 @@ export function getLastTokenBetween<
  * @param countOptions? - Options object.
  *   If is a number, equivalent to `{ count: n }`.
  *   If is a function, equivalent to `{ filter: fn }`.
- * @returns Array of `Token`s between `left` and `right`.
+ * @returns Array of `Token`s, or array of `Token | Comment`s if `includeComments` is `true`.
  */
 export function getLastTokensBetween<
   Options extends CountOptions | number | FilterFn | null | undefined,
@@ -1467,7 +1467,7 @@ export function getLastTokensBetween<
  * Get the token starting at the specified index.
  * @param index - Index of the start of the token's range.
  * @param rangeOptions - Options object.
- * @returns The token starting at index, or `null` if no such token.
+ * @returns `Token` (or `Token | Comment` if `includeComments` is `true`), or `null` if none found.
  */
 export function getTokenByRangeStart<Options extends RangeOptions | null | undefined>(
   index: number,
