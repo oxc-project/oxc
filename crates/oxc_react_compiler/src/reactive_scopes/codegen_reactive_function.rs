@@ -145,6 +145,12 @@ pub struct CodegenContext<'a> {
     fn_decl_data: FxHashMap<DeclarationId, CodegenOutput<'a>>,
     /// Accumulated invariant errors during codegen.
     codegen_errors: std::cell::RefCell<Vec<CompilerError>>,
+    /// Tracks which DeclarationIds originated from `InstructionValue::JsxText`.
+    /// In the TS reference, the temp map stores `t.Expression | t.JSXText` (a union),
+    /// so `codegenJsxElement` can check `value.type === 'JSXText'` directly.
+    /// In Rust, both JsxText and Primitive::String produce `Expression::StringLiteral`,
+    /// so we use this set to distinguish the two cases in `codegen_jsx_child`.
+    jsx_text_ids: FxHashSet<DeclarationId>,
 }
 
 impl<'a> CodegenContext<'a> {
@@ -172,6 +178,7 @@ impl<'a> CodegenContext<'a> {
             enable_name_anonymous_functions,
             fn_decl_data: FxHashMap::default(),
             codegen_errors: std::cell::RefCell::new(Vec::new()),
+            jsx_text_ids: FxHashSet::default(),
         }
     }
 
@@ -1579,6 +1586,13 @@ fn codegen_instruction_nullable<'a>(
                 codegen_instruction_to_statement(cx, instr, value_expr, stmts);
             }
             other => {
+                // Track JsxText-origin declarations so codegen_jsx_child can
+                // distinguish them from Primitive::String (both produce StringLiteral).
+                if matches!(other, InstructionValue::JsxText(_)) {
+                    if let Some(lval) = &instr.lvalue {
+                        cx.jsx_text_ids.insert(lval.identifier.declaration_id);
+                    }
+                }
                 let value_expr = codegen_instruction_value(cx, other);
                 codegen_instruction_to_statement(cx, instr, value_expr, stmts);
             }
@@ -2638,20 +2652,32 @@ fn jsx_text_child_requires_expr_container(s: &str) -> bool {
 /// fragments pass through directly; everything else is wrapped in a
 /// `JSXExpressionContainer`.
 fn codegen_jsx_child<'a>(cx: &CodegenContext<'a>, place: &Place) -> JSXChild<'a> {
+    let is_jsx_text = cx.jsx_text_ids.contains(&place.identifier.declaration_id);
     let value = codegen_place_to_expression(cx, place);
     match value {
         Expression::StringLiteral(lit) => {
-            // TS: JSXText children with special chars get wrapped in
-            // expression container as {"string"} instead of raw text
-            if jsx_text_child_requires_expr_container(&lit.value) {
+            // TS reference: the temp map stores `t.Expression | t.JSXText`. In
+            // `codegenJsxElement`, `case 'JSXText'` applies the special-char
+            // heuristic while `default` always wraps in ExpressionContainer.
+            // We emulate this by checking `jsx_text_ids`: JsxText-origin strings
+            // use the heuristic; Primitive::String-origin strings always wrap.
+            if is_jsx_text {
+                if jsx_text_child_requires_expr_container(&lit.value) {
+                    let container = cx.ast.jsx_expression_container(
+                        SPAN,
+                        JSXExpression::StringLiteral(lit),
+                    );
+                    JSXChild::ExpressionContainer(cx.ast.alloc(container))
+                } else {
+                    let text = cx.ast.jsx_text(SPAN, lit.value.clone(), None);
+                    JSXChild::Text(cx.ast.alloc(text))
+                }
+            } else {
                 let container = cx.ast.jsx_expression_container(
                     SPAN,
                     JSXExpression::StringLiteral(lit),
                 );
                 JSXChild::ExpressionContainer(cx.ast.alloc(container))
-            } else {
-                let text = cx.ast.jsx_text(SPAN, lit.value.clone(), None);
-                JSXChild::Text(cx.ast.alloc(text))
             }
         }
         Expression::JSXElement(elem) => JSXChild::Element(elem),
