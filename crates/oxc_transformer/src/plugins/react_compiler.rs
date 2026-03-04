@@ -442,6 +442,7 @@ impl ReactCompiler {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<CodegenOutput<'a>> {
         let fn_type = should_compile_function(
+            function,
             name,
             directives,
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
