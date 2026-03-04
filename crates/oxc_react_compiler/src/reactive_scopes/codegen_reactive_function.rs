@@ -33,7 +33,8 @@ use crate::{
         InstructionValue, JsxAttribute, JsxTag, ObjectExpression, ObjectMethodValue,
         ObjectPatternProperty, ObjectPropertyKey, ObjectPropertyType, Pattern, Place,
         PrimitiveValueKind, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
-        ReactiveFunction, ReactiveInstruction, ReactiveParam, ReactiveScope,
+        ReactiveFunction, ReactiveInstruction, ReactiveInstructionStatement, ReactiveParam,
+        ReactiveScope,
         ReactiveScopeDeclaration, ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal,
         ReactiveTerminalTargetKind, ReactiveValue,
         environment::{CompilerOutputMode, ExternalFunction, InstrumentationConfig},
@@ -1328,8 +1329,7 @@ fn codegen_terminal<'a>(
             stmts.push(cx.ast.statement_switch(SPAN, discriminant, cases));
         }
         ReactiveTerminal::For(t) => {
-            let init_expr = codegen_for_init(cx, &t.init);
-            let init = Some(ForStatementInit::from(init_expr));
+            let init = Some(codegen_for_init(cx, &t.init));
             let test = Some(codegen_reactive_value_to_expression(cx, &t.test));
             let update = t.update.as_ref().map(|u| codegen_reactive_value_to_expression(cx, u));
             let body_stmts = codegen_block(cx, &t.r#loop);
@@ -2966,13 +2966,112 @@ fn codegen_dependency<'a>(
 /// Generate the init part of a for statement.
 ///
 /// For a for-loop init like `let i = 0, length = items.length`, this processes
-/// the sequence of instructions. For now, delegates to `codegen_reactive_value_to_expression`.
-/// Full variable-declaration support will be added with `codegen_terminal`.
+/// the sequence of instructions into a single `VariableDeclaration` with merged
+/// declarators. For non-sequence inits, delegates to expression codegen.
+///
+/// Port of `codegenForInit` from `CodegenReactiveFunction.ts` lines 1194-1244.
 fn codegen_for_init<'a>(
     cx: &mut CodegenContext<'a>,
     init: &ReactiveValue,
-) -> Expression<'a> {
-    codegen_reactive_value_to_expression(cx, init)
+) -> ForStatementInit<'a> {
+    if let ReactiveValue::Sequence(seq) = init {
+        // Convert each instruction in the sequence to statements via codegen_block.
+        // This mirrors the TS: codegenBlock(cx, init.instructions.map(i => ({kind:'instruction', instruction:i})))
+        let block: Vec<ReactiveStatement> = seq
+            .instructions
+            .iter()
+            .map(|instr| {
+                ReactiveStatement::Instruction(ReactiveInstructionStatement {
+                    instruction: instr.clone(),
+                })
+            })
+            .collect();
+        let body = codegen_block(cx, &block);
+
+        let mut declarators: AVec<'a, VariableDeclarator<'a>> = cx.ast.vec();
+        let mut kind = VariableDeclarationKind::Const;
+
+        for stmt in body.into_iter() {
+            // Check if this is an ExpressionStatement with an AssignmentExpression
+            // that should be merged into the last declarator (handles `let i; i = 0;` pattern)
+            let merged = match &stmt {
+                Statement::ExpressionStatement(expr_stmt) => {
+                    if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
+                        if assign.operator == AssignmentOperator::Assign {
+                            if let AssignmentTarget::AssignmentTargetIdentifier(left_id) =
+                                &assign.left
+                            {
+                                // Check if last declarator has the same name and no init
+                                let should_merge = declarators
+                                    .last()
+                                    .map(|top| {
+                                        if let BindingPattern::BindingIdentifier(top_id) = &top.id {
+                                            top_id.name.as_str() == left_id.name.as_str()
+                                                && top.init.is_none()
+                                        } else {
+                                            false
+                                        }
+                                    })
+                                    .unwrap_or(false);
+                                should_merge
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            };
+
+            if merged {
+                // Extract the right-hand side of the assignment and set it as the init
+                // of the last declarator. We need to destructure the statement to take ownership.
+                if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                    let expr = expr_stmt.unbox().expression;
+                    if let Expression::AssignmentExpression(assign) = expr {
+                        let assign = assign.unbox();
+                        if let Some(top) = declarators.last_mut() {
+                            top.init = Some(assign.right);
+                        }
+                    }
+                }
+            } else {
+                // Must be a VariableDeclaration with let or const
+                match stmt {
+                    Statement::VariableDeclaration(var_decl) => {
+                        let var_decl = var_decl.unbox();
+                        if var_decl.kind == VariableDeclarationKind::Let {
+                            kind = VariableDeclarationKind::Let;
+                        }
+                        declarators.extend(var_decl.declarations);
+                    }
+                    _ => {
+                        // Invariant: expected a variable declaration
+                        // In error cases, skip this statement
+                    }
+                }
+            }
+        }
+
+        if declarators.is_empty() {
+            // Fallback: if no declarators were found, return as expression
+            return ForStatementInit::from(codegen_reactive_value_to_expression(cx, init));
+        }
+
+        // Update declarator kinds to match the final kind
+        for decl in declarators.iter_mut() {
+            decl.kind = kind;
+        }
+
+        let decl = cx.ast.variable_declaration(SPAN, kind, declarators, false);
+        ForStatementInit::VariableDeclaration(cx.ast.alloc(decl))
+    } else {
+        ForStatementInit::from(codegen_reactive_value_to_expression(cx, init))
+    }
 }
 
 /// Extract the loop variable declaration kind and binding pattern for for-of.
