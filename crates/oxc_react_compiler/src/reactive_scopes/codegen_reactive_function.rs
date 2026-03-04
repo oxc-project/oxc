@@ -699,11 +699,19 @@ pub fn codegen_function<'a>(
     let mut counter = MemoCounter::default();
     visit_reactive_block(&reactive_fn.body, &mut counter);
 
-    // TODO: Insert the `const $ = _c(N);` preamble if there are cache slots
     // TODO: Emit HMR/Fast Refresh hash check and cache reset
     // TODO: Emit instrument forget
 
     let cache_count = cx.next_cache_index;
+
+    // Insert `const $ = _c(N);` preamble if there are cache slots
+    if cache_count > 0 {
+        let call = make_call(&cx, make_id(&cx, "_c"), cx.ast.vec1(Argument::from(
+            make_number(&cx, f64::from(cache_count)),
+        )));
+        let preamble = make_var_decl(&cx, VariableDeclarationKind::Const, "$", Some(call));
+        body.insert(0, preamble);
+    }
 
     let params = convert_params(&reactive_fn.params);
 
