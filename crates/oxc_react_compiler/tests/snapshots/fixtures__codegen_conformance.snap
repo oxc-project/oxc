@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8940
 expression: snapshot
 ---
-Codegen conformance: 1312/1348 passed (97.3%)
+Codegen conformance: 1339/1348 passed (99.3%)
 Flow files skipped: 39
 FBT lowering skipped: 33
 
@@ -13,43 +12,16 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:36
+  output_mismatch:9
   no_expected:    0
 
 Failed fixtures:
-  [output_mismatch] allocating-logical-expression-instruction-scope.ts
   [output_mismatch] conflicting-dollar-sign-variable.js
-  [output_mismatch] exhaustive-deps/exhaustive-deps.js
   [output_mismatch] gating/dynamic-gating-annotation.js
   [output_mismatch] gating/dynamic-gating-disabled.js
   [output_mismatch] gating/dynamic-gating-enabled.js
-  [output_mismatch] iife-return-modified-later-phi.js
-  [output_mismatch] infer-sequential-optional-chain-nonnull.ts
   [output_mismatch] jsx-string-attribute-expression-container.js
   [output_mismatch] multi-directive.js
-  [output_mismatch] nested-optional-chains.ts
-  [output_mismatch] nested-optional-member-expr.js
-  [output_mismatch] new-mutability/iife-return-modified-later-phi.js
-  [output_mismatch] optional-call-logical.js
-  [output_mismatch] optional-call-with-optional-property-load.js
-  [output_mismatch] optional-member-expression-as-memo-dep.js
-  [output_mismatch] optional-member-expression-chain.js
-  [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
-  [output_mismatch] optional-receiver-method-call.js
   [output_mismatch] preserve-jsxtext-stringliteral-distinction.js
-  [output_mismatch] preserve-memo-validation/useMemo-conditional-access-alloc.ts
-  [output_mismatch] preserve-memo-validation/useMemo-conditional-access-noAlloc.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/iife-return-modified-later-phi.js
-  [output_mismatch] propagate-scope-deps-hir-fork/infer-sequential-optional-chain-nonnull.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/nested-optional-chains.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/optional-member-expression-as-memo-dep.js
-  [output_mismatch] propagate-scope-deps-hir-fork/optional-member-expression-inverted-optionals-parallel-paths.js
-  [output_mismatch] propagate-scope-deps-hir-fork/reactive-dependencies-non-optional-properties-inside-optional-chain.js
-  [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
-  [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
-  [output_mismatch] propagate-scope-deps-hir-fork/repro-invariant.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/todo-optional-call-chain-in-optional.ts
-  [output_mismatch] reactive-dependencies-non-optional-properties-inside-optional-chain.js
-  [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
-  [output_mismatch] repro-slow-validate-preserve-memo.ts
   [output_mismatch] todo-optional-call-chain-in-optional.ts

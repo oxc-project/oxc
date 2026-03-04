@@ -9493,6 +9493,7 @@ function Component(props) {
     assert!(result.is_ok(), "Pipeline should succeed for nested optional: {}", result.unwrap_err());
 }
 
+
 /// Regression test: for-of loop with non-mutating local collection
 /// should not cause "Expected continue target to be scheduled" error.
 #[test]
