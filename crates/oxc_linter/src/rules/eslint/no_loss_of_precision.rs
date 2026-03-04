@@ -348,6 +348,19 @@ fn round_to_precision(digits: &mut String, precision: usize) -> bool {
     }
 }
 
+fn fractional_digits_for_precision(num: f64, precision: usize) -> usize {
+    let exponent = format!("{num:e}")
+        .rsplit_once('e')
+        .and_then(|(_, exp)| exp.parse::<isize>().ok())
+        .unwrap_or_default();
+
+    if exponent.is_negative() {
+        exponent.unsigned_abs().saturating_add(precision).saturating_add(1)
+    } else {
+        100
+    }
+}
+
 /// Mimics JavaScript's `Number.prototype.toPrecision()` method
 ///
 /// The `toPrecision()` method returns a string representing the Number object to the specified precision.
@@ -391,8 +404,10 @@ pub fn to_precision(mut num: f64, precision: usize) -> String {
         suffix = "0".repeat(precision);
         exponent = 0;
     } else {
-        // Format with maximum precision to get all digits
-        suffix = format!("{num:.100}");
+        // For very small numbers (e.g. 3e-308), we need more than 100 fractional digits
+        // to keep enough significant digits for precision comparison.
+        let fractional_digits = fractional_digits_for_precision(num, precision);
+        suffix = format!("{num:.fractional_digits$}");
 
         // Calculate exponent
         exponent = flt_str_to_exp(&suffix);
@@ -519,6 +534,7 @@ fn test() {
         "const a = Infinity",
         "const a = 480.00",
         "const a = -30.00",
+        "const x = 3e-308",
         "(1000000000000000128).toFixed(0)",
     ];
 
