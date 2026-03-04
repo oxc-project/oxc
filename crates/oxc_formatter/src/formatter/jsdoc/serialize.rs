@@ -919,6 +919,19 @@ pub fn format_jsdoc_comment<'a>(
     Some(result)
 }
 
+/// Push a tag line into `content_lines`, splitting on embedded newlines so each
+/// line gets its own ` * ` prefix in the final JSDoc comment. This handles
+/// multi-line types produced by `format_type_via_formatter()`.
+fn push_multiline_tag(tag_line: String, content_lines: &mut Vec<String>) {
+    if tag_line.contains('\n') {
+        for line in tag_line.split('\n') {
+            content_lines.push(line.to_string());
+        }
+    } else {
+        content_lines.push(tag_line);
+    }
+}
+
 /// Wrap a long type expression across multiple lines at `|` operators.
 /// Returns `None` if no wrapping is needed or the type can't be sensibly wrapped.
 fn wrap_type_expression(
@@ -1416,8 +1429,21 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
     let formatted = Formatter::new(&allocator, options).build(&ret.program);
     let formatted = formatted.trim_end();
 
-    // Strip the `type __t = ` prefix and trailing `;`
-    let result = formatted.strip_prefix("type __t = ")?.strip_suffix(';')?.trim();
+    // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
+    // `pretty.slice(TYPE_START.length)` approach. This handles both same-line and
+    // wrapped output (e.g. `type __t =\n  | ...`).
+    let result = formatted.get("type __t = ".len()..)?;
+
+    // Upstream cleanup: strip leading whitespace, trailing `;` and newlines,
+    // leading `|`, then trim.
+    let result = result.trim_start();
+    let result = result.trim_end_matches([';', '\n']);
+    let result = result.strip_prefix('|').unwrap_or(result);
+    let result = result.trim();
+
+    if result.is_empty() {
+        return None;
+    }
 
     Some(result.to_string())
 }
@@ -1732,7 +1758,7 @@ fn format_type_name_comment_tag(
         {
             return;
         }
-        content_lines.push(tag_line);
+        push_multiline_tag(tag_line, content_lines);
         return;
     }
 
@@ -1967,8 +1993,13 @@ fn format_type_comment_tag(
             } else {
                 normalize_type_return(raw_type)
             };
-            // Try formatting via the formatter (simulates upstream's formatType())
-            if !preserve_quotes
+            // Try formatting via the formatter (simulates upstream's formatType()).
+            // For @type/@satisfies with no-space-before-type and non-object types,
+            // skip to preserve quotes (e.g. @type{import('...')} stays unchanged).
+            // Object types (starting with `{`) always get formatted.
+            let skip_formatter =
+                preserve_quotes && has_no_space_before_type && !normalized_type_str.starts_with('{');
+            if !skip_formatter
                 && let Some(formatted) =
                     format_type_via_formatter(&normalized_type_str, format_options)
             {
@@ -2002,7 +2033,7 @@ fn format_type_comment_tag(
         {
             return;
         }
-        content_lines.push(tag_line);
+        push_multiline_tag(tag_line, content_lines);
         return;
     }
 

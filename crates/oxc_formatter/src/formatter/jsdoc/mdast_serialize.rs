@@ -51,15 +51,29 @@ fn needs_mdast_parsing(text: &str) -> bool {
                     j += 1;
                 }
             }
-            // At line start: heading (#), blockquote (>), list/thematic break (-),
-            // ordered list (digit), table (|)
-            b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' if i == 0 || bytes[i - 1] == b'\n' => {
-                return true;
-            }
-            // Unordered list marker `+ ` at line start
-            b'+' if i == 0 || bytes[i - 1] == b'\n' => {
-                if i + 1 < len && bytes[i + 1] == b' ' {
+            // At line start (after optional leading spaces): detect block-level constructs.
+            // We skip leading spaces to catch indented lists/code blocks.
+            b' ' | b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' | b'+'
+                if i == 0 || bytes[i - 1] == b'\n' =>
+            {
+                // Count leading spaces
+                let mut spaces = 0;
+                while i + spaces < len && bytes[i + spaces] == b' ' {
+                    spaces += 1;
+                }
+                // 4+ leading spaces = indented code block
+                if spaces >= 4 {
                     return true;
+                }
+                // Check trigger character after whitespace
+                if i + spaces < len {
+                    match bytes[i + spaces] {
+                        b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' => return true,
+                        b'+' if i + spaces + 1 < len && bytes[i + spaces + 1] == b' ' => {
+                            return true;
+                        }
+                        _ => {}
+                    }
                 }
             }
             // Code fences
