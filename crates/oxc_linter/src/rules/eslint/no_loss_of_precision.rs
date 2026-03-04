@@ -355,7 +355,7 @@ fn fractional_digits_for_precision(num: f64, precision: usize) -> usize {
         .unwrap_or_default();
 
     if exponent.is_negative() {
-        exponent.unsigned_abs().saturating_add(precision).saturating_add(1)
+        exponent.unsigned_abs().saturating_add(precision).saturating_add(1).max(100)
     } else {
         100
     }
@@ -587,6 +587,7 @@ fn test() {
         "var x = 0x2_0000000000001",
         "var x = 0X200000_0000000_1",
         "var x = 1e18_446_744_073_709_551_615",
+        "var x = 96215808661.52751e-84",
     ];
 
     Tester::new(NoLossOfPrecision::NAME, NoLossOfPrecision::PLUGIN, pass, fail).test_and_snapshot();
