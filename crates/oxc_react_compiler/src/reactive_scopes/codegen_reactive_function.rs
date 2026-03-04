@@ -397,6 +397,148 @@ fn make_sequence<'a>(
     cx.ast.expression_sequence(SPAN, expressions)
 }
 
+/// Build `FormalParameters` from param name strings and an optional rest param.
+///
+/// Each param string becomes a simple `BindingIdentifier` parameter.
+/// If the last param string starts with "...", it becomes a rest element.
+fn build_formal_params<'a>(
+    cx: &CodegenContext<'a>,
+    params: &[String],
+) -> oxc_allocator::Box<'a, FormalParameters<'a>> {
+    let mut items = cx.ast.vec_with_capacity(params.len());
+    let mut rest: Option<oxc_allocator::Box<'a, FormalParameterRest<'a>>> = None;
+
+    for param_str in params {
+        if let Some(rest_name) = param_str.strip_prefix("...") {
+            // Rest parameter
+            let binding = cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(rest_name));
+            let rest_elem = cx.ast.binding_rest_element(SPAN, binding);
+            let fp_rest = cx.ast.formal_parameter_rest(SPAN, cx.ast.vec(), rest_elem, NONE);
+            rest = Some(oxc_allocator::Box::new_in(fp_rest, cx.ast.allocator));
+        } else {
+            let binding = cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(param_str.as_str()));
+            let decorators = cx.ast.vec();
+            let fp = cx.ast.formal_parameter(SPAN, decorators, binding, NONE, NONE, false, None, false, false);
+            items.push(fp);
+        }
+    }
+
+    cx.ast.alloc_formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, rest)
+}
+
+/// Build a `FunctionBody` from directives and body statements.
+fn build_function_body<'a>(
+    cx: &CodegenContext<'a>,
+    directives: &[String],
+    body: AVec<'a, Statement<'a>>,
+) -> oxc_allocator::Box<'a, FunctionBody<'a>> {
+    let mut directive_nodes = cx.ast.vec_with_capacity(directives.len());
+    for d in directives {
+        let str_lit = cx.ast.string_literal(SPAN, cx.ast.atom(d.as_str()), None);
+        let directive_node = cx.ast.directive(SPAN, str_lit, cx.ast.atom(d.as_str()));
+        directive_nodes.push(directive_node);
+    }
+    cx.ast.alloc_function_body(SPAN, directive_nodes, body)
+}
+
+/// Convert an expression into an optional `ChainElement`.
+///
+/// Takes a CallExpression, StaticMemberExpression, ComputedMemberExpression,
+/// or ChainExpression and produces a `ChainElement` with `optional: true`.
+/// Used for building `ChainExpression` nodes for optional chains (`?.`).
+fn make_optional_chain_element<'a>(
+    cx: &CodegenContext<'a>,
+    expr: Expression<'a>,
+    loc: crate::compiler_error::SourceLocation,
+) -> Option<ChainElement<'a>> {
+    match expr {
+        Expression::CallExpression(call) => {
+            let call = call.unbox();
+            let chain_call = cx.ast.chain_element_call_expression(
+                SPAN,
+                call.callee,
+                NONE,
+                call.arguments,
+                true, // optional
+            );
+            Some(chain_call)
+        }
+        Expression::StaticMemberExpression(member) => {
+            let member = member.unbox();
+            let new_member = cx.ast.alloc_static_member_expression(
+                SPAN,
+                member.object,
+                member.property,
+                true, // optional
+            );
+            Some(ChainElement::StaticMemberExpression(new_member))
+        }
+        Expression::ComputedMemberExpression(member) => {
+            let member = member.unbox();
+            let new_member = cx.ast.alloc_computed_member_expression(
+                SPAN,
+                member.object,
+                member.expression,
+                true, // optional
+            );
+            Some(ChainElement::ComputedMemberExpression(new_member))
+        }
+        Expression::ChainExpression(chain) => {
+            // Already a chain expression (nested optional) — extract inner and rewrap
+            let chain = chain.unbox();
+            match chain.expression {
+                ChainElement::CallExpression(call) => {
+                    let call = call.unbox();
+                    let chain_call = cx.ast.chain_element_call_expression(
+                        SPAN,
+                        call.callee,
+                        NONE,
+                        call.arguments,
+                        true,
+                    );
+                    Some(chain_call)
+                }
+                ChainElement::StaticMemberExpression(member) => {
+                    let member = member.unbox();
+                    let new_member = cx.ast.alloc_static_member_expression(
+                        SPAN,
+                        member.object,
+                        member.property,
+                        true,
+                    );
+                    Some(ChainElement::StaticMemberExpression(new_member))
+                }
+                ChainElement::ComputedMemberExpression(member) => {
+                    let member = member.unbox();
+                    let new_member = cx.ast.alloc_computed_member_expression(
+                        SPAN,
+                        member.object,
+                        member.expression,
+                        true,
+                    );
+                    Some(ChainElement::ComputedMemberExpression(new_member))
+                }
+                _ => {
+                    cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                        "Expected an optional value to resolve to a call or member expression",
+                        None,
+                        loc,
+                    ));
+                    None
+                }
+            }
+        }
+        _ => {
+            cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                "Expected an optional value to resolve to a call expression or member expression",
+                None,
+                loc,
+            ));
+            None
+        }
+    }
+}
+
 /// Clone an expression from the temp map (arena-allocated copy).
 fn clone_expr<'a>(cx: &CodegenContext<'a>, expr: &Expression<'a>) -> Expression<'a> {
     expr.clone_in(cx.ast.allocator)
@@ -1251,31 +1393,280 @@ fn expression_to_jsx_member_object<'a>(
 
 /// Generate a function expression by recursively compiling the inner function.
 ///
+/// Port of `CodegenReactiveFunction.ts` FunctionExpression case (lines 1861-1909).
+///
 /// Returns the expression and, for `FunctionDeclaration` types, the structured
 /// `CodegenOutput` data needed to emit a proper function declaration statement.
 fn codegen_function_expression<'a>(
     cx: &CodegenContext<'a>,
     func_expr: &crate::hir::FunctionExpressionValue,
 ) -> (Expression<'a>, Option<CodegenOutput<'a>>) {
-    todo!()
+    match codegen_inner_function(&func_expr.lowered_func.func, cx, true) {
+        Ok(inner_fn) => {
+            // For FunctionDeclaration types, preserve the CodegenOutput
+            // so callers can emit a proper function declaration statement.
+            let fn_decl =
+                if func_expr.expression_type == FunctionExpressionType::FunctionDeclaration {
+                    // Clone the inner_fn for the declaration data.
+                    // We need to clone the body since we move inner_fn below.
+                    let decl_body = inner_fn.body.clone_in(cx.ast.allocator);
+                    Some(CodegenOutput {
+                        id: inner_fn.id.clone(),
+                        name_hint: inner_fn.name_hint.clone(),
+                        params: inner_fn.params.clone(),
+                        generator: inner_fn.generator,
+                        is_async: inner_fn.is_async,
+                        loc: inner_fn.loc,
+                        memo_slots_used: inner_fn.memo_slots_used,
+                        memo_blocks: inner_fn.memo_blocks,
+                        memo_values: inner_fn.memo_values,
+                        pruned_memo_blocks: inner_fn.pruned_memo_blocks,
+                        pruned_memo_values: inner_fn.pruned_memo_values,
+                        body: decl_body,
+                        directives: inner_fn.directives.clone(),
+                        outlined: Vec::new(),
+                    })
+                } else {
+                    None
+                };
+
+            let value = match func_expr.expression_type {
+                FunctionExpressionType::ArrowFunctionExpression => {
+                    let params = build_formal_params(cx, &inner_fn.params);
+                    let body_stmts = inner_fn.body;
+
+                    // Check for concise arrow body: single return statement with argument,
+                    // and no directives on the lowered function.
+                    // In the AST world, we check if the body has exactly one ReturnStatement
+                    // with an argument, and there are no directives.
+                    let concise = if body_stmts.len() == 1
+                        && func_expr.lowered_func.func.directives.is_empty()
+                    {
+                        if let Statement::ReturnStatement(ret) = &body_stmts[0] {
+                            ret.argument.as_ref().map(|arg| arg.clone_in(cx.ast.allocator))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    if let Some(expr_body) = concise {
+                        // Concise arrow: () => expr
+                        // Build a function body containing just the expression.
+                        // The `expression: true` flag on ArrowFunctionExpression tells
+                        // the AST that this is a concise body.
+                        let expr_stmt = make_expr_stmt(cx, expr_body);
+                        let stmts = cx.ast.vec1(expr_stmt);
+                        let fb = build_function_body(cx, &inner_fn.directives, stmts);
+                        cx.ast.expression_arrow_function(
+                            SPAN,
+                            true,              // expression (concise body)
+                            inner_fn.is_async,
+                            NONE,              // type_parameters
+                            params,
+                            NONE,              // return_type
+                            fb,
+                        )
+                    } else {
+                        let fb = build_function_body(cx, &inner_fn.directives, body_stmts);
+                        cx.ast.expression_arrow_function(
+                            SPAN,
+                            false,             // expression (block body)
+                            inner_fn.is_async,
+                            NONE,              // type_parameters
+                            params,
+                            NONE,              // return_type
+                            fb,
+                        )
+                    }
+                }
+                FunctionExpressionType::FunctionExpression
+                | FunctionExpressionType::FunctionDeclaration => {
+                    let params = build_formal_params(cx, &inner_fn.params);
+                    let body = build_function_body(cx, &inner_fn.directives, inner_fn.body);
+                    let id = func_expr.name.as_ref().map(|n| {
+                        cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str()))
+                    });
+
+                    cx.ast.expression_function(
+                        SPAN,
+                        FunctionType::FunctionExpression,
+                        id,
+                        inner_fn.generator,
+                        inner_fn.is_async,
+                        false,           // declare
+                        NONE,            // type_parameters
+                        NONE,            // this_param
+                        params,
+                        NONE,            // return_type
+                        Some(body),
+                    )
+                }
+            };
+
+            // enableNameAnonymousFunctions: wrap anonymous functions in a naming expression.
+            // Produces: {"nameHint": <funcExpr>}["nameHint"]
+            // TS reference lines 1896-1908
+            let value = if cx.enable_name_anonymous_functions
+                && func_expr.name.is_none()
+                && func_expr.name_hint.is_some()
+            {
+                let hint = func_expr.name_hint.as_ref().map_or("", String::as_str);
+                // Build: {hint: value}[hint]
+                let key = PropertyKey::StringLiteral(
+                    cx.ast.alloc(cx.ast.string_literal(SPAN, cx.ast.atom(hint), None)),
+                );
+                let obj_prop = cx.ast.object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    key,
+                    value,
+                    false,  // method
+                    false,  // shorthand
+                    false,  // computed
+                );
+                let props = cx.ast.vec1(ObjectPropertyKind::ObjectProperty(cx.ast.alloc(obj_prop)));
+                let obj = cx.ast.expression_object(SPAN, props);
+                let index = make_string(cx, hint);
+                make_computed_member(cx, obj, index)
+            } else {
+                value
+            };
+
+            (value, fn_decl)
+        }
+        Err(e) => {
+            // Propagate inner function compilation errors to the outer context
+            cx.codegen_errors.borrow_mut().push(e);
+            (make_undefined(cx), None)
+        }
+    }
 }
 
 /// Generate an object expression.
+///
+/// Port of `CodegenReactiveFunction.ts` ObjectExpression case (lines 1637-1708).
+///
+/// For each property:
+/// - Regular properties: build `ObjectProperty` with key + value
+/// - Method properties: compile inner function, build `ObjectProperty` with `method: true`
+/// - Spread properties: build `SpreadElement`
 fn codegen_object_expression<'a>(
     cx: &CodegenContext<'a>,
     obj: &ObjectExpression,
 ) -> Expression<'a> {
-    todo!()
+    let mut properties = cx.ast.vec_with_capacity(obj.properties.len());
+
+    for prop in &obj.properties {
+        match prop {
+            ObjectPatternProperty::Property(p) => {
+                let key = codegen_object_property_key(cx, &p.key);
+                let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
+
+                if p.property_type == ObjectPropertyType::Method {
+                    // Look up the ObjectMethod from the context
+                    let method = cx.object_methods.get(&p.place.identifier.id).cloned();
+                    if let Some(method) = method {
+                        let method_key = codegen_object_property_key(cx, &p.key);
+                        let method_expr = codegen_object_method_expression(cx, &method, method_key, is_computed);
+                        // Build ObjectProperty with method: true, kind: Init
+                        let obj_prop = cx.ast.object_property(
+                            SPAN,
+                            PropertyKind::Init,
+                            key,
+                            method_expr,
+                            true,      // method
+                            false,     // shorthand
+                            is_computed,
+                        );
+                        properties.push(ObjectPropertyKind::ObjectProperty(cx.ast.alloc(obj_prop)));
+                    } else {
+                        // Fallback if method not found (should not happen)
+                        cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                            "Expected ObjectMethod instruction",
+                            None,
+                            crate::compiler_error::GENERATED_SOURCE,
+                        ));
+                    }
+                } else {
+                    let value = codegen_place_to_expression(cx, &p.place);
+
+                    // Check if shorthand: key is an identifier and value resolves to the same name
+                    let is_shorthand = if !is_computed {
+                        if let ObjectPropertyKey::Identifier(key_name) = &p.key {
+                            // The value expression should be an identifier with the same name
+                            let val_name = identifier_name(&p.place.identifier);
+                            *key_name == val_name
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
+
+                    let obj_prop = cx.ast.object_property(
+                        SPAN,
+                        PropertyKind::Init,
+                        key,
+                        value,
+                        false,        // method
+                        is_shorthand,
+                        is_computed,
+                    );
+                    properties.push(ObjectPropertyKind::ObjectProperty(cx.ast.alloc(obj_prop)));
+                }
+            }
+            ObjectPatternProperty::Spread(s) => {
+                let expr = codegen_place_to_expression(cx, &s.place);
+                let spread = cx.ast.spread_element(SPAN, expr);
+                properties.push(ObjectPropertyKind::SpreadProperty(cx.ast.alloc(spread)));
+            }
+        }
+    }
+
+    cx.ast.expression_object(SPAN, properties)
 }
 
 /// Generate an object method expression by recursively compiling the inner function.
+///
+/// Port of `CodegenReactiveFunction.ts` ObjectMethod case (lines 1658-1693).
+///
+/// Object methods do NOT call `pruneHoistedContexts` (the `include_prune_hoisted`
+/// flag is false for `codegen_inner_function`).
+///
+/// Returns a `FunctionExpression` that will be used as the `value` of the
+/// `ObjectProperty` with `method: true`.
 fn codegen_object_method_expression<'a>(
     cx: &CodegenContext<'a>,
     method: &ObjectMethodValue,
-    key: PropertyKey<'a>,
-    is_computed: bool,
+    _key: PropertyKey<'a>,
+    _is_computed: bool,
 ) -> Expression<'a> {
-    todo!()
+    match codegen_inner_function(&method.lowered_func.func, cx, false) {
+        Ok(inner_fn) => {
+            let params = build_formal_params(cx, &inner_fn.params);
+            let body = build_function_body(cx, &inner_fn.directives, inner_fn.body);
+
+            cx.ast.expression_function(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,               // id (methods don't need a name here)
+                inner_fn.generator,
+                inner_fn.is_async,
+                false,              // declare
+                NONE,               // type_parameters
+                NONE,               // this_param
+                params,
+                NONE,               // return_type
+                Some(body),
+            )
+        }
+        Err(e) => {
+            cx.codegen_errors.borrow_mut().push(e);
+            make_undefined(cx)
+        }
+    }
 }
 
 // =====================================================================================
@@ -1283,11 +1674,99 @@ fn codegen_object_method_expression<'a>(
 // =====================================================================================
 
 /// Convert a `ReactiveValue` to an expression.
+///
+/// Port of `CodegenReactiveFunction.ts` `codegenInstructionValueToExpression` +
+/// the reactive value handling (LogicalExpression, ConditionalExpression,
+/// SequenceExpression, OptionalExpression).
+///
+/// With AST-based codegen, precedence and parenthesization are handled automatically
+/// by oxc_codegen, so we don't need `wrap_logical_operand_if_needed` or similar helpers.
 fn codegen_reactive_value_to_expression<'a>(
     cx: &mut CodegenContext<'a>,
     value: &ReactiveValue,
 ) -> Expression<'a> {
-    todo!()
+    match value {
+        ReactiveValue::Instruction(boxed) => codegen_instruction_value(cx, boxed),
+
+        ReactiveValue::Logical(logical) => {
+            // TS reference: case 'LogicalExpression' (lines 1940-1947)
+            // Build left/right expressions, then LogicalExpression node.
+            // oxc_codegen handles precedence and parenthesization automatically.
+            let left = codegen_reactive_value_to_expression(cx, &logical.left);
+            let right = codegen_reactive_value_to_expression(cx, &logical.right);
+            make_logical(cx, left, logical.operator, right)
+        }
+
+        ReactiveValue::Ternary(ternary) => {
+            // TS reference: case 'ConditionalExpression' (lines 1949-1957)
+            // Build test/consequent/alternate, then ConditionalExpression node.
+            // oxc_codegen handles precedence and parenthesization automatically.
+            let test = codegen_reactive_value_to_expression(cx, &ternary.test);
+            let consequent = codegen_reactive_value_to_expression(cx, &ternary.consequent);
+            let alternate = codegen_reactive_value_to_expression(cx, &ternary.alternate);
+            cx.ast.expression_conditional(SPAN, test, consequent, alternate)
+        }
+
+        ReactiveValue::Sequence(seq) => {
+            // TS reference: case 'SequenceExpression' (lines 1958-2004)
+            //
+            // Process sequence instructions via `codegen_instruction_nullable`,
+            // collecting any ExpressionStatements into a sequence expression.
+            //
+            // Instructions whose results are consumed temps retain `lvalue: Some(unnamed)`
+            // and are stored in `cx.temp` (producing no statements).
+            // Instructions whose results are NOT consumed produce ExpressionStatements.
+            //
+            // We collect expression statements, then combine with the final value
+            // into a SequenceExpression if needed.
+            let mut temp_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+
+            for instr in &seq.instructions {
+                codegen_instruction_nullable(cx, instr, &mut temp_stmts);
+            }
+
+            // Extract expressions from any ExpressionStatements
+            let mut expressions: AVec<'a, Expression<'a>> = cx.ast.vec();
+            for stmt in temp_stmts {
+                if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                    expressions.push(expr_stmt.unbox().expression);
+                }
+                // VariableDeclarations in value blocks are logged as errors in the TS
+                // reference but we silently skip them (they shouldn't occur after pruning).
+            }
+
+            let final_value = codegen_reactive_value_to_expression(cx, &seq.value);
+
+            if expressions.is_empty() {
+                final_value
+            } else {
+                expressions.push(final_value);
+                make_sequence(cx, expressions)
+            }
+        }
+
+        ReactiveValue::OptionalCall(optional) => {
+            // TS reference: case 'OptionalExpression' (lines 1550-1593)
+            //
+            // The inner value is generated first, then wrapped in an optional
+            // call or member expression based on the result type.
+            let inner = codegen_reactive_value_to_expression(cx, &optional.value);
+
+            if optional.optional {
+                // Wrap the inner expression in an optional chain.
+                // The inner expression should be either a CallExpression or
+                // a MemberExpression (static or computed).
+                let chain_elem = make_optional_chain_element(cx, inner, optional.loc);
+                match chain_elem {
+                    Some(elem) => cx.ast.expression_chain(SPAN, elem),
+                    None => make_undefined(cx),
+                }
+            } else {
+                // Not optional — just return the inner expression as-is.
+                inner
+            }
+        }
+    }
 }
 
 // =====================================================================================
@@ -1500,11 +1979,32 @@ fn is_valid_identifier_name(s: &str) -> bool {
 }
 
 /// Generate an object property key.
+///
+/// Port of `CodegenReactiveFunction.ts` `codegenObjectPropertyKey` (lines 2257-2280).
+///
+/// - `Identifier(name)` -> `PropertyKey::StaticIdentifier`
+/// - `String(s)` -> `PropertyKey::StringLiteral`
+/// - `Computed(place)` -> `PropertyKey` from the expression (computed)
+/// - `Number(n)` -> `PropertyKey::NumericLiteral`
 fn codegen_object_property_key<'a>(
     cx: &CodegenContext<'a>,
     key: &ObjectPropertyKey,
 ) -> PropertyKey<'a> {
-    todo!()
+    match key {
+        ObjectPropertyKey::Identifier(name) => {
+            PropertyKey::StaticIdentifier(cx.ast.alloc(cx.ast.identifier_name(SPAN, cx.ast.atom(name))))
+        }
+        ObjectPropertyKey::String(s) => {
+            PropertyKey::StringLiteral(cx.ast.alloc(cx.ast.string_literal(SPAN, cx.ast.atom(s), None)))
+        }
+        ObjectPropertyKey::Computed(place) => {
+            let expr = codegen_place_to_expression(cx, place);
+            PropertyKey::from(expr)
+        }
+        ObjectPropertyKey::Number(n) => {
+            PropertyKey::NumericLiteral(cx.ast.alloc(cx.ast.numeric_literal(SPAN, *n, None, NumberBase::Decimal)))
+        }
+    }
 }
 
 /// Generate call arguments.
