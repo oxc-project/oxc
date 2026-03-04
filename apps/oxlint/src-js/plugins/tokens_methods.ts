@@ -6,7 +6,7 @@ import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Node, NodeOrToken } from "./types.ts";
-import type { TokenOrComment } from "./tokens.ts";
+import type { Token, TokenOrComment } from "./tokens.ts";
 
 /**
  * Options for various `SourceCode` methods e.g. `getFirstToken`.
@@ -45,6 +45,22 @@ export interface RangeOptions {
  */
 export type FilterFn = (token: TokenOrComment) => boolean;
 
+/**
+ * Whether `Options` may include comment tokens in the result.
+ * Resolves to `true` if `Options` has an `includeComments` property whose type includes `true`
+ * (i.e. it's `true`, `boolean`, or `boolean | undefined`), and `false` otherwise.
+ */
+type MayIncludeComments<Options> = Options extends { includeComments: false }
+  ? false
+  : "includeComments" extends keyof Options
+    ? true
+    : false;
+
+/**
+ * Resolves to `TokenOrComment` if `Options` may include comments, `Token` otherwise.
+ */
+type TokenResult<Options> = MayIncludeComments<Options> extends true ? TokenOrComment : Token;
+
 // `SkipOptions` object used by `getTokenOrCommentBefore` and `getTokenOrCommentAfter`.
 // This object is reused over and over to avoid creating a new options object on each call.
 const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
@@ -62,11 +78,15 @@ const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip
  * @param afterCount? - The number of tokens after the node to retrieve.
  * @returns Array of `Token`s.
  */
-export function getTokens(
+export function getTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
-  countOptions?: CountOptions | number | FilterFn | null,
+  countOptions?: Options,
   afterCount?: number | null,
-): TokenOrComment[] {
+): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -84,7 +104,7 @@ export function getTokens(
       : 0;
 
   // Function to filter tokens
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -139,7 +159,10 @@ export function getTokens(
   sliceEnd = Math.min(sliceEnd + afterCount, tokensLength);
 
   if (typeof filter !== "function") {
-    return tokenList.slice(sliceStart, Math.min(sliceStart + (count ?? sliceEnd), sliceEnd));
+    return tokenList.slice(
+      sliceStart,
+      Math.min(sliceStart + (count ?? sliceEnd), sliceEnd),
+    ) as Result;
   }
 
   const allTokens: TokenOrComment[] = [];
@@ -149,7 +172,7 @@ export function getTokens(
       const token = tokenList[i];
       if (filter(token)) allTokens.push(token);
     }
-    return allTokens;
+    return allTokens as Result;
   }
 
   for (let i = sliceStart; i < sliceEnd && count > 0; i++) {
@@ -160,7 +183,7 @@ export function getTokens(
     }
   }
 
-  return allTokens;
+  return allTokens as Result;
 }
 
 /**
@@ -171,10 +194,14 @@ export function getTokens(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getFirstToken(
+export function getFirstToken<Options extends SkipOptions | number | FilterFn | null | undefined>(
   node: Node,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+  skipOptions?: Options,
+): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -187,7 +214,7 @@ export function getFirstToken(
         : null;
 
   // Filter function
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -234,21 +261,21 @@ export function getFirstToken(
 
     const token = tokenList[skipTo];
     if (token.start >= rangeEnd) return null;
-    return token;
+    return token as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = tokenList[i];
       if (token.start >= rangeEnd) return null; // Token is outside the node
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
     }
   } else {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = tokenList[i];
       if (token.start >= rangeEnd) return null; // Token is outside the node
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
     }
@@ -265,10 +292,14 @@ export function getFirstToken(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getFirstTokens(
+export function getFirstTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+  countOptions?: Options,
+): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -279,7 +310,7 @@ export function getFirstTokens(
         ? countOptions.count
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -329,8 +360,8 @@ export function getFirstTokens(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
   }
 
   const firstTokens: TokenOrComment[] = [];
@@ -345,7 +376,7 @@ export function getFirstTokens(
       if (filter(token)) firstTokens.push(token);
     }
   }
-  return firstTokens;
+  return firstTokens as Result;
 }
 
 /**
@@ -356,10 +387,14 @@ export function getFirstTokens(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getLastToken(
+export function getLastToken<Options extends SkipOptions | number | FilterFn | null | undefined>(
   node: Node,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+  skipOptions?: Options,
+): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -371,7 +406,7 @@ export function getLastToken(
         ? skipOptions.skip
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -419,21 +454,21 @@ export function getLastToken(
     if (skipTo < 0) return null;
     const token = tokenList[skipTo];
     if (token.start < rangeStart) return null;
-    return token;
+    return token as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = tokenList[i];
       if (token.start < rangeStart) return null;
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = tokenList[i];
       if (token.start < rangeStart) return null;
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
     }
@@ -450,10 +485,14 @@ export function getLastToken(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getLastTokens(
+export function getLastTokens<Options extends CountOptions | number | FilterFn | null | undefined>(
   node: Node,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+  countOptions?: Options,
+): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -466,7 +505,7 @@ export function getLastTokens(
         : null;
 
   // Function to filter tokens
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -518,8 +557,8 @@ export function getLastTokens(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
+    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd) as Result;
   }
 
   const lastTokens: TokenOrComment[] = [];
@@ -535,7 +574,7 @@ export function getLastTokens(
       if (filter(token)) lastTokens.unshift(token);
     }
   }
-  return lastTokens;
+  return lastTokens as Result;
 }
 
 /**
@@ -546,10 +585,14 @@ export function getLastTokens(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getTokenBefore(
+export function getTokenBefore<Options extends SkipOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+  skipOptions?: Options,
+): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -561,7 +604,7 @@ export function getTokenBefore(
         ? skipOptions.skip
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -606,20 +649,20 @@ export function getTokenBefore(
     const skipTo = beforeIndex - (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo < 0) return null;
-    return tokenList[skipTo];
+    return tokenList[skipTo] as Result;
   }
 
   if (typeof skip !== "number") {
     while (beforeIndex >= 0) {
       const token = tokenList[beforeIndex];
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
       beforeIndex--;
     }
   } else {
     while (beforeIndex >= 0) {
       const token = tokenList[beforeIndex];
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
       beforeIndex--;
@@ -656,10 +699,13 @@ export function getTokenOrCommentBefore(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getTokensBefore(
-  nodeOrToken: NodeOrToken,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+export function getTokensBefore<
+  Options extends CountOptions | number | FilterFn | null | undefined,
+>(nodeOrToken: NodeOrToken, countOptions?: Options): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -672,7 +718,7 @@ export function getTokensBefore(
         : null;
 
   // Function to filter tokens
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -711,8 +757,8 @@ export function getTokensBefore(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(0, sliceEnd);
-    return tokenList.slice(sliceEnd - count, sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(0, sliceEnd) as Result;
+    return tokenList.slice(sliceEnd - count, sliceEnd) as Result;
   }
 
   const tokensBefore: TokenOrComment[] = [];
@@ -728,7 +774,7 @@ export function getTokensBefore(
       if (filter(token)) tokensBefore.unshift(token);
     }
   }
-  return tokensBefore;
+  return tokensBefore as Result;
 }
 
 /**
@@ -739,10 +785,14 @@ export function getTokensBefore(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getTokenAfter(
+export function getTokenAfter<Options extends SkipOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+  skipOptions?: Options,
+): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -754,7 +804,7 @@ export function getTokenAfter(
         ? skipOptions.skip
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -796,19 +846,19 @@ export function getTokenAfter(
     const skipTo = startIndex + (skip ?? 0);
     // Avoid indexing out of bounds
     if (skipTo >= tokensLength) return null;
-    return tokenList[skipTo];
+    return tokenList[skipTo] as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = tokenList[i];
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
     }
   } else {
     for (let i = startIndex; i < tokensLength; i++) {
       const token = tokenList[i];
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
     }
@@ -844,10 +894,14 @@ export function getTokenOrCommentAfter(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s.
  */
-export function getTokensAfter(
+export function getTokensAfter<Options extends CountOptions | number | FilterFn | null | undefined>(
   nodeOrToken: NodeOrToken,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+  countOptions?: Options,
+): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -858,7 +912,7 @@ export function getTokensAfter(
         ? countOptions.count
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -894,8 +948,8 @@ export function getTokensAfter(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart);
-    return tokenList.slice(sliceStart, sliceStart + count);
+    if (typeof count !== "number") return tokenList.slice(sliceStart) as Result;
+    return tokenList.slice(sliceStart, sliceStart + count) as Result;
   }
 
   const tokenListAfter: TokenOrComment[] = [];
@@ -910,7 +964,7 @@ export function getTokensAfter(
       if (filter(token)) tokenListAfter.push(token);
     }
   }
-  return tokenListAfter;
+  return tokenListAfter as Result;
 }
 
 /**
@@ -927,11 +981,13 @@ export function getTokensAfter(
  * @param padding - Number of extra tokens on either side of center.
  * @returns Array of `Token`s between `left` and `right`.
  */
-export function getTokensBetween(
-  left: NodeOrToken,
-  right: NodeOrToken,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+export function getTokensBetween<
+  Options extends CountOptions | number | FilterFn | null | undefined,
+>(left: NodeOrToken, right: NodeOrToken, countOptions?: Options): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -940,7 +996,7 @@ export function getTokensBetween(
 
   const padding = typeof countOptions === "number" ? countOptions : 0;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -996,8 +1052,8 @@ export function getTokensBetween(
   sliceEnd += padding;
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
   }
 
   const tokensBetween: TokenOrComment[] = [];
@@ -1012,7 +1068,7 @@ export function getTokensBetween(
       if (filter(token)) tokensBetween.push(token);
     }
   }
-  return tokensBetween;
+  return tokensBetween as Result;
 }
 
 /**
@@ -1024,11 +1080,13 @@ export function getTokensBetween(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getFirstTokenBetween(
-  left: NodeOrToken,
-  right: NodeOrToken,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+export function getFirstTokenBetween<
+  Options extends SkipOptions | number | FilterFn | null | undefined,
+>(left: NodeOrToken, right: NodeOrToken, skipOptions?: Options): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -1040,7 +1098,7 @@ export function getFirstTokenBetween(
         ? skipOptions.skip
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -1087,21 +1145,21 @@ export function getFirstTokenBetween(
     if (skipTo >= tokensLength) return null;
     const token = tokenList[skipTo];
     if (token.start >= rangeEnd) return null;
-    return token;
+    return token as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = firstTokenIndex; i < tokensLength; i++) {
       const token = tokenList[i];
       if (token.start >= rangeEnd) return null;
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
     }
   } else {
     for (let i = firstTokenIndex; i < tokensLength; i++) {
       const token = tokenList[i];
       if (token.start >= rangeEnd) return null;
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
     }
@@ -1119,11 +1177,13 @@ export function getFirstTokenBetween(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s between `left` and `right`.
  */
-export function getFirstTokensBetween(
-  left: NodeOrToken,
-  right: NodeOrToken,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+export function getFirstTokensBetween<
+  Options extends CountOptions | number | FilterFn | null | undefined,
+>(left: NodeOrToken, right: NodeOrToken, countOptions?: Options): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -1134,7 +1194,7 @@ export function getFirstTokensBetween(
         ? countOptions.count
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -1187,8 +1247,8 @@ export function getFirstTokensBetween(
   }
 
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd));
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
+    return tokenList.slice(sliceStart, Math.min(sliceStart + count, sliceEnd)) as Result;
   }
 
   const firstTokens: TokenOrComment[] = [];
@@ -1203,7 +1263,7 @@ export function getFirstTokensBetween(
       if (filter(token)) firstTokens.push(token);
     }
   }
-  return firstTokens;
+  return firstTokens as Result;
 }
 
 /**
@@ -1215,11 +1275,13 @@ export function getFirstTokensBetween(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns `Token`, or `null` if all were skipped.
  */
-export function getLastTokenBetween(
-  left: NodeOrToken,
-  right: NodeOrToken,
-  skipOptions?: SkipOptions | number | FilterFn | null,
-): TokenOrComment | null {
+export function getLastTokenBetween<
+  Options extends SkipOptions | number | FilterFn | null | undefined,
+>(left: NodeOrToken, right: NodeOrToken, skipOptions?: Options): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -1231,7 +1293,7 @@ export function getLastTokenBetween(
         ? skipOptions.skip
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof skipOptions === "function"
       ? skipOptions
       : typeof skipOptions === "object" && skipOptions !== null
@@ -1279,21 +1341,21 @@ export function getLastTokenBetween(
     if (skipTo < 0) return null;
     const token = tokenList[skipTo];
     if (token.start < rangeStart) return null;
-    return token;
+    return token as Result;
   }
 
   if (typeof skip !== "number") {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = tokenList[i];
       if (token.start < rangeStart) return null;
-      if (filter(token)) return token;
+      if (filter(token)) return token as Result;
     }
   } else {
     for (let i = lastTokenIndex; i >= 0; i--) {
       const token = tokenList[i];
       if (token.start < rangeStart) return null;
       if (filter(token)) {
-        if (skip <= 0) return token;
+        if (skip <= 0) return token as Result;
         skip--;
       }
     }
@@ -1311,11 +1373,13 @@ export function getLastTokenBetween(
  *   If is a function, equivalent to `{ filter: fn }`.
  * @returns Array of `Token`s between `left` and `right`.
  */
-export function getLastTokensBetween(
-  left: NodeOrToken,
-  right: NodeOrToken,
-  countOptions?: CountOptions | number | FilterFn | null,
-): TokenOrComment[] {
+export function getLastTokensBetween<
+  Options extends CountOptions | number | FilterFn | null | undefined,
+>(left: NodeOrToken, right: NodeOrToken, countOptions?: Options): TokenResult<Options>[] {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options>[];
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -1326,7 +1390,7 @@ export function getLastTokensBetween(
         ? countOptions.count
         : null;
 
-  const filter =
+  const filter: FilterFn | null | undefined =
     typeof countOptions === "function"
       ? countOptions
       : typeof countOptions === "object" && countOptions !== null
@@ -1379,8 +1443,8 @@ export function getLastTokensBetween(
 
   // Fast path for the common case
   if (typeof filter !== "function") {
-    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd);
-    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd);
+    if (typeof count !== "number") return tokenList.slice(sliceStart, sliceEnd) as Result;
+    return tokenList.slice(Math.max(sliceStart, sliceEnd - count), sliceEnd) as Result;
   }
 
   const tokensBetween: TokenOrComment[] = [];
@@ -1396,7 +1460,7 @@ export function getLastTokensBetween(
       if (filter(token)) tokensBetween.unshift(token);
     }
   }
-  return tokensBetween;
+  return tokensBetween as Result;
 }
 
 /**
@@ -1405,10 +1469,14 @@ export function getLastTokensBetween(
  * @param rangeOptions - Options object.
  * @returns The token starting at index, or `null` if no such token.
  */
-export function getTokenByRangeStart(
+export function getTokenByRangeStart<Options extends RangeOptions | null | undefined>(
   index: number,
-  rangeOptions?: RangeOptions | null,
-): TokenOrComment | null {
+  rangeOptions?: Options,
+): TokenResult<Options> | null {
+  // TypeScript cannot verify conditional return types within the function body,
+  // so we use `Result` alias + casts on return statements
+  type Result = TokenResult<Options> | null;
+
   if (tokens === null) initTokens();
   debugAssertIsNonNull(tokens);
 
@@ -1432,7 +1500,7 @@ export function getTokenByRangeStart(
     const mid = (lo + hi) >> 1;
     const tokenStart = tokenList[mid].start;
     if (tokenStart === index) {
-      return tokenList[mid];
+      return tokenList[mid] as Result;
     } else if (tokenStart < index) {
       lo = mid + 1;
     } else {
