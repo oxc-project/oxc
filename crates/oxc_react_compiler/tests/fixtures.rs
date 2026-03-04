@@ -5,14 +5,14 @@
 /// the `.expect.md` files.
 use std::path::Path;
 
+use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
+use oxc_codegen::{Context, Gen};
 use oxc_react_compiler::entrypoint::options::{CompilationMode, PanicThreshold};
 use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
-use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
-use oxc_codegen::{Gen, Context};
 use oxc_react_compiler::utils::test_utils::{PragmaDefaults, parse_config_pragma_for_tests};
 
 /// String-based representation of codegen output for test comparison.
@@ -6787,8 +6787,7 @@ fn normalize_cache_variable_name(s: &str) -> String {
                     !prev.is_ascii_alphanumeric() && prev != b'_' && prev != b'$'
                 };
                 // Check word boundary after (no more digits)
-                let at_end =
-                    i + var_len >= len || !bytes[i + var_len].is_ascii_digit();
+                let at_end = i + var_len >= len || !bytes[i + var_len].is_ascii_digit();
                 if at_start && at_end {
                     result.push('$');
                     i += var_len;
@@ -9627,7 +9626,6 @@ function Component(props) {
     let result = run_pipeline_on_source(source);
     assert!(result.is_ok(), "Pipeline should succeed for nested optional: {}", result.unwrap_err());
 }
-
 
 /// Regression test: for-of loop with non-mutating local collection
 /// should not cause "Expected continue target to be scheduled" error.
