@@ -2,24 +2,15 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 262/275 (95.3%)
+Error fixture conformance: 273/277 (98.6%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 13
+  unexpected_success: 4
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
-  [unexpected_success] error.assign-global-in-jsx-children.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
   [unexpected_success] error.invalid-hoisting-setstate.js
-  [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
-  [unexpected_success] error.invalid-mutate-global-in-render-helper-phi-return-prop.js
-  [unexpected_success] error.invalid-mutate-global-in-render-helper-prop.js
-  [unexpected_success] error.invalid-mutate-props-in-effect-fixpoint.js
-  [unexpected_success] error.invalid-mutate-props-via-for-of-iterator.js
-  [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
-  [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
-  [unexpected_success] error.invalid-return-mutable-function-from-hook.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
