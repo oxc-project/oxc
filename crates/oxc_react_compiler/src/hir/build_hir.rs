@@ -2460,11 +2460,30 @@ fn collect_jsx_element_refs(
     element: &ast::JSXElement<'_>,
     refs: &mut Vec<(String, SourceLocation)>,
 ) {
-    // Tag name
+    // Tag name - identifier (e.g., <Component>)
     if let ast::JSXElementName::IdentifierReference(ident) = &element.opening_element.name
         && ident.name.starts_with(|c: char| c.is_ascii_uppercase())
     {
         refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+    }
+    // Tag name - member expression (e.g., <localVar.Stringify>)
+    // Walk the chain to find the root identifier
+    if let ast::JSXElementName::MemberExpression(member) = &element.opening_element.name {
+        let mut current = &member.object;
+        loop {
+            match current {
+                ast::JSXMemberExpressionObject::IdentifierReference(ident) => {
+                    refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+                    break;
+                }
+                ast::JSXMemberExpressionObject::MemberExpression(inner) => {
+                    current = &inner.object;
+                }
+                ast::JSXMemberExpressionObject::ThisExpression(_) => {
+                    break;
+                }
+            }
+        }
     }
     // Attributes
     for attr in &element.opening_element.attributes {
@@ -2714,6 +2733,24 @@ pub fn lower_block_statement(
     builder: &mut HirBuilder,
     stmts: &[LowerableStatement<'_>],
 ) -> Result<(), CompilerError> {
+    lower_block_statement_with_extra_hoistable(builder, stmts, None)
+}
+
+/// Lower a block statement with optional extra hoistable bindings.
+///
+/// The `extra_hoistable` parameter allows callers to inject additional bindings
+/// into the hoisting analysis. This is used for catch clause parameters, which
+/// are not declared by any statement in the catch body but ARE bindings in the
+/// catch handler scope. In Babel, `stmt.scope.bindings` automatically includes
+/// catch parameters; here we must add them explicitly.
+///
+/// # Errors
+/// Returns a `CompilerError` if any statement in the block cannot be lowered.
+fn lower_block_statement_with_extra_hoistable(
+    builder: &mut HirBuilder,
+    stmts: &[LowerableStatement<'_>],
+    extra_hoistable: Option<(&str, HoistableBinding)>,
+) -> Result<(), CompilerError> {
     // =========================================================================
     // Hoisting analysis (port of BlockStatement handling in TS BuildHIR.ts)
     //
@@ -2729,6 +2766,13 @@ pub fn lower_block_statement(
     // Phase 1: collect all bindings declared in this block.
     for stmt in stmts {
         collect_hoistable_bindings_from_statement(stmt, &mut hoistable);
+    }
+
+    // Add extra hoistable bindings (e.g. catch clause parameters).
+    // These are bindings in the scope that are not declared by statements
+    // but can still be referenced by inner functions and need hoisting.
+    if let Some((name, binding)) = extra_hoistable {
+        hoistable.insert(name.to_string(), binding);
     }
 
     // Phase 2: for each statement, hoist as needed, then lower.
@@ -4513,6 +4557,21 @@ fn lower_statement_with_label(
 
             for declaration in &var_decl.declarations {
                 if let Some(init) = &declaration.init {
+                    // Pre-declare all bindings in the pattern BEFORE lowering the
+                    // initializer, so that self-referencing initializers like
+                    // `const x = identity(x)` emit LoadLocal (not LoadGlobal).
+                    // The TS reference doesn't need this because Babel's scope
+                    // analysis pre-resolves all bindings before HIR lowering.
+                    // Without this, SSA can't detect use-before-definition errors.
+                    {
+                        let pre_loc = span_to_loc(declaration.span);
+                        let mut names = rustc_hash::FxHashSet::default();
+                        collect_binding_pattern_names(&declaration.id, &mut names);
+                        for name in &names {
+                            builder.pre_declare_binding(name, pre_loc);
+                        }
+                    }
+
                     // Lower the initializer
                     let init_expr = convert_expression(init);
                     let value = lower_expression(builder, &init_expr)?.place;
@@ -4837,10 +4896,28 @@ fn lower_statement_with_label(
                 }
 
                 if let Some(catch_clause) = &try_stmt.handler {
-                    // Lower catch body
+                    // Lower catch body.
+                    // The catch parameter needs to be included in the hoistable
+                    // bindings so that references to it from inner functions
+                    // trigger DeclareContext emission (matching TS behavior where
+                    // Babel's scope.bindings includes catch params automatically).
                     let stmts: Vec<_> =
                         catch_clause.body.body.iter().map(convert_statement).collect();
-                    lower_block_statement(builder, &stmts).ok();
+                    let extra_hoistable = catch_param_info.map(|(name, _, _)| {
+                        (
+                            name,
+                            HoistableBinding {
+                                decl_kind: ast::VariableDeclarationKind::Let,
+                                is_function_decl: false,
+                            },
+                        )
+                    });
+                    lower_block_statement_with_extra_hoistable(
+                        builder,
+                        &stmts,
+                        extra_hoistable,
+                    )
+                    .ok();
                 }
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
