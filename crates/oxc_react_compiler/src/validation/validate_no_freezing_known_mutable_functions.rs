@@ -169,8 +169,8 @@ fn is_ref_or_ref_like_mutable_type(ty: &crate::hir::types::Type) -> bool {
             matches!(
                 obj.shape_id.as_deref(),
                 Some(
-                    crate::hir::object_shape::BUILT_IN_REF_VALUE_ID
-                        | crate::hir::object_shape::BUILT_IN_USE_REF_ID
+                    crate::hir::object_shape::BUILT_IN_USE_REF_ID
+                        | crate::hir::object_shape::REANIMATED_SHARED_VALUE_ID
                 )
             )
         }
