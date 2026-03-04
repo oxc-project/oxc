@@ -292,11 +292,23 @@ pub fn wrap_plain_paragraphs(text: &str, max_width: usize, lines: &mut Vec<Strin
 /// and wrapping plain paragraphs to the given max width.
 ///
 /// Delegates to `format_description_mdast` for full markdown-aware formatting.
-pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
+pub fn wrap_text(
+    text: &str,
+    max_width: usize,
+    lines: &mut Vec<String>,
+    format_options: Option<&crate::FormatOptions>,
+    external_callbacks: Option<&crate::ExternalCallbacks>,
+) {
     if text.is_empty() {
         return;
     }
-    let result = super::mdast_serialize::format_description_mdast(text, max_width, false);
+    let result = super::mdast_serialize::format_description_mdast(
+        text,
+        max_width,
+        false,
+        format_options,
+        external_callbacks,
+    );
     lines.extend(result);
 }
 
@@ -307,7 +319,7 @@ mod tests {
     #[test]
     fn test_wrap_simple_text() {
         let mut lines = Vec::new();
-        wrap_text("This is a short line", 80, &mut lines);
+        wrap_text("This is a short line", 80, &mut lines, None, None);
         assert_eq!(lines, vec!["This is a short line"]);
     }
 
@@ -318,6 +330,8 @@ mod tests {
             "This is a long line that should be wrapped because it exceeds the maximum width",
             40,
             &mut lines,
+            None,
+            None,
         );
         assert_eq!(
             lines,
@@ -332,7 +346,7 @@ mod tests {
     #[test]
     fn test_wrap_preserves_markdown_list() {
         let mut lines = Vec::new();
-        wrap_text("- item one\n- item two\n- item three", 80, &mut lines);
+        wrap_text("- item one\n- item two\n- item three", 80, &mut lines, None, None);
         assert_eq!(lines, vec!["- item one", "- item two", "- item three"]);
     }
 
@@ -343,6 +357,8 @@ mod tests {
             "- This is a very long list item that should be wrapped to the next line with proper indent",
             40,
             &mut lines,
+            None,
+            None,
         );
         assert_eq!(
             lines,
@@ -357,7 +373,7 @@ mod tests {
     #[test]
     fn test_wrap_converts_code_fence_to_indented() {
         let mut lines = Vec::new();
-        wrap_text("Some text\n```\ncode here\n  indented\n```\nMore text", 80, &mut lines);
+        wrap_text("Some text\n```\ncode here\n  indented\n```\nMore text", 80, &mut lines, None, None);
         // Fenced code without language tag is converted to indented code block.
         // The MDAST path preserves original indentation within the code block.
         assert_eq!(
@@ -369,7 +385,7 @@ mod tests {
     #[test]
     fn test_wrap_preserves_code_fence_with_language() {
         let mut lines = Vec::new();
-        wrap_text("Some text\n```js\nconst x = 1;\n```\nMore text", 80, &mut lines);
+        wrap_text("Some text\n```js\nconst x = 1;\n```\nMore text", 80, &mut lines, None, None);
         // Blank lines are added before and after fenced code blocks
         assert_eq!(lines, vec!["Some text", "", "```js", "const x = 1;", "```", "", "More text"]);
     }
@@ -377,21 +393,21 @@ mod tests {
     #[test]
     fn test_wrap_empty_lines() {
         let mut lines = Vec::new();
-        wrap_text("Paragraph one\n\nParagraph two", 80, &mut lines);
+        wrap_text("Paragraph one\n\nParagraph two", 80, &mut lines, None, None);
         assert_eq!(lines, vec!["Paragraph one", "", "Paragraph two"]);
     }
 
     #[test]
     fn test_wrap_empty_text() {
         let mut lines = Vec::new();
-        wrap_text("", 80, &mut lines);
+        wrap_text("", 80, &mut lines, None, None);
         assert!(lines.is_empty());
     }
 
     #[test]
     fn test_numbered_list_removes_blank_lines() {
         let mut lines = Vec::new();
-        wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, &mut lines);
+        wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, &mut lines, None, None);
         assert_eq!(lines, vec!["1. Thing 1", "2. Thing 2", "3. Thing 3"]);
     }
 
@@ -402,6 +418,8 @@ mod tests {
             "- Consider caching this for the lifetime of the component, or possibly being able to share this cache between any `ScrollMap` view.",
             77,
             &mut lines,
+            None,
+            None,
         );
         assert_eq!(
             lines,
@@ -420,6 +438,8 @@ mod tests {
             "- Consider caching this for the lifetime of the component, or possibly being able to share this\ncache between any `ScrollMap` view.",
             77,
             &mut lines,
+            None,
+            None,
         );
         assert_eq!(
             lines,
