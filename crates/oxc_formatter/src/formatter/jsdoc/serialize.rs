@@ -56,28 +56,12 @@ fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> String {
 }
 
 /// Tags whose descriptions should NOT be capitalized.
-/// Includes upstream's `TAGS_PEV_FORMAT_DESCRIPTION` (borrows, default, defaultValue,
-/// import, memberof, module, see) plus tags whose content is a name/reference rather
-/// than descriptive text (e.g. @function name, @typedef type, @class name).
+/// Matches upstream's `TAGS_PEV_FORMATE_DESCRIPTION` exactly:
+/// borrows, default, defaultValue, import, memberof, module, see.
 fn should_skip_capitalize(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
-        "augments"
-            | "borrows"
-            | "callback"
-            | "class"
-            | "default"
-            | "defaultValue"
-            | "example"
-            | "extends"
-            | "function"
-            | "import"
-            | "link"
-            | "memberof"
-            | "module"
-            | "see"
-            | "type"
-            | "typedef"
+        "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
     )
 }
 
@@ -90,7 +74,7 @@ fn is_type_name_comment_tag(tag_kind: &str) -> bool {
 /// Tags that use `type_comment()` pattern: `@tag {type} description`
 /// Expects canonical (normalized) tag names.
 fn is_type_comment_tag(tag_kind: &str) -> bool {
-    matches!(tag_kind, "returns" | "yields" | "throws" | "type" | "satisfies")
+    matches!(tag_kind, "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends")
 }
 
 /// Get the sort priority for a tag kind (lower number = higher priority).
@@ -120,11 +104,13 @@ fn tag_sort_priority(kind: &str) -> u32 {
         "abstract" => 38,
         "augments" => 40,
         "constant" => 42,
-        "default" | "defaultValue" => 44,
+        "default" => 44,
+        "defaultValue" => 46,
         "external" => 48,
         "overload" => 50,
         "fires" => 52,
-        "template" | "typeParam" => 54,
+        "template" => 54,
+        "typeParam" => 56,
         "function" => 58,
         "namespace" => 60,
         "borrows" => 62,
@@ -161,6 +147,54 @@ fn is_known_tag(kind: &str) -> bool {
 /// Matches prettier-plugin-jsdoc's `TAGS_GROUP_HEAD = [CALLBACK, TYPEDEF]`.
 fn is_tags_group_head(kind: &str) -> bool {
     matches!(kind, "callback" | "typedef")
+}
+
+/// Check if a tag kind is a group condition (enables group splitting).
+/// Matches prettier-plugin-jsdoc's `TAGS_GROUP_CONDITION`.
+fn is_tags_group_condition(kind: &str) -> bool {
+    matches!(
+        kind,
+        "callback"
+            | "typedef"
+            | "type"
+            | "property"
+            | "param"
+            | "returns"
+            | "this"
+            | "yields"
+            | "throws"
+    )
+}
+
+/// Check if a tag that goes through `format_generic_tag` has a "name" field
+/// in upstream's comment-parser (i.e., is NOT in `TAGS_NAMELESS`).
+/// For these tags, the first word of the comment is the name and should NOT
+/// be capitalized — only the description after the name should be.
+///
+/// This only lists tags that are routed to `format_generic_tag` (i.e., not
+/// handled by type_name_comment, type_comment, or example/remarks formatters).
+fn is_named_generic_tag(kind: &str) -> bool {
+    matches!(
+        kind,
+        "abstract"
+            | "async"
+            | "augments"
+            | "author"
+            | "callback"
+            | "class"
+            | "constant"
+            | "external"
+            | "fires"
+            | "flow"
+            | "function"
+            | "ignore"
+            | "member"
+            | "memberof"
+            | "private"
+            | "see"
+            | "version"
+            | "typeParam"
+    )
 }
 
 /// Reorder @param tags to match the function signature parameter order.
@@ -582,15 +616,21 @@ fn sort_tags_by_groups<'a>(
         return Vec::new();
     }
 
-    // Split into groups at TAGS_GROUP_HEAD boundaries
+    // Split into groups at TAGS_GROUP_HEAD boundaries, but only when a
+    // TAGS_GROUP_CONDITION tag has been seen first (matching upstream behavior).
     let mut groups: Vec<Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)>> = Vec::new();
     let mut current_group: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> = Vec::new();
+    let mut can_group_next_tags = false;
 
     for tag in tags {
         let normalized_kind = normalize_tag_kind(tag.kind.parsed());
-        if is_tags_group_head(normalized_kind) && !current_group.is_empty() {
+        if is_tags_group_head(normalized_kind) && can_group_next_tags && !current_group.is_empty() {
             groups.push(current_group);
             current_group = Vec::new();
+            can_group_next_tags = false;
+        }
+        if is_tags_group_condition(normalized_kind) {
+            can_group_next_tags = true;
         }
         current_group.push((tag, normalized_kind));
     }
@@ -723,7 +763,7 @@ pub fn format_jsdoc_comment<'a>(
     reorder_param_tags(&mut effective_tags, comment, source_text);
 
     // Pre-process @import tags: merge by module, sort, format
-    let mut import_lines = process_import_tags(&effective_tags);
+    let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
     let has_imports = !import_lines.is_empty();
     let mut imports_emitted = false;
 
@@ -731,8 +771,9 @@ pub fn format_jsdoc_comment<'a>(
     let mut prev_normalized_kind: Option<&str> = None;
     let mut first_non_import_tag_emitted = false;
     for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
-        // Skip @import tags — they are handled via merged import_lines
-        if normalized_kind == "import" {
+        // Skip successfully parsed @import tags — they are handled via merged import_lines.
+        // Unparseable @import tags fall through to format_generic_tag().
+        if parsed_import_indices.contains(&tag_idx) {
             if has_imports && !imports_emitted {
                 // Emit merged imports at the position of the first @import tag
                 if !content_lines.is_empty() && !content_lines.last().is_some_and(String::is_empty)
@@ -1419,7 +1460,7 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
     let input = format!("type __t = {type_str};");
 
     let allocator = Allocator::default();
-    let line_width = LineWidth::try_from(80u16).unwrap();
+    let line_width = format_options.line_width;
     let options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
 
     let ret = Parser::new(&allocator, &input, SourceType::tsx())
@@ -2000,8 +2041,9 @@ fn format_type_comment_tag(
             // For @type/@satisfies with no-space-before-type and non-object types,
             // skip to preserve quotes (e.g. @type{import('...')} stays unchanged).
             // Object types (starting with `{`) always get formatted.
-            let skip_formatter =
-                preserve_quotes && has_no_space_before_type && !normalized_type_str.starts_with('{');
+            let skip_formatter = preserve_quotes
+                && has_no_space_before_type
+                && !normalized_type_str.starts_with('{');
             if !skip_formatter
                 && let Some(formatted) =
                     format_type_via_formatter(&normalized_type_str, format_options)
@@ -2165,6 +2207,22 @@ fn format_generic_tag(
     // For @default/@defaultValue, format JSON-like values
     let desc_text: Cow<'_, str> = if matches!(normalized_kind, "default" | "defaultValue") {
         format_default_value(desc_text, quote_style)
+    } else if should_capitalize && is_named_generic_tag(normalized_kind) {
+        // Named tags: first word is the "name" (don't capitalize), rest is description.
+        // Upstream comment-parser separates name/description; we do it inline.
+        if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
+            let name_part = &desc_text[..space_idx];
+            let desc_part = desc_text[space_idx..].trim_start();
+            if desc_part.is_empty() {
+                Cow::Borrowed(desc_text)
+            } else {
+                let capitalized = capitalize_first(desc_part);
+                Cow::Owned(format!("{name_part} {capitalized}"))
+            }
+        } else {
+            // Only a name, no description — no capitalization needed
+            Cow::Borrowed(desc_text)
+        }
     } else if should_capitalize {
         capitalize_first(desc_text)
     } else {
@@ -2307,10 +2365,14 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     Some(ImportInfo { default_import, named_imports, module_path: module_path.to_string() })
 }
 
-/// Get the sort key for a named import specifier.
-/// `"B as B1"` → `"B"`, `"B2"` → `"B2"`.
+/// Get the sort key for a named import specifier (sort by alias).
+/// `"B as B1"` → `"B1"`, `"B2"` → `"B2"`.
 fn import_specifier_sort_key(specifier: &str) -> &str {
-    if let Some(idx) = specifier.find(" as ") { specifier[..idx].trim() } else { specifier.trim() }
+    if let Some(idx) = specifier.find(" as ") {
+        specifier[idx + 4..].trim()
+    } else {
+        specifier.trim()
+    }
 }
 
 /// Merge `@import` tags that share the same module path.
@@ -2401,17 +2463,23 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
 }
 
 /// Process all `@import` tags: parse, merge by module, sort, and format.
-/// Returns formatted lines ready to be inserted into the comment.
-fn process_import_tags(tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)]) -> Vec<String> {
+/// Returns formatted lines ready to be inserted into the comment, plus
+/// the set of tag indices that were successfully parsed (so unparseable
+/// `@import` tags can fall through to `format_generic_tag()`).
+fn process_import_tags(
+    tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
+) -> (Vec<String>, rustc_hash::FxHashSet<usize>) {
     let mut imports = Vec::new();
+    let mut parsed_indices = rustc_hash::FxHashSet::default();
 
-    for &(tag, kind) in tags {
+    for (idx, &(tag, kind)) in tags.iter().enumerate() {
         if kind != "import" {
             continue;
         }
         let comment = tag.comment().parsed();
         if let Some(info) = parse_import_tag(&comment) {
             imports.push(info);
+            parsed_indices.insert(idx);
         }
     }
 
@@ -2421,7 +2489,7 @@ fn process_import_tags(tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)]) -> Vec
     for import in &merged {
         format_import_lines(import, &mut lines);
     }
-    lines
+    (lines, parsed_indices)
 }
 
 #[cfg(test)]
@@ -2470,7 +2538,7 @@ mod tests {
 
     #[test]
     fn test_should_skip_capitalize() {
-        // Tags in TAGS_PEV_FORMAT_DESCRIPTION
+        // Tags in TAGS_PEV_FORMATE_DESCRIPTION
         assert!(should_skip_capitalize("borrows"));
         assert!(should_skip_capitalize("default"));
         assert!(should_skip_capitalize("defaultValue"));
@@ -2479,16 +2547,14 @@ mod tests {
         assert!(should_skip_capitalize("module"));
         assert!(should_skip_capitalize("see"));
 
-        // Tags whose content is a name/reference
-        assert!(should_skip_capitalize("function"));
-        assert!(should_skip_capitalize("typedef"));
-        assert!(should_skip_capitalize("class"));
-        assert!(should_skip_capitalize("callback"));
-
-        // Tags that should capitalize
+        // Tags that SHOULD capitalize (not in TAGS_PEV_FORMATE_DESCRIPTION)
         assert!(!should_skip_capitalize("param"));
         assert!(!should_skip_capitalize("returns"));
         assert!(!should_skip_capitalize("deprecated"));
+        assert!(!should_skip_capitalize("function"));
+        assert!(!should_skip_capitalize("typedef"));
+        assert!(!should_skip_capitalize("class"));
+        assert!(!should_skip_capitalize("callback"));
     }
 
     #[test]

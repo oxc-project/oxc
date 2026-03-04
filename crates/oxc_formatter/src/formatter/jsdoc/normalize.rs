@@ -23,7 +23,6 @@ pub fn normalize_tag_kind(kind: &str) -> &str {
         "exception" => "throws",
         "examples" => "example",
         "hidden" => "ignore",
-        "memberOf" => "memberof",
         // Note: @augments and @extends are NOT synonyms in the plugin.
         // They have different sort weights (20 vs 33).
         // @linkcode, @linkplain are also NOT normalized to @link.
@@ -1105,7 +1104,8 @@ mod tests {
 
     #[test]
     fn test_normalize_tag_kind_memberof() {
-        assert_eq!(normalize_tag_kind("memberOf"), "memberof");
+        // "memberOf" is NOT in upstream's TAGS_SYNONYMS, so it stays as-is
+        assert_eq!(normalize_tag_kind("memberOf"), "memberOf");
     }
 
     #[test]
