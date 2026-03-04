@@ -7,7 +7,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        options::CompilationMode, pipeline::run_pipeline, program::should_compile_function,
+        options::{CompilationMode, OPT_OUT_DIRECTIVES},
+        pipeline::run_pipeline,
+        program::should_compile_function,
     },
     hir::{
         NonLocalBinding,
@@ -342,8 +344,17 @@ fn lint_function<'a>(
     config: &ReactCompilerConfig,
     ctx: &LintContext<'a>,
 ) {
+    // In lint mode, ignore opt-out directives ('use no forget', 'use no memo')
+    // so that validation still runs on opted-out functions.
+    // This matches the ESLint plugin's behavior where the lint rule always
+    // validates, even if the compiler won't transform the function.
+    let lint_directives: Vec<String> = directives
+        .iter()
+        .filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str()))
+        .cloned()
+        .collect();
     let Some(fn_type) =
-        should_compile_function(name, directives, config.compilation_mode.into(), false)
+        should_compile_function(name, &lint_directives, config.compilation_mode.into(), false)
     else {
         return;
     };
@@ -402,23 +413,220 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Valid component
+        // === Basic valid cases ===
         (r"function Component(props) { return <div>{props.value}</div>; }", None),
-        // Valid hook
         (r"function useMyHook() { const [state, setState] = useState(0); return state; }", None),
-        // Not a component or hook (lowercase)
         (r"function helper() { return 42; }", None),
-        // Arrow function component
         (r"const Component = (props) => { return <div>{props.value}</div>; };", None),
-        // Named export function
+        // Named exports
         (r"export function Component(props) { return <div>{props.value}</div>; }", None),
-        // Named export const arrow
         (r"export const Component = (props) => { return <div>{props.value}</div>; };", None),
+        // === Ported from eslint-plugin-react-compiler PluginTest ===
+        // Invariants are only for the compiler team — not surfaced as lint errors
+        (
+            r#"
+            function Component(props) {
+              let y = function () {
+                m(x);
+              };
+              let x = { a };
+              m(x);
+              return y;
+            }
+            "#,
+            None,
+        ),
+        // Classes don't throw
+        (
+            r#"
+            class Foo {
+              #bar() {}
+            }
+            "#,
+            None,
+        ),
+        // === Ported from InvalidHooksRule ===
+        (
+            r#"
+            function Component() {
+              useHook();
+              return <div>Hello world</div>;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from ReactCompilerRuleTypescript ===
+        (
+            r#"
+            function Button(props) {
+              return null;
+            }
+            "#,
+            None,
+        ),
     ];
 
     let fail = vec![
-        // Keep this as a smoke test for integration; compiler parity with the
-        // upstream rule set is still evolving.
+        // === Ported from eslint-plugin-react-compiler PluginTest ===
+        // Conditional hook call
+        (
+            r#"
+            function Component() {
+              const result = cond ?? useConditionalHook();
+              return <>{result}</>;
+            }
+            "#,
+            None,
+        ),
+        // Multiple conditional hooks in same file
+        (
+            r#"
+            function useConditional1() {
+              'use memo';
+              return cond ?? useConditionalHook();
+            }
+            function useConditional2(props) {
+              'use memo';
+              return props.cond && useConditionalHook();
+            }
+            "#,
+            None,
+        ),
+        // 'use no forget' does not disable eslint rule
+        (
+            r#"
+            let count = 0;
+            function Component() {
+              'use no forget';
+              return cond ?? useConditionalHook();
+            }
+            "#,
+            None,
+        ),
+        // void useMemo + setState in useMemo
+        (
+            r#"
+            import {useMemo, useState} from 'react';
+
+            function Component({item, cond}) {
+              const [prevItem, setPrevItem] = useState(item);
+              const [state, setState] = useState(0);
+
+              useMemo(() => {
+                if (cond) {
+                  setPrevItem(item);
+                  setState(0);
+                }
+              }, [cond, item, init]);
+
+              return <Child x={state} />;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from InvalidHooksRule ===
+        // Simple conditional hook violation
+        (
+            r#"
+            function useConditional() {
+              if (cond) {
+                useConditionalHook();
+              }
+            }
+            "#,
+            None,
+        ),
+        // Multiple conditional hooks in same function
+        (
+            r#"
+            function useConditional() {
+              cond ?? useConditionalHook();
+              props.cond && useConditionalHook();
+              return <div>Hello world</div>;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from NoCapitalizedCallsRule ===
+        // Direct capitalized call
+        (
+            r#"
+            import Child from './Child';
+            function Component() {
+              return <>
+                {Child()}
+              </>;
+            }
+            "#,
+            None,
+        ),
+        // Method call with capitalized name
+        (
+            r#"
+            import myModule from './MyModule';
+            function Component() {
+              return <>
+                {myModule.Child()}
+              </>;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from ImpureFunctionCallsRule ===
+        // Known impure function calls
+        (
+            r#"
+            function Component() {
+              const date = Date.now();
+              const now = performance.now();
+              const rand = Math.random();
+              return <Foo date={date} now={now} rand={rand} />;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from NoAmbiguousJsxRule ===
+        // JSX in try blocks
+        (
+            r#"
+            function Component(props) {
+              let el;
+              try {
+                el = <Child />;
+              } catch {
+                return null;
+              }
+              return el;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from NoRefAccessInRender ===
+        // Ref access during render
+        (
+            r#"
+            function Component(props) {
+              const ref = useRef(null);
+              const value = ref.current;
+              return value;
+            }
+            "#,
+            None,
+        ),
+        // === Ported from ReactCompilerRuleTypescript ===
+        // Mutating useState value
+        (
+            r#"
+            import { useState } from 'react';
+            function Component(props) {
+              const x: `foo${1}` = 'foo1';
+              const [state, setState] = useState({a: 0});
+              state.a = 1;
+              return <div>{props.foo}</div>;
+            }
+            "#,
+            None,
+        ),
     ];
 
     Tester::new(ReactCompilerRule::NAME, ReactCompilerRule::PLUGIN, pass, fail).test_and_snapshot();
