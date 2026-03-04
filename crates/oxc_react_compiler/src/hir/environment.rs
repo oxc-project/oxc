@@ -116,6 +116,14 @@ pub struct EnvironmentConfig {
     /// Whether to validate no setState in effects.
     pub validate_no_set_state_in_effects: bool,
 
+    /// Enable verbose error messages for no-setState-in-effects validation.
+    ///
+    /// When true, emits a more detailed description with guidance about
+    /// common patterns (non-local derived data, derived event, force update).
+    ///
+    /// Corresponds to `enableVerboseNoSetStateInEffect` in the TS version.
+    pub enable_verbose_no_set_state_in_effect: bool,
+
     /// Whether to validate no JSX in try statements.
     pub validate_no_jsx_in_try_statements: bool,
 
@@ -181,6 +189,15 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `validateBlocklistedImports` in the TS version.
     pub validate_blocklisted_imports: Option<Vec<String>>,
+
+    /// Enable `useKeyedState` in error messages for setState-during-render validation.
+    ///
+    /// When true, the "Cannot call setState during render" error suggests using
+    /// `useKeyedState(initialState, key)` instead of the default advice about
+    /// storing previous values in state.
+    ///
+    /// Corresponds to `enableUseKeyedState` in the TS version.
+    pub enable_use_keyed_state: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -203,6 +220,7 @@ impl Default for EnvironmentConfig {
             validate_no_derived_computations_in_effects: false,
             validate_no_derived_computations_in_effects_exp: false,
             validate_no_set_state_in_effects: false,
+            enable_verbose_no_set_state_in_effect: false,
             validate_no_jsx_in_try_statements: false,
             validate_no_impure_functions_in_render: false,
             validate_static_components: false,
@@ -217,6 +235,7 @@ impl Default for EnvironmentConfig {
             enable_assume_hooks_follow_rules_of_react: true,
             enable_treat_set_identifiers_as_state_setters: false,
             validate_blocklisted_imports: None,
+            enable_use_keyed_state: false,
         }
     }
 }
