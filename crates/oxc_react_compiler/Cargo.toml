@@ -29,4 +29,5 @@ hmac = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_codegen = { workspace = true }
 walkdir = { workspace = true }

@@ -4,6 +4,19 @@
 /// - `__tests__/Result-test.ts` -- tests for Result type (Rust native)
 /// - `__tests__/envConfig-test.ts` -- tests for environment config validation
 /// - `__tests__/Logger-test.ts` -- tests for compilation logging
+
+/// Print codegen output body to a string using oxc_codegen.
+fn print_codegen_body(
+    output: &oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenOutput<'_>,
+) -> String {
+    use oxc_codegen::{Codegen, Context, Gen};
+    let mut codegen = Codegen::new();
+    for stmt in output.body.iter() {
+        stmt.print(&mut codegen, Context::default());
+    }
+    codegen.into_source_text()
+}
+
 mod result_tests {
     // Result-test.ts port
     // The TS version tests a custom Result class. In Rust, we use the native Result type.
@@ -423,8 +436,9 @@ fn test_console_readonly_output() {
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
     let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
-    let result = run_codegen(pipeline_output, &env).expect("Codegen failed");
-    let output = format!("{result}");
+    let ast = oxc_ast::AstBuilder::new(&allocator);
+    let result = run_codegen(pipeline_output, &env, ast).expect("Codegen failed");
+    let output = print_codegen_body(&result);
 
     // The console.log(x) call should be OUTSIDE the scope guard.
     // Expected pattern: the scope guard assigns to $ cache, then console.log happens after.
@@ -510,7 +524,8 @@ fn test_context_variable_reactive_scopes() {
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
     let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
-    let result = run_codegen(pipeline_output, &env).expect("Codegen failed");
+    let ast = oxc_ast::AstBuilder::new(&allocator);
+    let result = run_codegen(pipeline_output, &env, ast).expect("Codegen failed");
 
     // The expected output should have _c(2) and a reactive scope
     assert_eq!(
@@ -798,8 +813,9 @@ fn test_context_variable_debug() {
 
     match pipeline_result {
         Ok(pipeline_output) => {
-            let codegen_func = run_codegen(pipeline_output, &env).expect("Codegen failed");
-            let output = format!("{codegen_func}");
+            let ast = oxc_ast::AstBuilder::new(&allocator);
+            let codegen_func = run_codegen(pipeline_output, &env, ast).expect("Codegen failed");
+            let output = print_codegen_body(&codegen_func);
             println!("=== Codegen output ===\n{output}");
             assert!(
                 output.contains("_c("),

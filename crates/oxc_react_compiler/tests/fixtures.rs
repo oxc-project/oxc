@@ -10,8 +10,64 @@ use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
-use oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenFunction;
+use oxc_ast::AstBuilder;
+use oxc_codegen::{Gen, Context};
 use oxc_react_compiler::utils::test_utils::{PragmaDefaults, parse_config_pragma_for_tests};
+
+/// String-based representation of codegen output for test comparison.
+/// Converts `CodegenOutput<'a>` (which borrows from an allocator) into
+/// an owned type that can be returned from functions.
+struct CodegenResult {
+    id: Option<String>,
+    params: Vec<String>,
+    generator: bool,
+    is_async: bool,
+    body_text: String,
+    outlined: Vec<OutlinedResult>,
+}
+
+struct OutlinedResult {
+    id: Option<String>,
+    params: Vec<String>,
+    generator: bool,
+    is_async: bool,
+    body_text: String,
+}
+
+/// Print a slice of AST statements to a string using oxc_codegen.
+fn print_stmts_to_string(stmts: &oxc_allocator::Vec<'_, oxc_ast::ast::Statement<'_>>) -> String {
+    let mut codegen = oxc_codegen::Codegen::new();
+    for stmt in stmts.iter() {
+        stmt.print(&mut codegen, Context::default());
+    }
+    codegen.into_source_text()
+}
+
+/// Convert a `CodegenOutput` (arena-allocated) to `CodegenResult` (owned strings).
+fn codegen_output_to_result(
+    output: oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenOutput<'_>,
+) -> CodegenResult {
+    let body_text = print_stmts_to_string(&output.body);
+    let outlined = output
+        .outlined
+        .into_iter()
+        .map(|o| OutlinedResult {
+            id: o.fn_.id.clone(),
+            params: o.fn_.params.clone(),
+            generator: o.fn_.generator,
+            is_async: o.fn_.is_async,
+            body_text: print_stmts_to_string(&o.fn_.body),
+        })
+        .collect();
+    CodegenResult {
+        id: output.id,
+        params: output.params,
+        generator: output.generator,
+        is_async: output.is_async,
+        body_text,
+        outlined,
+    }
+}
 
 fn is_js_ts_tsx(path: &Path) -> bool {
     path.extension()
@@ -1046,14 +1102,14 @@ fn is_valid_js_identifier(s: &str) -> bool {
 }
 
 /// Run the full pipeline (parse -> lower -> pipeline -> codegen) on a source
-/// string and return the `CodegenFunction` on success.
+/// string and return the `CodegenResult` on success.
 ///
 /// Parses any `@pragma` flags from the first line of the source to configure
 /// the compiler environment, matching the behaviour of the TypeScript test harness.
 fn run_pipeline_for_codegen(
     source: &str,
     source_type: oxc_span::SourceType,
-) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
+) -> Result<(CodegenResult, Option<WrapperInfo>), String> {
     run_pipeline_for_codegen_impl(source, source_type, false)
 }
 
@@ -1064,7 +1120,7 @@ fn run_pipeline_for_codegen(
 fn run_pipeline_for_codegen_error_mode(
     source: &str,
     source_type: oxc_span::SourceType,
-) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
+) -> Result<(CodegenResult, Option<WrapperInfo>), String> {
     run_pipeline_for_codegen_impl(source, source_type, true)
 }
 
@@ -1072,7 +1128,7 @@ fn run_pipeline_for_codegen_impl(
     source: &str,
     source_type: oxc_span::SourceType,
     return_first_error: bool,
-) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
+) -> Result<(CodegenResult, Option<WrapperInfo>), String> {
     let allocator = oxc_allocator::Allocator::default();
     let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
     if !parser_result.errors.is_empty() {
@@ -1484,7 +1540,7 @@ fn run_pipeline_for_codegen_impl(
     let ignore_use_no_forget = first_line.contains("@ignoreUseNoForget");
 
     let mut last_err = String::new();
-    let mut last_success: Option<(CodegenFunction, Option<WrapperInfo>)> = None;
+    let mut last_success: Option<(CodegenResult, Option<WrapperInfo>)> = None;
     for (func, candidate_name, wrapper) in candidates {
         // Skip candidates with opt-out directives ('use no forget', 'use no memo'),
         // UNLESS @ignoreUseNoForget is set in the pragma.
@@ -1569,8 +1625,10 @@ fn run_pipeline_for_codegen_impl(
                 continue;
             }
         };
-        match run_codegen(pipeline_output, &env) {
-            Ok(result) => {
+        let ast = AstBuilder::new(&allocator);
+        match run_codegen(pipeline_output, &env, ast) {
+            Ok(output) => {
+                let result = codegen_output_to_result(output);
                 if return_first_error {
                     // In error-fixture conformance mode, a successful compilation
                     // does not mean the whole file passes — another candidate may
@@ -1608,15 +1666,15 @@ fn run_pipeline_for_codegen_impl(
     Err(last_err)
 }
 
-/// Reconstruct the full function source from a `CodegenFunction`, including
+/// Reconstruct the full function source from a `CodegenResult`, including
 /// the function declaration wrapper (but not imports).
 /// When `wrapper` is provided, the output is wrapped in the appropriate
 /// `React.memo(...)` / `forwardRef(...)` call, preserving arrow-vs-function style.
-fn format_full_function(func: &CodegenFunction, wrapper: Option<&WrapperInfo>) -> String {
+fn format_full_function(func: &CodegenResult, wrapper: Option<&WrapperInfo>) -> String {
     let async_prefix = if func.is_async { "async " } else { "" };
     let star = if func.generator { "*" } else { "" };
     let params = func.params.join(", ");
-    let body = format!("{func}"); // uses Display impl for the body
+    let body = &func.body_text;
 
     let mut result = if let Some(w) = wrapper {
         // Format the inner function according to the original style (arrow vs function expr).
@@ -1660,12 +1718,11 @@ fn format_full_function(func: &CodegenFunction, wrapper: Option<&WrapperInfo>) -
     //   function Component(props) { ... }
     //   function _temp(item) { ... }
     for outlined in &func.outlined {
-        let outlined_fn = &outlined.fn_;
-        let o_async = if outlined_fn.is_async { "async " } else { "" };
-        let o_star = if outlined_fn.generator { "*" } else { "" };
-        let o_name = outlined_fn.id.as_deref().unwrap_or("_temp");
-        let o_params = outlined_fn.params.join(", ");
-        let o_body = format!("{outlined_fn}");
+        let o_async = if outlined.is_async { "async " } else { "" };
+        let o_star = if outlined.generator { "*" } else { "" };
+        let o_name = outlined.id.as_deref().unwrap_or("_temp");
+        let o_params = outlined.params.join(", ");
+        let o_body = &outlined.body_text;
         if o_body.trim().is_empty() {
             result.push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{}}"));
         } else {
