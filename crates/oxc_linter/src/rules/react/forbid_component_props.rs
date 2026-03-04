@@ -237,7 +237,7 @@ declare_oxc_lint!(
     /// ```
     ForbidComponentProps,
     react,
-    style,
+    restriction,
     config = ForbidComponentPropsConfig,
 );
 
