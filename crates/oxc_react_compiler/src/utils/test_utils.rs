@@ -166,6 +166,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "enableUseKeyedState" => {
                 env_config.enable_use_keyed_state = parse_bool_value(entry.value.as_ref(), true);
             }
+            "enableAllowSetStateFromRefsInEffects" => {
+                env_config.enable_allow_set_state_from_refs_in_effects =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableVerboseNoSetStateInEffect" => {
                 env_config.enable_verbose_no_set_state_in_effect =
                     parse_bool_value(entry.value.as_ref(), true);
