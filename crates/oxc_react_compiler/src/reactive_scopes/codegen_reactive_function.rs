@@ -2482,14 +2482,67 @@ fn join_jsx_children_multiline(children: &[String]) -> String {
 }
 
 /// Generate a JSX attribute.
+///
+/// Handles namespaced attributes (e.g., `xmlns:xlink`) and string value escaping.
+/// Matches TS `codegenJsxAttribute`: StringLiteral values that don't need
+/// escaping are emitted directly as JSX attribute strings; all other values
+/// are wrapped in expression containers.
 fn codegen_jsx_attribute<'a>(
     cx: &CodegenContext<'a>,
     attr: &JsxAttribute,
 ) -> JSXAttributeItem<'a> {
-    todo!()
+    match attr {
+        JsxAttribute::Attribute { name, place } => {
+            // Build attribute name, handling namespaced names like xmlns:xlink
+            let attr_name = if let Some(colon_pos) = name.find(':') {
+                let namespace = &name[..colon_pos];
+                let local = &name[colon_pos + 1..];
+                let ns_ident = cx.ast.jsx_identifier(SPAN, cx.ast.atom(namespace));
+                let name_ident = cx.ast.jsx_identifier(SPAN, cx.ast.atom(local));
+                cx.ast.jsx_attribute_name_namespaced_name(SPAN, ns_ident, name_ident)
+            } else {
+                cx.ast.jsx_attribute_name_identifier(SPAN, cx.ast.atom(name.as_str()))
+            };
+
+            let inner_value = codegen_place_to_expression(cx, place);
+
+            // TS: if the value is a StringLiteral, use it directly unless it
+            // contains characters that require wrapping in an expression container.
+            // fbt operands are exempt from the wrapping check.
+            let value = match &inner_value {
+                Expression::StringLiteral(lit)
+                    if !string_requires_expr_container(&lit.value)
+                        || cx.is_fbt_operand(place.identifier.id) =>
+                {
+                    // Use string literal directly as JSX attribute value
+                    let Expression::StringLiteral(lit) = inner_value else {
+                        unreachable!()
+                    };
+                    JSXAttributeValue::StringLiteral(lit)
+                }
+                _ => {
+                    // Wrap in expression container (handles StringLiteral with
+                    // special chars, JSXFragment, and all other expression types)
+                    cx.ast.jsx_attribute_value_expression_container(
+                        SPAN,
+                        JSXExpression::from(inner_value),
+                    )
+                }
+            };
+
+            cx.ast.jsx_attribute_item_attribute(SPAN, attr_name, Some(value))
+        }
+        JsxAttribute::Spread { argument } => {
+            let expr = codegen_place_to_expression(cx, argument);
+            cx.ast.jsx_attribute_item_spread_attribute(SPAN, expr)
+        }
+    }
 }
 
 /// Check if a string literal value requires wrapping in a JSX expression container.
+///
+/// Matches the TS `STRING_REQUIRES_EXPR_CONTAINER_PATTERN` regex:
+/// `/[\u{0000}-\u{001F}\u{007F}\u{0080}-\u{FFFF}\u{010000}-\u{10FFFF}]|"|\\/u`
 fn string_requires_expr_container(s: &str) -> bool {
     for c in s.chars() {
         let code = c as u32;
@@ -2503,9 +2556,45 @@ fn string_requires_expr_container(s: &str) -> bool {
     false
 }
 
+/// Check if a JSX text child requires wrapping in an expression container.
+///
+/// Matches the TS `JSX_TEXT_CHILD_REQUIRES_EXPR_CONTAINER_PATTERN` regex: `/[<>&{}]/`
+/// These characters have special meaning in JSX and cannot appear as raw text.
+fn jsx_text_child_requires_expr_container(s: &str) -> bool {
+    s.contains(['<', '>', '&', '{', '}'])
+}
+
 /// Render a JSX child element.
+///
+/// Matches TS `codegenJsxElement`: JSX text values that don't contain
+/// special chars (`<>&{}`) become `JSXText` nodes; JSX elements and
+/// fragments pass through directly; everything else is wrapped in a
+/// `JSXExpressionContainer`.
 fn codegen_jsx_child<'a>(cx: &CodegenContext<'a>, place: &Place) -> JSXChild<'a> {
-    todo!()
+    let value = codegen_place_to_expression(cx, place);
+    match value {
+        Expression::StringLiteral(lit) => {
+            // TS: JSXText children with special chars get wrapped in
+            // expression container as {"string"} instead of raw text
+            if jsx_text_child_requires_expr_container(&lit.value) {
+                let container = cx.ast.jsx_expression_container(
+                    SPAN,
+                    JSXExpression::StringLiteral(lit),
+                );
+                JSXChild::ExpressionContainer(cx.ast.alloc(container))
+            } else {
+                let text = cx.ast.jsx_text(SPAN, lit.value.clone(), None);
+                JSXChild::Text(cx.ast.alloc(text))
+            }
+        }
+        Expression::JSXElement(elem) => JSXChild::Element(elem),
+        Expression::JSXFragment(frag) => JSXChild::Fragment(frag),
+        _ => {
+            let container =
+                cx.ast.jsx_expression_container(SPAN, JSXExpression::from(value));
+            JSXChild::ExpressionContainer(cx.ast.alloc(container))
+        }
+    }
 }
 
 /// Convert a Place to an expression.
