@@ -198,6 +198,15 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `enableUseKeyedState` in the TS version.
     pub enable_use_keyed_state: bool,
+
+    /// Allow setState calls in effects when the value is derived from a ref.
+    ///
+    /// When true (default), setState calls in effects are exempted from the
+    /// `validateNoSetStateInEffects` validation if the first argument is derived
+    /// from a ref, or if the block is controlled by a ref-derived conditional.
+    ///
+    /// Corresponds to `enableAllowSetStateFromRefsInEffects` in the TS version.
+    pub enable_allow_set_state_from_refs_in_effects: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -236,6 +245,7 @@ impl Default for EnvironmentConfig {
             enable_treat_set_identifiers_as_state_setters: false,
             validate_blocklisted_imports: None,
             enable_use_keyed_state: false,
+            enable_allow_set_state_from_refs_in_effects: true,
         }
     }
 }
