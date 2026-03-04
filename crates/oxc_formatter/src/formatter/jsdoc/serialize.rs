@@ -1244,6 +1244,7 @@ pub(super) fn fenced_lang_to_external_language(lang: &str) -> Option<&'static st
         "html" => Some("tagged-html"),
         "graphql" | "gql" => Some("tagged-graphql"),
         "markdown" | "md" | "mdx" => Some("tagged-markdown"),
+        "yaml" | "yml" => Some("tagged-yaml"),
         _ => None,
     }
 }
@@ -1749,7 +1750,13 @@ fn format_type_name_comment_tag(
         let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
         let indent_width = wrap_width.saturating_sub(indent.len());
         let mut desc_lines = Vec::new();
-        wrap_text(desc_raw, indent_width, &mut desc_lines, Some(format_options), Some(external_callbacks));
+        wrap_text(
+            desc_raw,
+            indent_width,
+            &mut desc_lines,
+            Some(format_options),
+            Some(external_callbacks),
+        );
         // Skip leading blank line from wrap_text since we already added one
         let start = usize::from(desc_lines.first().is_some_and(String::is_empty));
         for line in &desc_lines[start..] {
@@ -1877,7 +1884,13 @@ fn format_type_name_comment_tag(
 
         if !full_remaining.trim().is_empty() {
             let mut desc_lines = Vec::new();
-            wrap_text(full_remaining.trim(), indent_width, &mut desc_lines, Some(format_options), Some(external_callbacks));
+            wrap_text(
+                full_remaining.trim(),
+                indent_width,
+                &mut desc_lines,
+                Some(format_options),
+                Some(external_callbacks),
+            );
 
             // In markdown, a list or table after a paragraph needs a blank line separator.
             // The plugin's markdown AST processing (remark) handles this naturally.
@@ -2019,7 +2032,13 @@ fn format_type_comment_tag(
         let indent = "  ";
         let indent_width = wrap_width.saturating_sub(indent.len());
         let mut desc_lines = Vec::new();
-        wrap_text(&desc_text, indent_width, &mut desc_lines, Some(format_options), Some(external_callbacks));
+        wrap_text(
+            &desc_text,
+            indent_width,
+            &mut desc_lines,
+            Some(format_options),
+            Some(external_callbacks),
+        );
         for dl in desc_lines {
             let mut s = String::with_capacity(indent.len() + dl.len());
             s.push_str(indent);
@@ -2070,7 +2089,13 @@ fn format_type_comment_tag(
         if remaining_start < words.len() {
             let remaining = join_words(&words[remaining_start..]);
             let mut desc_lines = Vec::new();
-            wrap_text(&remaining, indent_width, &mut desc_lines, Some(format_options), Some(external_callbacks));
+            wrap_text(
+                &remaining,
+                indent_width,
+                &mut desc_lines,
+                Some(format_options),
+                Some(external_callbacks),
+            );
             for dl in desc_lines {
                 let mut s = String::with_capacity(indent.len() + dl.len());
                 s.push_str(indent);
@@ -2165,7 +2190,13 @@ fn format_generic_tag(
         if remaining_start < words.len() {
             let remaining = join_words(&words[remaining_start..]);
             let mut desc_lines = Vec::new();
-            wrap_text(&remaining, indent_width, &mut desc_lines, Some(format_options), Some(external_callbacks));
+            wrap_text(
+                &remaining,
+                indent_width,
+                &mut desc_lines,
+                Some(format_options),
+                Some(external_callbacks),
+            );
             for dl in desc_lines {
                 let mut s = String::with_capacity(indent.len() + dl.len());
                 s.push_str(indent);

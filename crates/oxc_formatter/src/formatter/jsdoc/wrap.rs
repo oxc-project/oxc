@@ -373,7 +373,13 @@ mod tests {
     #[test]
     fn test_wrap_converts_code_fence_to_indented() {
         let mut lines = Vec::new();
-        wrap_text("Some text\n```\ncode here\n  indented\n```\nMore text", 80, &mut lines, None, None);
+        wrap_text(
+            "Some text\n```\ncode here\n  indented\n```\nMore text",
+            80,
+            &mut lines,
+            None,
+            None,
+        );
         // Fenced code without language tag is converted to indented code block.
         // The MDAST path preserves original indentation within the code block.
         assert_eq!(
