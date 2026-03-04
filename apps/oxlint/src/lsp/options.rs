@@ -24,7 +24,7 @@ pub enum Run {
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LintOptions {
-    pub run: Run, // TODO: the client wants maybe only the formatter, make it optional
+    pub run: Run,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
