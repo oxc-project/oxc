@@ -5,9 +5,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        options::{CompilationMode, PanicThreshold},
+        imports::validate_restricted_imports,
+        options::{CompilationMode, CompilerReactTarget, PanicThreshold},
         pipeline::{run_codegen, run_pipeline},
         program::{ErrorAction, handle_compilation_error, should_compile_function},
+        suppression::{
+            DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
+        },
     },
     hir::{
         NonLocalBinding,
@@ -17,7 +21,7 @@ use oxc_react_compiler::{
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -33,6 +37,17 @@ pub struct ReactCompilerOptions {
     pub compilation_mode: Option<String>,
     /// Panic threshold: "all_errors", "critical_errors", "none"
     pub panic_threshold: Option<String>,
+    /// Target React version: "react-17", "react-18", "react-19" (default)
+    ///
+    /// Controls which runtime module to import:
+    /// - "react-17" / "react-18" -> "react-compiler-runtime" (npm package)
+    /// - "react-19" (default)    -> "react/compiler-runtime" (from react namespace)
+    pub target: Option<String>,
+    /// ESLint suppression rules to check for when scanning for suppression comments.
+    /// Defaults to `["react-hooks/rules-of-hooks", "react-hooks/exhaustive-deps"]`.
+    pub eslint_suppression_rules: Option<Vec<String>>,
+    /// Whether to bail on Flow suppression comments. Defaults to `true`.
+    pub flow_suppressions: Option<bool>,
 }
 
 /// React Compiler transformer plugin.
@@ -43,7 +58,10 @@ pub struct ReactCompilerOptions {
 pub struct ReactCompiler {
     options: ReactCompilerOptions,
     panic_threshold: PanicThreshold,
+    target: CompilerReactTarget,
+    environment_config: EnvironmentConfig,
     outer_bindings: FxHashMap<String, NonLocalBinding>,
+    suppressions: Vec<SuppressionRange>,
 }
 
 /// Result of compiling a single function.
@@ -57,7 +75,15 @@ struct CompileResult<'a> {
 impl ReactCompiler {
     pub fn new(options: ReactCompilerOptions) -> Self {
         let panic_threshold = parse_panic_threshold(options.panic_threshold.as_deref());
-        Self { options, panic_threshold, outer_bindings: FxHashMap::default() }
+        let target = parse_target(options.target.as_deref());
+        Self {
+            options,
+            panic_threshold,
+            target,
+            environment_config: EnvironmentConfig::default(),
+            outer_bindings: FxHashMap::default(),
+            suppressions: Vec::new(),
+        }
     }
 
     pub fn enter_program<'a>(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -65,11 +91,14 @@ impl ReactCompiler {
             return;
         }
 
-        // Check for already-compiled marker import: `import { c } from "react/compiler-runtime"`.
+        let runtime_module = get_runtime_module(&self.target);
+
+        // Check for already-compiled marker import: `import { c } from "<runtime_module>"`.
         // If found, skip compilation entirely to prevent double-compilation.
+        // Port of `hasMemoCacheFunctionImport` from Program.ts.
         for stmt in program.body.iter() {
             if let Statement::ImportDeclaration(import) = stmt {
-                if import.source.value == "react/compiler-runtime" {
+                if import.source.value.as_str() == runtime_module {
                     return;
                 }
             }
@@ -82,6 +111,41 @@ impl ReactCompiler {
                 return;
             }
         }
+
+        // Validate restricted imports (port of validateRestrictedImports call in Program.ts).
+        if let Some(error) = validate_restricted_imports(
+            &program.body,
+            self.environment_config
+                .validate_blocklisted_imports
+                .as_deref(),
+        ) {
+            Self::report_compiler_error(
+                &error,
+                program.span,
+                self.panic_threshold,
+                ctx,
+            );
+            return;
+        }
+
+        // Find program-level suppression ranges from eslint-disable comments.
+        // Port of findProgramSuppressions call in Program.ts.
+        let rule_names: Vec<String> = self
+            .options
+            .eslint_suppression_rules
+            .clone()
+            .unwrap_or_else(|| {
+                DEFAULT_ESLINT_SUPPRESSION_RULES
+                    .iter()
+                    .map(|s| (*s).to_string())
+                    .collect()
+            });
+        self.suppressions = find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            Some(&rule_names),
+            self.options.flow_suppressions.unwrap_or(true),
+        );
 
         self.outer_bindings = collect_import_bindings(&program.body);
 
@@ -97,13 +161,13 @@ impl ReactCompiler {
             return;
         }
 
-        // Phase 2: Inject `import { c as _c } from "react/compiler-runtime"` if any
+        // Phase 2: Inject `import { c as _c } from "<runtime_module>"` if any
         // compiled function uses memo slots.
         let needs_memo_import = compiled_results.iter().any(|r| r.output.memo_slots_used > 0);
         if needs_memo_import {
             let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::Import);
             ctx.state.module_imports.add_named_import(
-                Atom::from("react/compiler-runtime"),
+                Atom::from(runtime_module),
                 Atom::from("c"),
                 binding,
                 false,
@@ -384,6 +448,16 @@ impl ReactCompiler {
             is_memo_or_forwardref_arg,
         )?;
 
+        // Check if any eslint-disable suppression range covers this function.
+        // Port of filterSuppressionsThatAffectFunction from Suppression.ts.
+        let affecting_suppressions =
+            filter_suppressions_that_affect_function(&self.suppressions, fallback_span);
+        if !affecting_suppressions.is_empty() {
+            let error = suppressions_to_compiler_error(&affecting_suppressions);
+            Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
+            return None;
+        }
+
         let environment =
             Environment::new(fn_type, CompilerOutputMode::Client, EnvironmentConfig::default());
 
@@ -507,6 +581,102 @@ fn parse_panic_threshold(threshold: Option<&str>) -> PanicThreshold {
         Some("critical_errors") => PanicThreshold::CriticalErrors,
         _ => PanicThreshold::None,
     }
+}
+
+/// Parse a target string into a `CompilerReactTarget`.
+///
+/// Maps string values to targets:
+/// - "react-17" / "17" -> React17
+/// - "react-18" / "18" -> React18
+/// - "react-19" / "19" (default) -> React19
+fn parse_target(target: Option<&str>) -> CompilerReactTarget {
+    match target {
+        Some("react-17") | Some("17") => CompilerReactTarget::React17,
+        Some("react-18") | Some("18") => CompilerReactTarget::React18,
+        _ => CompilerReactTarget::React19,
+    }
+}
+
+/// Get the runtime module name for the given target.
+///
+/// Port of `getReactCompilerRuntimeModule` from Program.ts.
+fn get_runtime_module(target: &CompilerReactTarget) -> &'static str {
+    match target {
+        CompilerReactTarget::React17 | CompilerReactTarget::React18 => "react-compiler-runtime",
+        CompilerReactTarget::React19 => "react/compiler-runtime",
+        CompilerReactTarget::MetaInternal { .. } => "react",
+    }
+}
+
+/// Filter suppression ranges to those that affect a given function span.
+///
+/// Port of `filterSuppressionsThatAffectFunction` from Suppression.ts.
+///
+/// A suppression affects a function if:
+/// 1. The suppression is within the function's body; or
+/// 2. The suppression wraps the function
+fn filter_suppressions_that_affect_function(
+    suppressions: &[SuppressionRange],
+    fn_span: Span,
+) -> Vec<&SuppressionRange> {
+    let fn_start = fn_span.start;
+    let fn_end = fn_span.end;
+
+    suppressions
+        .iter()
+        .filter(|s| {
+            let disable_start = s.start;
+
+            // The suppression is within the function
+            let within = disable_start > fn_start
+                && match s.end {
+                    None => true,
+                    Some(enable_end) => enable_end < fn_end,
+                };
+
+            // The suppression wraps the function
+            let wraps = disable_start < fn_start
+                && match s.end {
+                    None => true,
+                    Some(enable_end) => enable_end > fn_end,
+                };
+
+            within || wraps
+        })
+        .collect()
+}
+
+/// Convert suppression ranges that affect a function into a CompilerError.
+///
+/// Port of `suppressionsToCompilerError` from Suppression.ts.
+fn suppressions_to_compiler_error(suppressions: &[&SuppressionRange]) -> CompilerError {
+    use oxc_react_compiler::compiler_error::{
+        CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
+    };
+    use oxc_react_compiler::entrypoint::suppression::SuppressionSource;
+
+    let mut error = CompilerError::new();
+    for suppression in suppressions {
+        let reason = match suppression.source {
+            SuppressionSource::Eslint => {
+                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when it can safely apply React rules of hooks and other React rules."
+            }
+            SuppressionSource::Flow => {
+                "React Compiler has skipped optimizing this component because a Flow suppression was found."
+            }
+        };
+        error.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+            category: ErrorCategory::Todo,
+            reason: reason.to_string(),
+            description: None,
+            loc: Some(SourceLocation::Source(Span::new(
+                suppression.start,
+                suppression.end.unwrap_or(suppression.start),
+            ))),
+            suggestions: None,
+        }));
+    }
+    error
 }
 
 fn function_directives(function: &Function<'_>) -> Vec<String> {
