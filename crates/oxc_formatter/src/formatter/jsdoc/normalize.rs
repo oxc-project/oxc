@@ -248,7 +248,7 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
     let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
     // Phase 4: Format inline object type spacing (simulating Prettier's TS parser).
     // { key:value } → { key: value }
-    Cow::Owned(format_inline_object_type(&unquoted).into_owned())
+    Cow::Owned(fix_object_commas(&unquoted).into_owned())
 }
 
 /// Protect quoted strings during type transformation.
@@ -832,100 +832,42 @@ fn unquote_object_property_names(type_str: &str) -> Cow<'_, str> {
     Cow::Owned(result)
 }
 
-/// Format inline object types with proper spacing.
-/// `{foo:string}` → `{ foo: string }`
-/// Only handles single-level object types that don't contain newlines.
-fn format_inline_object_type(type_str: &str) -> Cow<'_, str> {
+/// Match upstream's `fixObjectCommas`: replace `; X` with `, X` in object types.
+/// Upstream regex: `/; ([A-z0-9_])/g` → `", $1"`
+fn fix_object_commas(type_str: &str) -> Cow<'_, str> {
+    // isAnObject: /^{.*[A-z0-9_]+ ?:.*}$/
     let trimmed = type_str.trim();
-    // Only apply to `{...}` patterns (not nested `{{...}}` which is handled by wrap_object_type)
-    if !trimmed.starts_with('{') || !trimmed.ends_with('}') || trimmed.contains('\n') {
+    if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
         return Cow::Borrowed(type_str);
     }
-
-    // Skip `{{ }}` double-brace types — these are handled by serialize.rs wrap_object_type
-    if trimmed.starts_with("{{") && trimmed.ends_with("}}") {
-        // Format the inner content of {{ }}
-        let inner = &trimmed[1..trimmed.len() - 1]; // Strip one level of braces
-        let formatted_inner = format_object_body(inner);
-        return Cow::Owned(format!("{{{formatted_inner}}}"));
+    // Check it contains a key-colon pattern
+    let inner = &trimmed[1..trimmed.len() - 1];
+    let has_field = inner.bytes().any(|b| b == b':');
+    if !has_field {
+        return Cow::Borrowed(type_str);
     }
-
-    // Single brace: format { key: value; ... }
-    format_object_body(trimmed)
-}
-
-/// Format an object type body `{ key: value; key2: value2 }` with proper spacing.
-fn format_object_body(obj_str: &str) -> Cow<'_, str> {
-    let trimmed = obj_str.trim();
-    if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
-        return Cow::Borrowed(obj_str);
+    // Replace `; X` with `, X` where X is [A-Za-z0-9_]
+    if !trimmed.contains("; ") {
+        return Cow::Borrowed(type_str);
     }
-
-    let inner = trimmed[1..trimmed.len() - 1].trim();
-    if inner.is_empty() {
-        return Cow::Borrowed("{}");
-    }
-
-    // Split at top-level `;` or `,`
-    let mut fields = Vec::new();
-    let mut depth = 0i32;
-    let mut start = 0;
-    let bytes = inner.as_bytes();
-    for (i, &b) in bytes.iter().enumerate() {
-        match b {
-            b'(' | b'<' | b'[' | b'{' => depth += 1,
-            b')' | b'>' | b']' | b'}' => depth -= 1,
-            b';' | b',' if depth == 0 => {
-                let field = inner[start..i].trim();
-                if !field.is_empty() {
-                    fields.push(field);
-                }
-                start = i + 1;
-            }
-            _ => {}
+    // Do the replacement
+    let mut result = String::with_capacity(trimmed.len());
+    let bytes = trimmed.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if i + 2 < bytes.len()
+            && bytes[i] == b';'
+            && bytes[i + 1] == b' '
+            && (bytes[i + 2].is_ascii_alphanumeric() || bytes[i + 2] == b'_')
+        {
+            result.push(',');
+            // keep the space and next char
+        } else {
+            result.push(bytes[i] as char);
         }
+        i += 1;
     }
-    let last = inner[start..].trim();
-    if !last.is_empty() {
-        fields.push(last);
-    }
-
-    if fields.is_empty() {
-        return Cow::Owned(format!("{{ {inner} }}"));
-    }
-
-    // Format each field: ensure space after `:` in key-value pairs
-    let formatted_fields: Vec<Cow<'_, str>> = fields
-        .iter()
-        .map(|field| {
-            // Find the `:` separating key from value (skip `:` inside nested types)
-            let mut fd = 0i32;
-            let fb = field.as_bytes();
-            for (i, &b) in fb.iter().enumerate() {
-                match b {
-                    b'(' | b'<' | b'[' | b'{' => fd += 1,
-                    b')' | b'>' | b']' | b'}' => fd -= 1,
-                    b':' if fd == 0 => {
-                        let key = field[..i].trim();
-                        let value = field[i + 1..].trim();
-                        return Cow::Owned(format!("{key}: {value}"));
-                    }
-                    _ => {}
-                }
-            }
-            Cow::Borrowed(*field)
-        })
-        .collect();
-
-    // Use `;` delimiter for consistency
-    let mut body = String::new();
-    for (i, f) in formatted_fields.iter().enumerate() {
-        if i > 0 {
-            body.push_str("; ");
-        }
-        body.push_str(f);
-    }
-    Cow::Owned(format!("{{ {body} }}"))
+    Cow::Owned(result)
 }
 
 /// Fast check: is the type expression already whitespace-normalized?
