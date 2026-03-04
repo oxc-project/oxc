@@ -420,9 +420,7 @@ pub fn get_parent_component<'a, 'b>(
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
     let prefix = match &jsx_mem_expr.object {
         JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
-        JSXMemberExpressionObject::MemberExpression(mem_expr) => {
-            Cow::Owned(format!("{}.{}", get_jsx_mem_expr_name(mem_expr), mem_expr.property.name))
-        }
+        JSXMemberExpressionObject::MemberExpression(mem_expr) => get_jsx_mem_expr_name(mem_expr),
         JSXMemberExpressionObject::ThisExpression(_) => Cow::Borrowed("this"),
     };
 
@@ -846,6 +844,7 @@ mod test {
                 "this.Modal",
             ),
             ("const App = () => <fbt:param />", "fbt:param"),
+            ("const App = () => <App.Foo.Bar.Baz />", "App.Foo.Bar.Baz"),
         ];
 
         for (source, expected) in cases {
