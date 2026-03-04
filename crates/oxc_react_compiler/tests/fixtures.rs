@@ -8,8 +8,9 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_codegen::{Context, Gen};
-use oxc_react_compiler::entrypoint::options::{CompilationMode, PanicThreshold};
+use oxc_react_compiler::entrypoint::options::{CompilationMode, OPT_OUT_DIRECTIVES, PanicThreshold};
 use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
+use oxc_react_compiler::entrypoint::program::should_compile_function;
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
@@ -1148,6 +1149,7 @@ fn run_pipeline_for_codegen_impl(
         &PragmaDefaults { compilation_mode: CompilationMode::All },
     );
     let env_config = plugin_options.environment;
+    let compilation_mode = plugin_options.compilation_mode;
 
     // Collect module-scope import bindings from the program body.
     // These are used by the HIR builder to correctly resolve renamed imports
@@ -1252,158 +1254,6 @@ fn run_pipeline_for_codegen_impl(
         }
     }
 
-    /// Check if a function body directly calls hooks or creates JSX.
-    /// This mirrors the TS reference's `callsHooksOrCreatesJsx()`, which traverses
-    /// the function body but skips nested function declarations/expressions/arrows.
-    /// A function is classified as a Component only if it directly uses JSX or hooks.
-    fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
-        use oxc_ast::ast::{Expression, Statement};
-
-        fn check_expr(expr: &Expression) -> bool {
-            match expr {
-                // JSX
-                Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                // Hook calls: call expressions where callee is a hook name
-                Expression::CallExpression(call) => {
-                    let is_hook = match &call.callee {
-                        Expression::Identifier(id) => {
-                            oxc_react_compiler::utils::hook_declaration::is_hook_name(&id.name)
-                        }
-                        Expression::StaticMemberExpression(member) => {
-                            oxc_react_compiler::utils::hook_declaration::is_hook_name(
-                                &member.property.name,
-                            )
-                        }
-                        _ => false,
-                    };
-                    if is_hook {
-                        return true;
-                    }
-                    // Check arguments (but not nested functions in them)
-                    for arg in &call.arguments {
-                        if let Some(e) = arg.as_expression() {
-                            // Skip function expressions/arrows in arguments
-                            if !matches!(
-                                e,
-                                Expression::FunctionExpression(_)
-                                    | Expression::ArrowFunctionExpression(_)
-                            ) && check_expr(e)
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                    // Check callee (but skip if it's a function expression)
-                    if !matches!(
-                        &call.callee,
-                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-                    ) {
-                        check_expr(&call.callee)
-                    } else {
-                        false
-                    }
-                }
-                // Skip nested functions entirely
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => false,
-                // Recurse into other expressions
-                Expression::ParenthesizedExpression(paren) => check_expr(&paren.expression),
-                Expression::SequenceExpression(seq) => {
-                    seq.expressions.iter().any(|e| check_expr(e))
-                }
-                Expression::ConditionalExpression(cond) => {
-                    check_expr(&cond.test)
-                        || check_expr(&cond.consequent)
-                        || check_expr(&cond.alternate)
-                }
-                Expression::LogicalExpression(log) => {
-                    check_expr(&log.left) || check_expr(&log.right)
-                }
-                Expression::BinaryExpression(bin) => {
-                    check_expr(&bin.left) || check_expr(&bin.right)
-                }
-                Expression::UnaryExpression(un) => check_expr(&un.argument),
-                Expression::AssignmentExpression(assign) => check_expr(&assign.right),
-                Expression::TaggedTemplateExpression(tag) => check_expr(&tag.tag),
-                Expression::TemplateLiteral(tl) => tl.expressions.iter().any(|e| check_expr(e)),
-                Expression::ArrayExpression(arr) => {
-                    arr.elements.iter().any(|el| el.as_expression().is_some_and(|e| check_expr(e)))
-                }
-                Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
-                    if let oxc_ast::ast::ObjectPropertyKind::ObjectProperty(p) = prop {
-                        check_expr(&p.value)
-                    } else {
-                        false
-                    }
-                }),
-                Expression::StaticMemberExpression(member) => check_expr(&member.object),
-                Expression::ComputedMemberExpression(member) => {
-                    check_expr(&member.object) || check_expr(&member.expression)
-                }
-                // SpreadElement is not an Expression variant in oxc
-                Expression::AwaitExpression(aw) => check_expr(&aw.argument),
-                Expression::YieldExpression(y) => {
-                    y.argument.as_ref().is_some_and(|a| check_expr(a))
-                }
-                _ => false,
-            }
-        }
-
-        fn check_stmt(stmt: &Statement) -> bool {
-            match stmt {
-                // Skip nested function declarations
-                Statement::FunctionDeclaration(_) => false,
-                Statement::ExpressionStatement(es) => check_expr(&es.expression),
-                Statement::ReturnStatement(ret) => {
-                    ret.argument.as_ref().is_some_and(|e| check_expr(e))
-                }
-                Statement::VariableDeclaration(decl) => {
-                    decl.declarations.iter().any(|d| d.init.as_ref().is_some_and(|e| check_expr(e)))
-                }
-                Statement::IfStatement(ifs) => {
-                    check_expr(&ifs.test)
-                        || check_stmt(&ifs.consequent)
-                        || ifs.alternate.as_ref().is_some_and(|a| check_stmt(a))
-                }
-                Statement::BlockStatement(block) => block.body.iter().any(|s| check_stmt(s)),
-                Statement::ForStatement(f) => check_stmt(&f.body),
-                Statement::ForInStatement(f) => check_stmt(&f.body),
-                Statement::ForOfStatement(f) => check_stmt(&f.body),
-                Statement::WhileStatement(w) => check_stmt(&w.body),
-                Statement::DoWhileStatement(d) => check_stmt(&d.body),
-                Statement::SwitchStatement(s) => {
-                    s.cases.iter().any(|c| c.consequent.iter().any(|stmt| check_stmt(stmt)))
-                }
-                Statement::TryStatement(t) => {
-                    t.block.body.iter().any(|s| check_stmt(s))
-                        || t.handler
-                            .as_ref()
-                            .is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s)))
-                        || t.finalizer
-                            .as_ref()
-                            .is_some_and(|f| f.body.iter().any(|s| check_stmt(s)))
-                }
-                Statement::ThrowStatement(throw) => check_expr(&throw.argument),
-                Statement::LabeledStatement(l) => check_stmt(&l.body),
-                _ => false,
-            }
-        }
-
-        match func {
-            LowerableFunction::Function(f) => {
-                if let Some(body) = &f.body {
-                    body.statements.iter().any(|stmt| check_stmt(stmt))
-                } else {
-                    false
-                }
-            }
-            LowerableFunction::ArrowFunction(a) => {
-                // For expression arrows, the parser stores the expression as a
-                // single ExpressionStatement in body.statements, so this works
-                // uniformly.
-                a.body.statements.iter().any(|stmt| check_stmt(stmt))
-            }
-        }
-    }
 
     for stmt in &parser_result.program.body {
         use oxc_ast::ast::{Declaration, Expression, Statement, VariableDeclarationKind};
@@ -1547,64 +1397,38 @@ fn run_pipeline_for_codegen_impl(
     let mut last_err = String::new();
     let mut last_success: Option<(CodegenResult, Option<WrapperInfo>)> = None;
     for (func, candidate_name, wrapper) in candidates {
-        // Skip candidates with opt-out directives ('use no forget', 'use no memo'),
-        // UNLESS @ignoreUseNoForget is set in the pragma.
-        // These functions should not be compiled; try the next candidate instead.
-        // This matches the TS test harness behavior where functions with opt-out
-        // directives are passed through unchanged and compilation continues to
-        // the next function in the file.
-        if !ignore_use_no_forget {
-            let has_opt_out = match &func {
-                LowerableFunction::Function(f) => f.body.as_ref().map_or(false, |body| {
-                    body.directives.iter().any(|d| {
-                        d.expression.value == "use no forget" || d.expression.value == "use no memo"
-                    })
-                }),
-                LowerableFunction::ArrowFunction(f) => f.body.directives.iter().any(|d| {
-                    d.expression.value == "use no forget" || d.expression.value == "use no memo"
-                }),
-            };
-            if has_opt_out {
-                continue;
+        // Collect directives from the function body.
+        let directives: Vec<String> = match &func {
+            LowerableFunction::Function(f) => f.body.as_ref().map_or_else(Vec::new, |body| {
+                body.directives.iter().map(|d| d.directive.to_string()).collect()
+            }),
+            LowerableFunction::ArrowFunction(f) => {
+                f.body.directives.iter().map(|d| d.directive.to_string()).collect()
             }
-        }
+        };
 
-        // Infer function type from the function name, matching the TS compiler behavior.
-        // The TS reference's `getComponentOrHookLike()` checks:
-        // 1. Name starts with uppercase (component) or "use" (hook)
-        // 2. `callsHooksOrCreatesJsx()` returns true (has JSX or hook calls in direct body)
-        // 3. Valid component params (at most 1 param)
-        // If the name looks like a component but has no JSX/hooks in the direct body,
-        // the function type falls back to 'Other' in compilation mode 'all'.
-        //
-        // Additionally, for function/arrow expressions inside React.memo() or
-        // React.forwardRef(), the TS reference uses `isForwardRefCallback`/`isMemoCallback`
-        // as a fallback, classifying them as 'Component' if they have JSX/hooks.
+        // When @ignoreUseNoForget is set, filter out opt-out directives so that
+        // should_compile_function won't skip the function. This matches the TS
+        // reference's `ignoreUseNoForget` option (Program.ts line 570).
+        let directives: Vec<String> = if ignore_use_no_forget {
+            directives
+                .into_iter()
+                .filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str()))
+                .collect()
+        } else {
+            directives
+        };
+
         let is_wrapped = wrapper.is_some();
-        let fn_type = match candidate_name.as_deref() {
-            Some(n) if oxc_react_compiler::utils::hook_declaration::is_hook_name(n) => {
-                if calls_hooks_or_creates_jsx(&func) {
-                    ReactFunctionType::Hook
-                } else {
-                    ReactFunctionType::Other
-                }
-            }
-            Some(n) if oxc_react_compiler::utils::component_declaration::is_component_name(n) => {
-                if calls_hooks_or_creates_jsx(&func) {
-                    ReactFunctionType::Component
-                } else {
-                    ReactFunctionType::Other
-                }
-            }
-            _ => {
-                // For memo/forwardRef-wrapped functions without a component/hook name,
-                // classify as Component if they have JSX/hooks (matches TS reference).
-                if is_wrapped && calls_hooks_or_creates_jsx(&func) {
-                    ReactFunctionType::Component
-                } else {
-                    ReactFunctionType::Other
-                }
-            }
+        let fn_type = match should_compile_function(
+            &func,
+            candidate_name.as_deref(),
+            &directives,
+            compilation_mode,
+            is_wrapped,
+        ) {
+            Some(ft) => ft,
+            None => continue,
         };
 
         let env = Environment::new(fn_type, CompilerOutputMode::Client, env_config.clone());
