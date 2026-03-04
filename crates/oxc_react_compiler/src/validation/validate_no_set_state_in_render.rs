@@ -121,20 +121,29 @@ fn validate_impl(
                                 }),
                             );
                         } else if is_unconditional {
+                            let description = if func.env.config.enable_use_keyed_state {
+                                "Calling setState during render may trigger an infinite loop.\n\
+                                 * To reset state when other state/props change, use \
+                                 `const [state, setState] = useKeyedState(initialState, key)` \
+                                 to reset `state` when `key` changes.\n\
+                                 * To derive data from other state/props, compute the derived \
+                                 data during render without using state"
+                                    .to_string()
+                            } else {
+                                "Calling setState during render may trigger an infinite loop.\n\
+                                 * To reset state when other state/props change, store the \
+                                 previous value in state and update conditionally: \
+                                 https://react.dev/reference/react/useState\
+                                 #storing-information-from-previous-renders\n\
+                                 * To derive data from other state/props, compute the derived \
+                                 data during render without using state"
+                                    .to_string()
+                            };
                             errors.push_diagnostic(
                                 CompilerDiagnostic::create(
                                     ErrorCategory::RenderSetState,
                                     "Cannot call setState during render".to_string(),
-                                    Some(
-                                        "Calling setState during render may trigger an infinite loop.\n\
-                                         * To reset state when other state/props change, store the \
-                                         previous value in state and update conditionally: \
-                                         https://react.dev/reference/react/useState\
-                                         #storing-information-from-previous-renders\n\
-                                         * To derive data from other state/props, compute the derived \
-                                         data during render without using state"
-                                            .to_string(),
-                                    ),
+                                    Some(description),
                                     None,
                                 )
                                 .with_detail(CompilerDiagnosticDetail::Error {

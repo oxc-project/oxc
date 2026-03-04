@@ -163,6 +163,13 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     }
                 }
             }
+            "enableUseKeyedState" => {
+                env_config.enable_use_keyed_state = parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableVerboseNoSetStateInEffect" => {
+                env_config.enable_verbose_no_set_state_in_effect =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "validateNoCapitalizedCalls" => {
                 // When the pragma is present (with or without value), enable the
                 // validation with an empty allow list. The TS config uses an array

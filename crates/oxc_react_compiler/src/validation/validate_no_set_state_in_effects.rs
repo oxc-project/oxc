@@ -84,29 +84,57 @@ pub fn validate_no_set_state_in_effects(func: &HIRFunction) -> CompilerError {
                         && let Some(CallArg::Place(arg)) = args.first()
                         && let Some(set_state) = set_state_functions.get(&arg.identifier.id)
                     {
+                        let enable_verbose =
+                            func.env.config.enable_verbose_no_set_state_in_effect;
+                        let description = if enable_verbose {
+                            "Effects are intended to synchronize state between \
+                             React and external systems. Calling setState \
+                             synchronously causes cascading renders that hurt \
+                             performance.\n\n\
+                             This pattern may indicate one of several issues:\n\n\
+                             **1. Non-local derived data**: If the value being \
+                             set could be computed from props/state but requires \
+                             data from a parent component, consider restructuring \
+                             state ownership so the derivation can happen during \
+                             render in the component that owns the relevant \
+                             state.\n\n\
+                             **2. Derived event pattern**: If you're detecting \
+                             when a prop changes (e.g., `isPlaying` transitioning \
+                             from false to true), this often indicates the parent \
+                             should provide an event callback (like `onPlay`) \
+                             instead of just the current state. Request access to \
+                             the original event.\n\n\
+                             **3. Force update / external sync**: If you're \
+                             forcing a re-render to sync with an external data \
+                             source (mutable values outside React), use \
+                             `useSyncExternalStore` to properly subscribe to \
+                             external state changes.\n\n\
+                             See: https://react.dev/learn/you-might-not-need-an-effect"
+                                .to_string()
+                        } else {
+                            "Effects are intended to synchronize state between \
+                             React and external systems such as manually updating \
+                             the DOM, state management libraries, or other \
+                             platform APIs. In general, the body of an effect \
+                             should do one or both of the following:\n\
+                             * Update external systems with the latest state from \
+                             React.\n\
+                             * Subscribe for updates from some external system, \
+                             calling setState in a callback function when external \
+                             state changes.\n\n\
+                             Calling setState synchronously within an effect body \
+                             causes cascading renders that can hurt performance, \
+                             and is not recommended. \
+                             (https://react.dev/learn/you-might-not-need-an-effect)"
+                                .to_string()
+                        };
                         errors.push_diagnostic(
                             CompilerDiagnostic::create(
                                 ErrorCategory::EffectSetState,
                                 "Calling setState synchronously within an effect can \
-                                         trigger cascading renders"
+                                 trigger cascading renders"
                                     .to_string(),
-                                Some(
-                                    "Effects are intended to synchronize state between \
-                                             React and external systems such as manually updating \
-                                             the DOM, state management libraries, or other \
-                                             platform APIs. In general, the body of an effect \
-                                             should do one or both of the following:\n\
-                                             * Update external systems with the latest state from \
-                                             React.\n\
-                                             * Subscribe for updates from some external system, \
-                                             calling setState in a callback function when external \
-                                             state changes.\n\n\
-                                             Calling setState synchronously within an effect body \
-                                             causes cascading renders that can hurt performance, \
-                                             and is not recommended. \
-                                             (https://react.dev/learn/you-might-not-need-an-effect)"
-                                        .to_string(),
-                                ),
+                                Some(description),
                                 None,
                             )
                             .with_detail(
