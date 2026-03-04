@@ -227,6 +227,10 @@ impl JsdocTestRunner {
         if json.get("bracket_spacing").and_then(serde_json::Value::as_bool) == Some(true) {
             options.bracket_spacing = true;
         }
+        if json.get("single_line_when_possible").and_then(serde_json::Value::as_bool) == Some(false)
+        {
+            options.single_line_when_possible = false;
+        }
         if json.get("single_quote").and_then(serde_json::Value::as_bool) == Some(true) {
             quote_style = QuoteStyle::Single;
         }

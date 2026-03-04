@@ -729,6 +729,7 @@ pub fn format_jsdoc_comment<'a>(
 
     // Format tags
     let mut prev_normalized_kind: Option<&str> = None;
+    let mut first_non_import_tag_emitted = false;
     for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
         // Skip @import tags — they are handled via merged import_lines
         if normalized_kind == "import" {
@@ -745,7 +746,7 @@ pub fn format_jsdoc_comment<'a>(
             continue;
         }
 
-        let is_first_tag = tag_idx == 0 && !imports_emitted;
+        let is_first_tag = !first_non_import_tag_emitted && !imports_emitted;
 
         let should_capitalize = options.capitalize_descriptions
             && !should_skip_capitalize(normalized_kind)
@@ -787,6 +788,7 @@ pub fn format_jsdoc_comment<'a>(
             }
         }
 
+        first_non_import_tag_emitted = true;
         prev_normalized_kind = Some(normalized_kind);
 
         // Track content before formatting this tag
@@ -1316,7 +1318,8 @@ pub(super) fn format_embedded_js(
     print_width: usize,
     format_options: &FormatOptions,
 ) -> Option<String> {
-    let line_width = LineWidth::try_from(u16::try_from(print_width).unwrap_or(80)).unwrap();
+    let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
+    let line_width = LineWidth::try_from(width).unwrap();
 
     // Build options from parent, overriding line_width and disabling JSDoc
     // to prevent recursive formatting
