@@ -6,7 +6,7 @@
 use std::path::Path;
 
 use oxc_react_compiler::entrypoint::options::{CompilationMode, PanicThreshold};
-use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
@@ -1559,7 +1559,17 @@ fn run_pipeline_for_codegen_impl(
             }
         };
 
-        match run_pipeline(&mut hir_func, &env) {
+        let pipeline_output = match run_pipeline(&mut hir_func, &env) {
+            Ok(output) => output,
+            Err(e) => {
+                last_err = format!("Pipeline: {e:?}");
+                if num_candidates == 1 || return_first_error {
+                    return Err(last_err);
+                }
+                continue;
+            }
+        };
+        match run_codegen(pipeline_output, &env) {
             Ok(result) => {
                 if return_first_error {
                     // In error-fixture conformance mode, a successful compilation
@@ -1574,7 +1584,7 @@ fn run_pipeline_for_codegen_impl(
                 return Ok((result, wrapper));
             }
             Err(e) => {
-                last_err = format!("Pipeline: {e:?}");
+                last_err = format!("Codegen: {e:?}");
                 // Return the error immediately if:
                 // - there is only one candidate (most common case), OR
                 // - `return_first_error` is set (error-fixture conformance mode, where

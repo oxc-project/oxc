@@ -378,7 +378,7 @@ mod logger_tests {
 /// The expected output should have console.log(x) OUTSIDE the scope guard.
 #[test]
 fn test_console_readonly_output() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
     use oxc_react_compiler::hir::ReactFunctionType;
     use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
     use oxc_react_compiler::hir::environment::{
@@ -422,7 +422,8 @@ fn test_console_readonly_output() {
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
-    let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let result = run_codegen(pipeline_output, &env).expect("Codegen failed");
     let output = format!("{result}");
 
     // The console.log(x) call should be OUTSIDE the scope guard.
@@ -464,7 +465,7 @@ fn test_console_readonly_output() {
 /// produced context variables to be pruned even when those variables escaped.
 #[test]
 fn test_context_variable_reactive_scopes() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
     use oxc_react_compiler::hir::ReactFunctionType;
     use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
     use oxc_react_compiler::hir::environment::{
@@ -508,7 +509,8 @@ fn test_context_variable_reactive_scopes() {
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
             .expect("Lower failed");
-    let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let result = run_codegen(pipeline_output, &env).expect("Codegen failed");
 
     // The expected output should have _c(2) and a reactive scope
     assert_eq!(
@@ -610,7 +612,7 @@ fn test_console_method_type_resolution() {
 
 #[test]
 fn test_context_variable_debug() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
     use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
     use oxc_react_compiler::hir::environment::{
         CompilerOutputMode, Environment, EnvironmentConfig,
@@ -659,7 +661,7 @@ fn test_context_variable_debug() {
 
     // Run pipeline - we need to intercept at specific points
     // First let's just run the full pipeline and check mutable ranges
-    let result = run_pipeline(&mut hir_func, &env);
+    let pipeline_result = run_pipeline(&mut hir_func, &env);
 
     // Print all instructions with mutable ranges and scopes
     println!("=== After full pipeline ===");
@@ -794,8 +796,9 @@ fn test_context_variable_debug() {
         println!("  Block {} -> {}", block_id.0, terminal_type);
     }
 
-    match result {
-        Ok(codegen_func) => {
+    match pipeline_result {
+        Ok(pipeline_output) => {
+            let codegen_func = run_codegen(pipeline_output, &env).expect("Codegen failed");
             let output = format!("{codegen_func}");
             println!("=== Codegen output ===\n{output}");
             assert!(
