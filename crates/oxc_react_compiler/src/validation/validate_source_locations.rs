@@ -7,7 +7,7 @@
 use crate::compiler_error::{
     CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
 };
-use crate::reactive_scopes::codegen_reactive_function::CodegenFunction;
+use crate::reactive_scopes::codegen_reactive_function::CodegenOutput;
 
 /// Validate that source locations are preserved in the output.
 ///
@@ -15,17 +15,7 @@ use crate::reactive_scopes::codegen_reactive_function::CodegenFunction;
 /// Returns a `CompilerError` with a Todo diagnostic when source location
 /// validation is enabled, since the Rust port does not yet fully implement
 /// source-location tracking in the generated AST.
-pub fn validate_source_locations(_codegen: &CodegenFunction) -> Result<(), CompilerError> {
-    // The full implementation (in the TS reference) traverses the original AST
-    // and the generated AST, collecting source locations for "important"
-    // instrumented node types (ExpressionStatement, Identifier, etc.), and
-    // verifies that every important location from the original appears in the
-    // generated output with the correct node type.
-    //
-    // The Rust port does not yet track source locations in the same way, so we
-    // unconditionally report a Todo error when the pragma is enabled. This
-    // ensures test fixtures that expect a source-location error still fail
-    // compilation, matching the TS reference behavior.
+pub fn validate_source_locations(_codegen: &CodegenOutput<'_>) -> Result<(), CompilerError> {
     let mut errors = CompilerError::new();
     errors.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
         category: ErrorCategory::Todo,
