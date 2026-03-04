@@ -574,6 +574,16 @@ impl ReactiveVisitor for MemoCounter {
 // =====================================================================================
 
 /// Create a try-finally statement that wraps `stmts` with hook guard calls.
+///
+/// Produces:
+/// ```js
+/// try {
+///   guardFn(before);
+///   ...stmts
+/// } finally {
+///   guardFn(after);
+/// }
+/// ```
 fn create_hook_guard<'a>(
     cx: &CodegenContext<'a>,
     guard_fn_name: &str,
@@ -581,7 +591,33 @@ fn create_hook_guard<'a>(
     before: GuardKind,
     after: GuardKind,
 ) -> Statement<'a> {
-    todo!()
+    // Build: guardFn(before)
+    let before_args = cx.ast.vec1(Argument::from(make_number(cx, before as u8 as f64)));
+    let before_call = make_call(cx, make_id(cx, guard_fn_name), before_args);
+    let before_stmt = make_expr_stmt(cx, before_call);
+
+    // Build try block: { guardFn(before); ...stmts }
+    let mut try_stmts = cx.ast.vec_with_capacity(1 + stmts.len());
+    try_stmts.push(before_stmt);
+    try_stmts.extend(stmts);
+    let try_block = stmts_to_block_body(cx, try_stmts);
+
+    // Build: guardFn(after)
+    let after_args = cx.ast.vec1(Argument::from(make_number(cx, after as u8 as f64)));
+    let after_call = make_call(cx, make_id(cx, guard_fn_name), after_args);
+    let after_stmt = make_expr_stmt(cx, after_call);
+
+    // Build finally block: { guardFn(after); }
+    let finally_stmts = cx.ast.vec1(after_stmt);
+    let finally_block = stmts_to_block_body(cx, finally_stmts);
+
+    // Build try-finally statement (no catch handler)
+    cx.ast.statement_try(
+        SPAN,
+        try_block,
+        None::<oxc_allocator::Box<'_, CatchClause<'_>>>,
+        Some(finally_block),
+    )
 }
 
 /// Check if an identifier represents a hook by looking up its type in the shape registry.
@@ -600,13 +636,91 @@ fn get_hook_kind(shapes: &ShapeRegistry, identifier: &crate::hir::Identifier) ->
 
 /// Create a call expression, optionally wrapping hook calls in an IIFE with
 /// try-finally hook guards.
+///
+/// When hook guards are enabled and this is a hook call, wraps like:
+/// ```js
+/// (() => {
+///   try {
+///     guardFn(2); // AllowHook
+///     return hookCall(args);
+///   } finally {
+///     guardFn(3); // DisallowHook
+///   }
+/// })()
+/// ```
 fn create_call_expression<'a>(
     cx: &mut CodegenContext<'a>,
     callee: Expression<'a>,
     args: AVec<'a, Argument<'a>>,
     is_hook: bool,
 ) -> Expression<'a> {
-    todo!()
+    let call = make_call(cx, callee, args);
+
+    // If no hook guard needed, return the call directly
+    let Some(ref guard_fn) = cx.enable_emit_hook_guards else {
+        return call;
+    };
+    if !is_hook {
+        return call;
+    }
+
+    // Hook guard wrapping: (() => { try { guardFn(2); return callExpr; } finally { guardFn(3); } })()
+    let guard_name = cx.synthesize_name(&guard_fn.import_specifier_name.clone());
+
+    // Build: guardFn(2)
+    let before_args =
+        cx.ast.vec1(Argument::from(make_number(cx, GuardKind::AllowHook as u8 as f64)));
+    let before_call = make_call(cx, make_id(cx, &guard_name), before_args);
+    let before_stmt = make_expr_stmt(cx, before_call);
+
+    // Build: return callExpr
+    let return_stmt = make_return(cx, Some(call));
+
+    // Build try block: { guardFn(2); return callExpr; }
+    let try_stmts = cx.ast.vec_from_array([before_stmt, return_stmt]);
+    let try_block = stmts_to_block_body(cx, try_stmts);
+
+    // Build: guardFn(3)
+    let after_args =
+        cx.ast.vec1(Argument::from(make_number(cx, GuardKind::DisallowHook as u8 as f64)));
+    let after_call = make_call(cx, make_id(cx, &guard_name), after_args);
+    let after_stmt = make_expr_stmt(cx, after_call);
+
+    // Build finally block: { guardFn(3); }
+    let finally_stmts = cx.ast.vec1(after_stmt);
+    let finally_block = stmts_to_block_body(cx, finally_stmts);
+
+    // Build try-finally statement
+    let try_stmt = cx.ast.statement_try(
+        SPAN,
+        try_block,
+        None::<oxc_allocator::Box<'_, CatchClause<'_>>>,
+        Some(finally_block),
+    );
+
+    // Build arrow function body
+    let arrow_body_stmts = cx.ast.vec1(try_stmt);
+    let arrow_body = cx.ast.alloc_function_body(SPAN, cx.ast.vec(), arrow_body_stmts);
+
+    // Build arrow: () => { try { ... } finally { ... } }
+    let arrow = cx.ast.expression_arrow_function(
+        SPAN,
+        false,
+        false,
+        NONE,
+        cx.ast.formal_parameters(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            cx.ast.vec(),
+            NONE,
+        ),
+        NONE,
+        arrow_body,
+    );
+
+    // Build IIFE: (() => { ... })()
+    let wrapped = cx.ast.expression_parenthesized(SPAN, arrow);
+    make_call(cx, wrapped, cx.ast.vec())
 }
 
 // =====================================================================================
@@ -878,15 +992,33 @@ fn codegen_place_to_expression<'a>(
     cx: &CodegenContext<'a>,
     place: &Place,
 ) -> Expression<'a> {
-    todo!()
+    let decl_id = place.identifier.declaration_id;
+    if let Some(expr) = resolve_temp(cx, decl_id) {
+        return expr;
+    }
+
+    // TS invariant: convertIdentifier checks that the identifier has a name.
+    // If unnamed, this is an invariant violation indicating the identifier
+    // was not promoted by an earlier pass (PromoteUsedTemporaries).
+    if place.identifier.name.is_none() {
+        cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+            "Expected temporaries to be promoted to named identifiers in an earlier pass",
+            Some(&format!("identifier {} is unnamed.", place.identifier.id.0)),
+            crate::compiler_error::GENERATED_SOURCE,
+        ));
+    }
+    let name = identifier_name(&place.identifier);
+    make_id(cx, &name)
 }
 
 /// Convert a Place to an expression WITHOUT wrapping assignment expressions.
+/// With AST-based codegen, there is no string-level paren wrapping needed,
+/// so this is identical to `codegen_place_to_expression`.
 fn codegen_place_to_expression_raw<'a>(
     cx: &CodegenContext<'a>,
     place: &Place,
 ) -> Expression<'a> {
-    todo!()
+    codegen_place_to_expression(cx, place)
 }
 
 /// Get the string name of an identifier.
@@ -898,11 +1030,13 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
 }
 
 /// Generate a sequence expression for ExpressionStatement context.
+/// With AST-based codegen, parenthesization decisions are handled by oxc_codegen,
+/// so this delegates directly to `codegen_reactive_value_to_expression`.
 fn codegen_sequence_for_expr_stmt<'a>(
     cx: &mut CodegenContext<'a>,
     value: &ReactiveValue,
 ) -> Expression<'a> {
-    todo!()
+    codegen_reactive_value_to_expression(cx, value)
 }
 
 /// Generate a label string from a BlockId.
@@ -915,7 +1049,23 @@ fn codegen_primitive<'a>(
     cx: &CodegenContext<'a>,
     value: &PrimitiveValueKind,
 ) -> Expression<'a> {
-    todo!()
+    match value {
+        PrimitiveValueKind::Number(n) => {
+            let n = *n;
+            if n == 0.0 && n.is_sign_negative() {
+                // -0 => just 0 (matching the old codegen behavior)
+                make_number(cx, 0.0)
+            } else if n < 0.0 {
+                make_unary(cx, UnaryOperator::UnaryNegation, make_number(cx, -n))
+            } else {
+                make_number(cx, n)
+            }
+        }
+        PrimitiveValueKind::Boolean(b) => make_bool(cx, *b),
+        PrimitiveValueKind::String(s) => make_string(cx, s),
+        PrimitiveValueKind::Null => make_null(cx),
+        PrimitiveValueKind::Undefined => make_undefined(cx),
+    }
 }
 
 /// Escape special characters in a double-quoted string literal.
@@ -974,7 +1124,14 @@ fn codegen_member_access<'a>(
     object: Expression<'a>,
     property: &crate::hir::types::PropertyLiteral,
 ) -> Expression<'a> {
-    todo!()
+    match property {
+        crate::hir::types::PropertyLiteral::String(name) => {
+            make_member(cx, object, name)
+        }
+        crate::hir::types::PropertyLiteral::Number(n) => {
+            make_computed_member(cx, object, make_number(cx, *n as f64))
+        }
+    }
 }
 
 /// Check if a string is a valid JavaScript identifier name.
@@ -1049,7 +1206,34 @@ fn codegen_dependency<'a>(
     cx: &CodegenContext<'a>,
     dep: &ReactiveScopeDependency,
 ) -> Expression<'a> {
-    todo!()
+    let name = identifier_name(&dep.identifier);
+    let mut result: Expression<'a> = make_id(cx, &name);
+    for entry in &dep.path {
+        match &entry.property {
+            crate::hir::types::PropertyLiteral::String(name) => {
+                if entry.optional {
+                    // object?.property - optional member expression
+                    let ident = cx.ast.identifier_name(SPAN, cx.ast.atom(name.as_str()));
+                    result = Expression::from(
+                        cx.ast.member_expression_static(SPAN, result, ident, true),
+                    );
+                } else {
+                    result = make_member(cx, result, name);
+                }
+            }
+            crate::hir::types::PropertyLiteral::Number(n) => {
+                let index = make_number(cx, *n as f64);
+                if entry.optional {
+                    result = Expression::from(
+                        cx.ast.member_expression_computed(SPAN, result, index, true),
+                    );
+                } else {
+                    result = make_computed_member(cx, result, index);
+                }
+            }
+        }
+    }
+    result
 }
 
 /// Generate the init part of a for statement.
@@ -1074,7 +1258,14 @@ fn codegen_for_of_collection<'a>(
     cx: &mut CodegenContext<'a>,
     init: &ReactiveValue,
 ) -> Expression<'a> {
-    todo!()
+    if let ReactiveValue::Sequence(seq) = init
+        && let Some(first) = seq.instructions.first()
+        && let ReactiveValue::Instruction(boxed) = &first.value
+        && let InstructionValue::GetIterator(iter) = boxed.as_ref()
+    {
+        return codegen_place_to_expression(cx, &iter.collection);
+    }
+    codegen_reactive_value_to_expression(cx, init)
 }
 
 /// Extract left and collection for for-in from the init value.
@@ -1090,7 +1281,12 @@ fn codegen_for_in_collection<'a>(
     cx: &mut CodegenContext<'a>,
     init: &ReactiveValue,
 ) -> Expression<'a> {
-    todo!()
+    if let ReactiveValue::Sequence(seq) = init
+        && let Some(first) = seq.instructions.first()
+    {
+        return codegen_reactive_value_to_expression(cx, &first.value);
+    }
+    codegen_reactive_value_to_expression(cx, init)
 }
 
 /// Compare two scope dependencies for deterministic ordering.
