@@ -214,6 +214,43 @@ node_modules
     }
   });
 
+  it("should migrate prettier-plugin-svelte options to svelte", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          plugins: ["prettier-plugin-svelte"],
+          svelteSortOrder: "options-scripts-styles-markup",
+          svelteIndentScriptAndStyle: true,
+          svelteStrictMode: true,
+          svelteAllowShorthand: false,
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      expect(oxfmtrc.svelte).toEqual({
+        sortOrder: "options-scripts-styles-markup",
+        indentScriptAndStyle: true,
+        strictMode: true,
+        allowShorthand: false,
+      });
+      // Svelte options should not be at root level
+      expect(oxfmtrc.svelteSortOrder).toBeUndefined();
+      expect(oxfmtrc.svelteIndentScriptAndStyle).toBeUndefined();
+      // plugins should not be copied
+      expect(oxfmtrc.plugins).toBeUndefined();
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it("should disable sortPackageJson by default", async () => {
     const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
 

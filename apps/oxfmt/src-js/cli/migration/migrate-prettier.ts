@@ -68,6 +68,9 @@ export async function runMigratePrettier() {
         if (plugin === "prettier-plugin-tailwindcss") {
           // Migrate `prettier-plugin-tailwindcss` options
           migrateTailwindOptions(prettierConfig!, oxfmtrc);
+        } else if (plugin === "prettier-plugin-svelte") {
+          // Migrate `prettier-plugin-svelte` options
+          migrateSvelteOptions(prettierConfig!, oxfmtrc);
         } else if (plugin === "prettier-plugin-packagejson") {
           hasSortPackageJsonPlugin = true;
         } else if (typeof plugin === "string") {
@@ -91,6 +94,10 @@ export async function runMigratePrettier() {
 
     // Skip Tailwind options - handled separately by migrateTailwindOptions
     if (key.startsWith("tailwind")) {
+      continue;
+    }
+    // Skip Svelte options - handled separately by migrateSvelteOptions
+    if (key.startsWith("svelte")) {
       continue;
     }
 
@@ -170,6 +177,53 @@ async function resolvePrettierIgnore(cwd: string) {
   } catch {}
 
   return ignores;
+}
+
+// ---
+
+const SVELTE_OPTION_MAPPING: Record<string, string> = {
+  sortOrder: "svelteSortOrder",
+  strictMode: "svelteStrictMode",
+  allowShorthand: "svelteAllowShorthand",
+  indentScriptAndStyle: "svelteIndentScriptAndStyle",
+};
+
+/**
+ * Migrate prettier-plugin-svelte options to Oxfmt's svelte format.
+ *
+ * Prettier format:
+ * ```json
+ * {
+ *   "plugins": ["prettier-plugin-svelte"],
+ *   "svelteSortOrder": "options-scripts-styles-markup",
+ *   "svelteIndentScriptAndStyle": true
+ * }
+ * ```
+ *
+ * Oxfmt format:
+ * ```json
+ * {
+ *   "svelte": {
+ *     "sortOrder": "options-scripts-styles-markup",
+ *     "indentScriptAndStyle": true
+ *   }
+ * }
+ * ```
+ */
+function migrateSvelteOptions(
+  prettierConfig: Record<string, unknown>,
+  oxfmtrc: Record<string, unknown>,
+): void {
+  const svelteOptions: Record<string, unknown> = {};
+  for (const [oxfmtKey, prettierKey] of Object.entries(SVELTE_OPTION_MAPPING)) {
+    const value = prettierConfig[prettierKey];
+    if (value !== undefined) {
+      svelteOptions[oxfmtKey] = value;
+    }
+  }
+
+  oxfmtrc.svelte = svelteOptions;
+  console.log("Migrated prettier-plugin-svelte options to svelte");
 }
 
 // ---
