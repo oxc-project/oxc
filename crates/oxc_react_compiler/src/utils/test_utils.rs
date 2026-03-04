@@ -5,7 +5,7 @@
 /// Provides utilities for parsing test configuration pragmas from
 /// fixture files and setting up the compiler for test execution.
 use crate::entrypoint::options::{
-    CompilationMode, DynamicGatingOptions, PanicThreshold, PluginOptions,
+    CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold, PluginOptions,
 };
 use crate::hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 
@@ -215,6 +215,21 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     // @dynamicGating with no value — not valid, ignore
                 }
             }
+            "target" => {
+                if let Some(val) = &entry.value {
+                    // Strip surrounding quotes to match TS tryParseTestPragmaValue
+                    let stripped = val.trim_matches('"');
+                    options.target = match stripped {
+                        "17" => CompilerReactTarget::React17,
+                        "18" => CompilerReactTarget::React18,
+                        "19" => CompilerReactTarget::React19,
+                        "donotuse_meta_internal" => CompilerReactTarget::MetaInternal {
+                            runtime_module: "react".to_string(),
+                        },
+                        _ => CompilerReactTarget::React19,
+                    };
+                }
+            }
             _ => {
                 // Unknown pragma — ignore
             }
@@ -381,5 +396,54 @@ mod tests {
             &PragmaDefaults { compilation_mode: CompilationMode::Infer },
         );
         assert_eq!(options.environment.enable_reset_cache_on_source_file_changes, Some(true));
+    }
+
+    #[test]
+    fn parses_target_react17() {
+        let options = parse_config_pragma_for_tests(
+            "@target:\"17\"",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        assert_eq!(options.target, CompilerReactTarget::React17);
+    }
+
+    #[test]
+    fn parses_target_react18() {
+        let options = parse_config_pragma_for_tests(
+            "@target:\"18\"",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        assert_eq!(options.target, CompilerReactTarget::React18);
+    }
+
+    #[test]
+    fn parses_target_react19() {
+        let options = parse_config_pragma_for_tests(
+            "@target:\"19\"",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        assert_eq!(options.target, CompilerReactTarget::React19);
+    }
+
+    #[test]
+    fn parses_target_meta_internal() {
+        let options = parse_config_pragma_for_tests(
+            "@target:\"donotuse_meta_internal\"",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        assert_eq!(
+            options.target,
+            CompilerReactTarget::MetaInternal { runtime_module: "react".to_string() }
+        );
+    }
+
+    #[test]
+    fn parses_target_without_value_keeps_default() {
+        let options = parse_config_pragma_for_tests(
+            "@target",
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
+        );
+        // No value provided — target stays at default (React19)
+        assert_eq!(options.target, CompilerReactTarget::React19);
     }
 }
