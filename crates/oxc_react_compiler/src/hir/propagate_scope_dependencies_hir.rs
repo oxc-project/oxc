@@ -1215,7 +1215,7 @@ fn collect_dependencies(
                         // function), so each function level needs its own set to
                         // avoid false-positive deferrals.
                         let inner_opt_chain =
-                            super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(inner_func)?;
+                            super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(inner_func);
                         let saved_processed = std::mem::replace(
                             &mut context.processed_instrs_in_optional,
                             inner_opt_chain.processed_instrs_in_optional,
@@ -1303,7 +1303,7 @@ pub fn propagate_scope_dependencies_hir(
 
     // Collect optional chain sidemap
     let opt_chain =
-        super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func)?;
+        super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func);
 
     // Merge temporaries with optional chain temporaries.
     //

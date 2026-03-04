@@ -69,153 +69,26 @@ struct OptionalTraversalContext {
     hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency>,
     /// See `OptionalChainSidemap::intermediate_optional_results`.
     intermediate_optional_results: FxHashSet<IdentifierId>,
-    /// Accumulated Todo error from traversal. In TS, throwTodo immediately halts;
-    /// in Rust we capture the error and check it after traversal completes.
-    error: Option<crate::compiler_error::CompilerError>,
 }
 
 /// Collect optional chain sidemap from the function.
 ///
 /// Port of `collectOptionalChainSidemap` from the TS reference.
-pub fn collect_optional_chain_sidemap(
-    func: &HIRFunction,
-) -> Result<OptionalChainSidemap, crate::compiler_error::CompilerError> {
+pub fn collect_optional_chain_sidemap(func: &HIRFunction) -> OptionalChainSidemap {
     let mut context = OptionalTraversalContext {
         seen_optionals: FxHashSet::default(),
         processed_instrs_in_optional: FxHashSet::default(),
         temporaries_read_in_optional: FxHashMap::default(),
         hoistable_objects: FxHashMap::default(),
         intermediate_optional_results: FxHashSet::default(),
-        error: None,
     };
     traverse_function(func, &mut context);
-    if let Some(err) = context.error {
-        return Err(err);
-    }
-    Ok(OptionalChainSidemap {
+    OptionalChainSidemap {
         temporaries_read_in_optional: context.temporaries_read_in_optional,
         processed_instrs_in_optional: context.processed_instrs_in_optional,
         hoistable_objects: context.hoistable_objects,
         intermediate_optional_results: context.intermediate_optional_results,
-    })
-}
-
-/// Recursively trace an identifier through LoadLocal and StoreLocal targets to
-/// determine if it ultimately resolves to an optional-chain result.
-///
-/// Call args may not directly be in `temporaries_read_in_optional`; they may be
-/// LoadLocals of slots that were populated by StoreLocals of the optional-chain
-/// results. This function traces through those indirections.
-fn arg_is_opt_chain_result(
-    id: IdentifierId,
-    identifier_to_value: &FxHashMap<IdentifierId, &InstructionValue>,
-    store_local_targets: &FxHashMap<IdentifierId, IdentifierId>,
-    phi_result_to_operands: &FxHashMap<IdentifierId, Vec<IdentifierId>>,
-    temporaries_read_in_optional: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-    depth: u32,
-) -> bool {
-    if depth == 0 {
-        return false;
     }
-    // Direct check: is this id itself an optional-chain result?
-    if temporaries_read_in_optional.contains_key(&id) {
-        return true;
-    }
-    // Trace through instruction result (e.g. LoadLocal loading an opt-chain result slot)
-    if let Some(instr) = identifier_to_value.get(&id) {
-        if let InstructionValue::LoadLocal(v) = instr {
-            return arg_is_opt_chain_result(
-                v.place.identifier.id,
-                identifier_to_value,
-                store_local_targets,
-                phi_result_to_operands,
-                temporaries_read_in_optional,
-                depth - 1,
-            );
-        }
-    }
-    // Trace through StoreLocal: if id is a variable slot written by a StoreLocal
-    if let Some(&stored_value_id) = store_local_targets.get(&id) {
-        return arg_is_opt_chain_result(
-            stored_value_id,
-            identifier_to_value,
-            store_local_targets,
-            phi_result_to_operands,
-            temporaries_read_in_optional,
-            depth - 1,
-        );
-    }
-    // Trace through phi nodes
-    if let Some(operand_ids) = phi_result_to_operands.get(&id) {
-        return operand_ids.iter().any(|op_id| {
-            arg_is_opt_chain_result(
-                *op_id,
-                identifier_to_value,
-                store_local_targets,
-                phi_result_to_operands,
-                temporaries_read_in_optional,
-                depth - 1,
-            )
-        });
-    }
-    false
-}
-
-/// Count how many args of the call identified by `id` are opt-chain results.
-///
-/// Traces through LoadLocal/StoreLocal/phi chains to find the underlying call
-/// expression, then counts how many arguments are (or trace to) opt-chain results
-/// in `temporaries_read_in_optional`.
-///
-/// Returns 0 if `id` does not ultimately trace to a CallExpression or MethodCall.
-fn count_opt_chain_args_in_call(
-    id: IdentifierId,
-    identifier_to_value: &FxHashMap<IdentifierId, &InstructionValue>,
-    store_local_targets: &FxHashMap<IdentifierId, IdentifierId>,
-    phi_result_to_operands: &FxHashMap<IdentifierId, Vec<IdentifierId>>,
-    temporaries_read_in_optional: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
-) -> usize {
-    use super::hir_types::CallArg;
-    let mut current = id;
-    for _ in 0..6 {
-        if let Some(instr) = identifier_to_value.get(&current) {
-            let args: Option<&[CallArg]> = match instr {
-                InstructionValue::CallExpression(c) => Some(&c.args),
-                InstructionValue::MethodCall(c) => Some(&c.args),
-                InstructionValue::LoadLocal(v) => {
-                    current = v.place.identifier.id;
-                    continue;
-                }
-                _ => break,
-            };
-            if let Some(args) = args {
-                return args
-                    .iter()
-                    .filter(|arg| {
-                        let arg_id = match arg {
-                            CallArg::Place(p) => p.identifier.id,
-                            CallArg::Spread(s) => s.place.identifier.id,
-                        };
-                        arg_is_opt_chain_result(
-                            arg_id,
-                            identifier_to_value,
-                            store_local_targets,
-                            phi_result_to_operands,
-                            temporaries_read_in_optional,
-                            6,
-                        )
-                    })
-                    .count();
-            }
-        } else if let Some(&stored) = store_local_targets.get(&current) {
-            current = stored;
-        } else if let Some(ops) = phi_result_to_operands.get(&current) {
-            current = *ops.first().unwrap_or(&current);
-        } else {
-            break;
-        }
-    }
-    0
 }
 
 /// Traverse a function and all its inner functions to collect optional chain
@@ -225,41 +98,7 @@ fn count_opt_chain_args_in_call(
 fn traverse_function(func: &HIRFunction, context: &mut OptionalTraversalContext) {
     let blocks = &func.body.blocks;
 
-    // Build maps for the post-loop check that detects a(b?.c, d?.e)?.f patterns.
-    //
-    // `identifier_to_value`: maps instruction result id to the InstructionValue
-    //   e.g. for `$tmp = call(f, args)`, maps $tmp.id → CallExpression(...)
-    //
-    // `store_local_targets`: maps StoreLocal target variable id to the value id being stored
-    //   e.g. for `x = $tmp` (StoreLocal), maps x.id → $tmp.id
-    //   This is needed because LoadLocal(x) loads the value stored in x, which was put
-    //   there by a StoreLocal. The instruction result of StoreLocal is a different temporary.
-    //
-    // `phi_result_to_operands`: maps phi result id to its operand ids
-    //   After EnterSSA, values may flow through phi nodes.
-    let mut identifier_to_value: FxHashMap<IdentifierId, &InstructionValue> = FxHashMap::default();
-    let mut store_local_targets: FxHashMap<IdentifierId, IdentifierId> = FxHashMap::default();
-    let mut phi_result_to_operands: FxHashMap<IdentifierId, Vec<IdentifierId>> =
-        FxHashMap::default();
     for block in blocks.values() {
-        for instr in &block.instructions {
-            identifier_to_value.insert(instr.lvalue.identifier.id, &instr.value);
-            if let InstructionValue::StoreLocal(sl) = &instr.value {
-                // Map the target variable to the value being stored into it
-                store_local_targets.insert(sl.lvalue.place.identifier.id, sl.value.identifier.id);
-            }
-        }
-        for phi in &block.phis {
-            let operand_ids: Vec<IdentifierId> =
-                phi.operands.values().map(|p| p.identifier.id).collect();
-            phi_result_to_operands.insert(phi.place.identifier.id, operand_ids);
-        }
-    }
-
-    for block in blocks.values() {
-        if context.error.is_some() {
-            return;
-        }
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::FunctionExpression(v) => {
@@ -288,76 +127,6 @@ fn traverse_function(func: &HIRFunction, context: &mut OptionalTraversalContext)
             && !context.seen_optionals.contains(&block.id)
         {
             traverse_optional_block(block, opt, context, None, blocks);
-        }
-    }
-
-    if context.error.is_some() {
-        return;
-    }
-
-    // Post-loop check: detect the pattern a(b?.c, d?.e)?.f where an Optional chain's
-    // base is a call expression with MULTIPLE optional-chain arguments.
-    //
-    // Background: In the TS HIR, this pattern causes `traverseOptionalBlock` to throw
-    // a Todo error because the inner arguments (b?.c, d?.e) produce nested Optional
-    // terminals inside the outer optional's test block — the fallthrough of the first
-    // inner optional (b?.c) has another Optional terminal (d?.e), not a Branch.
-    //
-    // In the Rust HIR, the lowering is different: b?.c and d?.e are processed into
-    // separate Optional blocks, and their phi results feed into a Branch in the
-    // fallthrough block (not another Optional). This means the in-traversal check
-    // (lines in `traverse_optional_block`) does NOT fire for this pattern in Rust.
-    //
-    // We detect the pattern post-loop (after all optionals are processed so
-    // `temporaries_read_in_optional` is fully populated) by checking whether the
-    // call in the branch test has two or more optional-chain arguments.
-    //
-    // The threshold of >= 2 is key:
-    // - `identity(prop1?.value)?.toString()` has exactly 1 opt-chain arg → NOT an error
-    //   (In TS HIR, the fallthrough of prop1?.value's Optional is Branch directly)
-    // - `createArray(value?.x, value?.y)?.join(', ')` has 2 opt-chain args → IS an error
-    //   (In TS HIR, the fallthrough of value?.x's Optional is another Optional for value?.y)
-    //
-    // Structural signature in the Rust HIR:
-    //   Optional block B (test=T):
-    //     T.terminal = Optional(inner_opt)         [inner_opt starts the first inner optional chain]
-    //     inner_opt.fallthrough = FB               [FB tests the call result]
-    //     FB.terminal = Branch(test=callResult)    [callResult is from a call with 2+ opt-chain args]
-    for block in blocks.values() {
-        if context.error.is_some() {
-            break;
-        }
-        let opt = match &block.terminal {
-            Terminal::Optional(opt) => opt,
-            _ => continue,
-        };
-        let Some(maybe_test) = blocks.get(&opt.test) else { continue };
-        let inner_opt = match &maybe_test.terminal {
-            Terminal::Optional(inner_opt) => inner_opt,
-            _ => continue,
-        };
-        let Some(fallthrough_block) = blocks.get(&inner_opt.fallthrough) else { continue };
-        let branch_test_id = match &fallthrough_block.terminal {
-            Terminal::Branch(b) => b.test.identifier.id,
-            _ => continue,
-        };
-        // Only trigger when the call has 2 or more optional-chain arguments.
-        // A single opt-chain arg (e.g. `identity(prop1?.value)?.toString()`) compiles
-        // fine and does NOT correspond to the TS error case.
-        if count_opt_chain_args_in_call(
-            branch_test_id,
-            &identifier_to_value,
-            &store_local_targets,
-            &phi_result_to_operands,
-            &context.temporaries_read_in_optional,
-        ) >= 2
-        {
-            context.error = Some(crate::compiler_error::CompilerError::todo(
-                "Unexpected terminal kind `optional` for optional fallthrough block",
-                None,
-                maybe_test.terminal.loc(),
-            ));
-            break;
         }
     }
 }
@@ -436,34 +205,6 @@ fn match_optional_test_block(
         })
     } else {
         None
-    }
-}
-
-/// Returns the lowercase kind name of a terminal, matching TS `terminal.kind`.
-fn terminal_kind_name(terminal: &Terminal) -> &'static str {
-    match terminal {
-        Terminal::Unsupported(_) => "unsupported",
-        Terminal::Unreachable(_) => "unreachable",
-        Terminal::Throw(_) => "throw",
-        Terminal::Return(_) => "return",
-        Terminal::Goto(_) => "goto",
-        Terminal::If(_) => "if",
-        Terminal::Branch(_) => "branch",
-        Terminal::Switch(_) => "switch",
-        Terminal::For(_) => "for",
-        Terminal::ForOf(_) => "for-of",
-        Terminal::ForIn(_) => "for-in",
-        Terminal::DoWhile(_) => "do-while",
-        Terminal::While(_) => "while",
-        Terminal::Logical(_) => "logical",
-        Terminal::Ternary(_) => "ternary",
-        Terminal::Optional(_) => "optional",
-        Terminal::Label(_) => "label",
-        Terminal::Sequence(_) => "sequence",
-        Terminal::MaybeThrow(_) => "maybe-throw",
-        Terminal::Try(_) => "try",
-        Terminal::Scope(_) => "scope",
-        Terminal::PrunedScope(_) => "pruned-scope",
     }
 }
 
@@ -587,26 +328,10 @@ fn traverse_optional_block(
             let test_block = blocks.get(&inner_opt.fallthrough)?;
             let inner_branch = match &test_block.terminal {
                 Terminal::Branch(b) => b,
-                other => {
-                    // Port of TS: CompilerError.throwTodo at CollectOptionalChainDependencies.ts:293-303
-                    // The TS throws a Todo when the fallthrough block's terminal is not `branch`.
-                    // In the Rust HIR, try-catch wrapping generates a `MaybeThrow` terminal in
-                    // the optional's fallthrough block — this is a HIR-level difference from the
-                    // TS compiler and should NOT produce a user-facing error. Only emit the Todo
-                    // for `Optional` terminals, which represents the actual nested
-                    // optional-in-optional case that the TS compiler also encounters.
-                    if matches!(other, Terminal::Optional(_)) {
-                        let kind_name = terminal_kind_name(other);
-                        context.error = Some(crate::compiler_error::CompilerError::todo(
-                            &format!(
-                                "Unexpected terminal kind `{kind_name}` for optional fallthrough block",
-                            ),
-                            None,
-                            maybe_test.terminal.loc(),
-                        ));
-                    }
-                    return None;
-                }
+                // The TS reference returns null for non-hoistable chains when the
+                // fallthrough terminal is not a Branch (e.g. another Optional or
+                // MaybeThrow). No error is emitted — the chain is simply not tracked.
+                _ => return None,
             };
 
             // Recurse into inner optional blocks to collect inner optional-chain
