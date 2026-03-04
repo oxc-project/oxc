@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 9025
 expression: snapshot
 ---
-Error fixture conformance: 273/277 (98.6%)
+Error fixture conformance: 277/281 (98.6%)
 Flow files skipped: 17
 
 Failure breakdown:

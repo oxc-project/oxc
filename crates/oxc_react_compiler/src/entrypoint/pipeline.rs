@@ -1,7 +1,9 @@
+use rustc_hash::FxHashSet;
+
 use crate::{
     compiler_error::CompilerError,
     hir::{
-        HIRFunction, ReactiveFunction,
+        HIRFunction, IdentifierId, ReactFunctionType, ReactiveFunction,
         environment::{CompilerOutputMode, Environment},
     },
     inference::infer_mutation_aliasing_effects::InferOptions,
@@ -16,23 +18,48 @@ pub enum CompilerPipelineValue {
     Hir { name: String, value: Box<HIRFunction> },
     /// A reactive function (intermediate stage).
     Reactive { name: String, value: ReactiveFunction },
-    /// A compiled output function.
-    Ast { name: String, value: CodegenFunction },
+    /// Analysis output ready for codegen.
+    Analyzed { name: String, value: PipelineOutput },
     /// A debug string representation.
     Debug { name: String, value: String },
 }
 
-/// Run the compiler pipeline on a function.
+/// Output of the analysis pipeline, ready for codegen.
+#[derive(Debug)]
+pub struct PipelineOutput {
+    /// The processed reactive function.
+    pub reactive_function: ReactiveFunction,
+    /// Unique identifiers from RenameVariables.
+    pub unique_identifiers: FxHashSet<String>,
+    /// FBT operand identifiers from MemoizeFbt.
+    pub fbt_operands: FxHashSet<IdentifierId>,
+    /// Pre-processed outlined functions (each went through the analysis sub-pipeline).
+    pub outlined: Vec<OutlinedPipelineOutput>,
+}
+
+/// Analysis output for a single outlined function.
+#[derive(Debug)]
+pub struct OutlinedPipelineOutput {
+    /// The processed reactive function.
+    pub reactive_function: ReactiveFunction,
+    /// Unique identifiers from RenameVariables.
+    pub unique_identifiers: FxHashSet<String>,
+    /// The function type of the outlined function.
+    pub fn_type: Option<ReactFunctionType>,
+}
+
+/// Run the analysis pipeline on a function (everything except codegen).
 ///
-/// This is the main entry point for compilation. It takes a lowered HIR function
-/// and runs all analysis, optimization, and codegen passes in the correct order.
+/// This is the main entry point for analysis. It takes a lowered HIR function
+/// and runs all analysis, optimization, and reactive scope passes in the correct
+/// order, returning a `PipelineOutput` that can be passed to `run_codegen()`.
 ///
 /// # Errors
 /// Returns a `CompilerError` if any pass fails.
 pub fn run_pipeline(
     func: &mut HIRFunction,
     env: &Environment,
-) -> Result<CodegenFunction, CompilerError> {
+) -> Result<PipelineOutput, CompilerError> {
     // =========================================================================
     // Phase 1: HIR-level passes
     // =========================================================================
@@ -335,7 +362,7 @@ pub fn run_pipeline(
     crate::hir::propagate_scope_dependencies_hir::propagate_scope_dependencies_hir(func)?;
 
     // =========================================================================
-    // Phase 4: Build reactive function (HIR → Reactive tree)
+    // Phase 4: Build reactive function (HIR -> Reactive tree)
     // =========================================================================
 
     // 37. BuildReactiveFunction
@@ -417,35 +444,10 @@ pub fn run_pipeline(
     }
 
     // =========================================================================
-    // Phase 6: Codegen
+    // Process outlined functions (analysis sub-pipeline only)
     // =========================================================================
-
-    // 50. CodegenFunction
-    let fbt_operands_for_outlined = fbt_operands.clone();
-    let enable_reset_cache =
-        func.env.config.enable_reset_cache_on_source_file_changes == Some(true);
-    let source_code = func.env.code.clone();
-    let codegen_options = CodegenOptions {
-        unique_identifiers,
-        fbt_operands,
-        enable_reset_cache_on_source_file_changes: enable_reset_cache,
-        code: source_code,
-        enable_emit_hook_guards: func.env.config.enable_emit_hook_guards.clone(),
-        enable_emit_instrument_forget: func.env.config.enable_emit_instrument_forget.clone(),
-        fn_id: reactive_function.id.clone(),
-        filename: func.env.filename.clone(),
-        output_mode: func.env.output_mode,
-        shapes: func.env.shapes.clone(),
-        enable_name_anonymous_functions: func.env.config.enable_name_anonymous_functions,
-    };
-    let mut ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
-        &reactive_function,
-        codegen_options,
-    )?;
-
-    // 51. Process outlined functions
-    // Each outlined function goes through a sub-pipeline: build reactive function,
-    // prune unused labels/lvalues, prune hoisted contexts, rename variables, and codegen.
+    // Each outlined function goes through: build reactive function,
+    // prune unused labels/lvalues, prune hoisted contexts, and rename variables.
     let mut outlined = Vec::new();
     for entry in func.env.get_outlined_functions() {
         let mut outlined_reactive =
@@ -455,29 +457,79 @@ pub fn run_pipeline(
         crate::reactive_scopes::prune::prune_hoisted_contexts(&mut outlined_reactive)?;
         let outlined_identifiers =
             crate::reactive_scopes::rename_variables::rename_variables(&mut outlined_reactive);
-        let outlined_codegen_options = CodegenOptions {
+        outlined.push(OutlinedPipelineOutput {
+            reactive_function: outlined_reactive,
             unique_identifiers: outlined_identifiers,
+            fn_type: entry.fn_type,
+        });
+    }
+
+    Ok(PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined })
+}
+
+/// Run the codegen phase on the output of `run_pipeline()`.
+///
+/// Takes the analysis output and the environment, and produces the final
+/// `CodegenFunction` with all outlined functions attached.
+///
+/// # Errors
+/// Returns a `CompilerError` if codegen or post-codegen validation fails.
+pub fn run_codegen(
+    pipeline_output: PipelineOutput,
+    env: &Environment,
+) -> Result<CodegenFunction, CompilerError> {
+    let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined } =
+        pipeline_output;
+
+    // 50. CodegenFunction
+    let fbt_operands_for_outlined = fbt_operands.clone();
+    let enable_reset_cache =
+        env.config.enable_reset_cache_on_source_file_changes == Some(true);
+    let source_code = env.code.clone();
+    let codegen_options = CodegenOptions {
+        unique_identifiers,
+        fbt_operands,
+        enable_reset_cache_on_source_file_changes: enable_reset_cache,
+        code: source_code,
+        enable_emit_hook_guards: env.config.enable_emit_hook_guards.clone(),
+        enable_emit_instrument_forget: env.config.enable_emit_instrument_forget.clone(),
+        fn_id: reactive_function.id.clone(),
+        filename: env.filename.clone(),
+        output_mode: env.output_mode,
+        shapes: env.shapes.clone(),
+        enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
+    };
+    let mut ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
+        &reactive_function,
+        codegen_options,
+    )?;
+
+    // 51. Codegen outlined functions
+    let mut outlined_fns = Vec::new();
+    for entry in outlined {
+        let outlined_codegen_options = CodegenOptions {
+            unique_identifiers: entry.unique_identifiers,
             fbt_operands: fbt_operands_for_outlined.clone(),
             enable_reset_cache_on_source_file_changes: false,
             code: None,
-            enable_emit_hook_guards: func.env.config.enable_emit_hook_guards.clone(),
+            enable_emit_hook_guards: env.config.enable_emit_hook_guards.clone(),
             enable_emit_instrument_forget: None,
             fn_id: None,
             filename: None,
-            output_mode: func.env.output_mode,
-            shapes: func.env.shapes.clone(),
-            enable_name_anonymous_functions: func.env.config.enable_name_anonymous_functions,
+            output_mode: env.output_mode,
+            shapes: env.shapes.clone(),
+            enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
         };
         let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
-            &outlined_reactive,
+            &entry.reactive_function,
             outlined_codegen_options,
         )?;
-        outlined.push(crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
+        outlined_fns.push(crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
             fn_: outlined_ast,
             fn_type: entry.fn_type,
         });
     }
-    ast.outlined = outlined;
+    ast.outlined = outlined_fns;
 
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
