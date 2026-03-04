@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 /// Lookup table of pre-allocated indent strings (0–12 spaces).
 /// Avoids `" ".repeat(n)` heap allocations for common indent widths.
 const INDENTS: [&str; 13] = [
@@ -26,94 +24,6 @@ pub fn indent_str(n: usize) -> std::borrow::Cow<'static, str> {
     } else {
         std::borrow::Cow::Owned(" ".repeat(n))
     }
-}
-
-/// Result of parsing a list item prefix.
-struct ListItemPrefix {
-    /// Width for continuation indentation
-    indent_width: usize,
-    /// Whether this is a numbered (ordered) list item
-    is_numbered: bool,
-    /// The rest of the line after the prefix (trimmed)
-    rest_start: usize,
-}
-
-/// Check if a line starts a list item and return parsing info.
-/// Returns Some for list items, None for non-list lines.
-fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
-    // Markdown unordered list items: "- ", "* ", "+ "
-    if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
-        return Some(ListItemPrefix { indent_width: 2, is_numbered: false, rest_start: 2 });
-    }
-    // Markdown ordered list items: "1. ", "2. ", "1- ", etc.
-    if let Some(first) = trimmed.chars().next()
-        && first.is_ascii_digit()
-    {
-        // Try "N. " format first
-        if let Some(dot_space_pos) = trimmed.find(". ")
-            && dot_space_pos < 5
-        {
-            let number = &trimmed[..dot_space_pos];
-            if number.chars().all(|c| c.is_ascii_digit()) {
-                let rest_start = dot_space_pos + 2;
-                return Some(ListItemPrefix {
-                    indent_width: number.len() + 2,
-                    is_numbered: true,
-                    rest_start,
-                });
-            }
-        }
-        // Try "N- " format (non-standard, convert to "N. ")
-        if let Some(dash_pos) = trimmed.find('-')
-            && dash_pos < 5
-        {
-            let number = &trimmed[..dash_pos];
-            if number.chars().all(|c| c.is_ascii_digit()) {
-                // Skip past dash and any extra spaces
-                let after_dash = &trimmed[dash_pos + 1..];
-                let spaces = after_dash.len() - after_dash.trim_start().len();
-                let rest_start = dash_pos + 1 + spaces;
-                return Some(ListItemPrefix {
-                    indent_width: number.len() + 2,
-                    is_numbered: true,
-                    rest_start,
-                });
-            }
-        }
-    }
-    None
-}
-
-/// Simple check for list item (returns just the indent width for compatibility).
-fn list_item_indent(trimmed: &str) -> Option<usize> {
-    parse_list_item(trimmed).map(|p| p.indent_width)
-}
-
-/// Check if a line is a table line (starts with |)
-fn is_table_line(trimmed: &str) -> bool {
-    trimmed.starts_with('|')
-}
-
-/// Check if a line is a heading (starts with #)
-fn is_heading_line(trimmed: &str) -> bool {
-    trimmed.starts_with('#')
-}
-
-/// Check if a line is a blockquote (starts with >)
-fn is_blockquote_line(trimmed: &str) -> bool {
-    trimmed.starts_with('>')
-}
-
-/// Check if a line starts a code fence
-fn is_code_fence(trimmed: &str) -> bool {
-    trimmed.starts_with("```")
-}
-
-/// Check if a line is an indented code block (4+ spaces of indentation).
-/// Only counts as indented code if it's not a list continuation.
-fn is_indented_code(line: &str) -> bool {
-    let leading_spaces = line.len() - line.trim_start().len();
-    leading_spaces >= 4
 }
 
 /// Check if a line looks like a table separator row (e.g. `| --- | --- | --- |`).
@@ -352,378 +262,42 @@ pub fn wrap_paragraph(
     }
 }
 
+/// Wrap plain text with paragraph breaks into lines.
+/// For text with no markdown constructs — just paragraphs separated by blank lines.
+pub fn wrap_plain_paragraphs(text: &str, max_width: usize, lines: &mut Vec<String>) {
+    let mut paragraph = String::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            if !paragraph.is_empty() {
+                wrap_paragraph(paragraph.trim(), max_width, 0, lines);
+                paragraph.clear();
+            }
+            if !lines.last().is_some_and(String::is_empty) {
+                lines.push(String::new());
+            }
+        } else {
+            if !paragraph.is_empty() {
+                paragraph.push(' ');
+            }
+            paragraph.push_str(trimmed);
+        }
+    }
+    if !paragraph.is_empty() {
+        wrap_paragraph(paragraph.trim(), max_width, 0, lines);
+    }
+}
+
 /// Wrap text into lines, preserving structured content (lists, code blocks, tables, etc.)
 /// and wrapping plain paragraphs to the given max width.
 ///
-/// List items are wrapped with continuation indent:
-/// ```text
-/// - Long list item text that wraps
-///   to the next line with 2-space indent
-/// ```
+/// Delegates to `format_description_mdast` for full markdown-aware formatting.
 pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
     if text.is_empty() {
         return;
     }
-
-    let input_lines: Vec<&str> = text.lines().collect();
-    let mut in_code_fence = false;
-    let mut code_fence_has_language = false;
-    let mut paragraph = String::new();
-    // Track current list item state
-    let mut current_list_indent: Option<usize> = None;
-    let mut list_marker: Cow<'static, str> = Cow::Borrowed("");
-    let mut list_text = String::new();
-    let mut in_list = false;
-    let mut numbered_list_counter: u32 = 0;
-    let mut just_finished_table = false;
-    let mut just_finished_code_fence = false;
-    let mut prev_was_indented_code = false;
-
-    let flush_paragraph = |paragraph: &mut String, lines: &mut Vec<String>| {
-        if !paragraph.is_empty() {
-            wrap_paragraph(paragraph.trim(), max_width, 0, lines);
-            paragraph.clear();
-        }
-    };
-
-    let flush_list_item = |list_marker: &mut Cow<'static, str>,
-                           list_text: &mut String,
-                           current_list_indent: &mut Option<usize>,
-                           lines: &mut Vec<String>| {
-        if !list_text.is_empty() {
-            let indent = current_list_indent.unwrap_or(0);
-            // Wrap the content without the marker, then prepend the marker
-            // to the first line. This matches the plugin's behavior where
-            // the paragraph content is wrapped at commentContentPrintWidth,
-            // and the list marker is prepended afterward (allowing the first
-            // line to exceed the nominal width by the marker width).
-            let mut item_lines = Vec::new();
-            wrap_paragraph(list_text.trim(), max_width, indent, &mut item_lines);
-            for (idx, line) in item_lines.into_iter().enumerate() {
-                if idx == 0 {
-                    let mut s = String::with_capacity(list_marker.len() + line.len());
-                    s.push_str(list_marker);
-                    s.push_str(&line);
-                    lines.push(s);
-                } else {
-                    lines.push(line);
-                }
-            }
-            list_text.clear();
-            *list_marker = Cow::Borrowed("");
-        }
-        *current_list_indent = None;
-    };
-
-    let mut i = 0;
-    while i < input_lines.len() {
-        let line = input_lines[i];
-        let trimmed = line.trim();
-
-        // Track code fence state
-        if is_code_fence(trimmed) {
-            flush_paragraph(&mut paragraph, lines);
-            flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
-            in_list = false;
-            // Don't reset numbered_list_counter here: numbered lists can span
-            // across code fences (e.g. "1. step one\n```js\ncode\n```\n2. step two").
-            if in_code_fence {
-                in_code_fence = false;
-                if code_fence_has_language {
-                    lines.push(trimmed.to_string());
-                }
-                code_fence_has_language = false;
-                just_finished_code_fence = true;
-            } else {
-                in_code_fence = true;
-                // Check if fenced code has a language tag (```js, ```python, etc.)
-                code_fence_has_language = trimmed.len() > 3 && !trimmed[3..].trim().is_empty();
-                // Add blank line before code fence if needed
-                if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-                    lines.push(String::new());
-                }
-                if code_fence_has_language {
-                    // Keep fenced code with language tag as-is
-                    lines.push(trimmed.to_string());
-                }
-            }
-            i += 1;
-            continue;
-        }
-
-        // Inside code fence: pass through verbatim
-        if in_code_fence {
-            if code_fence_has_language {
-                lines.push(line.to_string());
-            } else {
-                // Convert to indented code block: add 4-space prefix
-                let content = line.trim();
-                if content.is_empty() {
-                    lines.push(String::new());
-                } else {
-                    let mut s = String::with_capacity(4 + content.len());
-                    s.push_str("    ");
-                    s.push_str(content);
-                    lines.push(s);
-                }
-            }
-            i += 1;
-            continue;
-        }
-
-        // Empty line handling
-        if trimmed.is_empty() {
-            just_finished_code_fence = false;
-            just_finished_table = false;
-            if in_list {
-                // Find next non-blank line
-                let next_non_blank = {
-                    let mut j = i + 1;
-                    while j < input_lines.len() && input_lines[j].trim().is_empty() {
-                        j += 1;
-                    }
-                    input_lines.get(j)
-                };
-
-                // Check if next content is a list item
-                let next_is_list = next_non_blank.is_some_and(|next| {
-                    let next_trimmed = next.trim();
-                    !next_trimmed.is_empty() && list_item_indent(next_trimmed).is_some()
-                });
-
-                // Check if next content is an indented continuation paragraph
-                // (indented by at least the list item's content indent)
-                let next_is_continuation = !next_is_list
-                    && current_list_indent.is_some()
-                    && next_non_blank.is_some_and(|next| {
-                        let leading = next.len() - next.trim_start().len();
-                        let indent = current_list_indent.unwrap();
-                        leading >= indent && !next.trim().is_empty()
-                    });
-
-                if next_is_list {
-                    flush_list_item(
-                        &mut list_marker,
-                        &mut list_text,
-                        &mut current_list_indent,
-                        lines,
-                    );
-                    i += 1;
-                    continue;
-                }
-
-                if next_is_continuation {
-                    // Flush current list item, add blank separator.
-                    // Save the list indent for the continuation paragraph.
-                    let saved_indent = current_list_indent.unwrap_or(0);
-                    flush_list_item(
-                        &mut list_marker,
-                        &mut list_text,
-                        &mut current_list_indent,
-                        lines,
-                    );
-                    lines.push(String::new());
-                    // Exit list mode; instead accumulate the continuation paragraph
-                    // and wrap ALL lines (including first) with the saved indent.
-                    in_list = false;
-                    numbered_list_counter = 0;
-
-                    // Collect the continuation paragraph text
-                    let mut cont_paragraph = String::new();
-                    i += 1; // skip blank line
-                    while i < input_lines.len() {
-                        let cont_line = input_lines[i];
-                        let cont_trimmed = cont_line.trim();
-                        if cont_trimmed.is_empty() {
-                            break;
-                        }
-                        if !cont_paragraph.is_empty() {
-                            cont_paragraph.push(' ');
-                        }
-                        cont_paragraph.push_str(cont_trimmed);
-                        i += 1;
-                    }
-                    if !cont_paragraph.is_empty() {
-                        let ind = indent_str(saved_indent);
-                        // Wrap at max_width (not max_width - indent) to match plugin
-                        // behavior: the paragraph is wrapped first, then indentation
-                        // is prepended. This allows indented lines to exceed the
-                        // nominal width, matching the plugin's markdown AST approach.
-                        let mut para_lines = Vec::new();
-                        wrap_paragraph(&cont_paragraph, max_width, 0, &mut para_lines);
-                        for pl in para_lines {
-                            let mut s = String::with_capacity(ind.len() + pl.len());
-                            s.push_str(&ind);
-                            s.push_str(&pl);
-                            lines.push(s);
-                        }
-                    }
-                    continue;
-                }
-
-                flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
-                in_list = false;
-                // Don't reset numbered_list_counter: the list may continue
-                // after blank lines and code fences.
-            }
-            flush_paragraph(&mut paragraph, lines);
-            // Allow consecutive blank lines between indented code blocks
-            // (when the next non-blank line is also indented code)
-            let next_is_indented_code = prev_was_indented_code && {
-                let mut j = i + 1;
-                while j < input_lines.len() && input_lines[j].trim().is_empty() {
-                    j += 1;
-                }
-                j < input_lines.len() && is_indented_code(input_lines[j])
-            };
-            if next_is_indented_code || !lines.last().is_some_and(String::is_empty) {
-                lines.push(String::new());
-            }
-            i += 1;
-            continue;
-        }
-
-        // Check for list items
-        if let Some(parsed) = parse_list_item(trimmed) {
-            flush_paragraph(&mut paragraph, lines);
-            // Add blank line after code fence/table before list items
-            if just_finished_code_fence || just_finished_table {
-                just_finished_code_fence = false;
-                just_finished_table = false;
-                if !lines.last().is_some_and(String::is_empty) {
-                    lines.push(String::new());
-                }
-            }
-            if in_list {
-                flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
-            }
-            in_list = true;
-            let rest = &trimmed[parsed.rest_start..].trim_start();
-
-            if parsed.is_numbered {
-                numbered_list_counter += 1;
-                list_marker = Cow::Owned(format!("{numbered_list_counter}. "));
-                current_list_indent = Some(list_marker.len());
-            } else {
-                numbered_list_counter = 0;
-                current_list_indent = Some(parsed.indent_width);
-                list_marker = Cow::Borrowed("- ");
-            }
-            list_text = rest.to_string();
-            i += 1;
-            continue;
-        }
-
-        // Non-list text following a list item is continuation
-        if in_list && current_list_indent.is_some() {
-            list_text.push(' ');
-            list_text.push_str(trimmed);
-            i += 1;
-            continue;
-        }
-
-        // Check for indented code blocks (4+ spaces)
-        if is_indented_code(line) && !in_list {
-            flush_paragraph(&mut paragraph, lines);
-            lines.push(line.to_string());
-            prev_was_indented_code = true;
-            i += 1;
-            continue;
-        }
-
-        // Reset indented code tracking when we see non-empty, non-code content
-        prev_was_indented_code = false;
-
-        // Table lines: collect consecutive table lines as a block
-        if is_table_line(trimmed) {
-            flush_paragraph(&mut paragraph, lines);
-            numbered_list_counter = 0;
-            let mut table_lines: Vec<&str> = vec![trimmed];
-            let mut j = i + 1;
-            while j < input_lines.len() {
-                let next = input_lines[j].trim();
-                if is_table_line(next) {
-                    table_lines.push(next);
-                    j += 1;
-                } else {
-                    break;
-                }
-            }
-            // Add blank line before table if needed
-            if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-                lines.push(String::new());
-            }
-            format_table_block(&table_lines, lines);
-            just_finished_table = true;
-            i = j; // Skip past all consumed table lines
-            continue;
-        }
-
-        // Heading lines
-        if is_heading_line(trimmed) {
-            flush_paragraph(&mut paragraph, lines);
-            numbered_list_counter = 0;
-            // Add blank line before heading if needed
-            if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-                lines.push(String::new());
-            }
-            lines.push(trimmed.to_string());
-            let next_is_content =
-                input_lines.get(i + 1).is_some_and(|next| !next.trim().is_empty());
-            if next_is_content {
-                lines.push(String::new());
-            }
-            i += 1;
-            continue;
-        }
-
-        // Blockquote lines
-        if is_blockquote_line(trimmed) {
-            flush_paragraph(&mut paragraph, lines);
-            numbered_list_counter = 0;
-            if trimmed == ">" {
-                if !lines.last().is_some_and(String::is_empty) {
-                    lines.push(String::new());
-                }
-            } else {
-                lines.push(trimmed.to_string());
-            }
-            i += 1;
-            continue;
-        }
-
-        // Check for backslash line continuation
-        if trimmed.ends_with('\\') {
-            flush_paragraph(&mut paragraph, lines);
-            lines.push(trimmed.to_string());
-            i += 1;
-            continue;
-        }
-
-        // Add blank line after table/code-fence blocks before regular text
-        if just_finished_table || just_finished_code_fence {
-            just_finished_table = false;
-            just_finished_code_fence = false;
-            if !lines.last().is_some_and(String::is_empty) {
-                lines.push(String::new());
-            }
-        }
-
-        // Regular text: accumulate for paragraph wrapping
-        // Paragraphs definitively end numbered lists.
-        if numbered_list_counter > 0 && !in_list {
-            numbered_list_counter = 0;
-        }
-        if !paragraph.is_empty() {
-            paragraph.push(' ');
-        }
-        paragraph.push_str(trimmed);
-        i += 1;
-    }
-
-    // Flush any remaining content
-    flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
-    flush_paragraph(&mut paragraph, lines);
+    let result = super::mdast_serialize::format_description_mdast(text, max_width, false);
+    lines.extend(result);
 }
 
 #[cfg(test)]
@@ -784,9 +358,12 @@ mod tests {
     fn test_wrap_converts_code_fence_to_indented() {
         let mut lines = Vec::new();
         wrap_text("Some text\n```\ncode here\n  indented\n```\nMore text", 80, &mut lines);
-        // Fenced code without language tag is converted to indented code block
-        // Blank lines are added before and after the code block
-        assert_eq!(lines, vec!["Some text", "", "    code here", "    indented", "", "More text"]);
+        // Fenced code without language tag is converted to indented code block.
+        // The MDAST path preserves original indentation within the code block.
+        assert_eq!(
+            lines,
+            vec!["Some text", "", "    code here", "      indented", "", "More text"]
+        );
     }
 
     #[test]
