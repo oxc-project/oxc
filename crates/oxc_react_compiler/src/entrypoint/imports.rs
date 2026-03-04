@@ -15,6 +15,7 @@ use crate::{
         SourceLocation,
     },
     entrypoint::options::CompilerReactTarget,
+    hir::environment::ExternalFunction,
 };
 
 /// Tracks imports that need to be added to the program.
@@ -24,6 +25,8 @@ pub struct ProgramContext {
     pub imports: FxHashMap<String, Vec<ImportSpecifier>>,
     /// Whether any function was compiled (used for checking if imports are needed).
     pub has_compiled_function: bool,
+    /// Set of known referenced names, used to avoid collisions in `new_uid`.
+    pub known_referenced_names: FxHashSet<String>,
 }
 
 /// A single import specifier.
@@ -60,6 +63,54 @@ impl ProgramContext {
     /// Check if any imports have been registered.
     pub fn has_imports(&self) -> bool {
         !self.imports.is_empty()
+    }
+
+    /// Generate a unique identifier name, avoiding collisions with known references.
+    ///
+    /// Port of `ProgramContext.newUid` from `Entrypoint/Imports.ts`.
+    ///
+    /// Appends incrementing numeric suffixes (`_0`, `_1`, ...) if the base name
+    /// is already in use.
+    pub fn new_uid(&mut self, name: &str) -> String {
+        let mut uid = name.to_string();
+        let mut i = 0;
+        while self.known_referenced_names.contains(&uid) {
+            uid = format!("{name}_{i}");
+            i += 1;
+        }
+        self.known_referenced_names.insert(uid.clone());
+        uid
+    }
+
+    /// Add an import specifier for an external function.
+    ///
+    /// Port of `ProgramContext.addImportSpecifier` from `Entrypoint/Imports.ts`.
+    ///
+    /// If the same module+specifier pair has already been added, returns the
+    /// existing local name. Otherwise, generates a unique local name and
+    /// registers the import.
+    pub fn add_import_specifier(&mut self, ext_fn: &ExternalFunction) -> String {
+        // Check if this module+specifier combination already exists
+        if let Some(specifiers) = self.imports.get(&ext_fn.source) {
+            if let Some(existing) =
+                specifiers.iter().find(|s| s.imported == ext_fn.import_specifier_name)
+            {
+                return existing.local.clone();
+            }
+        }
+
+        let local = self.new_uid(&ext_fn.import_specifier_name);
+        let specifiers = self.imports.entry(ext_fn.source.clone()).or_default();
+        specifiers.push(ImportSpecifier {
+            local: local.clone(),
+            imported: ext_fn.import_specifier_name.clone(),
+        });
+        local
+    }
+
+    /// Record a name as already referenced, so `new_uid` will avoid it.
+    pub fn add_reference(&mut self, name: &str) {
+        self.known_referenced_names.insert(name.to_string());
     }
 }
 
