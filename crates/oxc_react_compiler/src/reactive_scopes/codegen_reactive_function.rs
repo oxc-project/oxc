@@ -1069,13 +1069,178 @@ struct CacheLoad {
 }
 
 /// Generate code for a reactive scope block.
+///
+/// Produces the memoization if/else structure:
+/// ```js
+/// let decl;
+/// if ($[idx] !== dep || ...) {  // or $[idx] === Symbol.for("react.memo_cache_sentinel")
+///   // computation
+///   $[idx] = dep;
+///   $[idx] = decl;
+/// } else {
+///   decl = $[idx];
+/// }
+/// if (decl !== Symbol.for("react.early_return_sentinel")) { return decl; }
+/// ```
 fn codegen_reactive_scope<'a>(
     cx: &mut CodegenContext<'a>,
     statements: &mut AVec<'a, Statement<'a>>,
     scope: &ReactiveScope,
     block: &ReactiveBlock,
 ) {
-    todo!()
+    let cache_name = cx.synthesize_name("$");
+
+    let mut cache_store_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+    let mut cache_load_stmts: AVec<'a, Statement<'a>> = cx.ast.vec();
+    let mut change_expressions: Vec<Expression<'a>> = Vec::new();
+
+    // Process dependencies: sorted for determinism
+    let mut deps: Vec<&ReactiveScopeDependency> = scope.dependencies.iter().collect();
+    deps.sort_by(|a, b| compare_scope_dependency(a, b));
+
+    for dep in &deps {
+        let index = cx.alloc_cache_index();
+
+        // Build change test: $[idx] !== dep_expr
+        let cache_access = make_computed_member(
+            cx,
+            make_id(cx, &cache_name),
+            make_number(cx, f64::from(index)),
+        );
+        let dep_expr = codegen_dependency(cx, dep);
+        let comparison = make_binary(cx, cache_access, BinaryOperator::StrictInequality, dep_expr);
+        change_expressions.push(comparison);
+
+        // Build cache store: $[idx] = dep_expr (for consequent block)
+        let store_target = make_computed_member_assignment_target(
+            cx,
+            make_id(cx, &cache_name),
+            make_number(cx, f64::from(index)),
+        );
+        let dep_val = codegen_dependency(cx, dep);
+        let store_assign = make_assignment(cx, store_target, dep_val);
+        cache_store_stmts.push(make_expr_stmt(cx, store_assign));
+    }
+
+    // Process declarations: sorted for determinism, deduplicated by declaration_id.
+    let mut decls: Vec<(&IdentifierId, &ReactiveScopeDeclaration)> =
+        scope.declarations.iter().collect();
+    decls.sort_by(|(_, a), (_, b)| compare_scope_declaration(a, b));
+    let mut seen_declaration_ids: FxHashSet<DeclarationId> = FxHashSet::default();
+    decls.retain(|(_, decl)| seen_declaration_ids.insert(decl.identifier.declaration_id));
+
+    let mut first_output_index: Option<u32> = None;
+    let mut cache_loads: Vec<CacheLoad> = Vec::new();
+
+    for (_, decl) in &decls {
+        let index = cx.alloc_cache_index();
+        if first_output_index.is_none() {
+            first_output_index = Some(index);
+        }
+
+        let name = identifier_name(&decl.identifier);
+
+        // Emit `let name;` before the if-block if not yet declared
+        if !cx.has_declared(decl.identifier.declaration_id) {
+            statements.push(make_var_decl(cx, VariableDeclarationKind::Let, &name, None));
+        }
+        cache_loads.push(CacheLoad { name: name.clone(), index });
+        cx.declare(decl.identifier.declaration_id);
+    }
+
+    // Process reassignments
+    for reassignment_ident in &scope.reassignments {
+        let index = cx.alloc_cache_index();
+        if first_output_index.is_none() {
+            first_output_index = Some(index);
+        }
+        let name = match &reassignment_ident.name {
+            Some(crate::hir::IdentifierName::Named(n)
+            | crate::hir::IdentifierName::Promoted(n)) => n.clone(),
+            None => format!("t{}", reassignment_ident.id.0),
+        };
+        cache_loads.push(CacheLoad { name, index });
+    }
+
+    // Build the test condition
+    let test_condition = if change_expressions.is_empty() {
+        // No dependencies — use sentinel check on first output:
+        // $[first_output_idx] === Symbol.for("react.memo_cache_sentinel")
+        if let Some(first_idx) = first_output_index {
+            let cache_access = make_computed_member(
+                cx,
+                make_id(cx, &cache_name),
+                make_number(cx, f64::from(first_idx)),
+            );
+            let sentinel = make_sentinel_call(cx, MEMO_CACHE_SENTINEL);
+            make_binary(cx, cache_access, BinaryOperator::StrictEquality, sentinel)
+        } else {
+            // No deps and no outputs — should not happen, but be safe
+            make_bool(cx, true)
+        }
+    } else {
+        // Join change expressions with || (LogicalExpression)
+        let mut iter = change_expressions.into_iter();
+        let first = iter.next().unwrap_or_else(|| make_bool(cx, true));
+        iter.fold(first, |acc, expr| make_logical(cx, acc, LogicalOperator::Or, expr))
+    };
+
+    // Generate the computation block
+    let mut computation_stmts = codegen_block(cx, block);
+
+    // Store each output into the cache: $[idx] = name
+    for load in &cache_loads {
+        let target = make_computed_member_assignment_target(
+            cx,
+            make_id(cx, &cache_name),
+            make_number(cx, f64::from(load.index)),
+        );
+        let value = make_id(cx, &load.name);
+        let assign = make_assignment(cx, target, value);
+        cache_store_stmts.push(make_expr_stmt(cx, assign));
+    }
+    computation_stmts.extend(cache_store_stmts);
+
+    // Load from cache in else branch: name = $[idx]
+    for load in &cache_loads {
+        let target = make_simple_target(cx, &load.name);
+        let cache_access = make_computed_member(
+            cx,
+            make_id(cx, &cache_name),
+            make_number(cx, f64::from(load.index)),
+        );
+        let assign = make_assignment(cx, target, cache_access);
+        cache_load_stmts.push(make_expr_stmt(cx, assign));
+    }
+
+    // Build: if (test) { computation + stores } else { loads }
+    let consequent = Statement::BlockStatement(stmts_to_block_body(cx, computation_stmts));
+    let alternate = Statement::BlockStatement(stmts_to_block_body(cx, cache_load_stmts));
+    statements.push(cx.ast.statement_if(SPAN, test_condition, consequent, Some(alternate)));
+
+    // Handle early return value:
+    // if (name !== Symbol.for("react.early_return_sentinel")) { return name; }
+    if let Some(ref early_return) = scope.early_return_value {
+        let name = identifier_name(&early_return.value);
+        let test = make_binary(
+            cx,
+            make_id(cx, &name),
+            BinaryOperator::StrictInequality,
+            make_sentinel_call(cx, EARLY_RETURN_SENTINEL),
+        );
+        let return_stmt = make_return(cx, Some(make_id(cx, &name)));
+        let return_block = Statement::BlockStatement(
+            stmts_to_block_body(cx, cx.ast.vec1(return_stmt)),
+        );
+        statements.push(cx.ast.statement_if(SPAN, test, return_block, None));
+    }
+}
+
+/// Build `Symbol.for("sentinel_string")` call expression.
+fn make_sentinel_call<'a>(cx: &CodegenContext<'a>, sentinel: &str) -> Expression<'a> {
+    let symbol_for = make_member(cx, make_id(cx, "Symbol"), "for");
+    let args = cx.ast.vec1(Argument::from(make_string(cx, sentinel)));
+    make_call(cx, symbol_for, args)
 }
 
 // =====================================================================================
@@ -1088,7 +1253,146 @@ fn codegen_terminal<'a>(
     terminal: &ReactiveTerminal,
     stmts: &mut AVec<'a, Statement<'a>>,
 ) {
-    todo!()
+    match terminal {
+        ReactiveTerminal::Break(t) => {
+            if let Some(stmt) = codegen_break(cx, t) {
+                stmts.push(stmt);
+            }
+        }
+        ReactiveTerminal::Continue(t) => {
+            if let Some(stmt) = codegen_continue(cx, t) {
+                stmts.push(stmt);
+            }
+        }
+        ReactiveTerminal::Return(t) => {
+            let value = codegen_place_to_expression(cx, &t.value);
+            // If the return value is just `undefined`, emit bare `return;`
+            let ret = if matches!(&value, Expression::Identifier(id) if id.name == "undefined") {
+                make_return(cx, None)
+            } else {
+                make_return(cx, Some(value))
+            };
+            stmts.push(ret);
+        }
+        ReactiveTerminal::Throw(t) => {
+            let value = codegen_place_to_expression(cx, &t.value);
+            stmts.push(cx.ast.statement_throw(SPAN, value));
+        }
+        ReactiveTerminal::If(t) => {
+            let test = codegen_place_to_expression(cx, &t.test);
+            let consequent_stmts = codegen_block(cx, &t.consequent);
+            let consequent = Statement::BlockStatement(stmts_to_block_body(cx, consequent_stmts));
+
+            let alternate = t.alternate.as_ref().and_then(|alt| {
+                let alt_stmts = codegen_block(cx, alt);
+                if alt_stmts.is_empty() {
+                    None
+                } else {
+                    Some(Statement::BlockStatement(stmts_to_block_body(cx, alt_stmts)))
+                }
+            });
+
+            stmts.push(cx.ast.statement_if(SPAN, test, consequent, alternate));
+        }
+        ReactiveTerminal::Switch(t) => {
+            let discriminant = codegen_place_to_expression(cx, &t.test);
+            let mut cases: AVec<'a, SwitchCase<'a>> = cx.ast.vec();
+            for case in &t.cases {
+                let test = case.test.as_ref().map(|p| codegen_place_to_expression(cx, p));
+                let consequent: AVec<'a, Statement<'a>> = case
+                    .block
+                    .as_ref()
+                    .map(|b| {
+                        let block_stmts = codegen_block(cx, b);
+                        if block_stmts.is_empty() {
+                            cx.ast.vec()
+                        } else {
+                            // Wrap in a BlockStatement like TS does
+                            let block = Statement::BlockStatement(
+                                stmts_to_block_body(cx, block_stmts),
+                            );
+                            cx.ast.vec1(block)
+                        }
+                    })
+                    .unwrap_or_else(|| cx.ast.vec());
+                cases.push(cx.ast.switch_case(SPAN, test, consequent));
+            }
+            stmts.push(cx.ast.statement_switch(SPAN, discriminant, cases));
+        }
+        ReactiveTerminal::For(t) => {
+            let init_expr = codegen_for_init(cx, &t.init);
+            let init = Some(ForStatementInit::from(init_expr));
+            let test = Some(codegen_reactive_value_to_expression(cx, &t.test));
+            let update = t.update.as_ref().map(|u| codegen_reactive_value_to_expression(cx, u));
+            let body_stmts = codegen_block(cx, &t.r#loop);
+            let body = Statement::BlockStatement(stmts_to_block_body(cx, body_stmts));
+            stmts.push(cx.ast.statement_for(SPAN, init, test, update, body));
+        }
+        ReactiveTerminal::ForOf(t) => {
+            let (kind, binding) = codegen_for_of_in_init(cx, &t.init, &t.test);
+            let declarator =
+                cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
+            let decl = cx.ast.variable_declaration(SPAN, kind, cx.ast.vec1(declarator), false);
+            let left = ForStatementLeft::VariableDeclaration(cx.ast.alloc(decl));
+            let right = codegen_for_of_collection(cx, &t.init);
+            let body_stmts = codegen_block(cx, &t.r#loop);
+            let body = Statement::BlockStatement(stmts_to_block_body(cx, body_stmts));
+            stmts.push(cx.ast.statement_for_of(SPAN, false, left, right, body));
+        }
+        ReactiveTerminal::ForIn(t) => {
+            let (kind, binding) = codegen_for_in_init(cx, &t.init);
+            let declarator =
+                cx.ast.variable_declarator(SPAN, kind, binding, NONE, None, false);
+            let decl = cx.ast.variable_declaration(SPAN, kind, cx.ast.vec1(declarator), false);
+            let left = ForStatementLeft::VariableDeclaration(cx.ast.alloc(decl));
+            let right = codegen_for_in_collection(cx, &t.init);
+            let body_stmts = codegen_block(cx, &t.r#loop);
+            let body = Statement::BlockStatement(stmts_to_block_body(cx, body_stmts));
+            stmts.push(cx.ast.statement_for_in(SPAN, left, right, body));
+        }
+        ReactiveTerminal::While(t) => {
+            let test = codegen_reactive_value_to_expression(cx, &t.test);
+            let body_stmts = codegen_block(cx, &t.r#loop);
+            let body = Statement::BlockStatement(stmts_to_block_body(cx, body_stmts));
+            stmts.push(cx.ast.statement_while(SPAN, test, body));
+        }
+        ReactiveTerminal::DoWhile(t) => {
+            let body_stmts = codegen_block(cx, &t.r#loop);
+            let body = Statement::BlockStatement(stmts_to_block_body(cx, body_stmts));
+            let test = codegen_reactive_value_to_expression(cx, &t.test);
+            stmts.push(cx.ast.statement_do_while(SPAN, body, test));
+        }
+        ReactiveTerminal::Label(t) => {
+            let block_stmts = codegen_block(cx, &t.block);
+            if !block_stmts.is_empty() {
+                stmts.push(Statement::BlockStatement(stmts_to_block_body(cx, block_stmts)));
+            }
+        }
+        ReactiveTerminal::Try(t) => {
+            let block_stmts = codegen_block(cx, &t.block);
+            let block = stmts_to_block_body(cx, block_stmts);
+
+            let handler_stmts = codegen_block(cx, &t.handler);
+            let handler = {
+                let handler_body = stmts_to_block_body(cx, handler_stmts);
+                let param = t.handler_binding.as_ref().map(|binding| {
+                    let name = identifier_name(&binding.identifier);
+                    cx.temp.insert(binding.identifier.declaration_id, None);
+                    let binding_pattern =
+                        cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
+                    cx.ast.catch_parameter(SPAN, binding_pattern, NONE)
+                });
+                Some(cx.ast.alloc_catch_clause(SPAN, param, handler_body))
+            };
+
+            stmts.push(cx.ast.statement_try(
+                SPAN,
+                block,
+                handler,
+                None::<oxc_allocator::Box<'_, BlockStatement<'_>>>,
+            ));
+        }
+    }
 }
 
 fn codegen_break<'a>(
