@@ -2,15 +2,15 @@ use std::borrow::Cow;
 
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
-use super::wrap::{format_table_block, wrap_paragraph, wrap_text};
+use super::wrap::{format_table_block, wrap_paragraph, wrap_plain_paragraphs};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
 /// Uses a format that `tokenize_words` won't split (no spaces, looks like a word).
 const PLACEHOLDER_PREFIX: &str = "\x00JDLNK";
 
 /// Check if the text contains markdown constructs that require full AST parsing.
-/// Returns `false` only for pure plain-text paragraphs that `wrap_text()` can
-/// handle directly (no lists, tables, code fences, headings, blockquotes, or
+/// Returns `false` only for pure plain-text paragraphs that `wrap_plain_paragraphs()`
+/// can handle directly (no lists, tables, code fences, headings, blockquotes, or
 /// inline markdown like emphasis/links).
 fn needs_mdast_parsing(text: &str) -> bool {
     let bytes = text.as_bytes();
@@ -82,10 +82,10 @@ pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) 
     }
 
     // Fast path: if text has no markdown constructs requiring AST parsing,
-    // use lightweight wrap_text() directly.
+    // use lightweight wrap_plain_paragraphs() directly.
     if !needs_mdast_parsing(text) {
         let mut lines = Vec::new();
-        wrap_text(text, max_width, &mut lines);
+        wrap_plain_paragraphs(text, max_width, &mut lines);
         if capitalize {
             // Capitalize the first word of each paragraph (after blank lines),
             // matching the mdast path's per-paragraph capitalization.
