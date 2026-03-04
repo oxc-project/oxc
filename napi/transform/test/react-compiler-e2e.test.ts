@@ -5,15 +5,15 @@ import { transformSync } from "../index";
 /**
  * E2E tests for the React Compiler via NAPI transform binding.
  *
- * The React compiler currently runs analysis and validation through the
- * full pipeline (HIR lowering, type inference, aliasing analysis, reactive
- * scope inference, etc.) but does not yet emit memoized codegen output.
+ * The React compiler runs the full pipeline (HIR lowering, type inference,
+ * aliasing analysis, reactive scope inference, codegen) and replaces
+ * function bodies with memoized output using the react/compiler-runtime.
  * These tests verify that:
  *
  * 1. The compiler pipeline runs without errors for valid components
- * 2. The JSX output is correctly transformed
+ * 2. Memoized codegen output is correctly produced (_c cache, sentinel checks)
  * 3. Different compilation modes and options work as expected
- * 4. Various component patterns are handled without crashes
+ * 4. Various component patterns are handled correctly
  *
  * Ported from: babel-plugin-react-compiler/src/__tests__/e2e/
  */
@@ -34,9 +34,9 @@ function compileWithReactCompiler(
       runtime: "automatic",
     },
     plugins: {
-      react_compiler: {
+      reactCompiler: {
         enabled: true,
-        compilation_mode: compilationMode,
+        compilationMode: compilationMode,
       },
     },
   });
@@ -546,7 +546,7 @@ describe("react-compiler e2e", () => {
         sourceType: "module",
         jsx: { runtime: "automatic" },
         plugins: {
-          react_compiler: true,
+          reactCompiler: true,
         },
       });
       expect(result.errors).toEqual([]);
@@ -563,7 +563,7 @@ describe("react-compiler e2e", () => {
         sourceType: "module",
         jsx: { runtime: "automatic" },
         plugins: {
-          react_compiler: false,
+          reactCompiler: false,
         },
       });
       expect(result.errors).toEqual([]);
@@ -582,7 +582,7 @@ describe("react-compiler e2e", () => {
         sourceType: "module",
         jsx: { runtime: "automatic" },
         plugins: {
-          react_compiler: {
+          reactCompiler: {
             enabled: false,
           },
         },
@@ -603,6 +603,155 @@ describe("react-compiler e2e", () => {
       });
       expect(result.errors).toEqual([]);
       expect(result.code).toContain("_jsx");
+    });
+  });
+
+  describe("memoization output", () => {
+    test("compiler-runtime import is injected", () => {
+      const source = `
+        function Component({ name }) {
+          return <div>Hello {name}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain('from "react/compiler-runtime"');
+    });
+
+    test("_c cache call appears in compiled output", () => {
+      const source = `
+        function Component({ name }) {
+          return <div>Hello {name}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+
+    test("memo cache sentinel check appears for constant values", () => {
+      const source = `
+        function Component() {
+          return <div>Hello</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("react.memo_cache_sentinel");
+    });
+  });
+
+  describe("memo/forwardRef discovery", () => {
+    test("React.memo wrapped component compiles", () => {
+      const source = `
+        import React from 'react';
+        const Component = React.memo(({ name }) => {
+          return <div>{name}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+
+    test("memo wrapped component compiles", () => {
+      const source = `
+        import { memo } from 'react';
+        const Component = memo(({ name }) => {
+          return <div>{name}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+
+    test("forwardRef wrapped component compiles", () => {
+      const source = `
+        import { forwardRef } from 'react';
+        const Component = forwardRef(function MyComponent(props, ref) {
+          return <div ref={ref}>{props.name}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+
+    test("export default memo compiles inner function", () => {
+      const source = `
+        import { memo } from 'react';
+        export default memo(({ name }) => {
+          return <div>{name}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("memo");
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+
+    test("export named memo compiles inner function", () => {
+      const source = `
+        import { memo } from 'react';
+        export const Component = memo(({ name }) => {
+          return <div>{name}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toMatch(/_c\(\d+\)/);
+    });
+  });
+
+  describe("already-compiled skip", () => {
+    test("file with compiler-runtime import is not recompiled", () => {
+      const source = `
+        import { c as _c } from "react/compiler-runtime";
+        function Component({ name }) {
+          const $ = _c(1);
+          let t0;
+          if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+            t0 = <div>{name}</div>;
+            $[0] = t0;
+          } else {
+            t0 = $[0];
+          }
+          return t0;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Should NOT add a second compiler-runtime import
+      const matches = result.code.match(/react\/compiler-runtime/g);
+      expect(matches?.length).toBe(1);
+    });
+  });
+
+  describe("opt-out directives", () => {
+    test("'use no memo' skips function compilation", () => {
+      const source = `
+        function Component({ name }) {
+          'use no memo';
+          return <div>{name}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Should not have compiler-runtime import since function was skipped
+      expect(result.code).not.toContain("react/compiler-runtime");
+    });
+
+    test("'use no forget' skips function compilation", () => {
+      const source = `
+        function Component({ name }) {
+          'use no forget';
+          return <div>{name}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain("react/compiler-runtime");
     });
   });
 

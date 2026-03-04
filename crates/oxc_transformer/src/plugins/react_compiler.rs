@@ -16,7 +16,7 @@ use oxc_react_compiler::{
     },
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -119,21 +119,36 @@ impl ReactCompiler {
 
         let old_body = program.body.take_in(ctx.ast);
         let mut new_body = ctx.ast.vec_with_capacity(old_body.len());
+        // Track which indices in new_body correspond to replaced/outlined statements
+        // that need scope IDs assigned.
+        let mut replaced_indices: Vec<usize> = Vec::new();
 
         for (i, stmt) in old_body.into_iter().enumerate() {
             if let Some(mut compiled) = result_map.remove(&i) {
                 // Extract outlined functions before consuming compiled for replacement.
                 let outlined_fns = std::mem::take(&mut compiled.outlined);
                 let replaced = replace_statement_function(stmt, compiled, ctx);
+                replaced_indices.push(new_body.len());
                 new_body.push(replaced);
                 // Insert outlined functions as top-level FunctionDeclarations after
                 // the replaced statement.
                 for outlined in outlined_fns {
+                    replaced_indices.push(new_body.len());
                     new_body.push(build_outlined_function_statement(outlined, ctx));
                 }
             } else {
                 new_body.push(stmt);
             }
+        }
+
+        // Phase 4: Assign scope IDs to newly created AST nodes in compiled output.
+        // The React Compiler codegen creates BlockStatement and other scope-creating
+        // nodes without scope IDs. The subsequent transformer traversal (e.g. JSX
+        // transform) requires all such nodes to have valid scope IDs.
+        for &idx in &replaced_indices {
+            let parent_scope_id = get_function_scope_id(&new_body[idx])
+                .unwrap_or_else(|| program.scope_id());
+            assign_scope_ids_to_statement(&mut new_body[idx], parent_scope_id, ctx);
         }
 
         program.body = new_body;
@@ -721,6 +736,523 @@ fn build_outlined_function_statement<'a>(
     );
 
     Statement::FunctionDeclaration(function)
+}
+
+/// Get the scope ID of the function within a statement (if the statement contains one).
+///
+/// Used to determine the parent scope for newly created AST nodes in the compiled output.
+fn get_function_scope_id(stmt: &Statement<'_>) -> Option<ScopeId> {
+    match stmt {
+        Statement::FunctionDeclaration(f) => f.scope_id.get(),
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    match init {
+                        Expression::FunctionExpression(f) => return f.scope_id.get(),
+                        Expression::ArrowFunctionExpression(f) => return f.scope_id.get(),
+                        Expression::CallExpression(call)
+                            if is_memo_or_forwardref_call(&call.callee) =>
+                        {
+                            if let Some(arg) = call.arguments.first() {
+                                if let Some(expr) = arg.as_expression() {
+                                    match expr {
+                                        Expression::FunctionExpression(f) => {
+                                            return f.scope_id.get();
+                                        }
+                                        Expression::ArrowFunctionExpression(f) => {
+                                            return f.scope_id.get();
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            None
+        }
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => f.scope_id.get(),
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(f) => f.scope_id.get(),
+            ExportDefaultDeclarationKind::CallExpression(call)
+                if is_memo_or_forwardref_call(&call.callee) =>
+            {
+                call.arguments.first().and_then(|arg| {
+                    arg.as_expression().and_then(|expr| match expr {
+                        Expression::FunctionExpression(f) => f.scope_id.get(),
+                        Expression::ArrowFunctionExpression(f) => f.scope_id.get(),
+                        _ => None,
+                    })
+                })
+            }
+            _ => None,
+        },
+        Statement::ExportNamedDeclaration(export) => {
+            export.declaration.as_ref().and_then(|decl| match decl {
+                Declaration::FunctionDeclaration(f) => f.scope_id.get(),
+                Declaration::VariableDeclaration(var_decl) => {
+                    for declarator in &var_decl.declarations {
+                        if let Some(init) = &declarator.init {
+                            match init {
+                                Expression::FunctionExpression(f) => return f.scope_id.get(),
+                                Expression::ArrowFunctionExpression(f) => return f.scope_id.get(),
+                                Expression::CallExpression(call)
+                                    if is_memo_or_forwardref_call(&call.callee) =>
+                                {
+                                    if let Some(arg) = call.arguments.first() {
+                                        if let Some(expr) = arg.as_expression() {
+                                            match expr {
+                                                Expression::FunctionExpression(f) => {
+                                                    return f.scope_id.get();
+                                                }
+                                                Expression::ArrowFunctionExpression(f) => {
+                                                    return f.scope_id.get();
+                                                }
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    None
+                }
+                _ => None,
+            })
+        }
+        _ => None,
+    }
+}
+
+/// Recursively assign scope IDs to all scope-creating AST nodes within a statement.
+///
+/// The React Compiler codegen creates new AST nodes (BlockStatement, ForStatement, etc.)
+/// without scope IDs. The traverse walker requires all such nodes to have valid scope IDs.
+/// This function walks the AST and creates child scopes as needed.
+fn assign_scope_ids_to_statement(
+    stmt: &mut Statement<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    match stmt {
+        Statement::FunctionDeclaration(f) => {
+            // For outlined functions (which have no scope_id yet), create a new scope.
+            if f.scope_id.get().is_none() {
+                let scope_id =
+                    ctx.create_child_scope(parent_scope_id, ScopeFlags::Function | ScopeFlags::Top);
+                f.scope_id.set(Some(scope_id));
+                if let Some(body) = &mut f.body {
+                    assign_scope_ids_to_function_body(body, scope_id, ctx);
+                }
+            } else {
+                // Existing function with valid scope_id: walk its body.
+                let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+                if let Some(body) = &mut f.body {
+                    assign_scope_ids_to_function_body(body, fn_scope, ctx);
+                }
+            }
+        }
+        Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => {
+                let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+                if let Some(body) = &mut f.body {
+                    assign_scope_ids_to_function_body(body, fn_scope, ctx);
+                }
+            }
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(f) => {
+                let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+                assign_scope_ids_to_function_body(&mut f.body, fn_scope, ctx);
+            }
+            ExportDefaultDeclarationKind::CallExpression(call) => {
+                if let Some(arg) = call.arguments.first_mut() {
+                    if let Some(expr) = arg.as_expression_mut() {
+                        assign_scope_ids_to_expression(expr, parent_scope_id, ctx);
+                    }
+                }
+            }
+            _ => {}
+        },
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(decl) = &mut export.declaration {
+                assign_scope_ids_to_declaration(decl, parent_scope_id, ctx);
+            }
+        }
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &mut decl.declarations {
+                if let Some(init) = &mut declarator.init {
+                    assign_scope_ids_to_expression(init, parent_scope_id, ctx);
+                }
+            }
+        }
+        _ => {
+            assign_scope_ids_to_statement_inner(stmt, parent_scope_id, ctx);
+        }
+    }
+}
+
+fn assign_scope_ids_to_declaration(
+    decl: &mut Declaration<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    match decl {
+        Declaration::FunctionDeclaration(f) => {
+            let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+            if let Some(body) = &mut f.body {
+                assign_scope_ids_to_function_body(body, fn_scope, ctx);
+            }
+        }
+        Declaration::VariableDeclaration(var_decl) => {
+            for declarator in &mut var_decl.declarations {
+                if let Some(init) = &mut declarator.init {
+                    assign_scope_ids_to_expression(init, parent_scope_id, ctx);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn assign_scope_ids_to_function_body(
+    body: &mut FunctionBody<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    for stmt in body.statements.iter_mut() {
+        assign_scope_ids_to_statement_inner(stmt, parent_scope_id, ctx);
+    }
+}
+
+/// Inner recursive walker for statements within a function body.
+fn assign_scope_ids_to_statement_inner(
+    stmt: &mut Statement<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    match stmt {
+        Statement::BlockStatement(block) => {
+            if block.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+                block.scope_id.set(Some(scope_id));
+                for s in block.body.iter_mut() {
+                    assign_scope_ids_to_statement_inner(s, scope_id, ctx);
+                }
+            }
+        }
+        Statement::IfStatement(if_stmt) => {
+            assign_scope_ids_to_statement_inner(&mut if_stmt.consequent, parent_scope_id, ctx);
+            if let Some(alternate) = &mut if_stmt.alternate {
+                assign_scope_ids_to_statement_inner(alternate, parent_scope_id, ctx);
+            }
+            assign_scope_ids_to_expression(&mut if_stmt.test, parent_scope_id, ctx);
+        }
+        Statement::ForStatement(for_stmt) => {
+            if for_stmt.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+                for_stmt.scope_id.set(Some(scope_id));
+                assign_scope_ids_to_statement_inner(&mut for_stmt.body, scope_id, ctx);
+            }
+        }
+        Statement::ForInStatement(for_in) => {
+            if for_in.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+                for_in.scope_id.set(Some(scope_id));
+                assign_scope_ids_to_statement_inner(&mut for_in.body, scope_id, ctx);
+            }
+        }
+        Statement::ForOfStatement(for_of) => {
+            if for_of.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+                for_of.scope_id.set(Some(scope_id));
+                assign_scope_ids_to_statement_inner(&mut for_of.body, scope_id, ctx);
+            }
+        }
+        Statement::WhileStatement(while_stmt) => {
+            assign_scope_ids_to_statement_inner(&mut while_stmt.body, parent_scope_id, ctx);
+        }
+        Statement::DoWhileStatement(do_while) => {
+            assign_scope_ids_to_statement_inner(&mut do_while.body, parent_scope_id, ctx);
+        }
+        Statement::SwitchStatement(switch_stmt) => {
+            if switch_stmt.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+                switch_stmt.scope_id.set(Some(scope_id));
+                for case in switch_stmt.cases.iter_mut() {
+                    for s in case.consequent.iter_mut() {
+                        assign_scope_ids_to_statement_inner(s, scope_id, ctx);
+                    }
+                }
+            }
+        }
+        Statement::TryStatement(try_stmt) => {
+            assign_scope_ids_to_block(&mut try_stmt.block, parent_scope_id, ctx);
+            if let Some(handler) = &mut try_stmt.handler {
+                if handler.scope_id.get().is_none() {
+                    let catch_scope_id =
+                        ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
+                    handler.scope_id.set(Some(catch_scope_id));
+                    assign_scope_ids_to_block(&mut handler.body, catch_scope_id, ctx);
+                }
+            }
+            if let Some(finalizer) = &mut try_stmt.finalizer {
+                assign_scope_ids_to_block(finalizer, parent_scope_id, ctx);
+            }
+        }
+        Statement::LabeledStatement(labeled) => {
+            assign_scope_ids_to_statement_inner(&mut labeled.body, parent_scope_id, ctx);
+        }
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &mut decl.declarations {
+                if let Some(init) = &mut declarator.init {
+                    assign_scope_ids_to_expression(init, parent_scope_id, ctx);
+                }
+            }
+        }
+        Statement::ReturnStatement(ret) => {
+            if let Some(arg) = &mut ret.argument {
+                assign_scope_ids_to_expression(arg, parent_scope_id, ctx);
+            }
+        }
+        Statement::ExpressionStatement(expr_stmt) => {
+            assign_scope_ids_to_expression(&mut expr_stmt.expression, parent_scope_id, ctx);
+        }
+        _ => {}
+    }
+}
+
+/// Assign scope ID to a BlockStatement if it doesn't have one, and recurse into its body.
+fn assign_scope_ids_to_block(
+    block: &mut BlockStatement<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    if block.scope_id.get().is_none() {
+        let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
+        block.scope_id.set(Some(scope_id));
+        for s in block.body.iter_mut() {
+            assign_scope_ids_to_statement_inner(s, scope_id, ctx);
+        }
+    }
+}
+
+/// Recursively assign scope IDs within expressions (for arrow functions, function
+/// expressions, and other scope-creating expressions).
+fn assign_scope_ids_to_expression(
+    expr: &mut Expression<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    match expr {
+        Expression::FunctionExpression(f) => {
+            if f.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::Function);
+                f.scope_id.set(Some(scope_id));
+                if let Some(body) = &mut f.body {
+                    assign_scope_ids_to_function_body(body, scope_id, ctx);
+                }
+            } else {
+                let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+                if let Some(body) = &mut f.body {
+                    assign_scope_ids_to_function_body(body, fn_scope, ctx);
+                }
+            }
+        }
+        Expression::ArrowFunctionExpression(f) => {
+            if f.scope_id.get().is_none() {
+                let scope_id = ctx.create_child_scope(
+                    parent_scope_id,
+                    ScopeFlags::Function | ScopeFlags::Arrow,
+                );
+                f.scope_id.set(Some(scope_id));
+                assign_scope_ids_to_function_body(&mut f.body, scope_id, ctx);
+            } else {
+                let fn_scope = f.scope_id.get().unwrap_or(parent_scope_id);
+                assign_scope_ids_to_function_body(&mut f.body, fn_scope, ctx);
+            }
+        }
+        Expression::ConditionalExpression(cond) => {
+            assign_scope_ids_to_expression(&mut cond.test, parent_scope_id, ctx);
+            assign_scope_ids_to_expression(&mut cond.consequent, parent_scope_id, ctx);
+            assign_scope_ids_to_expression(&mut cond.alternate, parent_scope_id, ctx);
+        }
+        Expression::SequenceExpression(seq) => {
+            for e in seq.expressions.iter_mut() {
+                assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+            }
+        }
+        Expression::CallExpression(call) => {
+            assign_scope_ids_to_expression(&mut call.callee, parent_scope_id, ctx);
+            for arg in call.arguments.iter_mut() {
+                if let Some(e) = arg.as_expression_mut() {
+                    assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                }
+            }
+        }
+        Expression::NewExpression(new_expr) => {
+            assign_scope_ids_to_expression(&mut new_expr.callee, parent_scope_id, ctx);
+            for arg in new_expr.arguments.iter_mut() {
+                if let Some(e) = arg.as_expression_mut() {
+                    assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                }
+            }
+        }
+        Expression::AssignmentExpression(assign) => {
+            assign_scope_ids_to_expression(&mut assign.right, parent_scope_id, ctx);
+        }
+        Expression::LogicalExpression(logical) => {
+            assign_scope_ids_to_expression(&mut logical.left, parent_scope_id, ctx);
+            assign_scope_ids_to_expression(&mut logical.right, parent_scope_id, ctx);
+        }
+        Expression::BinaryExpression(binary) => {
+            assign_scope_ids_to_expression(&mut binary.left, parent_scope_id, ctx);
+            assign_scope_ids_to_expression(&mut binary.right, parent_scope_id, ctx);
+        }
+        Expression::UnaryExpression(unary) => {
+            assign_scope_ids_to_expression(&mut unary.argument, parent_scope_id, ctx);
+        }
+        Expression::UpdateExpression(_) => {
+            // UpdateExpression.argument is a SimpleAssignmentTarget, not an Expression.
+            // No nested scope-creating nodes possible.
+        }
+        Expression::ArrayExpression(arr) => {
+            for elem in arr.elements.iter_mut() {
+                if let ArrayExpressionElement::SpreadElement(spread) = elem {
+                    assign_scope_ids_to_expression(&mut spread.argument, parent_scope_id, ctx);
+                } else if let Some(e) = elem.as_expression_mut() {
+                    assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                }
+            }
+        }
+        Expression::ObjectExpression(obj) => {
+            for prop in obj.properties.iter_mut() {
+                match prop {
+                    ObjectPropertyKind::ObjectProperty(p) => {
+                        assign_scope_ids_to_expression(&mut p.value, parent_scope_id, ctx);
+                    }
+                    ObjectPropertyKind::SpreadProperty(s) => {
+                        assign_scope_ids_to_expression(&mut s.argument, parent_scope_id, ctx);
+                    }
+                }
+            }
+        }
+        Expression::TemplateLiteral(tmpl) => {
+            for e in tmpl.expressions.iter_mut() {
+                assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+            }
+        }
+        Expression::TaggedTemplateExpression(tagged) => {
+            assign_scope_ids_to_expression(&mut tagged.tag, parent_scope_id, ctx);
+            for e in tagged.quasi.expressions.iter_mut() {
+                assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+            }
+        }
+        Expression::ParenthesizedExpression(paren) => {
+            assign_scope_ids_to_expression(&mut paren.expression, parent_scope_id, ctx);
+        }
+        Expression::AwaitExpression(await_expr) => {
+            assign_scope_ids_to_expression(&mut await_expr.argument, parent_scope_id, ctx);
+        }
+        Expression::YieldExpression(yield_expr) => {
+            if let Some(arg) = &mut yield_expr.argument {
+                assign_scope_ids_to_expression(arg, parent_scope_id, ctx);
+            }
+        }
+        // Member expressions
+        Expression::StaticMemberExpression(member) => {
+            assign_scope_ids_to_expression(&mut member.object, parent_scope_id, ctx);
+        }
+        Expression::ComputedMemberExpression(member) => {
+            assign_scope_ids_to_expression(&mut member.object, parent_scope_id, ctx);
+            assign_scope_ids_to_expression(&mut member.expression, parent_scope_id, ctx);
+        }
+        Expression::PrivateFieldExpression(member) => {
+            assign_scope_ids_to_expression(&mut member.object, parent_scope_id, ctx);
+        }
+        // JSX expressions
+        Expression::JSXElement(jsx) => {
+            assign_scope_ids_to_jsx_element(jsx, parent_scope_id, ctx);
+        }
+        Expression::JSXFragment(jsx) => {
+            assign_scope_ids_to_jsx_fragment(jsx, parent_scope_id, ctx);
+        }
+        _ => {}
+    }
+}
+
+/// Assign scope IDs within a JSX element's attributes and children.
+fn assign_scope_ids_to_jsx_element(
+    element: &mut JSXElement<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    // Walk attributes for expression containers (e.g., onClick={() => ...})
+    for attr in element.opening_element.attributes.iter_mut() {
+        if let JSXAttributeItem::Attribute(a) = attr {
+            if let Some(value) = &mut a.value {
+                if let JSXAttributeValue::ExpressionContainer(container) = value {
+                    if let Some(e) = container.expression.as_expression_mut() {
+                        assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                    }
+                }
+            }
+        }
+        if let JSXAttributeItem::SpreadAttribute(spread) = attr {
+            assign_scope_ids_to_expression(&mut spread.argument, parent_scope_id, ctx);
+        }
+    }
+    // Walk children
+    for child in element.children.iter_mut() {
+        match child {
+            JSXChild::ExpressionContainer(container) => {
+                if let Some(e) = container.expression.as_expression_mut() {
+                    assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                }
+            }
+            JSXChild::Element(el) => {
+                assign_scope_ids_to_jsx_element(el, parent_scope_id, ctx);
+            }
+            JSXChild::Fragment(frag) => {
+                assign_scope_ids_to_jsx_fragment(frag, parent_scope_id, ctx);
+            }
+            JSXChild::Spread(spread) => {
+                assign_scope_ids_to_expression(&mut spread.expression, parent_scope_id, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Assign scope IDs within a JSX fragment's children.
+fn assign_scope_ids_to_jsx_fragment(
+    fragment: &mut JSXFragment<'_>,
+    parent_scope_id: ScopeId,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    for child in fragment.children.iter_mut() {
+        match child {
+            JSXChild::ExpressionContainer(container) => {
+                if let Some(e) = container.expression.as_expression_mut() {
+                    assign_scope_ids_to_expression(e, parent_scope_id, ctx);
+                }
+            }
+            JSXChild::Element(el) => {
+                assign_scope_ids_to_jsx_element(el, parent_scope_id, ctx);
+            }
+            JSXChild::Fragment(frag) => {
+                assign_scope_ids_to_jsx_fragment(frag, parent_scope_id, ctx);
+            }
+            JSXChild::Spread(spread) => {
+                assign_scope_ids_to_expression(&mut spread.expression, parent_scope_id, ctx);
+            }
+            _ => {}
+        }
+    }
 }
 
 #[cfg(test)]
