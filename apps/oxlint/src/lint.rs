@@ -1876,6 +1876,33 @@ mod suppression {
     }
 
     #[test]
+    fn test_suppression_not_filtered_dangerous_fix_not_applied() {
+        fix_suppression_tester("suppression_not_filtered_dangerous_fix_not_applied", &["--fix"]);
+    }
+
+    #[test]
+    fn test_suppression_updated_dangerous_fix_applied() {
+        fix_suppression_tester(
+            "suppression_updated_dangerous_fix_applied",
+            // Adding both fix see https://github.com/oxc-project/oxc/pull/13366, https://github.com/oxc-project/oxc/issues/12491
+            &["--fix", "--fix-suggestions", "--fix-dangerously"],
+        );
+    }
+
+    #[test]
+    fn test_suppression_not_filtered_suggestion_fix_not_applied() {
+        fix_suppression_tester("suppression_not_filtered_suggestion_fix_not_applied", &["--fix"]);
+    }
+
+    #[test]
+    fn test_suppression_updated_suggestion_fix_applied() {
+        fix_suppression_tester(
+            "suppression_updated_suggestion_fix_applied",
+            &["--fix", "--fix-suggestions"],
+        );
+    }
+
+    #[test]
     fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
         file_suppression_update_tester(
             "suppression_with_arg_and_pruned_errors",
