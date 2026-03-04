@@ -2235,6 +2235,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
+ "oxc_formatter",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
