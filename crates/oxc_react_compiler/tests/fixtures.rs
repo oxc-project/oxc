@@ -8,7 +8,9 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_codegen::{Context, Gen};
-use oxc_react_compiler::entrypoint::options::{CompilationMode, OPT_OUT_DIRECTIVES, PanicThreshold};
+use oxc_react_compiler::entrypoint::options::{
+    CompilationMode, OPT_OUT_DIRECTIVES, PanicThreshold,
+};
 use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 use oxc_react_compiler::entrypoint::program::should_compile_function;
 use oxc_react_compiler::hir::ReactFunctionType;
@@ -1254,7 +1256,6 @@ fn run_pipeline_for_codegen_impl(
         }
     }
 
-
     for stmt in &parser_result.program.body {
         use oxc_ast::ast::{Declaration, Expression, Statement, VariableDeclarationKind};
         match stmt {
@@ -1412,9 +1413,8 @@ fn run_pipeline_for_codegen_impl(
         // compilation in TS. For the fixture test, we skip the function entirely
         // since we only compare codegen output (not lint diagnostics).
         if !ignore_use_no_forget {
-            let has_fn_opt_out = directives
-                .iter()
-                .any(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()));
+            let has_fn_opt_out =
+                directives.iter().any(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()));
             if has_fn_opt_out {
                 continue;
             }

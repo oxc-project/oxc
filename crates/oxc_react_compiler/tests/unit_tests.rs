@@ -297,24 +297,20 @@ mod logger_tests {
     #[test]
     fn should_compile_component() {
         // Component with JSX — qualifies as component in Infer mode
-        let result = with_parsed_function(
-            "function Component() { return <div />; }",
-            |func, name| {
+        let result =
+            with_parsed_function("function Component() { return <div />; }", |func, name| {
                 should_compile_function(func, name, &[], CompilationMode::Infer, false)
-            },
-        );
+            });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn should_compile_hook() {
         // Hook with a hook call — qualifies as hook in Infer mode
-        let result = with_parsed_function(
-            "function useMyHook() { return useState(0); }",
-            |func, name| {
+        let result =
+            with_parsed_function("function useMyHook() { return useState(0); }", |func, name| {
                 should_compile_function(func, name, &[], CompilationMode::Infer, false)
-            },
-        );
+            });
         assert_eq!(result, Some(ReactFunctionType::Hook));
     }
 
@@ -347,9 +343,8 @@ mod logger_tests {
         // opt-out directives. In the TS reference, opt-out is checked by the caller
         // (processFn) AFTER compilation. So even with 'use no memo', the function
         // type is still determined as Component.
-        let result = with_parsed_function(
-            "function Component() { return <div />; }",
-            |func, name| {
+        let result =
+            with_parsed_function("function Component() { return <div />; }", |func, name| {
                 should_compile_function(
                     func,
                     name,
@@ -357,24 +352,20 @@ mod logger_tests {
                     CompilationMode::Infer,
                     false,
                 )
-            },
-        );
+            });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn annotation_mode_requires_directive() {
-        let result = with_parsed_function(
-            "function Component() { return <div />; }",
-            |func, name| {
+        let result =
+            with_parsed_function("function Component() { return <div />; }", |func, name| {
                 should_compile_function(func, name, &[], CompilationMode::Annotation, false)
-            },
-        );
+            });
         assert_eq!(result, None);
 
-        let result = with_parsed_function(
-            "function Component() { return <div />; }",
-            |func, name| {
+        let result =
+            with_parsed_function("function Component() { return <div />; }", |func, name| {
                 should_compile_function(
                     func,
                     name,
@@ -382,8 +373,7 @@ mod logger_tests {
                     CompilationMode::Annotation,
                     false,
                 )
-            },
-        );
+            });
         assert!(result.is_some());
     }
 
@@ -400,36 +390,27 @@ mod logger_tests {
     fn memo_callback_compiles_as_component_in_infer_mode() {
         // An anonymous-like function inside React.memo() should compile as Component
         // if it calls hooks or creates JSX. Pass is_memo_or_forwardref_arg=true.
-        let result = with_parsed_function(
-            "function _temp() { return <div />; }",
-            |func, _name| {
-                // Pass None for name to simulate anonymous, and is_memo_or_forwardref_arg=true
-                should_compile_function(func, None, &[], CompilationMode::Infer, true)
-            },
-        );
+        let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
+            // Pass None for name to simulate anonymous, and is_memo_or_forwardref_arg=true
+            should_compile_function(func, None, &[], CompilationMode::Infer, true)
+        });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn memo_callback_compiles_as_component_in_all_mode() {
-        let result = with_parsed_function(
-            "function _temp() { return <div />; }",
-            |func, _name| {
-                should_compile_function(func, None, &[], CompilationMode::All, true)
-            },
-        );
+        let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
+            should_compile_function(func, None, &[], CompilationMode::All, true)
+        });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn forwardref_callback_not_compiled_without_flag() {
         // Without is_memo_or_forwardref_arg, an anonymous function should not compile in Infer mode
-        let result = with_parsed_function(
-            "function _temp() { return <div />; }",
-            |func, _name| {
-                should_compile_function(func, None, &[], CompilationMode::Infer, false)
-            },
-        );
+        let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
+            should_compile_function(func, None, &[], CompilationMode::Infer, false)
+        });
         assert_eq!(result, None);
     }
 
@@ -892,7 +873,8 @@ fn test_context_variable_debug() {
     match pipeline_result {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
-            let codegen_func = run_codegen(pipeline_output, &env, ast, "_c").expect("Codegen failed");
+            let codegen_func =
+                run_codegen(pipeline_output, &env, ast, "_c").expect("Codegen failed");
             let output = print_codegen_body(&codegen_func);
             println!("=== Codegen output ===\n{output}");
             assert!(
