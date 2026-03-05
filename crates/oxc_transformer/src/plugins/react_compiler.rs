@@ -93,8 +93,11 @@ pub struct ReactCompilerOptions {
     /// Defaults to `true`.
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     /// Validate that useMemo/useCallback results are not void.
-    /// Defaults to `false`.
+    /// Defaults to `true`.
     pub validate_no_void_use_memo: Option<bool>,
+    /// Validate exhaustive memoization dependencies.
+    /// Defaults to `true`.
+    pub validate_exhaustive_memoization_dependencies: Option<bool>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -186,6 +189,9 @@ impl ReactCompiler {
         if let Some(v) = options.validate_no_void_use_memo {
             environment_config.validate_no_void_use_memo = v;
         }
+        if let Some(v) = options.validate_exhaustive_memoization_dependencies {
+            environment_config.validate_exhaustive_memoization_dependencies = v;
+        }
         Self {
             options,
             panic_threshold,
@@ -210,13 +216,20 @@ impl ReactCompiler {
 
         // Sources filtering: if `sources` is configured, only compile files
         // whose path matches at least one source pattern (substring match).
+        // When not configured, exclude node_modules by default (matching TS upstream).
+        let source_path = ctx.state.source_path.to_string_lossy();
         if let Some(ref sources) = self.options.sources {
-            let source_path = ctx.state.source_path.to_string_lossy();
             if source_path.is_empty() {
                 // No filename available — cannot filter, skip compilation.
                 return;
             }
             if !sources.iter().any(|pattern| source_path.contains(pattern.as_str())) {
+                return;
+            }
+        } else {
+            // Default: exclude node_modules (matches TS upstream behavior where
+            // the default sources filter is `(fn) => fn.indexOf("node_modules") === -1`).
+            if source_path.contains("node_modules") {
                 return;
             }
         }

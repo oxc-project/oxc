@@ -1134,6 +1134,10 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
 /// The TS test harness registers a module type provider that tells the compiler
 /// about hooks and typed functions exported from the `shared-runtime` test module.
 /// This function creates the equivalent object type with known properties.
+///
+/// # Panics
+/// Panics if any built-in aliasing signature config contains an `Impure` effect,
+/// which should never happen for the hardcoded configs used here.
 pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
     let mut props: Vec<(String, Type)> = Vec::new();
 
@@ -1321,7 +1325,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                     from: "@value".to_string(),
                     into: "@return".to_string(),
                 }],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1354,7 +1358,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                     from: "@value".to_string(),
                     into: "@return".to_string(),
                 }],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1394,7 +1398,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                         into: "@return".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1434,7 +1438,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                         into: "@return".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1469,7 +1473,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                     from: "@value".to_string(),
                     into: "@return".to_string(),
                 }],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1510,7 +1514,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
                         into: "@object".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -1937,7 +1941,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
                         reason: ValueReason::KnownReturnSignature,
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -2128,7 +2132,7 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
                         into: "@returns".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -2159,7 +2163,7 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
                         into: "@returns".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
@@ -2190,7 +2194,7 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
                         into: "@returns".to_string(),
                     },
                 ],
-            })),
+            }).expect("built-in config should not contain Impure effects")),
             ..FunctionSignature::default()
         },
     );
