@@ -101,6 +101,11 @@ pub fn parse_jsdoc(
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
+                // Parentheses and square-bracket syntaxes are line-oriented in JSDoc.
+                // Reset them on each new line so prose such as `[min, max)` does not
+                // block parsing subsequent `@tag` lines.
+                brace_depth = 0;
+                square_brace_depth = 0;
             }
             '{' => curly_brace_depth += 1,
             '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
