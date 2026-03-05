@@ -10084,7 +10084,8 @@ fn normalize_dispatcher_guard_names(s: &str) -> String {
     let marker_bytes = marker.as_bytes();
     let mut i = 0;
     while i < bytes.len() {
-        if i + marker_bytes.len() <= bytes.len() && &bytes[i..i + marker_bytes.len()] == marker_bytes
+        if i + marker_bytes.len() <= bytes.len()
+            && &bytes[i..i + marker_bytes.len()] == marker_bytes
         {
             result.push_str(marker);
             let mut j = i + marker_bytes.len();
@@ -10156,11 +10157,8 @@ fn convert_arrow_iife_guards(s: &str) -> String {
             }
             if !found_end {
                 // Can't find matching end — mark and skip
-                result = format!(
-                    "{}__SKIPARROW__{}",
-                    &result[..start],
-                    &result[start + marker.len()..]
-                );
+                result =
+                    format!("{}__SKIPARROW__{}", &result[..start], &result[start + marker.len()..]);
                 continue;
             }
             let iife_body = &rest[..end];
@@ -10176,11 +10174,8 @@ fn convert_arrow_iife_guards(s: &str) -> String {
                 continue;
             }
             // Not a guard IIFE, skip
-            result = format!(
-                "{}__SKIPARROW__{}",
-                &result[..start],
-                &result[start + marker.len()..]
-            );
+            result =
+                format!("{}__SKIPARROW__{}", &result[..start], &result[start + marker.len()..]);
             continue;
         }
         break;
