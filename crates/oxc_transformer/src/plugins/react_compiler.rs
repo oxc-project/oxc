@@ -76,6 +76,13 @@ pub struct ReactCompilerOptions {
     /// Dynamic gating config: `{ source }`.
     /// When set, enables `use memo if(...)` directives.
     pub dynamic_gating: Option<DynamicGatingConfig>,
+    /// Array of filename regex patterns to filter which files get compiled.
+    /// When set, only files whose path matches at least one pattern will be compiled.
+    ///
+    /// NOTE: Filtering logic is not yet implemented because the filename is not
+    /// directly available in `enter_program`. This field is wired through so that
+    /// the option can be passed from the NAPI layer.
+    pub sources: Option<Vec<String>>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
