@@ -19,7 +19,7 @@ use oxc_react_compiler::{
         },
     },
     hir::{
-        NonLocalBinding,
+        NonLocalBinding, ReactFunctionType,
         build_hir::{LowerableFunction, collect_import_bindings, lower},
         environment::{CompilerOutputMode, Environment, EnvironmentConfig, ExternalFunction},
     },
@@ -289,11 +289,36 @@ impl ReactCompiler {
                 let replaced = replace_statement_function(stmt, compiled, ctx);
                 replaced_indices.push(new_body.len());
                 new_body.push(replaced);
-                // Insert outlined functions as top-level FunctionDeclarations after
-                // the replaced statement.
-                for outlined in outlined_fns {
+                // Process outlined functions using a queue, matching TS Program.ts
+                // lines 426-454. Outlined functions with fn_type are requeued for
+                // full compilation; their own outlined outputs are then processed.
+                let mut outlined_queue: Vec<OutlinedOutput<'a>> = outlined_fns;
+                while let Some(outlined) = outlined_queue.pop() {
+                    let requeue_fn_type = outlined.fn_type;
+                    let mut outlined_stmt = build_outlined_function_statement(outlined, ctx);
+                    if let Some(fn_type) = requeue_fn_type {
+                        if let Some(mut recompiled) = self.compile_outlined_function(
+                            &outlined_stmt,
+                            fn_type,
+                            &cache_identifier_name,
+                            ctx,
+                        ) {
+                            // Collect outlined functions from the requeued compilation
+                            // and add them to the queue for processing.
+                            let nested_outlined = std::mem::take(&mut recompiled.outlined);
+                            outlined_stmt =
+                                replace_statement_function(outlined_stmt, recompiled, ctx);
+                            for nested in nested_outlined {
+                                debug_assert!(
+                                    nested.fn_.outlined.is_empty(),
+                                    "Unexpected nested outlined functions",
+                                );
+                                outlined_queue.push(nested);
+                            }
+                        }
+                    }
                     replaced_indices.push(new_body.len());
-                    new_body.push(build_outlined_function_statement(outlined, ctx));
+                    new_body.push(outlined_stmt);
                 }
             } else {
                 new_body.push(stmt);
@@ -675,6 +700,68 @@ impl ReactCompiler {
             }
             _ => None,
         }
+    }
+
+    /// Compile an outlined function that was requeued for full compilation.
+    ///
+    /// This is the Rust equivalent of TS Program.ts lines 448-454 where outlined
+    /// functions with `type !== null` are pushed back onto the compilation queue.
+    /// Unlike `compile_function`, this skips `should_compile_function` (the fn_type
+    /// is already known) and suppression checks (the function is compiler-generated).
+    fn compile_outlined_function<'a>(
+        &self,
+        statement: &Statement<'a>,
+        fn_type: ReactFunctionType,
+        cache_identifier_name: &str,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<CodegenOutput<'a>> {
+        let function = match statement {
+            Statement::FunctionDeclaration(f) => f,
+            _ => return None,
+        };
+
+        let environment =
+            Environment::new(fn_type, self.output_mode, self.environment_config.clone());
+
+        let lowerable_function = LowerableFunction::Function(function);
+        let mut hir_function = match lower(&environment, fn_type, &lowerable_function, self.outer_bindings.clone()) {
+            Ok(hir_function) => hir_function,
+            Err(error) => {
+                Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                return None;
+            }
+        };
+
+        let pipeline_output = match run_pipeline(&mut hir_function, &environment) {
+            Ok(output) => output,
+            Err(error) => {
+                Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                for diagnostic in hir_function.env.take_diagnostics() {
+                    Self::report_compiler_error(&diagnostic, function.span, self.panic_threshold, ctx);
+                }
+                return None;
+            }
+        };
+
+        for diagnostic in hir_function.env.take_diagnostics() {
+            Self::report_compiler_error(&diagnostic, function.span, self.panic_threshold, ctx);
+        }
+
+        let codegen_output =
+            match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
+                Ok(output) => output,
+                Err(error) => {
+                    Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                    return None;
+                }
+            };
+
+        // Lint mode: compile for validation but don't emit.
+        if self.output_mode == CompilerOutputMode::Lint {
+            return None;
+        }
+
+        Some(codegen_output)
     }
 
     fn report_compiler_error(
