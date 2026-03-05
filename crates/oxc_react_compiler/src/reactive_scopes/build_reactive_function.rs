@@ -453,27 +453,16 @@ fn visit_value_block(
     loc: SourceLocation,
     fallthrough: Option<BlockId>,
 ) -> Result<ValueBlockResult, CompilerError> {
-    let Some(block) = cx.block(block_id) else {
-        // Fallback: return an undefined value if the block is missing
-        return Ok(ValueBlockResult {
-            block: block_id,
-            place: make_undefined_place(loc),
-            value: make_undefined_value(loc),
-            id: InstructionId::ZERO,
-        });
-    };
+    let block = cx.block(block_id).expect("block must exist");
 
-    // If we've reached the fallthrough block, this shouldn't happen
+    // If we've reached the fallthrough block, this is an invariant violation
     if let Some(ft) = fallthrough
         && block_id == ft
     {
-        // Invariant violation in TS; here we return undefined as fallback
-        return Ok(ValueBlockResult {
-            block: block_id,
-            place: make_undefined_place(loc),
-            value: make_undefined_value(loc),
-            id: InstructionId::ZERO,
-        });
+        unreachable!(
+            "Expected block to not equal fallthrough. block: {:?}, fallthrough: {:?}",
+            block_id, ft
+        );
     }
 
     match &block.terminal {
@@ -497,12 +486,7 @@ fn visit_value_block(
         Terminal::Goto(_) => {
             // A goto terminal: extract the value from the instructions
             if block.instructions.is_empty() {
-                return Ok(ValueBlockResult {
-                    block: block.id,
-                    place: make_undefined_place(loc),
-                    value: make_undefined_value(loc),
-                    id: block.terminal.id(),
-                });
+                unreachable!("Unexpected empty block with goto terminal: {:?}", block_id);
             }
             Ok(extract_value_block_result(&block.instructions, block.id, loc))
         }

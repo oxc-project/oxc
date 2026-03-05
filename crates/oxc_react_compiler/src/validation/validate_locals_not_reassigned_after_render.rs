@@ -29,10 +29,16 @@ pub fn validate_locals_not_reassigned_after_render(
     func: &HIRFunction,
 ) -> Result<(), CompilerError> {
     let mut context_variables: FxHashSet<IdentifierId> = FxHashSet::default();
-    let reassignment =
-        get_context_reassignment(func, &func.env.shapes, &mut context_variables, false, false);
+    let mut errors = CompilerError::new();
+    let reassignment = get_context_reassignment(
+        func,
+        &func.env.shapes,
+        &mut context_variables,
+        false,
+        false,
+        &mut errors,
+    );
     if let Some(reassignment) = reassignment {
-        let mut errors = CompilerError::new();
         let variable = get_variable_name(&reassignment);
         errors.push_diagnostic(
             CompilerDiagnostic::create(
@@ -49,9 +55,8 @@ pub fn validate_locals_not_reassigned_after_render(
                 message: Some(format!("Cannot reassign {variable} after render completes")),
             }),
         );
-        return Err(errors);
     }
-    Ok(())
+    if errors.has_any_errors() { Err(errors) } else { Ok(()) }
 }
 
 fn get_variable_name(place: &Place) -> String {
@@ -79,12 +84,35 @@ fn has_no_alias(shapes: &ShapeRegistry, ty: &Type) -> bool {
     sig.no_alias
 }
 
+/// Build and push the async-specific reassignment diagnostic into `errors`.
+fn push_async_reassignment_error(errors: &mut CompilerError, place: &Place) {
+    let variable = get_variable_name(place);
+    errors.push_diagnostic(
+        CompilerDiagnostic::create(
+            ErrorCategory::Immutability,
+            "Cannot reassign variable in async function".to_string(),
+            Some(
+                "Reassigning a variable in an async function can cause \
+                 inconsistent behavior on subsequent renders. Consider \
+                 using state instead"
+                    .to_string(),
+            ),
+            None,
+        )
+        .with_detail(CompilerDiagnosticDetail::Error {
+            loc: Some(place.loc),
+            message: Some(format!("Cannot reassign {variable}")),
+        }),
+    );
+}
+
 fn get_context_reassignment(
     func: &HIRFunction,
     shapes: &ShapeRegistry,
     context_variables: &mut FxHashSet<IdentifierId>,
     is_function_expression: bool,
     is_async: bool,
+    errors: &mut CompilerError,
 ) -> Option<Place> {
     let mut reassigning_functions: FxHashMap<IdentifierId, Place> = FxHashMap::default();
 
@@ -99,6 +127,7 @@ fn get_context_reassignment(
                         context_variables,
                         true,
                         is_async || v.lowered_func.func.is_async,
+                        errors,
                     );
                     if reassignment.is_none() {
                         // Check if any operand is a reassigning function
@@ -111,30 +140,12 @@ fn get_context_reassignment(
                     }
                     if let Some(ref r) = reassignment {
                         if is_async || v.lowered_func.func.is_async {
-                            // Async function reassignment is an immediate error
-                            let variable = get_variable_name(r);
-                            let mut errors = CompilerError::new();
-                            errors.push_diagnostic(
-                                CompilerDiagnostic::create(
-                                    ErrorCategory::Immutability,
-                                    "Cannot reassign variable in async function".to_string(),
-                                    Some(
-                                        "Reassigning a variable in an async function can cause \
-                                         inconsistent behavior on subsequent renders. Consider \
-                                         using state instead"
-                                            .to_string(),
-                                    ),
-                                    None,
-                                )
-                                .with_detail(
-                                    CompilerDiagnosticDetail::Error {
-                                        loc: Some(r.loc),
-                                        message: Some(format!("Cannot reassign {variable}")),
-                                    },
-                                ),
-                            );
-                            // In TS this throws; we just return the reassignment
-                            return Some(r.clone());
+                            // Async function reassignment: record the async-specific
+                            // error and return None so the caller does NOT emit the
+                            // generic "after render" diagnostic (matches TS behavior
+                            // where env.recordError() + return null).
+                            push_async_reassignment_error(errors, r);
+                            return None;
                         }
                         reassigning_functions.insert(lvalue_id, r.clone());
                     }
@@ -146,6 +157,7 @@ fn get_context_reassignment(
                         context_variables,
                         true,
                         is_async || v.lowered_func.func.is_async,
+                        errors,
                     );
                     if reassignment.is_none() {
                         for operand in each_instruction_value_operand(&instr.value) {
@@ -157,7 +169,9 @@ fn get_context_reassignment(
                     }
                     if let Some(ref r) = reassignment {
                         if is_async || v.lowered_func.func.is_async {
-                            return Some(r.clone());
+                            // Same async handling as FunctionExpression above
+                            push_async_reassignment_error(errors, r);
+                            return None;
                         }
                         reassigning_functions.insert(lvalue_id, r.clone());
                     }
