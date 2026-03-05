@@ -1407,17 +1407,18 @@ fn run_pipeline_for_codegen_impl(
             }
         };
 
-        // When @ignoreUseNoForget is set, filter out opt-out directives so that
-        // should_compile_function won't skip the function. This matches the TS
-        // reference's `ignoreUseNoForget` option (Program.ts line 570).
-        let directives: Vec<String> = if ignore_use_no_forget {
-            directives
-                .into_iter()
-                .filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str()))
-                .collect()
-        } else {
-            directives
-        };
+        // Check for function-level opt-out directives post-type-determination.
+        // Port of processFn (Program.ts lines 634-644): opt-out is checked AFTER
+        // compilation in TS. For the fixture test, we skip the function entirely
+        // since we only compare codegen output (not lint diagnostics).
+        if !ignore_use_no_forget {
+            let has_fn_opt_out = directives
+                .iter()
+                .any(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()));
+            if has_fn_opt_out {
+                continue;
+            }
+        }
 
         let is_wrapped = wrapper.is_some();
         let fn_type = match should_compile_function(
@@ -1426,8 +1427,6 @@ fn run_pipeline_for_codegen_impl(
             &directives,
             compilation_mode,
             is_wrapped,
-            false,
-            None,
         ) {
             Some(ft) => ft,
             None => continue,

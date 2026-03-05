@@ -22,7 +22,12 @@ pub struct ProgramCompilationResult {
 
 /// Determine if a function should be compiled based on the compilation mode.
 ///
-/// Port of `getReactFunctionType` from Program.ts (lines 737-777).
+/// Port of `getReactFunctionType` from Program.ts (lines 818-864).
+///
+/// This function does NOT check opt-out directives (`'use no memo'` / `'use no forget'`).
+/// In the TS reference, `getReactFunctionType` only determines the function type;
+/// opt-out directives are checked by the caller (`processFn`) AFTER compilation,
+/// allowing validation/lint errors to still be reported.
 ///
 /// `is_memo_or_forwardref_arg` should be true when the function is the callback
 /// argument of `React.memo()`, `memo()`, `React.forwardRef()`, or `forwardRef()`.
@@ -32,25 +37,8 @@ pub fn should_compile_function(
     directives: &[String],
     mode: CompilationMode,
     is_memo_or_forwardref_arg: bool,
-    ignore_use_no_forget: bool,
-    custom_opt_out_directives: Option<&[String]>,
 ) -> Option<ReactFunctionType> {
-    // Check for opt-out directives (unless ignore_use_no_forget is set)
-    if !ignore_use_no_forget {
-        for directive in directives {
-            if OPT_OUT_DIRECTIVES.contains(&directive.as_str()) {
-                return None;
-            }
-            // Check custom opt-out directives
-            if let Some(custom) = custom_opt_out_directives {
-                if custom.iter().any(|d| d == directive) {
-                    return None;
-                }
-            }
-        }
-    }
-
-    // Check for opt-in directives (TS lines 738-743)
+    // Check for opt-in directives (TS lines 822-830)
     // This includes both static opt-ins ("use forget", "use memo") and
     // dynamic gating directives ("use memo if(...)") which are also opt-ins
     // in the TS reference's tryFindDirectiveEnablingMemoization.

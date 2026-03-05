@@ -10,7 +10,10 @@ use oxc_react_compiler::{
             CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold,
         },
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
-        program::{ErrorAction, handle_compilation_error, should_compile_function},
+        program::{
+            ErrorAction, find_directive_disabling_memoization, handle_compilation_error,
+            should_compile_function,
+        },
         suppression::{
             DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
         },
@@ -108,6 +111,7 @@ pub struct ReactCompiler {
     output_mode: CompilerOutputMode,
     ignore_use_no_forget: bool,
     custom_opt_out_directives: Option<Vec<String>>,
+    has_module_scope_opt_out: bool,
     gating: Option<ExternalFunction>,
     dynamic_gating: Option<DynamicGatingOptions>,
     outer_bindings: FxHashMap<String, NonLocalBinding>,
@@ -158,6 +162,7 @@ impl ReactCompiler {
             output_mode,
             ignore_use_no_forget,
             custom_opt_out_directives,
+            has_module_scope_opt_out: false,
             gating,
             dynamic_gating,
             outer_bindings: FxHashMap::default(),
@@ -183,20 +188,18 @@ impl ReactCompiler {
             }
         }
 
-        // Check for module-level opt-out directives
+        // Check for module-level opt-out directives.
+        // Port of TS Program.ts line 411-413: set hasModuleScopeOptOut flag but
+        // continue compilation so that validation/lint errors are still reported.
+        // The compiled results are discarded post-compilation if this flag is set.
         if !self.ignore_use_no_forget {
-            for directive in &program.directives {
-                let value = directive.directive.as_str();
-                if value == "use no memo" || value == "use no forget" {
-                    return;
-                }
-                // Check custom opt-out directives
-                if let Some(custom) = &self.custom_opt_out_directives {
-                    if custom.iter().any(|d| d == value) {
-                        return;
-                    }
-                }
-            }
+            let program_directives: Vec<String> =
+                program.directives.iter().map(|d| d.directive.to_string()).collect();
+            self.has_module_scope_opt_out = find_directive_disabling_memoization(
+                &program_directives,
+                self.custom_opt_out_directives.as_deref(),
+            )
+            .is_some();
         }
 
         // Validate restricted imports (port of validateRestrictedImports call in Program.ts).
@@ -551,8 +554,6 @@ impl ReactCompiler {
             directives,
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
             is_memo_or_forwardref_arg,
-            self.ignore_use_no_forget,
-            self.custom_opt_out_directives.as_deref(),
         )?;
 
         // Check if any eslint-disable suppression range covers this function.
@@ -594,13 +595,43 @@ impl ReactCompiler {
             Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
         }
 
-        match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
-            Ok(codegen_output) => Some(codegen_output),
-            Err(error) => {
-                Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
-                None
+        let codegen_output =
+            match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
+                Ok(output) => output,
+                Err(error) => {
+                    Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
+                    return None;
+                }
+            };
+
+        // Port of processFn (Program.ts lines 634-672): check for function-level
+        // and module-level opt-out AFTER compilation. This allows validation/lint
+        // errors to be reported even for opted-out functions.
+        //
+        // Function-level opt-out: if 'use no memo'/'use no forget' (or custom opt-out)
+        // is present and ignoreUseNoForget is false, discard the compiled output.
+        if !self.ignore_use_no_forget {
+            let has_fn_opt_out = find_directive_disabling_memoization(
+                directives,
+                self.custom_opt_out_directives.as_deref(),
+            )
+            .is_some();
+            if has_fn_opt_out {
+                return None;
             }
         }
+
+        // Module-level opt-out: discard compiled output (TS line 657-658).
+        if self.has_module_scope_opt_out {
+            return None;
+        }
+
+        // Lint mode: compile for validation but don't emit (TS line 659-660).
+        if self.output_mode == CompilerOutputMode::Lint {
+            return None;
+        }
+
+        Some(codegen_output)
     }
 
     /// Try to compile the inner function of a memo/forwardRef call expression.
