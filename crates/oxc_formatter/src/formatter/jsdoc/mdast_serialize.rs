@@ -836,23 +836,23 @@ fn format_code_value<'a>(
         let lang = lang_lower.as_ref();
 
         // JS/TS: native formatter
-        if super::serialize::is_js_ts_lang(lang)
+        if super::embedded::is_js_ts_lang(lang)
             && let Some(formatted) =
-                super::serialize::format_embedded_js(code, width, format_options, allocator)
+                super::embedded::format_embedded_js(code, width, format_options, allocator)
         {
             return Cow::Owned(formatted);
         }
         // CSS/HTML/GraphQL/MD/YAML: external formatter
-        if let Some(ext_lang) = super::serialize::fenced_lang_to_external_language(lang)
+        if let Some(ext_lang) = super::embedded::fenced_lang_to_external_language(lang)
             && let Some(cbs) = opts.external_callbacks
             && let Some(formatted) =
-                super::serialize::format_external_language(code, ext_lang, width, cbs)
+                super::embedded::format_external_language(code, ext_lang, width, cbs)
         {
             return Cow::Owned(formatted);
         }
         // Unknown language: fall back to JS (matches upstream default "babel" parser)
         if let Some(formatted) =
-            super::serialize::format_embedded_js(code, width, format_options, allocator)
+            super::embedded::format_embedded_js(code, width, format_options, allocator)
         {
             return Cow::Owned(formatted);
         }
@@ -860,7 +860,7 @@ fn format_code_value<'a>(
     } else {
         // No language: try as JS (matches upstream default "babel" parser)
         if let Some(formatted) =
-            super::serialize::format_embedded_js(code, width, format_options, allocator)
+            super::embedded::format_embedded_js(code, width, format_options, allocator)
         {
             Cow::Owned(formatted)
         } else {
