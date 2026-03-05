@@ -48,6 +48,15 @@ pub struct ReactCompilerOptions {
     pub eslint_suppression_rules: Option<Vec<String>>,
     /// Whether to bail on Flow suppression comments. Defaults to `true`.
     pub flow_suppressions: Option<bool>,
+    /// Whether to validate hooks usage (Rules of Hooks).
+    /// Defaults to `true`.
+    pub validate_hooks_usage: Option<bool>,
+    /// Whether to validate ref access during render.
+    /// Defaults to `true`.
+    pub validate_ref_access_during_render: Option<bool>,
+    /// Whether to validate no setState in render.
+    /// Defaults to `true`.
+    pub validate_no_set_state_in_render: Option<bool>,
 }
 
 /// React Compiler transformer plugin.
@@ -76,11 +85,21 @@ impl ReactCompiler {
     pub fn new(options: ReactCompilerOptions) -> Self {
         let panic_threshold = parse_panic_threshold(options.panic_threshold.as_deref());
         let target = parse_target(options.target.as_deref());
+        let mut environment_config = EnvironmentConfig::default();
+        if let Some(v) = options.validate_hooks_usage {
+            environment_config.validate_hooks_usage = v;
+        }
+        if let Some(v) = options.validate_ref_access_during_render {
+            environment_config.validate_ref_access_during_render = v;
+        }
+        if let Some(v) = options.validate_no_set_state_in_render {
+            environment_config.validate_no_set_state_in_render = v;
+        }
         Self {
             options,
             panic_threshold,
             target,
-            environment_config: EnvironmentConfig::default(),
+            environment_config,
             outer_bindings: FxHashMap::default(),
             suppressions: Vec::new(),
         }
@@ -477,7 +496,7 @@ impl ReactCompiler {
         }
 
         let environment =
-            Environment::new(fn_type, CompilerOutputMode::Client, EnvironmentConfig::default());
+            Environment::new(fn_type, CompilerOutputMode::Client, self.environment_config.clone());
 
         let mut hir_function =
             match lower(&environment, fn_type, function, self.outer_bindings.clone()) {
