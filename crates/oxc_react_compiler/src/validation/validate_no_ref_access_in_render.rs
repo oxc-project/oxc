@@ -770,18 +770,81 @@ fn validate_no_ref_access_in_render_impl(
 
                         if !did_error {
                             let is_ref_lvalue = is_use_ref_type(&instr.lvalue.identifier);
-                            for operand in each_instruction_value_operand(&instr.value) {
-                                if is_ref_lvalue
-                                    || matches!(
-                                        hook_kind,
-                                        Some(hk) if !matches!(hk, HookKind::UseState | HookKind::UseReducer)
-                                    )
-                                {
+                            if is_ref_lvalue
+                                || matches!(
+                                    hook_kind,
+                                    Some(hk) if !matches!(hk, HookKind::UseState | HookKind::UseReducer)
+                                )
+                            {
+                                for operand in each_instruction_value_operand(&instr.value) {
                                     validate_no_direct_ref_value_access(&mut errors, operand, env);
-                                } else if interpolated_as_jsx.contains(&instr.lvalue.identifier.id)
-                                {
+                                }
+                            } else if interpolated_as_jsx.contains(&instr.lvalue.identifier.id) {
+                                for operand in each_instruction_value_operand(&instr.value) {
                                     validate_no_ref_value_access(&mut errors, env, operand);
-                                } else {
+                                }
+                            } else if hook_kind.is_none() && let Some(effects) = &instr.effects {
+                                // For non-hook functions with known aliasing effects, use the
+                                // effects to determine what validation to apply for each place.
+                                // Track visited id:kind pairs to avoid duplicate errors.
+                                let mut visited_effects: FxHashSet<(IdentifierId, bool)> = FxHashSet::default();
+                                for effect in effects {
+                                    let (place, is_direct_ref) = match effect {
+                                        crate::inference::aliasing_effects::AliasingEffect::Freeze { value, .. } => {
+                                            (Some(value), true)
+                                        }
+                                        crate::inference::aliasing_effects::AliasingEffect::Mutate { value, .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MutateTransitive { value }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MutateConditionally { value }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MutateTransitiveConditionally { value } => {
+                                            (Some(value), false)
+                                        }
+                                        crate::inference::aliasing_effects::AliasingEffect::Render { place } => {
+                                            (Some(place), false)
+                                        }
+                                        crate::inference::aliasing_effects::AliasingEffect::Capture { from, .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::Alias { from, .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MaybeAlias { from, .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::Assign { from, .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::CreateFrom { from, .. } => {
+                                            (Some(from), false)
+                                        }
+                                        crate::inference::aliasing_effects::AliasingEffect::ImmutableCapture { from, .. } => {
+                                            // ImmutableCapture: check if the same operand also has
+                                            // a Freeze effect, which indicates a known signature.
+                                            let is_frozen = effects.iter().any(|e| {
+                                                matches!(e, crate::inference::aliasing_effects::AliasingEffect::Freeze { value, .. }
+                                                    if value.identifier.id == from.identifier.id)
+                                            });
+                                            (Some(from), is_frozen)
+                                        }
+                                        crate::inference::aliasing_effects::AliasingEffect::Create { .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::CreateFunction { .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::Apply { .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::Impure { .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MutateFrozen { .. }
+                                        | crate::inference::aliasing_effects::AliasingEffect::MutateGlobal { .. } => {
+                                            (None, false)
+                                        }
+                                    };
+                                    if let Some(place) = place {
+                                        let key = (place.identifier.id, is_direct_ref);
+                                        if visited_effects.insert(key) {
+                                            if is_direct_ref {
+                                                validate_no_direct_ref_value_access(&mut errors, place, env);
+                                            } else {
+                                                validate_no_ref_passed_to_function(
+                                                    &mut errors,
+                                                    env,
+                                                    place,
+                                                    place.loc,
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                for operand in each_instruction_value_operand(&instr.value) {
                                     validate_no_ref_passed_to_function(
                                         &mut errors,
                                         env,

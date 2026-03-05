@@ -36,6 +36,10 @@ pub struct PipelineOutput {
     pub fbt_operands: FxHashSet<IdentifierId>,
     /// Pre-processed outlined functions (each went through the analysis sub-pipeline).
     pub outlined: Vec<OutlinedPipelineOutput>,
+    /// Accumulated non-fatal validation errors (from `env.recordError()` equivalent).
+    /// These allow the pipeline to continue through codegen, but are checked after
+    /// codegen completes — if any are present, the error is returned to the caller.
+    pub recorded_errors: Option<CompilerError>,
 }
 
 /// Analysis output for a single outlined function.
@@ -220,9 +224,11 @@ pub fn run_pipeline(
         }
 
         if env.config.validate_ref_access_during_render {
-            crate::validation::validate_no_ref_access_in_render::validate_no_ref_access_in_render(
-                func,
-            )?;
+            func.env.record_errors(
+                crate::validation::validate_no_ref_access_in_render::validate_no_ref_access_in_render(
+                    func,
+                ),
+            );
         }
         if env.config.validate_no_set_state_in_render {
             crate::validation::validate_no_set_state_in_render::validate_no_set_state_in_render(
@@ -254,7 +260,9 @@ pub fn run_pipeline(
             crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func)?;
         }
 
-        crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func)?;
+        func.env.record_errors(
+            crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
+        );
     }
 
     // 24. InferReactivePlaces
@@ -441,7 +449,9 @@ pub fn run_pipeline(
     if env.config.enable_preserve_existing_memoization_guarantees
         || env.config.validate_preserve_existing_memoization_guarantees
     {
-        crate::validation::validate_preserved_manual_memoization::validate_preserved_manual_memoization(&reactive_function)?;
+        func.env.record_errors(
+            crate::validation::validate_preserved_manual_memoization::validate_preserved_manual_memoization(&reactive_function),
+        );
     }
 
     // =========================================================================
@@ -465,7 +475,8 @@ pub fn run_pipeline(
         });
     }
 
-    Ok(PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined })
+    let recorded_errors = func.env.take_recorded_errors();
+    Ok(PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined, recorded_errors })
 }
 
 /// Run the codegen phase on the output of `run_pipeline()`.
@@ -482,7 +493,7 @@ pub fn run_codegen<'a>(
     cache_identifier_name: &str,
     original_func: Option<&crate::hir::build_hir::LowerableFunction<'_>>,
 ) -> Result<CodegenOutput<'a>, CompilerError> {
-    let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined } =
+    let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined, recorded_errors } =
         pipeline_output;
 
     // 50. CodegenFunction
@@ -550,6 +561,18 @@ pub fn run_codegen<'a>(
             None,
             None,
         ));
+    }
+
+    // Check for accumulated non-fatal validation errors from the pipeline.
+    // In the TS upstream, validation passes record errors via env.recordError()
+    // and the pipeline continues through codegen. At the end of the pipeline
+    // (Pipeline.ts:527), env.hasErrors() checks for accumulated errors and
+    // returns them. This matches that pattern: codegen runs to completion,
+    // but the error is still returned to the caller.
+    if let Some(errors) = recorded_errors
+        && errors.has_errors()
+    {
+        return Err(errors);
     }
 
     Ok(codegen_output)
