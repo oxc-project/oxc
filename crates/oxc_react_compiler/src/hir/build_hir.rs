@@ -5449,13 +5449,12 @@ pub fn lower_expression(
 
             // Alternate block: evaluates the right expression
             let alternate = builder.enter(BlockKind::Value, |builder, _block_id| {
-                let right_result =
-                    lower_expression(builder, right).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
+                let right_result = lower_expression(builder, right).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
                 let store_lvalue = create_temporary_place(builder.environment_mut(), loc);
                 builder.push(Instruction {
                     id: InstructionId(0),
@@ -5949,13 +5948,12 @@ pub fn lower_expression(
 
             // Alternate block: lower the alternate and store to shared place
             let alternate_block = builder.enter(BlockKind::Value, |builder, _block_id| {
-                let alternate_result =
-                    lower_expression(builder, alternate).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
+                let alternate_result = lower_expression(builder, alternate).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
                 let store_lvalue = create_temporary_place(builder.environment_mut(), loc);
                 builder.push(Instruction {
                     id: InstructionId(0),
@@ -6024,13 +6022,12 @@ pub fn lower_expression(
             let sequence_block = builder.enter(BlockKind::Sequence, |builder, _block_id| {
                 let mut last_place = None;
                 for sub_expr in expressions {
-                    let result =
-                        lower_expression(builder, sub_expr).unwrap_or_else(|err| {
-                            builder.errors.merge(err);
-                            ExpressionResult {
-                                place: create_temporary_place(builder.environment_mut(), loc),
-                            }
-                        });
+                    let result = lower_expression(builder, sub_expr).unwrap_or_else(|err| {
+                        builder.errors.merge(err);
+                        ExpressionResult {
+                            place: create_temporary_place(builder.environment_mut(), loc),
+                        }
+                    });
                     last_place = Some(result.place);
                 }
                 if let Some(last) = last_place {
@@ -7180,13 +7177,12 @@ fn lower_optional_member_expression(
                 })
             }
             OptionalMemberProperty::Computed(prop_expr) => {
-                let prop_result =
-                    lower_expression(builder, prop_expr).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
+                let prop_result = lower_expression(builder, prop_expr).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
                 InstructionValue::ComputedLoad(crate::hir::ComputedLoad {
                     object: object_place.clone(),
                     property: prop_result.place,
@@ -7324,13 +7320,12 @@ fn lower_optional_call_expression(
             // Callee is a regular (non-optional) member expression: method call pattern
             LowerableExpression::PropertyAccess { object, property, span: member_span } => {
                 let member_loc = span_to_loc(*member_span);
-                let obj_result =
-                    lower_expression(builder, object).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
+                let obj_result = lower_expression(builder, object).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
                 let prop_value = InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
                     object: obj_result.place.clone(),
                     property: crate::hir::types::PropertyLiteral::String(property.clone()),
@@ -7342,20 +7337,18 @@ fn lower_optional_call_expression(
             }
             LowerableExpression::ComputedPropertyAccess { object, property, span: member_span } => {
                 let member_loc = span_to_loc(*member_span);
-                let obj_result =
-                    lower_expression(builder, object).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
-                let prop_result =
-                    lower_expression(builder, property).unwrap_or_else(|err| {
-                        builder.errors.merge(err);
-                        ExpressionResult {
-                            place: create_temporary_place(builder.environment_mut(), loc),
-                        }
-                    });
+                let obj_result = lower_expression(builder, object).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
+                let prop_result = lower_expression(builder, property).unwrap_or_else(|err| {
+                    builder.errors.merge(err);
+                    ExpressionResult {
+                        place: create_temporary_place(builder.environment_mut(), loc),
+                    }
+                });
                 let computed_value = InstructionValue::ComputedLoad(crate::hir::ComputedLoad {
                     object: obj_result.place.clone(),
                     property: prop_result.place,
