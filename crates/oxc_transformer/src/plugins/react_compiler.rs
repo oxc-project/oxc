@@ -344,10 +344,8 @@ impl ReactCompiler {
         let mut compiled_stmt_indices: FxHashSet<usize> = FxHashSet::default();
 
         let mut new_body = if has_top_level_results {
-            let mut result_map: FxHashMap<
-                usize,
-                Vec<(CodegenOutput<'a>, Option<String>, Option<usize>)>,
-            > = FxHashMap::default();
+            type ResultEntry<'b> = (CodegenOutput<'b>, Option<String>, Option<usize>);
+            let mut result_map: FxHashMap<usize, Vec<ResultEntry<'a>>> = FxHashMap::default();
             for result in compiled_results {
                 result_map.entry(result.index).or_default().push((
                     result.output,
@@ -2276,9 +2274,8 @@ fn extract_dynamic_gating_directive(
     directives: &[String],
     dynamic_gating: Option<&DynamicGatingOptions>,
 ) -> Result<Option<ExternalFunction>, Vec<String>> {
-    let dynamic_gating_config = match dynamic_gating {
-        Some(config) => config,
-        None => return Ok(None),
+    let Some(dynamic_gating_config) = dynamic_gating else {
+        return Ok(None);
     };
 
     let mut errors: Vec<String> = Vec::new();
