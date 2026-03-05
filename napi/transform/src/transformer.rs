@@ -533,6 +533,45 @@ pub struct ReactCompilerOptions {
 
     /// Custom opt-out directives (in addition to "use no memo" / "use no forget").
     pub custom_opt_out_directives: Option<Vec<String>>,
+
+    /// Gating function config. When set, emits gated output that wraps
+    /// compiled + original functions behind a feature flag.
+    pub gating: Option<ExternalFunctionConfig>,
+
+    /// Dynamic gating config. When set, enables `use memo if(...)` directives.
+    pub dynamic_gating: Option<DynamicGatingConfig>,
+
+    /// ESLint suppression rules to check for when scanning for suppression comments.
+    ///
+    /// @default `["react-hooks/rules-of-hooks", "react-hooks/exhaustive-deps"]`
+    pub eslint_suppression_rules: Option<Vec<String>>,
+
+    /// Whether to bail on Flow suppression comments.
+    ///
+    /// @default true
+    pub flow_suppressions: Option<bool>,
+
+    /// Array of filename regex patterns to filter which files get compiled.
+    /// When set, only files whose path matches at least one pattern will be compiled.
+    pub sources: Option<Vec<String>>,
+}
+
+/// Configuration for an external function import used for gating.
+#[napi(object)]
+#[derive(Default)]
+pub struct ExternalFunctionConfig {
+    /// The module source to import from.
+    pub source: String,
+    /// The import specifier name.
+    pub import_specifier_name: String,
+}
+
+/// Configuration for dynamic gating via `use memo if(...)` directives.
+#[napi(object)]
+#[derive(Default)]
+pub struct DynamicGatingConfig {
+    /// The module source to import from.
+    pub source: String,
 }
 
 #[napi(object)]
@@ -599,7 +638,16 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             no_emit: options.no_emit,
             ignore_use_no_forget: options.ignore_use_no_forget,
             custom_opt_out_directives: options.custom_opt_out_directives,
-            ..Default::default()
+            gating: options.gating.map(|g| oxc::transformer::ExternalFunctionConfig {
+                source: g.source,
+                import_specifier_name: g.import_specifier_name,
+            }),
+            dynamic_gating: options
+                .dynamic_gating
+                .map(|d| oxc::transformer::DynamicGatingConfig { source: d.source }),
+            eslint_suppression_rules: options.eslint_suppression_rules,
+            flow_suppressions: options.flow_suppressions,
+            sources: options.sources,
         }
     }
 }
