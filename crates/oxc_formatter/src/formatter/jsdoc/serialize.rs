@@ -56,7 +56,7 @@ fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> String {
 }
 
 /// Tags whose descriptions should NOT be capitalized.
-/// Matches upstream's `TAGS_PEV_FORMATE_DESCRIPTION` exactly:
+/// Matches upstream's `TAGS_PEV_FORMAT_DESCRIPTION` exactly:
 /// borrows, default, defaultValue, import, memberof, module, see.
 fn should_skip_capitalize(tag_kind: &str) -> bool {
     matches!(
@@ -803,7 +803,7 @@ pub fn format_jsdoc_comment<'a>(
     let mut first_non_import_tag_emitted = false;
     for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
         // Skip successfully parsed @import tags — they are handled via merged import_lines.
-        // Unparseable @import tags fall through to format_generic_tag().
+        // Unparsable @import tags fall through to format_generic_tag().
         if parsed_import_indices.contains(&tag_idx) {
             if has_imports && !imports_emitted {
                 // Emit merged imports at the position of the first @import tag
@@ -2497,7 +2497,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
 
 /// Process all `@import` tags: parse, merge by module, sort, and format.
 /// Returns formatted lines ready to be inserted into the comment, plus
-/// the set of tag indices that were successfully parsed (so unparseable
+/// the set of tag indices that were successfully parsed (so unparsable
 /// `@import` tags can fall through to `format_generic_tag()`).
 fn process_import_tags(
     tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
@@ -2571,7 +2571,7 @@ mod tests {
 
     #[test]
     fn test_should_skip_capitalize() {
-        // Tags in TAGS_PEV_FORMATE_DESCRIPTION
+        // Tags in TAGS_PEV_FORMAT_DESCRIPTION
         assert!(should_skip_capitalize("borrows"));
         assert!(should_skip_capitalize("default"));
         assert!(should_skip_capitalize("defaultValue"));
@@ -2580,7 +2580,7 @@ mod tests {
         assert!(should_skip_capitalize("module"));
         assert!(should_skip_capitalize("see"));
 
-        // Tags that SHOULD capitalize (not in TAGS_PEV_FORMATE_DESCRIPTION)
+        // Tags that SHOULD capitalize (not in TAGS_PEV_FORMAT_DESCRIPTION)
         assert!(!should_skip_capitalize("param"));
         assert!(!should_skip_capitalize("returns"));
         assert!(!should_skip_capitalize("deprecated"));
