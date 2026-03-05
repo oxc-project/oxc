@@ -67,6 +67,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.validate_no_derived_computations_in_effects =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "validateNoDerivedComputationsInEffects_exp" => {
+                env_config.validate_no_derived_computations_in_effects_exp =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "validateNoJSXInTryStatements" => {
                 env_config.validate_no_jsx_in_try_statements =
                     parse_bool_value(entry.value.as_ref(), true);
@@ -166,6 +170,21 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "enableVerboseNoSetStateInEffect" => {
                 env_config.enable_verbose_no_set_state_in_effect =
                     parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableOptionalDependencies" => {
+                env_config.enable_optional_dependencies =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableTransitivelyFreezeFunctionExpressions" => {
+                env_config.enable_transitively_freeze_function_expressions =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableTreatRefLikeIdentifiersAsRefs" => {
+                env_config.enable_treat_ref_like_identifiers_as_refs =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "validateNoVoidUseMemo" => {
+                env_config.validate_no_void_use_memo = parse_bool_value(entry.value.as_ref(), true);
             }
             "enableEmitHookGuards" => {
                 // Matches TS testComplexConfigDefaults.enableEmitHookGuards

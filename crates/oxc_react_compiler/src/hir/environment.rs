@@ -208,6 +208,41 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `enableAllowSetStateFromRefsInEffects` in the TS version.
     pub enable_allow_set_state_from_refs_in_effects: bool,
+
+    /// Enable optional dependency tracking for optional chain expressions.
+    ///
+    /// When true (default), the compiler tracks optional chain dependencies
+    /// (e.g., `a?.b`) more precisely.
+    ///
+    /// Corresponds to `enableOptionalDependencies` in the TS version.
+    pub enable_optional_dependencies: bool,
+
+    /// Enable transitive freezing of function expression captures.
+    ///
+    /// When true (default), freezing a function expression also recursively
+    /// freezes all of its context captures. This ensures that values captured
+    /// by callbacks passed to hooks like useEffect are treated as frozen.
+    ///
+    /// Corresponds to `enableTransitivelyFreezeFunctionExpressions` in the TS version.
+    pub enable_transitively_freeze_function_expressions: bool,
+
+    /// Enable treating ref-like identifiers as refs for type inference.
+    ///
+    /// When true (default), identifiers whose names end with `Ref` (e.g.,
+    /// `myRef`) are inferred as ref types, and their `.current` property
+    /// accesses are typed as `BuiltInRefValue`. This prevents mutations to
+    /// `.current` from extending mutable ranges.
+    ///
+    /// Corresponds to `enableTreatRefLikeIdentifiersAsRefs` in the TS version.
+    pub enable_treat_ref_like_identifiers_as_refs: bool,
+
+    /// Validate that useMemo/useCallback results are not void (unused or no return value).
+    ///
+    /// When true, the compiler checks that useMemo callbacks return a value
+    /// and that useMemo results are actually used.
+    ///
+    /// Corresponds to `validateNoVoidUseMemo` in the TS version.
+    pub validate_no_void_use_memo: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -247,6 +282,10 @@ impl Default for EnvironmentConfig {
             validate_blocklisted_imports: None,
             enable_use_keyed_state: false,
             enable_allow_set_state_from_refs_in_effects: true,
+            enable_optional_dependencies: true,
+            enable_transitively_freeze_function_expressions: true,
+            enable_treat_ref_like_identifiers_as_refs: true,
+            validate_no_void_use_memo: false,
         }
     }
 }

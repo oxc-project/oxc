@@ -53,7 +53,7 @@ impl<'a> Unifier<'a> {
 
         // Handle Property types: resolve the object type and look up the property
         if let Type::Property(prop) = &right {
-            if is_ref_like_name(prop) {
+            if self.env.config.enable_treat_ref_like_identifiers_as_refs && is_ref_like_name(prop) {
                 self.unify(
                     prop.object_type.clone(),
                     Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) }),
@@ -79,7 +79,7 @@ impl<'a> Unifier<'a> {
             return;
         }
         if let Type::Property(prop) = &left {
-            if is_ref_like_name(prop) {
+            if self.env.config.enable_treat_ref_like_identifiers_as_refs && is_ref_like_name(prop) {
                 self.unify(
                     prop.object_type.clone(),
                     Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) }),
@@ -794,16 +794,18 @@ fn generate_instruction_equations(
                 left: lvalue_type,
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
             });
-            for attr in &v.props {
-                if let crate::hir::JsxAttribute::Attribute { name, place } = attr
-                    && name == "ref"
-                {
-                    equations.push(TypeEquation {
-                        left: place.identifier.type_.clone(),
-                        right: Type::Object(ObjectType {
-                            shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
-                        }),
-                    });
+            if env.config.enable_treat_ref_like_identifiers_as_refs {
+                for attr in &v.props {
+                    if let crate::hir::JsxAttribute::Attribute { name, place } = attr
+                        && name == "ref"
+                    {
+                        equations.push(TypeEquation {
+                            left: place.identifier.type_.clone(),
+                            right: Type::Object(ObjectType {
+                                shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
+                            }),
+                        });
+                    }
                 }
             }
         }

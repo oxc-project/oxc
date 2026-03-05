@@ -496,7 +496,7 @@ fn test_console_readonly_output() {
             .expect("Lower failed");
     let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
-    let result = run_codegen(pipeline_output, &env, ast, "_c").expect("Codegen failed");
+    let result = run_codegen(pipeline_output, &env, ast, "_c", None).expect("Codegen failed");
     let output = print_codegen_body(&result);
 
     // The console.log(x) call should be OUTSIDE the scope guard.
@@ -584,7 +584,7 @@ fn test_context_variable_reactive_scopes() {
             .expect("Lower failed");
     let pipeline_output = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
-    let result = run_codegen(pipeline_output, &env, ast, "_c").expect("Codegen failed");
+    let result = run_codegen(pipeline_output, &env, ast, "_c", None).expect("Codegen failed");
 
     // The expected output should have _c(2) and a reactive scope
     assert_eq!(
@@ -874,7 +874,7 @@ fn test_context_variable_debug() {
         Ok(pipeline_output) => {
             let ast = oxc_ast::AstBuilder::new(&allocator);
             let codegen_func =
-                run_codegen(pipeline_output, &env, ast, "_c").expect("Codegen failed");
+                run_codegen(pipeline_output, &env, ast, "_c", None).expect("Codegen failed");
             let output = print_codegen_body(&codegen_func);
             println!("=== Codegen output ===\n{output}");
             assert!(

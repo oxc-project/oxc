@@ -1456,7 +1456,7 @@ fn run_pipeline_for_codegen_impl(
             }
         };
         let ast = AstBuilder::new(&allocator);
-        match run_codegen(pipeline_output, &env, ast, "_c") {
+        match run_codegen(pipeline_output, &env, ast, "_c", Some(&func)) {
             Ok(output) => {
                 let result = codegen_output_to_result(output);
                 if return_first_error {

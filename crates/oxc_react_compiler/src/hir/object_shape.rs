@@ -216,6 +216,9 @@ pub fn signature_argument(id: u32) -> Place {
 ///
 /// Converts string-based parameter names to `IdentifierId`-based `Place`s,
 /// then resolves all effect references using the same string-to-Place mapping.
+///
+/// # Panics
+/// Panics if the config contains an `Impure` effect (not yet supported).
 pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> AliasingSignature {
     let mut lifetimes: FxHashMap<String, Place> = FxHashMap::default();
     let mut next_id: u32 = 0;
@@ -276,9 +279,10 @@ pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> Alia
                 AliasingEffect::Freeze { value: lookup(value), reason: *reason }
             }
             AliasingEffectConfig::Impure { .. } => {
-                // TS throws a TODO error for Impure effect declarations.
-                // For now this is unreachable since no built-in configs use Impure.
-                unreachable!("Impure aliasing effect config is not yet supported")
+                // TS throws CompilerError.throwTodo("Handle Impure in config").
+                // No built-in configs use Impure, so this is only reachable via
+                // custom hook configs. Panic to match TS bailout behavior.
+                panic!("TODO: Handle Impure aliasing effect in signature config")
             }
             AliasingEffectConfig::Apply { receiver, function, mutates_function, args, into } => {
                 let args_converted: Vec<ApplyArg> = args

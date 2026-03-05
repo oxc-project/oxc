@@ -71,6 +71,9 @@ struct InferenceState {
     /// Used to resolve Apply effects for locally-defined functions with known
     /// aliasing effects (port of TS `state.values(place)` returning FunctionExpression).
     function_values: FxHashMap<IdentifierId, FunctionExpressionValue>,
+    /// Whether to transitively freeze FunctionExpression context captures.
+    /// Gated by `enablePreserveExistingMemoizationGuarantees || enableTransitivelyFreezeFunctionExpressions`.
+    transitively_freeze_function_expressions: bool,
 }
 
 impl InferenceState {
@@ -80,6 +83,7 @@ impl InferenceState {
             aliases: FxHashMap::default(),
             identity_aliases: FxHashMap::default(),
             function_values: FxHashMap::default(),
+            transitively_freeze_function_expressions: true,
         }
     }
 
@@ -151,25 +155,26 @@ impl InferenceState {
         // Transitively freeze FunctionExpression context captures.
         // Port of TS `freezeValue()` (lines 1461-1474): when a FunctionExpression is frozen,
         // all of its context captures are also recursively frozen.
-        // Both enablePreserveExistingMemoizationGuarantees and
-        // enableTransitivelyFreezeFunctionExpressions default to true.
-        let context_ids: Vec<IdentifierId> = to_freeze
-            .iter()
-            .filter_map(|&freeze_id| {
-                self.function_values.get(&freeze_id).map(|fn_val| {
-                    fn_val
-                        .lowered_func
-                        .func
-                        .context
-                        .iter()
-                        .map(|p| p.identifier.id)
-                        .collect::<Vec<_>>()
+        // Gated by enablePreserveExistingMemoizationGuarantees || enableTransitivelyFreezeFunctionExpressions.
+        if self.transitively_freeze_function_expressions {
+            let context_ids: Vec<IdentifierId> = to_freeze
+                .iter()
+                .filter_map(|&freeze_id| {
+                    self.function_values.get(&freeze_id).map(|fn_val| {
+                        fn_val
+                            .lowered_func
+                            .func
+                            .context
+                            .iter()
+                            .map(|p| p.identifier.id)
+                            .collect::<Vec<_>>()
+                    })
                 })
-            })
-            .flatten()
-            .collect();
-        for ctx_id in context_ids {
-            self.freeze(ctx_id, reason);
+                .flatten()
+                .collect();
+            for ctx_id in context_ids {
+                self.freeze(ctx_id, reason);
+            }
         }
 
         true
@@ -209,23 +214,25 @@ impl InferenceState {
         }
 
         // Transitively freeze FunctionExpression context captures (same as in freeze()).
-        let context_ids: Vec<IdentifierId> = to_freeze
-            .iter()
-            .filter_map(|&freeze_id| {
-                self.function_values.get(&freeze_id).map(|fn_val| {
-                    fn_val
-                        .lowered_func
-                        .func
-                        .context
-                        .iter()
-                        .map(|p| p.identifier.id)
-                        .collect::<Vec<_>>()
+        if self.transitively_freeze_function_expressions {
+            let context_ids: Vec<IdentifierId> = to_freeze
+                .iter()
+                .filter_map(|&freeze_id| {
+                    self.function_values.get(&freeze_id).map(|fn_val| {
+                        fn_val
+                            .lowered_func
+                            .func
+                            .context
+                            .iter()
+                            .map(|p| p.identifier.id)
+                            .collect::<Vec<_>>()
+                    })
                 })
-            })
-            .flatten()
-            .collect();
-        for ctx_id in context_ids {
-            self.freeze(ctx_id, reason);
+                .flatten()
+                .collect();
+            for ctx_id in context_ids {
+                self.freeze(ctx_id, reason);
+            }
         }
 
         true
@@ -636,6 +643,9 @@ pub fn infer_mutation_aliasing_effects(
     }
 
     let mut initial_state = InferenceState::empty();
+    initial_state.transitively_freeze_function_expressions =
+        func.env.config.enable_preserve_existing_memoization_guarantees
+            || func.env.config.enable_transitively_freeze_function_expressions;
 
     // Initialize context variables
     for ctx_ref in &func.context {
@@ -2126,9 +2136,11 @@ fn compute_effects_for_signature(
                 });
             }
 
-            // CreateFunction: not expected in signatures from function expressions
+            // CreateFunction: not expected in signatures.
+            // TS throws CompilerError.throwTodo("Support CreateFrom effects in signatures").
+            // We bail out of signature-based effects (return None → conservative fallback).
             AliasingEffect::CreateFunction { .. } => {
-                // TS throws a todo error here; we skip it for now
+                return None;
             }
         }
     }
