@@ -280,21 +280,17 @@ impl ReactCompiler {
         // Port of findProgramSuppressions call in Program.ts (lines 396-400).
         // When both validateExhaustiveMemoizationDependencies and validateHooksUsage
         // are enabled, pass None (the compiler's own validation handles those cases).
-        let suppress_rules =
-            if self.environment_config.validate_exhaustive_memoization_dependencies
-                && self.environment_config.validate_hooks_usage
-            {
-                None
-            } else {
-                let rule_names: Vec<String> =
-                    self.options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                        DEFAULT_ESLINT_SUPPRESSION_RULES
-                            .iter()
-                            .map(|s| (*s).to_string())
-                            .collect()
-                    });
-                Some(rule_names)
-            };
+        let suppress_rules = if self.environment_config.validate_exhaustive_memoization_dependencies
+            && self.environment_config.validate_hooks_usage
+        {
+            None
+        } else {
+            let rule_names: Vec<String> =
+                self.options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                    DEFAULT_ESLINT_SUPPRESSION_RULES.iter().map(|s| (*s).to_string()).collect()
+                });
+            Some(rule_names)
+        };
         self.suppressions = find_program_suppressions(
             &program.comments,
             program.source_text,
@@ -360,15 +356,24 @@ impl ReactCompiler {
                     let outlined_fns = std::mem::take(&mut compiled.outlined);
 
                     // Determine if gating should be applied for this function.
-                    let gating_output = if self.gating.is_some()
-                        || self.dynamic_gating.is_some()
-                    {
+                    let gating_output = if self.gating.is_some() || self.dynamic_gating.is_some() {
                         // Check for dynamic gating directive.
                         let directives = get_statement_directives(&stmt);
-                        let dynamic_gating = extract_dynamic_gating_directive(
+                        let dynamic_gating = match extract_dynamic_gating_directive(
                             &directives,
                             self.dynamic_gating.as_ref(),
-                        );
+                        ) {
+                            Ok(dg) => dg,
+                            Err(errors) => {
+                                for msg in &errors {
+                                    let diagnostic = OxcDiagnostic::error(format!(
+                                        "React Compiler: {msg}"
+                                    ));
+                                    ctx.state.error(diagnostic.with_label(SPAN));
+                                }
+                                None
+                            }
+                        };
                         let effective_gating = dynamic_gating.as_ref().or(self.gating.as_ref());
 
                         if let Some(gating) = effective_gating {
@@ -2223,58 +2228,81 @@ fn collect_top_level_refs_from_expr(expr: &Expression<'_>, refs: &mut Vec<String
 fn extract_dynamic_gating_directive(
     directives: &[String],
     dynamic_gating: Option<&DynamicGatingOptions>,
-) -> Option<ExternalFunction> {
-    let dynamic_gating_config = dynamic_gating?;
+) -> Result<Option<ExternalFunction>, Vec<String>> {
+    let dynamic_gating_config = match dynamic_gating {
+        Some(config) => config,
+        None => return Ok(None),
+    };
 
-    let mut matches: Vec<String> = Vec::new();
+    let mut errors: Vec<String> = Vec::new();
+    // Store (ident, full_directive) pairs for error reporting.
+    let mut matches: Vec<(String, String)> = Vec::new();
+
     for directive in directives {
-        if let Some(ident) = parse_dynamic_gating_directive(directive) {
-            matches.push(ident.to_string());
+        match parse_dynamic_gating_directive(directive) {
+            Some(Ok(ident)) => {
+                matches.push((ident.to_string(), directive.clone()));
+            }
+            Some(Err(raw)) => {
+                errors.push(format!(
+                    "Dynamic gating directive is not a valid JavaScript identifier. Found '{raw}'"
+                ));
+            }
+            None => {}
         }
     }
 
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+
     match matches.len() {
-        1 => Some(ExternalFunction {
-            source: dynamic_gating_config.source.clone(),
-            import_specifier_name: matches.into_iter().next().unwrap(),
-        }),
+        1 => {
+            let (ident, _) = matches.into_iter().next().unwrap_or_default();
+            Ok(Some(ExternalFunction {
+                source: dynamic_gating_config.source.clone(),
+                import_specifier_name: ident,
+            }))
+        }
         n if n > 1 => {
-            // Multiple dynamic gating directives found — this is an error.
-            // Upstream TS: `CompilerError.throwTodo({ ... reason: 'Expected exactly one ...' })`
-            // We return None and let the caller handle the absence of dynamic gating.
-            // TODO: propagate this as a CompilerError diagnostic when ctx is available here.
-            None
+            let directive_list =
+                matches.iter().map(|(_, d)| d.as_str()).collect::<Vec<_>>().join(", ");
+            Err(vec![format!(
+                "Multiple dynamic gating directives found. Expected a single directive but found [{directive_list}]"
+            )])
         }
-        _ => {
-            // 0 matches => no dynamic gating
-            None
-        }
+        _ => Ok(None),
     }
 }
 
 /// Parse the `use memo if(IDENT)` directive pattern.
-/// Returns the identifier if the directive matches.
-fn parse_dynamic_gating_directive(directive: &str) -> Option<&str> {
+///
+/// Returns:
+/// - `None` if the directive doesn't match the `use memo if(...)` pattern at all
+/// - `Some(Ok(ident))` if a valid identifier was found
+/// - `Some(Err(directive))` if the pattern matched but the content is not a valid identifier
+fn parse_dynamic_gating_directive(directive: &str) -> Option<Result<&str, &str>> {
     let trimmed = directive.trim();
     let rest = trimmed.strip_prefix("use memo if(")?;
     let ident = rest.strip_suffix(')')?;
     let ident = ident.trim();
     if ident.is_empty() {
-        return None;
+        return Some(Err(trimmed));
     }
     // Basic identifier validation: must start with letter/underscore/$,
     // rest must be alphanumeric/underscore/$
     let mut chars = ident.chars();
-    let first = chars.next()?;
-    if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
-        return None;
+    let first = chars.next();
+    match first {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$' => {}
+        _ => return Some(Err(trimmed)),
     }
     for c in chars {
         if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
-            return None;
+            return Some(Err(trimmed));
         }
     }
-    Some(ident)
+    Some(Ok(ident))
 }
 
 /// Determine the gating function kind from the statement and its function.
@@ -2634,9 +2662,7 @@ fn replace_function_in_statement_with_expr<'a>(
             // `function Name() {}` → `const Name = <expr>;`
             if let Some(id) = &function.id {
                 let name = id.name.as_str();
-                let binding = ctx
-                    .ast
-                    .binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                let binding = ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
                 let declarator = ctx.ast.variable_declarator(
                     SPAN,
                     VariableDeclarationKind::Const,
@@ -2666,8 +2692,7 @@ fn replace_function_in_statement_with_expr<'a>(
                 if let Some(init) = &declarator.init
                     && matches!(
                         init,
-                        Expression::FunctionExpression(_)
-                            | Expression::ArrowFunctionExpression(_)
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
                     )
                 {
                     declarator.init = Some(expr);
@@ -2702,8 +2727,7 @@ fn replace_function_in_statement_with_expr<'a>(
                                 declarators,
                                 false,
                             );
-                            export.declaration =
-                                Some(Declaration::VariableDeclaration(var_decl));
+                            export.declaration = Some(Declaration::VariableDeclaration(var_decl));
                         }
                     }
                     Declaration::VariableDeclaration(var_decl) => {
