@@ -724,6 +724,50 @@ fn build_compiled_body<'a>(
     ctx.ast.alloc_function_body(SPAN, directives, body)
 }
 
+/// Build `FormalParameters` from codegen param names.
+///
+/// Param names prefixed with `"..."` are emitted as rest elements.
+fn build_formal_params_from_codegen<'a>(
+    param_names: &[String],
+    ctx: &TraverseCtx<'a>,
+) -> ABox<'a, FormalParameters<'a>> {
+    let mut rest: Option<ABox<'a, FormalParameterRest<'a>>> = None;
+    let mut items = ctx.ast.vec_with_capacity(param_names.len());
+
+    for param_name in param_names {
+        if let Some(name) = param_name.strip_prefix("...") {
+            // Rest element: `...name`
+            let binding_pattern =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+            let binding_rest = ctx.ast.binding_rest_element(SPAN, binding_pattern);
+            rest = Some(ctx.ast.alloc_formal_parameter_rest(
+                SPAN,
+                ctx.ast.vec(),
+                binding_rest,
+                NONE, // type_annotation
+            ));
+        } else {
+            let pattern = ctx.ast.binding_pattern_binding_identifier(
+                SPAN,
+                ctx.ast.atom(param_name.as_str()),
+            );
+            items.push(ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                pattern,
+                NONE,  // type_annotation
+                NONE,  // initializer
+                false, // optional
+                None,  // accessibility
+                false, // readonly
+                false, // override
+            ));
+        }
+    }
+
+    ctx.ast.alloc_formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, rest)
+}
+
 /// Replace the inner function body of a memo/forwardRef call expression with compiled output.
 fn replace_memo_inner_function_body<'a>(
     call: &mut CallExpression<'a>,
@@ -734,9 +778,11 @@ fn replace_memo_inner_function_body<'a>(
         if let Some(expr) = arg.as_expression_mut() {
             match expr {
                 Expression::FunctionExpression(function) => {
+                    function.params = build_formal_params_from_codegen(&compiled.params, ctx);
                     function.body = Some(build_compiled_body(compiled, ctx));
                 }
                 Expression::ArrowFunctionExpression(arrow) => {
+                    arrow.params = build_formal_params_from_codegen(&compiled.params, ctx);
                     let directives = build_directives(&compiled.directives, ctx);
                     let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                     arrow.body = ctx.ast.alloc_function_body(SPAN, directives, body);
@@ -760,6 +806,7 @@ fn replace_statement_function<'a>(
 ) -> Statement<'a> {
     match &mut stmt {
         Statement::FunctionDeclaration(function) => {
+            function.params = build_formal_params_from_codegen(&compiled.params, ctx);
             function.body = Some(build_compiled_body(&mut compiled, ctx));
         }
         Statement::VariableDeclaration(declaration) => {
@@ -769,10 +816,13 @@ fn replace_statement_function<'a>(
                 };
                 match init {
                     Expression::FunctionExpression(function) => {
+                        function.params =
+                            build_formal_params_from_codegen(&compiled.params, ctx);
                         function.body = Some(build_compiled_body(&mut compiled, ctx));
                         break;
                     }
                     Expression::ArrowFunctionExpression(arrow) => {
+                        arrow.params = build_formal_params_from_codegen(&compiled.params, ctx);
                         let directives = build_directives(&compiled.directives, ctx);
                         let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                         arrow.body = ctx.ast.alloc_function_body(SPAN, directives, body);
@@ -793,9 +843,11 @@ fn replace_statement_function<'a>(
             match &mut export_default.declaration {
                 ExportDefaultDeclarationKind::FunctionDeclaration(function)
                 | ExportDefaultDeclarationKind::FunctionExpression(function) => {
+                    function.params = build_formal_params_from_codegen(&compiled.params, ctx);
                     function.body = Some(build_compiled_body(&mut compiled, ctx));
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
+                    arrow.params = build_formal_params_from_codegen(&compiled.params, ctx);
                     let directives = build_directives(&compiled.directives, ctx);
                     let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                     arrow.body = ctx.ast.alloc_function_body(SPAN, directives, body);
@@ -813,6 +865,8 @@ fn replace_statement_function<'a>(
             if let Some(declaration) = &mut export_named.declaration {
                 match declaration {
                     Declaration::FunctionDeclaration(function) => {
+                        function.params =
+                            build_formal_params_from_codegen(&compiled.params, ctx);
                         function.body = Some(build_compiled_body(&mut compiled, ctx));
                     }
                     Declaration::VariableDeclaration(var_decl) => {
@@ -822,10 +876,18 @@ fn replace_statement_function<'a>(
                             };
                             match init {
                                 Expression::FunctionExpression(function) => {
+                                    function.params = build_formal_params_from_codegen(
+                                        &compiled.params,
+                                        ctx,
+                                    );
                                     function.body = Some(build_compiled_body(&mut compiled, ctx));
                                     break;
                                 }
                                 Expression::ArrowFunctionExpression(arrow) => {
+                                    arrow.params = build_formal_params_from_codegen(
+                                        &compiled.params,
+                                        ctx,
+                                    );
                                     let directives = build_directives(&compiled.directives, ctx);
                                     let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                                     arrow.body =
@@ -872,25 +934,7 @@ fn build_outlined_function_statement<'a>(
         codegen.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
 
     // Build formal parameters from param names.
-    let params = {
-        let mut items = ctx.ast.vec_with_capacity(codegen.params.len());
-        for param_name in &codegen.params {
-            let pattern =
-                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(param_name.as_str()));
-            items.push(ctx.ast.formal_parameter(
-                SPAN,
-                ctx.ast.vec(),
-                pattern,
-                NONE,  // type_annotation
-                NONE,  // initializer
-                false, // optional
-                None,  // accessibility
-                false, // readonly
-                false, // override
-            ));
-        }
-        ctx.ast.alloc_formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
-    };
+    let params = build_formal_params_from_codegen(&codegen.params, ctx);
 
     let function = ctx.ast.alloc_function(
         SPAN,
