@@ -356,8 +356,15 @@ pub struct Environment {
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
 
-    /// Collected diagnostics from lint-mode validation passes.
+    /// Collected diagnostics from lint-mode validation passes (TS `logErrors` equivalent).
+    /// These are only logged/reported but do NOT prevent compilation.
     diagnostics: Vec<crate::compiler_error::CompilerError>,
+
+    /// Accumulated non-fatal validation errors (TS `recordError` equivalent).
+    /// These allow the pipeline to continue through codegen, but are checked
+    /// at the end — if any are present, the compiled output is discarded and
+    /// the errors are returned.
+    recorded_errors: Vec<crate::compiler_error::CompilerError>,
 
     /// Outlined functions extracted from this function.
     ///
@@ -446,6 +453,7 @@ impl Environment {
             enable_memoization,
             enable_drop_manual_memoization,
             diagnostics: Vec::new(),
+            recorded_errors: Vec::new(),
             outlined_functions: Vec::new(),
             known_referenced_names: FxHashSet::default(),
             module_types,
@@ -512,6 +520,36 @@ impl Environment {
     /// Retrieve and clear all collected diagnostics.
     pub fn take_diagnostics(&mut self) -> Vec<crate::compiler_error::CompilerError> {
         std::mem::take(&mut self.diagnostics)
+    }
+
+    /// Record errors from a validation pass result. If the result is Err, the errors
+    /// are accumulated on the environment so the pipeline can continue through codegen.
+    /// These are checked at the end of the pipeline via `take_recorded_errors()`.
+    ///
+    /// This matches the TS `env.recordError(detail)` pattern used by validation passes
+    /// like `validateNoRefAccessInRender` and `validatePreservedManualMemoization`.
+    pub fn record_errors(&mut self, result: Result<(), crate::compiler_error::CompilerError>) {
+        if let Err(error) = result {
+            self.recorded_errors.push(error);
+        }
+    }
+
+    /// Returns true if any errors have been recorded via `record_errors`.
+    pub fn has_recorded_errors(&self) -> bool {
+        !self.recorded_errors.is_empty()
+    }
+
+    /// Retrieve and clear all recorded errors, aggregated into a single `CompilerError`.
+    pub fn take_recorded_errors(&mut self) -> Option<crate::compiler_error::CompilerError> {
+        if self.recorded_errors.is_empty() {
+            return None;
+        }
+        let errors = std::mem::take(&mut self.recorded_errors);
+        let mut combined = crate::compiler_error::CompilerError::new();
+        for error in errors {
+            combined.merge(error);
+        }
+        Some(combined)
     }
 
     /// Register a function to be outlined (extracted) from this function.
