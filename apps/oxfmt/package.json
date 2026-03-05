@@ -31,10 +31,10 @@
     "degit": "^2.8.4",
     "execa": "^9.6.0",
     "json-schema-to-typescript": "catalog:",
+    "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",
-    "vscode-languageserver-textdocument": "^1.0.12",
-    "vite-plus": "catalog:"
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "napi": {
     "binaryName": "oxfmt",
