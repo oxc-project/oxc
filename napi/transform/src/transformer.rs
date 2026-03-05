@@ -519,6 +519,20 @@ pub struct ReactCompilerOptions {
     ///
     /// @default true
     pub validate_no_set_state_in_render: Option<bool>,
+
+    /// Output mode: "client", "ssr", "lint".
+    /// When not set, defaults to "client" (or "lint" if `noEmit` is true).
+    pub output_mode: Option<String>,
+
+    /// When true, the compiler still runs validation but does not emit compiled output.
+    /// Equivalent to setting `outputMode` to "lint".
+    pub no_emit: Option<bool>,
+
+    /// Whether to ignore "use no forget" / "use no memo" directives.
+    pub ignore_use_no_forget: Option<bool>,
+
+    /// Custom opt-out directives (in addition to "use no memo" / "use no forget").
+    pub custom_opt_out_directives: Option<Vec<String>>,
 }
 
 #[napi(object)]
@@ -581,6 +595,10 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             validate_hooks_usage: options.validate_hooks_usage,
             validate_ref_access_during_render: options.validate_ref_access_during_render,
             validate_no_set_state_in_render: options.validate_no_set_state_in_render,
+            output_mode: options.output_mode,
+            no_emit: options.no_emit,
+            ignore_use_no_forget: options.ignore_use_no_forget,
+            custom_opt_out_directives: options.custom_opt_out_directives,
             ..Default::default()
         }
     }

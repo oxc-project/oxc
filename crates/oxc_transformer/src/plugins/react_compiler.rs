@@ -6,8 +6,10 @@ use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
         imports::validate_restricted_imports,
-        options::{CompilationMode, CompilerReactTarget, PanicThreshold},
-        pipeline::{run_codegen, run_pipeline},
+        options::{
+            CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold,
+        },
+        pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{ErrorAction, handle_compilation_error, should_compile_function},
         suppression::{
             DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
@@ -16,7 +18,7 @@ use oxc_react_compiler::{
     hir::{
         NonLocalBinding,
         build_hir::{LowerableFunction, collect_import_bindings, lower},
-        environment::{CompilerOutputMode, Environment, EnvironmentConfig},
+        environment::{CompilerOutputMode, Environment, EnvironmentConfig, ExternalFunction},
     },
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
@@ -57,6 +59,40 @@ pub struct ReactCompilerOptions {
     /// Whether to validate no setState in render.
     /// Defaults to `true`.
     pub validate_no_set_state_in_render: Option<bool>,
+    /// Output mode: "client", "ssr", "lint"
+    /// When not set, defaults to "client" (or "lint" if `no_emit` is true).
+    pub output_mode: Option<String>,
+    /// When true, the compiler still runs validation but does not emit compiled output.
+    /// Equivalent to setting `output_mode` to "lint".
+    pub no_emit: Option<bool>,
+    /// Whether to ignore "use no forget" / "use no memo" directives.
+    pub ignore_use_no_forget: Option<bool>,
+    /// Custom opt-out directives (in addition to "use no memo" / "use no forget").
+    pub custom_opt_out_directives: Option<Vec<String>>,
+    /// Gating function config: `{ source, importSpecifierName }`.
+    /// When set, emits gated output that wraps compiled + original functions.
+    pub gating: Option<ExternalFunctionConfig>,
+    /// Dynamic gating config: `{ source }`.
+    /// When set, enables `use memo if(...)` directives.
+    pub dynamic_gating: Option<DynamicGatingConfig>,
+}
+
+/// Configuration for an external function import (gating, instrumentation, etc.).
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct ExternalFunctionConfig {
+    /// The module source to import from.
+    pub source: String,
+    /// The import specifier name.
+    pub import_specifier_name: String,
+}
+
+/// Configuration for dynamic gating via `use memo if(...)` directives.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct DynamicGatingConfig {
+    /// The module source to import from.
+    pub source: String,
 }
 
 /// React Compiler transformer plugin.
@@ -69,6 +105,11 @@ pub struct ReactCompiler {
     panic_threshold: PanicThreshold,
     target: CompilerReactTarget,
     environment_config: EnvironmentConfig,
+    output_mode: CompilerOutputMode,
+    ignore_use_no_forget: bool,
+    custom_opt_out_directives: Option<Vec<String>>,
+    gating: Option<ExternalFunction>,
+    dynamic_gating: Option<DynamicGatingOptions>,
     outer_bindings: FxHashMap<String, NonLocalBinding>,
     suppressions: Vec<SuppressionRange>,
 }
@@ -85,6 +126,20 @@ impl ReactCompiler {
     pub fn new(options: ReactCompilerOptions) -> Self {
         let panic_threshold = parse_panic_threshold(options.panic_threshold.as_deref());
         let target = parse_target(options.target.as_deref());
+        let output_mode = resolve_output_mode(
+            parse_output_mode(options.output_mode.as_deref()),
+            options.no_emit.unwrap_or(false),
+        );
+        let ignore_use_no_forget = options.ignore_use_no_forget.unwrap_or(false);
+        let custom_opt_out_directives = options.custom_opt_out_directives.clone();
+        let gating = options.gating.as_ref().map(|g| ExternalFunction {
+            source: g.source.clone(),
+            import_specifier_name: g.import_specifier_name.clone(),
+        });
+        let dynamic_gating = options
+            .dynamic_gating
+            .as_ref()
+            .map(|d| DynamicGatingOptions { source: d.source.clone() });
         let mut environment_config = EnvironmentConfig::default();
         if let Some(v) = options.validate_hooks_usage {
             environment_config.validate_hooks_usage = v;
@@ -100,6 +155,11 @@ impl ReactCompiler {
             panic_threshold,
             target,
             environment_config,
+            output_mode,
+            ignore_use_no_forget,
+            custom_opt_out_directives,
+            gating,
+            dynamic_gating,
             outer_bindings: FxHashMap::default(),
             suppressions: Vec::new(),
         }
@@ -124,10 +184,18 @@ impl ReactCompiler {
         }
 
         // Check for module-level opt-out directives
-        for directive in &program.directives {
-            let value = directive.directive.as_str();
-            if value == "use no memo" || value == "use no forget" {
-                return;
+        if !self.ignore_use_no_forget {
+            for directive in &program.directives {
+                let value = directive.directive.as_str();
+                if value == "use no memo" || value == "use no forget" {
+                    return;
+                }
+                // Check custom opt-out directives
+                if let Some(custom) = &self.custom_opt_out_directives {
+                    if custom.iter().any(|d| d == value) {
+                        return;
+                    }
+                }
             }
         }
 
@@ -483,6 +551,8 @@ impl ReactCompiler {
             directives,
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
             is_memo_or_forwardref_arg,
+            self.ignore_use_no_forget,
+            self.custom_opt_out_directives.as_deref(),
         )?;
 
         // Check if any eslint-disable suppression range covers this function.
@@ -496,7 +566,7 @@ impl ReactCompiler {
         }
 
         let environment =
-            Environment::new(fn_type, CompilerOutputMode::Client, self.environment_config.clone());
+            Environment::new(fn_type, self.output_mode, self.environment_config.clone());
 
         let mut hir_function =
             match lower(&environment, fn_type, function, self.outer_bindings.clone()) {
@@ -612,6 +682,15 @@ fn parse_compilation_mode(mode: Option<&str>) -> CompilationMode {
         Some("annotation") => CompilationMode::Annotation,
         Some("syntax") => CompilationMode::Syntax,
         _ => CompilationMode::Infer,
+    }
+}
+
+fn parse_output_mode(mode: Option<&str>) -> Option<CompilerOutputMode> {
+    match mode {
+        Some("client") => Some(CompilerOutputMode::Client),
+        Some("ssr") => Some(CompilerOutputMode::Ssr),
+        Some("lint") => Some(CompilerOutputMode::Lint),
+        _ => None,
     }
 }
 
