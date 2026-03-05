@@ -479,6 +479,7 @@ pub fn run_codegen<'a>(
     pipeline_output: PipelineOutput,
     env: &Environment,
     ast: AstBuilder<'a>,
+    cache_identifier_name: &str,
 ) -> Result<CodegenOutput<'a>, CompilerError> {
     let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined } =
         pipeline_output;
@@ -499,6 +500,7 @@ pub fn run_codegen<'a>(
         output_mode: env.output_mode,
         shapes: env.shapes.clone(),
         enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
+        cache_identifier_name: cache_identifier_name.to_string(),
     };
     let mut codegen_output = crate::reactive_scopes::codegen_reactive_function::codegen_function(
         &reactive_function,
@@ -521,6 +523,7 @@ pub fn run_codegen<'a>(
             output_mode: env.output_mode,
             shapes: env.shapes.clone(),
             enable_name_anonymous_functions: env.config.enable_name_anonymous_functions,
+            cache_identifier_name: cache_identifier_name.to_string(),
         };
         let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
             &entry.reactive_function,
