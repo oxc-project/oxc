@@ -480,6 +480,7 @@ pub fn run_codegen<'a>(
     env: &Environment,
     ast: AstBuilder<'a>,
     cache_identifier_name: &str,
+    original_func: Option<&crate::hir::build_hir::LowerableFunction<'_>>,
 ) -> Result<CodegenOutput<'a>, CompilerError> {
     let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined } =
         pipeline_output;
@@ -536,7 +537,10 @@ pub fn run_codegen<'a>(
 
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
-        crate::validation::validate_source_locations::validate_source_locations(&codegen_output)?;
+        crate::validation::validate_source_locations::validate_source_locations(
+            &codegen_output,
+            original_func,
+        )?;
     }
 
     // [TESTING ONLY] Simulate an unexpected exception during compilation.

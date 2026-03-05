@@ -2229,6 +2229,7 @@ dependencies = [
 name = "oxc_react_compiler"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "hmac",
  "indexmap",
  "insta",

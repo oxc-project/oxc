@@ -5,7 +5,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        imports::validate_restricted_imports,
+        gating::{
+            FunctionKind as GatingFunctionKind, GatingOutput, ParamInfo, ParentContext,
+            TernaryWrap, build_gating_output,
+        },
+        imports::{ProgramContext, validate_restricted_imports},
         options::{CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold},
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{
@@ -76,13 +80,21 @@ pub struct ReactCompilerOptions {
     /// Dynamic gating config: `{ source }`.
     /// When set, enables `use memo if(...)` directives.
     pub dynamic_gating: Option<DynamicGatingConfig>,
-    /// Array of filename regex patterns to filter which files get compiled.
-    /// When set, only files whose path matches at least one pattern will be compiled.
-    ///
-    /// NOTE: Filtering logic is not yet implemented because the filename is not
-    /// directly available in `enter_program`. This field is wired through so that
-    /// the option can be passed from the NAPI layer.
+    /// Array of filename patterns to filter which files get compiled.
+    /// When set, only files whose path contains at least one pattern will be compiled.
     pub sources: Option<Vec<String>>,
+    /// Enable optional dependency tracking for optional chain expressions.
+    /// Defaults to `true`.
+    pub enable_optional_dependencies: Option<bool>,
+    /// Enable transitive freezing of function expression captures.
+    /// Defaults to `true`.
+    pub enable_transitively_freeze_function_expressions: Option<bool>,
+    /// Enable treating ref-like identifiers as refs for type inference.
+    /// Defaults to `true`.
+    pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
+    /// Validate that useMemo/useCallback results are not void.
+    /// Defaults to `false`.
+    pub validate_no_void_use_memo: Option<bool>,
 }
 
 /// Configuration for an external function import (gating, instrumentation, etc.).
@@ -117,8 +129,9 @@ pub struct ReactCompiler {
     ignore_use_no_forget: bool,
     custom_opt_out_directives: Option<Vec<String>>,
     has_module_scope_opt_out: bool,
-    _gating: Option<ExternalFunction>,
-    _dynamic_gating: Option<DynamicGatingOptions>,
+    gating: Option<ExternalFunction>,
+    dynamic_gating: Option<DynamicGatingOptions>,
+    program_context: ProgramContext,
     outer_bindings: FxHashMap<String, NonLocalBinding>,
     suppressions: Vec<SuppressionRange>,
 }
@@ -129,6 +142,8 @@ struct CompileResult<'a> {
     index: usize,
     /// The codegen output for the compiled function.
     output: CodegenOutput<'a>,
+    /// The name of the original function (if any), used for gating.
+    function_name: Option<String>,
 }
 
 impl ReactCompiler {
@@ -159,6 +174,18 @@ impl ReactCompiler {
         if let Some(v) = options.validate_no_set_state_in_render {
             environment_config.validate_no_set_state_in_render = v;
         }
+        if let Some(v) = options.enable_optional_dependencies {
+            environment_config.enable_optional_dependencies = v;
+        }
+        if let Some(v) = options.enable_transitively_freeze_function_expressions {
+            environment_config.enable_transitively_freeze_function_expressions = v;
+        }
+        if let Some(v) = options.enable_treat_ref_like_identifiers_as_refs {
+            environment_config.enable_treat_ref_like_identifiers_as_refs = v;
+        }
+        if let Some(v) = options.validate_no_void_use_memo {
+            environment_config.validate_no_void_use_memo = v;
+        }
         Self {
             options,
             panic_threshold,
@@ -168,8 +195,9 @@ impl ReactCompiler {
             ignore_use_no_forget,
             custom_opt_out_directives,
             has_module_scope_opt_out: false,
-            _gating: gating,
-            _dynamic_gating: dynamic_gating,
+            gating,
+            dynamic_gating,
+            program_context: ProgramContext::new(),
             outer_bindings: FxHashMap::default(),
             suppressions: Vec::new(),
         }
@@ -178,6 +206,19 @@ impl ReactCompiler {
     pub fn enter_program<'a>(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.options.enabled {
             return;
+        }
+
+        // Sources filtering: if `sources` is configured, only compile files
+        // whose path matches at least one source pattern (substring match).
+        if let Some(ref sources) = self.options.sources {
+            let source_path = ctx.state.source_path.to_string_lossy();
+            if source_path.is_empty() {
+                // No filename available — cannot filter, skip compilation.
+                return;
+            }
+            if !sources.iter().any(|pattern| source_path.contains(pattern.as_str())) {
+                return;
+            }
         }
 
         let runtime_module = get_runtime_module(&self.target);
@@ -240,8 +281,10 @@ impl ReactCompiler {
         // Phase 1: Compile all candidate functions, collecting results by statement index.
         let mut compiled_results: Vec<CompileResult<'a>> = Vec::new();
         for (index, statement) in program.body.iter().enumerate() {
-            if let Some(output) = self.compile_statement(statement, &cache_identifier_name, ctx) {
-                compiled_results.push(CompileResult { index, output });
+            if let Some((output, function_name)) =
+                self.compile_statement(statement, &cache_identifier_name, ctx)
+            {
+                compiled_results.push(CompileResult { index, output, function_name });
             }
         }
 
@@ -249,6 +292,16 @@ impl ReactCompiler {
         let mut needs_memo_import = compiled_results.iter().any(|r| r.output.memo_slots_used > 0);
 
         let has_top_level_results = !compiled_results.is_empty();
+
+        // Pre-gating: compute referenced-before-declared set if gating is active.
+        let referenced_before_declared = if self.gating.is_some() && has_top_level_results {
+            Some(get_functions_referenced_before_declaration(&compiled_results, &program.body))
+        } else {
+            None
+        };
+
+        // Track whether any gating was actually applied (for import injection).
+        let mut gating_was_used = false;
 
         // Phase 2 (conditional): Rebuild program.body, replacing compiled functions
         // and inserting outlined functions after the replaced statement.
@@ -260,23 +313,97 @@ impl ReactCompiler {
         let mut compiled_stmt_indices: FxHashSet<usize> = FxHashSet::default();
 
         let mut new_body = if has_top_level_results {
-            let mut result_map: FxHashMap<usize, CodegenOutput<'a>> = FxHashMap::default();
+            let mut result_map: FxHashMap<usize, (CodegenOutput<'a>, Option<String>)> =
+                FxHashMap::default();
             for result in compiled_results {
-                result_map.insert(result.index, result.output);
+                result_map.insert(result.index, (result.output, result.function_name));
             }
 
             let old_body = program.body.take_in(ctx.ast);
             let mut new_body = ctx.ast.vec_with_capacity(old_body.len());
 
             for (i, stmt) in old_body.into_iter().enumerate() {
-                if let Some(mut compiled) = result_map.remove(&i) {
+                if let Some((mut compiled, fn_name)) = result_map.remove(&i) {
                     // Extract outlined functions before consuming compiled for replacement.
                     let outlined_fns = std::mem::take(&mut compiled.outlined);
-                    let replaced = replace_statement_function(stmt, compiled, ctx);
-                    let new_idx = new_body.len();
-                    replaced_indices.push(new_idx);
-                    compiled_stmt_indices.insert(new_idx);
-                    new_body.push(replaced);
+
+                    // Determine if gating should be applied for this function.
+                    let gating_output = if self.gating.is_some() {
+                        // Check for dynamic gating directive.
+                        let directives = get_statement_directives(&stmt);
+                        let dynamic_gating = extract_dynamic_gating_directive(
+                            &directives,
+                            self.dynamic_gating.as_ref(),
+                        );
+                        let effective_gating = dynamic_gating.as_ref().or(self.gating.as_ref());
+
+                        if let Some(gating) = effective_gating {
+                            let fn_name_ref = fn_name.as_deref();
+                            let fn_kind = get_gating_function_kind(&stmt);
+                            let parent_context = get_gating_parent_context(&stmt);
+                            let is_ref_before_decl = referenced_before_declared
+                                .as_ref()
+                                .is_some_and(|set| set.contains(&i));
+                            let param_info = get_statement_param_info(&stmt);
+
+                            Some(build_gating_output(
+                                fn_name_ref,
+                                fn_kind,
+                                parent_context,
+                                gating,
+                                is_ref_before_decl,
+                                &param_info,
+                                &mut self.program_context,
+                            ))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    if let Some(gating_output) = gating_output {
+                        gating_was_used = true;
+                        // Apply gating-aware replacement.
+                        match &gating_output {
+                            GatingOutput::Ternary { gating_fn_name, wrap } => {
+                                let replacement_stmts = build_ternary_gating_replacement(
+                                    stmt,
+                                    compiled,
+                                    gating_fn_name,
+                                    wrap,
+                                    ctx,
+                                );
+                                for replacement in replacement_stmts {
+                                    let new_idx = new_body.len();
+                                    replaced_indices.push(new_idx);
+                                    compiled_stmt_indices.insert(new_idx);
+                                    new_body.push(replacement);
+                                }
+                            }
+                            GatingOutput::Hoisted { .. } => {
+                                let replacement_stmts = build_hoisted_gating_replacement(
+                                    stmt,
+                                    compiled,
+                                    &gating_output,
+                                    ctx,
+                                );
+                                for replacement in replacement_stmts {
+                                    let new_idx = new_body.len();
+                                    replaced_indices.push(new_idx);
+                                    compiled_stmt_indices.insert(new_idx);
+                                    new_body.push(replacement);
+                                }
+                            }
+                        }
+                    } else {
+                        // No gating: use existing simple replacement.
+                        let replaced = replace_statement_function(stmt, compiled, ctx);
+                        let new_idx = new_body.len();
+                        replaced_indices.push(new_idx);
+                        compiled_stmt_indices.insert(new_idx);
+                        new_body.push(replaced);
+                    }
                     // Process outlined functions using a queue, matching TS Program.ts
                     // lines 426-454. Outlined functions with fn_type are requeued for
                     // full compilation; their own outlined outputs are then processed.
@@ -403,6 +530,35 @@ impl ReactCompiler {
             );
         }
 
+        // Phase 4b: Inject gating function imports if gating was used.
+        if gating_was_used {
+            // Clone the import data to avoid borrowing self while mutating ctx.
+            let gating_imports: Vec<(String, Vec<(String, String)>)> = self
+                .program_context
+                .imports
+                .iter()
+                .map(|(source, specifiers)| {
+                    (
+                        source.clone(),
+                        specifiers.iter().map(|s| (s.local.clone(), s.imported.clone())).collect(),
+                    )
+                })
+                .collect();
+            for (source, specifiers) in gating_imports {
+                for (local, imported) in specifiers {
+                    let local_binding = ctx.generate_uid_in_root_scope(&local, SymbolFlags::Import);
+                    let source_atom = ctx.ast.atom(&source);
+                    let imported_atom = ctx.ast.atom(&imported);
+                    ctx.state.module_imports.add_named_import(
+                        source_atom,
+                        imported_atom,
+                        local_binding,
+                        false,
+                    );
+                }
+            }
+        }
+
         // Phase 5: Assign scope IDs to newly created AST nodes in compiled output.
         // The React Compiler codegen creates BlockStatement and other scope-creating
         // nodes without scope IDs. The subsequent transformer traversal (e.g. JSX
@@ -417,16 +573,17 @@ impl ReactCompiler {
     }
 
     /// Try to compile the function(s) within a statement, returning the codegen
-    /// output on success.
+    /// output and the original function name on success.
     fn compile_statement<'a>(
         &self,
         statement: &Statement<'a>,
         cache_identifier_name: &str,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<CodegenOutput<'a>> {
+    ) -> Option<(CodegenOutput<'a>, Option<String>)> {
         match statement {
             Statement::FunctionDeclaration(function) => {
                 let directives = function_directives(function);
+                let fn_name = function.id.as_ref().map(|id| id.name.to_string());
                 let lowerable_function = LowerableFunction::Function(function);
                 self.compile_function(
                     &lowerable_function,
@@ -437,6 +594,7 @@ impl ReactCompiler {
                     cache_identifier_name,
                     ctx,
                 )
+                .map(|output| (output, fn_name))
             }
             Statement::VariableDeclaration(declaration) => {
                 // For variable declarations, we only compile the first function-like
@@ -459,6 +617,7 @@ impl ReactCompiler {
                             let directives = function_directives(function);
                             let function_name =
                                 function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+                            let fn_name_owned = function_name.map(str::to_string);
                             let lowerable_function = LowerableFunction::Function(function);
                             let result = self.compile_function(
                                 &lowerable_function,
@@ -469,12 +628,13 @@ impl ReactCompiler {
                                 cache_identifier_name,
                                 ctx,
                             );
-                            if result.is_some() {
-                                return result;
+                            if let Some(output) = result {
+                                return Some((output, fn_name_owned));
                             }
                         }
                         Expression::ArrowFunctionExpression(arrow) => {
                             let directives = arrow_directives(arrow);
+                            let fn_name_owned = binding_name.map(str::to_string);
                             let lowerable_function = LowerableFunction::ArrowFunction(arrow);
                             let result = self.compile_function(
                                 &lowerable_function,
@@ -485,20 +645,21 @@ impl ReactCompiler {
                                 cache_identifier_name,
                                 ctx,
                             );
-                            if result.is_some() {
-                                return result;
+                            if let Some(output) = result {
+                                return Some((output, fn_name_owned));
                             }
                         }
                         Expression::CallExpression(call)
                             if is_memo_or_forwardref_call(&call.callee) =>
                         {
-                            if let Some(result) = self.compile_memo_or_forwardref_arg(
+                            let fn_name_owned = binding_name.map(str::to_string);
+                            if let Some(output) = self.compile_memo_or_forwardref_arg(
                                 call,
                                 binding_name,
                                 cache_identifier_name,
                                 ctx,
                             ) {
-                                return Some(result);
+                                return Some((output, fn_name_owned));
                             }
                         }
                         _ => {}
@@ -511,6 +672,7 @@ impl ReactCompiler {
                     ExportDefaultDeclarationKind::FunctionDeclaration(function)
                     | ExportDefaultDeclarationKind::FunctionExpression(function) => {
                         let directives = function_directives(function);
+                        let fn_name = function.id.as_ref().map(|id| id.name.to_string());
                         let lowerable_function = LowerableFunction::Function(function);
                         self.compile_function(
                             &lowerable_function,
@@ -521,6 +683,7 @@ impl ReactCompiler {
                             cache_identifier_name,
                             ctx,
                         )
+                        .map(|output| (output, fn_name))
                     }
                     ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
                         let directives = arrow_directives(arrow);
@@ -534,11 +697,13 @@ impl ReactCompiler {
                             cache_identifier_name,
                             ctx,
                         )
+                        .map(|output| (output, None))
                     }
                     ExportDefaultDeclarationKind::CallExpression(call)
                         if is_memo_or_forwardref_call(&call.callee) =>
                     {
                         self.compile_memo_or_forwardref_arg(call, None, cache_identifier_name, ctx)
+                            .map(|output| (output, None))
                     }
                     _ => None,
                 }
@@ -550,6 +715,7 @@ impl ReactCompiler {
                 match declaration {
                     Declaration::FunctionDeclaration(function) => {
                         let directives = function_directives(function);
+                        let fn_name = function.id.as_ref().map(|id| id.name.to_string());
                         let lowerable_function = LowerableFunction::Function(function);
                         self.compile_function(
                             &lowerable_function,
@@ -560,6 +726,7 @@ impl ReactCompiler {
                             cache_identifier_name,
                             ctx,
                         )
+                        .map(|output| (output, fn_name))
                     }
                     Declaration::VariableDeclaration(var_decl) => {
                         for declarator in &var_decl.declarations {
@@ -582,6 +749,7 @@ impl ReactCompiler {
                                         .as_ref()
                                         .map(|id| id.name.as_str())
                                         .or(binding_name);
+                                    let fn_name_owned = function_name.map(str::to_string);
                                     let lowerable_function = LowerableFunction::Function(function);
                                     let result = self.compile_function(
                                         &lowerable_function,
@@ -592,12 +760,13 @@ impl ReactCompiler {
                                         cache_identifier_name,
                                         ctx,
                                     );
-                                    if result.is_some() {
-                                        return result;
+                                    if let Some(output) = result {
+                                        return Some((output, fn_name_owned));
                                     }
                                 }
                                 Expression::ArrowFunctionExpression(arrow) => {
                                     let directives = arrow_directives(arrow);
+                                    let fn_name_owned = binding_name.map(str::to_string);
                                     let lowerable_function =
                                         LowerableFunction::ArrowFunction(arrow);
                                     let result = self.compile_function(
@@ -609,20 +778,21 @@ impl ReactCompiler {
                                         cache_identifier_name,
                                         ctx,
                                     );
-                                    if result.is_some() {
-                                        return result;
+                                    if let Some(output) = result {
+                                        return Some((output, fn_name_owned));
                                     }
                                 }
                                 Expression::CallExpression(call)
                                     if is_memo_or_forwardref_call(&call.callee) =>
                                 {
-                                    if let Some(result) = self.compile_memo_or_forwardref_arg(
+                                    let fn_name_owned = binding_name.map(str::to_string);
+                                    if let Some(output) = self.compile_memo_or_forwardref_arg(
                                         call,
                                         binding_name,
                                         cache_identifier_name,
                                         ctx,
                                     ) {
-                                        return Some(result);
+                                        return Some((output, fn_name_owned));
                                     }
                                 }
                                 _ => {}
@@ -703,14 +873,19 @@ impl ReactCompiler {
             Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
         }
 
-        let codegen_output =
-            match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
-                Ok(output) => output,
-                Err(error) => {
-                    Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
-                    return None;
-                }
-            };
+        let codegen_output = match run_codegen(
+            pipeline_output,
+            &environment,
+            ctx.ast,
+            cache_identifier_name,
+            None,
+        ) {
+            Ok(output) => output,
+            Err(error) => {
+                Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
+                return None;
+            }
+        };
 
         // Port of processFn (Program.ts lines 634-672): check for function-level
         // and module-level opt-out AFTER compilation. This allows validation/lint
@@ -835,14 +1010,19 @@ impl ReactCompiler {
             Self::report_compiler_error(&diagnostic, function.span, self.panic_threshold, ctx);
         }
 
-        let codegen_output =
-            match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
-                Ok(output) => output,
-                Err(error) => {
-                    Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
-                    return None;
-                }
-            };
+        let codegen_output = match run_codegen(
+            pipeline_output,
+            &environment,
+            ctx.ast,
+            cache_identifier_name,
+            None,
+        ) {
+            Ok(output) => output,
+            Err(error) => {
+                Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                return None;
+            }
+        };
 
         // Lint mode: compile for validation but don't emit.
         if self.output_mode == CompilerOutputMode::Lint {
@@ -1669,6 +1849,828 @@ impl ReactCompiler {
             cache_identifier_name,
             ctx,
         )
+    }
+}
+
+/// Determine the set of compiled function indices that are referenced before
+/// their declaration site at the top level of the program.
+///
+/// Port of `getFunctionReferencedBeforeDeclarationAtTopLevel` from Program.ts
+/// lines 1124-1183.
+///
+/// For each compiled function that has a name, walks program body statements
+/// top-to-bottom. If an identifier reference to the function name appears
+/// before the function's declaration site (at the top-level scope, not inside
+/// nested functions), the function's statement index is added to the returned set.
+fn get_functions_referenced_before_declaration(
+    compiled_fns: &[CompileResult<'_>],
+    body: &[Statement<'_>],
+) -> FxHashSet<usize> {
+    // Build a map: function_name -> (declaration_statement_index, compile_result_index)
+    let mut fn_names: FxHashMap<&str, usize> = FxHashMap::default();
+    for result in compiled_fns {
+        if let Some(ref name) = result.function_name {
+            fn_names.insert(name.as_str(), result.index);
+        }
+    }
+
+    if fn_names.is_empty() {
+        return FxHashSet::default();
+    }
+
+    let mut referenced_before_declared: FxHashSet<usize> = FxHashSet::default();
+
+    // Walk program body statements in order, checking only top-level references.
+    for (stmt_idx, stmt) in body.iter().enumerate() {
+        // Collect top-level identifier references in this statement
+        // (not descending into function bodies).
+        let refs = collect_top_level_identifier_refs(stmt);
+        for name_ref in &refs {
+            if let Some(&decl_idx) = fn_names.get(name_ref.as_str()) {
+                // If we haven't reached the declaration site yet, it's referenced before declared
+                if stmt_idx < decl_idx {
+                    referenced_before_declared.insert(decl_idx);
+                }
+            }
+        }
+        // If this statement IS the declaration of a tracked function, remove it
+        // from tracking (any further references are after the declaration).
+        let stmt_fn_name = get_statement_function_name(stmt);
+        if let Some(name) = stmt_fn_name {
+            fn_names.remove(name);
+        }
+    }
+
+    referenced_before_declared
+}
+
+/// Get the function name declared by a statement (if it's a function declaration).
+fn get_statement_function_name<'a>(stmt: &'a Statement<'_>) -> Option<&'a str> {
+    match stmt {
+        Statement::FunctionDeclaration(f) => f.id.as_ref().map(|id| id.name.as_str()),
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => {
+                f.id.as_ref().map(|id| id.name.as_str())
+            }
+            _ => None,
+        },
+        Statement::ExportNamedDeclaration(export) => match &export.declaration {
+            Some(Declaration::FunctionDeclaration(f)) => f.id.as_ref().map(|id| id.name.as_str()),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// Collect top-level identifier references in a statement.
+///
+/// Only collects references at the top level scope -- does not descend into
+/// function bodies, arrow functions, or class bodies. This matches the TS
+/// behavior where `scope.getFunctionParent() === null` filters to top-level.
+fn collect_top_level_identifier_refs(stmt: &Statement<'_>) -> Vec<String> {
+    let mut refs = Vec::new();
+    collect_top_level_refs_from_stmt(stmt, &mut refs);
+    refs
+}
+
+fn collect_top_level_refs_from_stmt(stmt: &Statement<'_>, refs: &mut Vec<String>) {
+    match stmt {
+        Statement::ExpressionStatement(expr_stmt) => {
+            collect_top_level_refs_from_expr(&expr_stmt.expression, refs);
+        }
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    collect_top_level_refs_from_expr(init, refs);
+                }
+            }
+        }
+        Statement::ReturnStatement(ret) => {
+            if let Some(arg) = &ret.argument {
+                collect_top_level_refs_from_expr(arg, refs);
+            }
+        }
+        Statement::ExportDefaultDeclaration(export) => {
+            if let ExportDefaultDeclarationKind::CallExpression(call) = &export.declaration {
+                // Walk the call expression's callee and arguments for identifier refs.
+                collect_top_level_refs_from_expr(&call.callee, refs);
+                for arg in &call.arguments {
+                    if let Some(e) = arg.as_expression() {
+                        collect_top_level_refs_from_expr(e, refs);
+                    }
+                }
+            }
+            // Don't descend into function/arrow bodies
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(Declaration::VariableDeclaration(var_decl)) = &export.declaration {
+                for declarator in &var_decl.declarations {
+                    if let Some(init) = &declarator.init {
+                        collect_top_level_refs_from_expr(init, refs);
+                    }
+                }
+            }
+            // Don't descend into function declarations
+        }
+        Statement::IfStatement(if_stmt) => {
+            collect_top_level_refs_from_expr(&if_stmt.test, refs);
+            // Don't descend into branches -- they're block statements at top level
+        }
+        _ => {}
+    }
+}
+
+fn collect_top_level_refs_from_expr(expr: &Expression<'_>, refs: &mut Vec<String>) {
+    match expr {
+        Expression::Identifier(id) => {
+            refs.push(id.name.to_string());
+        }
+        Expression::CallExpression(call) => {
+            collect_top_level_refs_from_expr(&call.callee, refs);
+            for arg in &call.arguments {
+                if let Some(e) = arg.as_expression() {
+                    collect_top_level_refs_from_expr(e, refs);
+                }
+            }
+        }
+        Expression::StaticMemberExpression(member) => {
+            collect_top_level_refs_from_expr(&member.object, refs);
+        }
+        Expression::ComputedMemberExpression(member) => {
+            collect_top_level_refs_from_expr(&member.object, refs);
+            collect_top_level_refs_from_expr(&member.expression, refs);
+        }
+        Expression::ConditionalExpression(cond) => {
+            collect_top_level_refs_from_expr(&cond.test, refs);
+            collect_top_level_refs_from_expr(&cond.consequent, refs);
+            collect_top_level_refs_from_expr(&cond.alternate, refs);
+        }
+        Expression::AssignmentExpression(assign) => {
+            collect_top_level_refs_from_expr(&assign.right, refs);
+        }
+        Expression::LogicalExpression(logical) => {
+            collect_top_level_refs_from_expr(&logical.left, refs);
+            collect_top_level_refs_from_expr(&logical.right, refs);
+        }
+        Expression::BinaryExpression(binary) => {
+            collect_top_level_refs_from_expr(&binary.left, refs);
+            collect_top_level_refs_from_expr(&binary.right, refs);
+        }
+        Expression::SequenceExpression(seq) => {
+            for e in &seq.expressions {
+                collect_top_level_refs_from_expr(e, refs);
+            }
+        }
+        Expression::ArrayExpression(arr) => {
+            for elem in &arr.elements {
+                if let Some(e) = elem.as_expression() {
+                    collect_top_level_refs_from_expr(e, refs);
+                }
+            }
+        }
+        Expression::ObjectExpression(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ObjectPropertyKind::ObjectProperty(p) => {
+                        collect_top_level_refs_from_expr(&p.value, refs);
+                    }
+                    ObjectPropertyKind::SpreadProperty(s) => {
+                        collect_top_level_refs_from_expr(&s.argument, refs);
+                    }
+                }
+            }
+        }
+        Expression::NewExpression(new_expr) => {
+            collect_top_level_refs_from_expr(&new_expr.callee, refs);
+            for arg in &new_expr.arguments {
+                if let Some(e) = arg.as_expression() {
+                    collect_top_level_refs_from_expr(e, refs);
+                }
+            }
+        }
+        Expression::UnaryExpression(unary) => {
+            collect_top_level_refs_from_expr(&unary.argument, refs);
+        }
+        Expression::TemplateLiteral(tmpl) => {
+            for e in &tmpl.expressions {
+                collect_top_level_refs_from_expr(e, refs);
+            }
+        }
+        Expression::TaggedTemplateExpression(tagged) => {
+            collect_top_level_refs_from_expr(&tagged.tag, refs);
+        }
+        Expression::ParenthesizedExpression(paren) => {
+            collect_top_level_refs_from_expr(&paren.expression, refs);
+        }
+        // Don't descend into function expressions, arrow functions, or class expressions.
+        // All other expression types are also ignored.
+        _ => {}
+    }
+}
+
+/// Extract dynamic gating from a function's directives.
+///
+/// Port of `findDirectivesDynamicGating` from Program.ts lines 72-129.
+///
+/// Looks for `use memo if(IDENT)` directives. If `dynamic_gating` config is set
+/// and the directive is found, returns an `ExternalFunction` with the dynamic
+/// gating source and the directive's identifier as the import specifier.
+fn extract_dynamic_gating_directive(
+    directives: &[String],
+    dynamic_gating: Option<&DynamicGatingOptions>,
+) -> Option<ExternalFunction> {
+    let dynamic_gating_config = dynamic_gating?;
+
+    let mut matches: Vec<String> = Vec::new();
+    for directive in directives {
+        if let Some(ident) = parse_dynamic_gating_directive(directive) {
+            matches.push(ident.to_string());
+        }
+    }
+
+    if matches.len() == 1 {
+        Some(ExternalFunction {
+            source: dynamic_gating_config.source.clone(),
+            import_specifier_name: matches.into_iter().next().unwrap(),
+        })
+    } else {
+        // 0 matches => no dynamic gating, >1 matches => error (ignored for now)
+        None
+    }
+}
+
+/// Parse the `use memo if(IDENT)` directive pattern.
+/// Returns the identifier if the directive matches.
+fn parse_dynamic_gating_directive(directive: &str) -> Option<&str> {
+    let trimmed = directive.trim();
+    let rest = trimmed.strip_prefix("use memo if(")?;
+    let ident = rest.strip_suffix(')')?;
+    let ident = ident.trim();
+    if ident.is_empty() {
+        return None;
+    }
+    // Basic identifier validation: must start with letter/underscore/$,
+    // rest must be alphanumeric/underscore/$
+    let mut chars = ident.chars();
+    let first = chars.next()?;
+    if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
+        return None;
+    }
+    for c in chars {
+        if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
+            return None;
+        }
+    }
+    Some(ident)
+}
+
+/// Determine the gating function kind from the statement and its function.
+fn get_gating_function_kind(stmt: &Statement<'_>) -> GatingFunctionKind {
+    match stmt {
+        Statement::FunctionDeclaration(_) => GatingFunctionKind::FunctionDeclaration,
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
+                GatingFunctionKind::FunctionDeclaration
+            }
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(_) => {
+                GatingFunctionKind::ArrowFunction
+            }
+            ExportDefaultDeclarationKind::FunctionExpression(_) => {
+                GatingFunctionKind::FunctionExpression
+            }
+            _ => GatingFunctionKind::FunctionExpression,
+        },
+        Statement::ExportNamedDeclaration(export) => match &export.declaration {
+            Some(Declaration::FunctionDeclaration(_)) => GatingFunctionKind::FunctionDeclaration,
+            _ => GatingFunctionKind::FunctionExpression,
+        },
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(Expression::ArrowFunctionExpression(_)) = &declarator.init {
+                    return GatingFunctionKind::ArrowFunction;
+                }
+                if declarator.init.is_some() {
+                    return GatingFunctionKind::FunctionExpression;
+                }
+            }
+            GatingFunctionKind::FunctionExpression
+        }
+        _ => GatingFunctionKind::FunctionExpression,
+    }
+}
+
+/// Determine the parent context for gating (export default vs other).
+fn get_gating_parent_context(stmt: &Statement<'_>) -> ParentContext {
+    match stmt {
+        Statement::ExportDefaultDeclaration(_) => ParentContext::ExportDefault,
+        _ => ParentContext::Other,
+    }
+}
+
+/// Get the directives from a statement's function body, for dynamic gating.
+fn get_statement_directives(stmt: &Statement<'_>) -> Vec<String> {
+    match stmt {
+        Statement::FunctionDeclaration(f) => function_directives(f),
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => function_directives(f),
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => arrow_directives(arrow),
+            _ => Vec::new(),
+        },
+        Statement::ExportNamedDeclaration(export) => match &export.declaration {
+            Some(Declaration::FunctionDeclaration(f)) => function_directives(f),
+            _ => Vec::new(),
+        },
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    return match init {
+                        Expression::FunctionExpression(f) => function_directives(f),
+                        Expression::ArrowFunctionExpression(arrow) => arrow_directives(arrow),
+                        _ => Vec::new(),
+                    };
+                }
+            }
+            Vec::new()
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// Get the parameter info (count and rest-ness) from a statement's function.
+fn get_statement_param_info(stmt: &Statement<'_>) -> Vec<ParamInfo> {
+    let params = match stmt {
+        Statement::FunctionDeclaration(f) => Some(&f.params),
+        Statement::ExportDefaultDeclaration(export) => match &export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => Some(&f.params),
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => Some(&arrow.params),
+            _ => None,
+        },
+        Statement::ExportNamedDeclaration(export) => match &export.declaration {
+            Some(Declaration::FunctionDeclaration(f)) => Some(&f.params),
+            _ => None,
+        },
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    return match init {
+                        Expression::FunctionExpression(f) => get_param_info_from_formal(&f.params),
+                        Expression::ArrowFunctionExpression(arrow) => {
+                            get_param_info_from_formal(&arrow.params)
+                        }
+                        _ => Vec::new(),
+                    };
+                }
+            }
+            return Vec::new();
+        }
+        _ => None,
+    };
+
+    params.map_or_else(Vec::new, |p| get_param_info_from_formal(p))
+}
+
+fn get_param_info_from_formal(params: &FormalParameters<'_>) -> Vec<ParamInfo> {
+    let mut info: Vec<ParamInfo> =
+        params.items.iter().map(|_| ParamInfo { is_rest: false }).collect();
+    if params.rest.is_some() {
+        info.push(ParamInfo { is_rest: true });
+    }
+    info
+}
+
+/// Build a function expression from a function declaration (for ternary gating).
+///
+/// Converts a FunctionDeclaration to a FunctionExpression AST node,
+/// preserving params, body, async, generator, and id.
+fn convert_function_decl_to_expr<'a>(
+    function: &mut Function<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let params = std::mem::replace(
+        &mut function.params,
+        ctx.ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::FormalParameter,
+            ctx.ast.vec(),
+            NONE,
+        ),
+    );
+    let body = function.body.take();
+    let id = function.id.take();
+    let func = ctx.ast.alloc_function(
+        SPAN,
+        FunctionType::FunctionExpression,
+        id,
+        function.generator,
+        function.r#async,
+        false,
+        NONE,
+        NONE,
+        params,
+        NONE,
+        body,
+    );
+    Expression::FunctionExpression(func)
+}
+
+/// Build a gating ternary expression: `gatingFn() ? compiled : original`
+fn build_gating_ternary<'a>(
+    gating_fn_name: &str,
+    compiled_expr: Expression<'a>,
+    original_expr: Expression<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_fn_name));
+    let test = ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false);
+    ctx.ast.expression_conditional(SPAN, test, compiled_expr, original_expr)
+}
+
+/// Build the compiled function as a function expression for gating.
+///
+/// Takes the CodegenOutput and builds a FunctionExpression from it.
+fn build_compiled_function_expr<'a>(
+    compiled: &mut CodegenOutput<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let directives = build_directives(&compiled.directives, ctx);
+    let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
+    let function_body = ctx.ast.alloc_function_body(SPAN, directives, body);
+    let params = build_formal_params_from_codegen(&compiled.params, ctx);
+
+    let id =
+        compiled.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
+
+    let func = ctx.ast.alloc_function(
+        SPAN,
+        FunctionType::FunctionExpression,
+        id,
+        compiled.generator,
+        compiled.is_async,
+        false,
+        NONE,
+        NONE,
+        params,
+        NONE,
+        Some(function_body),
+    );
+    Expression::FunctionExpression(func)
+}
+
+/// Build a gating-aware replacement for a statement using ternary (non-hoisted) mode.
+///
+/// Returns the replacement statement(s) to insert into the program body.
+fn build_ternary_gating_replacement<'a>(
+    mut stmt: Statement<'a>,
+    mut compiled: CodegenOutput<'a>,
+    gating_fn_name: &str,
+    wrap: &TernaryWrap,
+    ctx: &TraverseCtx<'a>,
+) -> Vec<Statement<'a>> {
+    let compiled_expr = build_compiled_function_expr(&mut compiled, ctx);
+
+    // Build the original function as a function expression.
+    let original_expr = extract_function_as_expr(&mut stmt, ctx);
+
+    let ternary = build_gating_ternary(gating_fn_name, compiled_expr, original_expr, ctx);
+
+    match wrap {
+        TernaryWrap::ConstDeclaration { name } => {
+            // `const Name = gatingFn() ? compiled : original;`
+            let binding_id =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name.as_str()));
+            let declarator = ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Const,
+                binding_id,
+                NONE,
+                Some(ternary),
+                false,
+            );
+            let mut declarators = ctx.ast.vec_with_capacity(1);
+            declarators.push(declarator);
+            let var_decl = ctx.ast.alloc_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Const,
+                declarators,
+                false,
+            );
+            vec![Statement::VariableDeclaration(var_decl)]
+        }
+        TernaryWrap::ExportDefaultThenConst { name } => {
+            // `const Name = gatingFn() ? compiled : original;`
+            let binding_id =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name.as_str()));
+            let declarator = ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Const,
+                binding_id,
+                NONE,
+                Some(ternary),
+                false,
+            );
+            let mut declarators = ctx.ast.vec_with_capacity(1);
+            declarators.push(declarator);
+            let var_decl = ctx.ast.alloc_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Const,
+                declarators,
+                false,
+            );
+            let const_stmt = Statement::VariableDeclaration(var_decl);
+            // `export default Name;`
+            let default_expr = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(name.as_str()));
+            let export_decl = ctx.ast.alloc_export_default_declaration(SPAN, default_expr.into());
+            let export_stmt = Statement::ExportDefaultDeclaration(export_decl);
+            vec![const_stmt, export_stmt]
+        }
+        TernaryWrap::Inline => {
+            // Replace the function in the statement with the ternary expression.
+            // This is used for export default arrow functions, anonymous export defaults, etc.
+            replace_function_in_statement_with_expr(stmt, ternary, ctx)
+        }
+    }
+}
+
+/// Extract the function from a statement as a function expression.
+///
+/// For function declarations, converts them to function expressions.
+/// For arrow/function expressions in variable declarations, extracts the expression.
+fn extract_function_as_expr<'a>(stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    match stmt {
+        Statement::FunctionDeclaration(function) => convert_function_decl_to_expr(function, ctx),
+        Statement::VariableDeclaration(decl) => {
+            for declarator in &mut decl.declarations {
+                if let Some(init) = &mut declarator.init {
+                    let dummy = ctx.ast.expression_null_literal(SPAN);
+                    return std::mem::replace(init, dummy);
+                }
+            }
+            ctx.ast.expression_null_literal(SPAN)
+        }
+        Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(function)
+            | ExportDefaultDeclarationKind::FunctionExpression(function) => {
+                convert_function_decl_to_expr(function, ctx)
+            }
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
+                let params = std::mem::replace(
+                    &mut arrow.params,
+                    ctx.ast.alloc_formal_parameters(
+                        SPAN,
+                        FormalParameterKind::FormalParameter,
+                        ctx.ast.vec(),
+                        NONE,
+                    ),
+                );
+                let body = std::mem::replace(
+                    &mut arrow.body,
+                    ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), ctx.ast.vec()),
+                );
+                let arrow_expr = ctx.ast.alloc_arrow_function_expression(
+                    SPAN,
+                    arrow.expression,
+                    arrow.r#async,
+                    NONE,
+                    params,
+                    NONE,
+                    body,
+                );
+                Expression::ArrowFunctionExpression(arrow_expr)
+            }
+            _ => ctx.ast.expression_null_literal(SPAN),
+        },
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(decl) = &mut export.declaration {
+                match decl {
+                    Declaration::FunctionDeclaration(function) => {
+                        convert_function_decl_to_expr(function, ctx)
+                    }
+                    Declaration::VariableDeclaration(var_decl) => {
+                        for declarator in &mut var_decl.declarations {
+                            if let Some(init) = &mut declarator.init {
+                                let dummy = ctx.ast.expression_null_literal(SPAN);
+                                return std::mem::replace(init, dummy);
+                            }
+                        }
+                        ctx.ast.expression_null_literal(SPAN)
+                    }
+                    _ => ctx.ast.expression_null_literal(SPAN),
+                }
+            } else {
+                ctx.ast.expression_null_literal(SPAN)
+            }
+        }
+        _ => ctx.ast.expression_null_literal(SPAN),
+    }
+}
+
+/// Replace the function in a statement with a raw expression (for Inline ternary mode).
+fn replace_function_in_statement_with_expr<'a>(
+    mut stmt: Statement<'a>,
+    expr: Expression<'a>,
+    _ctx: &TraverseCtx<'a>,
+) -> Vec<Statement<'a>> {
+    match &mut stmt {
+        Statement::ExportDefaultDeclaration(export) => {
+            export.declaration = ExportDefaultDeclarationKind::from(expr);
+            vec![stmt]
+        }
+        _ => {
+            // For other cases, just wrap in an expression statement
+            // This shouldn't normally happen for Inline mode.
+            vec![stmt]
+        }
+    }
+}
+
+/// Build a hoisted gating replacement for a function declaration.
+///
+/// Returns a Vec of statements:
+/// 1. `const gating_result = gatingFn();`
+/// 2. `function Name_optimized(...) { /* compiled */ }`
+/// 3. The original statement (renamed to Name_unoptimized)
+/// 4. `function Name(arg0, ...) { if (gating_result) return Name_optimized(arg0, ...); else return Name_unoptimized(arg0, ...); }`
+fn build_hoisted_gating_replacement<'a>(
+    mut stmt: Statement<'a>,
+    mut compiled: CodegenOutput<'a>,
+    gating_output: &GatingOutput,
+    ctx: &TraverseCtx<'a>,
+) -> Vec<Statement<'a>> {
+    let GatingOutput::Hoisted {
+        original_name,
+        optimized_name,
+        unoptimized_name,
+        gating_result_name,
+        gating_fn_name,
+        params,
+    } = gating_output
+    else {
+        unreachable!("build_hoisted_gating_replacement called with non-Hoisted gating output");
+    };
+
+    let mut result = Vec::with_capacity(4);
+
+    // 1. `const gating_result = gatingFn();`
+    let gating_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_fn_name.as_str()));
+    let gating_call = ctx.ast.expression_call(SPAN, gating_callee, NONE, ctx.ast.vec(), false);
+    let gating_binding =
+        ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(gating_result_name.as_str()));
+    let gating_declarator = ctx.ast.variable_declarator(
+        SPAN,
+        VariableDeclarationKind::Const,
+        gating_binding,
+        NONE,
+        Some(gating_call),
+        false,
+    );
+    let mut gating_declarators = ctx.ast.vec_with_capacity(1);
+    gating_declarators.push(gating_declarator);
+    let gating_var_decl = ctx.ast.alloc_variable_declaration(
+        SPAN,
+        VariableDeclarationKind::Const,
+        gating_declarators,
+        false,
+    );
+    result.push(Statement::VariableDeclaration(gating_var_decl));
+
+    // 2. Build compiled function as `function Name_optimized(...) { ... }`
+    let compiled_id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(optimized_name.as_str())));
+    let compiled_params = build_formal_params_from_codegen(&compiled.params, ctx);
+    let compiled_directives = build_directives(&compiled.directives, ctx);
+    let compiled_body_stmts = std::mem::replace(&mut compiled.body, ctx.ast.vec());
+    let compiled_body = ctx.ast.alloc_function_body(SPAN, compiled_directives, compiled_body_stmts);
+    let compiled_fn = ctx.ast.alloc_function(
+        SPAN,
+        FunctionType::FunctionDeclaration,
+        compiled_id,
+        compiled.generator,
+        compiled.is_async,
+        false,
+        NONE,
+        NONE,
+        compiled_params,
+        NONE,
+        Some(compiled_body),
+    );
+    result.push(Statement::FunctionDeclaration(compiled_fn));
+
+    // 3. Rename the original function to Name_unoptimized.
+    rename_function_in_statement(&mut stmt, unoptimized_name, ctx);
+    result.push(stmt);
+
+    // 4. Build dispatcher: `function Name(arg0, ...) { if (gating_result) ... }`
+    let mut dispatcher_params_items = ctx.ast.vec_with_capacity(params.len());
+    let mut dispatcher_rest: Option<ABox<'a, FormalParameterRest<'a>>> = None;
+
+    for (i, p) in params.iter().enumerate() {
+        let arg_name = format!("arg{i}");
+        if p.is_rest {
+            let binding_pattern =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+            let binding_rest = ctx.ast.binding_rest_element(SPAN, binding_pattern);
+            dispatcher_rest =
+                Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), binding_rest, NONE));
+        } else {
+            let pattern =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+            dispatcher_params_items.push(ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                pattern,
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            ));
+        }
+    }
+    let dispatcher_params = ctx.ast.alloc_formal_parameters(
+        SPAN,
+        FormalParameterKind::FormalParameter,
+        dispatcher_params_items,
+        dispatcher_rest,
+    );
+
+    // Build args for calling optimized/unoptimized
+    let build_call_args = |ctx: &TraverseCtx<'a>| -> AVec<'a, Argument<'a>> {
+        let mut args = ctx.ast.vec_with_capacity(params.len());
+        for (i, p) in params.iter().enumerate() {
+            let arg_name = format!("arg{i}");
+            let id = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(arg_name.as_str()));
+            if p.is_rest {
+                args.push(Argument::SpreadElement(ctx.ast.alloc_spread_element(SPAN, id)));
+            } else {
+                args.push(Argument::from(id));
+            }
+        }
+        args
+    };
+
+    // if (gating_result) return Name_optimized(args); else return Name_unoptimized(args);
+    let gating_test =
+        ctx.ast.expression_identifier(SPAN, ctx.ast.atom(gating_result_name.as_str()));
+
+    let opt_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(optimized_name.as_str()));
+    let opt_call = ctx.ast.expression_call(SPAN, opt_callee, NONE, build_call_args(ctx), false);
+    let opt_return = ctx.ast.statement_return(SPAN, Some(opt_call));
+
+    let unopt_callee = ctx.ast.expression_identifier(SPAN, ctx.ast.atom(unoptimized_name.as_str()));
+    let unopt_call = ctx.ast.expression_call(SPAN, unopt_callee, NONE, build_call_args(ctx), false);
+    let unopt_return = ctx.ast.statement_return(SPAN, Some(unopt_call));
+
+    let if_stmt = ctx.ast.statement_if(SPAN, gating_test, opt_return, Some(unopt_return));
+    let mut dispatcher_body_stmts = ctx.ast.vec_with_capacity(1);
+    dispatcher_body_stmts.push(if_stmt);
+    let dispatcher_body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), dispatcher_body_stmts);
+
+    let dispatcher_id =
+        Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(original_name.as_str())));
+    let dispatcher_fn = ctx.ast.alloc_function(
+        SPAN,
+        FunctionType::FunctionDeclaration,
+        dispatcher_id,
+        false, // not generator
+        false, // not async
+        false,
+        NONE,
+        NONE,
+        dispatcher_params,
+        NONE,
+        Some(dispatcher_body),
+    );
+    result.push(Statement::FunctionDeclaration(dispatcher_fn));
+
+    result
+}
+
+/// Rename the function inside a statement (for hoisted gating).
+fn rename_function_in_statement<'a>(
+    stmt: &mut Statement<'a>,
+    new_name: &str,
+    ctx: &TraverseCtx<'a>,
+) {
+    match stmt {
+        Statement::FunctionDeclaration(f) => {
+            f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+        }
+        Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(f)
+            | ExportDefaultDeclarationKind::FunctionExpression(f) => {
+                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+            }
+            _ => {}
+        },
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(Declaration::FunctionDeclaration(f)) = &mut export.declaration {
+                f.id = Some(ctx.ast.binding_identifier(SPAN, ctx.ast.atom(new_name)));
+            }
+        }
+        _ => {}
     }
 }
 
