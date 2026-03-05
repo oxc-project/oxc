@@ -6,9 +6,7 @@ use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
         imports::validate_restricted_imports,
-        options::{
-            CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold,
-        },
+        options::{CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold},
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{
             ErrorAction, find_directive_disabling_memoization, handle_compilation_error,
@@ -27,7 +25,7 @@ use oxc_react_compiler::{
 };
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::context::TraverseCtx;
@@ -205,30 +203,17 @@ impl ReactCompiler {
         // Validate restricted imports (port of validateRestrictedImports call in Program.ts).
         if let Some(error) = validate_restricted_imports(
             &program.body,
-            self.environment_config
-                .validate_blocklisted_imports
-                .as_deref(),
+            self.environment_config.validate_blocklisted_imports.as_deref(),
         ) {
-            Self::report_compiler_error(
-                &error,
-                program.span,
-                self.panic_threshold,
-                ctx,
-            );
+            Self::report_compiler_error(&error, program.span, self.panic_threshold, ctx);
             return;
         }
 
         // Find program-level suppression ranges from eslint-disable comments.
         // Port of findProgramSuppressions call in Program.ts.
-        let rule_names: Vec<String> = self
-            .options
-            .eslint_suppression_rules
-            .clone()
-            .unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSION_RULES
-                    .iter()
-                    .map(|s| (*s).to_string())
-                    .collect()
+        let rule_names: Vec<String> =
+            self.options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                DEFAULT_ESLINT_SUPPRESSION_RULES.iter().map(|s| (*s).to_string()).collect()
             });
         self.suppressions = find_program_suppressions(
             &program.comments,
@@ -253,13 +238,155 @@ impl ReactCompiler {
             }
         }
 
-        if compiled_results.is_empty() {
+        // Track whether any compiled function needs memo import (updated across phases).
+        let mut needs_memo_import = compiled_results.iter().any(|r| r.output.memo_slots_used > 0);
+
+        let has_top_level_results = !compiled_results.is_empty();
+
+        // Phase 2 (conditional): Rebuild program.body, replacing compiled functions
+        // and inserting outlined functions after the replaced statement.
+        // Track which indices in new_body correspond to replaced/outlined statements
+        // that need scope IDs assigned.
+        let mut replaced_indices: Vec<usize> = Vec::new();
+        // Track which indices in new_body correspond to compiled top-level statements
+        // (used by nested discovery to skip already-compiled functions).
+        let mut compiled_stmt_indices: FxHashSet<usize> = FxHashSet::default();
+
+        let mut new_body = if has_top_level_results {
+            let mut result_map: FxHashMap<usize, CodegenOutput<'a>> = FxHashMap::default();
+            for result in compiled_results {
+                result_map.insert(result.index, result.output);
+            }
+
+            let old_body = program.body.take_in(ctx.ast);
+            let mut new_body = ctx.ast.vec_with_capacity(old_body.len());
+
+            for (i, stmt) in old_body.into_iter().enumerate() {
+                if let Some(mut compiled) = result_map.remove(&i) {
+                    // Extract outlined functions before consuming compiled for replacement.
+                    let outlined_fns = std::mem::take(&mut compiled.outlined);
+                    let replaced = replace_statement_function(stmt, compiled, ctx);
+                    let new_idx = new_body.len();
+                    replaced_indices.push(new_idx);
+                    compiled_stmt_indices.insert(new_idx);
+                    new_body.push(replaced);
+                    // Process outlined functions using a queue, matching TS Program.ts
+                    // lines 426-454. Outlined functions with fn_type are requeued for
+                    // full compilation; their own outlined outputs are then processed.
+                    let mut outlined_queue: Vec<OutlinedOutput<'a>> = outlined_fns;
+                    while let Some(outlined) = outlined_queue.pop() {
+                        let requeue_fn_type = outlined.fn_type;
+                        let mut outlined_stmt = build_outlined_function_statement(outlined, ctx);
+                        if let Some(fn_type) = requeue_fn_type {
+                            if let Some(mut recompiled) = self.compile_outlined_function(
+                                &outlined_stmt,
+                                fn_type,
+                                &cache_identifier_name,
+                                ctx,
+                            ) {
+                                // Collect outlined functions from the requeued compilation
+                                // and add them to the queue for processing.
+                                let nested_outlined = std::mem::take(&mut recompiled.outlined);
+                                outlined_stmt =
+                                    replace_statement_function(outlined_stmt, recompiled, ctx);
+                                for nested in nested_outlined {
+                                    debug_assert!(
+                                        nested.fn_.outlined.is_empty(),
+                                        "Unexpected nested outlined functions",
+                                    );
+                                    outlined_queue.push(nested);
+                                }
+                            }
+                        }
+                        let outlined_idx = new_body.len();
+                        replaced_indices.push(outlined_idx);
+                        compiled_stmt_indices.insert(outlined_idx);
+                        new_body.push(outlined_stmt);
+                    }
+                } else {
+                    new_body.push(stmt);
+                }
+            }
+            new_body
+        } else {
+            // No top-level results — we still need to check for nested functions.
+            // Use the existing body directly (take ownership for potential mutation).
+            program.body.take_in(ctx.ast)
+        };
+
+        // Phase 3: Discover and compile nested functions within non-compiled statements.
+        // Port of TS Program.ts `findFunctionsToCompile` which uses `program.traverse()`
+        // to find ALL function nodes at any depth, not just top-level ones.
+        //
+        // Key behaviors matching TS:
+        // - In `all` mode, only top-level functions are compiled (skip nested discovery)
+        // - Skip class bodies (ClassDeclaration/ClassExpression)
+        // - Skip walking into already-compiled function bodies (fn.skip() in TS)
+        // - `alreadyCompiled` set prevents double-compilation
+        let compilation_mode = parse_compilation_mode(self.options.compilation_mode.as_deref());
+        let mut compiled_any_nested = false;
+        if compilation_mode != CompilationMode::All {
+            let mut nested_scope_assign_indices: Vec<usize> = Vec::new();
+            let mut nested_outlined: Vec<OutlinedOutput<'a>> = Vec::new();
+            for (idx, stmt) in new_body.iter_mut().enumerate() {
+                // Skip statements that were already compiled at the top level.
+                // This matches TS `fn.skip()` — the compiler handles inner functions
+                // of compiled functions internally.
+                if compiled_stmt_indices.contains(&idx) {
+                    continue;
+                }
+                if self.compile_nested_functions_in_statement(
+                    stmt,
+                    &cache_identifier_name,
+                    &mut needs_memo_import,
+                    &mut nested_outlined,
+                    ctx,
+                ) {
+                    nested_scope_assign_indices.push(idx);
+                    compiled_any_nested = true;
+                }
+            }
+            // Assign scope IDs for nested compiled functions.
+            for &idx in &nested_scope_assign_indices {
+                let parent_scope_id = program.scope_id();
+                assign_scope_ids_to_statement(&mut new_body[idx], parent_scope_id, ctx);
+            }
+            // Process outlined functions from nested compilations.
+            // These are added as top-level statements, matching TS behavior
+            // where outlined functions are always inserted at the program level.
+            let mut outlined_queue: Vec<OutlinedOutput<'a>> = nested_outlined;
+            while let Some(outlined) = outlined_queue.pop() {
+                let requeue_fn_type = outlined.fn_type;
+                let mut outlined_stmt = build_outlined_function_statement(outlined, ctx);
+                if let Some(fn_type) = requeue_fn_type {
+                    if let Some(mut recompiled) = self.compile_outlined_function(
+                        &outlined_stmt,
+                        fn_type,
+                        &cache_identifier_name,
+                        ctx,
+                    ) {
+                        let nested_outlined_inner = std::mem::take(&mut recompiled.outlined);
+                        outlined_stmt = replace_statement_function(outlined_stmt, recompiled, ctx);
+                        for nested in nested_outlined_inner {
+                            outlined_queue.push(nested);
+                        }
+                    }
+                }
+                let outlined_idx = new_body.len();
+                replaced_indices.push(outlined_idx);
+                new_body.push(outlined_stmt);
+            }
+        }
+
+        // If nothing was compiled (neither top-level nor nested), restore the
+        // program body and return without modifications.
+        if !has_top_level_results && !compiled_any_nested {
+            program.body = new_body;
             return;
         }
 
-        // Phase 2: Inject `import { c as _c } from "<runtime_module>"` if any
-        // compiled function uses memo slots.
-        let needs_memo_import = compiled_results.iter().any(|r| r.output.memo_slots_used > 0);
+        // Phase 4: Inject `import { c as _c } from "<runtime_module>"` if any
+        // compiled function (top-level or nested) uses memo slots.
         if needs_memo_import {
             ctx.state.module_imports.add_named_import(
                 Atom::from(runtime_module),
@@ -269,69 +396,13 @@ impl ReactCompiler {
             );
         }
 
-        // Phase 3: Rebuild program.body, replacing compiled functions and inserting
-        // outlined functions after the replaced statement.
-        let mut result_map: FxHashMap<usize, CodegenOutput<'a>> = FxHashMap::default();
-        for result in compiled_results {
-            result_map.insert(result.index, result.output);
-        }
-
-        let old_body = program.body.take_in(ctx.ast);
-        let mut new_body = ctx.ast.vec_with_capacity(old_body.len());
-        // Track which indices in new_body correspond to replaced/outlined statements
-        // that need scope IDs assigned.
-        let mut replaced_indices: Vec<usize> = Vec::new();
-
-        for (i, stmt) in old_body.into_iter().enumerate() {
-            if let Some(mut compiled) = result_map.remove(&i) {
-                // Extract outlined functions before consuming compiled for replacement.
-                let outlined_fns = std::mem::take(&mut compiled.outlined);
-                let replaced = replace_statement_function(stmt, compiled, ctx);
-                replaced_indices.push(new_body.len());
-                new_body.push(replaced);
-                // Process outlined functions using a queue, matching TS Program.ts
-                // lines 426-454. Outlined functions with fn_type are requeued for
-                // full compilation; their own outlined outputs are then processed.
-                let mut outlined_queue: Vec<OutlinedOutput<'a>> = outlined_fns;
-                while let Some(outlined) = outlined_queue.pop() {
-                    let requeue_fn_type = outlined.fn_type;
-                    let mut outlined_stmt = build_outlined_function_statement(outlined, ctx);
-                    if let Some(fn_type) = requeue_fn_type {
-                        if let Some(mut recompiled) = self.compile_outlined_function(
-                            &outlined_stmt,
-                            fn_type,
-                            &cache_identifier_name,
-                            ctx,
-                        ) {
-                            // Collect outlined functions from the requeued compilation
-                            // and add them to the queue for processing.
-                            let nested_outlined = std::mem::take(&mut recompiled.outlined);
-                            outlined_stmt =
-                                replace_statement_function(outlined_stmt, recompiled, ctx);
-                            for nested in nested_outlined {
-                                debug_assert!(
-                                    nested.fn_.outlined.is_empty(),
-                                    "Unexpected nested outlined functions",
-                                );
-                                outlined_queue.push(nested);
-                            }
-                        }
-                    }
-                    replaced_indices.push(new_body.len());
-                    new_body.push(outlined_stmt);
-                }
-            } else {
-                new_body.push(stmt);
-            }
-        }
-
-        // Phase 4: Assign scope IDs to newly created AST nodes in compiled output.
+        // Phase 5: Assign scope IDs to newly created AST nodes in compiled output.
         // The React Compiler codegen creates BlockStatement and other scope-creating
         // nodes without scope IDs. The subsequent transformer traversal (e.g. JSX
         // transform) requires all such nodes to have valid scope IDs.
         for &idx in &replaced_indices {
-            let parent_scope_id = get_function_scope_id(&new_body[idx])
-                .unwrap_or_else(|| program.scope_id());
+            let parent_scope_id =
+                get_function_scope_id(&new_body[idx]).unwrap_or_else(|| program.scope_id());
             assign_scope_ids_to_statement(&mut new_body[idx], parent_scope_id, ctx);
         }
 
@@ -609,7 +680,12 @@ impl ReactCompiler {
                 Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
                 // Report accumulated diagnostics even on pipeline failure.
                 for diagnostic in hir_function.env.take_diagnostics() {
-                    Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
+                    Self::report_compiler_error(
+                        &diagnostic,
+                        fallback_span,
+                        self.panic_threshold,
+                        ctx,
+                    );
                 }
                 return None;
             }
@@ -724,20 +800,26 @@ impl ReactCompiler {
             Environment::new(fn_type, self.output_mode, self.environment_config.clone());
 
         let lowerable_function = LowerableFunction::Function(function);
-        let mut hir_function = match lower(&environment, fn_type, &lowerable_function, self.outer_bindings.clone()) {
-            Ok(hir_function) => hir_function,
-            Err(error) => {
-                Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
-                return None;
-            }
-        };
+        let mut hir_function =
+            match lower(&environment, fn_type, &lowerable_function, self.outer_bindings.clone()) {
+                Ok(hir_function) => hir_function,
+                Err(error) => {
+                    Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
+                    return None;
+                }
+            };
 
         let pipeline_output = match run_pipeline(&mut hir_function, &environment) {
             Ok(output) => output,
             Err(error) => {
                 Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
                 for diagnostic in hir_function.env.take_diagnostics() {
-                    Self::report_compiler_error(&diagnostic, function.span, self.panic_threshold, ctx);
+                    Self::report_compiler_error(
+                        &diagnostic,
+                        function.span,
+                        self.panic_threshold,
+                        ctx,
+                    );
                 }
                 return None;
             }
@@ -779,6 +861,810 @@ impl ReactCompiler {
             };
             ctx.state.error(diagnostic.with_label(span));
         }
+    }
+
+    /// Recursively walk a statement to find and compile nested function declarations,
+    /// function expressions, and arrow function expressions.
+    ///
+    /// Port of TS `findFunctionsToCompile` (Program.ts lines 495-559) which uses
+    /// `program.traverse()` to visit all function nodes at any depth, skipping class
+    /// bodies and already-compiled functions.
+    ///
+    /// Returns `true` if any nested function was compiled (for scope ID assignment).
+    /// Any outlined functions produced by nested compilations are collected in
+    /// `outlined_outputs` for later insertion as top-level statements.
+    fn compile_nested_functions_in_statement<'a>(
+        &self,
+        stmt: &mut Statement<'a>,
+        cache_identifier_name: &str,
+        needs_memo_import: &mut bool,
+        outlined_outputs: &mut Vec<OutlinedOutput<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let mut compiled_any = false;
+        self.walk_statement_for_nested_functions(
+            stmt,
+            cache_identifier_name,
+            needs_memo_import,
+            &mut compiled_any,
+            outlined_outputs,
+            false, // not inside class
+            ctx,
+        );
+        compiled_any
+    }
+
+    /// Recursive walker for nested function discovery.
+    ///
+    /// Walks into all AST nodes looking for function declarations/expressions,
+    /// skipping class bodies (matching TS `ClassDeclaration.skip()` /
+    /// `ClassExpression.skip()`).
+    #[allow(clippy::too_many_arguments)]
+    fn walk_statement_for_nested_functions<'a>(
+        &self,
+        stmt: &mut Statement<'a>,
+        cache_identifier_name: &str,
+        needs_memo_import: &mut bool,
+        compiled_any: &mut bool,
+        outlined_outputs: &mut Vec<OutlinedOutput<'a>>,
+        inside_class: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match stmt {
+            // Function declarations at any depth: try to compile them.
+            Statement::FunctionDeclaration(function) => {
+                if !inside_class {
+                    if let Some(output) =
+                        self.try_compile_nested_function_decl(function, cache_identifier_name, ctx)
+                    {
+                        if output.memo_slots_used > 0 {
+                            *needs_memo_import = true;
+                        }
+                        // Collect outlined functions for top-level insertion.
+                        let mut output = output;
+                        outlined_outputs.append(&mut output.outlined);
+                        // Replace body/params in-place.
+                        function.params = build_formal_params_from_codegen(&output.params, ctx);
+                        function.body = Some(build_compiled_body(&mut output, ctx));
+                        *compiled_any = true;
+                        // Don't recurse into this function — it's been compiled
+                        // (matches TS fn.skip()).
+                        return;
+                    }
+                }
+                // If not compiled, recurse into the function body to find
+                // deeper nested functions.
+                if let Some(body) = &mut function.body {
+                    for inner_stmt in body.statements.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            false,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Variable declarations: check initializers for function expressions.
+            Statement::VariableDeclaration(declaration) => {
+                for declarator in &mut declaration.declarations {
+                    if let Some(init) = &mut declarator.init {
+                        let binding_name = match &declarator.id {
+                            BindingPattern::BindingIdentifier(id) => Some(id.name.clone()),
+                            _ => None,
+                        };
+                        self.walk_expression_for_nested_functions(
+                            init,
+                            binding_name.as_deref(),
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Expression statements: walk the expression.
+            Statement::ExpressionStatement(expr_stmt) => {
+                self.walk_expression_for_nested_functions(
+                    &mut expr_stmt.expression,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Block statements: recurse into body.
+            Statement::BlockStatement(block) => {
+                for inner_stmt in block.body.iter_mut() {
+                    self.walk_statement_for_nested_functions(
+                        inner_stmt,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            // If statements: recurse into consequent and alternate.
+            Statement::IfStatement(if_stmt) => {
+                self.walk_statement_for_nested_functions(
+                    &mut if_stmt.consequent,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                if let Some(alternate) = &mut if_stmt.alternate {
+                    self.walk_statement_for_nested_functions(
+                        alternate,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            // For/while/do-while: recurse into body.
+            Statement::ForStatement(for_stmt) => {
+                self.walk_statement_for_nested_functions(
+                    &mut for_stmt.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            Statement::ForInStatement(for_in) => {
+                self.walk_statement_for_nested_functions(
+                    &mut for_in.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            Statement::ForOfStatement(for_of) => {
+                self.walk_statement_for_nested_functions(
+                    &mut for_of.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            Statement::WhileStatement(while_stmt) => {
+                self.walk_statement_for_nested_functions(
+                    &mut while_stmt.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            Statement::DoWhileStatement(do_while) => {
+                self.walk_statement_for_nested_functions(
+                    &mut do_while.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Switch: recurse into case consequents.
+            Statement::SwitchStatement(switch_stmt) => {
+                for case in switch_stmt.cases.iter_mut() {
+                    for inner_stmt in case.consequent.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Try/catch/finally: recurse into blocks.
+            Statement::TryStatement(try_stmt) => {
+                for inner_stmt in try_stmt.block.body.iter_mut() {
+                    self.walk_statement_for_nested_functions(
+                        inner_stmt,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+                if let Some(handler) = &mut try_stmt.handler {
+                    for inner_stmt in handler.body.body.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+                if let Some(finalizer) = &mut try_stmt.finalizer {
+                    for inner_stmt in finalizer.body.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Labeled statements: recurse into body.
+            Statement::LabeledStatement(labeled) => {
+                self.walk_statement_for_nested_functions(
+                    &mut labeled.body,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Return statement: walk the argument expression.
+            Statement::ReturnStatement(ret) => {
+                if let Some(arg) = &mut ret.argument {
+                    self.walk_expression_for_nested_functions(
+                        arg,
+                        None,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            // Export declarations: recurse into inner declarations.
+            Statement::ExportDefaultDeclaration(export) => match &mut export.declaration {
+                ExportDefaultDeclarationKind::FunctionDeclaration(function)
+                | ExportDefaultDeclarationKind::FunctionExpression(function) => {
+                    if !inside_class {
+                        if let Some(output) = self.try_compile_nested_function_decl(
+                            function,
+                            cache_identifier_name,
+                            ctx,
+                        ) {
+                            if output.memo_slots_used > 0 {
+                                *needs_memo_import = true;
+                            }
+                            let mut output = output;
+                            outlined_outputs.append(&mut output.outlined);
+                            function.params = build_formal_params_from_codegen(&output.params, ctx);
+                            function.body = Some(build_compiled_body(&mut output, ctx));
+                            *compiled_any = true;
+                            return;
+                        }
+                    }
+                    if let Some(body) = &mut function.body {
+                        for inner_stmt in body.statements.iter_mut() {
+                            self.walk_statement_for_nested_functions(
+                                inner_stmt,
+                                cache_identifier_name,
+                                needs_memo_import,
+                                compiled_any,
+                                outlined_outputs,
+                                false,
+                                ctx,
+                            );
+                        }
+                    }
+                }
+                ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
+                    if !inside_class {
+                        let directives = arrow_directives(arrow);
+                        let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                        if let Some(output) = self.compile_function(
+                            &lowerable_function,
+                            None,
+                            &directives,
+                            arrow.span,
+                            false,
+                            cache_identifier_name,
+                            ctx,
+                        ) {
+                            if output.memo_slots_used > 0 {
+                                *needs_memo_import = true;
+                            }
+                            let mut output = output;
+                            outlined_outputs.append(&mut output.outlined);
+                            arrow.params = build_formal_params_from_codegen(&output.params, ctx);
+                            let compiled_directives = build_directives(&output.directives, ctx);
+                            let body = std::mem::replace(&mut output.body, ctx.ast.vec());
+                            arrow.body =
+                                ctx.ast.alloc_function_body(SPAN, compiled_directives, body);
+                            arrow.expression = false;
+                            *compiled_any = true;
+                            return;
+                        }
+                    }
+                    for inner_stmt in arrow.body.statements.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            false,
+                            ctx,
+                        );
+                    }
+                }
+                _ => {}
+            },
+            Statement::ExportNamedDeclaration(export) => {
+                if let Some(declaration) = &mut export.declaration {
+                    self.walk_declaration_for_nested_functions(
+                        declaration,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Walk a declaration node for nested function discovery.
+    #[allow(clippy::too_many_arguments)]
+    fn walk_declaration_for_nested_functions<'a>(
+        &self,
+        decl: &mut Declaration<'a>,
+        cache_identifier_name: &str,
+        needs_memo_import: &mut bool,
+        compiled_any: &mut bool,
+        outlined_outputs: &mut Vec<OutlinedOutput<'a>>,
+        inside_class: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match decl {
+            Declaration::FunctionDeclaration(function) => {
+                if !inside_class {
+                    if let Some(output) =
+                        self.try_compile_nested_function_decl(function, cache_identifier_name, ctx)
+                    {
+                        if output.memo_slots_used > 0 {
+                            *needs_memo_import = true;
+                        }
+                        let mut output = output;
+                        outlined_outputs.append(&mut output.outlined);
+                        function.params = build_formal_params_from_codegen(&output.params, ctx);
+                        function.body = Some(build_compiled_body(&mut output, ctx));
+                        *compiled_any = true;
+                        return;
+                    }
+                }
+                if let Some(body) = &mut function.body {
+                    for inner_stmt in body.statements.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            false,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            Declaration::VariableDeclaration(var_decl) => {
+                for declarator in &mut var_decl.declarations {
+                    if let Some(init) = &mut declarator.init {
+                        let binding_name = match &declarator.id {
+                            BindingPattern::BindingIdentifier(id) => Some(id.name.clone()),
+                            _ => None,
+                        };
+                        self.walk_expression_for_nested_functions(
+                            init,
+                            binding_name.as_deref(),
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Walk an expression node for nested function discovery.
+    ///
+    /// Handles FunctionExpression, ArrowFunctionExpression, and recurses into
+    /// other expression types that may contain functions. Skips ClassExpression
+    /// bodies (matching TS `ClassExpression.skip()`).
+    #[allow(clippy::too_many_arguments)]
+    fn walk_expression_for_nested_functions<'a>(
+        &self,
+        expr: &mut Expression<'a>,
+        binding_name: Option<&str>,
+        cache_identifier_name: &str,
+        needs_memo_import: &mut bool,
+        compiled_any: &mut bool,
+        outlined_outputs: &mut Vec<OutlinedOutput<'a>>,
+        inside_class: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match expr {
+            // Function expressions: try to compile.
+            Expression::FunctionExpression(function) => {
+                if !inside_class {
+                    let directives = function_directives(function);
+                    let function_name =
+                        function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+                    let lowerable_function = LowerableFunction::Function(function);
+                    if let Some(output) = self.compile_function(
+                        &lowerable_function,
+                        function_name,
+                        &directives,
+                        function.span,
+                        false,
+                        cache_identifier_name,
+                        ctx,
+                    ) {
+                        if output.memo_slots_used > 0 {
+                            *needs_memo_import = true;
+                        }
+                        let mut output = output;
+                        outlined_outputs.append(&mut output.outlined);
+                        function.params = build_formal_params_from_codegen(&output.params, ctx);
+                        function.body = Some(build_compiled_body(&mut output, ctx));
+                        *compiled_any = true;
+                        return;
+                    }
+                }
+                // Not compiled: recurse into body.
+                if let Some(body) = &mut function.body {
+                    for inner_stmt in body.statements.iter_mut() {
+                        self.walk_statement_for_nested_functions(
+                            inner_stmt,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            false,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Arrow function expressions: try to compile.
+            Expression::ArrowFunctionExpression(arrow) => {
+                if !inside_class {
+                    let directives = arrow_directives(arrow);
+                    let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                    if let Some(output) = self.compile_function(
+                        &lowerable_function,
+                        binding_name,
+                        &directives,
+                        arrow.span,
+                        false,
+                        cache_identifier_name,
+                        ctx,
+                    ) {
+                        if output.memo_slots_used > 0 {
+                            *needs_memo_import = true;
+                        }
+                        let mut output = output;
+                        outlined_outputs.append(&mut output.outlined);
+                        arrow.params = build_formal_params_from_codegen(&output.params, ctx);
+                        let compiled_directives = build_directives(&output.directives, ctx);
+                        let body = std::mem::replace(&mut output.body, ctx.ast.vec());
+                        arrow.body = ctx.ast.alloc_function_body(SPAN, compiled_directives, body);
+                        arrow.expression = false;
+                        *compiled_any = true;
+                        return;
+                    }
+                }
+                // Not compiled: recurse into body.
+                for inner_stmt in arrow.body.statements.iter_mut() {
+                    self.walk_statement_for_nested_functions(
+                        inner_stmt,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        false,
+                        ctx,
+                    );
+                }
+            }
+            // Class expressions: skip (don't recurse into class bodies).
+            // Matches TS `ClassExpression(node) { node.skip(); }`.
+            Expression::ClassExpression(_) => {}
+            // Call expressions: check for memo/forwardRef, then recurse into args.
+            Expression::CallExpression(call) => {
+                if !inside_class && is_memo_or_forwardref_call(&call.callee) {
+                    if let Some(output) = self.compile_memo_or_forwardref_arg(
+                        call,
+                        binding_name,
+                        cache_identifier_name,
+                        ctx,
+                    ) {
+                        if output.memo_slots_used > 0 {
+                            *needs_memo_import = true;
+                        }
+                        let mut output = output;
+                        outlined_outputs.append(&mut output.outlined);
+                        replace_memo_inner_function_body(call, &mut output, ctx);
+                        *compiled_any = true;
+                        return;
+                    }
+                }
+                // Recurse into callee and arguments.
+                self.walk_expression_for_nested_functions(
+                    &mut call.callee,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                for arg in call.arguments.iter_mut() {
+                    if let Some(e) = arg.as_expression_mut() {
+                        self.walk_expression_for_nested_functions(
+                            e,
+                            None,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            // Assignment expressions: recurse into right-hand side.
+            Expression::AssignmentExpression(assign) => {
+                self.walk_expression_for_nested_functions(
+                    &mut assign.right,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Conditional/ternary: recurse into all branches.
+            Expression::ConditionalExpression(cond) => {
+                self.walk_expression_for_nested_functions(
+                    &mut cond.test,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                self.walk_expression_for_nested_functions(
+                    &mut cond.consequent,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                self.walk_expression_for_nested_functions(
+                    &mut cond.alternate,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Logical/binary: recurse into both sides.
+            Expression::LogicalExpression(logical) => {
+                self.walk_expression_for_nested_functions(
+                    &mut logical.left,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                self.walk_expression_for_nested_functions(
+                    &mut logical.right,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // Sequence expressions: recurse into all.
+            Expression::SequenceExpression(seq) => {
+                for e in seq.expressions.iter_mut() {
+                    self.walk_expression_for_nested_functions(
+                        e,
+                        None,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            // Array/object: recurse into elements/properties.
+            Expression::ArrayExpression(arr) => {
+                for elem in arr.elements.iter_mut() {
+                    if let Some(e) = elem.as_expression_mut() {
+                        self.walk_expression_for_nested_functions(
+                            e,
+                            None,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            Expression::ObjectExpression(obj) => {
+                for prop in obj.properties.iter_mut() {
+                    match prop {
+                        ObjectPropertyKind::ObjectProperty(p) => {
+                            self.walk_expression_for_nested_functions(
+                                &mut p.value,
+                                None,
+                                cache_identifier_name,
+                                needs_memo_import,
+                                compiled_any,
+                                outlined_outputs,
+                                inside_class,
+                                ctx,
+                            );
+                        }
+                        ObjectPropertyKind::SpreadProperty(s) => {
+                            self.walk_expression_for_nested_functions(
+                                &mut s.argument,
+                                None,
+                                cache_identifier_name,
+                                needs_memo_import,
+                                compiled_any,
+                                outlined_outputs,
+                                inside_class,
+                                ctx,
+                            );
+                        }
+                    }
+                }
+            }
+            // Parenthesized: recurse.
+            Expression::ParenthesizedExpression(paren) => {
+                self.walk_expression_for_nested_functions(
+                    &mut paren.expression,
+                    binding_name,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            // New expression: recurse into callee and arguments.
+            Expression::NewExpression(new_expr) => {
+                self.walk_expression_for_nested_functions(
+                    &mut new_expr.callee,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                for arg in new_expr.arguments.iter_mut() {
+                    if let Some(e) = arg.as_expression_mut() {
+                        self.walk_expression_for_nested_functions(
+                            e,
+                            None,
+                            cache_identifier_name,
+                            needs_memo_import,
+                            compiled_any,
+                            outlined_outputs,
+                            inside_class,
+                            ctx,
+                        );
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Try to compile a nested function declaration.
+    ///
+    /// Helper that extracts the function's name and directives, then delegates
+    /// to `compile_function`.
+    fn try_compile_nested_function_decl<'a>(
+        &self,
+        function: &Function<'a>,
+        cache_identifier_name: &str,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<CodegenOutput<'a>> {
+        let directives = function_directives(function);
+        let name = function.id.as_ref().map(|id| id.name.as_str());
+        let lowerable_function = LowerableFunction::Function(function);
+        self.compile_function(
+            &lowerable_function,
+            name,
+            &directives,
+            function.span,
+            false,
+            cache_identifier_name,
+            ctx,
+        )
     }
 }
 
@@ -983,10 +1869,8 @@ fn build_formal_params_from_codegen<'a>(
                 NONE, // type_annotation
             ));
         } else {
-            let pattern = ctx.ast.binding_pattern_binding_identifier(
-                SPAN,
-                ctx.ast.atom(param_name.as_str()),
-            );
+            let pattern =
+                ctx.ast.binding_pattern_binding_identifier(SPAN, ctx.ast.atom(param_name.as_str()));
             items.push(ctx.ast.formal_parameter(
                 SPAN,
                 ctx.ast.vec(),
@@ -1052,8 +1936,7 @@ fn replace_statement_function<'a>(
                 };
                 match init {
                     Expression::FunctionExpression(function) => {
-                        function.params =
-                            build_formal_params_from_codegen(&compiled.params, ctx);
+                        function.params = build_formal_params_from_codegen(&compiled.params, ctx);
                         function.body = Some(build_compiled_body(&mut compiled, ctx));
                         break;
                     }
@@ -1101,8 +1984,7 @@ fn replace_statement_function<'a>(
             if let Some(declaration) = &mut export_named.declaration {
                 match declaration {
                     Declaration::FunctionDeclaration(function) => {
-                        function.params =
-                            build_formal_params_from_codegen(&compiled.params, ctx);
+                        function.params = build_formal_params_from_codegen(&compiled.params, ctx);
                         function.body = Some(build_compiled_body(&mut compiled, ctx));
                     }
                     Declaration::VariableDeclaration(var_decl) => {
@@ -1112,18 +1994,14 @@ fn replace_statement_function<'a>(
                             };
                             match init {
                                 Expression::FunctionExpression(function) => {
-                                    function.params = build_formal_params_from_codegen(
-                                        &compiled.params,
-                                        ctx,
-                                    );
+                                    function.params =
+                                        build_formal_params_from_codegen(&compiled.params, ctx);
                                     function.body = Some(build_compiled_body(&mut compiled, ctx));
                                     break;
                                 }
                                 Expression::ArrowFunctionExpression(arrow) => {
-                                    arrow.params = build_formal_params_from_codegen(
-                                        &compiled.params,
-                                        ctx,
-                                    );
+                                    arrow.params =
+                                        build_formal_params_from_codegen(&compiled.params, ctx);
                                     let directives = build_directives(&compiled.directives, ctx);
                                     let body = std::mem::replace(&mut compiled.body, ctx.ast.vec());
                                     arrow.body =
@@ -1166,8 +2044,7 @@ fn build_outlined_function_statement<'a>(
     let function_body = ctx.ast.alloc_function_body(SPAN, directives, body);
 
     // Build the function id from the codegen output id.
-    let id =
-        codegen.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
+    let id = codegen.id.as_deref().map(|name| ctx.ast.binding_identifier(SPAN, ctx.ast.atom(name)));
 
     // Build formal parameters from param names.
     let params = build_formal_params_from_codegen(&codegen.params, ctx);
@@ -1516,10 +2393,8 @@ fn assign_scope_ids_to_expression(
         }
         Expression::ArrowFunctionExpression(f) => {
             if f.scope_id.get().is_none() {
-                let scope_id = ctx.create_child_scope(
-                    parent_scope_id,
-                    ScopeFlags::Function | ScopeFlags::Arrow,
-                );
+                let scope_id = ctx
+                    .create_child_scope(parent_scope_id, ScopeFlags::Function | ScopeFlags::Arrow);
                 f.scope_id.set(Some(scope_id));
                 assign_scope_ids_to_function_body(&mut f.body, scope_id, ctx);
             } else {
