@@ -226,7 +226,11 @@ impl ReactCompiler {
         let source_path = ctx.state.source_path.to_string_lossy();
         if let Some(ref sources) = self.options.sources {
             if source_path.is_empty() {
-                // No filename available — cannot filter, skip compilation.
+                // TS upstream: "Expected a filename but found none."
+                let diagnostic = OxcDiagnostic::error(
+                    "React Compiler: Expected a filename but found none. When the 'sources' config option is specified, the React compiler will only compile files with a name",
+                );
+                ctx.state.error(diagnostic);
                 return;
             }
             if !sources.iter().any(|pattern| source_path.contains(pattern.as_str())) {

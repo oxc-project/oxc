@@ -268,10 +268,10 @@ fn get_set_state_call(
                                     ref_derived_values.insert(operand.identifier.id);
                                 }
                             }
-                            // Effect::Freeze, Effect::Read: no-op
-                            // Effect::Unknown: TS throws an invariant here, but
-                            // we silently skip
-                            _ => {}
+                            Effect::Freeze | Effect::Read => {}
+                            Effect::Unknown => {
+                                unreachable!("Unexpected unknown effect")
+                            }
                         }
                     }
                 }
