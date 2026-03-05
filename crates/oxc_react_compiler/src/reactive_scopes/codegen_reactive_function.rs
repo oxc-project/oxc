@@ -678,30 +678,27 @@ pub fn codegen_function<'a>(
 
     // Fast Refresh / HMR: compute source hash and allocate cache index for
     // tracking source changes.
-    let fast_refresh_state =
-        if options.enable_reset_cache_on_source_file_changes {
-            options.code.as_ref().map(|code| {
-                type HmacSha256 = Hmac<Sha256>;
-                // HMAC accepts keys of any size, so new_from_slice never fails
-                let Ok(mac) = HmacSha256::new_from_slice(code.as_bytes()) else {
-                    unreachable!();
-                };
-                // TS: createHmac("sha256", code).digest("hex") — no .update() call, so data is empty
-                let result = mac.finalize();
-                let hash_hex = result
-                    .into_bytes()
-                    .iter()
-                    .fold(String::with_capacity(64), |mut acc, b| {
-                        use std::fmt::Write;
-                        let _ = write!(acc, "{b:02x}");
-                        acc
-                    });
-                let cache_index = cx.alloc_cache_index();
-                (cache_index, hash_hex)
-            })
-        } else {
-            None
-        };
+    let fast_refresh_state = if options.enable_reset_cache_on_source_file_changes {
+        options.code.as_ref().map(|code| {
+            type HmacSha256 = Hmac<Sha256>;
+            // HMAC accepts keys of any size, so new_from_slice never fails
+            let Ok(mac) = HmacSha256::new_from_slice(code.as_bytes()) else {
+                unreachable!();
+            };
+            // TS: createHmac("sha256", code).digest("hex") — no .update() call, so data is empty
+            let result = mac.finalize();
+            let hash_hex =
+                result.into_bytes().iter().fold(String::with_capacity(64), |mut acc, b| {
+                    use std::fmt::Write;
+                    let _ = write!(acc, "{b:02x}");
+                    acc
+                });
+            let cache_index = cx.alloc_cache_index();
+            (cache_index, hash_hex)
+        })
+    } else {
+        None
+    };
 
     // Register function params as declared and as temporaries
     for param in &reactive_fn.params {
@@ -725,7 +722,9 @@ pub fn codegen_function<'a>(
 
     // Function-level hook guard: wrap the entire body in a try-finally with
     // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
-    if let Some(guard_fn) = cx.enable_emit_hook_guards.as_ref().filter(|_| cx.output_mode == CompilerOutputMode::Client) {
+    if let Some(guard_fn) =
+        cx.enable_emit_hook_guards.as_ref().filter(|_| cx.output_mode == CompilerOutputMode::Client)
+    {
         let guard_name = cx.synthesize_name(&guard_fn.import_specifier_name.clone());
 
         // Build: guardFn(0)  — PushHookGuard
@@ -742,9 +741,8 @@ pub fn codegen_function<'a>(
         let try_block = stmts_to_block_body(&cx, try_stmts);
 
         // Build: guardFn(1)  — PopHookGuard
-        let pop_args = cx
-            .ast
-            .vec1(Argument::from(make_number(&cx, f64::from(GuardKind::PopHookGuard as u8))));
+        let pop_args =
+            cx.ast.vec1(Argument::from(make_number(&cx, f64::from(GuardKind::PopHookGuard as u8))));
         let pop_call = make_call(&cx, make_id(&cx, &guard_name), pop_args);
         let pop_stmt = make_expr_stmt(&cx, pop_call);
 
@@ -798,9 +796,8 @@ pub fn codegen_function<'a>(
             let index_name = cx.synthesize_name("$i");
 
             // for-init: let $i = 0
-            let init_binding = cx
-                .ast
-                .binding_pattern_binding_identifier(SPAN, cx.ast.atom(&index_name));
+            let init_binding =
+                cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&index_name));
             let init_declarator = cx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Let,
@@ -829,7 +826,12 @@ pub fn codegen_function<'a>(
             let for_update = cx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Addition,
-                cx.ast.simple_assignment_target_assignment_target_identifier(SPAN, cx.ast.atom(&index_name)).into(),
+                cx.ast
+                    .simple_assignment_target_assignment_target_identifier(
+                        SPAN,
+                        cx.ast.atom(&index_name),
+                    )
+                    .into(),
                 make_number(&cx, 1.0),
             );
 
@@ -855,9 +857,13 @@ pub fn codegen_function<'a>(
             let for_body_block = stmts_to_block_body(&cx, cx.ast.vec1(for_body_stmt));
             let for_body = Statement::BlockStatement(for_body_block);
 
-            let for_stmt =
-                cx.ast
-                    .statement_for(SPAN, Some(for_init), Some(for_test), Some(for_update), for_body);
+            let for_stmt = cx.ast.statement_for(
+                SPAN,
+                Some(for_init),
+                Some(for_test),
+                Some(for_update),
+                for_body,
+            );
 
             // Build: $[hashIndex] = "hashHexString"
             let dollar_assign = make_id(&cx, &dollar_name);
@@ -885,55 +891,53 @@ pub fn codegen_function<'a>(
     }
 
     // Emit instrument forget: only when config is set, function has a name, and output mode is client
-    #[allow(clippy::collapsible_if)]
     if let (Some(instrument_config), Some(fn_name)) =
         (&options.enable_emit_instrument_forget, &options.fn_id)
+        && options.output_mode == CompilerOutputMode::Client
     {
-        if options.output_mode == CompilerOutputMode::Client {
-            // Build the gating condition
-            let gating_expr = instrument_config.gating.as_ref().map(|gating| {
-                let name = cx.synthesize_name(&gating.import_specifier_name.clone());
-                make_id(&cx, &name)
-            });
+        // Build the gating condition
+        let gating_expr = instrument_config.gating.as_ref().map(|gating| {
+            let name = cx.synthesize_name(&gating.import_specifier_name.clone());
+            make_id(&cx, &name)
+        });
 
-            let global_gating_expr =
-                instrument_config.global_gating.as_ref().map(|name| make_id(&cx, name));
+        let global_gating_expr =
+            instrument_config.global_gating.as_ref().map(|name| make_id(&cx, name));
 
-            let if_test = match (gating_expr, global_gating_expr) {
-                (Some(gating), Some(global)) => {
-                    cx.ast.expression_logical(SPAN, global, LogicalOperator::And, gating)
-                }
-                (Some(gating), None) => gating,
-                (None, Some(global)) => global,
-                (None, None) => {
-                    return Err(CompilerError::invariant(
-                        "Bad config: expected at least one of gating or globalGating",
-                        None,
-                        SourceLocation::Generated,
-                    ));
-                }
-            };
+        let if_test = match (gating_expr, global_gating_expr) {
+            (Some(gating), Some(global)) => {
+                cx.ast.expression_logical(SPAN, global, LogicalOperator::And, gating)
+            }
+            (Some(gating), None) => gating,
+            (None, Some(global)) => global,
+            (None, None) => {
+                return Err(CompilerError::invariant(
+                    "Bad config: expected at least one of gating or globalGating",
+                    None,
+                    SourceLocation::Generated,
+                ));
+            }
+        };
 
-            // Build: instrumentFn("functionName", "filename.js")
-            let instrument_fn_name =
-                cx.synthesize_name(&instrument_config.func.import_specifier_name.clone());
-            let filename = options.filename.as_deref().unwrap_or("");
-            let instrument_call = make_call(
-                &cx,
-                make_id(&cx, &instrument_fn_name),
-                cx.ast.vec_from_array([
-                    Argument::from(make_string(&cx, fn_name)),
-                    Argument::from(make_string(&cx, filename)),
-                ]),
-            );
-            let instrument_stmt = make_expr_stmt(&cx, instrument_call);
+        // Build: instrumentFn("functionName", "filename.js")
+        let instrument_fn_name =
+            cx.synthesize_name(&instrument_config.func.import_specifier_name.clone());
+        let filename = options.filename.as_deref().unwrap_or("");
+        let instrument_call = make_call(
+            &cx,
+            make_id(&cx, &instrument_fn_name),
+            cx.ast.vec_from_array([
+                Argument::from(make_string(&cx, fn_name)),
+                Argument::from(make_string(&cx, filename)),
+            ]),
+        );
+        let instrument_stmt = make_expr_stmt(&cx, instrument_call);
 
-            // Build: if (gatingCondition) { instrumentFn(...); }
-            let if_stmt = cx.ast.statement_if(SPAN, if_test, instrument_stmt, None);
+        // Build: if (gatingCondition) { instrumentFn(...); }
+        let if_stmt = cx.ast.statement_if(SPAN, if_test, instrument_stmt, None);
 
-            // Insert at position 0 (before everything else)
-            body.insert(0, if_stmt);
-        }
+        // Insert at position 0 (before everything else)
+        body.insert(0, if_stmt);
     }
 
     let params = convert_params(&reactive_fn.params);
