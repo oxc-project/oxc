@@ -78,7 +78,10 @@ pub use crate::{
         ESFeature, ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
-    plugins::{PluginsOptions, ReactCompilerOptions, StyledComponentsOptions},
+    plugins::{
+        DynamicGatingConfig, ExternalFunctionConfig, PluginsOptions, ReactCompilerOptions,
+        StyledComponentsOptions,
+    },
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };

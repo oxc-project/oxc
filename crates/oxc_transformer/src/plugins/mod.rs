@@ -6,7 +6,7 @@ mod tagged_template_transform;
 pub use options::PluginsOptions;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
-pub use react_compiler::ReactCompilerOptions;
+pub use react_compiler::{DynamicGatingConfig, ExternalFunctionConfig, ReactCompilerOptions};
 pub use styled_components::StyledComponentsOptions;
 
 use crate::{
