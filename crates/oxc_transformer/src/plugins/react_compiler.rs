@@ -242,6 +242,12 @@ impl ReactCompiler {
         for stmt in &program.body {
             if let Statement::ImportDeclaration(import) = stmt
                 && import.source.value.as_str() == runtime_module
+                && import.specifiers.as_ref().is_some_and(|specs| {
+                    specs.iter().any(|spec| {
+                        matches!(spec, ImportDeclarationSpecifier::ImportSpecifier(s)
+                            if s.imported.name() == "c")
+                    })
+                })
             {
                 return;
             }
@@ -271,15 +277,28 @@ impl ReactCompiler {
         }
 
         // Find program-level suppression ranges from eslint-disable comments.
-        // Port of findProgramSuppressions call in Program.ts.
-        let rule_names: Vec<String> =
-            self.options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSION_RULES.iter().map(|s| (*s).to_string()).collect()
-            });
+        // Port of findProgramSuppressions call in Program.ts (lines 396-400).
+        // When both validateExhaustiveMemoizationDependencies and validateHooksUsage
+        // are enabled, pass None (the compiler's own validation handles those cases).
+        let suppress_rules =
+            if self.environment_config.validate_exhaustive_memoization_dependencies
+                && self.environment_config.validate_hooks_usage
+            {
+                None
+            } else {
+                let rule_names: Vec<String> =
+                    self.options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                        DEFAULT_ESLINT_SUPPRESSION_RULES
+                            .iter()
+                            .map(|s| (*s).to_string())
+                            .collect()
+                    });
+                Some(rule_names)
+            };
         self.suppressions = find_program_suppressions(
             &program.comments,
             program.source_text,
-            Some(&rule_names),
+            suppress_rules.as_deref(),
             self.options.flow_suppressions.unwrap_or(true),
         );
 
