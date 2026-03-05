@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
@@ -41,8 +42,8 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: useMemo/useCallback result is unused. The return value of useMemo/useCallback should be used.
-    ╭─[react_compiler_rule.tsx:8:15]
+  ⚠ react_compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
+    ╭─[react_compiler_rule.tsx:8:23]
   7 │     
   8 │ ╭─▶               useMemo(() => {
   9 │ │                   if (cond) {
