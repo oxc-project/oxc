@@ -299,7 +299,7 @@ mod logger_tests {
         // Component with JSX — qualifies as component in Infer mode
         let result =
             with_parsed_function("function Component() { return <div />; }", |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Infer, false)
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
             });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
@@ -309,7 +309,7 @@ mod logger_tests {
         // Hook with a hook call — qualifies as hook in Infer mode
         let result =
             with_parsed_function("function useMyHook() { return useState(0); }", |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Infer, false)
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
             });
         assert_eq!(result, Some(ReactFunctionType::Hook));
     }
@@ -317,7 +317,7 @@ mod logger_tests {
     #[test]
     fn should_not_compile_regular_function() {
         let result = with_parsed_function("function helper() { return 1; }", |func, name| {
-            should_compile_function(func, name, &[], CompilationMode::Infer, false)
+            should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
         });
         assert_eq!(result, None);
     }
@@ -331,6 +331,7 @@ mod logger_tests {
                 name,
                 &["use memo".to_string()],
                 CompilationMode::Infer,
+                false,
                 false,
             )
         });
@@ -351,6 +352,7 @@ mod logger_tests {
                     &["use no memo".to_string()],
                     CompilationMode::Infer,
                     false,
+                    false,
                 )
             });
         assert_eq!(result, Some(ReactFunctionType::Component));
@@ -360,7 +362,7 @@ mod logger_tests {
     fn annotation_mode_requires_directive() {
         let result =
             with_parsed_function("function Component() { return <div />; }", |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Annotation, false)
+                should_compile_function(func, name, &[], CompilationMode::Annotation, false, false)
             });
         assert_eq!(result, None);
 
@@ -372,6 +374,7 @@ mod logger_tests {
                     &["use memo".to_string()],
                     CompilationMode::Annotation,
                     false,
+                    false,
                 )
             });
         assert!(result.is_some());
@@ -381,7 +384,7 @@ mod logger_tests {
     fn all_mode_compiles_everything() {
         // Even a plain helper is compiled in All mode (as Other)
         let result = with_parsed_function("function helper() { return 1; }", |func, name| {
-            should_compile_function(func, name, &[], CompilationMode::All, false)
+            should_compile_function(func, name, &[], CompilationMode::All, false, false)
         });
         assert!(result.is_some());
     }
@@ -392,7 +395,7 @@ mod logger_tests {
         // if it calls hooks or creates JSX. Pass is_memo_or_forwardref_arg=true.
         let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
             // Pass None for name to simulate anonymous, and is_memo_or_forwardref_arg=true
-            should_compile_function(func, None, &[], CompilationMode::Infer, true)
+            should_compile_function(func, None, &[], CompilationMode::Infer, true, false)
         });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
@@ -400,7 +403,7 @@ mod logger_tests {
     #[test]
     fn memo_callback_compiles_as_component_in_all_mode() {
         let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
-            should_compile_function(func, None, &[], CompilationMode::All, true)
+            should_compile_function(func, None, &[], CompilationMode::All, true, false)
         });
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
@@ -409,7 +412,7 @@ mod logger_tests {
     fn forwardref_callback_not_compiled_without_flag() {
         // Without is_memo_or_forwardref_arg, an anonymous function should not compile in Infer mode
         let result = with_parsed_function("function _temp() { return <div />; }", |func, _name| {
-            should_compile_function(func, None, &[], CompilationMode::Infer, false)
+            should_compile_function(func, None, &[], CompilationMode::Infer, false, false)
         });
         assert_eq!(result, None);
     }

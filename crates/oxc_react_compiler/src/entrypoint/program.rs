@@ -37,14 +37,16 @@ pub fn should_compile_function(
     directives: &[String],
     mode: CompilationMode,
     is_memo_or_forwardref_arg: bool,
+    has_dynamic_gating: bool,
 ) -> Option<ReactFunctionType> {
     // Check for opt-in directives (TS lines 822-830)
-    // This includes both static opt-ins ("use forget", "use memo") and
-    // dynamic gating directives ("use memo if(...)") which are also opt-ins
-    // in the TS reference's tryFindDirectiveEnablingMemoization.
-    let has_opt_in = directives
-        .iter()
-        .any(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()) || d.starts_with("use memo if("));
+    // Static opt-ins: "use forget", "use memo"
+    // Dynamic gating directives: "use memo if(...)" — only recognized when
+    // dynamicGating is configured (Program.ts:87-97 returns early if null).
+    let has_opt_in = directives.iter().any(|d| {
+        OPT_IN_DIRECTIVES.contains(&d.as_str())
+            || (has_dynamic_gating && d.starts_with("use memo if("))
+    });
     if has_opt_in {
         return Some(
             get_component_or_hook_like(function, name, is_memo_or_forwardref_arg)
@@ -149,6 +151,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                     Expression::Identifier(id) => is_hook_name(&id.name),
                     Expression::StaticMemberExpression(member) => {
                         is_hook_name(&member.property.name)
+                            && matches!(&member.object, Expression::Identifier(obj) if obj.name.starts_with(|c: char| c.is_ascii_uppercase()))
                     }
                     _ => false,
                 };
@@ -366,7 +369,7 @@ pub fn returns_non_node(func: &LowerableFunction) -> bool {
     fn check_stmt_for_non_node_return(stmt: &Statement) -> bool {
         match stmt {
             Statement::ReturnStatement(ret) => {
-                ret.argument.as_ref().is_some_and(|e| is_non_node(e))
+                ret.argument.as_ref().is_none_or(|e| is_non_node(e))
             }
             Statement::BlockStatement(block) => {
                 block.body.iter().any(|s| check_stmt_for_non_node_return(s))
@@ -458,7 +461,11 @@ pub fn handle_compilation_error(error: &CompilerError, threshold: PanicThreshold
     match threshold {
         PanicThreshold::AllErrors => ErrorAction::Panic,
         PanicThreshold::CriticalErrors => {
-            if error.has_errors() { ErrorAction::Panic } else { ErrorAction::Skip }
+            if error.has_errors() {
+                ErrorAction::Panic
+            } else {
+                ErrorAction::Skip
+            }
         }
         PanicThreshold::None => ErrorAction::Skip,
     }
