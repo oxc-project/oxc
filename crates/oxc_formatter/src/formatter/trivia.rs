@@ -441,15 +441,9 @@ impl<'a> Format<'a> for Comment {
                     .sum::<usize>()
             };
             let available_width = line_width.saturating_sub(indent_chars);
-            if let Some(formatted) = super::jsdoc::format_jsdoc_comment(
-                self,
-                jsdoc_options,
-                source,
-                f.allocator(),
-                available_width,
-                f.options(),
-                f.context().external_callbacks(),
-            ) {
+            if let Some(formatted) =
+                super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+            {
                 // `format_jsdoc_comment` returns `Some("")` for empty JSDoc comments
                 // (no description and no tags) to signal removal — matching upstream
                 // prettier-plugin-jsdoc behavior. In that case we skip writing and return.
