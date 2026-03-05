@@ -61,6 +61,13 @@ pub struct LintContext<'a> {
     severity: Severity,
 }
 
+#[inline]
+fn fix_debug_log(message: impl AsRef<str>) {
+    if std::env::var_os("OXLINT_FIX_DEBUG").is_some() {
+        eprintln!("[oxlint::fix] {}", message.as_ref());
+    }
+}
+
 impl<'a> Deref for LintContext<'a> {
     type Target = Semantic<'a>;
 
@@ -130,7 +137,54 @@ impl<'a> LintContext<'a> {
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.parent.semantic().source_text())
+        let source_text = self.parent.semantic().source_text();
+        let source_len = source_text.len();
+        let mut start = span.start as usize;
+        let mut end = span.end as usize;
+        let mut span_was_invalid = false;
+
+        if start > source_len || end > source_len || start > end {
+            span_was_invalid = true;
+            start = start.min(source_len);
+            end = end.min(source_len);
+            if start > end {
+                std::mem::swap(&mut start, &mut end);
+            }
+        }
+
+        if span_was_invalid && start == end && start < source_len {
+            // Attempt to recover a non-empty snippet for invalid spans to avoid
+            // downstream rule code panicking on `.chars().next().unwrap()`.
+            if let Some(ch) = source_text[start..].chars().next() {
+                end = start + ch.len_utf8();
+            }
+        }
+
+        if let Some(snippet) = source_text.get(start..end) {
+            if span_was_invalid {
+                fix_debug_log(format!(
+                    "recovered invalid span {}..{} for {}/{} in {} (source_len={})",
+                    span.start,
+                    span.end,
+                    self.current_plugin_name,
+                    self.current_rule_name,
+                    self.file_path().display(),
+                    source_len
+                ));
+            }
+            snippet
+        } else {
+            fix_debug_log(format!(
+                "failed to slice span {}..{} for {}/{} in {} (source_len={})",
+                span.start,
+                span.end,
+                self.current_plugin_name,
+                self.current_rule_name,
+                self.file_path().display(),
+                source_len
+            ));
+            ""
+        }
     }
 
     /// Finds the next occurrence of the given token in the source code,

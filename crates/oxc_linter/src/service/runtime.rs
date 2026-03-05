@@ -40,6 +40,13 @@ use super::LintServiceOptions;
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
 
+#[inline]
+fn runtime_debug_log(message: impl AsRef<str>) {
+    if std::env::var_os("OXLINT_RUNTIME_DEBUG").is_some() {
+        eprintln!("[oxlint::runtime] {}", message.as_ref());
+    }
+}
+
 pub struct Runtime {
     cwd: Box<Path>,
     pub(super) linter: Linter,
@@ -452,15 +459,14 @@ impl Runtime {
                     let path = Arc::clone(path);
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
-                        tx_process_output
-                            .send(me.process_path(
-                                file_system,
-                                paths,
-                                &path,
-                                check_syntax_errors,
-                                tx_error,
-                            ))
-                            .unwrap();
+                        let process_output =
+                            me.process_path(file_system, paths, &path, check_syntax_errors, tx_error);
+                        if tx_process_output.send(process_output).is_err() {
+                            runtime_debug_log(format!(
+                                "module process output receiver dropped while processing bootstrap path {}",
+                                Path::new(path.as_ref()).display()
+                            ));
+                        }
                     });
                 }
             }
@@ -492,15 +498,19 @@ impl Runtime {
                                 let tx_process_output = tx_process_output.clone();
                                 let dep_path = Arc::clone(dep_path);
                                 move |_| {
-                                    tx_process_output
-                                        .send(me.process_path(
-                                            file_system,
-                                            paths,
-                                            &dep_path,
-                                            check_syntax_errors,
-                                            tx_error,
-                                        ))
-                                        .unwrap();
+                                    let process_output = me.process_path(
+                                        file_system,
+                                        paths,
+                                        &dep_path,
+                                        check_syntax_errors,
+                                        tx_error,
+                                    );
+                                    if tx_process_output.send(process_output).is_err() {
+                                        runtime_debug_log(format!(
+                                            "module process output receiver dropped while processing dependency path {}",
+                                            Path::new(dep_path.as_ref()).display()
+                                        ));
+                                    }
                                 }
                             });
                             pending_module_count += 1;
@@ -546,31 +556,53 @@ impl Runtime {
 
             // Now all dependencies in this group are processed.
             // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`
-            module_paths_and_resolved_requests.par_drain(..).for_each(|(path, requested_module_paths)| {
-                if requested_module_paths.is_empty() {
-                    return;
-                }
-                let modules_by_path = self.modules_by_path.pin();
-                let records = modules_by_path.get(&path).unwrap();
-                assert_eq!(
-                    records.len(), requested_module_paths.len(),
-                    "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
-                );
-                for (record, requested_module_paths) in
-                    records.iter().zip(requested_module_paths.into_iter())
-                {
-                    let mut loaded_modules = record.write_loaded_modules();
-                    for request in requested_module_paths {
-                        // TODO: revise how to store multiple sections in loaded_modules
-                        let Some(dep_module_record) =
-                            modules_by_path.get(&request.resolved_requested_path).unwrap().last()
-                        else {
-                            continue;
-                        };
-                        loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
+            module_paths_and_resolved_requests.par_drain(..).for_each(
+                |(path, requested_module_paths)| {
+                    if requested_module_paths.is_empty() {
+                        return;
                     }
-                }
-            });
+                    let modules_by_path = self.modules_by_path.pin();
+                    let Some(records) = modules_by_path.get(&path) else {
+                        runtime_debug_log(format!(
+                            "missing module record for path {} while wiring module graph",
+                            Path::new(path.as_ref()).display()
+                        ));
+                        return;
+                    };
+                    if records.len() != requested_module_paths.len() {
+                        runtime_debug_log(format!(
+                            "module graph section mismatch for {}: records={}, requested_paths={}",
+                            Path::new(path.as_ref()).display(),
+                            records.len(),
+                            requested_module_paths.len()
+                        ));
+                        return;
+                    }
+                    for (record, requested_module_paths) in
+                        records.iter().zip(requested_module_paths.into_iter())
+                    {
+                        let mut loaded_modules = record.write_loaded_modules();
+                        for request in requested_module_paths {
+                            // TODO: revise how to store multiple sections in loaded_modules
+                            let Some(dep_records) =
+                                modules_by_path.get(&request.resolved_requested_path)
+                            else {
+                                runtime_debug_log(format!(
+                                    "resolved dependency missing from module graph: {} <- {}",
+                                    Path::new(path.as_ref()).display(),
+                                    Path::new(request.resolved_requested_path.as_ref()).display()
+                                ));
+                                continue;
+                            };
+                            let Some(dep_module_record) = dep_records.last() else {
+                                continue;
+                            };
+                            loaded_modules
+                                .insert(request.specifier, Arc::downgrade(dep_module_record));
+                        }
+                    }
+                },
+            );
             #[expect(clippy::iter_with_drain)]
             for entry in modules_to_lint.drain(..) {
                 let on_entry = on_module_to_lint.clone();
@@ -606,10 +638,15 @@ impl Runtime {
 
                         let path = Path::new(&module_to_lint.path);
 
-                        assert_eq!(
-                            module_to_lint.section_module_records.len(),
-                            dep.section_contents.len()
-                        );
+                        if module_to_lint.section_module_records.len() != dep.section_contents.len() {
+                            runtime_debug_log(format!(
+                                "section count mismatch while linting {}: records={}, sections={}",
+                                path.display(),
+                                module_to_lint.section_module_records.len(),
+                                dep.section_contents.len()
+                            ));
+                            return;
+                        }
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
@@ -617,8 +654,15 @@ impl Runtime {
                             .zip(dep.section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => {
+                                    let Some(semantic) = section.semantic else {
+                                        runtime_debug_log(format!(
+                                            "missing semantic for successful module record in {}",
+                                            path.display()
+                                        ));
+                                        return None;
+                                    };
                                     Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
+                                        semantic,
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
@@ -633,7 +677,12 @@ impl Runtime {
                                             dep.source_text,
                                             messages,
                                         );
-                                        tx_error.send(diagnostics).unwrap();
+                                        if tx_error.send(diagnostics).is_err() {
+                                            runtime_debug_log(format!(
+                                                "failed to send parser diagnostics for {} because receiver was dropped",
+                                                path.display()
+                                            ));
+                                        }
                                     }
                                     None
                                 }
@@ -688,13 +737,23 @@ impl Runtime {
                                 dep.source_text,
                                 errors,
                             );
-                            tx_error.send(diagnostics).unwrap();
+                            if tx_error.send(diagnostics).is_err() {
+                                runtime_debug_log(format!(
+                                    "failed to send lint diagnostics for {} because receiver was dropped",
+                                    path.display()
+                                ));
+                            }
                         }
 
                         // If the new source text is owned, that means it was modified,
                         // so we write the new source text to the file.
                         if let Cow::Owned(new_source_text) = &new_source_text {
-                            file_system.write_file(path, new_source_text).unwrap();
+                            if let Err(err) = file_system.write_file(path, new_source_text) {
+                                runtime_debug_log(format!(
+                                    "failed to write fixed file {}: {err}",
+                                    path.display()
+                                ));
+                            }
                         }
                     });
                 },
@@ -726,10 +785,15 @@ impl Runtime {
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
-                        assert_eq!(
-                            module_to_lint.section_module_records.len(),
-                            section_contents.len()
-                        );
+                        if module_to_lint.section_module_records.len() != section_contents.len() {
+                            runtime_debug_log(format!(
+                                "section count mismatch while linting source {}: records={}, sections={}",
+                                Path::new(&module_to_lint.path).display(),
+                                module_to_lint.section_module_records.len(),
+                                section_contents.len()
+                            ));
+                            return;
+                        }
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
@@ -737,8 +801,15 @@ impl Runtime {
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => {
+                                    let Some(semantic) = section.semantic else {
+                                        runtime_debug_log(format!(
+                                            "missing semantic for successful module record in {}",
+                                            Path::new(&module_to_lint.path).display()
+                                        ));
+                                        return None;
+                                    };
                                     Some(ContextSubHost::new_with_framework_options(
-                                        section.semantic.unwrap(),
+                                        semantic,
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
@@ -747,11 +818,17 @@ impl Runtime {
                                 }
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
-                                        messages.lock().unwrap().extend(
-                                            diagnostics.into_iter().map(|diagnostic| {
-                                                Message::new(diagnostic, PossibleFixes::None)
-                                            }),
-                                        );
+                                        if let Ok(mut locked_messages) = messages.lock() {
+                                            locked_messages.extend(
+                                                diagnostics.into_iter().map(|diagnostic| {
+                                                    Message::new(diagnostic, PossibleFixes::None)
+                                                }),
+                                            );
+                                        } else {
+                                            runtime_debug_log(
+                                                "message collector mutex poisoned while adding parser diagnostics",
+                                            );
+                                        }
                                     }
                                     None
                                 }
@@ -775,16 +852,20 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        messages.lock().unwrap().extend(
-                            section_messages
-                        );
+                        if let Ok(mut locked_messages) = messages.lock() {
+                            locked_messages.extend(section_messages);
+                        } else {
+                            runtime_debug_log(
+                                "message collector mutex poisoned while adding lint diagnostics",
+                            );
+                        }
                     },
                 );
                 },
             );
         });
 
-        messages.into_inner().unwrap()
+        messages.into_inner().unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     #[cfg(test)]
@@ -903,7 +984,12 @@ impl Runtime {
                     Ok(v) => v,
                     Err(e) => {
                         if let Some(tx_error) = tx_error {
-                            tx_error.send(vec![e]).unwrap();
+                            if tx_error.send(vec![e]).is_err() {
+                                runtime_debug_log(format!(
+                                    "failed to send diagnostic for {} because receiver was dropped",
+                                    Path::new(path).display()
+                                ));
+                            }
                         }
                         return Err(());
                     }
@@ -934,7 +1020,12 @@ impl Runtime {
                 Ok(v) => v,
                 Err(e) => {
                     if let Some(tx_error) = tx_error {
-                        tx_error.send(vec![e]).unwrap();
+                        if tx_error.send(vec![e]).is_err() {
+                            runtime_debug_log(format!(
+                                "failed to send diagnostic for {} because receiver was dropped",
+                                Path::new(path).display()
+                            ));
+                        }
                     }
                     return None;
                 }
@@ -1063,7 +1154,17 @@ impl Runtime {
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
-            let dir = path.parent().unwrap();
+            let Some(dir) = path.parent() else {
+                runtime_debug_log(format!(
+                    "path has no parent while resolving imports: {}",
+                    path.display()
+                ));
+                return Ok((
+                    ResolvedModuleRecord { module_record, resolved_module_requests },
+                    semantic,
+                    tokens,
+                ));
+            };
             resolved_module_requests = module_record
                 .requested_modules
                 .keys()

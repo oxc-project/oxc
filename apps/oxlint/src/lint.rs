@@ -541,7 +541,7 @@ impl CliRunner {
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    stdout.flush().unwrap();
+    stdout.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -561,10 +561,96 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{
+        fs,
+        io::{self, ErrorKind, Write},
+    };
 
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
+
+    struct BrokenPipeOnFlushWriter {
+        writes: Vec<u8>,
+    }
+
+    impl Write for BrokenPipeOnFlushWriter {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.writes.extend_from_slice(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Err(io::Error::new(ErrorKind::BrokenPipe, "broken pipe on flush"))
+        }
+    }
+
+    #[test]
+    fn print_and_flush_stdout_ignores_broken_pipe_on_flush() {
+        let mut writer = BrokenPipeOnFlushWriter { writes: Vec::new() };
+        super::print_and_flush_stdout(&mut writer, "hello");
+        assert_eq!(writer.writes, b"hello");
+    }
+    #[test]
+    fn print_and_flush_stdout_ignores_interrupted_on_flush() {
+        struct InterruptedOnFlushWriter;
+        impl Write for InterruptedOnFlushWriter {
+            fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+                Ok(buf.len())
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Err(io::Error::new(ErrorKind::Interrupted, "interrupted"))
+            }
+        }
+        let mut writer = InterruptedOnFlushWriter;
+        super::print_and_flush_stdout(&mut writer, "hello");
+    }
+
+    #[test]
+    fn print_and_flush_stdout_ignores_broken_pipe_on_write() {
+        struct BrokenPipeOnWriteWriter;
+        impl Write for BrokenPipeOnWriteWriter {
+            fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+                Err(io::Error::new(ErrorKind::BrokenPipe, "broken pipe on write"))
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+        let mut writer = BrokenPipeOnWriteWriter;
+        super::print_and_flush_stdout(&mut writer, "hello");
+    }
+
+    #[test]
+    #[should_panic]
+    fn print_and_flush_stdout_panics_on_other_write_errors() {
+        struct PermissionDeniedWriter;
+        impl Write for PermissionDeniedWriter {
+            fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+                Err(io::Error::new(ErrorKind::PermissionDenied, "permission denied"))
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+        let mut writer = PermissionDeniedWriter;
+        super::print_and_flush_stdout(&mut writer, "hello");
+    }
+
+    #[test]
+    #[should_panic]
+    fn print_and_flush_stdout_panics_on_other_flush_errors() {
+        struct PermissionDeniedFlushWriter;
+        impl Write for PermissionDeniedFlushWriter {
+            fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+                Ok(buf.len())
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Err(io::Error::new(ErrorKind::PermissionDenied, "permission denied"))
+            }
+        }
+        let mut writer = PermissionDeniedFlushWriter;
+        super::print_and_flush_stdout(&mut writer, "hello");
+    }
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only

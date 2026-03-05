@@ -1,6 +1,11 @@
 use std::{
+    ffi::OsString,
+    fs::OpenOptions,
     io::BufWriter,
+    io::Write,
+    path::PathBuf,
     process::{ExitCode, Termination},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use napi::{
@@ -15,6 +20,93 @@ use crate::{
     lint::CliRunner,
     result::CliRunResult,
 };
+
+const OXLINT_RUNTIME_DEBUG_ENV: &str = "OXLINT_RUNTIME_DEBUG";
+
+fn runtime_debug_path() -> Option<PathBuf> {
+    let path_or_flag = std::env::var_os(OXLINT_RUNTIME_DEBUG_ENV)?;
+    let value = path_or_flag.to_string_lossy();
+
+    if value.is_empty() || value == "1" || value.eq_ignore_ascii_case("true") {
+        return Some(std::env::temp_dir().join("oxlint-runtime.log"));
+    }
+
+    Some(PathBuf::from(path_or_flag))
+}
+
+fn sanitize_for_log(value: &str) -> String {
+    value.replace('\n', "\\n").replace('\r', "\\r")
+}
+
+fn runtime_debug_log(
+    event: &str,
+    args: &[OsString],
+    lsp_mode: Option<bool>,
+    details: Option<&str>,
+) {
+    let Some(path) = runtime_debug_path() else {
+        return;
+    };
+
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs_f64())
+        .unwrap_or_default();
+    let cwd = std::env::current_dir()
+        .map(|dir| dir.display().to_string())
+        .unwrap_or_else(|_| "<unknown>".to_string());
+    let args_rendered = args
+        .iter()
+        .map(|arg| sanitize_for_log(&arg.to_string_lossy()))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let env_keys = [
+        "VSCODE_PID",
+        "VSCODE_IPC_HOOK_CLI",
+        "VSCODE_IPC_HOOK",
+        "ELECTRON_RUN_AS_NODE",
+        "TERM_PROGRAM",
+        "npm_lifecycle_event",
+        "npm_execpath",
+    ];
+    let env_rendered = env_keys
+        .iter()
+        .filter_map(|key| {
+            std::env::var_os(key)
+                .map(|value| format!("{key}={}", sanitize_for_log(&value.to_string_lossy())))
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let mode = lsp_mode
+        .map_or("unknown".to_string(), |is_lsp| if is_lsp { "lsp" } else { "cli" }.to_string());
+    let details = details.map(sanitize_for_log).unwrap_or_default();
+
+    let report = format!(
+        "\n=== oxlint runtime ===\n\
+         pid: {}\n\
+         timestamp_unix_s: {:.3}\n\
+         event: {}\n\
+         mode: {}\n\
+         cwd: {}\n\
+         args: [{}]\n\
+         env: {}\n\
+         details: {}\n\
+         === end oxlint runtime ===\n",
+        std::process::id(),
+        timestamp,
+        event,
+        mode,
+        sanitize_for_log(&cwd),
+        args_rendered,
+        env_rendered,
+        details
+    );
+
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+        let _ = file.write_all(report.as_bytes());
+        let _ = file.flush();
+    }
+}
 
 /// JS callback to load a JS plugin.
 #[napi]
@@ -176,12 +268,19 @@ async fn lint_impl(
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
+    runtime_debug_log("lint_impl_enter", &args, None, None);
 
     let command = {
         let cmd = crate::cli::lint_command();
         match cmd.run_inner(&*args) {
             Ok(cmd) => cmd,
             Err(e) => {
+                runtime_debug_log(
+                    "lint_impl_arg_parse_error",
+                    &args,
+                    None,
+                    Some("failed to parse args"),
+                );
                 e.print_message(100);
                 return if e.exit_code() == 0 {
                     CliRunResult::LintSucceeded
@@ -191,6 +290,7 @@ async fn lint_impl(
             }
         }
     };
+    runtime_debug_log("lint_impl_parsed_command", &args, Some(command.lsp), None);
 
     // Both LSP and CLI use `tracing` for logging
     init_tracing();
@@ -223,7 +323,9 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
+        runtime_debug_log("lint_impl_enter_lsp", &args, Some(true), None);
         crate::lsp::run_lsp(external_linter, js_config_loader).await;
+        runtime_debug_log("lint_impl_exit_lsp", &args, Some(true), None);
         return CliRunResult::LintSucceeded;
     }
 
@@ -241,7 +343,11 @@ async fn lint_impl(
         cli_runner = cli_runner.with_config_loader(js_config_loader);
     }
 
-    cli_runner.run(&mut stdout)
+    runtime_debug_log("lint_impl_enter_cli_runner", &args, Some(false), None);
+    let result = cli_runner.run(&mut stdout);
+    let details = format!("result={result:?}");
+    runtime_debug_log("lint_impl_exit_cli_runner", &args, Some(false), Some(&details));
+    result
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

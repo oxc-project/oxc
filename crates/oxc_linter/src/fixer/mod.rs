@@ -9,6 +9,13 @@ use crate::LintContext;
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
+#[inline]
+fn fixer_debug_log(message: impl AsRef<str>) {
+    if std::env::var_os("OXLINT_FIX_DEBUG").is_some() {
+        eprintln!("[oxlint::fixer] {}", message.as_ref());
+    }
+}
+
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
 /// [`RuleFixer`]: https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/rule-fixer.js
@@ -406,15 +413,39 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
+            let offset = last_pos as usize;
+            let Some(before) = source_text.get(offset..start as usize) else {
+                fixer_debug_log(format!(
+                    "skipping invalid fix span {}..{}: cannot slice source {}..{} (source_len={})",
+                    start,
+                    end,
+                    offset,
+                    start,
+                    source_text.len()
+                ));
+                filtered_messages.push(m);
+                continue;
+            };
             m.fixed = true;
             fixed = true;
-            let offset = last_pos as usize;
-            output.push_str(&source_text[offset..start as usize]);
+            output.push_str(before);
             output.push_str(content);
             last_pos = end;
         }
 
-        output.push_str(&source_text[last_pos as usize..]);
+        let Some(after) = source_text.get(last_pos as usize..) else {
+            fixer_debug_log(format!(
+                "aborting fix application due invalid trailing slice at {} (source_len={})",
+                last_pos,
+                source_text.len()
+            ));
+            return FixResult {
+                fixed: false,
+                fixed_code: Cow::Borrowed(source_text),
+                messages: filtered_messages,
+            };
+        };
+        output.push_str(after);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
 
@@ -949,5 +980,83 @@ mod test {
         let result = fixer.fix();
         assert!(result.fixed);
         assert_eq!(result.fixed_code, "let answer = 42;");
+    }
+}
+
+#[cfg(test)]
+mod hardening_tests {
+    use std::borrow::Cow;
+
+    use oxc_diagnostics::OxcDiagnostic;
+    use oxc_span::Span;
+
+    use crate::FixKind;
+
+    use super::{Fix, Fixer, Message, PossibleFixes};
+
+    fn create_message(error: OxcDiagnostic, fix: PossibleFixes) -> Message {
+        Message::new(error, fix)
+    }
+
+    #[test]
+    fn fix_with_span_beyond_source_length_is_skipped() {
+        let source = "let x = 1;";
+        let fix = Fix {
+            span: Span::new(100, 200),
+            content: Cow::Borrowed("replaced"),
+            message: None,
+            kind: FixKind::None,
+        };
+        let message =
+            create_message(OxcDiagnostic::warn("out of bounds"), PossibleFixes::Single(fix));
+        let result = Fixer::new(source, vec![message], None).fix();
+
+        assert!(!result.fixed);
+        assert_eq!(result.fixed_code, source);
+        assert_eq!(result.messages.len(), 1, "unfixed message should be returned");
+    }
+
+    #[test]
+    fn fix_with_end_beyond_source_produces_no_crash() {
+        let source = "abc";
+        let fix = Fix {
+            span: Span::new(1, 999),
+            content: Cow::Borrowed("X"),
+            message: None,
+            kind: FixKind::None,
+        };
+        let message = create_message(
+            OxcDiagnostic::warn("partial out of bounds"),
+            PossibleFixes::Single(fix),
+        );
+        let result = Fixer::new(source, vec![message], None).fix();
+
+        assert!(!result.fixed, "fix should be aborted due to invalid trailing slice");
+        assert_eq!(result.fixed_code, source);
+    }
+
+    #[test]
+    fn multiple_fixes_where_one_is_out_of_bounds() {
+        let source = "var x = 1;";
+        let good_fix = Fix {
+            span: Span::new(0, 3),
+            content: Cow::Borrowed("let"),
+            message: None,
+            kind: FixKind::None,
+        };
+        let bad_fix = Fix {
+            span: Span::new(50, 100),
+            content: Cow::Borrowed("bad"),
+            message: None,
+            kind: FixKind::None,
+        };
+        let messages = vec![
+            create_message(OxcDiagnostic::warn("good fix"), PossibleFixes::Single(good_fix)),
+            create_message(OxcDiagnostic::warn("bad fix"), PossibleFixes::Single(bad_fix)),
+        ];
+        let result = Fixer::new(source, vec![messages.into_iter().next().unwrap()], None).fix();
+
+        assert!(result.fixed, "good fix alone should succeed");
+        assert_eq!(result.fixed_code, "let x = 1;");
     }
 }

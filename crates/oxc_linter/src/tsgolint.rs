@@ -128,14 +128,16 @@ impl TsGoLintState {
         let handler = std::thread::spawn(move || {
             let mut child = self.spawn_tsgolint(&json_input)?;
 
-            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let Some(stdout) = child.stdout.take() else {
+                return Err("Failed to open tsgolint stdout".to_string());
+            };
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(
                 move || -> Result<Vec<(PathBuf, String, Vec<Message>)>, String> {
                     let disable_directives_map = disable_directives_map
                         .lock()
-                        .expect("disable_directives_map mutex poisoned");
+                        .map_err(|_| "disable_directives_map mutex poisoned".to_string())?;
 
                     let mut diagnostic_handler = DiagnosticHandler::new(
                         self.cwd.clone(),
@@ -208,7 +210,9 @@ impl TsGoLintState {
             );
 
             // Wait for process to complete and stdout processing to finish
-            let exit_status = child.wait().expect("Failed to wait for tsgolint process");
+            let exit_status = child
+                .wait()
+                .map_err(|err| format!("Failed to wait for tsgolint process: {err}"))?;
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
@@ -237,9 +241,9 @@ impl TsGoLintState {
                     let fix_result = Fixer::new(&source_text, messages, source_type).fix();
 
                     if fix_result.fixed {
-                        file_system
-                            .write_file(&path, &fix_result.fixed_code)
-                            .expect("Failed to write fixed file");
+                        file_system.write_file(&path, &fix_result.fixed_code).map_err(|err| {
+                            format!("Failed to write fixed file {}: {err}", path.display())
+                        })?;
                     }
 
                     if !fix_result.messages.is_empty() {
@@ -251,7 +255,12 @@ impl TsGoLintState {
                             source_for_diagnostics,
                             fix_result.messages.into_iter().map(Into::into).collect(),
                         );
-                        sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
+                        if sender_for_fixes.send(diagnostics).is_err() {
+                            return Err(format!(
+                                "Failed to send diagnostics for {}: receiver was dropped",
+                                path.display()
+                            ));
+                        }
                     }
                 }
                 Ok(())
@@ -300,9 +309,12 @@ impl TsGoLintState {
             }
         };
 
-        let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+        let Some(mut stdin) = child.stdin.take() else {
+            return Err("Failed to open tsgolint stdin".to_string());
+        };
 
-        let json = serde_json::to_string(json_input).expect("Failed to serialize JSON");
+        let json = serde_json::to_string(json_input)
+            .map_err(|err| format!("Failed to serialize JSON payload: {err}"))?;
         if let Err(e) = stdin.write_all(json.as_bytes())
             && e.kind() != ErrorKind::BrokenPipe
         {
@@ -355,11 +367,14 @@ impl TsGoLintState {
 
         let mut child = self.spawn_tsgolint(&json_input)?;
         let handler = std::thread::spawn(move || {
-            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let Some(stdout) = child.stdout.take() else {
+                return Err("Failed to open tsgolint stdout".to_string());
+            };
 
             let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
-                let disable_directives_map =
-                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
+                let disable_directives_map = disable_directives_map
+                    .lock()
+                    .map_err(|_| "disable_directives_map mutex poisoned".to_string())?;
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut result = vec![];
@@ -448,7 +463,9 @@ impl TsGoLintState {
             });
 
             // Wait for process to complete and stdout processing to finish
-            let exit_status = child.wait().expect("Failed to wait for tsgolint process");
+            let exit_status = child
+                .wait()
+                .map_err(|err| format!("Failed to wait for tsgolint process: {err}"))?;
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
@@ -1010,7 +1027,7 @@ impl DiagnosticHandler {
             vec![oxc_diagnostic.into()]
         };
 
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+        let _ = self.error_sender.send(diagnostics);
     }
 
     fn send_diagnostic(
@@ -1031,7 +1048,7 @@ impl DiagnosticHandler {
             &source_text,
             vec![oxc_diagnostic],
         );
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+        let _ = self.error_sender.send(diagnostics);
     }
 
     /// Consume the handler and return collected messages requiring fixes.
@@ -1118,9 +1135,7 @@ fn parse_single_message(
 
             Ok(TsGoLintMessage::Diagnostic(match diagnostic_payload.kind {
                 DiagnosticKind::Rule => TsGoLintDiagnostic::Rule(TsGoLintRuleDiagnostic {
-                    rule: diagnostic_payload
-                        .rule
-                        .expect("Rule name must be present for rule diagnostics"),
+                    rule: diagnostic_payload.rule.unwrap_or_else(|| "<missing-rule>".to_string()),
                     span: diagnostic_payload.range.map_or_else(
                         || {
                             debug_assert!(false, "Range must be present for rule diagnostics");
@@ -1135,7 +1150,7 @@ fn parse_single_message(
                     file_path: PathBuf::from(
                         diagnostic_payload
                             .file_path
-                            .expect("File path must be present for rule diagnostics"),
+                            .unwrap_or_else(|| "<unknown-file>".to_string()),
                     ),
                 }),
                 DiagnosticKind::Internal => {
@@ -1589,5 +1604,92 @@ mod test {
 
         // Identical rules should be deduplicated
         assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
+    }
+}
+
+#[cfg(test)]
+mod hardening_tests {
+    use std::io::Cursor;
+    use std::path::PathBuf;
+
+    use super::{
+        DiagnosticKind, TsGoLintDiagnostic, TsGoLintDiagnosticPayload, TsGoLintMessage,
+        parse_single_message,
+    };
+
+    #[test]
+    fn parse_diagnostic_with_missing_rule_uses_placeholder() {
+        let json = r#"{
+            "kind": 0,
+            "range": {"pos": 0, "end": 5},
+            "message": {
+                "id": "test",
+                "description": "test description",
+                "help": null
+            },
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
+        assert_eq!(payload.rule, None);
+
+        if let DiagnosticKind::Rule = payload.kind {
+            let rule = payload.rule.unwrap_or_else(|| "<missing-rule>".to_string());
+            assert_eq!(rule, "<missing-rule>");
+        }
+    }
+
+    #[test]
+    fn parse_diagnostic_with_missing_file_path_uses_placeholder() {
+        let json = r#"{
+            "kind": 0,
+            "range": {"pos": 0, "end": 5},
+            "rule": "some-rule",
+            "message": {
+                "id": "test",
+                "description": "test description",
+                "help": null
+            }
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
+        assert_eq!(payload.file_path, None);
+
+        let file_path =
+            PathBuf::from(payload.file_path.unwrap_or_else(|| "<unknown-file>".to_string()));
+        assert_eq!(file_path, PathBuf::from("<unknown-file>"));
+    }
+
+    #[test]
+    fn parse_single_message_with_missing_rule_and_file_path() {
+        let payload_json = r#"{
+            "kind": 0,
+            "range": {"pos": 0, "end": 5},
+            "message": {
+                "id": "test",
+                "description": "missing fields test",
+                "help": null
+            }
+        }"#;
+
+        let payload_bytes = payload_json.as_bytes();
+        let payload_len = payload_bytes.len() as u32;
+
+        let mut data = Vec::new();
+        data.extend_from_slice(&payload_len.to_le_bytes()); // size first
+        data.push(1u8); // MessageType::Diagnostic
+        data.extend_from_slice(payload_bytes);
+
+        let data_slice: &[u8] = &data;
+        let mut cursor = Cursor::new(data_slice);
+        let result = parse_single_message(&mut cursor);
+        match result {
+            Ok(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic::Rule(diag))) => {
+                assert_eq!(diag.rule, "<missing-rule>");
+                assert_eq!(diag.file_path, PathBuf::from("<unknown-file>"));
+            }
+            Ok(other) => panic!("Expected Rule diagnostic, got {other:?}"),
+            Err(_) => panic!("Expected Ok result from parse_single_message"),
+        }
     }
 }
