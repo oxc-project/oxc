@@ -16,7 +16,7 @@ use super::{
     types::{Type, make_type},
 };
 use crate::{
-    compiler_error::SourceLocation,
+    compiler_error::{CompilerError, SourceLocation},
     inference::aliasing_effects::{AliasingEffect, AliasingSignature, ApplyArg},
 };
 
@@ -217,9 +217,11 @@ pub fn signature_argument(id: u32) -> Place {
 /// Converts string-based parameter names to `IdentifierId`-based `Place`s,
 /// then resolves all effect references using the same string-to-Place mapping.
 ///
-/// # Panics
-/// Panics if the config contains an `Impure` effect (not yet supported).
-pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> AliasingSignature {
+/// # Errors
+/// Returns `Err(CompilerError)` if the config contains an `Impure` effect (not yet supported).
+pub fn parse_aliasing_signature_config(
+    config: &AliasingSignatureConfig,
+) -> Result<AliasingSignature, CompilerError> {
     let mut lifetimes: FxHashMap<String, Place> = FxHashMap::default();
     let mut next_id: u32 = 0;
 
@@ -247,10 +249,9 @@ pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> Alia
         })
     };
 
-    let effects = config
-        .effects
-        .iter()
-        .map(|effect| match effect {
+    let mut effects = Vec::with_capacity(config.effects.len());
+    for effect in &config.effects {
+        effects.push(match effect {
             AliasingEffectConfig::ImmutableCapture { from, into } => {
                 AliasingEffect::ImmutableCapture { from: lookup(from), into: lookup(into) }
             }
@@ -279,10 +280,11 @@ pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> Alia
                 AliasingEffect::Freeze { value: lookup(value), reason: *reason }
             }
             AliasingEffectConfig::Impure { .. } => {
-                // TS throws CompilerError.throwTodo("Handle Impure in config").
-                // No built-in configs use Impure, so this is only reachable via
-                // custom hook configs. Panic to match TS bailout behavior.
-                panic!("TODO: Handle Impure aliasing effect in signature config")
+                return Err(CompilerError::todo(
+                    "Handle Impure aliasing effect in signature config",
+                    None,
+                    SourceLocation::Generated,
+                ));
             }
             AliasingEffectConfig::Apply { receiver, function, mutates_function, args, into } => {
                 let args_converted: Vec<ApplyArg> = args
@@ -305,15 +307,15 @@ pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> Alia
                     loc: SourceLocation::Generated,
                 }
             }
-        })
-        .collect();
+        });
+    }
 
-    AliasingSignature {
+    Ok(AliasingSignature {
         receiver: receiver.identifier.id,
         params: params.iter().map(|p| p.identifier.id).collect(),
         rest: rest.map(|r| r.identifier.id),
         returns: returns.identifier.id,
         temporaries,
         effects,
-    }
+    })
 }

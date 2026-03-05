@@ -260,7 +260,7 @@ impl Default for EnvironmentConfig {
             validate_no_set_state_in_render: true,
             validate_preserve_existing_memoization_guarantees: true,
             enable_preserve_existing_memoization_guarantees: true,
-            validate_exhaustive_memoization_dependencies: false,
+            validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             validate_no_derived_computations_in_effects: false,
             validate_no_derived_computations_in_effects_exp: false,
@@ -285,7 +285,7 @@ impl Default for EnvironmentConfig {
             enable_optional_dependencies: true,
             enable_transitively_freeze_function_expressions: true,
             enable_treat_ref_like_identifiers_as_refs: true,
-            validate_no_void_use_memo: false,
+            validate_no_void_use_memo: true,
         }
     }
 }
