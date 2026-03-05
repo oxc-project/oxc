@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import fs from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { runCli } from "../utils";
 
 describe("--init", () => {

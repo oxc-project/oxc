@@ -1,5 +1,5 @@
 import { Worker } from "node:worker_threads";
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, it, test } from "vite-plus/test";
 
 import { HelperMode, transformSync, transform } from "../index";
 

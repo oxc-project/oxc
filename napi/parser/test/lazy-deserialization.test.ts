@@ -3,7 +3,7 @@
 // oxlint-disable-next-line typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { parseSync } from "../src-js/index.js";
 

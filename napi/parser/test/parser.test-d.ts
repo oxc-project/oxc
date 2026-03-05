@@ -1,4 +1,4 @@
-import { assertType, describe, it } from "vitest";
+import { assertType, describe, it } from "vite-plus/test";
 
 import type { Node, Statement } from "../src-js/index.js";
 import { parseSync } from "../src-js/index.js";

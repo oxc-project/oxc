@@ -1,8 +1,8 @@
 import { join as pathJoin } from "node:path";
-import { describe, it } from "vitest";
+import { describe, it } from "vite-plus/test";
 import { PACKAGE_ROOT_PATH, getFixtures, testFixtureWithCommand } from "./utils.ts";
 
-import type { ExpectStatic } from "vitest";
+import type { ExpectStatic } from "vite-plus/test";
 import type { Fixture } from "./utils.ts";
 
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, "dist/cli.js");

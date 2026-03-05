@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { join } from "node:path";
 import { writeFile, rm } from "node:fs/promises";
 import { runAndSnapshot } from "../utils";
