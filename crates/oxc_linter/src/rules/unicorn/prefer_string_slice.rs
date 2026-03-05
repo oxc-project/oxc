@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -36,7 +39,7 @@ declare_oxc_lint!(
     PreferStringSlice,
     unicorn,
     pedantic,
-    fix
+    conditional_fix
 );
 
 impl Rule for PreferStringSlice {
@@ -53,12 +56,56 @@ impl Rule for PreferStringSlice {
             if !matches!(v.property.name.as_str(), "substr" | "substring") {
                 return;
             }
+            let method_name = v.property.name.as_str();
+            let has_spread_arguments = call_expr.arguments.iter().any(Argument::is_spread);
+            let has_unsafe_arguments = match method_name {
+                "substr" => has_spread_arguments || call_expr.arguments.len() >= 2,
+                "substring" => {
+                    has_spread_arguments || !is_safe_substring_arguments(&call_expr.arguments)
+                }
+                _ => unreachable!(),
+            };
+
+            if has_unsafe_arguments {
+                ctx.diagnostic(prefer_string_slice_diagnostic(v.property.span, method_name));
+                return;
+            }
+
             ctx.diagnostic_with_fix(
-                prefer_string_slice_diagnostic(v.property.span, v.property.name.as_str()),
+                prefer_string_slice_diagnostic(v.property.span, method_name),
                 |fixer| fixer.replace(v.property.span, "slice"),
             );
         }
     }
+}
+
+fn is_safe_substring_arguments(arguments: &[Argument<'_>]) -> bool {
+    match arguments {
+        [] => true,
+        [start] => get_non_negative_integer_argument(start).is_some(),
+        [start, end] => {
+            let Some(start_value) = get_non_negative_integer_argument(start) else {
+                return false;
+            };
+            let Some(end_value) = get_non_negative_integer_argument(end) else {
+                return false;
+            };
+            start_value <= end_value
+        }
+        _ => false,
+    }
+}
+
+fn get_non_negative_integer_argument(argument: &Argument<'_>) -> Option<f64> {
+    if !argument.is_expression() {
+        return None;
+    }
+
+    let Expression::NumericLiteral(number) = argument.to_expression().get_inner_expression() else {
+        return None;
+    };
+
+    if number.value >= 0.0 && number.value.fract() == 0.0 { Some(number.value) } else { None }
 }
 
 #[test]
@@ -90,6 +137,7 @@ fn test() {
         r#""foo".substr()"#,
         r#""foo".substr(1)"#,
         r#""foo".substr(1, 2)"#,
+        r#""foo".substr(11, 8)"#,
         r#""foo".substr(bar.length, Math.min(baz, 100))"#,
         r#""foo".substr(1, length)"#,
         r#""foo".substr(1, "abc".length)"#,
@@ -168,7 +216,6 @@ fn test() {
         //     "foo".slice(0, Math.max(0, length))"#,
         // ),
         // (r#""foo".substr(0, -1)"#, r#""foo".slice(0, 0)"#),
-        (r#""foo".substr(0, "foo".length)"#, r#""foo".slice(0, "foo".length)"#),
         (
             "const uri = 'foo';
             ((uri || '')).substr(1)",
@@ -192,7 +239,6 @@ fn test() {
         // (r#""foo".substring(-1, -5)"#, r#""foo".slice(0, 0)"#),
         // (r#""foo".substring(-1, 2)"#, r#""foo".slice(0, 2)"#),
         // (r#""foo".substring(length)"#, r#""foo".slice(Math.max(0, length))"#),
-        (r#""foo".substring("fo".length)"#, r#""foo".slice("fo".length)"#), // spellchecker:disable-line
         // TODO: Get this passing.
         // (r#""foo".substring(0, length)"#, r#""foo".slice(0, Math.max(0, length))"#),
         // (r#""foo".substring(length, 0)"#, r#""foo".slice(0, Math.max(0, length))"#),
