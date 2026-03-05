@@ -497,18 +497,9 @@ pub fn parse_dynamic_gating_directive(directive: &str) -> Option<Result<&str, &s
     if ident.is_empty() {
         return Some(Err(trimmed));
     }
-    // Basic identifier validation: must start with letter/underscore/$,
-    // rest must be alphanumeric/underscore/$
-    let mut chars = ident.chars();
-    let first = chars.next();
-    match first {
-        Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$' => {}
-        _ => return Some(Err(trimmed)),
+    if oxc_syntax::identifier::is_identifier_name(ident) {
+        Some(Ok(ident))
+    } else {
+        Some(Err(trimmed))
     }
-    for c in chars {
-        if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
-            return Some(Err(trimmed));
-        }
-    }
-    Some(Ok(ident))
 }
