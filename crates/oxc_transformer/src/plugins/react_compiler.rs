@@ -149,10 +149,16 @@ impl ReactCompiler {
 
         self.outer_bindings = collect_import_bindings(&program.body);
 
+        // Pre-generate the cache function UID before compiling any functions.
+        // This ensures the same name (e.g. "_c" or "_c2") is used in both the
+        // import binding and the codegen body references.
+        let cache_binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::Import);
+        let cache_identifier_name = cache_binding.name.to_string();
+
         // Phase 1: Compile all candidate functions, collecting results by statement index.
         let mut compiled_results: Vec<CompileResult<'a>> = Vec::new();
         for (index, statement) in program.body.iter().enumerate() {
-            if let Some(output) = self.compile_statement(statement, ctx) {
+            if let Some(output) = self.compile_statement(statement, &cache_identifier_name, ctx) {
                 compiled_results.push(CompileResult { index, output });
             }
         }
@@ -165,11 +171,10 @@ impl ReactCompiler {
         // compiled function uses memo slots.
         let needs_memo_import = compiled_results.iter().any(|r| r.output.memo_slots_used > 0);
         if needs_memo_import {
-            let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::Import);
             ctx.state.module_imports.add_named_import(
                 Atom::from(runtime_module),
                 Atom::from("c"),
-                binding,
+                cache_binding,
                 false,
             );
         }
@@ -223,6 +228,7 @@ impl ReactCompiler {
     fn compile_statement<'a>(
         &self,
         statement: &Statement<'a>,
+        cache_identifier_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<CodegenOutput<'a>> {
         match statement {
@@ -235,6 +241,7 @@ impl ReactCompiler {
                     &directives,
                     function.span,
                     false,
+                    cache_identifier_name,
                     ctx,
                 )
             }
@@ -266,6 +273,7 @@ impl ReactCompiler {
                                 &directives,
                                 function.span,
                                 false,
+                                cache_identifier_name,
                                 ctx,
                             );
                             if result.is_some() {
@@ -281,6 +289,7 @@ impl ReactCompiler {
                                 &directives,
                                 arrow.span,
                                 false,
+                                cache_identifier_name,
                                 ctx,
                             );
                             if result.is_some() {
@@ -293,6 +302,7 @@ impl ReactCompiler {
                             if let Some(result) = self.compile_memo_or_forwardref_arg(
                                 call,
                                 binding_name,
+                                cache_identifier_name,
                                 ctx,
                             ) {
                                 return Some(result);
@@ -315,6 +325,7 @@ impl ReactCompiler {
                             &directives,
                             function.span,
                             false,
+                            cache_identifier_name,
                             ctx,
                         )
                     }
@@ -327,13 +338,14 @@ impl ReactCompiler {
                             &directives,
                             arrow.span,
                             false,
+                            cache_identifier_name,
                             ctx,
                         )
                     }
                     ExportDefaultDeclarationKind::CallExpression(call)
                         if is_memo_or_forwardref_call(&call.callee) =>
                     {
-                        self.compile_memo_or_forwardref_arg(call, None, ctx)
+                        self.compile_memo_or_forwardref_arg(call, None, cache_identifier_name, ctx)
                     }
                     _ => None,
                 }
@@ -352,6 +364,7 @@ impl ReactCompiler {
                             &directives,
                             function.span,
                             false,
+                            cache_identifier_name,
                             ctx,
                         )
                     }
@@ -383,6 +396,7 @@ impl ReactCompiler {
                                         &directives,
                                         function.span,
                                         false,
+                                        cache_identifier_name,
                                         ctx,
                                     );
                                     if result.is_some() {
@@ -399,6 +413,7 @@ impl ReactCompiler {
                                         &directives,
                                         arrow.span,
                                         false,
+                                        cache_identifier_name,
                                         ctx,
                                     );
                                     if result.is_some() {
@@ -411,6 +426,7 @@ impl ReactCompiler {
                                     if let Some(result) = self.compile_memo_or_forwardref_arg(
                                         call,
                                         binding_name,
+                                        cache_identifier_name,
                                         ctx,
                                     ) {
                                         return Some(result);
@@ -439,6 +455,7 @@ impl ReactCompiler {
         directives: &[String],
         fallback_span: Span,
         is_memo_or_forwardref_arg: bool,
+        cache_identifier_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<CodegenOutput<'a>> {
         let fn_type = should_compile_function(
@@ -488,7 +505,7 @@ impl ReactCompiler {
             Self::report_compiler_error(&diagnostic, fallback_span, self.panic_threshold, ctx);
         }
 
-        match run_codegen(pipeline_output, &environment, ctx.ast) {
+        match run_codegen(pipeline_output, &environment, ctx.ast, cache_identifier_name) {
             Ok(codegen_output) => Some(codegen_output),
             Err(error) => {
                 Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
@@ -502,6 +519,7 @@ impl ReactCompiler {
         &self,
         call: &CallExpression<'a>,
         binding_name: Option<&str>,
+        cache_identifier_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<CodegenOutput<'a>> {
         let arg = call.arguments.first()?;
@@ -518,6 +536,7 @@ impl ReactCompiler {
                     &directives,
                     function.span,
                     true,
+                    cache_identifier_name,
                     ctx,
                 )
             }
@@ -530,6 +549,7 @@ impl ReactCompiler {
                     &directives,
                     arrow.span,
                     true,
+                    cache_identifier_name,
                     ctx,
                 )
             }
