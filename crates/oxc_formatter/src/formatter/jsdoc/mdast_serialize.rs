@@ -3,8 +3,11 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
+use oxc_allocator::Allocator;
+
 use crate::{ExternalCallbacks, FormatOptions};
 
+use super::line_buffer::LineBuffer;
 use super::wrap::{format_table_block, wrap_paragraph, wrap_plain_paragraphs};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
@@ -99,34 +102,37 @@ pub fn format_description_mdast(
     capitalize: bool,
     format_options: Option<&FormatOptions>,
     external_callbacks: Option<&ExternalCallbacks>,
-) -> Vec<String> {
+    allocator: Option<&Allocator>,
+) -> String {
     if text.trim().is_empty() {
-        return Vec::new();
+        return String::new();
     }
 
     // Fast path: if text has no markdown constructs requiring AST parsing,
     // use lightweight wrap_plain_paragraphs() directly.
     if !needs_mdast_parsing(text) {
-        let mut lines = Vec::new();
-        wrap_plain_paragraphs(text, max_width, &mut lines);
-        if capitalize {
-            // Capitalize the first word of each paragraph (after blank lines),
-            // matching the mdast path's per-paragraph capitalization.
-            let mut at_paragraph_start = true;
-            for line in &mut lines {
-                if line.is_empty() {
-                    at_paragraph_start = true;
-                } else if at_paragraph_start {
-                    *line = super::normalize::capitalize_first(line).into_owned();
-                    at_paragraph_start = false;
-                }
+        let result = wrap_plain_paragraphs(text, max_width);
+        if !capitalize {
+            return result;
+        }
+        // Capitalize the first word of each paragraph (after blank lines),
+        // matching the mdast path's per-paragraph capitalization.
+        let mut out = String::with_capacity(result.len());
+        let mut at_paragraph_start = true;
+        for (i, line) in result.split('\n').enumerate() {
+            if i > 0 {
+                out.push('\n');
             }
+            if line.is_empty() {
+                at_paragraph_start = true;
+            } else if at_paragraph_start {
+                out.push_str(&super::normalize::capitalize_first(line));
+                at_paragraph_start = false;
+                continue;
+            }
+            out.push_str(line);
         }
-        // Remove trailing blank lines
-        while lines.last().is_some_and(String::is_empty) {
-            lines.pop();
-        }
-        return lines;
+        return out;
     }
 
     let text = normalize_legacy_ordered_list_markers(text);
@@ -151,10 +157,17 @@ pub fn format_description_mdast(
     };
     let Ok(root) = to_mdast(&protected, &parse_opts) else {
         // If parsing fails, fall back to returning the text as-is
-        return text.lines().map(|l| l.trim().to_string()).collect();
+        let mut out = String::new();
+        for (i, line) in text.lines().enumerate() {
+            if i > 0 {
+                out.push('\n');
+            }
+            out.push_str(line.trim());
+        }
+        return out;
     };
 
-    let mut lines = Vec::new();
+    let mut lines = LineBuffer::new();
     let opts = SerializeOptions {
         max_width,
         capitalize,
@@ -162,27 +175,21 @@ pub fn format_description_mdast(
         source: &protected,
         format_options,
         external_callbacks,
+        allocator,
     };
     serialize_children(&root, 0, &opts, &mut lines);
 
-    // Restore any remaining placeholders in output lines
-    restore_placeholders(&mut lines, &placeholders);
-
-    // Remove trailing blank lines
-    while lines.last().is_some_and(String::is_empty) {
-        lines.pop();
-    }
-
-    lines
+    lines.into_string()
 }
 
 struct SerializeOptions<'a> {
     max_width: usize,
     capitalize: bool,
-    placeholders: &'a [String],
+    placeholders: &'a [&'a str],
     source: &'a str,
     format_options: Option<&'a FormatOptions>,
     external_callbacks: Option<&'a ExternalCallbacks>,
+    allocator: Option<&'a Allocator>,
 }
 
 // ──────────────────────────────────────────────────
@@ -193,8 +200,12 @@ struct SerializeOptions<'a> {
 /// fixtures into standard ordered-list syntax so markdown parsing can treat them
 /// as list items.
 fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
-    // Fast path: if no ASCII digit in the text, no legacy markers possible
-    if !text.bytes().any(|b| b.is_ascii_digit()) {
+    // Fast path: the pattern is `<digit(s)>- ` at line start. Check for the
+    // minimal signature (a digit followed somewhere by `-`) to skip the
+    // per-line scan for the vast majority of descriptions.
+    let bytes = text.as_bytes();
+    let has_digit_dash = bytes.windows(2).any(|w| w[0].is_ascii_digit() && w[1] == b'-');
+    if !has_digit_dash {
         return Cow::Borrowed(text);
     }
 
@@ -237,7 +248,7 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
 /// Replace `{@link ...}`, `{@linkcode ...}`, `{@linkplain ...}`, `{@tutorial ...}`
 /// with numbered placeholders so the markdown parser (especially GFM autolink) doesn't
 /// mangle URLs inside them.
-fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<String>) {
+fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<&str>) {
     // Fast path: if no `{@` in the text, nothing to protect
     if !text.contains("{@") {
         return (Cow::Borrowed(text), Vec::new());
@@ -268,11 +279,11 @@ fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<String>) {
             }
             let token = &text[start..i];
             let idx = placeholders.len();
-            placeholders.push(token.to_string());
+            placeholders.push(token);
             // Use a placeholder that looks like a single word (no spaces)
             // so tokenize_words treats it atomically
             result.push_str(PLACEHOLDER_PREFIX);
-            result.push_str(&idx.to_string());
+            result.push_str(itoa::Buffer::new().format(idx));
         } else {
             let ch = text[i..].chars().next().unwrap();
             result.push(ch);
@@ -284,7 +295,7 @@ fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<String>) {
 }
 
 /// Restore all placeholder tokens in a string back to their original `{@link ...}` form.
-fn restore_in_string<'a>(s: &'a str, placeholders: &[String]) -> Cow<'a, str> {
+fn restore_in_string<'a>(s: &'a str, placeholders: &[&str]) -> Cow<'a, str> {
     if placeholders.is_empty() || !s.contains(PLACEHOLDER_PREFIX) {
         return Cow::Borrowed(s);
     }
@@ -294,7 +305,7 @@ fn restore_in_string<'a>(s: &'a str, placeholders: &[String]) -> Cow<'a, str> {
 
 /// Single-pass scan that replaces all `PLACEHOLDER_PREFIX<digits>` occurrences
 /// with their original strings from `placeholders`.
-fn replace_placeholders(s: &str, placeholders: &[String]) -> String {
+fn replace_placeholders(s: &str, placeholders: &[&str]) -> String {
     let prefix = PLACEHOLDER_PREFIX;
     let prefix_len = prefix.len();
     let mut result = String::with_capacity(s.len());
@@ -332,15 +343,6 @@ fn replace_placeholders(s: &str, placeholders: &[String]) -> String {
     result
 }
 
-/// Restore placeholders in all output lines.
-fn restore_placeholders(lines: &mut [String], placeholders: &[String]) {
-    for line in lines.iter_mut() {
-        if line.contains(PLACEHOLDER_PREFIX) {
-            *line = restore_in_string(line, placeholders).into_owned();
-        }
-    }
-}
-
 // ──────────────────────────────────────────────────
 // Node serialization
 // ──────────────────────────────────────────────────
@@ -350,7 +352,7 @@ fn serialize_children(
     node: &Node,
     indent: usize,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) {
     let Some(children) = node.children() else {
         return;
@@ -358,8 +360,8 @@ fn serialize_children(
 
     for (i, child) in children.iter().enumerate() {
         // Add blank line between block-level siblings (except first)
-        if i > 0 && is_block_node(child) && !lines.last().is_some_and(String::is_empty) {
-            lines.push(String::new());
+        if i > 0 && is_block_node(child) && !lines.last_is_empty() {
+            lines.push_empty();
         }
 
         serialize_node(child, indent, opts, lines);
@@ -380,12 +382,7 @@ fn is_block_node(node: &Node) -> bool {
     )
 }
 
-fn serialize_node(
-    node: &Node,
-    indent: usize,
-    opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
-) {
+fn serialize_node(node: &Node, indent: usize, opts: &SerializeOptions<'_>, lines: &mut LineBuffer) {
     match node {
         Node::Root(_) => {
             serialize_children(node, indent, opts, lines);
@@ -398,10 +395,15 @@ fn serialize_node(
             // Restore placeholders in heading text before emitting
             let text = restore_in_string(&text, opts.placeholders);
             let prefix = "#".repeat(heading.depth as usize);
-            if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-                lines.push(String::new());
+            if !lines.is_empty() && !lines.last_is_empty() {
+                lines.push_empty();
             }
-            lines.push(format!("{prefix} {text}"));
+            {
+                let s = lines.begin_line();
+                s.push_str(&prefix);
+                s.push(' ');
+                s.push_str(&text);
+            }
         }
         Node::List(list) => {
             serialize_list(list, indent, opts, lines);
@@ -416,11 +418,17 @@ fn serialize_node(
         }
         Node::Definition(def) => {
             let label = def.label.as_deref().unwrap_or(&def.identifier);
-            lines.push(format!("[{label}]: {}", def.url));
+            {
+                let s = lines.begin_line();
+                s.push('[');
+                s.push_str(label);
+                s.push_str("]: ");
+                s.push_str(&def.url);
+            }
         }
         Node::Html(html) => {
             for line in html.value.lines() {
-                lines.push(line.to_string());
+                lines.push(line);
             }
         }
         // Inline nodes are normally collected by collect_inline_text,
@@ -444,7 +452,7 @@ fn serialize_paragraph(
     para: &markdown::mdast::Paragraph,
     indent: usize,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) {
     if serialize_pipe_prefixed_paragraph(para, indent, opts, lines) {
         return;
@@ -461,26 +469,27 @@ fn serialize_paragraph(
         for child in &para.children {
             if matches!(child, Node::Break(_)) {
                 // Emit current segment with trailing backslash
-                let text = current_segment.trim().to_string();
-                let text = restore_in_string(&text, opts.placeholders);
+                let text = restore_in_string(current_segment.trim(), opts.placeholders);
                 if indent > 0 {
-                    let mut s = String::with_capacity(indent_str.len() + text.len() + 1);
-                    s.push_str(&indent_str);
-                    s.push_str(&text);
-                    s.push('\\');
-                    lines.push(s);
+                    {
+                        let s = lines.begin_line();
+                        s.push_str(&indent_str);
+                        s.push_str(&text);
+                        s.push('\\');
+                    }
+                } else if opts.capitalize && lines.is_empty() {
+                    let text = super::normalize::capitalize_first(&text);
+                    {
+                        let s = lines.begin_line();
+                        s.push_str(&text);
+                        s.push('\\');
+                    }
                 } else {
-                    let capitalized;
-                    let text_ref = if opts.capitalize && lines.is_empty() {
-                        capitalized = super::normalize::capitalize_first(&text);
-                        capitalized.as_ref()
-                    } else {
-                        &*text
-                    };
-                    let mut s = String::with_capacity(text_ref.len() + 1);
-                    s.push_str(text_ref);
-                    s.push('\\');
-                    lines.push(s);
+                    {
+                        let s = lines.begin_line();
+                        s.push_str(&text);
+                        s.push('\\');
+                    }
                 }
                 current_segment.clear();
             } else {
@@ -490,15 +499,15 @@ fn serialize_paragraph(
 
         // Emit final segment (no trailing backslash)
         if !current_segment.trim().is_empty() {
-            let text = current_segment.trim().to_string();
-            let text = restore_in_string(&text, opts.placeholders);
+            let text = restore_in_string(current_segment.trim(), opts.placeholders);
             if indent > 0 {
-                let mut s = String::with_capacity(indent_str.len() + text.len());
-                s.push_str(&indent_str);
-                s.push_str(&text);
-                lines.push(s);
+                {
+                    let s = lines.begin_line();
+                    s.push_str(&indent_str);
+                    s.push_str(&text);
+                }
             } else {
-                lines.push(text.into_owned());
+                lines.push(text);
             }
         }
         return;
@@ -510,19 +519,23 @@ fn serialize_paragraph(
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::wrap::indent_str(indent);
 
-    let mut para_lines = Vec::new();
-    wrap_paragraph(&inline_text, effective_width, 0, &mut para_lines);
+    let mut para_buf = LineBuffer::new();
+    wrap_paragraph(&inline_text, effective_width, 0, &mut para_buf);
+    let para_str = para_buf.into_string();
 
-    for (i, line) in para_lines.iter().enumerate() {
+    for (i, line) in para_str.split('\n').enumerate() {
         if indent > 0 {
-            let mut s = String::with_capacity(ind.len() + line.len());
-            s.push_str(&ind);
-            s.push_str(line);
-            lines.push(s);
+            if line.is_empty() {
+                lines.push_empty();
+            } else {
+                let s = lines.begin_line();
+                s.push_str(&ind);
+                s.push_str(line);
+            }
         } else if opts.capitalize && i == 0 {
-            lines.push(super::normalize::capitalize_first(line).into_owned());
+            lines.push(super::normalize::capitalize_first(line));
         } else {
-            lines.push(line.clone());
+            lines.push(line);
         }
     }
 }
@@ -531,7 +544,7 @@ fn serialize_pipe_prefixed_paragraph(
     para: &markdown::mdast::Paragraph,
     indent: usize,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) -> bool {
     let Some(position) = para.position.as_ref() else {
         return false;
@@ -555,8 +568,8 @@ fn serialize_pipe_prefixed_paragraph(
             break;
         }
 
-        if emitted_segment && !lines.last().is_some_and(String::is_empty) {
-            lines.push(String::new());
+        if emitted_segment && !lines.last_is_empty() {
+            lines.push_empty();
         }
 
         if raw_lines[index].trim_start().starts_with('|') {
@@ -565,19 +578,15 @@ fn serialize_pipe_prefixed_paragraph(
                 index += 1;
             }
 
-            let pipe_lines: Vec<String> = raw_lines[start..index]
-                .iter()
-                .map(|line| restore_in_string(line.trim(), opts.placeholders).into_owned())
-                .collect();
-            let mut block_lines = Vec::new();
-            format_table_block(&pipe_lines, &mut block_lines);
+            let block_lines = format_table_block(&raw_lines[start..index]);
 
             for line in block_lines {
                 if indent > 0 && !line.is_empty() {
-                    let mut s = String::with_capacity(ind.len() + line.len());
-                    s.push_str(&ind);
-                    s.push_str(&line);
-                    lines.push(s);
+                    {
+                        let s = lines.begin_line();
+                        s.push_str(&ind);
+                        s.push_str(&line);
+                    }
                 } else {
                     lines.push(line);
                 }
@@ -600,19 +609,19 @@ fn serialize_pipe_prefixed_paragraph(
             let joined = text_parts.join(" ");
             let text = restore_in_string(&joined, opts.placeholders);
             let effective_width = opts.max_width.saturating_sub(indent);
-            let mut para_lines = Vec::new();
-            wrap_paragraph(&text, effective_width, 0, &mut para_lines);
+            let mut para_buf = LineBuffer::new();
+            wrap_paragraph(&text, effective_width, 0, &mut para_buf);
+            let para_str = para_buf.into_string();
 
-            for (i, line) in para_lines.iter().enumerate() {
+            for (i, line) in para_str.split('\n').enumerate() {
                 if indent > 0 {
-                    let mut s = String::with_capacity(ind.len() + line.len());
+                    let s = lines.begin_line();
                     s.push_str(&ind);
                     s.push_str(line);
-                    lines.push(s);
                 } else if opts.capitalize && i == 0 {
-                    lines.push(super::normalize::capitalize_first(line).into_owned());
+                    lines.push(super::normalize::capitalize_first(line));
                 } else {
-                    lines.push(line.clone());
+                    lines.push(line);
                 }
             }
         }
@@ -631,7 +640,7 @@ fn serialize_list(
     list: &markdown::mdast::List,
     indent: usize,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) {
     let ind = super::wrap::indent_str(indent);
     let mut counter = list.start.unwrap_or(1);
@@ -642,14 +651,18 @@ fn serialize_list(
         };
 
         // Build marker
-        let marker = if list.ordered {
-            let m = format!("{counter}. ");
+        let (marker, marker_width) = if list.ordered {
+            let mut buf = itoa::Buffer::new();
+            let num_str = buf.format(counter);
+            let mut m = String::with_capacity(num_str.len() + 2);
+            m.push_str(num_str);
+            m.push_str(". ");
+            let width = m.len();
             counter += 1;
-            m
+            (Cow::Owned(m), width)
         } else {
-            "- ".to_string()
+            (Cow::Borrowed("- "), 2)
         };
-        let marker_width = marker.len();
 
         // The upstream plugin does NOT add blank lines between list items.
         // Blank lines appear only within an item's children (between paragraphs).
@@ -659,43 +672,36 @@ fn serialize_list(
         for item_child in &item.children {
             if first_child {
                 // First child: prepend the marker
-                let mut child_lines = Vec::new();
-                serialize_node_for_list_item(
-                    item_child,
-                    marker_width,
-                    true,
-                    opts,
-                    &mut child_lines,
-                );
+                let child_str = serialize_node_for_list_item(item_child, marker_width, true, opts);
 
-                for (line_idx, line) in child_lines.iter().enumerate() {
+                for (line_idx, line) in child_str.split('\n').enumerate() {
                     if line_idx == 0 {
                         let text = if opts.capitalize {
                             super::normalize::capitalize_first(line)
                         } else {
-                            std::borrow::Cow::Borrowed(line.as_str())
+                            std::borrow::Cow::Borrowed(line)
                         };
-                        let mut s = String::with_capacity(ind.len() + marker.len() + text.len());
-                        s.push_str(&ind);
-                        s.push_str(&marker);
-                        s.push_str(&text);
-                        lines.push(s);
+                        {
+                            let s = lines.begin_line();
+                            s.push_str(&ind);
+                            s.push_str(&marker);
+                            s.push_str(&text);
+                        }
                     } else if line.is_empty() {
-                        lines.push(String::new());
+                        lines.push_empty();
                     } else {
-                        // wrap_paragraph already adds marker_width indent to
-                        // continuation lines, so only prepend outer indent.
-                        let mut s = String::with_capacity(ind.len() + line.len());
-                        s.push_str(&ind);
-                        s.push_str(line);
-                        lines.push(s);
+                        {
+                            let s = lines.begin_line();
+                            s.push_str(&ind);
+                            s.push_str(line);
+                        }
                     }
                 }
                 first_child = false;
             } else {
                 // Subsequent children: indented by marker width, with blank line separation
-                if is_block_node(item_child) && !lines.last().is_some_and(String::is_empty) {
-                    lines.push(String::new());
+                if is_block_node(item_child) && !lines.last_is_empty() {
+                    lines.push_empty();
                 }
 
                 if matches!(item_child, Node::Definition(_)) {
@@ -713,23 +719,18 @@ fn serialize_list(
                     };
                     serialize_node(item_child, nested_indent, opts, lines);
                 } else {
-                    let mut child_lines = Vec::new();
-                    serialize_node_for_list_item(
-                        item_child,
-                        marker_width,
-                        false,
-                        opts,
-                        &mut child_lines,
-                    );
+                    let child_str =
+                        serialize_node_for_list_item(item_child, marker_width, false, opts);
                     let child_ind = super::wrap::indent_str(indent + marker_width);
-                    for line in &child_lines {
+                    for line in child_str.split('\n') {
                         if line.is_empty() {
-                            lines.push(String::new());
+                            lines.push_empty();
                         } else {
-                            let mut s = String::with_capacity(child_ind.len() + line.len());
-                            s.push_str(&child_ind);
-                            s.push_str(line);
-                            lines.push(s);
+                            {
+                                let s = lines.begin_line();
+                                s.push_str(&child_ind);
+                                s.push_str(line);
+                            }
                         }
                     }
                 }
@@ -753,26 +754,21 @@ fn serialize_node_for_list_item(
     marker_width: usize,
     is_first_child: bool,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
-) {
-    match node {
-        Node::Paragraph(para) => {
-            let inline_text = collect_inline_text_from_children(&para.children);
-            let inline_text = restore_in_string(&inline_text, opts.placeholders);
-            if is_first_child {
-                // First line wraps at max_width; continuation at max_width - marker_width.
-                // The caller prepends the marker to the first line.
-                wrap_paragraph(&inline_text, opts.max_width, marker_width, lines);
-            } else {
-                // Wrap at max_width (full width), then let the caller add the
-                // list-item indent so continuation blocks stay aligned under the
-                // marker's content column.
-                wrap_paragraph(&inline_text, opts.max_width, 0, lines);
-            }
+) -> String {
+    if let Node::Paragraph(para) = node {
+        let inline_text = collect_inline_text_from_children(&para.children);
+        let inline_text = restore_in_string(&inline_text, opts.placeholders);
+        let mut buf = LineBuffer::new();
+        if is_first_child {
+            wrap_paragraph(&inline_text, opts.max_width, marker_width, &mut buf);
+        } else {
+            wrap_paragraph(&inline_text, opts.max_width, 0, &mut buf);
         }
-        _ => {
-            serialize_node(node, 0, opts, lines);
-        }
+        buf.into_string()
+    } else {
+        let mut buf = LineBuffer::new();
+        serialize_node(node, 0, opts, &mut buf);
+        buf.into_string()
     }
 }
 
@@ -783,11 +779,11 @@ fn serialize_node_for_list_item(
 fn serialize_code(
     code: &markdown::mdast::Code,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) {
     // Blank line before code block
-    if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-        lines.push(String::new());
+    if !lines.is_empty() && !lines.last_is_empty() {
+        lines.push_empty();
     }
 
     let code_width = opts.max_width.saturating_sub(4);
@@ -797,18 +793,26 @@ fn serialize_code(
         && !lang.is_empty()
     {
         // Fenced code block with language
-        lines.push(format!("```{lang}"));
-        for line in formatted_value.lines() {
-            lines.push(line.to_string());
+        {
+            let s = lines.begin_line();
+            s.push_str("```");
+            s.push_str(lang);
         }
-        lines.push("```".to_string());
+        for line in formatted_value.lines() {
+            lines.push(line);
+        }
+        lines.push("```");
     } else {
         // No language: indented code block (4-space prefix)
         for line in formatted_value.lines() {
             if line.is_empty() {
-                lines.push(String::new());
+                lines.push_empty();
             } else {
-                lines.push(format!("    {line}"));
+                {
+                    let s = lines.begin_line();
+                    s.push_str("    ");
+                    s.push_str(line);
+                }
             }
         }
     }
@@ -822,7 +826,7 @@ fn format_code_value<'a>(
     width: usize,
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    let Some(format_options) = opts.format_options else {
+    let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) else {
         return Cow::Borrowed(code);
     };
 
@@ -834,7 +838,7 @@ fn format_code_value<'a>(
         // JS/TS: native formatter
         if super::serialize::is_js_ts_lang(lang)
             && let Some(formatted) =
-                super::serialize::format_embedded_js(code, width, format_options)
+                super::serialize::format_embedded_js(code, width, format_options, allocator)
         {
             return Cow::Owned(formatted);
         }
@@ -847,13 +851,17 @@ fn format_code_value<'a>(
             return Cow::Owned(formatted);
         }
         // Unknown language: fall back to JS (matches upstream default "babel" parser)
-        if let Some(formatted) = super::serialize::format_embedded_js(code, width, format_options) {
+        if let Some(formatted) =
+            super::serialize::format_embedded_js(code, width, format_options, allocator)
+        {
             return Cow::Owned(formatted);
         }
         Cow::Borrowed(code)
     } else {
         // No language: try as JS (matches upstream default "babel" parser)
-        if let Some(formatted) = super::serialize::format_embedded_js(code, width, format_options) {
+        if let Some(formatted) =
+            super::serialize::format_embedded_js(code, width, format_options, allocator)
+        {
             Cow::Owned(formatted)
         } else {
             Cow::Borrowed(code)
@@ -868,7 +876,7 @@ fn format_code_value<'a>(
 fn serialize_blockquote(
     bq: &markdown::mdast::Blockquote,
     opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
+    lines: &mut LineBuffer,
 ) {
     // Serialize each child of the blockquote separately.
     // Between block-level children, emit a bare blank line (no `>` prefix)
@@ -877,15 +885,19 @@ fn serialize_blockquote(
     for (i, child) in bq.children.iter().enumerate() {
         if i > 0 {
             // Blank line between blockquote sections (no `>` prefix)
-            lines.push(String::new());
+            lines.push_empty();
         }
-        let mut inner_lines = Vec::new();
-        serialize_node(child, 0, opts, &mut inner_lines);
-        for line in inner_lines {
+        let mut inner_buf = LineBuffer::new();
+        serialize_node(child, 0, opts, &mut inner_buf);
+        for line in inner_buf.into_string().split('\n') {
             if line.is_empty() {
-                lines.push(">".to_string());
+                lines.push(">");
             } else {
-                lines.push(format!("> {line}"));
+                {
+                    let s = lines.begin_line();
+                    s.push_str("> ");
+                    s.push_str(line);
+                }
             }
         }
     }

@@ -462,9 +462,16 @@ fn normalize_type_inner(type_str: &str) -> String {
             let normalized = normalize_type_inner(rest);
             // Wrap in parens if contains top-level union
             if needs_parens_for_union(&normalized) {
-                return format!("...({normalized})");
+                let mut s = String::with_capacity(5 + normalized.len());
+                s.push_str("...(");
+                s.push_str(&normalized);
+                s.push(')');
+                return s;
             }
-            return format!("...{normalized}");
+            let mut s = String::with_capacity(3 + normalized.len());
+            s.push_str("...");
+            s.push_str(&normalized);
+            return s;
         }
         return trimmed.to_string();
     }
@@ -473,7 +480,11 @@ fn normalize_type_inner(type_str: &str) -> String {
     if let Some(rest) = trimmed.strip_prefix('?') {
         let inner = rest.trim();
         if !inner.is_empty() {
-            return format!("{} | null", normalize_type_core(inner));
+            let norm = normalize_type_core(inner);
+            let mut s = String::with_capacity(norm.len() + 7);
+            s.push_str(&norm);
+            s.push_str(" | null");
+            return s;
         }
     }
 
@@ -482,7 +493,11 @@ fn normalize_type_inner(type_str: &str) -> String {
     if trimmed.ends_with('?') && !contains_quotes(trimmed) {
         let inner = &trimmed[..trimmed.len() - 1];
         if !inner.is_empty() && !inner.contains('?') {
-            return format!("{} | null", normalize_type_core(inner));
+            let norm = normalize_type_core(inner);
+            let mut s = String::with_capacity(norm.len() + 7);
+            s.push_str(&norm);
+            s.push_str(" | null");
+            return s;
         }
     }
 
@@ -566,13 +581,21 @@ fn replace_one_array_pattern(type_str: &str) -> Option<String> {
             let normalized_inner = normalize_type_inner(inner);
 
             // Wrap in parens if needed
-            let array_elem = if needs_parens_for_array(&normalized_inner) {
-                format!("({normalized_inner})[]")
-            } else {
-                format!("{normalized_inner}[]")
-            };
-
-            return Some(format!("{prefix}{array_elem}{after}"));
+            let needs_parens = needs_parens_for_array(&normalized_inner);
+            let extra = if needs_parens { 4 } else { 2 }; // "()" + "[]" or just "[]"
+            let mut s =
+                String::with_capacity(prefix.len() + normalized_inner.len() + extra + after.len());
+            s.push_str(prefix);
+            if needs_parens {
+                s.push('(');
+            }
+            s.push_str(&normalized_inner);
+            if needs_parens {
+                s.push(')');
+            }
+            s.push_str("[]");
+            s.push_str(after);
+            return Some(s);
         }
 
         search_start = pos + 5;
@@ -641,7 +664,10 @@ pub fn normalize_type_return(type_str: &str) -> Cow<'_, str> {
         let inner = &trimmed[..trimmed.len() - 1];
         if !inner.is_empty() {
             let normalized = normalize_type(inner);
-            return Cow::Owned(format!("{normalized} | undefined"));
+            let mut s = String::with_capacity(normalized.len() + 12);
+            s.push_str(&normalized);
+            s.push_str(" | undefined");
+            return Cow::Owned(s);
         }
     }
     normalize_type(trimmed)
