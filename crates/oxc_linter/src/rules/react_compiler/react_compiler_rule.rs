@@ -7,9 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        options::CompilationMode,
-        pipeline::run_pipeline,
-        program::should_compile_function,
+        options::CompilationMode, pipeline::run_pipeline, program::should_compile_function,
     },
     hir::{
         NonLocalBinding,
@@ -347,13 +345,9 @@ fn lint_function<'a>(
     // should_compile_function (port of getReactFunctionType) does NOT check
     // opt-out directives. In lint mode, validation always runs regardless of
     // opt-out directives, matching the ESLint plugin's behavior.
-    let Some(fn_type) = should_compile_function(
-        function,
-        name,
-        directives,
-        config.compilation_mode.into(),
-        false,
-    ) else {
+    let Some(fn_type) =
+        should_compile_function(function, name, directives, config.compilation_mode.into(), false)
+    else {
         return;
     };
 

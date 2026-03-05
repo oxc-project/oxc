@@ -16,9 +16,7 @@ use oxc_ast::AstBuilder;
 use oxc_ast::NONE;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator,
-};
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -2589,7 +2587,6 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
         None => format!("t${}", identifier.id.0),
     }
 }
-
 
 /// Generate a label string from a BlockId.
 fn codegen_label(id: crate::hir::BlockId) -> String {

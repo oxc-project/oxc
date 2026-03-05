@@ -42,9 +42,9 @@ pub fn should_compile_function(
     // This includes both static opt-ins ("use forget", "use memo") and
     // dynamic gating directives ("use memo if(...)") which are also opt-ins
     // in the TS reference's tryFindDirectiveEnablingMemoization.
-    let has_opt_in = directives.iter().any(|d| {
-        OPT_IN_DIRECTIVES.contains(&d.as_str()) || d.starts_with("use memo if(")
-    });
+    let has_opt_in = directives
+        .iter()
+        .any(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()) || d.starts_with("use memo if("));
     if has_opt_in {
         return Some(
             get_component_or_hook_like(function, name, is_memo_or_forwardref_arg)
@@ -189,9 +189,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                     || check_expr(&cond.consequent)
                     || check_expr(&cond.alternate)
             }
-            Expression::LogicalExpression(log) => {
-                check_expr(&log.left) || check_expr(&log.right)
-            }
+            Expression::LogicalExpression(log) => check_expr(&log.left) || check_expr(&log.right),
             Expression::BinaryExpression(bin) => check_expr(&bin.left) || check_expr(&bin.right),
             Expression::UnaryExpression(un) => check_expr(&un.argument),
             Expression::AssignmentExpression(assign) => check_expr(&assign.right),
@@ -212,9 +210,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                 check_expr(&member.object) || check_expr(&member.expression)
             }
             Expression::AwaitExpression(aw) => check_expr(&aw.argument),
-            Expression::YieldExpression(y) => {
-                y.argument.as_ref().is_some_and(|a| check_expr(a))
-            }
+            Expression::YieldExpression(y) => y.argument.as_ref().is_some_and(|a| check_expr(a)),
             _ => false,
         }
     }
@@ -224,9 +220,7 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
             // Skip nested function declarations
             Statement::FunctionDeclaration(_) => false,
             Statement::ExpressionStatement(es) => check_expr(&es.expression),
-            Statement::ReturnStatement(ret) => {
-                ret.argument.as_ref().is_some_and(|e| check_expr(e))
-            }
+            Statement::ReturnStatement(ret) => ret.argument.as_ref().is_some_and(|e| check_expr(e)),
             Statement::VariableDeclaration(decl) => {
                 decl.declarations.iter().any(|d| d.init.as_ref().is_some_and(|e| check_expr(e)))
             }
@@ -246,12 +240,8 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
             }
             Statement::TryStatement(t) => {
                 t.block.body.iter().any(|s| check_stmt(s))
-                    || t.handler
-                        .as_ref()
-                        .is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s)))
-                    || t.finalizer
-                        .as_ref()
-                        .is_some_and(|f| f.body.iter().any(|s| check_stmt(s)))
+                    || t.handler.as_ref().is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s)))
+                    || t.finalizer.as_ref().is_some_and(|f| f.body.iter().any(|s| check_stmt(s)))
             }
             Statement::ThrowStatement(throw) => check_expr(&throw.argument),
             Statement::LabeledStatement(l) => check_stmt(&l.body),
@@ -396,17 +386,18 @@ pub fn returns_non_node(func: &LowerableFunction) -> bool {
             Statement::ForOfStatement(f) => check_stmt_for_non_node_return(&f.body),
             Statement::WhileStatement(w) => check_stmt_for_non_node_return(&w.body),
             Statement::DoWhileStatement(d) => check_stmt_for_non_node_return(&d.body),
-            Statement::SwitchStatement(s) => s.cases.iter().any(|c| {
-                c.consequent.iter().any(|stmt| check_stmt_for_non_node_return(stmt))
-            }),
+            Statement::SwitchStatement(s) => s
+                .cases
+                .iter()
+                .any(|c| c.consequent.iter().any(|stmt| check_stmt_for_non_node_return(stmt))),
             Statement::TryStatement(t) => {
                 t.block.body.iter().any(|s| check_stmt_for_non_node_return(s))
                     || t.handler.as_ref().is_some_and(|h| {
                         h.body.body.iter().any(|s| check_stmt_for_non_node_return(s))
                     })
-                    || t.finalizer.as_ref().is_some_and(|f| {
-                        f.body.iter().any(|s| check_stmt_for_non_node_return(s))
-                    })
+                    || t.finalizer
+                        .as_ref()
+                        .is_some_and(|f| f.body.iter().any(|s| check_stmt_for_non_node_return(s)))
             }
             Statement::LabeledStatement(l) => check_stmt_for_non_node_return(&l.body),
             // ExpressionStatement, VariableDeclaration, ThrowStatement, etc. — no return

@@ -1834,8 +1834,9 @@ function Component({a, b}) {
         oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
             .expect("pipeline failed");
     let ast = oxc_ast::AstBuilder::new(&allocator);
-    let codegen = oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env, ast, "_c")
-        .expect("codegen failed");
+    let codegen =
+        oxc_react_compiler::entrypoint::pipeline::run_codegen(pipeline_output, &env, ast, "_c")
+            .expect("codegen failed");
 
     // Should produce _c(3): 2 dependency slots (a, b) + 1 output slot (the array [y, z]).
     // Previously produced _c(5) because y and z were incorrectly kept as separate declarations.
