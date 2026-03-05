@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1338/1348 passed (99.3%)
+Codegen conformance: 1348/1348 passed (100.0%)
 Flow files skipped: 39
 FBT lowering skipped: 33
 
@@ -10,19 +10,9 @@ Failure breakdown:
   parse_error:    0
   no_function:    0
   lower_error:    0
-  pipeline_error: 10
+  pipeline_error: 0
   panic:          0
   output_mismatch:0
   no_expected:    0
 
 Failed fixtures:
-  [pipeline_error] allow-ref-access-in-effect-indirect.js
-  [pipeline_error] preserve-memo-validation/preserve-use-callback-stable-built-ins.ts
-  [pipeline_error] preserve-memo-validation/preserve-use-memo-ref-missing-ok.ts
-  [pipeline_error] preserve-memo-validation/preserve-use-memo-transition.ts
-  [pipeline_error] preserve-use-memo-transition-no-ispending.js
-  [pipeline_error] useCallback-multiple-callbacks-modifying-same-ref-preserve-memoization.js
-  [pipeline_error] useCallback-set-ref-nested-property-preserve-memoization.js
-  [pipeline_error] useCallback-set-ref-nested-property.js
-  [pipeline_error] useCallback-set-ref-value-dont-preserve-memoization.js
-  [pipeline_error] useCallback-set-ref-value-preserve-memoization.js
