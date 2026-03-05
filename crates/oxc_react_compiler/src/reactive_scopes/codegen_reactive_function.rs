@@ -358,7 +358,7 @@ fn make_property_assignment_target<'a>(
             make_member_assignment_target(cx, object, name)
         }
         crate::hir::types::PropertyLiteral::Number(n) => {
-            make_computed_member_assignment_target(cx, object, make_number(cx, *n as f64))
+            make_computed_member_assignment_target(cx, object, make_number(cx, *n))
         }
     }
 }
@@ -424,7 +424,7 @@ fn binding_pattern_to_assignment_target<'a>(
         BindingPattern::ObjectPattern(obj) => {
             let obj = obj.unbox();
             let mut properties = cx.ast.vec_with_capacity(obj.properties.len());
-            for prop in obj.properties.into_iter() {
+            for prop in obj.properties {
                 let target = binding_pattern_to_assignment_target(cx, prop.value);
                 let binding: AssignmentTargetMaybeDefault<'a> = target.into();
                 let property = cx.ast.assignment_target_property_property(
@@ -452,7 +452,7 @@ fn binding_pattern_to_assignment_target<'a>(
             let arr = arr.unbox();
             let mut elements: AVec<'a, Option<AssignmentTargetMaybeDefault<'a>>> =
                 cx.ast.vec_with_capacity(arr.elements.len());
-            for elem in arr.elements.into_iter() {
+            for elem in arr.elements {
                 match elem {
                     Some(pat) => {
                         let target = binding_pattern_to_assignment_target(cx, pat);
@@ -714,10 +714,10 @@ pub fn codegen_function<'a>(
     let mut body = codegen_block(&mut cx, &reactive_fn.body);
 
     // Remove trailing `return undefined` / `return;`
-    if let Some(Statement::ReturnStatement(ret)) = body.last() {
-        if ret.argument.is_none() {
-            body.pop();
-        }
+    if let Some(Statement::ReturnStatement(ret)) = body.last()
+        && ret.argument.is_none()
+    {
+        body.pop();
     }
 
     // Function-level hook guard: wrap the entire body in a try-finally with
@@ -1081,7 +1081,7 @@ fn create_call_expression<'a>(
 
     // Build: guardFn(2)
     let before_args =
-        cx.ast.vec1(Argument::from(make_number(cx, GuardKind::AllowHook as u8 as f64)));
+        cx.ast.vec1(Argument::from(make_number(cx, f64::from(GuardKind::AllowHook as u8))));
     let before_call = make_call(cx, make_id(cx, &guard_name), before_args);
     let before_stmt = make_expr_stmt(cx, before_call);
 
@@ -1094,7 +1094,7 @@ fn create_call_expression<'a>(
 
     // Build: guardFn(3)
     let after_args =
-        cx.ast.vec1(Argument::from(make_number(cx, GuardKind::DisallowHook as u8 as f64)));
+        cx.ast.vec1(Argument::from(make_number(cx, f64::from(GuardKind::DisallowHook as u8))));
     let after_call = make_call(cx, make_id(cx, &guard_name), after_args);
     let after_stmt = make_expr_stmt(cx, after_call);
 
@@ -1475,21 +1475,19 @@ fn codegen_terminal<'a>(
             let mut cases: AVec<'a, SwitchCase<'a>> = cx.ast.vec();
             for case in &t.cases {
                 let test = case.test.as_ref().map(|p| codegen_place_to_expression(cx, p));
-                let consequent: AVec<'a, Statement<'a>> = case
-                    .block
-                    .as_ref()
-                    .map(|b| {
+                let consequent: AVec<'a, Statement<'a>> = match case.block.as_ref() {
+                    Some(b) => {
                         let block_stmts = codegen_block(cx, b);
                         if block_stmts.is_empty() {
                             cx.ast.vec()
                         } else {
-                            // Wrap in a BlockStatement like TS does
                             let block =
                                 Statement::BlockStatement(stmts_to_block_body(cx, block_stmts));
                             cx.ast.vec1(block)
                         }
-                    })
-                    .unwrap_or_else(|| cx.ast.vec());
+                    }
+                    None => cx.ast.vec(),
+                };
                 cases.push(cx.ast.switch_case(SPAN, test, consequent));
             }
             stmts.push(cx.ast.statement_switch(SPAN, discriminant, cases));
@@ -1697,20 +1695,20 @@ fn codegen_instruction_nullable<'a>(
                 // Handle FunctionExpression separately so we can store structured
                 // CodegenOutput data for FunctionDeclaration types.
                 let (value_expr, fn_decl) = codegen_function_expression(cx, func_expr);
-                if let Some(fn_data) = fn_decl {
-                    if let Some(lval) = &instr.lvalue {
-                        cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
-                    }
+                if let Some(fn_data) = fn_decl
+                    && let Some(lval) = &instr.lvalue
+                {
+                    cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
                 }
                 codegen_instruction_to_statement(cx, instr, value_expr, stmts);
             }
             other => {
                 // Track JsxText-origin declarations so codegen_jsx_child can
                 // distinguish them from Primitive::String (both produce StringLiteral).
-                if matches!(other, InstructionValue::JsxText(_)) {
-                    if let Some(lval) = &instr.lvalue {
-                        cx.jsx_text_ids.insert(lval.identifier.declaration_id);
-                    }
+                if matches!(other, InstructionValue::JsxText(_))
+                    && let Some(lval) = &instr.lvalue
+                {
+                    cx.jsx_text_ids.insert(lval.identifier.declaration_id);
                 }
                 let value_expr = codegen_instruction_value(cx, other);
                 codegen_instruction_to_statement(cx, instr, value_expr, stmts);
@@ -1771,30 +1769,30 @@ fn codegen_store_or_declare<'a>(
             // Try to emit a proper function declaration statement.
             // Look up the structured CodegenOutput data stored when the
             // FunctionExpression instruction was processed.
-            if let Some(vp) = value_place {
-                if let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id) {
-                    let fn_name = fn_data
-                        .id
-                        .as_ref()
-                        .map(|n| cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str())));
-                    let params = build_formal_params(cx, &fn_data.params);
-                    let body = build_function_body(cx, &fn_data.directives, fn_data.body);
-                    let decl = cx.ast.function(
-                        SPAN,
-                        FunctionType::FunctionDeclaration,
-                        fn_name,
-                        fn_data.generator,
-                        fn_data.is_async,
-                        false, // declare
-                        NONE,  // type_parameters
-                        NONE,  // this_param
-                        params,
-                        NONE, // return_type
-                        Some(body),
-                    );
-                    stmts.push(Statement::FunctionDeclaration(cx.ast.alloc(decl)));
-                    return;
-                }
+            if let Some(vp) = value_place
+                && let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id)
+            {
+                let fn_name = fn_data
+                    .id
+                    .as_ref()
+                    .map(|n| cx.ast.binding_identifier(SPAN, cx.ast.atom(n.as_str())));
+                let params = build_formal_params(cx, &fn_data.params);
+                let body = build_function_body(cx, &fn_data.directives, fn_data.body);
+                let decl = cx.ast.function(
+                    SPAN,
+                    FunctionType::FunctionDeclaration,
+                    fn_name,
+                    fn_data.generator,
+                    fn_data.is_async,
+                    false, // declare
+                    NONE,  // type_parameters
+                    NONE,  // this_param
+                    params,
+                    NONE, // return_type
+                    Some(body),
+                );
+                stmts.push(Statement::FunctionDeclaration(cx.ast.alloc(decl)));
+                return;
             }
             // Fallback: emit as const declaration or expression statement
             if let Some(val) = value {
@@ -1807,13 +1805,13 @@ fn codegen_store_or_declare<'a>(
             if let Some(val) = value {
                 // If there's an lvalue on the instruction (i.e., it's used as an expression),
                 // store as temporary.
-                if let Some(lval) = instr.lvalue.as_ref() {
-                    if lval.identifier.name.is_none() {
-                        let target = make_simple_target(cx, &name);
-                        let assign = make_assignment(cx, target, val);
-                        cx.temp.insert(lval.identifier.declaration_id, Some(assign));
-                        return;
-                    }
+                if let Some(lval) = instr.lvalue.as_ref()
+                    && lval.identifier.name.is_none()
+                {
+                    let target = make_simple_target(cx, &name);
+                    let assign = make_assignment(cx, target, val);
+                    cx.temp.insert(lval.identifier.declaration_id, Some(assign));
+                    return;
                 }
                 // Named reassignment: emit `name = value` as expression statement
                 let target = make_simple_target(cx, &name);
@@ -1876,11 +1874,11 @@ fn codegen_destructure_statement<'a>(
             let target = binding_pattern_to_assignment_target(cx, lval);
             let assign = make_assignment(cx, target, value);
             // If there's an lvalue on the instruction used as expression, store as temp
-            if let Some(lval_place) = instr.lvalue.as_ref() {
-                if lval_place.identifier.name.is_none() {
-                    cx.temp.insert(lval_place.identifier.declaration_id, Some(assign));
-                    return;
-                }
+            if let Some(lval_place) = instr.lvalue.as_ref()
+                && lval_place.identifier.name.is_none()
+            {
+                cx.temp.insert(lval_place.identifier.declaration_id, Some(assign));
+                return;
             }
             stmts.push(make_expr_stmt(cx, assign));
         }
@@ -2010,7 +2008,7 @@ fn codegen_instruction_value<'a>(
             let is_hook = get_hook_kind(&cx.shapes, &method.property.identifier);
             let callee = codegen_place_to_expression(cx, &method.property);
             let property_decl_id = method.property.identifier.declaration_id;
-            let is_member_expr = cx.temp.get(&property_decl_id).is_some_and(|v| v.is_some());
+            let is_member_expr = cx.temp.get(&property_decl_id).is_some_and(Option::is_some);
             if !is_member_expr {
                 cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
                     "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
@@ -2062,7 +2060,7 @@ fn codegen_instruction_value<'a>(
         }
         InstructionValue::LoadLocal(load) => codegen_place_to_expression(cx, &load.place),
         InstructionValue::LoadContext(load) => codegen_place_to_expression(cx, &load.place),
-        InstructionValue::LoadGlobal(load) => make_id(cx, &load.binding.name()),
+        InstructionValue::LoadGlobal(load) => make_id(cx, load.binding.name()),
         InstructionValue::StoreGlobal(store) => {
             let value = codegen_place_to_expression(cx, &store.value);
             make_assignment(cx, make_simple_target(cx, &store.name), value)
@@ -2472,14 +2470,12 @@ fn codegen_object_expression<'a>(
                     let value = codegen_place_to_expression(cx, &p.place);
 
                     // Check if shorthand: key is an identifier and value resolves to the same name
-                    let is_shorthand = if !is_computed {
-                        if let ObjectPropertyKey::Identifier(key_name) = &p.key {
-                            // The value expression should be an identifier with the same name
-                            let val_name = identifier_name(&p.place.identifier);
-                            *key_name == val_name
-                        } else {
-                            false
-                        }
+                    let is_shorthand = if is_computed {
+                        false
+                    } else if let ObjectPropertyKey::Identifier(key_name) = &p.key {
+                        // The value expression should be an identifier with the same name
+                        let val_name = identifier_name(&p.place.identifier);
+                        *key_name == val_name
                     } else {
                         false
                     };
@@ -2761,7 +2757,7 @@ fn codegen_jsx_child<'a>(cx: &CodegenContext<'a>, place: &Place) -> JSXChild<'a>
                         cx.ast.jsx_expression_container(SPAN, JSXExpression::StringLiteral(lit));
                     JSXChild::ExpressionContainer(cx.ast.alloc(container))
                 } else {
-                    let text = cx.ast.jsx_text(SPAN, lit.value.clone(), None);
+                    let text = cx.ast.jsx_text(SPAN, lit.value, None);
                     JSXChild::Text(cx.ast.alloc(text))
                 }
             } else {
@@ -2843,7 +2839,7 @@ fn codegen_member_access<'a>(
     match property {
         crate::hir::types::PropertyLiteral::String(name) => make_member(cx, object, name),
         crate::hir::types::PropertyLiteral::Number(n) => {
-            make_computed_member(cx, object, make_number(cx, *n as f64))
+            make_computed_member(cx, object, make_number(cx, *n))
         }
     }
 }
@@ -2942,10 +2938,10 @@ fn codegen_pattern<'a>(cx: &CodegenContext<'a>, pattern: &Pattern) -> BindingPat
                             cx.ast.binding_pattern_binding_identifier(SPAN, cx.ast.atom(&name));
                         let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
                         // Check if shorthand: key is an identifier and the value has the same name
-                        let is_shorthand = if !is_computed {
-                            matches!(&p.key, ObjectPropertyKey::Identifier(k) if *k == name)
-                        } else {
+                        let is_shorthand = if is_computed {
                             false
+                        } else {
+                            matches!(&p.key, ObjectPropertyKey::Identifier(k) if *k == name)
                         };
                         let binding_prop =
                             cx.ast.binding_property(SPAN, key, value, is_shorthand, is_computed);
@@ -3029,7 +3025,7 @@ fn codegen_dependency<'a>(
                 }
             }
             crate::hir::types::PropertyLiteral::Number(n) => {
-                let index = make_number(cx, *n as f64);
+                let index = make_number(cx, *n);
                 if has_optional {
                     result = Expression::from(cx.ast.member_expression_computed(
                         SPAN,
@@ -3082,7 +3078,7 @@ fn codegen_for_init<'a>(cx: &mut CodegenContext<'a>, init: &ReactiveValue) -> Fo
         let mut declarators: AVec<'a, VariableDeclarator<'a>> = cx.ast.vec();
         let mut kind = VariableDeclarationKind::Const;
 
-        for stmt in body.into_iter() {
+        for stmt in body {
             // Check if this is an ExpressionStatement with an AssignmentExpression
             // that should be merged into the last declarator (handles `let i; i = 0;` pattern)
             let merged = match &stmt {
@@ -3093,18 +3089,14 @@ fn codegen_for_init<'a>(cx: &mut CodegenContext<'a>, init: &ReactiveValue) -> Fo
                                 &assign.left
                             {
                                 // Check if last declarator has the same name and no init
-                                let should_merge = declarators
-                                    .last()
-                                    .map(|top| {
-                                        if let BindingPattern::BindingIdentifier(top_id) = &top.id {
-                                            top_id.name.as_str() == left_id.name.as_str()
-                                                && top.init.is_none()
-                                        } else {
-                                            false
-                                        }
-                                    })
-                                    .unwrap_or(false);
-                                should_merge
+                                declarators.last().is_some_and(|top| {
+                                    if let BindingPattern::BindingIdentifier(top_id) = &top.id {
+                                        top_id.name.as_str() == left_id.name.as_str()
+                                            && top.init.is_none()
+                                    } else {
+                                        false
+                                    }
+                                })
                             } else {
                                 false
                             }
@@ -3130,21 +3122,13 @@ fn codegen_for_init<'a>(cx: &mut CodegenContext<'a>, init: &ReactiveValue) -> Fo
                         }
                     }
                 }
-            } else {
+            } else if let Statement::VariableDeclaration(var_decl) = stmt {
                 // Must be a VariableDeclaration with let or const
-                match stmt {
-                    Statement::VariableDeclaration(var_decl) => {
-                        let var_decl = var_decl.unbox();
-                        if var_decl.kind == VariableDeclarationKind::Let {
-                            kind = VariableDeclarationKind::Let;
-                        }
-                        declarators.extend(var_decl.declarations);
-                    }
-                    _ => {
-                        // Invariant: expected a variable declaration
-                        // In error cases, skip this statement
-                    }
+                let var_decl = var_decl.unbox();
+                if var_decl.kind == VariableDeclarationKind::Let {
+                    kind = VariableDeclarationKind::Let;
                 }
+                declarators.extend(var_decl.declarations);
             }
         }
 
@@ -3154,7 +3138,7 @@ fn codegen_for_init<'a>(cx: &mut CodegenContext<'a>, init: &ReactiveValue) -> Fo
         }
 
         // Update declarator kinds to match the final kind
-        for decl in declarators.iter_mut() {
+        for decl in &mut declarators {
             decl.kind = kind;
         }
 

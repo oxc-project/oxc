@@ -56,7 +56,7 @@ impl PropertyPathRegistry {
     fn alloc(&mut self, data: PathNodeData) -> PropertyPathNode {
         let idx = self.nodes.len();
         self.nodes.push(data);
-        PropertyPathNode(idx as u32)
+        PropertyPathNode(u32::try_from(idx).expect("property path index overflow"))
     }
 
     pub fn get_full_path(&self, node: PropertyPathNode) -> &ReactiveScopeDependency {
@@ -188,6 +188,8 @@ pub struct HoistablePropertyLoads {
 /// Collect hoistable property loads for the given function.
 ///
 /// Port of the TS `collectHoistablePropertyLoads`.
+// Cannot generalize over BuildHasher: .clippy.toml disallows std::collections::HashMap
+#[expect(clippy::implicit_hasher)]
 pub fn collect_hoistable_property_loads(
     func: &HIRFunction,
     temporaries: &FxHashMap<IdentifierId, ReactiveScopeDependency>,
@@ -476,14 +478,10 @@ fn propagate_non_null(
 ) {
     // Build successor map
     let mut block_successors: FxHashMap<BlockId, FxHashSet<BlockId>> = FxHashMap::default();
-    let mut terminal_preds: FxHashSet<BlockId> = FxHashSet::default();
 
     for (&block_id, block) in &func.body.blocks {
         for &pred in &block.preds {
             block_successors.entry(pred).or_default().insert(block_id);
-        }
-        if matches!(&block.terminal, Terminal::Throw(_) | Terminal::Return(_)) {
-            terminal_preds.insert(block_id);
         }
     }
 
@@ -763,7 +761,7 @@ fn get_assumed_invoked_functions_inner(
                     // Assume JSX attributes and children are safe to invoke
                     for attr in &jsx.props {
                         match attr {
-                            JsxAttribute::Spread { .. } => continue,
+                            JsxAttribute::Spread { .. } => {}
                             JsxAttribute::Attribute { place, .. } => {
                                 if let Some(existing) = temporaries.get(&place.identifier.id) {
                                     hoistable_functions.insert(existing.lowered_fn);

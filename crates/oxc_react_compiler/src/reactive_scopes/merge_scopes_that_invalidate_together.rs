@@ -212,6 +212,17 @@ fn update_last_usage(
 // =============================================================================
 
 /// Process a block: first recurse into children (with nested scope flattening),
+struct MergedScope {
+    from: usize,
+    to: usize,
+    lvalues: FxHashSet<DeclarationId>,
+    /// Accumulated declarations from the initial scope + all merged scopes so far.
+    /// Used for merge eligibility checks in subsequent scope comparisons.
+    accumulated_declarations: IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,
+    /// Accumulated range end from the initial scope + all merged scopes.
+    accumulated_range_end: InstructionId,
+}
+
 /// then merge consecutive scopes within this block.
 fn merge_in_block(
     block: &mut ReactiveBlock,
@@ -270,16 +281,6 @@ fn merge_in_block(
     // We do NOT mutate the block in sub-pass 2 (to avoid double-applying in sub-pass 3).
     // Instead, we pass the accumulated declarations to sub-pass 3 to use when building
     // the final merged scope.
-    struct MergedScope {
-        from: usize,
-        to: usize,
-        lvalues: FxHashSet<DeclarationId>,
-        /// Accumulated declarations from the initial scope + all merged scopes so far.
-        /// Used for merge eligibility checks in subsequent scope comparisons.
-        accumulated_declarations: IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,
-        /// Accumulated range end from the initial scope + all merged scopes.
-        accumulated_range_end: InstructionId,
-    }
 
     let mut current: Option<MergedScope> = None;
     let mut merged: Vec<MergedScope> = Vec::new();
@@ -575,6 +576,7 @@ fn merge_in_terminal(
 /// A view of a scope that uses an externally-provided accumulated declaration set.
 /// This allows checking merge eligibility with a combined set of declarations
 /// from multiple previously-merged scopes, without actually mutating the scope.
+#[derive(Clone, Copy)]
 struct AccumulatedScopeView<'a> {
     scope: &'a ReactiveScope,
     declarations: &'a IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,

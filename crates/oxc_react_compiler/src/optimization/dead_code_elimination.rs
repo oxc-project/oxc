@@ -312,14 +312,6 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         InstructionValue::PostfixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
         InstructionValue::PrefixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
 
-        // Context operations (LoadContext, StoreContext, DeclareContext) are NOT
-        // pruneable, matching the TS reference (DeadCodeElimination.ts lines 366-370).
-        // Context variables track captured variables from outer scopes and their
-        // load/store instructions must be preserved for correct codegen.
-        InstructionValue::LoadContext(_)
-        | InstructionValue::StoreContext(_)
-        | InstructionValue::DeclareContext(_) => false,
-
         // Most other values have side effects and cannot be pruned
         _ => false,
     }

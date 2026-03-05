@@ -493,11 +493,11 @@ fn find_non_mutating_spreads(func: &HIRFunction) -> FxHashSet<IdentifierId> {
                         candidate_non_mutating_spreads.insert(v.lvalue.place.identifier.id, spread);
                     }
                 }
-                InstructionValue::JsxFragment(_) | InstructionValue::JsxExpression(_) => {
+                InstructionValue::JsxFragment(_)
+                | InstructionValue::JsxExpression(_)
+                | InstructionValue::PropertyLoad(_) => {
+                    // Properties must be frozen since the original value was frozen;
                     // Passing objects created with spread to jsx can't mutate them
-                }
-                InstructionValue::PropertyLoad(_) => {
-                    // Properties must be frozen since the original value was frozen
                 }
                 InstructionValue::CallExpression(call) => {
                     if get_hook_kind(&func.env, &call.callee.identifier).is_some() {
@@ -598,10 +598,43 @@ fn is_jsx_or_phi_jsx(ty: &crate::hir::types::Type) -> bool {
 }
 
 /// Infer mutation/aliasing effects for the given function.
+///
+/// # Errors
+///
+/// Returns a `CompilerError` if aliasing inference encounters an invariant violation.
 pub fn infer_mutation_aliasing_effects(
     func: &mut HIRFunction,
     options: &InferOptions,
 ) -> Result<(), crate::compiler_error::CompilerError> {
+    /// Port of TS `queue()` function (InferMutationAliasingEffects.ts lines 157-174).
+    /// Enqueues a successor block with the outgoing state from the current block.
+    /// If the block is already queued, merges the states. If not, checks whether
+    /// the new state has changed relative to the last incoming state for that block.
+    fn queue_block(
+        queued_states: &mut FxHashMap<BlockId, InferenceState>,
+        states_by_block: &FxHashMap<BlockId, InferenceState>,
+        block_id: BlockId,
+        state: &InferenceState,
+    ) {
+        if let Some(existing) = queued_states.get_mut(&block_id) {
+            // Already queued — merge the new state into the existing queued state
+            existing.merge(state);
+        } else {
+            // First queue for this block — check if there's new info vs last incoming state
+            if let Some(prev_state) = states_by_block.get(&block_id) {
+                let mut merged = prev_state.clone();
+                if merged.merge(state) {
+                    // New info found — queue the merged state
+                    queued_states.insert(block_id, merged);
+                }
+                // else: no change, don't re-queue
+            } else {
+                // Never processed — queue unconditionally
+                queued_states.insert(block_id, state.clone());
+            }
+        }
+    }
+
     let mut initial_state = InferenceState::empty();
 
     // Initialize context variables
@@ -665,35 +698,6 @@ pub fn infer_mutation_aliasing_effects(
     let mut queued_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     queued_states.insert(func.body.entry, initial_state);
 
-    /// Port of TS `queue()` function (InferMutationAliasingEffects.ts lines 157-174).
-    /// Enqueues a successor block with the outgoing state from the current block.
-    /// If the block is already queued, merges the states. If not, checks whether
-    /// the new state has changed relative to the last incoming state for that block.
-    fn queue_block(
-        queued_states: &mut FxHashMap<BlockId, InferenceState>,
-        states_by_block: &FxHashMap<BlockId, InferenceState>,
-        block_id: BlockId,
-        state: &InferenceState,
-    ) {
-        if let Some(existing) = queued_states.get_mut(&block_id) {
-            // Already queued — merge the new state into the existing queued state
-            existing.merge(state);
-        } else {
-            // First queue for this block — check if there's new info vs last incoming state
-            if let Some(prev_state) = states_by_block.get(&block_id) {
-                let mut merged = prev_state.clone();
-                if merged.merge(state) {
-                    // New info found — queue the merged state
-                    queued_states.insert(block_id, merged);
-                }
-                // else: no change, don't re-queue
-            } else {
-                // Never processed — queue unconditionally
-                queued_states.insert(block_id, state.clone());
-            }
-        }
-    }
-
     let mut iteration_count = 0;
     let max_iterations = 1000; // Safety limit
 
@@ -708,9 +712,8 @@ pub fn infer_mutation_aliasing_effects(
 
         for block_id in block_ids {
             // Pop the queued incoming state for this block (if any).
-            let mut state = match queued_states.remove(&block_id) {
-                Some(s) => s,
-                None => continue,
+            let Some(mut state) = queued_states.remove(&block_id) else {
+                continue;
             };
 
             // Store the incoming state (before phis/instructions) — matches TS line 203.
@@ -1410,8 +1413,8 @@ fn effects_from_signature(
                     into: lvalue.clone(),
                 });
             }
-            _ => {
-                // Unknown or other: conservative
+            Effect::Unknown => {
+                // Unknown: conservative
                 effects
                     .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
             }
@@ -1452,7 +1455,7 @@ fn effects_from_signature(
                             description: Some(
                                 "Support spread syntax for hook arguments".to_string(),
                             ),
-                            loc: Some(place.loc.into()),
+                            loc: Some(place.loc),
                             suggestions: None,
                         },
                     ));
@@ -1915,9 +1918,7 @@ fn compute_effects_for_signature(
         };
         if i >= signature.params.len() || is_spread {
             // Goes into rest param
-            let Some(rest_id) = signature.rest else {
-                return None;
-            };
+            let rest_id = signature.rest?;
             substitutions.entry(rest_id).or_default().push(place.clone());
         } else {
             substitutions.insert(signature.params[i], vec![place.clone()]);
@@ -2168,7 +2169,7 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> &'static str {
 fn make_mutation_error_effect(
     value: &Place,
     abstract_value: &AbstractValue,
-    reason: &Option<MutationReason>,
+    reason: Option<&MutationReason>,
 ) -> AliasingEffect {
     let error_reason = get_write_error_reason(abstract_value);
     let variable = match &value.identifier.name {
@@ -2213,9 +2214,8 @@ fn emit_inner_function_frozen_mutation_errors(
     inner_func: &crate::hir::HIRFunction,
     effects: &mut Vec<AliasingEffect>,
 ) {
-    let aliasing_effects = match &inner_func.aliasing_effects {
-        Some(e) => e,
-        None => return,
+    let Some(aliasing_effects) = &inner_func.aliasing_effects else {
+        return;
     };
     let context_ids: rustc_hash::FxHashSet<IdentifierId> =
         inner_func.context.iter().map(|p| p.identifier.id).collect();
@@ -2230,32 +2230,31 @@ fn emit_inner_function_frozen_mutation_errors(
             continue;
         }
         // Check the OUTER state for this context variable
-        if let Some(av) = state.get(value) {
-            if matches!(av.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
-                // Create MutateFrozen error matching TS behavior
-                let error_reason = get_write_error_reason(av);
-                let variable = match &value.identifier.name {
-                    Some(crate::hir::IdentifierName::Named(name)) => format!("`{name}`"),
-                    _ => "value".to_string(),
-                };
-                let mut diagnostic = CompilerDiagnostic::create(
-                    ErrorCategory::Immutability,
-                    "This value cannot be modified".to_string(),
-                    Some(error_reason.to_string()),
-                    None,
-                )
-                .with_detail(CompilerDiagnosticDetail::Error {
-                    loc: Some(value.loc),
-                    message: Some(format!("{variable} cannot be modified")),
-                });
-                if matches!(reason, Some(MutationReason::AssignCurrentProperty)) {
-                    diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
+        if let Some(av) = state.get(value)
+            && matches!(av.kind, ValueKind::Frozen | ValueKind::MaybeFrozen)
+        {
+            // Create MutateFrozen error matching TS behavior
+            let error_reason = get_write_error_reason(av);
+            let variable = match &value.identifier.name {
+                Some(crate::hir::IdentifierName::Named(name)) => format!("`{name}`"),
+                _ => "value".to_string(),
+            };
+            let mut diagnostic = CompilerDiagnostic::create(
+                ErrorCategory::Immutability,
+                "This value cannot be modified".to_string(),
+                Some(error_reason.to_string()),
+                None,
+            )
+            .with_detail(CompilerDiagnosticDetail::Error {
+                loc: Some(value.loc),
+                message: Some(format!("{variable} cannot be modified")),
+            });
+            if matches!(reason, Some(MutationReason::AssignCurrentProperty)) {
+                diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
                         message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string(),
                     });
-                }
-                effects
-                    .push(AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic });
             }
+            effects.push(AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic });
         }
     }
 }
@@ -2289,7 +2288,7 @@ fn filter_mutation_effects(
                 match state.get(value) {
                     Some(av) => match av.kind {
                         ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
-                            filtered.push(make_mutation_error_effect(value, av, reason));
+                            filtered.push(make_mutation_error_effect(value, av, reason.as_ref()));
                         }
                         // Mutable, Context, Primitive: keep as-is.
                         // Note: unlike filter_substituted_effects, we do NOT drop
@@ -2315,7 +2314,7 @@ fn filter_mutation_effects(
                 match state.get(value) {
                     Some(av) => match av.kind {
                         ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
-                            filtered.push(make_mutation_error_effect(value, av, &None));
+                            filtered.push(make_mutation_error_effect(value, av, None));
                         }
                         _ => {
                             filtered.push(effect);
@@ -2386,7 +2385,7 @@ fn filter_substituted_effects(
                             // technically an error, but not React-specific: drop
                         }
                         ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
-                            filtered.push(make_mutation_error_effect(value, av, reason));
+                            filtered.push(make_mutation_error_effect(value, av, reason.as_ref()));
                         }
                     },
                     None => {
@@ -2409,7 +2408,7 @@ fn filter_substituted_effects(
                             // technically an error, but not React-specific: drop
                         }
                         ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
-                            filtered.push(make_mutation_error_effect(value, av, &None));
+                            filtered.push(make_mutation_error_effect(value, av, None));
                         }
                     },
                     None => {
@@ -3258,15 +3257,6 @@ fn compute_instruction_effects(
             });
         }
 
-        // NextPropertyOf: Create(Primitive) -- property name string
-        InstructionValue::NextPropertyOf(_) => {
-            effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
-                value: ValueKind::Primitive,
-                reason: ValueReason::Other,
-            });
-        }
-
         // AwaitExpression: Create(Mutable) + MutateTransitiveConditionally + Capture
         InstructionValue::Await(v) => {
             effects.push(AliasingEffect::Create {
@@ -3305,10 +3295,10 @@ fn compute_instruction_effects(
             }
             // Render effects for props that are functions returning JSX
             for prop in &jsx.props {
-                if let crate::hir::JsxAttribute::Attribute { place, .. } = prop {
-                    if is_render_function_type(&place.identifier.type_) {
-                        effects.push(AliasingEffect::Render { place: place.clone() });
-                    }
+                if let crate::hir::JsxAttribute::Attribute { place, .. } = prop
+                    && is_render_function_type(&place.identifier.type_)
+                {
+                    effects.push(AliasingEffect::Render { place: place.clone() });
                 }
             }
         }
@@ -3365,8 +3355,9 @@ fn compute_instruction_effects(
             });
         }
 
-        // All primitives: Create(Primitive)
-        InstructionValue::Primitive(_)
+        // All primitives: Create(Primitive) -- includes NextPropertyOf (property name string)
+        InstructionValue::NextPropertyOf(_)
+        | InstructionValue::Primitive(_)
         | InstructionValue::JsxText(_)
         | InstructionValue::BinaryExpression(_)
         | InstructionValue::UnaryExpression(_)
@@ -3407,7 +3398,7 @@ fn compute_instruction_effects(
                                 ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global
                             ) =>
                         {
-                            processed.push(make_mutation_error_effect(value, av, reason));
+                            processed.push(make_mutation_error_effect(value, av, reason.as_ref()));
                         }
                         _ => {
                             processed.push(effect);
@@ -3425,7 +3416,7 @@ fn compute_instruction_effects(
                                 ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global
                             ) =>
                         {
-                            processed.push(make_mutation_error_effect(value, av, &None));
+                            processed.push(make_mutation_error_effect(value, av, None));
                         }
                         _ => {
                             processed.push(effect);
@@ -3515,10 +3506,10 @@ fn compute_instruction_effects(
                 // data flow since frozen values are immutable.
                 // TS drops these in applyEffect because destinationType=null for Frozen.
                 if matches!(effect, AliasingEffect::Capture { .. } | AliasingEffect::Alias { .. }) {
-                    let (from, into) = match effect {
-                        AliasingEffect::Capture { from, into }
-                        | AliasingEffect::Alias { from, into } => (from, into),
-                        _ => unreachable!(),
+                    let (AliasingEffect::Capture { from, into }
+                    | AliasingEffect::Alias { from, into }) = effect
+                    else {
+                        unreachable!()
                     };
                     if let Some(abstract_val) = state.get(into)
                         && matches!(abstract_val.kind, ValueKind::Frozen)

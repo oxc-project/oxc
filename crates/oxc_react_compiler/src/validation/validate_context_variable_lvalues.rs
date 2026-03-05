@@ -69,7 +69,6 @@ fn validate_context_impl(
                 // the catch-param hoisting in build_hir.rs, which produces the
                 // same StoreLocal/DeclareContext mismatch that this validation
                 // detects at the outer-function level.
-                InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {}
                 _ => {}
             }
         }

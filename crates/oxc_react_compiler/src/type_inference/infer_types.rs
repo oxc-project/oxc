@@ -307,6 +307,10 @@ impl ResolvedTypes {
 }
 
 /// Run type inference on the given function.
+///
+/// # Errors
+///
+/// Returns a `CompilerError` if type inference encounters a validation error.
 pub fn infer_types(func: &mut HIRFunction) -> Result<(), crate::compiler_error::CompilerError> {
     let mut unifier = Unifier::new(&func.env);
 
@@ -700,7 +704,7 @@ fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error
 fn set_name(
     names: &mut FxHashMap<IdentifierId, String>,
     id: IdentifierId,
-    name: &Option<IdentifierName>,
+    name: Option<&IdentifierName>,
 ) {
     if let Some(IdentifierName::Named(value)) = name {
         names.insert(id, value.clone());
@@ -745,20 +749,9 @@ fn generate_instruction_equations(
             equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
         }
         InstructionValue::LoadLocal(v) => {
-            set_name(names, instr.lvalue.identifier.id, &v.place.identifier.name);
+            set_name(names, instr.lvalue.identifier.id, v.place.identifier.name.as_ref());
             equations
                 .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
-        }
-        InstructionValue::LoadContext(_) => {
-            // We intentionally do not infer types for context variable loads.
-            // Port of TS InferTypes.ts lines 199-202:
-            //   case 'DeclareContext':
-            //   case 'LoadContext': { break; }
-            // This leaves the lvalue as an unresolved TypeVar, preventing
-            // over-propagation of return types through context variables
-            // (e.g. a recursive function whose return type resolves to Primitive
-            // would incorrectly cause `may_allocate` to return false for calls
-            // through context, preventing scope creation).
         }
         InstructionValue::StoreLocal(v) => {
             equations.push(TypeEquation {
@@ -1095,11 +1088,8 @@ fn is_primitive_binary_op(op: BinaryOperator) -> bool {
 /// which prevents mutations to `.current` from extending mutable ranges.
 fn is_ref_like_name(prop: &PropType) -> bool {
     let is_current = match &prop.property_name {
-        PropertyName::Literal { value } => match value {
-            PropertyLiteral::String(s) => s == "current",
-            _ => false,
-        },
-        _ => false,
+        PropertyName::Literal { value: PropertyLiteral::String(s) } => s == "current",
+        PropertyName::Literal { .. } | PropertyName::Computed { .. } => false,
     };
     if !is_current {
         return false;

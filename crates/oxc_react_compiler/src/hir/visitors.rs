@@ -319,6 +319,7 @@ impl<'a> PatternItem<'a> {
 ///   - `Place` items yield `PatternItem::Identifier`
 ///   - `Spread` items yield `PatternItem::Spread`
 ///   - `Hole` items are skipped
+///
 /// For ObjectPattern:
 ///   - `ObjectProperty` items yield `PatternItem::Identifier` (with the property's place)
 ///   - `Spread` items yield `PatternItem::Spread`

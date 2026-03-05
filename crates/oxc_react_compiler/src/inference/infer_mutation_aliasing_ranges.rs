@@ -1267,12 +1267,6 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
                 }
             }
         }
-        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
-            // Do NOT override context variable effects. Their effects were carefully
-            // set by analyse_functions (Phase 2) and infer_mutation_aliasing_effects
-            // demotion logic. They will be restored by fix_operand/apply_operand_effects
-            // using the instruction's aliasing effects.
-        }
         InstructionValue::TaggedTemplateExpression(v) => {
             v.tag.effect = effect;
         }
@@ -1315,7 +1309,10 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
         InstructionValue::FinishMemoize(v) => {
             v.decl.effect = effect;
         }
-        InstructionValue::LoadGlobal(_)
+        // FunctionExpression/ObjectMethod: Do NOT override context variable effects.
+        InstructionValue::FunctionExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::LoadGlobal(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::Primitive(_)
@@ -1339,13 +1336,6 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
 /// To match TS behavior, `Effect::Freeze` is treated as the highest priority:
 /// once set for an identifier, it cannot be overwritten by a weaker effect.
 fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<IdentifierId, Effect> {
-    let mut operand_effects: FxHashMap<IdentifierId, Effect> = FxHashMap::default();
-    let instr_id = instr.id;
-
-    let Some(effects) = &instr.effects else {
-        return operand_effects;
-    };
-
     /// Insert an effect into the map, but never overwrite `Effect::Freeze`.
     /// In the TS compiler, `Freeze` always takes priority because `applyEffect`
     /// converts subsequent `Capture` effects on frozen values to `ImmutableCapture`.
@@ -1354,13 +1344,20 @@ fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<Identif
         id: IdentifierId,
         effect: Effect,
     ) {
-        if let Some(existing) = map.get(&id) {
-            if *existing == Effect::Freeze {
-                return; // Freeze takes priority
-            }
+        if let Some(existing) = map.get(&id)
+            && *existing == Effect::Freeze
+        {
+            return; // Freeze takes priority
         }
         map.insert(id, effect);
     }
+
+    let mut operand_effects: FxHashMap<IdentifierId, Effect> = FxHashMap::default();
+    let instr_id = instr.id;
+
+    let Some(effects) = &instr.effects else {
+        return operand_effects;
+    };
 
     for effect in effects {
         match effect {
@@ -1693,13 +1690,6 @@ fn apply_operand_effects_to_value(
                 }
             }
         }
-        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
-            // Do NOT apply operand effects to context variables. Their effects
-            // were carefully set by analyse_functions Phase 2 and preserved by
-            // infer_mutation_aliasing_effects demotion logic. Overwriting them
-            // here would lose the Capture/Read distinction needed by
-            // validate_no_freezing_known_mutable_functions.
-        }
         InstructionValue::TaggedTemplateExpression(v) => {
             fix_operand(&mut v.tag, instr_id, operand_effects);
         }
@@ -1742,7 +1732,10 @@ fn apply_operand_effects_to_value(
         InstructionValue::FinishMemoize(v) => {
             fix_operand(&mut v.decl, instr_id, operand_effects);
         }
-        InstructionValue::LoadGlobal(_)
+        // FunctionExpression/ObjectMethod: Do NOT apply operand effects to context variables.
+        InstructionValue::FunctionExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::LoadGlobal(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::Primitive(_)
@@ -2195,9 +2188,6 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
         each_instruction_lvalue, each_instruction_value_operand, each_terminal_operand,
     };
 
-    // Step 1: Collect canonical ranges (max end, min non-zero start) per IdentifierId
-    let mut canonical: FxHashMap<IdentifierId, MutableRange> = FxHashMap::default();
-
     fn merge_range(canonical: &mut FxHashMap<IdentifierId, MutableRange>, place: &Place) {
         let id = place.identifier.id;
         let range = &place.identifier.mutable_range;
@@ -2214,6 +2204,9 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
             })
             .or_insert(*range);
     }
+
+    // Step 1: Collect canonical ranges (max end, min non-zero start) per IdentifierId
+    let mut canonical: FxHashMap<IdentifierId, MutableRange> = FxHashMap::default();
 
     // Collect from params
     for param in &func.params {
