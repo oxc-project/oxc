@@ -1426,6 +1426,8 @@ fn run_pipeline_for_codegen_impl(
             &directives,
             compilation_mode,
             is_wrapped,
+            false,
+            None,
         ) {
             Some(ft) => ft,
             None => continue,
