@@ -539,13 +539,15 @@ impl ReactCompiler {
         // - Skip class bodies (ClassDeclaration/ClassExpression)
         // - Skip walking into already-compiled function bodies (fn.skip() in TS)
         // - `alreadyCompiled` set prevents double-compilation
-        // Note: In `all` mode, nested functions (including those inside module-level
-        // if/for/while blocks) still need to be discovered and compiled. The nested
-        // walker handles this correctly because already-compiled top-level statements
-        // are skipped via `compiled_stmt_indices`, and `should_compile_function` in
-        // `all` mode returns Some for all functions.
+        // - In `all` mode, only top-level functions are compiled (TS Program.ts:501-508
+        //   checks `fn.scope.getProgramParent() !== fn.scope.parent` and returns early).
+        //   So we skip Phase 3 entirely in `all` mode.
+        let compilation_mode =
+            parse_compilation_mode(self.options.compilation_mode.as_deref());
         let mut compiled_any_nested = false;
-        {
+        // In `all` mode, upstream only compiles top-level functions (Program.ts:501-508),
+        // so skip Phase 3 nested discovery entirely.
+        if compilation_mode != CompilationMode::All {
             let mut nested_scope_assign_indices: Vec<usize> = Vec::new();
             let mut nested_outlined: Vec<OutlinedOutput<'a>> = Vec::new();
             for (idx, stmt) in new_body.iter_mut().enumerate() {
@@ -596,7 +598,7 @@ impl ReactCompiler {
                 replaced_indices.push(outlined_idx);
                 new_body.push(outlined_stmt);
             }
-        }
+        } // end if not All mode
 
         // If nothing was compiled (neither top-level nor nested), restore the
         // program body and return without modifications.
@@ -917,6 +919,7 @@ impl ReactCompiler {
             directives,
             parse_compilation_mode(self.options.compilation_mode.as_deref()),
             is_memo_or_forwardref_arg,
+            self.dynamic_gating.is_some(),
         )?;
 
         // Check if any eslint-disable suppression range covers this function.
@@ -1844,11 +1847,16 @@ impl ReactCompiler {
                     }
                 }
             }
-            // Assignment expressions: recurse into right-hand side.
+            // Assignment expressions: infer name from LHS identifier.
+            // Port of getFunctionName context 2 (Program.ts:1189-1195).
             Expression::AssignmentExpression(assign) => {
+                let assign_name = match &assign.left {
+                    AssignmentTarget::AssignmentTargetIdentifier(id) => Some(id.name),
+                    _ => None,
+                };
                 self.walk_expression_for_nested_functions(
                     &mut assign.right,
-                    None,
+                    assign_name.as_deref(),
                     cache_identifier_name,
                     needs_memo_import,
                     compiled_any,
@@ -1949,9 +1957,19 @@ impl ReactCompiler {
                 for prop in &mut obj.properties {
                     match prop {
                         ObjectPropertyKind::ObjectProperty(p) => {
+                            // Port of getFunctionName context 3 (Program.ts:1197-1211):
+                            // infer name from non-computed property key identifier.
+                            let prop_name = if p.computed {
+                                None
+                            } else {
+                                match &p.key {
+                                    PropertyKey::StaticIdentifier(id) => Some(id.name),
+                                    _ => None,
+                                }
+                            };
                             self.walk_expression_for_nested_functions(
                                 &mut p.value,
-                                None,
+                                prop_name.as_deref(),
                                 cache_identifier_name,
                                 needs_memo_import,
                                 compiled_any,
@@ -3007,7 +3025,13 @@ fn parse_compilation_mode(mode: Option<&str>) -> CompilationMode {
         Some("all") => CompilationMode::All,
         Some("annotation") => CompilationMode::Annotation,
         Some("syntax") => CompilationMode::Syntax,
-        _ => CompilationMode::Infer,
+        Some("infer") | None => CompilationMode::Infer,
+        Some(invalid) => {
+            panic!(
+                "React Compiler: Invalid compilationMode \"{invalid}\". \
+                 Expected \"infer\", \"annotation\", \"syntax\", or \"all\"."
+            );
+        }
     }
 }
 
@@ -3016,7 +3040,13 @@ fn parse_output_mode(mode: Option<&str>) -> Option<CompilerOutputMode> {
         Some("client") => Some(CompilerOutputMode::Client),
         Some("ssr") => Some(CompilerOutputMode::Ssr),
         Some("lint") => Some(CompilerOutputMode::Lint),
-        _ => None,
+        None => None,
+        Some(invalid) => {
+            panic!(
+                "React Compiler: Invalid outputMode \"{invalid}\". \
+                 Expected \"client\", \"ssr\", or \"lint\"."
+            );
+        }
     }
 }
 
@@ -3024,7 +3054,13 @@ fn parse_panic_threshold(threshold: Option<&str>) -> PanicThreshold {
     match threshold {
         Some("all_errors") => PanicThreshold::AllErrors,
         Some("critical_errors") => PanicThreshold::CriticalErrors,
-        _ => PanicThreshold::None,
+        Some("none") | None => PanicThreshold::None,
+        Some(invalid) => {
+            panic!(
+                "React Compiler: Invalid panicThreshold \"{invalid}\". \
+                 Expected \"all_errors\", \"critical_errors\", or \"none\"."
+            );
+        }
     }
 }
 
@@ -3034,11 +3070,20 @@ fn parse_panic_threshold(threshold: Option<&str>) -> PanicThreshold {
 /// - "react-17" / "17" -> React17
 /// - "react-18" / "18" -> React18
 /// - "react-19" / "19" (default) -> React19
+///
+/// Panics on invalid values, matching upstream `parseTargetConfig` which calls
+/// `CompilerError.throwInvalidConfig` (Options.ts:405-417).
 fn parse_target(target: Option<&str>) -> CompilerReactTarget {
     match target {
         Some("react-17" | "17") => CompilerReactTarget::React17,
         Some("react-18" | "18") => CompilerReactTarget::React18,
-        _ => CompilerReactTarget::React19,
+        Some("react-19" | "19") | None => CompilerReactTarget::React19,
+        Some(invalid) => {
+            panic!(
+                "React Compiler: Invalid target \"{invalid}\". \
+                 Expected \"react-17\", \"react-18\", or \"react-19\"."
+            );
+        }
     }
 }
 
@@ -4006,7 +4051,13 @@ mod tests {
     #[test]
     fn infer_is_default_mode() {
         assert_eq!(parse_compilation_mode(None), CompilationMode::Infer);
-        assert_eq!(parse_compilation_mode(Some("unknown")), CompilationMode::Infer);
+        assert_eq!(parse_compilation_mode(Some("infer")), CompilationMode::Infer);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid compilationMode")]
+    fn invalid_compilation_mode_panics() {
+        parse_compilation_mode(Some("unknown"));
     }
 
     #[test]
@@ -4015,5 +4066,17 @@ mod tests {
         assert_eq!(parse_compilation_mode(Some("annotation")), CompilationMode::Annotation);
         assert_eq!(parse_compilation_mode(Some("syntax")), CompilationMode::Syntax);
         assert_eq!(parse_compilation_mode(Some("infer")), CompilationMode::Infer);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid target")]
+    fn invalid_target_panics() {
+        parse_target(Some("react-20"));
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid panicThreshold")]
+    fn invalid_panic_threshold_panics() {
+        parse_panic_threshold(Some("invalid"));
     }
 }
