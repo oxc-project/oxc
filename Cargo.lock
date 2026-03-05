@@ -1896,6 +1896,7 @@ dependencies = [
  "cow-utils",
  "fast-glob",
  "insta",
+ "itoa",
  "markdown",
  "natord",
  "nodejs-built-in-modules",

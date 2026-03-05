@@ -31,6 +31,7 @@ fast-glob = { workspace = true }
 markdown = { workspace = true }
 natord = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
+itoa = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 smallvec = { workspace = true }

@@ -1,3 +1,4 @@
+mod line_buffer;
 mod mdast_serialize;
 mod normalize;
 mod serialize;
