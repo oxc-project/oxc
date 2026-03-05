@@ -7,61 +7,396 @@ use oxc_span::Span;
 
 use crate::ExternalCallbacks;
 use crate::FormatOptions;
+use crate::formatter::Formatter;
 use crate::options::{JsdocOptions, QuoteStyle};
 
 use super::{
-    imports::process_import_tags,
-    line_buffer::LineBuffer,
-    mdast_serialize::format_description_mdast,
-    normalize::normalize_tag_kind,
+    imports::process_import_tags, line_buffer::LineBuffer,
+    mdast_serialize::format_description_mdast, normalize::normalize_tag_kind,
     param_order::reorder_param_tags,
-    tag_formatters::{
-        format_example_tag, format_generic_tag, format_type_comment_tag,
-        format_type_name_comment_tag,
-    },
 };
 
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
 const LINE_PREFIX_LEN: usize = 3;
 
+/// Holds the shared per-comment state for JSDoc formatting,
+/// reducing parameter passing across formatting functions.
+///
+/// Uses two lifetimes: `'a` for the allocator (tied to output strings)
+/// and `'o` for options/callbacks (only need to live as long as the formatter).
+pub(super) struct JsdocFormatter<'a, 'o> {
+    pub(super) options: &'o JsdocOptions,
+    pub(super) format_options: &'o FormatOptions,
+    pub(super) type_format_options: FormatOptions,
+    pub(super) external_callbacks: &'o ExternalCallbacks,
+    pub(super) allocator: &'a Allocator,
+    pub(super) wrap_width: usize,
+    pub(super) content_lines: LineBuffer,
+}
+
+impl<'a, 'o> JsdocFormatter<'a, 'o> {
+    fn new(
+        options: &'o JsdocOptions,
+        format_options: &'o FormatOptions,
+        external_callbacks: &'o ExternalCallbacks,
+        allocator: &'a Allocator,
+        available_width: usize,
+    ) -> Self {
+        let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
+        let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
+        Self {
+            options,
+            format_options,
+            type_format_options,
+            external_callbacks,
+            allocator,
+            wrap_width,
+            content_lines: LineBuffer::new(),
+        }
+    }
+
+    /// Format a JSDoc comment. Returns `Some(formatted)` if the comment was modified,
+    /// `None` if no changes are needed.
+    fn format(mut self, comment: &Comment, source_text: &str) -> Option<&'a str> {
+        let content = &source_text[comment.span.start as usize..comment.span.end as usize];
+
+        // Extract inner content (between `/**` and `*/`)
+        let content_span = comment.content_span();
+        // content_span strips `/*` and `*/`; bump start by 1 to also skip the extra `*` in `/**`
+        let jsdoc_span = Span::new(content_span.start + 1, content_span.end);
+        let inner = jsdoc_span.source_text(source_text);
+        let jsdoc = JSDoc::new(inner, jsdoc_span);
+
+        let comment_part = jsdoc.comment();
+        let description = comment_part.parsed_preserving_whitespace();
+
+        // Empty JSDoc: no description and no tags
+        if description.trim().is_empty() && jsdoc.tags().is_empty() {
+            return Some(self.allocator.alloc_str(""));
+        }
+
+        // Format description using mdast parsing (handles heading normalization,
+        // emphasis conversion, horizontal rule removal, reference links, nested lists, etc.)
+        let desc_trimmed = description.trim();
+        if !desc_trimmed.is_empty() {
+            let desc = format_description_mdast(
+                desc_trimmed,
+                self.wrap_width,
+                self.options.capitalize_descriptions,
+                Some(self.format_options),
+                Some(self.external_callbacks),
+                Some(self.allocator),
+            );
+            self.content_lines.push(desc);
+        }
+
+        // Sort tags by priority within groups.
+        // @typedef and @callback are TAGS_GROUP_HEAD — they start new groups.
+        // Tags sort within their group by weight, but groups keep their relative order.
+        let tags = jsdoc.tags();
+        let sorted_tags = sort_tags_by_groups(tags);
+
+        // Collect effective tags, merging @description into the description area
+        let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
+        for (tag, normalized_kind) in &sorted_tags {
+            if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
+                continue;
+            }
+            // @description tag: merge its content into the main description
+            if *normalized_kind == "description" {
+                let desc_content = tag.comment().parsed();
+                let desc_content = desc_content.trim();
+                if !desc_content.is_empty() {
+                    if !self.content_lines.is_empty() && !self.content_lines.last_is_empty() {
+                        self.content_lines.push_empty();
+                    }
+                    let desc = format_description_mdast(
+                        desc_content,
+                        self.wrap_width,
+                        self.options.capitalize_descriptions,
+                        Some(self.format_options),
+                        Some(self.external_callbacks),
+                        Some(self.allocator),
+                    );
+                    self.content_lines.push(desc);
+                }
+                continue;
+            }
+            effective_tags.push((tag, normalized_kind));
+        }
+
+        // Reorder @param tags to match the function signature order
+        reorder_param_tags(&mut effective_tags, comment, source_text);
+
+        // Pre-process @import tags: merge by module, sort, format
+        let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
+        let has_imports = !import_lines.is_empty();
+        let mut imports_emitted = false;
+
+        // Format tags
+        let mut prev_normalized_kind: Option<&str> = None;
+        let mut first_non_import_tag_emitted = false;
+        for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
+            // Skip successfully parsed @import tags — they are handled via merged import_lines.
+            // Unparsable @import tags fall through to format_generic_tag().
+            if parsed_import_indices.contains(&tag_idx) {
+                if has_imports && !imports_emitted {
+                    // Emit merged imports at the position of the first @import tag
+                    if !self.content_lines.is_empty() && !self.content_lines.last_is_empty() {
+                        self.content_lines.push_empty();
+                    }
+                    let import_str =
+                        std::mem::replace(&mut import_lines, LineBuffer::new()).into_string();
+                    self.content_lines.push(import_str);
+                    imports_emitted = true;
+                    prev_normalized_kind = Some("import");
+                }
+                continue;
+            }
+
+            let is_first_tag = !first_non_import_tag_emitted && !imports_emitted;
+
+            let should_capitalize = self.options.capitalize_descriptions
+                && !should_skip_capitalize(normalized_kind)
+                && is_known_tag(normalized_kind);
+
+            // Add blank line between description and first tag
+            if is_first_tag && !self.content_lines.is_empty() && !self.content_lines.last_is_empty()
+            {
+                self.content_lines.push_empty();
+            }
+
+            // Add blank lines between tag groups
+            if !is_first_tag {
+                let should_separate = if prev_normalized_kind.is_some_and(|prev| prev == "example")
+                    && normalized_kind == "example"
+                {
+                    // Always blank line between consecutive @example tags
+                    true
+                } else if self.options.separate_tag_groups {
+                    // Blank line between different tag kinds
+                    prev_normalized_kind.is_some_and(|prev| prev != normalized_kind)
+                } else if self.options.separate_returns_from_param {
+                    // Only blank line before @returns/@yields (when coming from @param-like tags)
+                    matches!(normalized_kind, "returns" | "yields")
+                        && prev_normalized_kind
+                            .is_some_and(|prev| !matches!(prev, "returns" | "yields"))
+                } else {
+                    // Default: blank line before compound tag groups (@typedef, @callback)
+                    // when coming from a different tag kind (but not from @import)
+                    matches!(normalized_kind, "typedef" | "callback")
+                        && prev_normalized_kind
+                            .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import"))
+                };
+
+                if should_separate && !self.content_lines.last_is_empty() {
+                    self.content_lines.push_empty();
+                }
+            }
+
+            first_non_import_tag_emitted = true;
+            prev_normalized_kind = Some(normalized_kind);
+
+            // Track content before formatting this tag
+            let lines_before = self.content_lines.byte_len();
+
+            // Detect if original has no space between tag kind and `{type}`
+            // e.g., `@type{import(...)}` vs `@type {import(...)}`
+            let has_no_space_before_type = {
+                let kind_end = tag.kind.span.end as usize;
+                kind_end < source_text.len() && source_text.as_bytes()[kind_end] == b'{'
+            };
+
+            if normalized_kind == "example" || normalized_kind == "remarks" {
+                self.format_example_tag(normalized_kind, tag);
+            } else if is_type_name_comment_tag(normalized_kind) {
+                self.format_type_name_comment_tag(
+                    normalized_kind,
+                    tag,
+                    should_capitalize,
+                    has_no_space_before_type,
+                );
+            } else if is_type_comment_tag(normalized_kind) {
+                self.format_type_comment_tag(
+                    normalized_kind,
+                    tag,
+                    should_capitalize,
+                    has_no_space_before_type,
+                );
+            } else {
+                self.format_generic_tag(normalized_kind, tag, should_capitalize);
+            }
+
+            // If this tag has multi-paragraph content (blank lines within, or is an @example tag
+            // with multi-line code) and the next tag is of a different kind, add a trailing
+            // blank line for separation.
+            let tag_content_has_blank_lines = self.content_lines.has_blank_line_since(lines_before);
+            // line_count_since counts \n separators added since the snapshot; ≥2 means multi-line.
+            let tag_newline_count = self.content_lines.line_count_since(lines_before);
+            let is_example_multiline = normalized_kind == "example" && tag_newline_count > 1;
+            if (tag_content_has_blank_lines || is_example_multiline)
+                && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
+                && next_kind != normalized_kind
+                && !self.content_lines.last_is_empty()
+            {
+                self.content_lines.push_empty();
+            }
+        }
+
+        // Get the full content as a single string and iterate lines,
+        // trimming leading and trailing blank lines.
+        let content_str = self.content_lines.into_string();
+        let content_str = content_str.trim_end_matches('\n');
+        let mut iter = content_str.split('\n').skip_while(|l| l.is_empty());
+
+        let Some(first) = iter.next() else {
+            return Some(self.allocator.alloc_str(""));
+        };
+
+        // Single-line check: convert to single-line if content is a single line.
+        // The plugin prefers single-line even if it slightly exceeds printWidth,
+        // since the wrapping logic already constrains the content width.
+        let second = iter.next();
+        if self.options.single_line_when_possible && second.is_none() {
+            let formatted = self.allocator.alloc_concat_strs_array(["/** ", first, " */"]);
+            if formatted == content {
+                return None;
+            }
+            return Some(formatted);
+        }
+
+        // Build multiline comment
+        let capacity =
+            content_str.len() + content_str.bytes().filter(|&b| b == b'\n').count() * 4 + 10;
+        let mut builder = StringBuilder::with_capacity_in(capacity, self.allocator);
+        builder.push_str("/**");
+
+        for line in std::iter::once(first).chain(second).chain(iter) {
+            builder.push('\n');
+            if line.is_empty() {
+                builder.push_str(" *");
+            } else {
+                builder.push_str(" * ");
+                builder.push_str(line);
+            }
+        }
+        builder.push('\n');
+        builder.push_str(" */");
+
+        let result = builder.into_str();
+
+        // Compare with original
+        if result == content {
+            return None;
+        }
+
+        Some(result)
+    }
+
+    /// Push a (possibly multi-line) description into `content_lines` as a single string,
+    /// prepending `indent` to each non-empty line. When indent is empty, moves `desc` directly.
+    pub(super) fn push_indented_desc(&mut self, indent: &str, mut desc: String) {
+        if desc.is_empty() {
+            return;
+        }
+        if indent.is_empty() {
+            self.content_lines.push(desc);
+            return;
+        }
+        if !desc.contains('\n') {
+            desc.insert_str(0, indent);
+            self.content_lines.push(desc);
+            return;
+        }
+        // One allocation, one forward pass using `find` (SIMD-accelerated in std).
+        let mut s = String::with_capacity(desc.len() + indent.len() * 4);
+        let mut rest = desc.as_str();
+        while let Some(nl) = rest.find('\n') {
+            // Skip indent for empty lines (nl == 0) — blank lines in JSDoc body
+            // should not have leading spaces.
+            if nl > 0 {
+                s.push_str(indent);
+            }
+            s.push_str(&rest[..=nl]);
+            rest = &rest[nl + 1..];
+        }
+        if !rest.is_empty() {
+            s.push_str(indent);
+            s.push_str(rest);
+        }
+        self.content_lines.push(s);
+    }
+
+    /// Wrap a long type expression across multiple lines at `|` operators.
+    /// Returns `true` if wrapping was performed.
+    pub(super) fn wrap_type_expression(
+        &mut self,
+        tag_prefix: &str,
+        type_str: &str,
+        name_and_rest: &str,
+    ) -> bool {
+        // Only wrap if the full line exceeds the width
+        let full_len = tag_prefix.len()
+            + 2 // " {"
+            + type_str.len()
+            + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
+        if full_len <= self.wrap_width {
+            return false;
+        }
+
+        // Check if the type contains `|` at the top level for union wrapping
+        let parts = split_type_at_top_level_pipe(type_str);
+        if parts.len() <= 1 {
+            // Check for generic type `Foo<...>` wrapping at top-level angle bracket
+            if let Some(wrapped) =
+                wrap_generic_type(tag_prefix, type_str, name_and_rest, &mut self.content_lines)
+            {
+                return wrapped;
+            }
+            return false;
+        }
+
+        // Wrap union type at `|` operators
+        let first_part = parts[0].trim();
+        {
+            let s = self.content_lines.begin_line();
+            s.push_str(tag_prefix);
+            s.push_str(" {");
+            s.push_str(first_part);
+        }
+
+        for (i, part) in parts.iter().enumerate().skip(1) {
+            let part = part.trim();
+            let s = self.content_lines.begin_line();
+            s.push_str("  | ");
+            s.push_str(part);
+            if i == parts.len() - 1 {
+                s.push('}');
+                if !name_and_rest.is_empty() {
+                    s.push(' ');
+                    s.push_str(name_and_rest);
+                }
+            }
+        }
+
+        true
+    }
+
+    /// Whether bracket spacing is enabled.
+    pub(super) fn bracket_spacing(&self) -> bool {
+        self.options.bracket_spacing
+    }
+
+    /// The configured quote style.
+    pub(super) fn quote_style(&self) -> QuoteStyle {
+        self.format_options.quote_style
+    }
+}
+
 /// Trim trailing whitespace from an owned `String` in place, avoiding a reallocation.
 pub(super) fn truncate_trim_end(s: &mut String) {
     let trimmed_len = s.trim_end().len();
     s.truncate(trimmed_len);
-}
-
-/// Push a (possibly multi-line) description into `content_lines` as a single string,
-/// prepending `indent` to each non-empty line. When indent is empty, moves `desc` directly.
-pub(super) fn push_indented_desc(content_lines: &mut LineBuffer, indent: &str, mut desc: String) {
-    if desc.is_empty() {
-        return;
-    }
-    if indent.is_empty() {
-        content_lines.push(desc);
-        return;
-    }
-    if !desc.contains('\n') {
-        desc.insert_str(0, indent);
-        content_lines.push(desc);
-        return;
-    }
-    // One allocation, one forward pass using `find` (SIMD-accelerated in std).
-    let mut s = String::with_capacity(desc.len() + indent.len() * 4);
-    let mut rest = desc.as_str();
-    while let Some(nl) = rest.find('\n') {
-        // Skip indent for empty lines (nl == 0) — blank lines in JSDoc body
-        // should not have leading spaces.
-        if nl > 0 {
-            s.push_str(indent);
-        }
-        s.push_str(&rest[..=nl]);
-        rest = &rest[nl + 1..];
-    }
-    if !rest.is_empty() {
-        s.push_str(indent);
-        s.push_str(rest);
-    }
-    content_lines.push(s);
 }
 
 /// Join an iterator of string slices with a separator, avoiding an intermediate `Vec`.
@@ -325,61 +660,6 @@ fn should_remove_empty_tag(kind: &str) -> bool {
     )
 }
 
-/// Wrap a long type expression across multiple lines at `|` operators.
-/// Returns `None` if no wrapping is needed or the type can't be sensibly wrapped.
-pub(super) fn wrap_type_expression(
-    tag_prefix: &str,
-    type_str: &str,
-    name_and_rest: &str,
-    wrap_width: usize,
-    content_lines: &mut LineBuffer,
-) -> bool {
-    // Only wrap if the full line exceeds the width
-    let full_len = tag_prefix.len()
-        + 2 // " {"
-        + type_str.len()
-        + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
-    if full_len <= wrap_width {
-        return false;
-    }
-
-    // Check if the type contains `|` at the top level for union wrapping
-    let parts = split_type_at_top_level_pipe(type_str);
-    if parts.len() <= 1 {
-        // Check for generic type `Foo<...>` wrapping at top-level angle bracket
-        if let Some(wrapped) = wrap_generic_type(tag_prefix, type_str, name_and_rest, content_lines)
-        {
-            return wrapped;
-        }
-        return false;
-    }
-
-    // Wrap union type at `|` operators
-    let first_part = parts[0].trim();
-    {
-        let s = content_lines.begin_line();
-        s.push_str(tag_prefix);
-        s.push_str(" {");
-        s.push_str(first_part);
-    }
-
-    for (i, part) in parts.iter().enumerate().skip(1) {
-        let part = part.trim();
-        let s = content_lines.begin_line();
-        s.push_str("  | ");
-        s.push_str(part);
-        if i == parts.len() - 1 {
-            s.push('}');
-            if !name_and_rest.is_empty() {
-                s.push(' ');
-                s.push_str(name_and_rest);
-            }
-        }
-    }
-
-    true
-}
-
 /// Wrap a generic type `Foo<Bar>` across multiple lines at the top-level angle bracket.
 /// Only wraps if the inner content is long enough to justify multi-line formatting.
 /// Expected output format:
@@ -629,284 +909,17 @@ pub fn format_jsdoc_comment<'a>(
     comment: &Comment,
     options: &JsdocOptions,
     source_text: &str,
-    allocator: &'a Allocator,
     available_width: usize,
-    format_options: &FormatOptions,
-    external_callbacks: &ExternalCallbacks,
+    f: &Formatter<'_, 'a>,
 ) -> Option<&'a str> {
-    let content = &source_text[comment.span.start as usize..comment.span.end as usize];
-
-    // Extract inner content (between `/**` and `*/`)
-    let content_span = comment.content_span();
-    // content_span strips `/*` and `*/`; bump start by 1 to also skip the extra `*` in `/**`
-    let jsdoc_span = Span::new(content_span.start + 1, content_span.end);
-    let inner = jsdoc_span.source_text(source_text);
-    let jsdoc = JSDoc::new(inner, jsdoc_span);
-
-    let comment_part = jsdoc.comment();
-    let description = comment_part.parsed_preserving_whitespace();
-
-    // Empty JSDoc: no description and no tags
-    if description.trim().is_empty() && jsdoc.tags().is_empty() {
-        return Some(allocator.alloc_str(""));
-    }
-
-    // Width available for content (subtract ` * ` prefix)
-    let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
-
-    // Pre-build format options for type formatting (jsdoc: None prevents recursion).
-    // This is cloned once here instead of per-tag in format_type_via_formatter.
-    let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
-
-    let mut content_lines = LineBuffer::new();
-
-    // Format description using mdast parsing (handles heading normalization,
-    // emphasis conversion, horizontal rule removal, reference links, nested lists, etc.)
-    let desc_trimmed = description.trim();
-    if !desc_trimmed.is_empty() {
-        let desc = format_description_mdast(
-            desc_trimmed,
-            wrap_width,
-            options.capitalize_descriptions,
-            Some(format_options),
-            Some(external_callbacks),
-            Some(allocator),
-        );
-        content_lines.push(desc);
-    }
-
-    // Sort tags by priority within groups.
-    // @typedef and @callback are TAGS_GROUP_HEAD — they start new groups.
-    // Tags sort within their group by weight, but groups keep their relative order.
-    let tags = jsdoc.tags();
-    let sorted_tags = sort_tags_by_groups(tags);
-
-    // Collect effective tags, merging @description into the description area
-    let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
-    for (tag, normalized_kind) in &sorted_tags {
-        if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
-            continue;
-        }
-        // @description tag: merge its content into the main description
-        if *normalized_kind == "description" {
-            let desc_content = tag.comment().parsed();
-            let desc_content = desc_content.trim();
-            if !desc_content.is_empty() {
-                if !content_lines.is_empty() && !content_lines.last_is_empty() {
-                    content_lines.push_empty();
-                }
-                let desc = format_description_mdast(
-                    desc_content,
-                    wrap_width,
-                    options.capitalize_descriptions,
-                    Some(format_options),
-                    Some(external_callbacks),
-                    Some(allocator),
-                );
-                content_lines.push(desc);
-            }
-            continue;
-        }
-        effective_tags.push((tag, normalized_kind));
-    }
-
-    // Reorder @param tags to match the function signature order
-    reorder_param_tags(&mut effective_tags, comment, source_text);
-
-    // Pre-process @import tags: merge by module, sort, format
-    let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
-    let has_imports = !import_lines.is_empty();
-    let mut imports_emitted = false;
-
-    // Format tags
-    let mut prev_normalized_kind: Option<&str> = None;
-    let mut first_non_import_tag_emitted = false;
-    for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
-        // Skip successfully parsed @import tags — they are handled via merged import_lines.
-        // Unparsable @import tags fall through to format_generic_tag().
-        if parsed_import_indices.contains(&tag_idx) {
-            if has_imports && !imports_emitted {
-                // Emit merged imports at the position of the first @import tag
-                if !content_lines.is_empty() && !content_lines.last_is_empty() {
-                    content_lines.push_empty();
-                }
-                let import_str =
-                    std::mem::replace(&mut import_lines, LineBuffer::new()).into_string();
-                content_lines.push(import_str);
-                imports_emitted = true;
-                prev_normalized_kind = Some("import");
-            }
-            continue;
-        }
-
-        let is_first_tag = !first_non_import_tag_emitted && !imports_emitted;
-
-        let should_capitalize = options.capitalize_descriptions
-            && !should_skip_capitalize(normalized_kind)
-            && is_known_tag(normalized_kind);
-
-        // Add blank line between description and first tag
-        if is_first_tag && !content_lines.is_empty() && !content_lines.last_is_empty() {
-            content_lines.push_empty();
-        }
-
-        // Add blank lines between tag groups
-        if !is_first_tag {
-            let should_separate = if prev_normalized_kind.is_some_and(|prev| prev == "example")
-                && normalized_kind == "example"
-            {
-                // Always blank line between consecutive @example tags
-                true
-            } else if options.separate_tag_groups {
-                // Blank line between different tag kinds
-                prev_normalized_kind.is_some_and(|prev| prev != normalized_kind)
-            } else if options.separate_returns_from_param {
-                // Only blank line before @returns/@yields (when coming from @param-like tags)
-                matches!(normalized_kind, "returns" | "yields")
-                    && prev_normalized_kind
-                        .is_some_and(|prev| !matches!(prev, "returns" | "yields"))
-            } else {
-                // Default: blank line before compound tag groups (@typedef, @callback)
-                // when coming from a different tag kind (but not from @import)
-                matches!(normalized_kind, "typedef" | "callback")
-                    && prev_normalized_kind
-                        .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import"))
-            };
-
-            if should_separate && !content_lines.last_is_empty() {
-                content_lines.push_empty();
-            }
-        }
-
-        first_non_import_tag_emitted = true;
-        prev_normalized_kind = Some(normalized_kind);
-
-        // Track content before formatting this tag
-        let lines_before = content_lines.byte_len();
-
-        // Detect if original has no space between tag kind and `{type}`
-        // e.g., `@type{import(...)}` vs `@type {import(...)}`
-        let has_no_space_before_type = {
-            let kind_end = tag.kind.span.end as usize;
-            kind_end < source_text.len() && source_text.as_bytes()[kind_end] == b'{'
-        };
-
-        let bracket_spacing = options.bracket_spacing;
-
-        if normalized_kind == "example" || normalized_kind == "remarks" {
-            format_example_tag(
-                normalized_kind,
-                tag,
-                wrap_width,
-                format_options,
-                allocator,
-                &mut content_lines,
-            );
-        } else if is_type_name_comment_tag(normalized_kind) {
-            format_type_name_comment_tag(
-                normalized_kind,
-                tag,
-                should_capitalize,
-                wrap_width,
-                has_no_space_before_type,
-                bracket_spacing,
-                format_options,
-                &type_format_options,
-                external_callbacks,
-                allocator,
-                &mut content_lines,
-            );
-        } else if is_type_comment_tag(normalized_kind) {
-            format_type_comment_tag(
-                normalized_kind,
-                tag,
-                should_capitalize,
-                wrap_width,
-                has_no_space_before_type,
-                bracket_spacing,
-                format_options,
-                &type_format_options,
-                external_callbacks,
-                allocator,
-                &mut content_lines,
-            );
-        } else {
-            format_generic_tag(
-                normalized_kind,
-                tag,
-                should_capitalize,
-                wrap_width,
-                format_options.quote_style,
-                format_options,
-                external_callbacks,
-                allocator,
-                &mut content_lines,
-            );
-        }
-
-        // If this tag has multi-paragraph content (blank lines within, or is an @example tag
-        // with multi-line code) and the next tag is of a different kind, add a trailing
-        // blank line for separation.
-        let tag_content_has_blank_lines = content_lines.has_blank_line_since(lines_before);
-        // line_count_since counts \n separators added since the snapshot; ≥2 means multi-line.
-        let tag_newline_count = content_lines.line_count_since(lines_before);
-        let is_example_multiline = normalized_kind == "example" && tag_newline_count > 1;
-        if (tag_content_has_blank_lines || is_example_multiline)
-            && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
-            && next_kind != normalized_kind
-            && !content_lines.last_is_empty()
-        {
-            content_lines.push_empty();
-        }
-    }
-
-    // Get the full content as a single string and iterate lines,
-    // trimming leading and trailing blank lines.
-    let content_str = content_lines.into_string();
-    let content_str = content_str.trim_end_matches('\n');
-    let mut iter = content_str.split('\n').skip_while(|l| l.is_empty());
-
-    let Some(first) = iter.next() else {
-        return Some(allocator.alloc_str(""));
-    };
-
-    // Single-line check: convert to single-line if content is a single line.
-    // The plugin prefers single-line even if it slightly exceeds printWidth,
-    // since the wrapping logic already constrains the content width.
-    let second = iter.next();
-    if options.single_line_when_possible && second.is_none() {
-        let formatted = allocator.alloc_concat_strs_array(["/** ", first, " */"]);
-        if formatted == content {
-            return None;
-        }
-        return Some(formatted);
-    }
-
-    // Build multiline comment
-    let capacity = content_str.len() + content_str.bytes().filter(|&b| b == b'\n').count() * 4 + 10;
-    let mut builder = StringBuilder::with_capacity_in(capacity, allocator);
-    builder.push_str("/**");
-
-    for line in std::iter::once(first).chain(second).chain(iter) {
-        builder.push('\n');
-        if line.is_empty() {
-            builder.push_str(" *");
-        } else {
-            builder.push_str(" * ");
-            builder.push_str(line);
-        }
-    }
-    builder.push('\n');
-    builder.push_str(" */");
-
-    let result = builder.into_str();
-
-    // Compare with original
-    if result == content {
-        return None;
-    }
-
-    Some(result)
+    let fmt = JsdocFormatter::new(
+        options,
+        f.options(),
+        f.context().external_callbacks(),
+        f.allocator(),
+        available_width,
+    );
+    fmt.format(comment, source_text)
 }
 
 #[cfg(test)]
