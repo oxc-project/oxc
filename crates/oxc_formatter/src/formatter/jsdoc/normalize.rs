@@ -41,6 +41,12 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
         return Cow::Borrowed(text);
     }
 
+    // Read-only scan: check if any emphasis change would actually occur,
+    // avoiding a heap allocation when `*` or `__` appear only inside code spans.
+    if !emphasis_needs_change(text.as_bytes()) {
+        return Cow::Borrowed(text);
+    }
+
     // Work with bytes directly — all significant chars (_, *, `, whitespace)
     // are ASCII single-byte, so byte-level mutation is safe and uses ~3x less
     // memory than Vec<char>.
@@ -48,7 +54,6 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
     let len = bytes.len();
     let mut i = 0;
     let mut in_code = false;
-    let mut changed = false;
 
     // First pass: convert `__` → `**`
     while i < len {
@@ -64,7 +69,6 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
         if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
             bytes[i] = b'*';
             bytes[i + 1] = b'*';
-            changed = true;
             i += 2;
             continue;
         }
@@ -119,7 +123,6 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
                 if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
                     bytes[opener] = b'_';
                     bytes[j] = b'_';
-                    changed = true;
                     i = j + 1;
                     break;
                 }
@@ -134,13 +137,87 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
         i += 1;
     }
 
-    // If no bytes were actually modified, return the original text without allocation.
-    if !changed {
-        return Cow::Borrowed(text);
-    }
     // We only replaced ASCII bytes (_, *) with other ASCII bytes (*, _),
     // so UTF-8 validity is preserved.
     Cow::Owned(String::from_utf8(bytes).unwrap())
+}
+
+/// Read-only scan that checks whether `normalize_markdown_emphasis` would
+/// actually change any bytes. Runs the same two-pass logic without mutation.
+fn emphasis_needs_change(bytes: &[u8]) -> bool {
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_code = false;
+
+    // Pass 1: would any `__` outside code be converted to `**`?
+    while i < len {
+        if bytes[i] == b'`' {
+            in_code = !in_code;
+            i += 1;
+            continue;
+        }
+        if in_code {
+            i += 1;
+            continue;
+        }
+        if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
+            return true;
+        }
+        i += 1;
+    }
+
+    // Pass 2: would any single `*text*` outside code be converted to `_text_`?
+    // After pass 1, `__` would become `**`, so `**` sequences need to be skipped.
+    // Since we're read-only, `__` is still `__` — but the mutation pass would have
+    // converted it. We simulate that by also skipping `__` as if it were `**`.
+    in_code = false;
+    i = 0;
+    while i < len {
+        if bytes[i] == b'`' {
+            in_code = !in_code;
+            i += 1;
+            continue;
+        }
+        if in_code {
+            i += 1;
+            continue;
+        }
+        // Skip `**` and `__` (which would become `**` after pass 1)
+        if (bytes[i] == b'*' || bytes[i] == b'_') && i + 1 < len && bytes[i + 1] == bytes[i] {
+            i += 2;
+            continue;
+        }
+        // Single `*` — check for matching closing emphasis
+        if bytes[i] == b'*' && i + 1 < len && !bytes[i + 1].is_ascii_whitespace() {
+            let opener = i;
+            let mut j = opener + 1;
+            while j < len {
+                if bytes[j] == b'`' {
+                    j += 1;
+                    while j < len && bytes[j] != b'`' {
+                        j += 1;
+                    }
+                    if j < len {
+                        j += 1;
+                    }
+                    continue;
+                }
+                if bytes[j] == b'*' && j + 1 < len && bytes[j + 1] == b'*' {
+                    j += 2;
+                    continue;
+                }
+                if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
+                    return true;
+                }
+                j += 1;
+            }
+            i = opener + 1;
+            continue;
+        }
+        i += 1;
+    }
+
+    false
 }
 
 /// Capitalize the first ASCII lowercase letter of a string.
