@@ -10,6 +10,7 @@ use crate::{
     },
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
+        embed::format_embedded_template,
     },
     write,
 };
@@ -26,6 +27,16 @@ pub(super) fn format_graphql_doc<'a>(
 ) -> bool {
     let quasis = &quasi.quasis;
     let num_quasis = quasis.len();
+
+    // Fast path: for simple templates with no string interpolation, use format_embedded
+    // This enables compatibility with string-based external formatters (e.g. dprint pretty_graphql)
+    if num_quasis == 1 {
+        let template_content = quasis[0].value.raw.as_str();
+        if format_embedded_template(f, "tagged-graphql", template_content) {
+            return true;
+        }
+        // If format_embedded fails, fall back to format_embedded_doc
+    }
 
     // Phase 1: Analyze each quasi
     let mut infos: Vec<QuasiInfo<'a>> = Vec::with_capacity(num_quasis);

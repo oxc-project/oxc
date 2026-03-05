@@ -209,7 +209,7 @@ fn try_embed_markdown<'a>(
 ///
 /// This is the shared formatting logic for no-substitution templates:
 /// dedent → external formatter (Prettier) → reconstruct template structure.
-fn format_embedded_template<'a>(
+pub(super) fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
     language: &str,
     template_content: &str,
