@@ -3,7 +3,7 @@ use oxc_ast::ast::{
 };
 
 use crate::{
-    compiler_error::{CompilerError, ErrorSeverity},
+    compiler_error::{CompilerError, ErrorCategory},
     entrypoint::options::{CompilationMode, OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES, PanicThreshold},
     hir::{ReactFunctionType, build_hir::LowerableFunction},
     utils::{component_declaration::is_component_name, hook_declaration::is_hook_name},
@@ -447,20 +447,18 @@ pub fn find_directive_disabling_memoization(
 }
 
 /// Determine how to handle a compilation error based on the panic threshold.
+///
+/// Port of Program.ts lines 143-155. Config errors always throw regardless of threshold.
 pub fn handle_compilation_error(error: &CompilerError, threshold: PanicThreshold) -> ErrorAction {
+    // Config errors always throw (upstream Program.ts:150-152 `isConfigError`).
+    if error.details.iter().any(|detail| detail.category() == ErrorCategory::Config) {
+        return ErrorAction::Panic;
+    }
+
     match threshold {
         PanicThreshold::AllErrors => ErrorAction::Panic,
         PanicThreshold::CriticalErrors => {
-            if error.has_errors() {
-                // Check if any errors are critical (invariants, config)
-                let has_critical = error.details.iter().any(|detail| {
-                    let severity = detail.severity();
-                    severity == ErrorSeverity::Error
-                });
-                if has_critical { ErrorAction::Panic } else { ErrorAction::Skip }
-            } else {
-                ErrorAction::Skip
-            }
+            if error.has_errors() { ErrorAction::Panic } else { ErrorAction::Skip }
         }
         PanicThreshold::None => ErrorAction::Skip,
     }

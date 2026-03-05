@@ -319,6 +319,13 @@ impl CompilerErrorEntry {
             CompilerErrorEntry::Detail(d) => d.severity(),
         }
     }
+
+    pub fn category(&self) -> ErrorCategory {
+        match self {
+            CompilerErrorEntry::Diagnostic(d) => d.category(),
+            CompilerErrorEntry::Detail(d) => d.category(),
+        }
+    }
 }
 
 impl fmt::Display for CompilerErrorEntry {
