@@ -215,7 +215,11 @@ impl Tester<'_> {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let linter = self.create_linter();
             let reports = FileResult {
-                diagnostic: linter.run_diagnostic(&uri, None),
+                diagnostic: linter.run_diagnostic(
+                    &uri,
+                    &oxc_language_server::LanguageId::default(),
+                    None,
+                ),
                 actions: linter.get_code_actions_or_commands(
                     &uri,
                     &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),

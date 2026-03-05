@@ -151,7 +151,12 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic(
+        &self,
+        uri: &Uri,
+        _language_id: &crate::LanguageId,
+        content: Option<&str>,
+    ) -> DiagnosticResult {
         if uri.as_str().ends_with("diagnostics.config") {
             return Ok(vec![(
                 uri.clone(),
@@ -172,14 +177,24 @@ impl Tool for FakeTool {
         Ok(Vec::new())
     }
 
-    fn run_diagnostic_on_change(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(
+        &self,
+        uri: &Uri,
+        language_id: &crate::LanguageId,
+        content: Option<&str>,
+    ) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(uri, language_id, content)
     }
 
-    fn run_diagnostic_on_save(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(
+        &self,
+        uri: &Uri,
+        language_id: &crate::LanguageId,
+        content: Option<&str>,
+    ) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
-        self.run_diagnostic(uri, content)
+        self.run_diagnostic(uri, language_id, content)
     }
 }
 

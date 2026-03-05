@@ -242,9 +242,13 @@ impl LanguageServer for Backend {
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let content =
-                        self.file_system.read().await.get(uri).map(|(_, content)| content);
-                    let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+                    let (language_id, content) =
+                        self.file_system.read().await.get(uri).map_or_else(
+                            || (LanguageId::default(), None),
+                            |(lang, c)| (lang, Some(c)),
+                        );
+                    let diagnostics =
+                        worker.run_diagnostic(uri, &language_id, content.as_deref()).await;
                     match diagnostics {
                         Err(err) => {
                             error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -600,9 +604,10 @@ impl LanguageServer for Backend {
         } else {
             self.file_system.read().await.get(&uri).map(|(_, content)| content)
         };
+        let language_id = self.file_system.read().await.get_language_id(&uri).unwrap_or_default();
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_save(&uri, content.as_deref()).await {
+            match worker.run_diagnostic_on_save(&uri, &language_id, content.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -635,7 +640,9 @@ impl LanguageServer for Backend {
         }
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
+            let language_id =
+                self.file_system.read().await.get_language_id(&uri).unwrap_or_default();
+            match worker.run_diagnostic_on_change(&uri, &language_id, content.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -665,15 +672,10 @@ impl LanguageServer for Backend {
         };
 
         let content = params.text_document.text;
-
-        self.file_system.write().await.set_with_language(
-            uri.clone(),
-            LanguageId::new(params.text_document.language_id),
-            content.clone(),
-        );
+        let language_id = LanguageId::new(params.text_document.language_id);
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic(&uri, Some(&content)).await {
+            match worker.run_diagnostic(&uri, &language_id, Some(&content)).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -689,6 +691,8 @@ impl LanguageServer for Backend {
                 }
             }
         }
+
+        self.file_system.write().await.set_with_language(uri, language_id, content);
     }
 
     /// It will remove the in-memory file content if the client supports dynamic formatting.
@@ -769,8 +773,13 @@ impl LanguageServer for Backend {
             )));
         };
 
-        let content = self.file_system.read().await.get(uri).map(|(_, content)| content);
-        let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
+        let (language_id, content) = self
+            .file_system
+            .read()
+            .await
+            .get(uri)
+            .map_or_else(|| (LanguageId::default(), None), |(lang, c)| (lang, Some(c)));
+        let diagnostics = worker.run_diagnostic(uri, &language_id, content.as_deref()).await;
 
         let diagnostics = match diagnostics {
             Err(err) => {
