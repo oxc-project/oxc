@@ -1608,72 +1608,7 @@ export { redundant };
 mod suppression {
     use std::{env, fs};
 
-    use crate::tester::Tester;
-
-    fn file_suppression_generator_tester(fixture_name: &str, args: &[&str]) {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path = format!("fixtures/{fixture_name}/oxlint-suppressions.json");
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf =
-            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
-        let fixture_path = fixture_buf.to_str().unwrap();
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/{}/oxlint-suppressions.json",
-            fixture_name
-        );
-
-        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
-
-        assert!(
-            fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression not found in fixtures/{}/oxlint-suppressions.json",
-            fixture_name
-        );
-
-        let stdout =
-            Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test_output(args);
-
-        assert!(stdout.starts_with("Found 0 warnings and 0 errors."), "Unexpected errors found");
-
-        let new_content = fs::read_to_string(cwd.join(fixture_path))
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(fixture_path).unwrap();
-    }
-
-    fn file_suppression_update_tester(fixture_name: &str, args: &[&str]) {
-        let cwd = env::current_dir().unwrap();
-        let fixture_buf = cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json"));
-        let expected_buf =
-            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
-        let backup_buf =
-            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-backup.json"));
-
-        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
-            .unwrap();
-        fs::copy(backup_buf, cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
-            .unwrap();
-    }
+    use crate::tester::{SuppressionTester, Tester};
 
     fn fix_suppression_tester(fixture_name: &str, args: &[&str]) {
         let cwd = env::current_dir().unwrap();
@@ -1788,150 +1723,137 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_no_file() {
-        file_suppression_generator_tester(
-            "suppression_with_suppress_all_arg_and_no_file",
-            &["--suppress-all"],
-        );
-    }
+        let args = &["--suppress-all"];
+        let suppression = SuppressionTester::new("suppression_with_suppress_all_arg_and_no_file")
+            .with_expected_file(true);
 
-    #[test]
-    fn test_suppression_with_suppress_all_and_fix_arg_and_no_file() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path = "fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let fixture_path = fixture_buf.to_str().unwrap();
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/oxlint-suppressions.json"
-        );
+        suppression.test(args);
+        let stdout = Tester::new()
+            .with_cwd("fixtures/suppression_with_suppress_all_arg_and_no_file".into())
+            .test_output(args);
 
-        let args = &["--fix", "--suppress-all"];
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file".into())
-            .test(args);
-
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/oxlint-suppressions.json"
-        );
-
-        fs::remove_file(
-            cwd.join(
-                "fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test.js",
-            ),
-        )
-        .unwrap();
-        fs::copy(
-            cwd.join(
-                "fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test-backup.js",
-            ),
-            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test.js"),
-        )
-        .unwrap();
+        assert!(stdout.starts_with("Found 0 warnings and 0 errors."), "Unexpected errors found");
     }
 
     #[test]
     fn test_suppression_with_prune_all_arg_and_no_file() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_buf = cwd
-            .join("fixtures/suppression_with_prune_all_arg_and_no_file/oxlint-suppressions.json");
-        let fixture_path = fixture_buf.to_str().unwrap();
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/suppression_with_prune_all_arg_and_no_file/oxlint-suppressions.json"
-        );
+        SuppressionTester::new("suppression_with_suppress_all_arg_and_no_file")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .test(&["--prune-suppressions"]);
+    }
 
-        let args = &["--prune-suppressions"];
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_prune_all_arg_and_no_file".into())
-            .test(args);
-
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/suppression_with_prune_all_arg_and_no_file/oxlint-suppressions.json"
-        );
+    #[test]
+    fn test_suppression_with_suppress_all_and_fix_arg_and_no_file() {
+        SuppressionTester::new("suppression_with_suppress_all_and_fix_arg_and_no_file")
+            .with_setup_file(false)
+            .with_expected_file(false)
+            .with_backup_file(false)
+            .with_files_fixed(true)
+            .test(&["--fix", "--suppress-all"]);
     }
 
     #[test]
     fn test_suppression_with_suppress_all_and_fix_arg_and_file() {
-        fix_suppression_tester(
-            "suppression_with_suppress_all_and_fix_arg_and_file",
-            &["--fix", "--suppress-all"],
-        );
+        SuppressionTester::new("suppression_with_suppress_all_and_fix_arg_and_file")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--suppress-all"]);
     }
 
     #[test]
     fn test_suppression_not_filtered_dangerous_fix_not_applied() {
-        fix_suppression_tester("suppression_not_filtered_dangerous_fix_not_applied", &["--fix"]);
+        SuppressionTester::new("suppression_not_filtered_dangerous_fix_not_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix"]);
     }
 
     #[test]
     fn test_suppression_updated_dangerous_fix_applied() {
-        fix_suppression_tester(
-            "suppression_updated_dangerous_fix_applied",
-            // Adding both fix see https://github.com/oxc-project/oxc/pull/13366, https://github.com/oxc-project/oxc/issues/12491
-            &["--fix", "--fix-suggestions", "--fix-dangerously"],
-        );
+        SuppressionTester::new("suppression_updated_dangerous_fix_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions", "--fix-dangerously"]); // Adding both fix see https://github.com/oxc-project/oxc/pull/13366, https://github.com/oxc-project/oxc/issues/12491
     }
 
     #[test]
     fn test_suppression_not_filtered_suggestion_fix_not_applied() {
-        fix_suppression_tester("suppression_not_filtered_suggestion_fix_not_applied", &["--fix"]);
+        SuppressionTester::new("suppression_not_filtered_suggestion_fix_not_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix"]);
     }
 
     #[test]
     fn test_suppression_updated_suggestion_fix_applied() {
-        fix_suppression_tester(
-            "suppression_updated_suggestion_fix_applied",
-            &["--fix", "--fix-suggestions"],
-        );
+        SuppressionTester::new("suppression_updated_suggestion_fix_applied")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .with_files_fixed(true)
+            .test(&["--fix", "--fix-suggestions"]);
     }
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_pruned_errors",
-            &["--suppress-all"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_pruned_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_pruned_errors",
-            &["--prune-suppressions"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_pruned_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
     }
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_increased_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_increased_errors",
-            &["--suppress-all"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_increased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_increased_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_increased_errors",
-            &["--prune-suppressions"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_increased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
     }
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_decreased_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_decreased_errors",
-            &["--suppress-all"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all"]);
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_decreased_errors() {
-        file_suppression_update_tester(
-            "suppression_with_arg_and_decreased_errors",
-            &["--prune-suppressions"],
-        );
+        SuppressionTester::new("suppression_with_arg_and_decreased_errors")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--prune-suppressions"]);
     }
 }
