@@ -7,7 +7,9 @@
 use crate::entrypoint::options::{
     CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold, PluginOptions,
 };
-use crate::hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction};
+use crate::hir::environment::{
+    EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunction, InstrumentationConfig,
+};
 
 /// Parse a config pragma string from a test fixture's first line.
 ///
@@ -173,6 +175,27 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "enableVerboseNoSetStateInEffect" => {
                 env_config.enable_verbose_no_set_state_in_effect =
                     parse_bool_value(entry.value.as_ref(), true);
+            }
+            "enableEmitHookGuards" => {
+                // Matches TS testComplexConfigDefaults.enableEmitHookGuards
+                env_config.enable_emit_hook_guards = Some(ExternalFunction {
+                    source: "react-compiler-runtime".to_string(),
+                    import_specifier_name: "$dispatcherGuard".to_string(),
+                });
+            }
+            "enableEmitInstrumentForget" => {
+                // Matches TS testComplexConfigDefaults.enableEmitInstrumentForget
+                env_config.enable_emit_instrument_forget = Some(InstrumentationConfig {
+                    func: ExternalFunction {
+                        source: "react-compiler-runtime".to_string(),
+                        import_specifier_name: "useRenderCounter".to_string(),
+                    },
+                    gating: Some(ExternalFunction {
+                        source: "react-compiler-runtime".to_string(),
+                        import_specifier_name: "shouldInstrument".to_string(),
+                    }),
+                    global_gating: Some("DEV".to_string()),
+                });
             }
             "validateNoCapitalizedCalls" => {
                 // When the pragma is present (with or without value), enable the
