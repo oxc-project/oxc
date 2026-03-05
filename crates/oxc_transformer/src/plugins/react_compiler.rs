@@ -14,10 +14,12 @@ use oxc_react_compiler::{
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{
             ErrorAction, find_directive_disabling_memoization, handle_compilation_error,
-            should_compile_function,
+            parse_dynamic_gating_directive, should_compile_function,
         },
         suppression::{
-            DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
+            DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange,
+            filter_suppressions_that_affect_function, find_program_suppressions,
+            suppressions_to_compiler_error,
         },
     },
     hir::{
@@ -27,8 +29,9 @@ use oxc_react_compiler::{
     },
     reactive_scopes::codegen_reactive_function::{CodegenOutput, OutlinedOutput},
 };
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
+use oxc_traverse::BoundIdentifier;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
@@ -303,6 +306,15 @@ impl ReactCompiler {
 
         self.outer_bindings = collect_import_bindings(&program.body);
 
+        // Seed ProgramContext.known_referenced_names with all top-level binding
+        // names so that ProgramContext::new_uid avoids collisions with real scope
+        // bindings. This matches upstream Imports.ts which receives the program
+        // scope and checks it for existing names.
+        let root_scope_id = ctx.scoping().root_scope_id();
+        for (name, _) in ctx.scoping().get_bindings(root_scope_id) {
+            self.program_context.add_reference(name);
+        }
+
         // Pre-generate the cache function UID before compiling any functions.
         // This ensures the same name (e.g. "_c" or "_c2") is used in both the
         // import binding and the codegen body references.
@@ -393,24 +405,48 @@ impl ReactCompiler {
                         all_outlined.extend(std::mem::take(&mut compiled.outlined));
 
                         // Determine if gating should be applied for this function.
-                        let gating_output =
-                            if let Some(ref dynamic_gating) = stmt_gating_directive {
+                        // For VarDecl declarators (declarator_index.is_some()), compute
+                        // gating per-declarator since each function can have different
+                        // directives. For non-VarDecl results, use the pre-computed
+                        // stmt_gating_directive.
+                        let gating_output = if let Some(decl_idx) = declarator_index {
+                            // Per-declarator gating for VarDecl results.
+                            if self.gating.is_some() || self.dynamic_gating.is_some() {
+                                let stmt_ref = stmt_opt.as_ref().expect(
+                                    "stmt should not have been consumed before gating check",
+                                );
+                                let directives =
+                                    get_declarator_directives(stmt_ref, decl_idx);
+                                let dynamic_gating =
+                                    match extract_dynamic_gating_directive(
+                                        &directives,
+                                        self.dynamic_gating.as_ref(),
+                                    ) {
+                                        Ok(dg) => dg,
+                                        Err(errors) => {
+                                            for msg in &errors {
+                                                let diagnostic = OxcDiagnostic::error(
+                                                    format!("React Compiler: {msg}"),
+                                                );
+                                                ctx.state
+                                                    .error(diagnostic.with_label(SPAN));
+                                            }
+                                            None
+                                        }
+                                    };
                                 let effective_gating =
                                     dynamic_gating.as_ref().or(self.gating.as_ref());
                                 if let Some(gating) = effective_gating {
-                                    let stmt_ref = stmt_opt.as_ref().expect(
-                                        "stmt should not have been consumed before gating check",
-                                    );
-                                    let fn_name_ref = fn_name.as_deref();
-                                    let fn_kind = get_gating_function_kind(stmt_ref);
+                                    let fn_kind =
+                                        get_declarator_function_kind(stmt_ref, decl_idx);
                                     let parent_context = get_gating_parent_context(stmt_ref);
                                     let is_ref_before_decl = referenced_before_declared
                                         .as_ref()
                                         .is_some_and(|set| set.contains(&i));
-                                    let param_info = get_statement_param_info(stmt_ref);
-
+                                    let param_info =
+                                        get_declarator_param_info(stmt_ref, decl_idx);
                                     Some(build_gating_output(
-                                        fn_name_ref,
+                                        fn_name.as_deref(),
                                         fn_kind,
                                         parent_context,
                                         gating,
@@ -423,60 +459,117 @@ impl ReactCompiler {
                                 }
                             } else {
                                 None
-                            };
+                            }
+                        } else {
+                            // Non-VarDecl: use pre-computed stmt_gating_directive.
+                            if let Some(ref dynamic_gating) = stmt_gating_directive {
+                                let effective_gating =
+                                    dynamic_gating.as_ref().or(self.gating.as_ref());
+                                if let Some(gating) = effective_gating {
+                                    let stmt_ref = stmt_opt.as_ref().expect(
+                                        "stmt should not have been consumed before gating check",
+                                    );
+                                    let fn_kind = get_gating_function_kind(stmt_ref);
+                                    let parent_context = get_gating_parent_context(stmt_ref);
+                                    let is_ref_before_decl = referenced_before_declared
+                                        .as_ref()
+                                        .is_some_and(|set| set.contains(&i));
+                                    let param_info = get_statement_param_info(stmt_ref);
+                                    Some(build_gating_output(
+                                        fn_name.as_deref(),
+                                        fn_kind,
+                                        parent_context,
+                                        gating,
+                                        is_ref_before_decl,
+                                        &param_info,
+                                        &mut self.program_context,
+                                    ))
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        };
 
                         if let Some(gating_output) = gating_output {
                             gating_was_used = true;
-                            // Apply gating-aware replacement. Gating consumes the entire
-                            // statement, so multi-declarator gating is not supported;
-                            // remaining results for this statement are skipped.
-                            let gating_stmt = stmt_opt.take().expect(
-                                "stmt should not have been consumed before gating replacement",
-                            );
-                            match &gating_output {
-                                GatingOutput::Ternary { gating_fn_name, wrap } => {
-                                    let replacement_stmts = build_ternary_gating_replacement(
-                                        gating_stmt,
-                                        compiled,
-                                        gating_fn_name,
-                                        wrap,
-                                        ctx,
-                                    );
-                                    for replacement in replacement_stmts {
-                                        let new_idx = new_body.len();
-                                        replaced_indices.push(new_idx);
-                                        compiled_stmt_indices.insert(new_idx);
-                                        new_body.push(replacement);
-                                    }
-                                }
-                                GatingOutput::Hoisted { .. } => {
-                                    let replacement_stmts = build_hoisted_gating_replacement(
-                                        gating_stmt,
-                                        compiled,
-                                        &gating_output,
-                                        ctx,
-                                    );
-                                    for replacement in replacement_stmts {
-                                        let new_idx = new_body.len();
-                                        replaced_indices.push(new_idx);
-                                        compiled_stmt_indices.insert(new_idx);
-                                        new_body.push(replacement);
-                                    }
-                                }
-                            }
-                            break;
-                        }
 
-                        // No gating: mutate the statement in-place for this declarator.
-                        let stmt_ref = stmt_opt
-                            .as_mut()
-                            .expect("stmt should not have been consumed in non-gating path");
-                        replace_statement_function_in_place(
-                            stmt_ref,
-                            compiled,
-                            declarator_index,
-                            ctx,
-                        );
+                            if let Some(decl_idx) = declarator_index {
+                                // In-place ternary gating for VarDecl declarators.
+                                // Replaces just the specific declarator's init with the
+                                // ternary, preserving the statement for other declarators.
+                                // This matches upstream where fnPath.replaceWith() only
+                                // replaces the function expression, not the enclosing statement.
+                                let gating_fn_name = match &gating_output {
+                                    GatingOutput::Ternary { gating_fn_name, .. }
+                                    | GatingOutput::Hoisted { gating_fn_name, .. } => {
+                                        gating_fn_name
+                                    }
+                                };
+                                let stmt_ref = stmt_opt.as_mut().expect(
+                                    "stmt should not have been consumed before in-place gating",
+                                );
+                                apply_ternary_gating_in_place(
+                                    stmt_ref,
+                                    compiled,
+                                    gating_fn_name,
+                                    decl_idx,
+                                    ctx,
+                                );
+                                // Continue to process remaining results for this statement.
+                            } else {
+                                // Statement-level gating: consumes the entire statement.
+                                let gating_stmt = stmt_opt.take().expect(
+                                    "stmt should not have been consumed before gating replacement",
+                                );
+                                match &gating_output {
+                                    GatingOutput::Ternary { gating_fn_name, wrap } => {
+                                        let replacement_stmts =
+                                            build_ternary_gating_replacement(
+                                                gating_stmt,
+                                                compiled,
+                                                gating_fn_name,
+                                                wrap,
+                                                ctx,
+                                            );
+                                        for replacement in replacement_stmts {
+                                            let new_idx = new_body.len();
+                                            replaced_indices.push(new_idx);
+                                            compiled_stmt_indices.insert(new_idx);
+                                            new_body.push(replacement);
+                                        }
+                                    }
+                                    GatingOutput::Hoisted { .. } => {
+                                        let replacement_stmts =
+                                            build_hoisted_gating_replacement(
+                                                gating_stmt,
+                                                compiled,
+                                                &gating_output,
+                                                ctx,
+                                            );
+                                        for replacement in replacement_stmts {
+                                            let new_idx = new_body.len();
+                                            replaced_indices.push(new_idx);
+                                            compiled_stmt_indices.insert(new_idx);
+                                            new_body.push(replacement);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        } else {
+                            // No gating: mutate the statement in-place for this declarator.
+                            let stmt_ref = stmt_opt
+                                .as_mut()
+                                .expect("stmt should not have been consumed in non-gating path");
+                            replace_statement_function_in_place(
+                                stmt_ref,
+                                compiled,
+                                declarator_index,
+                                ctx,
+                            );
+                        }
                     }
 
                     if let Some(final_stmt) = stmt_opt {
@@ -619,6 +712,10 @@ impl ReactCompiler {
         }
 
         // Phase 4b: Inject gating function imports if gating was used.
+        // Use the exact local names computed by ProgramContext::new_uid (which
+        // already checked against real scope bindings via known_referenced_names)
+        // instead of calling generate_uid_in_root_scope, which would rename them
+        // and cause a mismatch with the names already emitted in gating codegen.
         if gating_was_used {
             // Clone the import data to avoid borrowing self while mutating ctx.
             let gating_imports: Vec<(String, Vec<(String, String)>)> = self
@@ -632,9 +729,22 @@ impl ReactCompiler {
                     )
                 })
                 .collect();
+            let root_scope_id = ctx.scoping().root_scope_id();
             for (source, specifiers) in gating_imports {
                 for (local, imported) in specifiers {
-                    let local_binding = ctx.generate_uid_in_root_scope(&local, SymbolFlags::Import);
+                    // Create a binding in the root scope with the exact local
+                    // name that ProgramContext already used in codegen output.
+                    let name =
+                        oxc_span::Ident::from(ctx.ast.allocator.alloc_str(&local));
+                    let symbol_id = ctx.scoping_mut().create_symbol(
+                        SPAN,
+                        name,
+                        SymbolFlags::Import,
+                        root_scope_id,
+                        NodeId::DUMMY,
+                    );
+                    ctx.scoping_mut().add_binding(root_scope_id, name, symbol_id);
+                    let local_binding = BoundIdentifier::new(name, symbol_id);
                     let source_atom = ctx.ast.atom(&source);
                     let imported_atom = ctx.ast.atom(&imported);
                     ctx.state.module_imports.add_named_import(
@@ -2337,35 +2447,6 @@ fn extract_dynamic_gating_directive(
     }
 }
 
-/// Parse the `use memo if(IDENT)` directive pattern.
-///
-/// Returns:
-/// - `None` if the directive doesn't match the `use memo if(...)` pattern at all
-/// - `Some(Ok(ident))` if a valid identifier was found
-/// - `Some(Err(directive))` if the pattern matched but the content is not a valid identifier
-fn parse_dynamic_gating_directive(directive: &str) -> Option<Result<&str, &str>> {
-    let trimmed = directive.trim();
-    let rest = trimmed.strip_prefix("use memo if(")?;
-    let ident = rest.strip_suffix(')')?;
-    let ident = ident.trim();
-    if ident.is_empty() {
-        return Some(Err(trimmed));
-    }
-    // Basic identifier validation: must start with letter/underscore/$,
-    // rest must be alphanumeric/underscore/$
-    let mut chars = ident.chars();
-    let first = chars.next();
-    match first {
-        Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$' => {}
-        _ => return Some(Err(trimmed)),
-    }
-    for c in chars {
-        if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
-            return Some(Err(trimmed));
-        }
-    }
-    Some(Ok(ident))
-}
 
 /// Determine the gating function kind from the statement and its function.
 fn get_gating_function_kind(stmt: &Statement<'_>) -> GatingFunctionKind {
@@ -2407,6 +2488,91 @@ fn get_gating_parent_context(stmt: &Statement<'_>) -> ParentContext {
     match stmt {
         Statement::ExportDefaultDeclaration(_) => ParentContext::ExportDefault,
         _ => ParentContext::Other,
+    }
+}
+
+/// Get the init expression from a specific declarator within a statement.
+fn get_declarator_init<'a, 'b>(
+    stmt: &'b Statement<'a>,
+    declarator_index: usize,
+) -> Option<&'b Expression<'a>> {
+    match stmt {
+        Statement::VariableDeclaration(decl) => {
+            decl.declarations.get(declarator_index).and_then(|d| d.init.as_ref())
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(Declaration::VariableDeclaration(decl)) = &export.declaration {
+                decl.declarations.get(declarator_index).and_then(|d| d.init.as_ref())
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Determine the gating function kind for a specific declarator within a VarDecl.
+fn get_declarator_function_kind(
+    stmt: &Statement<'_>,
+    declarator_index: usize,
+) -> GatingFunctionKind {
+    match get_declarator_init(stmt, declarator_index) {
+        Some(Expression::ArrowFunctionExpression(_)) => GatingFunctionKind::ArrowFunction,
+        _ => GatingFunctionKind::FunctionExpression,
+    }
+}
+
+/// Get the directives from a specific declarator's function body.
+fn get_declarator_directives(stmt: &Statement<'_>, declarator_index: usize) -> Vec<String> {
+    match get_declarator_init(stmt, declarator_index) {
+        Some(Expression::FunctionExpression(f)) => function_directives(f),
+        Some(Expression::ArrowFunctionExpression(arrow)) => arrow_directives(arrow),
+        _ => Vec::new(),
+    }
+}
+
+/// Get the parameter info from a specific declarator's function.
+fn get_declarator_param_info(stmt: &Statement<'_>, declarator_index: usize) -> Vec<ParamInfo> {
+    match get_declarator_init(stmt, declarator_index) {
+        Some(Expression::FunctionExpression(f)) => get_param_info_from_formal(&f.params),
+        Some(Expression::ArrowFunctionExpression(arrow)) => get_param_info_from_formal(&arrow.params),
+        _ => Vec::new(),
+    }
+}
+
+/// Apply ternary gating in-place for a specific VarDecl declarator.
+///
+/// Replaces just the declarator's init expression with
+/// `gatingFn() ? compiledExpr : originalExpr`, preserving the enclosing
+/// statement and all other declarators. This matches upstream behavior where
+/// `fnPath.replaceWith(gatingExpression)` replaces only the function expression.
+fn apply_ternary_gating_in_place<'a>(
+    stmt: &mut Statement<'a>,
+    mut compiled: CodegenOutput<'a>,
+    gating_fn_name: &str,
+    declarator_index: usize,
+    ctx: &TraverseCtx<'a>,
+) {
+    let compiled_expr = build_compiled_function_expr(&mut compiled, ctx);
+
+    let declarations = match stmt {
+        Statement::VariableDeclaration(decl) => &mut decl.declarations,
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(Declaration::VariableDeclaration(decl)) = &mut export.declaration {
+                &mut decl.declarations
+            } else {
+                return;
+            }
+        }
+        _ => return,
+    };
+
+    if let Some(declarator) = declarations.get_mut(declarator_index) {
+        if let Some(init) = &mut declarator.init {
+            let original_expr = std::mem::replace(init, ctx.ast.expression_null_literal(SPAN));
+            let ternary = build_gating_ternary(gating_fn_name, compiled_expr, original_expr, ctx);
+            declarator.init = Some(ternary);
+        }
     }
 }
 
@@ -3096,77 +3262,6 @@ fn get_runtime_module(target: &CompilerReactTarget) -> &'static str {
         CompilerReactTarget::React19 => "react/compiler-runtime",
         CompilerReactTarget::MetaInternal { .. } => "react",
     }
-}
-
-/// Filter suppression ranges to those that affect a given function span.
-///
-/// Port of `filterSuppressionsThatAffectFunction` from Suppression.ts.
-///
-/// A suppression affects a function if:
-/// 1. The suppression is within the function's body; or
-/// 2. The suppression wraps the function
-fn filter_suppressions_that_affect_function(
-    suppressions: &[SuppressionRange],
-    fn_span: Span,
-) -> Vec<&SuppressionRange> {
-    let fn_start = fn_span.start;
-    let fn_end = fn_span.end;
-
-    suppressions
-        .iter()
-        .filter(|s| {
-            let disable_start = s.start;
-
-            // The suppression is within the function
-            let within = disable_start > fn_start
-                && match s.end {
-                    None => true,
-                    Some(enable_end) => enable_end < fn_end,
-                };
-
-            // The suppression wraps the function
-            let wraps = disable_start < fn_start
-                && match s.end {
-                    None => true,
-                    Some(enable_end) => enable_end > fn_end,
-                };
-
-            within || wraps
-        })
-        .collect()
-}
-
-/// Convert suppression ranges that affect a function into a CompilerError.
-///
-/// Port of `suppressionsToCompilerError` from Suppression.ts.
-fn suppressions_to_compiler_error(suppressions: &[&SuppressionRange]) -> CompilerError {
-    use oxc_react_compiler::compiler_error::{
-        CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
-    };
-    use oxc_react_compiler::entrypoint::suppression::SuppressionSource;
-
-    let mut error = CompilerError::new();
-    for suppression in suppressions {
-        let reason = match suppression.source {
-            SuppressionSource::Eslint => {
-                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when it can safely apply React rules of hooks and other React rules."
-            }
-            SuppressionSource::Flow => {
-                "React Compiler has skipped optimizing this component because a Flow suppression was found."
-            }
-        };
-        error.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
-            category: ErrorCategory::Todo,
-            reason: reason.to_string(),
-            description: None,
-            loc: Some(SourceLocation::Source(Span::new(
-                suppression.start,
-                suppression.end.unwrap_or(suppression.start),
-            ))),
-            suggestions: None,
-        }));
-    }
-    error
 }
 
 fn function_directives(function: &Function<'_>) -> Vec<String> {

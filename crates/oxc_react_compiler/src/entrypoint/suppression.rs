@@ -6,6 +6,11 @@
 /// which indicates the code may be breaking React rules and should be
 /// skipped during compilation.
 use oxc_ast::ast::Comment;
+use oxc_span::Span;
+
+use crate::compiler_error::{
+    CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory, SourceLocation,
+};
 
 /// A suppression range from an eslint-disable comment pair.
 #[derive(Debug, Clone)]
@@ -167,4 +172,70 @@ pub fn find_program_suppressions(
     }
 
     suppression_ranges
+}
+
+/// Filter suppression ranges to those that affect a given function span.
+///
+/// Port of `filterSuppressionsThatAffectFunction` from Suppression.ts.
+///
+/// A suppression affects a function if:
+/// 1. The suppression is within the function's body; or
+/// 2. The suppression wraps the function
+pub fn filter_suppressions_that_affect_function(
+    suppressions: &[SuppressionRange],
+    fn_span: Span,
+) -> Vec<&SuppressionRange> {
+    let fn_start = fn_span.start;
+    let fn_end = fn_span.end;
+
+    suppressions
+        .iter()
+        .filter(|s| {
+            let disable_start = s.start;
+
+            // The suppression is within the function
+            let within = disable_start > fn_start
+                && match s.end {
+                    None => true,
+                    Some(enable_end) => enable_end < fn_end,
+                };
+
+            // The suppression wraps the function
+            let wraps = disable_start < fn_start
+                && match s.end {
+                    None => true,
+                    Some(enable_end) => enable_end > fn_end,
+                };
+
+            within || wraps
+        })
+        .collect()
+}
+
+/// Convert suppression ranges that affect a function into a CompilerError.
+///
+/// Port of `suppressionsToCompilerError` from Suppression.ts.
+pub fn suppressions_to_compiler_error(suppressions: &[&SuppressionRange]) -> CompilerError {
+    let mut error = CompilerError::new();
+    for suppression in suppressions {
+        let reason = match suppression.source {
+            SuppressionSource::Eslint => {
+                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when it can safely apply React rules of hooks and other React rules."
+            }
+            SuppressionSource::Flow => {
+                "React Compiler has skipped optimizing this component because a Flow suppression was found."
+            }
+        };
+        error.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+            category: ErrorCategory::Suppression,
+            reason: reason.to_string(),
+            description: None,
+            loc: Some(SourceLocation::Source(Span::new(
+                suppression.start,
+                suppression.end.unwrap_or(suppression.start),
+            ))),
+            suggestions: None,
+        }));
+    }
+    error
 }

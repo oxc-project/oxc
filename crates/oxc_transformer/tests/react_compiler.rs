@@ -521,3 +521,40 @@ function Component() {
         "Expected no compilation with legacy 'use no forget' directive, got:\n{code}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// 17. Multi-declarator gating — both declarators get gated
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_multi_declarator_gating() {
+    let source = r#"
+const Foo = ({ a }) => {
+    return <div>{a}</div>;
+}, Bar = ({ b }) => {
+    return <span>{b}</span>;
+};
+"#;
+    let opts = ReactCompilerOptions {
+        enabled: true,
+        compilation_mode: Some("all".to_string()),
+        gating: Some(oxc_transformer::ExternalFunctionConfig {
+            source: "my-gating-module".to_string(),
+            import_specifier_name: "isEnabled".to_string(),
+        }),
+        ..ReactCompilerOptions::default()
+    };
+    let code = transform_react_compiler(source, opts);
+    // Both Foo and Bar should have gating ternaries.
+    // The output should contain two ternary gating patterns.
+    let ternary_count = code.matches("isEnabled").count();
+    assert!(
+        ternary_count >= 2,
+        "Expected at least 2 gating ternaries (one per declarator), found {ternary_count}.\nOutput:\n{code}"
+    );
+    // Both declarators should still be in a single const statement.
+    assert!(
+        code.contains("Foo =") && code.contains("Bar ="),
+        "Expected both Foo and Bar in output.\nOutput:\n{code}"
+    );
+}
