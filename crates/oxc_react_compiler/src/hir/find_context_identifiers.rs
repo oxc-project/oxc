@@ -560,7 +560,7 @@ fn visit_jsx_member_object(state: &mut FindContextState, obj: &ast::JSXMemberExp
         ast::JSXMemberExpressionObject::MemberExpression(member) => {
             visit_jsx_member_object(state, &member.object);
         }
-        _ => {}
+        ast::JSXMemberExpressionObject::ThisExpression(_) => {}
     }
 }
 
@@ -582,7 +582,7 @@ fn visit_jsx_attribute_value(state: &mut FindContextState, value: &ast::JSXAttri
                 visit_jsx_child(state, child);
             }
         }
-        _ => {}
+        ast::JSXAttributeValue::StringLiteral(_) => {}
     }
 }
 
@@ -607,7 +607,7 @@ fn visit_jsx_child(state: &mut FindContextState, child: &ast::JSXChild<'_>) {
         ast::JSXChild::Spread(spread) => {
             visit_expression(state, &spread.expression);
         }
-        _ => {}
+        ast::JSXChild::Text(_) => {}
     }
 }
 

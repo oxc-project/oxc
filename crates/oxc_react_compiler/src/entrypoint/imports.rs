@@ -91,12 +91,11 @@ impl ProgramContext {
     /// registers the import.
     pub fn add_import_specifier(&mut self, ext_fn: &ExternalFunction) -> String {
         // Check if this module+specifier combination already exists
-        if let Some(specifiers) = self.imports.get(&ext_fn.source) {
-            if let Some(existing) =
+        if let Some(specifiers) = self.imports.get(&ext_fn.source)
+            && let Some(existing) =
                 specifiers.iter().find(|s| s.imported == ext_fn.import_specifier_name)
-            {
-                return existing.local.clone();
-            }
+        {
+            return existing.local.clone();
         }
 
         let local = self.new_uid(&ext_fn.import_specifier_name);

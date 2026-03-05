@@ -277,10 +277,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // =========================================================================
     {
         let r = &mut registry;
-        let mut props = Vec::new();
-
-        // toString(): returns Primitive (string)
-        props.push((
+        let props = vec![(
             "toString".to_string(),
             method_prop(
                 r,
@@ -293,7 +290,7 @@ pub fn default_shapes() -> ShapeRegistry {
                 },
                 Type::Primitive,
             ),
-        ));
+        )];
 
         add_object(r, BUILT_IN_OBJECT_ID, props);
     }
@@ -303,8 +300,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // =========================================================================
     {
         let r = &mut registry;
-        let mut props = Vec::new();
-        props.push(("size".to_string(), Type::Primitive));
+        let mut props = vec![("size".to_string(), Type::Primitive)];
 
         props.push((
             "add".to_string(),
@@ -405,8 +401,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // =========================================================================
     {
         let r = &mut registry;
-        let mut props = Vec::new();
-        props.push(("size".to_string(), Type::Primitive));
+        let mut props = vec![("size".to_string(), Type::Primitive)];
 
         props.push((
             "clear".to_string(),
@@ -522,9 +517,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // =========================================================================
     {
         let r = &mut registry;
-        let mut props = Vec::new();
-
-        props.push((
+        let mut props = vec![(
             "add".to_string(),
             method_prop(
                 r,
@@ -537,7 +530,7 @@ pub fn default_shapes() -> ShapeRegistry {
                 },
                 weak_set_type,
             ),
-        ));
+        )];
 
         props.push((
             "delete".to_string(),
@@ -577,9 +570,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // =========================================================================
     {
         let r = &mut registry;
-        let mut props = Vec::new();
-
-        props.push((
+        let mut props = vec![(
             "delete".to_string(),
             method_prop(
                 r,
@@ -592,7 +583,7 @@ pub fn default_shapes() -> ShapeRegistry {
                 },
                 Type::Primitive,
             ),
-        ));
+        )];
 
         props.push((
             "get".to_string(),
@@ -1697,10 +1688,8 @@ pub fn get_react_compiler_test_module_type(shapes: &mut ShapeRegistry) -> Type {
 /// starts with `use` which suggests it should be a hook. This tests the module-level
 /// hook name / hook type consistency validation.
 pub fn get_use_default_export_not_typed_as_hook_module_type(shapes: &mut ShapeRegistry) -> Type {
-    let mut props: Vec<(String, Type)> = Vec::new();
-
     // default: { kind: "type", name: "Any" } → Poly (not a hook)
-    props.push(("default".to_string(), Type::Poly));
+    let props: Vec<(String, Type)> = vec![("default".to_string(), Type::Poly)];
 
     let module_shape_id = add_object(shapes, "UseDefaultExportNotTypedAsHookModule", props);
     Type::Object(ObjectType { shape_id: Some(module_shape_id) })
@@ -2576,7 +2565,7 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
         .iter()
         .filter_map(|(name, global)| match global {
             Global::Typed(t) => Some((name.clone(), t.clone())),
-            _ => None,
+            Global::Untyped => None,
         })
         .collect();
 

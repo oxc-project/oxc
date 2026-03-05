@@ -21,8 +21,9 @@ use crate::{
 
 /// Validate that locals are not reassigned after render.
 ///
-/// # Panics
-/// Throws a `CompilerError` (via panic) if a context variable is reassigned
+/// # Errors
+///
+/// Returns a `CompilerError` if a context variable is reassigned
 /// after render, or if an async function reassigns a context variable.
 pub fn validate_locals_not_reassigned_after_render(
     func: &HIRFunction,

@@ -23,24 +23,15 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
         ..PluginOptions::default()
     };
 
-    let mut env_config = EnvironmentConfig::default();
-
-    // Match the TS snap test harness behavior: default to NOT validating
-    // preserve-existing-memoization-guarantees. The snap tool in the TS
-    // codebase (packages/snap/src/compiler.ts) sets:
-    //   validatePreserveExistingMemoizationGuarantees = false
-    // by default and only enables it when the pragma explicitly contains
-    // `@validatePreserveExistingMemoizationGuarantees`. Most fixtures use
-    // useMemo for testing compilation output, not for testing that manual
-    // memoization is preserved.
-    env_config.validate_preserve_existing_memoization_guarantees = false;
-
-    // Match the TS snap test harness behavior: always register the shared-runtime
-    // module type provider. The TS snap tool (packages/snap/src/compiler.ts) sets:
-    //   moduleTypeProvider: makeSharedRuntimeTypeProvider(...)
-    // which provides type information for hooks like useFragment (MixedReadonly,
-    // noAlias) and useNoAlias from the shared-runtime test module.
-    env_config.enable_shared_runtime_type_provider = true;
+    let mut env_config = EnvironmentConfig {
+        // Match the TS snap test harness behavior: default to NOT validating
+        // preserve-existing-memoization-guarantees.
+        validate_preserve_existing_memoization_guarantees: false,
+        // Match the TS snap test harness behavior: always register the shared-runtime
+        // module type provider.
+        enable_shared_runtime_type_provider: true,
+        ..EnvironmentConfig::default()
+    };
 
     for entry in split_pragma(pragma) {
         match entry.key.as_str() {
@@ -159,10 +150,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 }
             }
             "validateBlocklistedImports" => {
-                if let Some(val) = &entry.value {
-                    if let Some(arr) = parse_json_string_array(val) {
-                        env_config.validate_blocklisted_imports = Some(arr);
-                    }
+                if let Some(val) = &entry.value
+                    && let Some(arr) = parse_json_string_array(val)
+                {
+                    env_config.validate_blocklisted_imports = Some(arr);
                 }
             }
             "enableUseKeyedState" => {
@@ -211,7 +202,6 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 if let Some(val) = &entry.value {
                     let stripped = val.trim_matches('"');
                     env_config.validate_exhaustive_effect_dependencies = match stripped {
-                        "all" => ExhaustiveEffectDepsMode::All,
                         "missing-only" => ExhaustiveEffectDepsMode::MissingOnly,
                         "extra-only" => ExhaustiveEffectDepsMode::ExtraOnly,
                         "off" => ExhaustiveEffectDepsMode::Off,
@@ -238,10 +228,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 }
             }
             "eslintSuppressionRules" => {
-                if let Some(val) = &entry.value {
-                    if let Some(arr) = parse_json_string_array(val) {
-                        options.eslint_suppression_rules = Some(arr);
-                    }
+                if let Some(val) = &entry.value
+                    && let Some(arr) = parse_json_string_array(val)
+                {
+                    options.eslint_suppression_rules = Some(arr);
                 }
             }
             "dynamicGating" => {
@@ -260,7 +250,6 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     options.target = match stripped {
                         "17" => CompilerReactTarget::React17,
                         "18" => CompilerReactTarget::React18,
-                        "19" => CompilerReactTarget::React19,
                         "donotuse_meta_internal" => CompilerReactTarget::MetaInternal {
                             runtime_module: "react".to_string(),
                         },

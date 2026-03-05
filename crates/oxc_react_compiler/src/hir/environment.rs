@@ -5,6 +5,7 @@
 /// The `Environment` holds all compilation context and configuration,
 /// including shape registries, global definitions, and feature flags.
 /// `EnvironmentConfig` defines all the knobs for controlling compiler behavior.
+use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{
@@ -745,8 +746,8 @@ impl Environment {
     /// Lookup order for string properties: exact name → wildcard ('*') → hook pattern.
     pub fn get_property_type(&self, receiver: &Type, property: &str) -> Option<Type> {
         let shape_id = match receiver {
-            Type::Object(ObjectType { shape_id: Some(id) }) => Some(id.as_str()),
-            Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
+            Type::Object(ObjectType { shape_id: Some(id) })
+            | Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
             _ => None,
         };
 
@@ -780,8 +781,8 @@ impl Environment {
     /// property on the receiver's shape (ignoring the specific property value).
     pub fn get_fallthrough_property_type(&self, receiver: &Type) -> Option<Type> {
         let shape_id = match receiver {
-            Type::Object(ObjectType { shape_id: Some(id) }) => Some(id.as_str()),
-            Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
+            Type::Object(ObjectType { shape_id: Some(id) })
+            | Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
             _ => None,
         };
 
@@ -906,7 +907,7 @@ fn is_identifier_start(c: char) -> bool {
 
 /// Check if a module name is a known React module.
 fn is_known_react_module(module: &str) -> bool {
-    let lower = module.to_lowercase();
+    let lower = module.cow_to_lowercase();
     lower == "react" || lower == "react-dom"
 }
 

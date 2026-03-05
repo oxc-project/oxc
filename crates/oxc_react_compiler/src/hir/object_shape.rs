@@ -297,7 +297,7 @@ pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> Alia
                     mutates_function: *mutates_function,
                     args: args_converted,
                     into: Box::new(lookup(into)),
-                    signature: None,
+                    signature: Box::new(None),
                     loc: SourceLocation::Generated,
                 }
             }

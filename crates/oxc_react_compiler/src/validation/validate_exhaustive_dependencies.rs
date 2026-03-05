@@ -158,11 +158,9 @@ fn find_optional_places(func: &HIRFunction) -> FxHashMap<IdentifierId, bool> {
 
                 match &test_block.terminal {
                     Terminal::Branch(branch) => {
-                        let is_optional = queue.pop();
                         // invariant: queue should have a value for each branch
-                        let is_optional = match is_optional {
-                            Some(v) => v,
-                            None => break,
+                        let Some(is_optional) = queue.pop() else {
+                            break;
                         };
                         if let Some(is_opt) = is_optional {
                             optionals.insert(branch.test.identifier.id, is_opt);
@@ -170,12 +168,11 @@ fn find_optional_places(func: &HIRFunction) -> FxHashMap<IdentifierId, bool> {
                         if branch.fallthrough == fallthrough {
                             // Found the end of the optional chain
                             let consequent_block = &func.body.blocks[&branch.consequent];
-                            if let Some(last) = consequent_block.instructions.last() {
-                                if let InstructionValue::StoreLocal(store) = &last.value {
-                                    if let Some(is_opt) = is_optional {
-                                        optionals.insert(store.value.identifier.id, is_opt);
-                                    }
-                                }
+                            if let Some(last) = consequent_block.instructions.last()
+                                && let InstructionValue::StoreLocal(store) = &last.value
+                                && let Some(is_opt) = is_optional
+                            {
+                                optionals.insert(store.value.identifier.id, is_opt);
                             }
                             break;
                         }
@@ -809,7 +806,7 @@ fn validate_dependencies(
             // Check if the extra dep matches an inferred dep that is an effect event function
             let root = match &dep.root {
                 ManualMemoDependencyRoot::NamedLocal { value, .. } => Some(value),
-                _ => None,
+                ManualMemoDependencyRoot::Global { .. } => None,
             };
             let matching_inferred = root.and_then(|root_val| {
                 inferred.iter().find(|inferred_dep| {
@@ -857,7 +854,7 @@ fn validate_dependencies(
                 false
             }
         })
-        .map(|dep| print_inferred_dependency(dep))
+        .map(print_inferred_dependency)
         .collect();
     diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
         message: format!("Inferred dependencies: `[{}]`", inferred_hint.join(", ")),

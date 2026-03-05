@@ -16,6 +16,10 @@ use crate::hir::{
 };
 
 /// Stabilize block IDs by renumbering them sequentially.
+///
+/// # Panics
+///
+/// Panics if the number of blocks exceeds `u32::MAX`.
 pub fn stabilize_block_ids(func: &mut ReactiveFunction) {
     // Phase 1: Collect all referenced label IDs (non-implicit labels + early return labels)
     let mut referenced: Vec<BlockId> = Vec::new();
@@ -24,7 +28,7 @@ pub fn stabilize_block_ids(func: &mut ReactiveFunction) {
     // Phase 2: Build mapping from old IDs to new sequential IDs
     let mut mapping: FxHashMap<BlockId, BlockId> = FxHashMap::default();
     for id in &referenced {
-        let next = mapping.len() as u32;
+        let next = u32::try_from(mapping.len()).expect("block index overflow");
         mapping.entry(*id).or_insert(BlockId(next));
     }
 
@@ -93,7 +97,7 @@ fn collect_referenced_labels_terminal(terminal: &ReactiveTerminal, referenced: &
 }
 
 fn get_or_insert(mapping: &mut FxHashMap<BlockId, BlockId>, id: BlockId) -> BlockId {
-    let next = mapping.len() as u32;
+    let next = u32::try_from(mapping.len()).expect("block index overflow");
     *mapping.entry(id).or_insert(BlockId(next))
 }
 

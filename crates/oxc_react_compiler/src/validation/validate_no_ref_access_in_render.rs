@@ -249,12 +249,12 @@ impl Env {
     }
 
     fn get(&self, key: IdentifierId) -> Option<&RefAccessType> {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier.id).unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map_or(key, |p| p.identifier.id);
         self.data.get(&operand_id)
     }
 
     fn set(&mut self, key: IdentifierId, value: RefAccessType) {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier.id).unwrap_or(key);
+        let operand_id = self.temporaries.get(&key).map_or(key, |p| p.identifier.id);
         let cur = self.data.get(&operand_id);
         let cur_none = cur.is_none();
         let widened_value =
@@ -836,10 +836,10 @@ fn validate_no_ref_access_in_render_impl(
                         };
                         let target = env.get(object.identifier.id).cloned();
                         let mut safe_found: Option<usize> = Option::None;
-                        if let InstructionValue::PropertyStore(_) = &instr.value {
-                            if let Some(RefAccessType::Ref { ref_id }) = &target {
-                                safe_found = safe_blocks.iter().position(|(_, r)| r == ref_id);
-                            }
+                        if let InstructionValue::PropertyStore(_) = &instr.value
+                            && let Some(RefAccessType::Ref { ref_id }) = &target
+                        {
+                            safe_found = safe_blocks.iter().position(|(_, r)| r == ref_id);
                         }
                         if let Some(idx) = safe_found {
                             safe_blocks.remove(idx);
@@ -955,16 +955,18 @@ fn validate_no_ref_access_in_render_impl(
                             ref_id = Some(*rid);
                         }
 
-                        if matches!(&left, Some(RefAccessType::Nullable)) {
-                            nullish = true;
-                        } else if matches!(&right, Some(RefAccessType::Nullable)) {
+                        if matches!(&left, Some(RefAccessType::Nullable))
+                            || matches!(&right, Some(RefAccessType::Nullable))
+                        {
                             nullish = true;
                         }
 
-                        if ref_id.is_some() && nullish {
+                        if let Some(rid) = ref_id
+                            && nullish
+                        {
                             env.set(
                                 instr.lvalue.identifier.id,
-                                RefAccessType::Guard { ref_id: ref_id.unwrap() },
+                                RefAccessType::Guard { ref_id: rid },
                             );
                         } else {
                             for operand in each_instruction_value_operand(&instr.value) {
@@ -1019,26 +1021,25 @@ fn validate_no_ref_access_in_render_impl(
             }
 
             // Terminal processing
-            if let crate::hir::Terminal::If(if_terminal) = &block.terminal {
-                let test = env.get(if_terminal.test.identifier.id).cloned();
-                if let Some(RefAccessType::Guard { ref_id }) = &test {
-                    if !safe_blocks.iter().any(|(_, r)| r == ref_id) {
-                        safe_blocks.push((if_terminal.fallthrough, *ref_id));
-                    }
-                }
+            if let crate::hir::Terminal::If(if_terminal) = &block.terminal
+                && let Some(RefAccessType::Guard { ref_id }) =
+                    env.get(if_terminal.test.identifier.id).cloned()
+                && !safe_blocks.iter().any(|(_, r)| *r == ref_id)
+            {
+                safe_blocks.push((if_terminal.fallthrough, ref_id));
             }
 
             for operand in each_terminal_operand(&block.terminal) {
-                if !matches!(block.terminal, crate::hir::Terminal::Return(_)) {
-                    validate_no_ref_value_access(&mut errors, env, operand);
-                    if !matches!(block.terminal, crate::hir::Terminal::If(_)) {
-                        guard_check(&mut errors, operand, env);
-                    }
-                } else {
+                if matches!(block.terminal, crate::hir::Terminal::Return(_)) {
                     // Allow functions containing refs to be returned, but not direct ref values
                     validate_no_direct_ref_value_access(&mut errors, operand, env);
                     guard_check(&mut errors, operand, env);
                     return_values.push(env.get(operand.identifier.id).cloned());
+                } else {
+                    validate_no_ref_value_access(&mut errors, env, operand);
+                    if !matches!(block.terminal, crate::hir::Terminal::If(_)) {
+                        guard_check(&mut errors, operand, env);
+                    }
                 }
             }
         }

@@ -67,6 +67,14 @@ impl JsxState {
 }
 
 fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>) {
+    #[derive(Clone)]
+    enum InstrInfo {
+        LoadGlobal { id: IdentifierId, instr: Box<Instruction> },
+        FunctionExpression { idx: usize },
+        Jsx { lvalue_id: IdentifierId, children_ids: Vec<IdentifierId>, idx: usize },
+        Other,
+    }
+
     // Globals map is per-function, matching TS behavior where globals accumulate
     // across all blocks (TS OutlineJsx.ts line 56).
     let mut globals: FxHashMap<IdentifierId, Instruction> = FxHashMap::default();
@@ -74,17 +82,6 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
 
     for block_id in block_ids {
         let mut rewrite_instr: FxHashMap<InstructionId, Vec<Instruction>> = FxHashMap::default();
-
-        // Collect all the information we need from the block upfront, so we
-        // can drop the immutable borrow before calling functions that need
-        // `&mut func`.
-        #[derive(Clone)]
-        enum InstrInfo {
-            LoadGlobal { id: IdentifierId, instr: Instruction },
-            FunctionExpression { idx: usize },
-            Jsx { lvalue_id: IdentifierId, children_ids: Vec<IdentifierId>, idx: usize },
-            Other,
-        }
 
         let instr_infos: Vec<InstrInfo> = {
             let Some(block) = func.body.blocks.get(&block_id) else {
@@ -97,7 +94,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                 .map(|(idx, instr)| match &instr.value {
                     InstructionValue::LoadGlobal(_) => InstrInfo::LoadGlobal {
                         id: instr.lvalue.identifier.id,
-                        instr: instr.clone(),
+                        instr: Box::new(instr.clone()),
                     },
                     InstructionValue::FunctionExpression(_) => {
                         InstrInfo::FunctionExpression { idx }
@@ -122,7 +119,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
         for info in instr_infos.iter().rev() {
             match info {
                 InstrInfo::LoadGlobal { id, instr } => {
-                    globals.insert(*id, instr.clone());
+                    globals.insert(*id, (**instr).clone());
                 }
                 InstrInfo::FunctionExpression { idx } => {
                     func_expr_indices.push(*idx);
@@ -274,9 +271,8 @@ fn collect_props(
     };
 
     for instr in instructions {
-        let jsx_expr = match &instr.value {
-            InstructionValue::JsxExpression(expr) => expr,
-            _ => continue,
+        let InstructionValue::JsxExpression(jsx_expr) = &instr.value else {
+            continue;
         };
 
         for attr in &jsx_expr.props {
@@ -451,9 +447,8 @@ fn emit_load_globals(
 ) -> Option<Vec<Instruction>> {
     let mut instructions = Vec::new();
     for instr in jsx {
-        let jsx_expr = match &instr.value {
-            InstructionValue::JsxExpression(expr) => expr,
-            _ => continue,
+        let InstructionValue::JsxExpression(jsx_expr) = &instr.value else {
+            continue;
         };
         // Add load globals instructions for JSX tags that are identifiers
         if let JsxTag::Place(tag_place) = &jsx_expr.tag {
@@ -472,9 +467,8 @@ fn emit_updated_jsx(
     let mut new_instrs = Vec::new();
 
     for instr in jsx {
-        let jsx_expr = match &instr.value {
-            InstructionValue::JsxExpression(expr) => expr,
-            _ => continue,
+        let InstructionValue::JsxExpression(jsx_expr) = &instr.value else {
+            continue;
         };
 
         let mut new_props: Vec<JsxAttribute> = Vec::new();

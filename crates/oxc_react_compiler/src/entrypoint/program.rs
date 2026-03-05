@@ -170,17 +170,15 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
                     }
                 }
                 // Check callee (but skip if it's a function expression)
-                if !matches!(
+                if matches!(
                     &call.callee,
                     Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
                 ) {
-                    check_expr(&call.callee)
-                } else {
                     false
+                } else {
+                    check_expr(&call.callee)
                 }
             }
-            // Skip nested functions entirely
-            Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => false,
             // Recurse into other expressions
             Expression::ParenthesizedExpression(paren) => check_expr(&paren.expression),
             Expression::SequenceExpression(seq) => seq.expressions.iter().any(|e| check_expr(e)),
@@ -217,8 +215,6 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
 
     fn check_stmt(stmt: &Statement) -> bool {
         match stmt {
-            // Skip nested function declarations
-            Statement::FunctionDeclaration(_) => false,
             Statement::ExpressionStatement(es) => check_expr(&es.expression),
             Statement::ReturnStatement(ret) => ret.argument.as_ref().is_some_and(|e| check_expr(e)),
             Statement::VariableDeclaration(decl) => {
@@ -369,8 +365,6 @@ fn is_non_node(expr: &Expression) -> bool {
 pub fn returns_non_node(func: &LowerableFunction) -> bool {
     fn check_stmt_for_non_node_return(stmt: &Statement) -> bool {
         match stmt {
-            // Skip nested functions
-            Statement::FunctionDeclaration(_) => false,
             Statement::ReturnStatement(ret) => {
                 ret.argument.as_ref().is_some_and(|e| is_non_node(e))
             }

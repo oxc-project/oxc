@@ -178,19 +178,10 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> Memoizat
         | InstructionValue::TaggedTemplateExpression(_)
         | InstructionValue::PropertyStore(_) => MemoizationLevel::Memoized,
 
-        // ComputedStore: outer lvalue is Conditional (TS lines 711-726).
-        // The object acts as an lvalue and only value.value is an rvalue.
-        InstructionValue::ComputedStore(_) => MemoizationLevel::Conditional,
-
-        // StoreContext: the instruction's outer lvalue is Conditional,
-        // but the inner target (context variable) is Memoized (handled in collect_in_block).
-        // This matches TS where StoreContext's outer lvalue is Conditional.
-        InstructionValue::StoreContext(_) => MemoizationLevel::Conditional,
-
-        // DeclareContext: the instruction's outer lvalue is Unmemoized,
-        // but the inner target (context variable) is Memoized (handled in collect_in_block).
-        // This matches TS where DeclareContext's outer lvalue is Unmemoized.
-        InstructionValue::DeclareContext(_) => MemoizationLevel::Unmemoized,
+        // ComputedStore/StoreContext: outer lvalue is Conditional.
+        InstructionValue::ComputedStore(_) | InstructionValue::StoreContext(_) => {
+            MemoizationLevel::Conditional
+        }
 
         // Values that propagate memoization from their dependencies
         InstructionValue::LoadLocal(_)
@@ -239,12 +230,10 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> Memoizat
             }
         }
 
-        // DeclareLocal: outer lvalue is Unmemoized (TS line 627),
-        // inner target is Unmemoized (handled in collect_in_block).
-        InstructionValue::DeclareLocal(_) => MemoizationLevel::Unmemoized,
-
-        // StoreGlobal: outer lvalue is Unmemoized (TS line 678).
-        InstructionValue::StoreGlobal(_) => MemoizationLevel::Unmemoized,
+        // DeclareLocal/DeclareContext/StoreGlobal: outer lvalue is Unmemoized.
+        InstructionValue::DeclareLocal(_)
+        | InstructionValue::DeclareContext(_)
+        | InstructionValue::StoreGlobal(_) => MemoizationLevel::Unmemoized,
 
         // UnsupportedNode: Never
         InstructionValue::UnsupportedNode(_) => MemoizationLevel::Never,

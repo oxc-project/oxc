@@ -82,13 +82,13 @@ pub fn validate_use_memo(
                     };
 
                     // If the first arg is a locally-defined FunctionExpression, validate it
-                    if let Some(arg_id) = first_arg_id {
-                        if let Some(body) = functions.get(&arg_id) {
-                            validate_no_context_variable_assignment(
-                                &body.lowered_func.func,
-                                &mut errors,
-                            );
-                        }
+                    if let Some(arg_id) = first_arg_id
+                        && let Some(body) = functions.get(&arg_id)
+                    {
+                        validate_no_context_variable_assignment(
+                            &body.lowered_func.func,
+                            &mut errors,
+                        );
                     }
                 }
                 _ => {}
@@ -125,9 +125,10 @@ fn validate_no_context_variable_assignment(func: &HIRFunction, errors: &mut Comp
 
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
-            if let InstructionValue::StoreContext(v) = &instr.value {
-                if context.contains(&v.lvalue_place.identifier.id) {
-                    errors.push_diagnostic(
+            if let InstructionValue::StoreContext(v) = &instr.value
+                && context.contains(&v.lvalue_place.identifier.id)
+            {
+                errors.push_diagnostic(
                         CompilerDiagnostic::create(
                             ErrorCategory::UseMemo,
                             "useMemo() callbacks may not reassign variables declared outside of the callback".to_string(),
@@ -141,7 +142,6 @@ fn validate_no_context_variable_assignment(func: &HIRFunction, errors: &mut Comp
                             message: Some("Cannot reassign variable".to_string()),
                         }),
                     );
-                }
             }
         }
     }

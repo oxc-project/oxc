@@ -68,10 +68,10 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
 
     let get_kind_for_place = |value_kinds: &FxHashMap<IdentifierId, Kind>, place: &Place| -> Kind {
         let known_kind = value_kinds.get(&place.identifier.id).copied();
-        if let Some(name) = &place.identifier.name {
-            if is_hook_name(name.value()) {
-                return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
-            }
+        if let Some(name) = &place.identifier.name
+            && is_hook_name(name.value())
+        {
+            return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
         }
         known_kind.unwrap_or(Kind::Local)
     };
@@ -99,7 +99,7 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                 } else {
                     Kind::Local
                 };
-            for (_, operand) in &phi.operands {
+            for operand in phi.operands.values() {
                 let operand_kind = value_kinds.get(&operand.identifier.id).copied();
                 // NOTE: we currently skip operands whose value is unknown
                 // (which can only occur for functions with loops). We may
@@ -208,7 +208,7 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                     }
                     // Check usages of operands, but skip the callee (validated above)
                     for operand in each_instruction_operand(instr) {
-                        if std::ptr::eq(operand, &v.callee) {
+                        if std::ptr::eq(operand, &raw const v.callee) {
                             continue;
                         }
                         visit_place(&value_kinds, operand, &mut errors, &mut errors_by_place);
@@ -234,7 +234,7 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                     }
                     // Check usages of operands, but skip the property (validated above)
                     for operand in each_instruction_operand(instr) {
-                        if std::ptr::eq(operand, &v.property) {
+                        if std::ptr::eq(operand, &raw const v.property) {
                             continue;
                         }
                         visit_place(&value_kinds, operand, &mut errors, &mut errors_by_place);
@@ -245,7 +245,7 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                     let object_kind = get_kind_for_place(&value_kinds, &v.value);
                     for lvalue in each_instruction_lvalue(instr) {
                         // Skip the instruction's own lvalue (first element), only process pattern lvalues
-                        if std::ptr::eq(lvalue, &instr.lvalue) {
+                        if std::ptr::eq(lvalue, &raw const instr.lvalue) {
                             continue;
                         }
                         let is_hook_property = lvalue
@@ -334,7 +334,7 @@ fn record_conditional_hook_error(
 
     let previous_error = match &place.loc {
         SourceLocation::Generated => None,
-        loc => errors_by_place.get(loc),
+        loc @ SourceLocation::Source(_) => errors_by_place.get(loc),
     };
 
     // In some circumstances such as optional calls, we may first encounter a
@@ -361,7 +361,7 @@ fn record_invalid_hook_usage_error(
 ) {
     let previous_error = match &place.loc {
         SourceLocation::Generated => None,
-        loc => errors_by_place.get(loc),
+        loc @ SourceLocation::Source(_) => errors_by_place.get(loc),
     };
     if previous_error.is_none() {
         record_error(
@@ -389,7 +389,7 @@ fn record_dynamic_hook_usage_error(
 ) {
     let previous_error = match &place.loc {
         SourceLocation::Generated => None,
-        loc => errors_by_place.get(loc),
+        loc @ SourceLocation::Source(_) => errors_by_place.get(loc),
     };
     if previous_error.is_none() {
         record_error(
@@ -420,7 +420,7 @@ fn record_error(
         SourceLocation::Generated => {
             errors.push_diagnostic(diagnostic);
         }
-        loc => {
+        loc @ SourceLocation::Source(_) => {
             errors_by_place.insert(loc, diagnostic);
         }
     }

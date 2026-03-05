@@ -121,9 +121,8 @@ fn outline_functions_inner(
                     && !fbt_operands.contains(&instr.lvalue.identifier.id));
 
             if should_outline {
-                let func_expr = match &mut instr.value {
-                    InstructionValue::FunctionExpression(f) => f,
-                    _ => continue,
+                let InstructionValue::FunctionExpression(func_expr) = &mut instr.value else {
+                    continue;
                 };
                 let loc = func_expr.loc;
 
@@ -154,7 +153,7 @@ fn outline_functions_inner(
                         context: Vec::new(),
                         body: crate::hir::Hir {
                             entry: crate::hir::BlockId(0),
-                            blocks: Default::default(),
+                            blocks: indexmap::IndexMap::default(),
                         },
                         generator: false,
                         is_async: false,

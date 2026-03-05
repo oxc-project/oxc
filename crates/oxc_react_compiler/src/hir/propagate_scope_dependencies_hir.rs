@@ -825,8 +825,7 @@ impl<'a> DependencyCollectionContext<'a> {
 
         match (current_scope, current_declaration) {
             (Some(scope), Some(decl)) => decl.id < scope.range.start,
-            (None, _) => false,
-            (_, None) => false,
+            (None, _) | (_, None) => false,
         }
     }
 
@@ -1294,6 +1293,10 @@ fn collect_dependencies(
 /// For each reactive scope, computes the set of external values (dependencies)
 /// that are read inside the scope. The result is stored on each scope's
 /// `dependencies` field.
+///
+/// # Errors
+///
+/// Returns a `CompilerError` if dependency propagation encounters an invariant violation.
 pub fn propagate_scope_dependencies_hir(
     func: &mut HIRFunction,
 ) -> Result<(), crate::compiler_error::CompilerError> {

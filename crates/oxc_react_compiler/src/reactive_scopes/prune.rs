@@ -400,12 +400,12 @@ fn propagate_instruction_reactivity(
     instruction: &ReactiveInstruction,
     reactive: &mut FxHashSet<IdentifierId>,
 ) {
-    propagate_reactivity_from_value(&instruction.value, &instruction.lvalue, reactive);
+    propagate_reactivity_from_value(&instruction.value, instruction.lvalue.as_ref(), reactive);
 }
 
 fn propagate_reactivity_from_value(
     value: &ReactiveValue,
-    lvalue: &Option<crate::hir::Place>,
+    lvalue: Option<&crate::hir::Place>,
     reactive: &mut FxHashSet<IdentifierId>,
 ) {
     match value {
@@ -458,7 +458,7 @@ fn propagate_reactivity_from_value(
         },
         ReactiveValue::Sequence(v) => {
             for instr in &v.instructions {
-                propagate_reactivity_from_value(&instr.value, &instr.lvalue, reactive);
+                propagate_reactivity_from_value(&instr.value, instr.lvalue.as_ref(), reactive);
             }
             propagate_reactivity_from_value(&v.value, lvalue, reactive);
         }
@@ -968,6 +968,10 @@ fn prune_all_scopes_block(block: &mut ReactiveBlock) {
 /// 2. a `foo = function foo() {}` assignment within the block
 ///
 /// This means references before the assignment are invalid.
+///
+/// # Errors
+///
+/// Returns a `CompilerError` if a hoisted context variable is referenced before initialization.
 pub fn prune_hoisted_contexts(
     func: &mut ReactiveFunction,
 ) -> Result<(), crate::compiler_error::CompilerError> {
@@ -1131,7 +1135,7 @@ fn process_hoisted_context_instruction(
                         category: crate::compiler_error::ErrorCategory::Todo,
                         reason: "[PruneHoistedContexts] Unexpected kind".to_string(),
                         description: Some(format!("({:?})", store_ctx.lvalue_kind)),
-                        loc: Some(instruction.loc.into()),
+                        loc: Some(instruction.loc),
                         suggestions: None,
                     },
                 ));
@@ -1196,23 +1200,22 @@ fn check_hoisted_function_reference(
     uninitialized: &FxHashMap<IdentifierId, UninitializedEntry>,
     errors: &mut crate::compiler_error::CompilerError,
 ) {
-    if let Some(UninitializedEntry::Func { definition }) = uninitialized.get(&place.identifier.id) {
-        if definition.is_none() || *definition != Some(place.identifier.id) {
-            // Port of TS: CompilerError.throwTodo({
-            //   reason: "[PruneHoistedContexts] Rewrite hoisted function references",
-            //   loc: place.loc,
-            // });
-            errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
-                crate::compiler_error::CompilerErrorDetailOptions {
-                    category: crate::compiler_error::ErrorCategory::Todo,
-                    reason: "[PruneHoistedContexts] Rewrite hoisted function references"
-                        .to_string(),
-                    description: None,
-                    loc: Some(place.loc.into()),
-                    suggestions: None,
-                },
-            ));
-        }
+    if let Some(UninitializedEntry::Func { definition }) = uninitialized.get(&place.identifier.id)
+        && (definition.is_none() || *definition != Some(place.identifier.id))
+    {
+        // Port of TS: CompilerError.throwTodo({
+        //   reason: "[PruneHoistedContexts] Rewrite hoisted function references",
+        //   loc: place.loc,
+        // });
+        errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+            crate::compiler_error::CompilerErrorDetailOptions {
+                category: crate::compiler_error::ErrorCategory::Todo,
+                reason: "[PruneHoistedContexts] Rewrite hoisted function references".to_string(),
+                description: None,
+                loc: Some(place.loc),
+                suggestions: None,
+            },
+        ));
     }
 }
 
