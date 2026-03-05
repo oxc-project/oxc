@@ -809,7 +809,7 @@ mod test {
             Err(errors) => {
                 let strs: Vec<String> =
                     errors.iter().map(std::string::ToString::to_string).collect();
-                assert!(strs.windows(2).all(|w| w[0] <= w[1]), "errors not sorted: {strs:#?}");
+                assert!(strs.array_windows().all(|[a, b]| a <= b), "errors not sorted: {strs:#?}");
             }
             Ok(()) => panic!("expected errors from invalid configs"),
         }

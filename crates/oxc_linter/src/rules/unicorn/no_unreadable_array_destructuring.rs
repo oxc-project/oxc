@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {
-    if elements.len() >= 3 && elements.windows(2).any(|window| window.iter().all(Option::is_none)) {
+    if elements.len() >= 3 && elements.array_windows().any(|[a, b]| a.is_none() && b.is_none()) {
         return true;
     }
 

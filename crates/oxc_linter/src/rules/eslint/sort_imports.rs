@@ -240,10 +240,10 @@ impl SortImports {
         }
 
         let unsorted = specifiers
-            .windows(2)
-            .find(|window| {
-                let a = window[0].local.name.as_str();
-                let b = window[1].local.name.as_str();
+            .array_windows()
+            .find(|[a, b]| {
+                let a = a.local.name.as_str();
+                let b = b.local.name.as_str();
 
                 if self.ignore_case {
                     a.cow_to_ascii_lowercase() > b.cow_to_ascii_lowercase()
@@ -275,10 +275,10 @@ impl SortImports {
                     // import { a, b,      c, d } from 'foo.js'
                     //            ^  ^^^^^^  ^
                     let mut paddings: Vec<&str> = specifiers
-                        .windows(2)
-                        .map(|window| {
-                            let a = window[0].span;
-                            let b = window[1].span;
+                        .array_windows()
+                        .map(|[a, b]| {
+                            let a = a.span;
+                            let b = b.span;
 
                             let padding = Span::new(a.end, b.start);
                             ctx.source_range(padding)

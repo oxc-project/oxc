@@ -116,11 +116,11 @@ impl Rule for NoRedeclare {
                 continue;
             }
 
-            for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
+            for [prev, next] in ctx.scoping().symbol_redeclarations(symbol_id).array_windows() {
                 if is_builtin {
-                    ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
+                    ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, next.span));
                 } else {
-                    ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
+                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
                 }
             }
         }

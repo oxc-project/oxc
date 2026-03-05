@@ -921,7 +921,9 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
                 // Find end of comment
                 let start_index = if is_block_comment {
-                    let Some(pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    let Some(pos) =
+                        bytes.array_windows().position(|[a, b]| *a == b'*' && *b == b'/')
+                    else {
                         // Comment contains whole of this quasi
                         continue;
                     };
@@ -1007,8 +1009,9 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         break;
                                     }
                                     Some(&b) if b != b'!' => {
-                                        let end_index =
-                                            bytes[i + 2..].windows(2).position(|q| q == b"*/");
+                                        let end_index = bytes[i + 2..]
+                                            .array_windows()
+                                            .position(|[a, b]| *a == b'*' && *b == b'/');
                                         if let Some(end_index) = end_index {
                                             // Block comments behave like whitespace.
                                             // `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.

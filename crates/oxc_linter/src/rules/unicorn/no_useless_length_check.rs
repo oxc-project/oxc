@@ -163,8 +163,8 @@ impl Rule for NoUselessLengthCheck {
             }
             let mut flat_exprs = Vec::new();
             make_flat_logical_expression(log_expr, &mut flat_exprs);
-            for window in flat_exprs.windows(2) {
-                if let Some(diag) = is_useless_check(window[0], window[1], log_expr.operator) {
+            for [a, b] in flat_exprs.array_windows() {
+                if let Some(diag) = is_useless_check(a, b, log_expr.operator) {
                     ctx.diagnostic(diag);
                 }
             }

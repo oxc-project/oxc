@@ -98,8 +98,8 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         // Check if there's an empty line (2+ newlines) between any consecutive arguments.
         // This is used to preserve intentional blank lines in the original source.
-        let has_empty_line = arguments.windows(2).any(|window| {
-            let (cur_arg, next_arg) = (&window[0], &window[1]);
+        let has_empty_line = arguments.array_windows().any(|[cur_arg, next_arg]| {
+            // let (cur_arg, next_arg) = (&window[0], &window[1]);
 
             // Count newlines between arguments, short-circuiting at 2 for performance
             // Check if there are at least two newlines between arguments
