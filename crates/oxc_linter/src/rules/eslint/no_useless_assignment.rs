@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{BindingPattern, Expression, VariableDeclarationKind},
 };
 use oxc_cfg::{
-    BasicBlockId, BlockNodeId, EdgeType, ErrorEdgeKind,
+    BasicBlockId, BlockNodeId, EdgeType, ErrorEdgeKind, Graph,
     graph::{
         Direction,
         visit::{Control, DfsEvent, EdgeRef, depth_first_search},
@@ -14,7 +14,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{NodeId, Reference, ScopeId, SymbolId};
 use oxc_span::Span;
 use smallvec::SmallVec;
 
@@ -34,7 +34,7 @@ pub struct NoUselessAssignment;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Flags assignments where the newly assigned value is never read afterward (a “dead store”). This helps catch wasted work or accidental mistakes.
+    /// Flags assignments where the newly assigned value is never read afterward (a "dead store"). This helps catch wasted work or accidental mistakes.
     ///
     /// ### Why is this bad?
     ///
@@ -119,15 +119,15 @@ pub struct OpAtNode {
 
 pub type BlockOps = Vec<(SymbolId, Vec<OpAtNode>)>;
 
-pub type CfgOps = IndexVec<BasicBlockId, Option<BlockOps>>;
+pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
 pub struct TraverseState<'a> {
-    live: Option<BitSet<'a>>,
+    live: BitSet<'a>,
 }
 
-impl TraverseState<'_> {
-    pub fn new() -> Self {
-        Self { live: None }
+impl<'a> TraverseState<'a> {
+    pub fn new(num_symbols: usize, allocator: &'a Allocator) -> Self {
+        Self { live: BitSet::new_in(num_symbols, allocator) }
     }
 }
 
@@ -137,10 +137,11 @@ impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
         let allocator = Allocator::default();
         let num_symbols = ctx.scoping().symbols_len();
+        let graph = ctx.cfg().graph();
         let num_blocks = ctx.cfg().basic_blocks.len();
 
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
-        cfg_ops.resize_with(num_blocks, || None);
+        cfg_ops.resize_with(num_blocks, Vec::new);
 
         // Track symbols that are read at least once globally, no-useless assignment ignore variables that are never read anywhere,
         // assume no-unused-vars will catch them
@@ -148,25 +149,11 @@ impl Rule for NoUselessAssignment {
 
         let mut cfg_traverse_state: CfgTraverseState<'_> =
             CfgTraverseState::with_capacity(num_blocks);
-        cfg_traverse_state.resize_with(num_blocks, TraverseState::new);
-
-        // Pre-compute exported symbols for O(1) lookup during block processing
-        let mut exported_symbols = BitSet::new_in(num_symbols, &allocator);
-        for symbol_id in ctx.scoping().symbol_ids() {
-            if Self::is_exported(ctx, symbol_id) {
-                exported_symbols.set_bit(symbol_id.index());
-            }
-        }
+        // Pre-fill with empty BitSets
+        cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_symbols, &allocator));
 
         //walk through all symbols, collect their operations from declarations and references
-        for symbol_id in ctx.scoping().symbol_ids().filter(|&symbol_id| {
-            !ctx.scoping().symbol_flags(symbol_id).intersects(
-                SymbolFlags::ConstVariable
-                    | SymbolFlags::Import
-                    | SymbolFlags::Function
-                    | SymbolFlags::Class,
-            )
-        }) {
+        for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
 
             let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else { continue };
@@ -183,13 +170,9 @@ impl Rule for NoUselessAssignment {
                 &var_decl.init,
                 Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
             ) {
-                let block_id = Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(decl_node.id()));
+                let block_id = *graph.node_weight(ctx.nodes().cfg_id(decl_node.id())).expect("expected a valid node id in graph");
 
-                // Ensure outer slot exists
-                if cfg_ops[block_id].is_none() {
-                    cfg_ops[block_id] = Some(Vec::new());
-                }
-                let block_ops_vec = cfg_ops[block_id].get_or_insert_with(Vec::new);
+                let block_ops_vec = &mut cfg_ops[block_id];
 
                 // Find or Create entry in Vec (Linear Scan)
                 let ops_vec =
@@ -205,107 +188,59 @@ impl Rule for NoUselessAssignment {
                     ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
                 }
 
-                // Inline reordering to handle assignment expressions like a = a + 1
-                // (RHS reads are emitted before LHS write) without allocating a Vec
+                // reorder reference to handle assignment expression like a = a + 1
                 let references = ctx.symbol_references(symbol_id);
-                let mut pending_assignment_lhs: Option<&Reference> = None;
+                let ordered_refs = Self::reordered_references(ctx, references);
 
-                macro_rules! emit_ref {
-                    ($reference:expr) => {{
-                        let reference: &Reference = $reference;
-                        let op_node = reference.node_id();
+                for reference in ordered_refs {
+                    let op_node = reference.node_id();
 
-                        if reference.is_read() {
-                            let ref_block =
-                                Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
-                            let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-                            ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
-                            used_symbols.set_bit(symbol_id.index());
-                        }
+                    if reference.is_read() {
+                        let ref_block = *graph.node_weight(ctx.nodes().cfg_id(op_node)).expect("expected a valid node id in graph");
+                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
 
-                        if reference.is_write() {
-                            let skip = matches!(
-                                &var_decl.id,
-                                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
-                            ) && decl_node.span().contains_inclusive(
-                                ctx.nodes().get_node(reference.node_id()).span(),
-                            );
-                            if !skip {
-                                let ref_block =
-                                    Self::get_basic_block_id(ctx, ctx.nodes().cfg_id(op_node));
-                                let ref_ops_vec =
-                                    Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-                                ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
-                            }
-                        }
-                    }};
-                }
+                        ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
+                        used_symbols.set_bit(symbol_id.index());
+                    }
 
-                for reference in references {
-                    if let Some(lhs) = pending_assignment_lhs
-                        && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
-                    {
-                        let assign_node = ctx.nodes().get_node(assign_node_id);
-                        if assign_node
+                    if reference.is_write() {
+                        if matches!(
+                            &var_decl.id,
+                            BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+                        ) && decl_node
                             .span()
                             .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
                         {
-                            emit_ref!(reference);
                             continue;
                         }
-                        emit_ref!(lhs);
-                        pending_assignment_lhs = None;
-                    }
 
-                    if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
-                        if let Some(prev) = pending_assignment_lhs.take() {
-                            emit_ref!(prev);
-                        }
-                        pending_assignment_lhs = Some(reference);
-                    } else {
-                        emit_ref!(reference);
-                    }
-                }
+                        let ref_block = *graph.node_weight(ctx.nodes().cfg_id(op_node)).expect("expected a valid node id in graph");
+                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
 
-                if let Some(lhs) = pending_assignment_lhs {
-                    emit_ref!(lhs);
+                        ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
+                    }
                 }
             }
         }
 
+        let mut scratch_live = BitSet::new_in(num_symbols, &allocator);
+        let mut scratch_catch = BitSet::new_in(num_symbols, &allocator);
+
         depth_first_search(
-            ctx.cfg().graph(),
+            graph,
             Some(ctx.nodes().cfg_id(ctx.nodes().get_node(NodeId::ROOT).id())),
             |e| match e {
-                DfsEvent::TreeEdge(a, b) => {
-                    if ctx.cfg().graph().edges_connecting(a, b).any(|e| {
-                        matches!(
-                            e.weight(),
-                            EdgeType::Normal
-                                | EdgeType::Jump
-                                | EdgeType::NewFunction
-                                | EdgeType::Error(ErrorEdgeKind::Explicit)
-                                | EdgeType::Finalize
-                                | EdgeType::Join
-                        )
-                    }) {
-                        Control::<()>::Continue
-                    } else {
-                        Control::Prune
-                    }
-                }
-
                 // backtrack and merge child block symbol operations
                 DfsEvent::Finish(block_node_id, _) => {
-                    let current_block_id = Self::get_basic_block_id(ctx, block_node_id);
-                    let mut live: BitSet<'_> = BitSet::new_in(num_symbols, &allocator);
-                    let mut live_from_catch: Option<BitSet<'_>> = None;
+                    let current_block_id = *graph.node_weight(block_node_id).expect("expected a valid node id in graph");
+                    scratch_live.clear();
+                    scratch_catch.clear();
 
                     let successors =
-                        ctx.cfg().graph().edges_directed(block_node_id, Direction::Outgoing);
+                        graph.edges_directed(block_node_id, Direction::Outgoing);
 
                     for edge in successors {
-                        let succ_id = Self::get_basic_block_id(ctx, edge.target());
+                        let succ_id = *graph.node_weight(edge.target()).expect("expected a valid node id in graph");
 
                         match edge.weight() {
                             // Normal Flow: We will process these through the block's Ops
@@ -314,31 +249,19 @@ impl Rule for NoUselessAssignment {
                             | EdgeType::NewFunction
                             | EdgeType::Finalize
                             | EdgeType::Join => {
-                                if let Some(succ_live) = &cfg_traverse_state[succ_id].live {
-                                    live.union(succ_live);
-                                }
+                                scratch_live.union(&cfg_traverse_state[succ_id].live);
                             }
                             // Error Flow: This is the "Branch" that bypasses this block's Ops
                             EdgeType::Error(_) => {
-                                if let Some(succ_live) = &cfg_traverse_state[succ_id].live {
-                                    live_from_catch
-                                        .get_or_insert_with(|| {
-                                            BitSet::new_in(num_symbols, &allocator)
-                                        })
-                                        .union(succ_live);
-                                }
+                                scratch_catch.union(&cfg_traverse_state[succ_id].live);
                             }
                             EdgeType::Backedge => {
-                                if let Some(loop_header) = Self::find_loop_start(ctx, block_node_id)
+                                if let Some(loop_header) = Self::find_loop_start(graph, block_node_id, &allocator)
                                 {
                                     let loop_header_block_id =
-                                        Self::get_basic_block_id(ctx, loop_header);
+                                        *graph.node_weight(loop_header).expect("expected a valid node id in graph");
 
-                                    if let Some(header_live) =
-                                        &cfg_traverse_state[loop_header_block_id].live
-                                    {
-                                        live.union(header_live);
-                                    }
+                                    scratch_live.union(&cfg_traverse_state[loop_header_block_id].live);
 
                                     let mut loop_requirements =
                                         BitSet::new_in(num_symbols, &allocator);
@@ -347,7 +270,7 @@ impl Rule for NoUselessAssignment {
                                         BitSet::new_in(num_symbols, &allocator);
 
                                     Self::analyze_loop_recursive(
-                                        ctx,
+                                        graph,
                                         loop_header,
                                         loop_header,
                                         &cfg_ops,
@@ -356,7 +279,7 @@ impl Rule for NoUselessAssignment {
                                         &mut visited,
                                     );
 
-                                    live.union(&loop_requirements);
+                                    scratch_live.union(&loop_requirements);
                                 }
                             }
                             EdgeType::Unreachable => {}
@@ -364,11 +287,11 @@ impl Rule for NoUselessAssignment {
                     }
 
                     // Walk back from the end of the block to the start
-                    if let Some(block_ops_vec) = &cfg_ops[current_block_id] {
-                        for (symbol_id, ops) in block_ops_vec {
+                    {
+                        for (symbol_id, ops) in &cfg_ops[current_block_id] {
                             let sym_idx = symbol_id.index();
 
-                            if !used_symbols.has_bit(sym_idx) && !exported_symbols.has_bit(sym_idx)
+                            if !used_symbols.has_bit(sym_idx) && !Self::is_exported(ctx, *symbol_id)
                             {
                                 // We don't need to track liveness for unused vars
                                 continue;
@@ -377,12 +300,10 @@ impl Rule for NoUselessAssignment {
                             for op in ops.iter().rev() {
                                 match op.op {
                                     Operation::Write => {
-                                        if !live.has_bit(sym_idx)
-                                            && !live_from_catch
-                                                .as_ref()
-                                                .is_some_and(|lfc| lfc.has_bit(sym_idx))
-                                            && !exported_symbols.has_bit(sym_idx)
-                                            && !Self::is_in_try_block(ctx, block_node_id)
+                                        if !scratch_live.has_bit(sym_idx)
+                                            && !scratch_catch.has_bit(sym_idx)
+                                            && !Self::is_exported(ctx, *symbol_id)
+                                            && !Self::is_in_try_block(graph, block_node_id)
                                             && Self::has_same_parent_variable_scope(
                                                 ctx,
                                                 ctx.scoping().symbol_scope_id(*symbol_id),
@@ -393,23 +314,21 @@ impl Rule for NoUselessAssignment {
                                                 ctx.nodes().get_node(op.node).span(),
                                             ));
                                         }
-                                        live.unset_bit(sym_idx);
+                                        scratch_live.unset_bit(sym_idx);
                                     }
                                     Operation::Read => {
-                                        live.set_bit(sym_idx);
+                                        scratch_live.set_bit(sym_idx);
                                     }
                                 }
                             }
                         }
                     }
 
-                    if let Some(lfc) = &live_from_catch {
-                        live.union(lfc);
-                    }
+                    scratch_live.union(&scratch_catch);
 
-                    cfg_traverse_state[current_block_id].live = Some(live);
+                    std::mem::swap(&mut scratch_live, &mut cfg_traverse_state[current_block_id].live);
 
-                    Control::Continue
+                    Control::<()>::Continue
                 }
                 _ => Control::Continue,
             },
@@ -426,27 +345,73 @@ impl NoUselessAssignment {
             })
     }
 
-    fn find_loop_start(ctx: &LintContext, loop_end: BlockNodeId) -> Option<BlockNodeId> {
+    fn reordered_references<'a>(
+        ctx: &LintContext,
+        references: impl Iterator<Item = &'a Reference>,
+    ) -> Vec<&'a Reference> {
+        let mut result = Vec::new();
+        let mut pending_assignment_lhs: Option<&Reference> = None;
+
+        for reference in references {
+            if let Some(lhs) = pending_assignment_lhs
+                && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
+            {
+                let assign_node = ctx.nodes().get_node(assign_node_id);
+
+                if assign_node
+                    .span()
+                    .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
+                {
+                    result.push(reference);
+                    continue;
+                }
+                result.push(lhs);
+                pending_assignment_lhs = None;
+            }
+
+            if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
+                if let Some(prev) = pending_assignment_lhs.take() {
+                    result.push(prev);
+                }
+
+                pending_assignment_lhs = Some(reference);
+            } else {
+                result.push(reference);
+            }
+        }
+
+        if let Some(lhs) = pending_assignment_lhs {
+            result.push(lhs);
+        }
+
+        result
+    }
+
+    fn find_loop_start(graph: &Graph, loop_end: BlockNodeId, allocator: &Allocator) -> Option<BlockNodeId> {
         let mut current = loop_end;
         let mut last: Option<BlockNodeId> = None;
+        let mut visited = BitSet::new_in(graph.node_count(), allocator);
 
-        // Follow a chain of backedge targets until there is no further backedge.
-        // Bounded iteration (max 64 hops) prevents infinite loops without heap allocation.
-        for _ in 0..64 {
+        loop {
+            let idx = current.index();
+            if visited.has_bit(idx) {
+                break;
+            }
+            visited.set_bit(idx);
+
             let mut next_backedge: Option<BlockNodeId> = None;
-            for edge in ctx.cfg().graph().edges_directed(current, Direction::Outgoing) {
+            for edge in graph.edges_directed(current, Direction::Outgoing) {
                 if matches!(edge.weight(), EdgeType::Backedge) {
                     next_backedge = Some(edge.target());
                     break;
                 }
             }
 
-            match next_backedge {
-                Some(target) if target != current => {
-                    last = Some(target);
-                    current = target;
-                }
-                _ => break,
+            if let Some(target) = next_backedge {
+                last = Some(target);
+                current = target;
+            } else {
+                break;
             }
         }
 
@@ -465,8 +430,8 @@ impl NoUselessAssignment {
         }
     }
 
-    fn is_in_try_block(ctx: &LintContext, block_node_id: BlockNodeId) -> bool {
-        ctx.cfg().graph().edges_directed(block_node_id, Direction::Outgoing).any(|e| {
+    fn is_in_try_block(graph: &Graph, block_node_id: BlockNodeId) -> bool {
+        graph.edges_directed(block_node_id, Direction::Outgoing).any(|e| {
             matches!(e.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize)
         })
     }
@@ -488,15 +453,15 @@ impl NoUselessAssignment {
     }
 
     fn analyze_loop_recursive(
-        ctx: &LintContext,
+        graph: &Graph,
         node: BlockNodeId,
         loop_header_id: BlockNodeId,
         cfg_ops: &CfgOps,
         result_gen: &mut BitSet,
-        killed_on_path: &mut BitSet, // Changed to mutable reference
+        killed_on_path: &mut BitSet,
         visited: &mut BitSet,
     ) {
-        let block_id = Self::get_basic_block_id(ctx, node);
+        let block_id = *graph.node_weight(node).expect("expected a valid node id in graph");
 
         if visited.has_bit(block_id.index()) {
             return;
@@ -506,29 +471,27 @@ impl NoUselessAssignment {
         // Track bits we set in THIS block so we can undo them later
         let mut newly_killed: SmallVec<[usize; 8]> = SmallVec::new();
 
-        if let Some(block_ops_vec) = &cfg_ops[block_id] {
-            for (symbol_id, ops) in block_ops_vec {
-                let sym_idx = symbol_id.index();
+        for (symbol_id, ops) in &cfg_ops[block_id] {
+            let sym_idx = symbol_id.index();
 
-                if result_gen.has_bit(sym_idx) || killed_on_path.has_bit(sym_idx) {
-                    continue;
-                }
+            if result_gen.has_bit(sym_idx) || killed_on_path.has_bit(sym_idx) {
+                continue;
+            }
 
-                if let Some(first_op) = ops.first() {
-                    match first_op.op {
-                        Operation::Read => {
-                            result_gen.set_bit(sym_idx);
-                        }
-                        Operation::Write => {
-                            killed_on_path.set_bit(sym_idx);
-                            newly_killed.push(sym_idx); // Remember to backtrack
-                        }
+            if let Some(first_op) = ops.first() {
+                match first_op.op {
+                    Operation::Read => {
+                        result_gen.set_bit(sym_idx);
+                    }
+                    Operation::Write => {
+                        killed_on_path.set_bit(sym_idx);
+                        newly_killed.push(sym_idx);
                     }
                 }
             }
         }
 
-        for edge in ctx.cfg().graph().edges_directed(node, Direction::Outgoing) {
+        for edge in graph.edges_directed(node, Direction::Outgoing) {
             match edge.weight() {
                 EdgeType::Normal | EdgeType::Jump | EdgeType::NewFunction | EdgeType::Backedge => {
                     let target = edge.target();
@@ -536,9 +499,8 @@ impl NoUselessAssignment {
                         continue;
                     }
 
-                    // Pass the same mutable bitset down
                     Self::analyze_loop_recursive(
-                        ctx,
+                        graph,
                         target,
                         loop_header_id,
                         cfg_ops,
@@ -557,21 +519,12 @@ impl NoUselessAssignment {
         }
     }
 
-    fn get_basic_block_id(ctx: &LintContext, block_node_id: BlockNodeId) -> BasicBlockId {
-        *ctx.cfg().graph().node_weight(block_node_id).expect("expected a valid node id in graph")
-    }
-
     fn get_ops_mut(
         cfg_ops: &mut CfgOps,
         block_id: BasicBlockId,
         symbol_id: SymbolId,
     ) -> &mut Vec<OpAtNode> {
-        if cfg_ops[block_id].is_none() {
-            // Start small (4) to avoid allocating too much for sparse blocks
-            cfg_ops[block_id] = Some(Vec::with_capacity(4));
-        }
-
-        let block_ops_vec = cfg_ops[block_id].get_or_insert_with(Vec::new);
+        let block_ops_vec = &mut cfg_ops[block_id];
 
         if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
             &mut block_ops_vec[pos].1
@@ -683,15 +636,6 @@ fn test() {
                     export { foo };
                     console.log(foo);
                     foo = 'unused like but exported';",
-        // "/* exported foo */
-        //                 let foo = 'used';
-        //                 console.log(foo);
-        //                 foo = 'unused like but exported with directive';", // { "sourceType": "script" },
-        // "/*eslint test/use-a:1*/
-        //             let a = 'used';
-        //             console.log(a);
-        //             a = 'unused like but marked by markVariableAsUsed()';
-        //             ",
         "v = 'used';
                     console.log(v);
                     v = 'unused'",
@@ -804,7 +748,7 @@ fn test() {
                             // process
                         } finally {
                             console = bk;
-                        }", // { "globals": { "console": false }, },
+                        }",
         "let message = 'init';
                     try {
                         const result = call();
@@ -905,32 +849,12 @@ fn test() {
                     function unsafeFn() {
                         throw new Error();
                     }",
-        // These tests rely on ESLint's test/unknown-ref plugin directive which is not supported in oxc.
-        // r#"/*eslint test/unknown-ref:1*/
-        //             let a = "used";
-        //             console.log(a);
-        //             a = "unused";"#,
-        // r#"/*eslint test/unknown-ref:1*/
-        //             function foo() {
-        //                 let a = "used";
-        //                 console.log(a);
-        //                 a = "unused";
-        //             }"#,
-        // r#"/*eslint test/unknown-ref:1*/
-        //             function foo() {
-        //                 let a = "used";
-        //                 if (condition) {
-        //                     a = "unused";
-        //                     return
-        //                 }
-        //                 console.log(a);
-        //             }"#,
         r#"
                             function App() {
                                 const A = "";
                                 return <A/>;
                             }
-                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
+                        "#,
         r#"
                             function App() {
                                 let A = "";
@@ -938,50 +862,50 @@ fn test() {
                                 A = "A";
                                 return <A/>;
                             }
-                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
+                        "#,
         r#"
                             function App() {
                                 let A = "a";
                                 foo(A);
                                 return <A/>;
                             }
-                        "#, // { "parserOptions": { "ecmaFeatures": { "jsx": true, }, }, },
+                        "#,
         "function App() {
                             let x = 0;
                             foo(x);
                             x = 1;
                             return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         r#"function App() {
                             let x = "init";
                             foo(x);
                             x = "used";
                             return <A>{x}</A>;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         "function App() {
                             let props = { a: 1 };
                             foo(props);
                             props = { b: 2 };
                             return <A {...props} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             let NS = Lib;
                             return <NS.Cmp />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             let a = 0;
                             a++;
                             return <A prop={a} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             const obj = { a: 1 };
                             const { a, b = a } = obj;
                             return <A prop={b} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             let { a, b: { c = a } = {} } = obj;
                             return <A prop={c} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         r#"function App() {
                             let x = "init";
                             if (cond) {
@@ -989,7 +913,7 @@ fn test() {
                                 return <A prop={x} />;
                             }
                             return <A prop={x} />;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         "function App() {
                             let A;
                             if (cond) {
@@ -998,7 +922,7 @@ fn test() {
                               A = Bar;
                             }
                             return <A />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             let m;
                             try {
@@ -1009,12 +933,12 @@ fn test() {
                               // ignore
                             }
                             return <A prop={m} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             const arr = [6];
                             const [c, d = c] = arr;
                             return <A prop={d} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                             const obj = { a: 1 };
                             let {
@@ -1022,7 +946,7 @@ fn test() {
                               b = (a = 2)
                             } = obj;
                             return <A prop={a} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }",
     ];
 
     let fail = vec![
@@ -1286,17 +1210,17 @@ fn test() {
                         let A = "unused";
                         A = "used";
                         return <A/>;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         r#"function App() {
                         let A = "unused";
                         A = "used";
                         return <A></A>;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         r#"function App() {
                         let A = "unused";
                         A = "used";
                         return <A.B />;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         r#"function App() {
                         let x = "used";
                         if (cond) {
@@ -1304,7 +1228,7 @@ fn test() {
                         } else {
                           x = "unused";
                         }
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         r#"function App() {
                         let A;
                         A = "unused";
@@ -1314,7 +1238,7 @@ fn test() {
                           A = "used2";
                         }
                         return <A/>;
-                        }"#, // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }"#,
         "function App() {
                         let message = 'unused';
                         try {
@@ -1324,24 +1248,24 @@ fn test() {
                           message = 'used';
                         }
                         return <A prop={message} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                         let x = 1;
                         x = x + 1;
                         x = 5;
                         return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                         let x = 1;
                         x = 2;
                         return <A>{x}</A>;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+                        }",
         "function App() {
                         let x = 0;
                         x = 1;
                         x = 2;
                         return <A prop={x} />;
-                        }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, }
+                        }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
