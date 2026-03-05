@@ -11,6 +11,7 @@
 /// - `$[idx] !== dep` checks for dependency changes
 /// - `$[idx] = value` assignments to cache new values
 /// - `$[idx]` reads for cached values
+use hmac::{Hmac, Mac};
 use oxc_allocator::{CloneIn, Vec as AVec};
 use oxc_ast::AstBuilder;
 use oxc_ast::NONE;
@@ -18,6 +19,7 @@ use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::{FxHashMap, FxHashSet};
+use sha2::Sha256;
 
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
@@ -674,8 +676,32 @@ pub fn codegen_function<'a>(
         options.cache_identifier_name,
     );
 
-    // TODO: Fast Refresh / HMR: compute source hash and allocate cache index for
-    // tracking source changes (enable_reset_cache_on_source_file_changes).
+    // Fast Refresh / HMR: compute source hash and allocate cache index for
+    // tracking source changes.
+    let fast_refresh_state =
+        if options.enable_reset_cache_on_source_file_changes {
+            options.code.as_ref().map(|code| {
+                type HmacSha256 = Hmac<Sha256>;
+                // HMAC accepts keys of any size, so new_from_slice never fails
+                let Ok(mac) = HmacSha256::new_from_slice(code.as_bytes()) else {
+                    unreachable!();
+                };
+                // TS: createHmac("sha256", code).digest("hex") — no .update() call, so data is empty
+                let result = mac.finalize();
+                let hash_hex = result
+                    .into_bytes()
+                    .iter()
+                    .fold(String::with_capacity(64), |mut acc, b| {
+                        use std::fmt::Write;
+                        let _ = write!(acc, "{b:02x}");
+                        acc
+                    });
+                let cache_index = cx.alloc_cache_index();
+                (cache_index, hash_hex)
+            })
+        } else {
+            None
+        };
 
     // Register function params as declared and as temporaries
     for param in &reactive_fn.params {
@@ -697,27 +723,217 @@ pub fn codegen_function<'a>(
         }
     }
 
-    // TODO: Function-level hook guard: wrap the entire body in a try-finally with
+    // Function-level hook guard: wrap the entire body in a try-finally with
     // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
+    if let Some(guard_fn) = cx.enable_emit_hook_guards.as_ref().filter(|_| cx.output_mode == CompilerOutputMode::Client) {
+        let guard_name = cx.synthesize_name(&guard_fn.import_specifier_name.clone());
+
+        // Build: guardFn(0)  — PushHookGuard
+        let push_args = cx
+            .ast
+            .vec1(Argument::from(make_number(&cx, f64::from(GuardKind::PushHookGuard as u8))));
+        let push_call = make_call(&cx, make_id(&cx, &guard_name), push_args);
+        let push_stmt = make_expr_stmt(&cx, push_call);
+
+        // Build try block: { guardFn(0); ...body... }
+        let mut try_stmts = cx.ast.vec_with_capacity(1 + body.len());
+        try_stmts.push(push_stmt);
+        try_stmts.extend(body);
+        let try_block = stmts_to_block_body(&cx, try_stmts);
+
+        // Build: guardFn(1)  — PopHookGuard
+        let pop_args = cx
+            .ast
+            .vec1(Argument::from(make_number(&cx, f64::from(GuardKind::PopHookGuard as u8))));
+        let pop_call = make_call(&cx, make_id(&cx, &guard_name), pop_args);
+        let pop_stmt = make_expr_stmt(&cx, pop_call);
+
+        // Build finally block: { guardFn(1); }
+        let finally_stmts = cx.ast.vec1(pop_stmt);
+        let finally_block = stmts_to_block_body(&cx, finally_stmts);
+
+        // Build try-finally statement
+        let try_stmt = cx.ast.statement_try(
+            SPAN,
+            try_block,
+            None::<oxc_allocator::Box<'_, CatchClause<'_>>>,
+            Some(finally_block),
+        );
+
+        body = cx.ast.vec1(try_stmt);
+    }
 
     // Count memo blocks/values
     let mut counter = MemoCounter::default();
     visit_reactive_block(&reactive_fn.body, &mut counter);
 
-    // TODO: Emit HMR/Fast Refresh hash check and cache reset
-    // TODO: Emit instrument forget
-
     let cache_count = cx.next_cache_index;
 
-    // Insert `const $ = _c(N);` preamble if there are cache slots
+    // Insert `const $ = _c(N);` preamble and HMR block if there are cache slots
     if cache_count > 0 {
+        let cache_name = cx.cache_identifier_name.clone();
         let call = make_call(
             &cx,
-            make_id(&cx, &cx.cache_identifier_name),
+            make_id(&cx, &cache_name),
             cx.ast.vec1(Argument::from(make_number(&cx, f64::from(cache_count)))),
         );
-        let preamble = make_var_decl(&cx, VariableDeclarationKind::Const, "$", Some(call));
+        let dollar_name = cx.synthesize_name("$");
+        let preamble = make_var_decl(&cx, VariableDeclarationKind::Const, &dollar_name, Some(call));
         body.insert(0, preamble);
+
+        // Emit HMR/Fast Refresh hash check and cache reset block
+        if let Some((hash_index, ref hash_hex)) = fast_refresh_state {
+            // Build: $[hashIndex] !== "hashHexString"
+            let dollar_ref = make_id(&cx, &dollar_name);
+            let hash_member =
+                make_computed_member(&cx, dollar_ref, make_number(&cx, f64::from(hash_index)));
+            let test = cx.ast.expression_binary(
+                SPAN,
+                hash_member,
+                BinaryOperator::StrictInequality,
+                make_string(&cx, hash_hex),
+            );
+
+            // Build: for (let $i = 0; $i < cacheCount; $i += 1) { $[$i] = Symbol.for("react.memo_cache_sentinel"); }
+            let index_name = cx.synthesize_name("$i");
+
+            // for-init: let $i = 0
+            let init_binding = cx
+                .ast
+                .binding_pattern_binding_identifier(SPAN, cx.ast.atom(&index_name));
+            let init_declarator = cx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Let,
+                init_binding,
+                NONE,
+                Some(make_number(&cx, 0.0)),
+                false,
+            );
+            let init_decl = cx.ast.variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Let,
+                cx.ast.vec1(init_declarator),
+                false,
+            );
+            let for_init = ForStatementInit::VariableDeclaration(cx.ast.alloc(init_decl));
+
+            // for-test: $i < cacheCount
+            let for_test = cx.ast.expression_binary(
+                SPAN,
+                make_id(&cx, &index_name),
+                BinaryOperator::LessThan,
+                make_number(&cx, f64::from(cache_count)),
+            );
+
+            // for-update: $i += 1
+            let for_update = cx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Addition,
+                cx.ast.simple_assignment_target_assignment_target_identifier(SPAN, cx.ast.atom(&index_name)).into(),
+                make_number(&cx, 1.0),
+            );
+
+            // for-body: { $[$i] = Symbol.for("react.memo_cache_sentinel"); }
+            let symbol_for = make_member(&cx, make_id(&cx, "Symbol"), "for");
+            let sentinel_call = make_call(
+                &cx,
+                symbol_for,
+                cx.ast.vec1(Argument::from(make_string(&cx, MEMO_CACHE_SENTINEL))),
+            );
+            let assign_sentinel = cx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                AssignmentTarget::from(cx.ast.member_expression_computed(
+                    SPAN,
+                    make_id(&cx, &dollar_name),
+                    make_id(&cx, &index_name),
+                    false,
+                )),
+                sentinel_call,
+            );
+            let for_body_stmt = make_expr_stmt(&cx, assign_sentinel);
+            let for_body_block = stmts_to_block_body(&cx, cx.ast.vec1(for_body_stmt));
+            let for_body = Statement::BlockStatement(for_body_block);
+
+            let for_stmt =
+                cx.ast
+                    .statement_for(SPAN, Some(for_init), Some(for_test), Some(for_update), for_body);
+
+            // Build: $[hashIndex] = "hashHexString"
+            let dollar_assign = make_id(&cx, &dollar_name);
+            let assign_hash = cx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                AssignmentTarget::from(cx.ast.member_expression_computed(
+                    SPAN,
+                    dollar_assign,
+                    make_number(&cx, f64::from(hash_index)),
+                    false,
+                )),
+                make_string(&cx, hash_hex),
+            );
+            let assign_hash_stmt = make_expr_stmt(&cx, assign_hash);
+
+            // Build: if ($[hashIndex] !== "hash") { for (...) { ... } $[hashIndex] = "hash"; }
+            let if_body_stmts = cx.ast.vec_from_array([for_stmt, assign_hash_stmt]);
+            let if_body = Statement::BlockStatement(stmts_to_block_body(&cx, if_body_stmts));
+            let if_stmt = cx.ast.statement_if(SPAN, test, if_body, None);
+
+            // Insert after the preamble (position 1)
+            body.insert(1, if_stmt);
+        }
+    }
+
+    // Emit instrument forget: only when config is set, function has a name, and output mode is client
+    #[allow(clippy::collapsible_if)]
+    if let (Some(instrument_config), Some(fn_name)) =
+        (&options.enable_emit_instrument_forget, &options.fn_id)
+    {
+        if options.output_mode == CompilerOutputMode::Client {
+            // Build the gating condition
+            let gating_expr = instrument_config.gating.as_ref().map(|gating| {
+                let name = cx.synthesize_name(&gating.import_specifier_name.clone());
+                make_id(&cx, &name)
+            });
+
+            let global_gating_expr =
+                instrument_config.global_gating.as_ref().map(|name| make_id(&cx, name));
+
+            let if_test = match (gating_expr, global_gating_expr) {
+                (Some(gating), Some(global)) => {
+                    cx.ast.expression_logical(SPAN, global, LogicalOperator::And, gating)
+                }
+                (Some(gating), None) => gating,
+                (None, Some(global)) => global,
+                (None, None) => {
+                    return Err(CompilerError::invariant(
+                        "Bad config: expected at least one of gating or globalGating",
+                        None,
+                        SourceLocation::Generated,
+                    ));
+                }
+            };
+
+            // Build: instrumentFn("functionName", "filename.js")
+            let instrument_fn_name =
+                cx.synthesize_name(&instrument_config.func.import_specifier_name.clone());
+            let filename = options.filename.as_deref().unwrap_or("");
+            let instrument_call = make_call(
+                &cx,
+                make_id(&cx, &instrument_fn_name),
+                cx.ast.vec_from_array([
+                    Argument::from(make_string(&cx, fn_name)),
+                    Argument::from(make_string(&cx, filename)),
+                ]),
+            );
+            let instrument_stmt = make_expr_stmt(&cx, instrument_call);
+
+            // Build: if (gatingCondition) { instrumentFn(...); }
+            let if_stmt = cx.ast.statement_if(SPAN, if_test, instrument_stmt, None);
+
+            // Insert at position 0 (before everything else)
+            body.insert(0, if_stmt);
+        }
     }
 
     let params = convert_params(&reactive_fn.params);

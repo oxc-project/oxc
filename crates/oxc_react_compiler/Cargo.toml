@@ -24,6 +24,8 @@ oxc_syntax = { workspace = true }
 
 rustc-hash = { workspace = true }
 indexmap = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
