@@ -70,9 +70,9 @@
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
     "test": "pnpm run test-node run",
-    "test-node": "vitest --dir ./test",
-    "test-browser": "vitest -c vitest.config.browser.ts",
-    "bench": "vitest bench --run ./bench.bench.js"
+    "test-node": "vp test --dir ./test",
+    "test-browser": "vp test -c vitest.config.browser.ts",
+    "bench": "vp test bench --run ./bench.bench.js"
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
@@ -83,12 +83,11 @@
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.54.0",
-    "@vitest/browser": "4.0.18",
-    "@vitest/browser-playwright": "4.0.18",
     "esbuild": "^0.27.0",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "tinypool": "^2.0.0",
+    "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

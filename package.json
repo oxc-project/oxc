@@ -7,14 +7,12 @@
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
     "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
-    "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
+    "fmt": "vp fmt -c oxfmtrc.jsonc",
+    "lint": "vp lint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
-    "oxfmt": "^0.36.0",
-    "oxlint": "^1.51.0",
-    "oxlint-tsgolint": "0.16.0"
+    "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@10.30.2"
 }

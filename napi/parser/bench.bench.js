@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { join as pathJoin } from "node:path";
-import { bench, describe } from "vitest";
+import { bench, describe } from "vite-plus/test";
 import { parseRawSync } from "./src-js/bindings.js";
 import { parseAsync, parseSync } from "./src-js/index.js";
 

@@ -44,12 +44,13 @@
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
-    "test": "vitest run --dir ./test"
+    "test": "vp test run --dir ./test"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "publint": "catalog:",
+    "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
   "napi": {

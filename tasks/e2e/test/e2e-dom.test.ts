@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 
 import { getModules } from "./utils";
 

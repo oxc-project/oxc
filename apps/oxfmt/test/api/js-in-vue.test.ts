@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { format } from "../../dist/index.js";
 
 // NOTE: For now, Vue files are partially handled by Prettier

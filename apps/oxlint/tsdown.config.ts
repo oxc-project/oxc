@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { join as pathJoin, relative as pathRelative, dirname } from "node:path";
-import { defineConfig } from "tsdown";
+import { defineConfig } from "vite-plus/pack";
 import { parseSync, Visitor } from "oxc-parser";
 
 import type { Plugin } from "rolldown";

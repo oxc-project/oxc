@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "vitest": "vitest"
+    "vitest": "vp test"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -22,6 +22,7 @@
     "@babel/plugin-transform-typescript": "^7.26.3",
     "@oxc-project/runtime": "link:../../npm/runtime",
     "reflect-metadata": "^0.2.2",
+    "vite-plus": "catalog:",
     "vitest": "catalog:"
   }
 }

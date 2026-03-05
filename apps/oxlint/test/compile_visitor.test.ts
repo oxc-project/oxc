@@ -1,6 +1,6 @@
 // oxlint-disable jest/no-conditional-expect
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   NODE_TYPES_COUNT,
   LEAF_NODE_TYPES_COUNT,
@@ -15,7 +15,7 @@ import {
   VISITOR_NOT_EMPTY,
 } from "../src-js/plugins/visitor.ts";
 
-import type { Mock } from "vitest";
+import type { Mock } from "vite-plus/test";
 import type { Node } from "../src-js/plugins/types.ts";
 import type { EnterExit, VisitFn } from "../src-js/plugins/visitor.ts";
 

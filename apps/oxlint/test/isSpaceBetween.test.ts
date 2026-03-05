@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { join as pathJoin } from "node:path";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { parse as parseRaw } from "../src-js/package/parse.ts";
 import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
 import { buffers } from "../src-js/plugins/lint.ts";

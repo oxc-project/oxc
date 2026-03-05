@@ -1,5 +1,5 @@
 // File should have a total of 1 error from the vitest rule, and 1 warning about an unnecessary disable.
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 vi.useFakeTimers();
 
