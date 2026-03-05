@@ -45,7 +45,7 @@ pub fn should_compile_function(
     // dynamicGating is configured (Program.ts:87-97 returns early if null).
     let has_opt_in = directives.iter().any(|d| {
         OPT_IN_DIRECTIVES.contains(&d.as_str())
-            || (has_dynamic_gating && d.starts_with("use memo if("))
+            || (has_dynamic_gating && parse_dynamic_gating_directive(d).is_some())
     });
     if has_opt_in {
         return Some(
@@ -478,4 +478,37 @@ pub enum ErrorAction {
     Panic,
     /// Skip this function and continue.
     Skip,
+}
+
+/// Parse the `use memo if(IDENT)` directive pattern.
+///
+/// Port of `findDirectivesDynamicGating` regex `^use memo if\(([^\)]*)\)$`
+/// from Program.ts (lines 40-120).
+///
+/// Returns:
+/// - `None` if the directive doesn't match the `use memo if(...)` pattern at all
+/// - `Some(Ok(ident))` if a valid identifier was found inside the parentheses
+/// - `Some(Err(raw))` if the pattern matched but the content is not a valid JS identifier
+pub fn parse_dynamic_gating_directive(directive: &str) -> Option<Result<&str, &str>> {
+    let trimmed = directive.trim();
+    let rest = trimmed.strip_prefix("use memo if(")?;
+    let ident = rest.strip_suffix(')')?;
+    let ident = ident.trim();
+    if ident.is_empty() {
+        return Some(Err(trimmed));
+    }
+    // Basic identifier validation: must start with letter/underscore/$,
+    // rest must be alphanumeric/underscore/$
+    let mut chars = ident.chars();
+    let first = chars.next();
+    match first {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '$' => {}
+        _ => return Some(Err(trimmed)),
+    }
+    for c in chars {
+        if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
+            return Some(Err(trimmed));
+        }
+    }
+    Some(Ok(ident))
 }
