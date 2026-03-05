@@ -224,7 +224,11 @@ fn emphasis_needs_change(bytes: &[u8]) -> bool {
 /// Skips if the string starts with a backtick (inline code) or a URL.
 /// Handles `"- "` prefix iteratively: `"- - hello"` → `"- - Hello"` with a single allocation.
 pub fn capitalize_first(s: &str) -> Cow<'_, str> {
-    if s.is_empty() || s.starts_with('`') || s.starts_with("http://") || s.starts_with("https://") {
+    if s.is_empty()
+        || s.starts_with('`')
+        || s.get(..7).is_some_and(|p| p.eq_ignore_ascii_case("http://"))
+        || s.get(..8).is_some_and(|p| p.eq_ignore_ascii_case("https://"))
+    {
         return Cow::Borrowed(s);
     }
 
@@ -1203,6 +1207,13 @@ mod tests {
         assert_eq!(capitalize_first("- hello"), "- Hello");
         assert_eq!(capitalize_first("- Hello"), "- Hello");
         assert_eq!(capitalize_first("- `code`"), "- `code`");
+        // URL handling: case-insensitive (matches upstream's /^https?:\/\//i)
+        assert_eq!(capitalize_first("http://example.com"), "http://example.com");
+        assert_eq!(capitalize_first("HTTP://example.com"), "HTTP://example.com");
+        assert_eq!(capitalize_first("Http://example.com"), "Http://example.com");
+        assert_eq!(capitalize_first("https://example.com"), "https://example.com");
+        assert_eq!(capitalize_first("HTTPS://example.com"), "HTTPS://example.com");
+        assert_eq!(capitalize_first("Https://example.com"), "Https://example.com");
     }
 
     #[test]
