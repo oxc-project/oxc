@@ -7,8 +7,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
-    HIRFunction, IdentifierId, IdentifierName, Instruction, InstructionKind, InstructionValue,
-    ReactFunctionType, ReactiveParam,
+    HIRFunction, Hir, IdentifierId, IdentifierName, Instruction, InstructionKind,
+    InstructionValue, Place, ReactFunctionType, ReactiveParam,
     environment::Environment,
     globals::Global,
     object_shape::{
@@ -312,16 +312,22 @@ impl ResolvedTypes {
 ///
 /// Returns a `CompilerError` if type inference encounters a validation error.
 pub fn infer_types(func: &mut HIRFunction) -> Result<(), crate::compiler_error::CompilerError> {
-    let mut unifier = Unifier::new(&func.env);
-
-    // Generate type equations
-    let (equations, errors) = generate(func);
+    // Generate type equations first (needs &mut env for module type resolution on cache miss).
+    // Split borrow: read func fields immutably while mutably borrowing env.
+    let (equations, errors) = generate(
+        func.fn_type,
+        &func.params,
+        &func.returns,
+        &func.body,
+        &mut func.env,
+    );
 
     // If there are type-provider validation errors, return the first one.
     if let Some(error) = errors.into_iter().next() {
         return Err(error);
     }
 
+    let mut unifier = Unifier::new(&func.env);
     for eq in equations {
         unifier.unify(eq.left, eq.right);
     }
@@ -613,7 +619,13 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
     }
 }
 
-fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error::CompilerError>) {
+fn generate(
+    fn_type: ReactFunctionType,
+    params: &[ReactiveParam],
+    returns: &Place,
+    body: &Hir,
+    env: &mut Environment,
+) -> (Vec<TypeEquation>, Vec<crate::compiler_error::CompilerError>) {
     let mut equations = Vec::new();
     let mut errors = Vec::new();
 
@@ -621,8 +633,8 @@ fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error
     // Props and the second param as BuiltInUseRefId (for forwardRef components).
     // This ensures that `ref` parameters in components like `function Foo(props, ref) {}`
     // are recognized as ref-like mutable types, allowing mutation in effects.
-    if func.fn_type == ReactFunctionType::Component {
-        let mut params_iter = func.params.iter();
+    if fn_type == ReactFunctionType::Component {
+        let mut params_iter = params.iter();
         // First param → BuiltInPropsId
         if let Some(first_param) = params_iter.next()
             && let ReactiveParam::Place(p) = first_param
@@ -652,7 +664,7 @@ fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error
 
     // Port of TS InferTypes.ts: collect return value types to connect func.returns.
     let mut return_types: Vec<Type> = Vec::new();
-    for block in func.body.blocks.values() {
+    for block in body.blocks.values() {
         if let crate::hir::Terminal::Return(ret) = &block.terminal {
             return_types.push(ret.value.identifier.type_.clone());
         }
@@ -661,19 +673,19 @@ fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error
         0 => {}
         1 => {
             equations.push(TypeEquation {
-                left: func.returns.identifier.type_.clone(),
+                left: returns.identifier.type_.clone(),
                 right: return_types.remove(0),
             });
         }
         _ => {
             equations.push(TypeEquation {
-                left: func.returns.identifier.type_.clone(),
+                left: returns.identifier.type_.clone(),
                 right: Type::Phi(crate::hir::types::PhiType { operands: return_types }),
             });
         }
     }
 
-    for block in func.body.blocks.values() {
+    for block in body.blocks.values() {
         for phi in &block.phis {
             let operand_types: Vec<Type> =
                 phi.operands.values().map(|p| p.identifier.type_.clone()).collect();
@@ -688,7 +700,7 @@ fn generate(func: &HIRFunction) -> (Vec<TypeEquation>, Vec<crate::compiler_error
         for instr in &block.instructions {
             generate_instruction_equations(
                 instr,
-                &func.env,
+                env,
                 &mut names,
                 &mut equations,
                 &mut errors,
@@ -719,7 +731,7 @@ fn get_name(names: &FxHashMap<IdentifierId, String>, id: IdentifierId) -> String
 
 fn generate_instruction_equations(
     instr: &Instruction,
-    env: &Environment,
+    env: &mut Environment,
     names: &mut FxHashMap<IdentifierId, String>,
     equations: &mut Vec<TypeEquation>,
     errors: &mut Vec<crate::compiler_error::CompilerError>,
@@ -822,7 +834,14 @@ fn generate_instruction_equations(
             // inside inner functions (e.g. LoadContext setState → lvalue gets the
             // TFunction<BuiltInSetState> type, enabling the correct aliasing signature
             // to be used in InferMutationAliasingEffects instead of the conservative fallback).
-            let (inner_eqs, inner_errors) = generate(&v.lowered_func.func);
+            let inner_func = &v.lowered_func.func;
+            let (inner_eqs, inner_errors) = generate(
+                inner_func.fn_type,
+                &inner_func.params,
+                &inner_func.returns,
+                &inner_func.body,
+                env,
+            );
             equations.extend(inner_eqs);
             errors.extend(inner_errors);
             equations.push(TypeEquation {
@@ -835,7 +854,14 @@ fn generate_instruction_equations(
             });
         }
         InstructionValue::ObjectMethod(v) => {
-            let (inner_eqs, inner_errors) = generate(&v.lowered_func.func);
+            let inner_func = &v.lowered_func.func;
+            let (inner_eqs, inner_errors) = generate(
+                inner_func.fn_type,
+                &inner_func.params,
+                &inner_func.returns,
+                &inner_func.body,
+                env,
+            );
             equations.extend(inner_eqs);
             errors.extend(inner_errors);
             equations.push(TypeEquation {
