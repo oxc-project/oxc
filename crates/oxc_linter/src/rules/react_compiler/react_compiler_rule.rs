@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
-    compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
+    compiler_error::{CompilerError, CompilerErrorEntry, ErrorSeverity, SourceLocation},
     entrypoint::{
         options::CompilationMode, pipeline::run_pipeline, program::should_compile_function,
     },
@@ -22,10 +22,6 @@ use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
-
-fn react_compiler_diagnostic(span: Span, message: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message.to_string()).with_label(span)
-}
 
 /// The main React Compiler lint rule.
 ///
@@ -189,10 +185,77 @@ impl Rule for ReactCompilerRule {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let program = ctx.nodes().program();
         let outer_bindings = collect_import_bindings(&program.body);
+        walk_statements(&program.body, &outer_bindings, &self.0, ctx);
+    }
+}
 
-        for statement in &program.body {
-            lint_statement(statement, &outer_bindings, &self.0, ctx);
+fn walk_statements<'a>(
+    statements: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    for statement in statements {
+        lint_statement(statement, outer_bindings, config, ctx);
+        walk_nested_statement(statement, outer_bindings, config, ctx);
+    }
+}
+
+fn walk_nested_statement<'a>(
+    statement: &'a Statement<'a>,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    match statement {
+        Statement::BlockStatement(block) => {
+            walk_statements(&block.body, outer_bindings, config, ctx);
         }
+        Statement::IfStatement(s) => {
+            walk_nested_statement(&s.consequent, outer_bindings, config, ctx);
+            if let Some(alt) = &s.alternate {
+                walk_nested_statement(alt, outer_bindings, config, ctx);
+            }
+        }
+        Statement::ForStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        Statement::ForInStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        Statement::ForOfStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        Statement::WhileStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        Statement::DoWhileStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        Statement::TryStatement(s) => {
+            walk_statements(&s.block.body, outer_bindings, config, ctx);
+            if let Some(handler) = &s.handler {
+                walk_statements(&handler.body.body, outer_bindings, config, ctx);
+            }
+            if let Some(finalizer) = &s.finalizer {
+                walk_statements(&finalizer.body, outer_bindings, config, ctx);
+            }
+        }
+        Statement::SwitchStatement(s) => {
+            for case in &s.cases {
+                walk_statements(&case.consequent, outer_bindings, config, ctx);
+            }
+        }
+        Statement::LabeledStatement(s) => {
+            lint_statement(&s.body, outer_bindings, config, ctx);
+            walk_nested_statement(&s.body, outer_bindings, config, ctx);
+        }
+        _ => {}
     }
 }
 
@@ -213,6 +276,7 @@ fn lint_statement<'a>(
                 function.span,
                 outer_bindings,
                 config,
+                false,
                 ctx,
             );
         }
@@ -231,6 +295,7 @@ fn lint_statement<'a>(
                     function.span,
                     outer_bindings,
                     config,
+                    false,
                     ctx,
                 );
             }
@@ -244,8 +309,12 @@ fn lint_statement<'a>(
                     arrow.span,
                     outer_bindings,
                     config,
+                    false,
                     ctx,
                 );
+            }
+            ExportDefaultDeclarationKind::CallExpression(call) => {
+                lint_memo_or_forwardref_call(call, None, outer_bindings, config, ctx);
             }
             _ => {}
         },
@@ -262,6 +331,7 @@ fn lint_statement<'a>(
                             function.span,
                             outer_bindings,
                             config,
+                            false,
                             ctx,
                         );
                     }
@@ -305,6 +375,7 @@ fn lint_variable_declaration<'a>(
                     function.span,
                     outer_bindings,
                     config,
+                    false,
                     ctx,
                 );
             }
@@ -318,11 +389,87 @@ fn lint_variable_declaration<'a>(
                     arrow.span,
                     outer_bindings,
                     config,
+                    false,
                     ctx,
                 );
             }
+            Expression::CallExpression(call) => {
+                lint_memo_or_forwardref_call(call, binding_name, outer_bindings, config, ctx);
+            }
             _ => {}
         }
+    }
+}
+
+/// Returns `true` if the callee expression is `memo`, `React.memo`,
+/// `forwardRef`, or `React.forwardRef`.
+fn is_memo_or_forwardref_callee(callee: &Expression<'_>) -> bool {
+    match callee {
+        Expression::Identifier(ident) => {
+            matches!(ident.name.as_str(), "memo" | "forwardRef")
+        }
+        Expression::StaticMemberExpression(member) => {
+            if let Expression::Identifier(obj) = &member.object {
+                obj.name.as_str() == "React"
+                    && matches!(member.property.name.as_str(), "memo" | "forwardRef")
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
+/// Handles a `CallExpression` that might be `memo(fn)` or `forwardRef(fn)`.
+/// Extracts the first argument and lints it with `is_memo_or_forwardref_arg = true`.
+fn lint_memo_or_forwardref_call<'a>(
+    call: &'a CallExpression<'a>,
+    binding_name: Option<&str>,
+    outer_bindings: &FxHashMap<String, NonLocalBinding>,
+    config: &ReactCompilerConfig,
+    ctx: &LintContext<'a>,
+) {
+    if !is_memo_or_forwardref_callee(&call.callee) {
+        return;
+    }
+    let Some(first_arg) = call.arguments.first() else {
+        return;
+    };
+    let Some(first_arg_expr) = first_arg.as_expression() else {
+        return;
+    };
+    match first_arg_expr {
+        Expression::FunctionExpression(function) => {
+            let directives = function_directives(function);
+            let function_name =
+                function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+            let lowerable_function = LowerableFunction::Function(function);
+            lint_function(
+                &lowerable_function,
+                function_name,
+                &directives,
+                function.span,
+                outer_bindings,
+                config,
+                true,
+                ctx,
+            );
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            let directives = arrow_directives(arrow);
+            let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+            lint_function(
+                &lowerable_function,
+                binding_name,
+                &directives,
+                arrow.span,
+                outer_bindings,
+                config,
+                true,
+                ctx,
+            );
+        }
+        _ => {}
     }
 }
 
@@ -333,13 +480,19 @@ fn lint_function<'a>(
     fallback_span: Span,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    is_memo_or_forwardref_arg: bool,
     ctx: &LintContext<'a>,
 ) {
     // should_compile_function (port of getReactFunctionType) does NOT check
     // opt-out directives. In lint mode, validation always runs regardless of
     // opt-out directives, matching the ESLint plugin's behavior.
-    let Some(fn_type) =
-        should_compile_function(function, name, directives, config.compilation_mode.into(), false)
+    let Some(fn_type) = should_compile_function(
+        function,
+        name,
+        directives,
+        config.compilation_mode.into(),
+        is_memo_or_forwardref_arg,
+    )
     else {
         return;
     };
@@ -355,8 +508,15 @@ fn lint_function<'a>(
         }
     };
 
-    if let Err(error) = run_pipeline(&mut hir_function, &environment) {
-        report_compiler_error(&error, fallback_span, ctx);
+    match run_pipeline(&mut hir_function, &environment) {
+        Ok(output) => {
+            if let Some(recorded) = output.recorded_errors {
+                report_compiler_error(&recorded, fallback_span, ctx);
+            }
+        }
+        Err(error) => {
+            report_compiler_error(&error, fallback_span, ctx);
+        }
     }
 
     for diagnostic in hir_function.env.take_diagnostics() {
@@ -366,8 +526,17 @@ fn lint_function<'a>(
 
 fn report_compiler_error(error: &CompilerError, fallback_span: Span, ctx: &LintContext<'_>) {
     for entry in &error.details {
+        let severity = entry.severity();
+        if matches!(severity, ErrorSeverity::Hint | ErrorSeverity::Off) {
+            continue;
+        }
         let span = compiler_error_entry_span(entry).unwrap_or(fallback_span);
-        ctx.diagnostic(react_compiler_diagnostic(span, &entry.to_string()));
+        let message = entry.to_string();
+        let diagnostic = match severity {
+            ErrorSeverity::Error => OxcDiagnostic::error(message).with_label(span),
+            _ => OxcDiagnostic::warn(message).with_label(span),
+        };
+        ctx.diagnostic(diagnostic);
     }
 }
 
