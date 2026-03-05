@@ -32,11 +32,21 @@ pub fn should_compile_function(
     directives: &[String],
     mode: CompilationMode,
     is_memo_or_forwardref_arg: bool,
+    ignore_use_no_forget: bool,
+    custom_opt_out_directives: Option<&[String]>,
 ) -> Option<ReactFunctionType> {
-    // Check for opt-out directives
-    for directive in directives {
-        if OPT_OUT_DIRECTIVES.contains(&directive.as_str()) {
-            return None;
+    // Check for opt-out directives (unless ignore_use_no_forget is set)
+    if !ignore_use_no_forget {
+        for directive in directives {
+            if OPT_OUT_DIRECTIVES.contains(&directive.as_str()) {
+                return None;
+            }
+            // Check custom opt-out directives
+            if let Some(custom) = custom_opt_out_directives {
+                if custom.iter().any(|d| d == directive) {
+                    return None;
+                }
+            }
         }
     }
 
