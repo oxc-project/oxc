@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::fmt::Write as _;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::Comment;
@@ -13,6 +12,7 @@ use crate::options::{JsdocOptions, QuoteStyle};
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::{
+    line_buffer::LineBuffer,
     mdast_serialize::format_description_mdast,
     normalize::{
         capitalize_first, normalize_markdown_emphasis, normalize_tag_kind, normalize_type,
@@ -30,13 +30,38 @@ fn truncate_trim_end(s: &mut String) {
     s.truncate(trimmed_len);
 }
 
-/// Build an indented line without `format!()` overhead.
-#[inline]
-fn indented_line(indent: &str, content: &str) -> String {
-    let mut s = String::with_capacity(indent.len() + content.len());
-    s.push_str(indent);
-    s.push_str(content);
-    s
+/// Push a (possibly multi-line) description into `content_lines` as a single string,
+/// prepending `indent` to each non-empty line. When indent is empty, moves `desc` directly.
+fn push_indented_desc(content_lines: &mut LineBuffer, indent: &str, mut desc: String) {
+    if desc.is_empty() {
+        return;
+    }
+    if indent.is_empty() {
+        content_lines.push(desc);
+        return;
+    }
+    if !desc.contains('\n') {
+        desc.insert_str(0, indent);
+        content_lines.push(desc);
+        return;
+    }
+    // One allocation, one forward pass using `find` (SIMD-accelerated in std).
+    let mut s = String::with_capacity(desc.len() + indent.len() * 4);
+    let mut rest = desc.as_str();
+    while let Some(nl) = rest.find('\n') {
+        // Skip indent for empty lines (nl == 0) — blank lines in JSDoc body
+        // should not have leading spaces.
+        if nl > 0 {
+            s.push_str(indent);
+        }
+        s.push_str(&rest[..=nl]);
+        rest = &rest[nl + 1..];
+    }
+    if !rest.is_empty() {
+        s.push_str(indent);
+        s.push_str(rest);
+    }
+    content_lines.push(s);
 }
 
 /// Join an iterator of string slices with a separator, avoiding an intermediate `Vec`.
@@ -620,15 +645,11 @@ fn sort_tags_by_groups<'a>(
         return Vec::new();
     }
 
-    // Build normalized list once (avoids calling normalize_tag_kind twice per tag).
-    let mut normalized: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> =
-        tags.iter().map(|tag| (tag, normalize_tag_kind(tag.kind.parsed()))).collect();
-
-    // Fast path: check if any group split is actually needed.
-    // A split only occurs when a TAGS_GROUP_HEAD appears after a TAGS_GROUP_CONDITION.
+    // Quick scan: check if any group split is needed (no allocation).
     let mut needs_split = false;
     let mut seen_condition = false;
-    for &(_, kind) in &normalized {
+    for tag in tags {
+        let kind = normalize_tag_kind(tag.kind.parsed());
         if is_tags_group_condition(kind) {
             seen_condition = true;
         }
@@ -638,19 +659,24 @@ fn sort_tags_by_groups<'a>(
         }
     }
 
+    // normalize_tag_kind is a cheap string match, so calling it again below is fine.
+    let normalize =
+        |tag: &'a oxc_jsdoc::parser::JSDocTag<'a>| (tag, normalize_tag_kind(tag.kind.parsed()));
+
     if !needs_split {
-        // Single group — sort in-place, no Vec-of-Vec overhead
-        normalized.sort_by_key(|(_, kind)| tag_sort_priority(kind));
-        return normalized;
+        // Single group — sort directly by priority.
+        let mut sorted: Vec<_> = tags.iter().map(normalize).collect();
+        sorted.sort_by_key(|(_, kind)| tag_sort_priority(kind));
+        return sorted;
     }
 
-    // Multi-group path: split at TAGS_GROUP_HEAD boundaries when a
-    // TAGS_GROUP_CONDITION tag has been seen first (matching upstream behavior).
+    // Multi-group path: build groups directly from tags, no intermediate Vec.
     let mut groups: Vec<Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)>> = Vec::new();
     let mut current_group: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> = Vec::new();
     let mut can_group_next_tags = false;
 
-    for (tag, kind) in normalized {
+    for tag in tags {
+        let kind = normalize_tag_kind(tag.kind.parsed());
         if is_tags_group_head(kind) && can_group_next_tags && !current_group.is_empty() {
             groups.push(current_group);
             current_group = Vec::new();
@@ -665,17 +691,11 @@ fn sort_tags_by_groups<'a>(
         groups.push(current_group);
     }
 
-    // Sort within each group by weight (stable sort preserves original order for same weight)
+    // Sort within each group, then flatten.
     for group in &mut groups {
         group.sort_by_key(|(_, kind)| tag_sort_priority(kind));
     }
-
-    // Flatten groups back into a single list
-    let mut result = Vec::with_capacity(tags.len());
-    for group in groups {
-        result.extend(group);
-    }
-    result
+    groups.into_iter().flatten().collect()
 }
 
 /// Check if a tag has meaningful content.
@@ -735,20 +755,25 @@ pub fn format_jsdoc_comment<'a>(
     // Width available for content (subtract ` * ` prefix)
     let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
 
-    let mut content_lines: Vec<String> = Vec::new();
+    // Pre-build format options for type formatting (jsdoc: None prevents recursion).
+    // This is cloned once here instead of per-tag in format_type_via_formatter.
+    let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
+
+    let mut content_lines = LineBuffer::new();
 
     // Format description using mdast parsing (handles heading normalization,
     // emphasis conversion, horizontal rule removal, reference links, nested lists, etc.)
     let desc_trimmed = description.trim();
     if !desc_trimmed.is_empty() {
-        let desc_lines = format_description_mdast(
+        let desc = format_description_mdast(
             desc_trimmed,
             wrap_width,
             options.capitalize_descriptions,
             Some(format_options),
             Some(external_callbacks),
+            Some(allocator),
         );
-        content_lines.extend(desc_lines);
+        content_lines.push(desc);
     }
 
     // Sort tags by priority within groups.
@@ -768,18 +793,18 @@ pub fn format_jsdoc_comment<'a>(
             let desc_content = tag.comment().parsed();
             let desc_content = desc_content.trim();
             if !desc_content.is_empty() {
-                if !content_lines.is_empty() && !content_lines.last().is_some_and(String::is_empty)
-                {
-                    content_lines.push(String::new());
+                if !content_lines.is_empty() && !content_lines.last_is_empty() {
+                    content_lines.push_empty();
                 }
-                let desc_lines = format_description_mdast(
+                let desc = format_description_mdast(
                     desc_content,
                     wrap_width,
                     options.capitalize_descriptions,
                     Some(format_options),
                     Some(external_callbacks),
+                    Some(allocator),
                 );
-                content_lines.extend(desc_lines);
+                content_lines.push(desc);
             }
             continue;
         }
@@ -803,11 +828,12 @@ pub fn format_jsdoc_comment<'a>(
         if parsed_import_indices.contains(&tag_idx) {
             if has_imports && !imports_emitted {
                 // Emit merged imports at the position of the first @import tag
-                if !content_lines.is_empty() && !content_lines.last().is_some_and(String::is_empty)
-                {
-                    content_lines.push(String::new());
+                if !content_lines.is_empty() && !content_lines.last_is_empty() {
+                    content_lines.push_empty();
                 }
-                content_lines.extend(std::mem::take(&mut import_lines));
+                let import_str =
+                    std::mem::replace(&mut import_lines, LineBuffer::new()).into_string();
+                content_lines.push(import_str);
                 imports_emitted = true;
                 prev_normalized_kind = Some("import");
             }
@@ -821,11 +847,8 @@ pub fn format_jsdoc_comment<'a>(
             && is_known_tag(normalized_kind);
 
         // Add blank line between description and first tag
-        if is_first_tag
-            && !content_lines.is_empty()
-            && !content_lines.last().is_some_and(String::is_empty)
-        {
-            content_lines.push(String::new());
+        if is_first_tag && !content_lines.is_empty() && !content_lines.last_is_empty() {
+            content_lines.push_empty();
         }
 
         // Add blank lines between tag groups
@@ -851,8 +874,8 @@ pub fn format_jsdoc_comment<'a>(
                         .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import"))
             };
 
-            if should_separate && !content_lines.last().is_some_and(String::is_empty) {
-                content_lines.push(String::new());
+            if should_separate && !content_lines.last_is_empty() {
+                content_lines.push_empty();
             }
         }
 
@@ -860,7 +883,7 @@ pub fn format_jsdoc_comment<'a>(
         prev_normalized_kind = Some(normalized_kind);
 
         // Track content before formatting this tag
-        let lines_before = content_lines.len();
+        let lines_before = content_lines.byte_len();
 
         // Detect if original has no space between tag kind and `{type}`
         // e.g., `@type{import(...)}` vs `@type {import(...)}`
@@ -877,6 +900,7 @@ pub fn format_jsdoc_comment<'a>(
                 tag,
                 wrap_width,
                 format_options,
+                allocator,
                 &mut content_lines,
             );
         } else if is_type_name_comment_tag(normalized_kind) {
@@ -888,6 +912,7 @@ pub fn format_jsdoc_comment<'a>(
                 has_no_space_before_type,
                 bracket_spacing,
                 format_options,
+                &type_format_options,
                 external_callbacks,
                 allocator,
                 &mut content_lines,
@@ -901,6 +926,7 @@ pub fn format_jsdoc_comment<'a>(
                 has_no_space_before_type,
                 bracket_spacing,
                 format_options,
+                &type_format_options,
                 external_callbacks,
                 allocator,
                 &mut content_lines,
@@ -914,6 +940,7 @@ pub fn format_jsdoc_comment<'a>(
                 format_options.quote_style,
                 format_options,
                 external_callbacks,
+                allocator,
                 &mut content_lines,
             );
         }
@@ -921,55 +948,47 @@ pub fn format_jsdoc_comment<'a>(
         // If this tag has multi-paragraph content (blank lines within, or is an @example tag
         // with multi-line code) and the next tag is of a different kind, add a trailing
         // blank line for separation.
-        let tag_content_has_blank_lines =
-            content_lines[lines_before..].iter().any(String::is_empty);
-        let tag_content_lines = content_lines.len() - lines_before;
-        let is_example_multiline = normalized_kind == "example" && tag_content_lines > 1;
+        let tag_content_has_blank_lines = content_lines.has_blank_line_since(lines_before);
+        // line_count_since counts \n separators added since the snapshot; ≥2 means multi-line.
+        let tag_newline_count = content_lines.line_count_since(lines_before);
+        let is_example_multiline = normalized_kind == "example" && tag_newline_count > 1;
         if (tag_content_has_blank_lines || is_example_multiline)
             && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
             && next_kind != normalized_kind
-            && !content_lines.last().is_some_and(String::is_empty)
+            && !content_lines.last_is_empty()
         {
-            content_lines.push(String::new());
+            content_lines.push_empty();
         }
     }
 
-    // Remove trailing empty lines
-    while content_lines.last().is_some_and(String::is_empty) {
-        content_lines.pop();
-    }
+    // Get the full content as a single string and iterate lines,
+    // trimming leading and trailing blank lines.
+    let content_str = content_lines.into_string();
+    let content_str = content_str.trim_end_matches('\n');
+    let mut iter = content_str.split('\n').skip_while(|l| l.is_empty());
 
-    // Remove leading empty lines
-    let leading_empty =
-        content_lines.iter().position(|l| !l.is_empty()).unwrap_or(content_lines.len());
-    if leading_empty > 0 {
-        content_lines.drain(..leading_empty);
-    }
-
-    if content_lines.is_empty() {
+    let Some(first) = iter.next() else {
         return Some(allocator.alloc_str(""));
-    }
+    };
 
     // Single-line check: convert to single-line if content is a single line.
     // The plugin prefers single-line even if it slightly exceeds printWidth,
     // since the wrapping logic already constrains the content width.
-    if options.single_line_when_possible && content_lines.len() == 1 {
-        let single = &content_lines[0];
-        let formatted = format!("/** {single} */");
+    let second = iter.next();
+    if options.single_line_when_possible && second.is_none() {
+        let formatted = allocator.alloc_concat_strs_array(["/** ", first, " */"]);
         if formatted == content {
             return None;
         }
-        return Some(allocator.alloc_str(&formatted));
+        return Some(formatted);
     }
 
     // Build multiline comment
-    let mut builder = StringBuilder::with_capacity_in(
-        content_lines.iter().map(|l| l.len() + 4).sum::<usize>() + 10,
-        allocator,
-    );
+    let capacity = content_str.len() + content_str.bytes().filter(|&b| b == b'\n').count() * 4 + 10;
+    let mut builder = StringBuilder::with_capacity_in(capacity, allocator);
     builder.push_str("/**");
 
-    for line in &content_lines {
+    for line in std::iter::once(first).chain(second).chain(iter) {
         builder.push('\n');
         if line.is_empty() {
             builder.push_str(" *");
@@ -991,19 +1010,6 @@ pub fn format_jsdoc_comment<'a>(
     Some(result)
 }
 
-/// Push a tag line into `content_lines`, splitting on embedded newlines so each
-/// line gets its own ` * ` prefix in the final JSDoc comment. This handles
-/// multi-line types produced by `format_type_via_formatter()`.
-fn push_multiline_tag(tag_line: String, content_lines: &mut Vec<String>) {
-    if tag_line.contains('\n') {
-        for line in tag_line.split('\n') {
-            content_lines.push(line.to_string());
-        }
-    } else {
-        content_lines.push(tag_line);
-    }
-}
-
 /// Wrap a long type expression across multiple lines at `|` operators.
 /// Returns `None` if no wrapping is needed or the type can't be sensibly wrapped.
 fn wrap_type_expression(
@@ -1011,28 +1017,14 @@ fn wrap_type_expression(
     type_str: &str,
     name_and_rest: &str,
     wrap_width: usize,
-    content_lines: &mut Vec<String>,
+    content_lines: &mut LineBuffer,
 ) -> bool {
     // Only wrap if the full line exceeds the width
-    let full_line = if name_and_rest.is_empty() {
-        let mut s = String::with_capacity(tag_prefix.len() + type_str.len() + 3);
-        s.push_str(tag_prefix);
-        s.push_str(" {");
-        s.push_str(type_str);
-        s.push('}');
-        s
-    } else {
-        let mut s =
-            String::with_capacity(tag_prefix.len() + type_str.len() + name_and_rest.len() + 4);
-        s.push_str(tag_prefix);
-        s.push_str(" {");
-        s.push_str(type_str);
-        s.push_str("} ");
-        s.push_str(name_and_rest);
-        s
-    };
-
-    if full_line.len() <= wrap_width {
+    let full_len = tag_prefix.len()
+        + 2 // " {"
+        + type_str.len()
+        + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
+    if full_len <= wrap_width {
         return false;
     }
 
@@ -1048,43 +1040,25 @@ fn wrap_type_expression(
     }
 
     // Wrap union type at `|` operators
-    let indent = "  ";
     let first_part = parts[0].trim();
     {
-        let mut s = String::with_capacity(tag_prefix.len() + first_part.len() + 3);
+        let s = content_lines.begin_line();
         s.push_str(tag_prefix);
         s.push_str(" {");
         s.push_str(first_part);
-        content_lines.push(s);
     }
 
     for (i, part) in parts.iter().enumerate().skip(1) {
         let part = part.trim();
+        let s = content_lines.begin_line();
+        s.push_str("  | ");
+        s.push_str(part);
         if i == parts.len() - 1 {
-            // Last part: close the braces, include name on same line if present
-            if name_and_rest.is_empty() {
-                let mut s = String::with_capacity(indent.len() + part.len() + 3);
-                s.push_str(indent);
-                s.push_str("| ");
-                s.push_str(part);
-                s.push('}');
-                content_lines.push(s);
-            } else {
-                let mut s =
-                    String::with_capacity(indent.len() + part.len() + name_and_rest.len() + 4);
-                s.push_str(indent);
-                s.push_str("| ");
-                s.push_str(part);
-                s.push_str("} ");
+            s.push('}');
+            if !name_and_rest.is_empty() {
+                s.push(' ');
                 s.push_str(name_and_rest);
-                content_lines.push(s);
             }
-        } else {
-            let mut s = String::with_capacity(indent.len() + part.len() + 2);
-            s.push_str(indent);
-            s.push_str("| ");
-            s.push_str(part);
-            content_lines.push(s);
         }
     }
 
@@ -1103,7 +1077,7 @@ fn wrap_generic_type(
     tag_prefix: &str,
     type_str: &str,
     name_and_rest: &str,
-    content_lines: &mut Vec<String>,
+    content_lines: &mut LineBuffer,
 ) -> Option<bool> {
     // Find the first top-level `<` (depth 0)
     let mut depth = 0i32;
@@ -1140,16 +1114,26 @@ fn wrap_generic_type(
         return None;
     }
 
-    let indent = "  ";
     // First line: tag + opening part including <
-    content_lines.push(format!("{tag_prefix} {{{prefix_part}"));
+    {
+        let s = content_lines.begin_line();
+        s.push_str(tag_prefix);
+        s.push_str(" {");
+        s.push_str(prefix_part);
+    }
     // Inner content with 2-space indent
-    content_lines.push(format!("{indent}{inner}"));
+    {
+        let s = content_lines.begin_line();
+        s.push_str("  ");
+        s.push_str(inner);
+    }
     // Closing >} with optional name
     if name_and_rest.is_empty() {
-        content_lines.push(">}".to_string());
+        content_lines.push(">}");
     } else {
-        content_lines.push(format!(">}} {name_and_rest}"));
+        let s = content_lines.begin_line();
+        s.push_str(">} ");
+        s.push_str(name_and_rest);
     }
 
     Some(true)
@@ -1387,6 +1371,7 @@ pub(super) fn format_embedded_js(
     code: &str,
     print_width: usize,
     format_options: &FormatOptions,
+    allocator: &Allocator,
 ) -> Option<String> {
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
     let line_width = LineWidth::try_from(width).unwrap();
@@ -1397,13 +1382,12 @@ pub(super) fn format_embedded_js(
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| -> Option<String> {
-        let allocator = Allocator::default();
         let ret =
-            Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
+            Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
         if ret.panicked || !ret.errors.is_empty() {
             return None;
         }
-        let mut formatted = Formatter::new(&allocator, base_options.clone()).build(&ret.program);
+        let mut formatted = Formatter::new(allocator, base_options.clone()).build(&ret.program);
         truncate_trim_end(&mut formatted);
         Some(formatted)
     };
@@ -1421,35 +1405,33 @@ pub(super) fn format_embedded_js(
     // to handle object literals like `{ "key": value }` that parse as blocks
     let trimmed = code.trim();
     if trimmed.starts_with('{') {
-        let wrapped = format!("({trimmed})");
+        let wrapped = allocator.alloc_concat_strs_array(["(", trimmed, ")"]);
         // Use TrailingCommas::None for object literals since JSON-like code
         // shouldn't have trailing commas
         let obj_options =
             FormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
 
         let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
-            let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, code, source_type)
-                .with_options(get_parse_options())
-                .parse();
+            let ret =
+                Parser::new(allocator, code, source_type).with_options(get_parse_options()).parse();
             if ret.panicked || !ret.errors.is_empty() {
                 return None;
             }
-            let formatted = Formatter::new(&allocator, obj_options.clone()).build(&ret.program);
+            let formatted = Formatter::new(allocator, obj_options.clone()).build(&ret.program);
             let formatted = formatted.trim_end();
             // Remove the wrapping parens and trailing semicolon
             if let Some(inner) = formatted.strip_prefix('(')
                 && let Some(inner) = inner.strip_suffix(");")
             {
-                return Some(inner.to_string());
+                return Some(String::from(inner));
             }
-            Some(formatted.to_string())
+            Some(String::from(formatted))
         };
 
-        if let Some(result) = try_format_obj(&wrapped, SourceType::jsx()) {
+        if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
             return Some(result);
         }
-        if let Some(result) = try_format_obj(&wrapped, SourceType::tsx()) {
+        if let Some(result) = try_format_obj(wrapped, SourceType::tsx()) {
             return Some(result);
         }
     }
@@ -1461,9 +1443,11 @@ pub(super) fn format_embedded_js(
 /// Wraps the type as `type __t = {type_str};`, parses as TSX, formats, then extracts
 /// the formatted type. Handles `...Type` rest params by formatting the inner type
 /// separately. Returns `None` on parse/format failure.
+/// Format a type expression through the formatter.
+/// `type_options` must already have `jsdoc: None` to prevent recursive formatting.
 fn format_type_via_formatter(
     type_str: &str,
-    format_options: &FormatOptions,
+    type_options: &FormatOptions,
     allocator: &Allocator,
 ) -> Option<String> {
     if type_str.is_empty() {
@@ -1477,10 +1461,13 @@ fn format_type_via_formatter(
         if rest.is_empty() {
             return None;
         }
-        let wrapped = format!("({rest})[]");
-        let formatted = format_type_via_formatter(&wrapped, format_options, allocator)?;
+        let wrapped = allocator.alloc_concat_strs_array(["(", rest, ")[]"]);
+        let formatted = format_type_via_formatter(wrapped, type_options, allocator)?;
         let inner = formatted.strip_suffix("[]")?;
-        return Some(format!("...{inner}"));
+        let mut result = String::with_capacity(inner.len() + 3);
+        result.push_str("...");
+        result.push_str(inner);
+        return Some(result);
     }
 
     // Fast path: skip the expensive parse+format cycle for types that the TS
@@ -1491,21 +1478,15 @@ fn format_type_via_formatter(
         return None;
     }
 
-    let input = format!("type __t = {type_str};");
+    let input = allocator.alloc_concat_strs_array(["type __t = ", type_str, ";"]);
 
-    // Clone and disable jsdoc to prevent recursive formatting.
-    // This clone only happens for complex types (union/intersection/object/function),
-    // not for simple identifiers which are filtered by needs_formatter_pass() above.
-    let options = FormatOptions { jsdoc: None, ..format_options.clone() };
-
-    let ret = Parser::new(allocator, &input, SourceType::tsx())
-        .with_options(get_parse_options())
-        .parse();
+    let ret =
+        Parser::new(allocator, input, SourceType::tsx()).with_options(get_parse_options()).parse();
     if ret.panicked || !ret.errors.is_empty() {
         return None;
     }
 
-    let formatted = Formatter::new(allocator, options).build(&ret.program);
+    let formatted = Formatter::new(allocator, type_options.clone()).build(&ret.program);
     let formatted = formatted.trim_end();
 
     // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
@@ -1524,7 +1505,7 @@ fn format_type_via_formatter(
         return None;
     }
 
-    Some(result.to_string())
+    Some(String::from(result))
 }
 
 /// Check if a type expression needs to go through the TS formatter.
@@ -1555,7 +1536,8 @@ fn format_example_code(
     code: &str,
     wrap_width: usize,
     format_options: &FormatOptions,
-    content_lines: &mut Vec<String>,
+    allocator: &Allocator,
+    content_lines: &mut LineBuffer,
 ) {
     if code.is_empty() {
         return;
@@ -1578,6 +1560,7 @@ fn format_example_code(
                 closing_fence,
                 wrap_width,
                 format_options,
+                allocator,
                 content_lines,
             );
             return;
@@ -1589,6 +1572,7 @@ fn format_example_code(
                 rest.trim(),
                 wrap_width,
                 format_options,
+                allocator,
                 content_lines,
             );
             return;
@@ -1598,18 +1582,22 @@ fn format_example_code(
     // Try formatting the code. The effective print width for @example code is
     // wrap_width - 2 (for the 2-space indent within the comment).
     let effective_width = wrap_width.saturating_sub(2);
-    if let Some(formatted) = format_embedded_js(code, effective_width, format_options) {
+    if let Some(formatted) = format_embedded_js(code, effective_width, format_options, allocator) {
         // Add 2-space indent to code structure lines, but NOT to template literal
         // content. The formatter preserves template literal content verbatim, so
         // adding indent to those lines would shift them incorrectly.
         let mut template_depth: u32 = 0;
         for line in formatted.lines() {
             if line.is_empty() {
-                content_lines.push(String::new());
+                content_lines.push_empty();
             } else if template_depth == 0 {
-                content_lines.push(indented_line("  ", line));
+                {
+                    let s = content_lines.begin_line();
+                    s.push_str("  ");
+                    s.push_str(line);
+                }
             } else {
-                content_lines.push(line.to_string());
+                content_lines.push(line);
             }
             // Count unescaped backticks to track template literal depth
             template_depth = update_template_depth(line, template_depth);
@@ -1621,9 +1609,13 @@ fn format_example_code(
     for line in code.lines() {
         let line_trimmed = line.trim();
         if line_trimmed.is_empty() {
-            content_lines.push(String::new());
+            content_lines.push_empty();
         } else {
-            content_lines.push(indented_line("  ", line_trimmed));
+            {
+                let s = content_lines.begin_line();
+                s.push_str("  ");
+                s.push_str(line_trimmed);
+            }
         }
     }
 }
@@ -1637,26 +1629,36 @@ fn format_example_fenced_block(
     closing_fence: &str,
     wrap_width: usize,
     format_options: &FormatOptions,
-    content_lines: &mut Vec<String>,
+    allocator: &Allocator,
+    content_lines: &mut LineBuffer,
 ) {
     let effective_width = wrap_width.saturating_sub(2);
 
     // Add opening fence with indent
-    content_lines.push(indented_line("  ", lang_line));
+    {
+        let s = content_lines.begin_line();
+        s.push_str("  ");
+        s.push_str(lang_line);
+    }
 
     if !inner_code.is_empty() {
         let lang = lang_line[3..].trim();
         if is_js_ts_lang(lang) {
-            if let Some(formatted) = format_embedded_js(inner_code, effective_width, format_options)
+            if let Some(formatted) =
+                format_embedded_js(inner_code, effective_width, format_options, allocator)
             {
                 let mut template_depth: u32 = 0;
                 for line in formatted.lines() {
                     if line.is_empty() {
-                        content_lines.push(String::new());
+                        content_lines.push_empty();
                     } else if template_depth == 0 {
-                        content_lines.push(indented_line("  ", line));
+                        {
+                            let s = content_lines.begin_line();
+                            s.push_str("  ");
+                            s.push_str(line);
+                        }
                     } else {
-                        content_lines.push(line.to_string());
+                        content_lines.push(line);
                     }
                     template_depth = update_template_depth(line, template_depth);
                 }
@@ -1665,9 +1667,13 @@ fn format_example_fenced_block(
                 for line in inner_code.lines() {
                     let trimmed = line.trim();
                     if trimmed.is_empty() {
-                        content_lines.push(String::new());
+                        content_lines.push_empty();
                     } else {
-                        content_lines.push(indented_line("  ", trimmed));
+                        {
+                            let s = content_lines.begin_line();
+                            s.push_str("  ");
+                            s.push_str(trimmed);
+                        }
                     }
                 }
             }
@@ -1676,16 +1682,24 @@ fn format_example_fenced_block(
             for line in inner_code.lines() {
                 let trimmed = line.trim();
                 if trimmed.is_empty() {
-                    content_lines.push(String::new());
+                    content_lines.push_empty();
                 } else {
-                    content_lines.push(indented_line("  ", trimmed));
+                    {
+                        let s = content_lines.begin_line();
+                        s.push_str("  ");
+                        s.push_str(trimmed);
+                    }
                 }
             }
         }
     }
 
     // Add closing fence with indent
-    content_lines.push(indented_line("  ", closing_fence));
+    {
+        let s = content_lines.begin_line();
+        s.push_str("  ");
+        s.push_str(closing_fence);
+    }
 }
 
 fn format_example_tag(
@@ -1693,7 +1707,8 @@ fn format_example_tag(
     tag: &oxc_jsdoc::parser::JSDocTag<'_>,
     wrap_width: usize,
     format_options: &FormatOptions,
-    content_lines: &mut Vec<String>,
+    allocator: &Allocator,
+    content_lines: &mut LineBuffer,
 ) {
     let comment_part = tag.comment();
     let raw_text = comment_part.parsed_preserving_whitespace();
@@ -1705,13 +1720,24 @@ fn format_example_tag(
     {
         let caption = &rest[..end_pos];
         let after_caption = rest[end_pos + "</caption>".len()..].trim();
-        content_lines.push(format!("@{normalized_kind} <caption>{caption}</caption>"));
-        format_example_code(after_caption, wrap_width, format_options, content_lines);
+        {
+            let s = content_lines.begin_line();
+            s.push('@');
+            s.push_str(normalized_kind);
+            s.push_str(" <caption>");
+            s.push_str(caption);
+            s.push_str("</caption>");
+        }
+        format_example_code(after_caption, wrap_width, format_options, allocator, content_lines);
         return;
     }
 
-    content_lines.push(format!("@{normalized_kind}"));
-    format_example_code(trimmed, wrap_width, format_options, content_lines);
+    {
+        let s = content_lines.begin_line();
+        s.push('@');
+        s.push_str(normalized_kind);
+    }
+    format_example_code(trimmed, wrap_width, format_options, allocator, content_lines);
 }
 
 /// Join a slice of words with spaces, pre-allocating capacity.
@@ -1738,9 +1764,10 @@ fn format_type_name_comment_tag(
     has_no_space_before_type: bool,
     bracket_spacing: bool,
     format_options: &FormatOptions,
+    type_format_options: &FormatOptions,
     external_callbacks: &ExternalCallbacks,
     allocator: &Allocator,
-    content_lines: &mut Vec<String>,
+    content_lines: &mut LineBuffer,
 ) {
     let (type_part, name_part, comment_part) = tag.type_name_comment();
 
@@ -1768,7 +1795,7 @@ fn format_type_name_comment_tag(
             // Try formatting via the formatter (simulates upstream's formatType())
             if !preserve_quotes
                 && let Some(formatted) =
-                    format_type_via_formatter(&normalized_type_str, format_options, allocator)
+                    format_type_via_formatter(&normalized_type_str, type_format_options, allocator)
             {
                 normalized_type_str = Cow::Owned(formatted);
             }
@@ -1776,39 +1803,52 @@ fn format_type_name_comment_tag(
     }
 
     // Build name string and extract default value
-    let mut name_str: Cow<'_, str> = Cow::Borrowed("");
-    let mut default_value: Option<Cow<'_, str>> = None;
+    let mut name_str: &str = "";
+    let mut default_value: Option<&str> = None;
     if let Some(np) = &name_part {
         let name_raw = np.raw();
         if is_type_optional && !name_raw.starts_with('[') {
-            name_str = Cow::Owned(format!("[{name_raw}]"));
+            name_str = allocator.alloc_concat_strs_array(["[", name_raw, "]"]);
         } else if name_raw.starts_with('[') && name_raw.ends_with(']') {
             if let Some(eq_pos) = name_raw.find('=') {
                 let name_part_inner = &name_raw[1..eq_pos];
                 let val = name_raw[eq_pos + 1..name_raw.len() - 1].trim();
                 if val.is_empty() {
-                    name_str = Cow::Owned(format!("[{name_part_inner}]"));
+                    name_str = allocator.alloc_concat_strs_array(["[", name_part_inner, "]"]);
                 } else {
-                    default_value = Some(Cow::Borrowed(val));
-                    name_str = Cow::Owned(format!("[{name_part_inner}={val}]"));
+                    default_value = Some(val);
+                    name_str =
+                        allocator.alloc_concat_strs_array(["[", name_part_inner, "=", val, "]"]);
                 }
             } else {
-                name_str = Cow::Borrowed(name_raw);
+                name_str = name_raw;
             }
         } else {
-            name_str = Cow::Borrowed(name_raw);
+            name_str = name_raw;
         }
     }
 
     // Build the full tag line (tag_line already contains "@{normalized_kind}")
     if !normalized_type_str.is_empty() {
         let preserve_no_space = has_no_space_before_type && !normalized_type_str.starts_with('{');
-        let space = if preserve_no_space { "" } else { " " };
-        let (ob, cb) = if bracket_spacing { ("{ ", " }") } else { ("{", "}") };
-        write!(tag_line, "{space}{ob}{normalized_type_str}{cb}").unwrap();
+        if !preserve_no_space {
+            tag_line.push(' ');
+        }
+        if bracket_spacing {
+            tag_line.push_str("{ ");
+        } else {
+            tag_line.push('{');
+        }
+        tag_line.push_str(&normalized_type_str);
+        if bracket_spacing {
+            tag_line.push_str(" }");
+        } else {
+            tag_line.push('}');
+        }
     }
     if !name_str.is_empty() {
-        write!(tag_line, " {name_str}").unwrap();
+        tag_line.push(' ');
+        tag_line.push_str(name_str);
     }
 
     let desc_raw = comment_part.parsed_preserving_whitespace();
@@ -1831,14 +1871,14 @@ fn format_type_name_comment_tag(
             && wrap_type_expression(
                 &tag_line[..tag_prefix_len],
                 &normalized_type_str,
-                &name_str,
+                name_str,
                 wrap_width,
                 content_lines,
             )
         {
             return;
         }
-        push_multiline_tag(tag_line, content_lines);
+        content_lines.push(tag_line);
         return;
     }
 
@@ -1852,29 +1892,21 @@ fn format_type_name_comment_tag(
     // and treat the entire description as structural content with a blank line separator
     if first_text_line.starts_with("```") {
         content_lines.push(tag_line);
-        content_lines.push(String::new());
+        content_lines.push_empty();
         let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
         let indent_width = wrap_width.saturating_sub(indent.len());
-        let mut desc_lines = Vec::new();
-        wrap_text(
+        let mut desc = wrap_text(
             desc_raw,
             indent_width,
-            &mut desc_lines,
             Some(format_options),
             Some(external_callbacks),
+            Some(allocator),
         );
         // Skip leading blank line from wrap_text since we already added one
-        let start = usize::from(desc_lines.first().is_some_and(String::is_empty));
-        for line in &desc_lines[start..] {
-            if line.is_empty() {
-                content_lines.push(String::new());
-            } else {
-                let mut s = String::with_capacity(indent.len() + line.len());
-                s.push_str(indent);
-                s.push_str(line);
-                content_lines.push(s);
-            }
+        if desc.starts_with('\n') {
+            desc.remove(0);
         }
+        push_indented_desc(content_lines, indent, desc);
         return;
     }
 
@@ -1890,10 +1922,10 @@ fn format_type_name_comment_tag(
     let first_text: Cow<'_, str> =
         if should_capitalize { capitalize_first(first_text) } else { Cow::Borrowed(first_text) };
 
-    // Build the default value suffix
-    let default_suffix = default_value.as_ref().map(|dv| format!("Default is `{dv}`"));
+    // Default suffix length: "Default is `" (12) + value + "`" (1) = 13 + dv.len()
+    let default_suffix_len: Option<usize> = default_value.map(|dv| 13 + dv.len());
 
-    if first_text.is_empty() && default_suffix.is_none() && rest_of_desc.is_none() {
+    if first_text.is_empty() && default_suffix_len.is_none() && rest_of_desc.is_none() {
         content_lines.push(tag_line);
         return;
     }
@@ -1912,30 +1944,49 @@ fn format_type_name_comment_tag(
     };
     let has_remaining = !remaining_desc.trim().is_empty();
 
-    // Check if everything fits on one line
-    let one_liner = if has_remaining {
-        format!("{tag_line}{separator}{first_text}")
-    } else if let Some(ref ds) = default_suffix {
+    // Compute one-liner length without allocating
+    let prefix_len = tag_line.len() + separator.len();
+    let one_liner_len = if has_remaining {
+        prefix_len + first_text.len()
+    } else if let Some(ds_len) = default_suffix_len {
         if first_text.is_empty() {
-            format!("{tag_line}{separator}{ds}")
+            prefix_len + ds_len
         } else {
-            let last_char = first_text.chars().last().unwrap_or(' ');
-            if matches!(last_char, '.' | '!' | '?') {
-                format!("{tag_line}{separator}{first_text} {ds}")
-            } else {
-                format!("{tag_line}{separator}{first_text}. {ds}")
-            }
+            // +2 for ". " or " " before default suffix
+            prefix_len + first_text.len() + 2 + ds_len
         }
     } else {
-        format!("{tag_line}{separator}{first_text}")
+        prefix_len + first_text.len()
     };
 
-    if !has_remaining && one_liner.len() <= wrap_width {
-        content_lines.push(one_liner);
+    if !has_remaining && one_liner_len <= wrap_width {
+        // Fits on one line — write directly into LineBuffer
+        let s = content_lines.begin_line();
+        s.push_str(&tag_line);
+        s.push_str(separator);
+        if let Some(dv) = default_value {
+            if first_text.is_empty() {
+                s.push_str("Default is `");
+                s.push_str(dv);
+                s.push('`');
+            } else {
+                s.push_str(&first_text);
+                let last_char = first_text.as_bytes().last().copied().unwrap_or(b' ');
+                if matches!(last_char, b'.' | b'!' | b'?') {
+                    s.push(' ');
+                } else {
+                    s.push_str(". ");
+                }
+                s.push_str("Default is `");
+                s.push_str(dv);
+                s.push('`');
+            }
+        } else {
+            s.push_str(&first_text);
+        }
     } else {
         // Multi-line: wrap first text line with tag line
-        let first_line_prefix = format!("{tag_line}{separator}");
-        let first_line_content_width = wrap_width.saturating_sub(first_line_prefix.len());
+        let first_line_content_width = wrap_width.saturating_sub(prefix_len);
 
         let words: Vec<&str> = tokenize_words(&first_text);
         let mut first_line = String::new();
@@ -1961,10 +2012,10 @@ fn format_type_name_comment_tag(
         if first_line.is_empty() {
             content_lines.push(tag_line);
         } else {
-            let mut s = String::with_capacity(first_line_prefix.len() + first_line.len());
-            s.push_str(&first_line_prefix);
+            let s = content_lines.begin_line();
+            s.push_str(&tag_line);
+            s.push_str(separator);
             s.push_str(&first_line);
-            content_lines.push(s);
         }
 
         // @typedef/@callback descriptions use no indent (plugin passes no beginningSpace).
@@ -1981,21 +2032,26 @@ fn format_type_name_comment_tag(
         // Combine remaining first text with remaining description lines
         // to preserve structural content (tables, code blocks, etc.)
         let full_remaining = if !remaining_first_text.is_empty() && has_remaining {
-            format!("{remaining_first_text}\n{remaining_desc}")
+            let mut s =
+                String::with_capacity(remaining_first_text.len() + 1 + remaining_desc.len());
+            s.push_str(&remaining_first_text);
+            s.push('\n');
+            s.push_str(&remaining_desc);
+            s
         } else if !remaining_first_text.is_empty() {
             remaining_first_text
         } else {
             remaining_desc
         };
 
-        if !full_remaining.trim().is_empty() {
-            let mut desc_lines = Vec::new();
-            wrap_text(
-                full_remaining.trim(),
+        let full_remaining = full_remaining.trim();
+        if !full_remaining.is_empty() {
+            let desc = wrap_text(
+                full_remaining,
                 indent_width,
-                &mut desc_lines,
                 Some(format_options),
                 Some(external_callbacks),
+                Some(allocator),
             );
 
             // In markdown, a list or table after a paragraph needs a blank line separator.
@@ -2003,7 +2059,7 @@ fn format_type_name_comment_tag(
             // We detect when the first wrapped content is a list item or table row
             // and insert a blank line between the tag's first text line and the
             // structured content.
-            let first_desc_is_structural = desc_lines.first().is_some_and(|first| {
+            let first_desc_is_structural = desc.split('\n').next().is_some_and(|first| {
                 let t = first.trim();
                 t.starts_with("- ")
                     || t.starts_with("* ")
@@ -2014,30 +2070,22 @@ fn format_type_name_comment_tag(
                         && t.contains(". "))
             });
             if first_desc_is_structural && !first_line.is_empty() {
-                content_lines.push(String::new());
+                content_lines.push_empty();
             }
 
-            for dl in desc_lines {
-                if dl.is_empty() {
-                    content_lines.push(String::new());
-                } else {
-                    let mut s = String::with_capacity(indent.len() + dl.len());
-                    s.push_str(indent);
-                    s.push_str(&dl);
-                    content_lines.push(s);
-                }
-            }
+            push_indented_desc(content_lines, indent, desc);
         }
 
         // Add default value as a separate paragraph with blank line
-        if let Some(ref ds) = default_suffix
+        if let Some(dv) = default_value
             && !first_text.is_empty()
         {
-            content_lines.push(String::new());
-            let mut s = String::with_capacity(indent.len() + ds.len());
+            content_lines.push_empty();
+            let s = content_lines.begin_line();
             s.push_str(indent);
-            s.push_str(ds);
-            content_lines.push(s);
+            s.push_str("Default is `");
+            s.push_str(dv);
+            s.push('`');
         }
     }
 }
@@ -2050,9 +2098,10 @@ fn format_type_comment_tag(
     has_no_space_before_type: bool,
     bracket_spacing: bool,
     format_options: &FormatOptions,
+    type_format_options: &FormatOptions,
     external_callbacks: &ExternalCallbacks,
     allocator: &Allocator,
-    content_lines: &mut Vec<String>,
+    content_lines: &mut LineBuffer,
 ) {
     let (type_part, comment_part) = tag.type_comment();
 
@@ -2083,7 +2132,7 @@ fn format_type_comment_tag(
                 && !normalized_type_str.starts_with('{');
             if !skip_formatter
                 && let Some(formatted) =
-                    format_type_via_formatter(&normalized_type_str, format_options, allocator)
+                    format_type_via_formatter(&normalized_type_str, type_format_options, allocator)
             {
                 normalized_type_str = Cow::Owned(formatted);
             }
@@ -2091,9 +2140,20 @@ fn format_type_comment_tag(
             // (object types start with `{`, making `@type{{` → should be `@type {{`)
             let preserve_no_space =
                 has_no_space_before_type && !normalized_type_str.starts_with('{');
-            let space = if preserve_no_space { "" } else { " " };
-            let (ob, cb) = if bracket_spacing { ("{ ", " }") } else { ("{", "}") };
-            write!(tag_line, "{space}{ob}{normalized_type_str}{cb}").unwrap();
+            if !preserve_no_space {
+                tag_line.push(' ');
+            }
+            if bracket_spacing {
+                tag_line.push_str("{ ");
+            } else {
+                tag_line.push('{');
+            }
+            tag_line.push_str(&normalized_type_str);
+            if bracket_spacing {
+                tag_line.push_str(" }");
+            } else {
+                tag_line.push('}');
+            }
         }
     }
 
@@ -2115,22 +2175,20 @@ fn format_type_comment_tag(
         {
             return;
         }
-        push_multiline_tag(tag_line, content_lines);
+        content_lines.push(tag_line);
         return;
     }
 
     let desc_text: Cow<'_, str> =
         if should_capitalize { capitalize_first(desc_text) } else { Cow::Borrowed(desc_text) };
 
-    let one_liner = {
-        let mut s = String::with_capacity(tag_line.len() + desc_text.len() + 1);
+    let prefix_len = tag_line.len() + 1; // tag_line + " "
+    let one_liner_len = prefix_len + desc_text.len();
+    if one_liner_len <= wrap_width {
+        let s = content_lines.begin_line();
         s.push_str(&tag_line);
         s.push(' ');
         s.push_str(&desc_text);
-        s
-    };
-    if one_liner.len() <= wrap_width {
-        content_lines.push(one_liner);
     } else if !normalized_type_str.is_empty()
         && tag_line.len() > wrap_width
         && wrap_type_expression(
@@ -2144,29 +2202,17 @@ fn format_type_comment_tag(
         // Type was wrapped. Add description as continuation.
         let indent = "  ";
         let indent_width = wrap_width.saturating_sub(indent.len());
-        let mut desc_lines = Vec::new();
-        wrap_text(
+        let desc = wrap_text(
             &desc_text,
             indent_width,
-            &mut desc_lines,
             Some(format_options),
             Some(external_callbacks),
+            Some(allocator),
         );
-        for dl in desc_lines {
-            let mut s = String::with_capacity(indent.len() + dl.len());
-            s.push_str(indent);
-            s.push_str(&dl);
-            content_lines.push(s);
-        }
+        push_indented_desc(content_lines, indent, desc);
     } else {
         // Regular word-wrapping of description
-        let first_line_prefix = {
-            let mut s = String::with_capacity(tag_line.len() + 1);
-            s.push_str(&tag_line);
-            s.push(' ');
-            s
-        };
-        let first_line_content_width = wrap_width.saturating_sub(first_line_prefix.len());
+        let first_line_content_width = wrap_width.saturating_sub(prefix_len);
         let words: Vec<&str> = tokenize_words(&desc_text);
         let mut first_line = String::new();
         let mut remaining_start = 0;
@@ -2191,30 +2237,24 @@ fn format_type_comment_tag(
         if first_line.is_empty() {
             content_lines.push(tag_line);
         } else {
-            let mut s = String::with_capacity(first_line_prefix.len() + first_line.len());
-            s.push_str(&first_line_prefix);
+            let s = content_lines.begin_line();
+            s.push_str(&tag_line);
+            s.push(' ');
             s.push_str(&first_line);
-            content_lines.push(s);
         }
 
         let indent = "  ";
         let indent_width = wrap_width.saturating_sub(indent.len());
         if remaining_start < words.len() {
             let remaining = join_words(&words[remaining_start..]);
-            let mut desc_lines = Vec::new();
-            wrap_text(
+            let desc = wrap_text(
                 &remaining,
                 indent_width,
-                &mut desc_lines,
                 Some(format_options),
                 Some(external_callbacks),
+                Some(allocator),
             );
-            for dl in desc_lines {
-                let mut s = String::with_capacity(indent.len() + dl.len());
-                s.push_str(indent);
-                s.push_str(&dl);
-                content_lines.push(s);
-            }
+            push_indented_desc(content_lines, indent, desc);
         }
     }
 }
@@ -2227,7 +2267,8 @@ fn format_generic_tag(
     quote_style: QuoteStyle,
     format_options: &FormatOptions,
     external_callbacks: &ExternalCallbacks,
-    content_lines: &mut Vec<String>,
+    allocator: &Allocator,
+    content_lines: &mut LineBuffer,
 ) {
     let mut tag_line = String::with_capacity(normalized_kind.len() + 1);
     tag_line.push('@');
@@ -2254,7 +2295,11 @@ fn format_generic_tag(
                 Cow::Borrowed(desc_text)
             } else {
                 let capitalized = capitalize_first(desc_part);
-                Cow::Owned(format!("{name_part} {capitalized}"))
+                let mut s = String::with_capacity(name_part.len() + 1 + capitalized.len());
+                s.push_str(name_part);
+                s.push(' ');
+                s.push_str(&capitalized);
+                Cow::Owned(s)
             }
         } else {
             // Only a name, no description — no capitalization needed
@@ -2266,24 +2311,15 @@ fn format_generic_tag(
         Cow::Borrowed(desc_text)
     };
 
-    let one_liner = {
-        let mut s = String::with_capacity(tag_line.len() + desc_text.len() + 1);
+    let prefix_len = tag_line.len() + 1; // tag_line + " "
+    if prefix_len + desc_text.len() <= wrap_width {
+        let s = content_lines.begin_line();
         s.push_str(&tag_line);
         s.push(' ');
         s.push_str(&desc_text);
-        s
-    };
-    if one_liner.len() <= wrap_width {
-        content_lines.push(one_liner);
     } else {
         // Try to fit some description on the first line
-        let first_line_prefix = {
-            let mut s = String::with_capacity(tag_line.len() + 1);
-            s.push_str(&tag_line);
-            s.push(' ');
-            s
-        };
-        let first_line_content_width = wrap_width.saturating_sub(first_line_prefix.len());
+        let first_line_content_width = wrap_width.saturating_sub(prefix_len);
         let words: Vec<&str> = tokenize_words(&desc_text);
         let mut first_line = String::new();
         let mut remaining_start = 0;
@@ -2308,30 +2344,24 @@ fn format_generic_tag(
         if first_line.is_empty() {
             content_lines.push(tag_line);
         } else {
-            let mut s = String::with_capacity(first_line_prefix.len() + first_line.len());
-            s.push_str(&first_line_prefix);
+            let s = content_lines.begin_line();
+            s.push_str(&tag_line);
+            s.push(' ');
             s.push_str(&first_line);
-            content_lines.push(s);
         }
 
         let indent = "  ";
         let indent_width = wrap_width.saturating_sub(indent.len());
         if remaining_start < words.len() {
             let remaining = join_words(&words[remaining_start..]);
-            let mut desc_lines = Vec::new();
-            wrap_text(
+            let desc = wrap_text(
                 &remaining,
                 indent_width,
-                &mut desc_lines,
                 Some(format_options),
                 Some(external_callbacks),
+                Some(allocator),
             );
-            for dl in desc_lines {
-                let mut s = String::with_capacity(indent.len() + dl.len());
-                s.push_str(indent);
-                s.push_str(&dl);
-                content_lines.push(s);
-            }
+            push_indented_desc(content_lines, indent, desc);
         }
     }
 }
@@ -2464,36 +2494,68 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
 }
 
 /// Format a single merged `@import` tag into output lines.
-fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
+fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
     let module = &import.module_path;
 
     match (&import.default_import, import.named_imports.len()) {
         (Some(default), 0) => {
-            content_lines.push(format!("@import {default} from \"{module}\""));
+            let s = content_lines.begin_line();
+            s.push_str("@import ");
+            s.push_str(default);
+            s.push_str(" from \"");
+            s.push_str(module);
+            s.push('"');
         }
         (None, 1) => {
-            let named = &import.named_imports[0];
-            content_lines.push(format!("@import {{{named}}} from \"{module}\""));
+            let s = content_lines.begin_line();
+            s.push_str("@import {");
+            s.push_str(&import.named_imports[0]);
+            s.push_str("} from \"");
+            s.push_str(module);
+            s.push('"');
         }
         (Some(default), 1) => {
-            let named = &import.named_imports[0];
-            content_lines.push(format!("@import {default}, {{{named}}} from \"{module}\""));
+            let s = content_lines.begin_line();
+            s.push_str("@import ");
+            s.push_str(default);
+            s.push_str(", {");
+            s.push_str(&import.named_imports[0]);
+            s.push_str("} from \"");
+            s.push_str(module);
+            s.push('"');
         }
         (None, n) if n >= 2 => {
-            content_lines.push("@import {".to_string());
+            content_lines.push("@import {");
             for (i, named) in import.named_imports.iter().enumerate() {
-                let comma = if i < import.named_imports.len() - 1 { "," } else { "" };
-                content_lines.push(format!("  {named}{comma}"));
+                let s = content_lines.begin_line();
+                s.push_str("  ");
+                s.push_str(named);
+                if i < import.named_imports.len() - 1 {
+                    s.push(',');
+                }
             }
-            content_lines.push(format!("}} from \"{module}\""));
+            let s = content_lines.begin_line();
+            s.push_str("} from \"");
+            s.push_str(module);
+            s.push('"');
         }
         (Some(default), n) if n >= 2 => {
-            content_lines.push(format!("@import {default}, {{"));
+            let s = content_lines.begin_line();
+            s.push_str("@import ");
+            s.push_str(default);
+            s.push_str(", {");
             for (i, named) in import.named_imports.iter().enumerate() {
-                let comma = if i < import.named_imports.len() - 1 { "," } else { "" };
-                content_lines.push(format!("  {named}{comma}"));
+                let s = content_lines.begin_line();
+                s.push_str("  ");
+                s.push_str(named);
+                if i < import.named_imports.len() - 1 {
+                    s.push(',');
+                }
             }
-            content_lines.push(format!("}} from \"{module}\""));
+            let s = content_lines.begin_line();
+            s.push_str("} from \"");
+            s.push_str(module);
+            s.push('"');
         }
         _ => {}
     }
@@ -2505,7 +2567,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
 /// `@import` tags can fall through to `format_generic_tag()`).
 fn process_import_tags(
     tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
-) -> (Vec<String>, smallvec::SmallVec<[usize; 4]>) {
+) -> (LineBuffer, smallvec::SmallVec<[usize; 4]>) {
     let mut imports = Vec::new();
     let mut parsed_indices = smallvec::SmallVec::<[usize; 4]>::new();
 
@@ -2522,7 +2584,7 @@ fn process_import_tags(
 
     let merged = merge_and_sort_imports(imports);
 
-    let mut lines = Vec::new();
+    let mut lines = LineBuffer::new();
     for import in &merged {
         format_import_lines(import, &mut lines);
     }
