@@ -476,7 +476,13 @@ pub fn run_pipeline(
     }
 
     let recorded_errors = func.env.take_recorded_errors();
-    Ok(PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined, recorded_errors })
+    Ok(PipelineOutput {
+        reactive_function,
+        unique_identifiers,
+        fbt_operands,
+        outlined,
+        recorded_errors,
+    })
 }
 
 /// Run the codegen phase on the output of `run_pipeline()`.
@@ -493,8 +499,13 @@ pub fn run_codegen<'a>(
     cache_identifier_name: &str,
     original_func: Option<&crate::hir::build_hir::LowerableFunction<'_>>,
 ) -> Result<CodegenOutput<'a>, CompilerError> {
-    let PipelineOutput { reactive_function, unique_identifiers, fbt_operands, outlined, recorded_errors } =
-        pipeline_output;
+    let PipelineOutput {
+        reactive_function,
+        unique_identifiers,
+        fbt_operands,
+        outlined,
+        recorded_errors,
+    } = pipeline_output;
 
     // 50. CodegenFunction
     let fbt_operands_for_outlined = fbt_operands.clone();

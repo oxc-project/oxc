@@ -783,11 +783,14 @@ fn validate_no_ref_access_in_render_impl(
                                 for operand in each_instruction_value_operand(&instr.value) {
                                     validate_no_ref_value_access(&mut errors, env, operand);
                                 }
-                            } else if hook_kind.is_none() && let Some(effects) = &instr.effects {
+                            } else if hook_kind.is_none()
+                                && let Some(effects) = &instr.effects
+                            {
                                 // For non-hook functions with known aliasing effects, use the
                                 // effects to determine what validation to apply for each place.
                                 // Track visited id:kind pairs to avoid duplicate errors.
-                                let mut visited_effects: FxHashSet<(IdentifierId, bool)> = FxHashSet::default();
+                                let mut visited_effects: FxHashSet<(IdentifierId, bool)> =
+                                    FxHashSet::default();
                                 for effect in effects {
                                     let (place, is_direct_ref) = match effect {
                                         crate::inference::aliasing_effects::AliasingEffect::Freeze { value, .. } => {
@@ -831,7 +834,11 @@ fn validate_no_ref_access_in_render_impl(
                                         let key = (place.identifier.id, is_direct_ref);
                                         if visited_effects.insert(key) {
                                             if is_direct_ref {
-                                                validate_no_direct_ref_value_access(&mut errors, place, env);
+                                                validate_no_direct_ref_value_access(
+                                                    &mut errors,
+                                                    place,
+                                                    env,
+                                                );
                                             } else {
                                                 validate_no_ref_passed_to_function(
                                                     &mut errors,
