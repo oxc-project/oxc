@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
     compiler_error::{CompilerError, CompilerErrorEntry, SourceLocation},
     entrypoint::{
-        options::{CompilationMode, OPT_OUT_DIRECTIVES},
+        options::CompilationMode,
         pipeline::run_pipeline,
         program::should_compile_function,
     },
@@ -344,15 +344,16 @@ fn lint_function<'a>(
     config: &ReactCompilerConfig,
     ctx: &LintContext<'a>,
 ) {
-    // In lint mode, ignore opt-out directives ('use no forget', 'use no memo')
-    // so that validation still runs on opted-out functions.
-    // This matches the ESLint plugin's behavior where the lint rule always
-    // validates, even if the compiler won't transform the function.
-    let lint_directives: Vec<String> =
-        directives.iter().filter(|d| !OPT_OUT_DIRECTIVES.contains(&d.as_str())).cloned().collect();
-    let Some(fn_type) =
-        should_compile_function(name, &lint_directives, config.compilation_mode.into(), false)
-    else {
+    // should_compile_function (port of getReactFunctionType) does NOT check
+    // opt-out directives. In lint mode, validation always runs regardless of
+    // opt-out directives, matching the ESLint plugin's behavior.
+    let Some(fn_type) = should_compile_function(
+        function,
+        name,
+        directives,
+        config.compilation_mode.into(),
+        false,
+    ) else {
         return;
     };
 

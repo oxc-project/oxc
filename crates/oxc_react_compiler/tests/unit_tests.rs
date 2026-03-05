@@ -300,7 +300,7 @@ mod logger_tests {
         let result = with_parsed_function(
             "function Component() { return <div />; }",
             |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Infer, false, false, None)
+                should_compile_function(func, name, &[], CompilationMode::Infer, false)
             },
         );
         assert_eq!(result, Some(ReactFunctionType::Component));
@@ -312,7 +312,7 @@ mod logger_tests {
         let result = with_parsed_function(
             "function useMyHook() { return useState(0); }",
             |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Infer, false, false, None)
+                should_compile_function(func, name, &[], CompilationMode::Infer, false)
             },
         );
         assert_eq!(result, Some(ReactFunctionType::Hook));
@@ -321,7 +321,7 @@ mod logger_tests {
     #[test]
     fn should_not_compile_regular_function() {
         let result = with_parsed_function("function helper() { return 1; }", |func, name| {
-            should_compile_function(func, name, &[], CompilationMode::Infer, false, false, None)
+            should_compile_function(func, name, &[], CompilationMode::Infer, false)
         });
         assert_eq!(result, None);
     }
@@ -336,8 +336,6 @@ mod logger_tests {
                 &["use memo".to_string()],
                 CompilationMode::Infer,
                 false,
-                false,
-                None,
             )
         });
         assert!(result.is_some());
@@ -345,6 +343,10 @@ mod logger_tests {
 
     #[test]
     fn should_not_compile_with_use_no_memo_directive() {
+        // `should_compile_function` (port of `getReactFunctionType`) does NOT check
+        // opt-out directives. In the TS reference, opt-out is checked by the caller
+        // (processFn) AFTER compilation. So even with 'use no memo', the function
+        // type is still determined as Component.
         let result = with_parsed_function(
             "function Component() { return <div />; }",
             |func, name| {
@@ -354,12 +356,10 @@ mod logger_tests {
                     &["use no memo".to_string()],
                     CompilationMode::Infer,
                     false,
-                    false,
-                    None,
                 )
             },
         );
-        assert_eq!(result, None);
+        assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
@@ -367,7 +367,7 @@ mod logger_tests {
         let result = with_parsed_function(
             "function Component() { return <div />; }",
             |func, name| {
-                should_compile_function(func, name, &[], CompilationMode::Annotation, false, false, None)
+                should_compile_function(func, name, &[], CompilationMode::Annotation, false)
             },
         );
         assert_eq!(result, None);
@@ -381,8 +381,6 @@ mod logger_tests {
                     &["use memo".to_string()],
                     CompilationMode::Annotation,
                     false,
-                    false,
-                    None,
                 )
             },
         );
@@ -393,7 +391,7 @@ mod logger_tests {
     fn all_mode_compiles_everything() {
         // Even a plain helper is compiled in All mode (as Other)
         let result = with_parsed_function("function helper() { return 1; }", |func, name| {
-            should_compile_function(func, name, &[], CompilationMode::All, false, false, None)
+            should_compile_function(func, name, &[], CompilationMode::All, false)
         });
         assert!(result.is_some());
     }
@@ -406,7 +404,7 @@ mod logger_tests {
             "function _temp() { return <div />; }",
             |func, _name| {
                 // Pass None for name to simulate anonymous, and is_memo_or_forwardref_arg=true
-                should_compile_function(func, None, &[], CompilationMode::Infer, true, false, None)
+                should_compile_function(func, None, &[], CompilationMode::Infer, true)
             },
         );
         assert_eq!(result, Some(ReactFunctionType::Component));
@@ -417,7 +415,7 @@ mod logger_tests {
         let result = with_parsed_function(
             "function _temp() { return <div />; }",
             |func, _name| {
-                should_compile_function(func, None, &[], CompilationMode::All, true, false, None)
+                should_compile_function(func, None, &[], CompilationMode::All, true)
             },
         );
         assert_eq!(result, Some(ReactFunctionType::Component));
@@ -429,7 +427,7 @@ mod logger_tests {
         let result = with_parsed_function(
             "function _temp() { return <div />; }",
             |func, _name| {
-                should_compile_function(func, None, &[], CompilationMode::Infer, false, false, None)
+                should_compile_function(func, None, &[], CompilationMode::Infer, false)
             },
         );
         assert_eq!(result, None);
