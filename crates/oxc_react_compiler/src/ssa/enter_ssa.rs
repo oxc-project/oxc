@@ -102,7 +102,7 @@ impl SsaBuilder {
                         "[hoisting] EnterSSA: Expected identifier to be defined before being used"
                             .to_string(),
                     description: Some(format!("Identifier {name} is undefined")),
-                    loc: Some(old_place.loc.into()),
+                    loc: Some(old_place.loc),
                     suggestions: None,
                 },
             ));

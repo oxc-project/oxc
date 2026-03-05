@@ -26,6 +26,10 @@ use crate::{
 
 /// Validate no derived computations in effects.
 ///
+/// # Errors
+///
+/// Returns a `CompilerError` if derived computations are found inside effects.
+///
 /// Checks for patterns like:
 /// ```js
 /// const [fullName, setFullName] = useState('');

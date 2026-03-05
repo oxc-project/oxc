@@ -56,7 +56,7 @@ pub enum AliasingEffect {
         mutates_function: bool,
         args: Vec<ApplyArg>,
         into: Box<Place>,
-        signature: Option<FunctionSignature>,
+        signature: Box<Option<FunctionSignature>>,
         loc: SourceLocation,
     },
     /// Constructs a function value with the given captures.

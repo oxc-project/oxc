@@ -157,13 +157,13 @@ fn match_optional_test_block(
         && matches!(consequent_block.instructions[0].value, InstructionValue::PropertyLoad(_))
         && matches!(consequent_block.instructions[1].value, InstructionValue::StoreLocal(_))
     {
-        let property_load = match &consequent_block.instructions[0].value {
-            InstructionValue::PropertyLoad(v) => v,
-            _ => return None,
+        let InstructionValue::PropertyLoad(property_load) = &consequent_block.instructions[0].value
+        else {
+            return None;
         };
-        let store_local = match &consequent_block.instructions[1].value {
-            InstructionValue::StoreLocal(v) => v,
-            _ => return None,
+        let InstructionValue::StoreLocal(store_local) = &consequent_block.instructions[1].value
+        else {
+            return None;
         };
         let store_local_instr = &consequent_block.instructions[1];
 
@@ -326,12 +326,11 @@ fn traverse_optional_block(
             // - an optional base block with a separate nested optional-chain
 
             let test_block = blocks.get(&inner_opt.fallthrough)?;
-            let inner_branch = match &test_block.terminal {
-                Terminal::Branch(b) => b,
-                // The TS reference returns null for non-hoistable chains when the
-                // fallthrough terminal is not a Branch (e.g. another Optional or
-                // MaybeThrow). No error is emitted — the chain is simply not tracked.
-                _ => return None,
+            // The TS reference returns null for non-hoistable chains when the
+            // fallthrough terminal is not a Branch (e.g. another Optional or
+            // MaybeThrow). No error is emitted — the chain is simply not tracked.
+            let Terminal::Branch(inner_branch) = &test_block.terminal else {
+                return None;
             };
 
             // Recurse into inner optional blocks to collect inner optional-chain

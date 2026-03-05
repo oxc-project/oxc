@@ -79,10 +79,36 @@ pub struct PropType {
 }
 
 /// A property literal value (string or numeric key).
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+///
+/// The `Number` variant stores an `f64` because JavaScript numbers are IEEE 754
+/// doubles. Equality and hashing use the bit representation, which is correct
+/// for the integer-valued indices stored here.
+#[derive(Debug, Clone)]
 pub enum PropertyLiteral {
     String(String),
-    Number(i64),
+    Number(f64),
+}
+
+impl PartialEq for PropertyLiteral {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::String(a), Self::String(b)) => a == b,
+            (Self::Number(a), Self::Number(b)) => a.to_bits() == b.to_bits(),
+            _ => false,
+        }
+    }
+}
+
+impl Eq for PropertyLiteral {}
+
+impl std::hash::Hash for PropertyLiteral {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state);
+        match self {
+            Self::String(s) => s.hash(state),
+            Self::Number(n) => n.to_bits().hash(state),
+        }
+    }
 }
 
 impl std::fmt::Display for PropertyLiteral {

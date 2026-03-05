@@ -306,28 +306,23 @@ impl HirBuilder {
         let original_name = name.to_string();
         let mut candidate = original_name.clone();
         let mut index = 0u32;
-        loop {
-            if let Some(existing) = self.bindings.get(&candidate) {
-                if existing.declaration_key == declaration_key {
-                    return existing.identifier.clone();
-                }
-                // If the existing entry was pre-declared, upgrade it
-                if existing.pre_declared {
-                    let identifier = existing.identifier.clone();
-                    if let Some(existing) = self.bindings.get_mut(&candidate) {
-                        existing.declaration_key = declaration_key;
-                        existing.pre_declared = false;
-                        existing.decl_span = decl_span;
-                    }
-                    return identifier;
-                }
-                // Name collision with a different declaration - try next suffix
-                candidate = format!("{original_name}_{index}");
-                index += 1;
-            } else {
-                // Found a free name
-                break;
+        while let Some(existing) = self.bindings.get(&candidate) {
+            if existing.declaration_key == declaration_key {
+                return existing.identifier.clone();
             }
+            // If the existing entry was pre-declared, upgrade it
+            if existing.pre_declared {
+                let identifier = existing.identifier.clone();
+                if let Some(existing) = self.bindings.get_mut(&candidate) {
+                    existing.declaration_key = declaration_key;
+                    existing.pre_declared = false;
+                    existing.decl_span = decl_span;
+                }
+                return identifier;
+            }
+            // Name collision with a different declaration - try next suffix
+            candidate = format!("{original_name}_{index}");
+            index += 1;
         }
 
         let id = self.env.next_identifier_id();
@@ -1239,11 +1234,13 @@ pub fn compute_rpo_order(entry: BlockId, blocks: &super::hir_types::BlockMap) ->
     postorder
 }
 
-/// Compute RPO with source-order sibling ordering, matching the TS reference's
-/// `getReversePostorderedBlocks` which reverses successors then iterates
-/// recursively. In the recursive DFS, reversing successors means alternate is
-/// visited before consequent; consequent finishes last and gets pushed to
-/// postorder first, so after the final reverse it appears before alternate.
+/// Compute RPO with source-order sibling ordering.
+///
+/// Matches the TS reference's `getReversePostorderedBlocks` which reverses
+/// successors then iterates recursively. In the recursive DFS, reversing
+/// successors means alternate is visited before consequent; consequent
+/// finishes last and gets pushed to postorder first, so after the final
+/// reverse it appears before alternate.
 ///
 /// In our iterative stack-based DFS, we achieve the same effect by pushing
 /// successors in their *original* (non-reversed) order: the last-pushed

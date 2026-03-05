@@ -582,21 +582,8 @@ fn primitive_to_property_literal(prim: &PrimitiveValueKind) -> Option<PropertyLi
             Some(PropertyLiteral::String(s.clone()))
         }
         PrimitiveValueKind::Number(n) => {
-            // Convert f64 to i64 for property literal if it's an integer.
-            // These casts intentionally truncate: we check the round-trip below.
-            #[expect(
-                clippy::cast_possible_truncation,
-                clippy::cast_precision_loss,
-                clippy::float_cmp
-            )]
-            let matches = (*n as i64) as f64 == *n;
-            if matches {
-                #[expect(clippy::cast_possible_truncation)]
-                let i = *n as i64;
-                Some(PropertyLiteral::Number(i))
-            } else {
-                None
-            }
+            // Only convert to property literal if the value is an exact integer
+            if n.fract() == 0.0 && n.is_finite() { Some(PropertyLiteral::Number(*n)) } else { None }
         }
         _ => None,
     }
