@@ -342,6 +342,58 @@ fn lint_statement<'a>(
                 }
             }
         }
+        // Port of getFunctionName context 2 (Program.ts:1189-1195):
+        // AssignmentExpression — infer name from LHS identifier.
+        Statement::ExpressionStatement(expr_stmt) => {
+            if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
+                let assign_name = match &assign.left {
+                    AssignmentTarget::AssignmentTargetIdentifier(id) => Some(id.name.as_str()),
+                    _ => None,
+                };
+                match &assign.right {
+                    Expression::FunctionExpression(function) => {
+                        let directives = function_directives(function);
+                        let function_name =
+                            function.id.as_ref().map(|id| id.name.as_str()).or(assign_name);
+                        let lowerable_function = LowerableFunction::Function(function);
+                        lint_function(
+                            &lowerable_function,
+                            function_name,
+                            &directives,
+                            function.span,
+                            outer_bindings,
+                            config,
+                            false,
+                            ctx,
+                        );
+                    }
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        let directives = arrow_directives(arrow);
+                        let lowerable_function = LowerableFunction::ArrowFunction(arrow);
+                        lint_function(
+                            &lowerable_function,
+                            assign_name,
+                            &directives,
+                            arrow.span,
+                            outer_bindings,
+                            config,
+                            false,
+                            ctx,
+                        );
+                    }
+                    Expression::CallExpression(call) => {
+                        lint_memo_or_forwardref_call(
+                            call,
+                            assign_name,
+                            outer_bindings,
+                            config,
+                            ctx,
+                        );
+                    }
+                    _ => {}
+                }
+            }
+        }
         _ => {}
     }
 }
@@ -441,8 +493,7 @@ fn lint_memo_or_forwardref_call<'a>(
     match first_arg_expr {
         Expression::FunctionExpression(function) => {
             let directives = function_directives(function);
-            let function_name =
-                function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
+            let function_name = function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
             let lowerable_function = LowerableFunction::Function(function);
             lint_function(
                 &lowerable_function,
@@ -492,8 +543,8 @@ fn lint_function<'a>(
         directives,
         config.compilation_mode.into(),
         is_memo_or_forwardref_arg,
-    )
-    else {
+        false, // linter does not support dynamic gating
+    ) else {
         return;
     };
 

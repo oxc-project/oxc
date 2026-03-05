@@ -1427,6 +1427,7 @@ fn run_pipeline_for_codegen_impl(
             &directives,
             compilation_mode,
             is_wrapped,
+            plugin_options.dynamic_gating.is_some(),
         ) {
             Some(ft) => ft,
             None => continue,
@@ -8536,14 +8537,11 @@ impl std::fmt::Display for FailureCategory {
 /// This is a progress-tracking test, not a pass/fail gate. The snapshot records
 /// the current state so improvements (or regressions) are visible in diffs.
 ///
-/// This test is ignored by default because some fixtures trigger stack overflows
-/// in the compilation pipeline (pre-existing infinite recursion bugs in certain
-/// passes). Stack overflows abort the process and cannot be caught.
+/// Codegen conformance test: verify that the compiler produces correct output
+/// for all non-error fixtures.
 ///
-/// Run with: `cargo test -p oxc_react_compiler -- --ignored test_codegen_conformance`
-/// or in release mode: `cargo test -p oxc_react_compiler --release -- --ignored test_codegen_conformance`
+/// Run with: `cargo test -p oxc_react_compiler -- test_codegen_conformance`
 #[test]
-#[ignore]
 fn test_codegen_conformance_pass_rate() {
     codegen_conformance_inner();
 }
@@ -8709,8 +8707,7 @@ fn codegen_conformance_inner() {
         };
 
         // Run the pipeline inside catch_unwind to prevent panics from aborting
-        // the entire test. Note: stack overflows cannot be caught — those will
-        // abort the process (this test is #[ignore]d for that reason).
+        // the entire test.
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             run_pipeline_for_codegen(&source, source_type)
         }));
@@ -8923,9 +8920,8 @@ impl std::fmt::Display for ErrorMatchLevel {
 /// For each error fixture that has a `.expect.md` with a `## Error` section,
 /// runs the compilation pipeline and verifies it returns an error (not success).
 ///
-/// Run with: `cargo test -p oxc_react_compiler --release -- --ignored test_error_fixture_conformance`
+/// Run with: `cargo test -p oxc_react_compiler -- test_error_fixture_conformance`
 #[test]
-#[ignore]
 fn test_error_fixture_conformance() {
     error_fixture_conformance_inner();
 }
