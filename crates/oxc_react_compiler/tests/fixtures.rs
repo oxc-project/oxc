@@ -10020,6 +10020,175 @@ fn normalize_jsx_string_attribute(s: &str) -> String {
     result
 }
 
+/// Find a `try {` block that is followed by a `$dispatcherGuard(` call.
+/// Returns the position of the `try` keyword, or None.
+fn find_guard_try_block(s: &str) -> Option<usize> {
+    let mut search_from = 0;
+    while let Some(pos) = s[search_from..].find("try {") {
+        let abs_pos = search_from + pos;
+        let after_try = &s[abs_pos + "try {".len()..];
+        let trimmed = after_try.trim_start();
+        if trimmed.starts_with("$dispatcherGuard(") {
+            return Some(abs_pos);
+        }
+        search_from = abs_pos + "try {".len();
+    }
+    None
+}
+
+/// Find the matching `} finally {` for a try block starting from `search_from`.
+/// Uses brace counting to find the correct finally clause.
+fn find_matching_finally(s: &str, search_from: usize) -> Option<usize> {
+    let bytes = s.as_bytes();
+    let mut depth = 1i32; // We're inside the try block's opening brace
+    let mut i = search_from;
+    while i < bytes.len() {
+        if bytes[i] == b'{' {
+            depth += 1;
+        } else if bytes[i] == b'}' {
+            depth -= 1;
+            if depth == 0 {
+                // Check if followed by ` finally {`
+                let after = &s[i..];
+                let trimmed = after.strip_prefix('}').map(|s| s.trim_start());
+                if let Some(rest) = trimmed {
+                    if rest.starts_with("finally") {
+                        let after_finally = rest["finally".len()..].trim_start();
+                        if after_finally.starts_with('{') {
+                            return Some(i);
+                        }
+                    }
+                }
+                // Not a finally — this try block doesn't have one at this level
+                return None;
+            }
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Normalize `$dispatcherGuard` names with numeric suffixes back to the base name.
+///
+/// The Rust codegen may synthesize `$dispatcherGuard0`, `$dispatcherGuard1`, etc. to
+/// avoid naming conflicts. This normalizes them all to `$dispatcherGuard` so the
+/// existing stripping logic can handle them uniformly.
+fn normalize_dispatcher_guard_names(s: &str) -> String {
+    let marker = "$dispatcherGuard";
+    if !s.contains(marker) {
+        return s.to_string();
+    }
+
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let marker_bytes = marker.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if i + marker_bytes.len() <= bytes.len() && &bytes[i..i + marker_bytes.len()] == marker_bytes
+        {
+            result.push_str(marker);
+            let mut j = i + marker_bytes.len();
+            // Skip trailing digits (the numeric suffix)
+            while j < bytes.len() && bytes[j].is_ascii_digit() {
+                j += 1;
+            }
+            // Only skip digits if the next char is NOT alphanumeric/underscore
+            // (to avoid matching `$dispatcherGuardFoo`)
+            if j == i + marker_bytes.len()
+                || j >= bytes.len()
+                || !bytes[j].is_ascii_alphanumeric() && bytes[j] != b'_'
+            {
+                i = j;
+            } else {
+                // Not a numeric suffix, keep original
+                i += marker_bytes.len();
+            }
+        } else {
+            result.push(bytes[i] as char);
+            i += 1;
+        }
+    }
+    result
+}
+
+/// Convert arrow IIFE guard wrappers to function IIFE format for uniform stripping.
+///
+/// The Rust codegen emits arrow IIFEs:
+///   `(() => { try { $dispatcherGuard(2); return EXPR; } finally { $dispatcherGuard(3); } })()`
+/// Convert these to the function IIFE format that `strip_dispatcher_guards_raw` already handles:
+///   `(function () { try { $dispatcherGuard(2); return EXPR; } finally { $dispatcherGuard(3); } })()`
+fn convert_arrow_iife_guards(s: &str) -> String {
+    let marker = "(() =>";
+    if !s.contains(marker) || !s.contains("$dispatcherGuard") {
+        return s.to_string();
+    }
+
+    let mut result = s.to_string();
+    let mut max_iterations = 50;
+    loop {
+        max_iterations -= 1;
+        if max_iterations == 0 {
+            break;
+        }
+        if let Some(start) = result.rfind(marker) {
+            let rest = &result[start..];
+            // Find matching end `)()` by counting parens
+            let mut depth = 0i32;
+            let bytes = rest.as_bytes();
+            let mut found_end = false;
+            let mut end = 0;
+            for j in 0..bytes.len() {
+                if bytes[j] == b'(' {
+                    depth += 1;
+                } else if bytes[j] == b')' {
+                    depth -= 1;
+                    if depth == 0 {
+                        let after_close = &rest[j + 1..];
+                        let trimmed = after_close.trim_start();
+                        if trimmed.starts_with("()") {
+                            let ws_len = after_close.len() - trimmed.len();
+                            end = j + 1 + ws_len + 2;
+                            found_end = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if !found_end {
+                // Can't find matching end — mark and skip
+                result = format!(
+                    "{}__SKIPARROW__{}",
+                    &result[..start],
+                    &result[start + marker.len()..]
+                );
+                continue;
+            }
+            let iife_body = &rest[..end];
+            if iife_body.contains("$dispatcherGuard") {
+                // Replace `(() =>` with `(function ()` and keep the rest
+                let body_content = &rest[marker.len()..end];
+                result = format!(
+                    "{}(function (){}{}",
+                    &result[..start],
+                    body_content,
+                    &result[start + end..]
+                );
+                continue;
+            }
+            // Not a guard IIFE, skip
+            result = format!(
+                "{}__SKIPARROW__{}",
+                &result[..start],
+                &result[start + marker.len()..]
+            );
+            continue;
+        }
+        break;
+    }
+    result = result.replace("__SKIPARROW__", marker);
+    result
+}
+
 /// Strip `$dispatcherGuard` hook guard wrappers from raw (non-normalized) text.
 ///
 /// The reference compiler with @enableEmitHookGuards wraps individual hook calls in:
@@ -10033,7 +10202,14 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
         return s.to_string();
     }
 
-    let mut result = s.to_string();
+    // Step 0a: Normalize guard names with numeric suffixes (e.g. `$dispatcherGuard0`)
+    // to the base name `$dispatcherGuard`. The Rust codegen may add a suffix to avoid
+    // naming conflicts with the cache identifier.
+    let normalized_names = normalize_dispatcher_guard_names(s);
+
+    // Step 0b: Convert arrow IIFE guard wrappers `(() => { ... })()` to the function
+    // IIFE format `(function () { ... })()` so the existing stripping logic handles both.
+    let mut result = convert_arrow_iife_guards(&normalized_names);
 
     // Step 1: Replace IIFE-wrapped hook calls with just the hook call.
     // Process from innermost to outermost by using rfind (find last occurrence first).
@@ -10161,57 +10337,85 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
     // Restore skipped non-guard IIFEs
     result = result.replace("__SKIPIIFE__", "(function ()");
 
-    // Step 2: Strip the outer try/finally wrapper.
+    // Step 2: Strip try/finally guard wrappers (function-level and callback-level).
     // Pattern:
     //   try {
-    //     $dispatcherGuard(0);
+    //     $dispatcherGuard(N);
     //     BODY
     //   } finally {
-    //     $dispatcherGuard(1);
+    //     $dispatcherGuard(N);
     //   }
-    // Find `try {` followed by `$dispatcherGuard(0)`
-    if let Some(try_pos) = result.find("try {") {
-        let after_try = &result[try_pos + "try {".len()..];
-        let trimmed = after_try.trim_start();
-        if trimmed.starts_with("$dispatcherGuard(0)") {
-            // Find the matching `} finally {` that contains $dispatcherGuard(1)
-            if let Some(finally_pos) = result.rfind("} finally {") {
-                let after_finally = &result[finally_pos + "} finally {".len()..];
-                let trimmed_finally = after_finally.trim_start();
-                if trimmed_finally.contains("$dispatcherGuard(1)") {
-                    // Find the FIRST closing `}` in the finally block using brace counting
-                    let mut brace_depth = 0i32;
-                    let mut finally_close = 0;
-                    let mut found_close = false;
-                    for (j, c) in trimmed_finally.char_indices() {
-                        if c == '{' {
-                            brace_depth += 1;
-                        } else if c == '}' {
-                            if brace_depth == 0 {
-                                finally_close = j;
-                                found_close = true;
-                                break;
-                            }
-                            brace_depth -= 1;
-                        }
+    // Loop to handle multiple wrappers (function-level + any callback-level wrappers).
+    let mut step2_iterations = 20;
+    while result.contains("$dispatcherGuard") && step2_iterations > 0 {
+        step2_iterations -= 1;
+        let mut found_match = false;
+
+        // Find a try/finally that starts with a $dispatcherGuard call
+        if let Some(try_pos) = find_guard_try_block(&result) {
+            let after_try = &result[try_pos + "try {".len()..];
+            let trimmed = after_try.trim_start();
+            // Check that it starts with $dispatcherGuard(N)
+            if trimmed.starts_with("$dispatcherGuard(") {
+                // Find the length of $dispatcherGuard(N); or $dispatcherGuard(N)
+                let guard_call_len = if let Some(close) = trimmed.find(')') {
+                    let mut end = close + 1;
+                    // Skip trailing semicolon
+                    if end < trimmed.len() && trimmed.as_bytes()[end] == b';' {
+                        end += 1;
                     }
-                    if found_close {
-                        let finally_end = finally_pos
-                            + "} finally {".len()
-                            + (after_finally.len() - trimmed_finally.len())
-                            + finally_close
-                            + 1;
-                        // Extract the body between try { $dispatcherGuard(0); and } finally {
-                        let guard_end_pos = try_pos
-                            + "try {".len()
-                            + (after_try.len() - trimmed.len())
-                            + "$dispatcherGuard(0);".len();
-                        let body = result[guard_end_pos..finally_pos].trim();
-                        result =
-                            format!("{}{}{}", &result[..try_pos], body, &result[finally_end..]);
+                    Some(end)
+                } else {
+                    None
+                };
+
+                if let Some(guard_len) = guard_call_len {
+                    // Find the matching `} finally {` for this try block using brace counting
+                    let try_body_start =
+                        try_pos + "try {".len() + (after_try.len() - trimmed.len()) + guard_len;
+                    let search_from = try_pos + "try {".len();
+                    if let Some(finally_pos) = find_matching_finally(&result, search_from) {
+                        let after_finally = &result[finally_pos + "} finally {".len()..];
+                        let trimmed_finally = after_finally.trim_start();
+                        if trimmed_finally.contains("$dispatcherGuard") {
+                            // Find the closing `}` of the finally block
+                            let mut brace_depth = 0i32;
+                            let mut finally_close = 0;
+                            let mut found_close = false;
+                            for (j, c) in trimmed_finally.char_indices() {
+                                if c == '{' {
+                                    brace_depth += 1;
+                                } else if c == '}' {
+                                    if brace_depth == 0 {
+                                        finally_close = j;
+                                        found_close = true;
+                                        break;
+                                    }
+                                    brace_depth -= 1;
+                                }
+                            }
+                            if found_close {
+                                let finally_end = finally_pos
+                                    + "} finally {".len()
+                                    + (after_finally.len() - trimmed_finally.len())
+                                    + finally_close
+                                    + 1;
+                                let body = result[try_body_start..finally_pos].trim();
+                                result = format!(
+                                    "{}{}{}",
+                                    &result[..try_pos],
+                                    body,
+                                    &result[finally_end..]
+                                );
+                                found_match = true;
+                            }
+                        }
                     }
                 }
             }
+        }
+        if !found_match {
+            break;
         }
     }
 
