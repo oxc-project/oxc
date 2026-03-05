@@ -122,7 +122,7 @@ pub type BlockOps = Vec<(SymbolId, Vec<OpAtNode>)>;
 pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
 pub struct TraverseState<'a> {
-    live: BitSet<'a>,
+    pub(crate) live: BitSet<'a>,
 }
 
 impl<'a> TraverseState<'a> {
@@ -140,91 +140,159 @@ impl Rule for NoUselessAssignment {
         let graph = ctx.cfg().graph();
         let num_blocks = ctx.cfg().basic_blocks.len();
 
+        // Single pass: build compact_map AND collect ops simultaneously.
+        // Defer BitSet allocations until num_tracked is known.
+        let mut compact_map = vec![u32::MAX; num_symbols];
+        let mut num_tracked: u32 = 0;
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
         cfg_ops.resize_with(num_blocks, Vec::new);
+        let mut used_compact_indices: Vec<u32> = Vec::new();
 
-        // Track symbols that are read at least once globally, no-useless assignment ignore variables that are never read anywhere,
-        // assume no-unused-vars will catch them
-        let mut used_symbols = BitSet::new_in(num_symbols, &allocator);
-
-        let mut cfg_traverse_state: CfgTraverseState<'_> =
-            CfgTraverseState::with_capacity(num_blocks);
-        // Pre-fill with empty BitSets
-        cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_symbols, &allocator));
-
-        //walk through all symbols, collect their operations from declarations and references
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
-
             let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else { continue };
-            //skip const declarations
             if let AstKind::VariableDeclaration(var_declaration) =
                 ctx.nodes().parent_node(decl_node.id()).kind()
                 && var_declaration.kind == VariableDeclarationKind::Const
             {
                 continue;
             }
-
-            // Skip function and arrow function assignments
-            if !matches!(
+            if matches!(
                 &var_decl.init,
                 Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
             ) {
-                let block_id = *graph.node_weight(ctx.nodes().cfg_id(decl_node.id())).expect("expected a valid node id in graph");
+                continue;
+            }
 
-                let block_ops_vec = &mut cfg_ops[block_id];
+            let compact_idx = num_tracked;
+            compact_map[symbol_id.index()] = compact_idx;
+            num_tracked += 1;
 
-                // Find or Create entry in Vec (Linear Scan)
-                let ops_vec =
-                    if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
-                        &mut block_ops_vec[pos].1
-                    } else {
-                        block_ops_vec.push((symbol_id, Vec::new()));
-                        &mut block_ops_vec.last_mut().unwrap().1
-                    };
+            // Collect ops for this symbol (formerly Pass 2)
+            let block_id = *graph
+                .node_weight(ctx.nodes().cfg_id(decl_node.id()))
+                .expect("expected a valid node id in graph");
 
-                // if there is an initializer, record a write operation at declaration
-                if var_decl.init.is_some() {
-                    ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
+            let block_ops_vec = &mut cfg_ops[block_id];
+
+            let ops_vec =
+                if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
+                    &mut block_ops_vec[pos].1
+                } else {
+                    block_ops_vec.push((symbol_id, Vec::new()));
+                    &mut block_ops_vec.last_mut().unwrap().1
+                };
+
+            if var_decl.init.is_some() {
+                ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
+            }
+
+            // Process references inline with reordering for assignment expressions like a = a + 1
+            let references = ctx.symbol_references(symbol_id);
+            let mut pending_assignment_lhs: Option<&Reference> = None;
+
+            for reference in references {
+                if let Some(lhs) = pending_assignment_lhs
+                    && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
+                {
+                    let assign_node = ctx.nodes().get_node(assign_node_id);
+                    if assign_node
+                        .span()
+                        .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
+                    {
+                        Self::process_reference_deferred(
+                            ctx,
+                            graph,
+                            &mut cfg_ops,
+                            reference,
+                            symbol_id,
+                            compact_idx,
+                            var_decl,
+                            decl_node,
+                            &mut used_compact_indices,
+                        );
+                        continue;
+                    }
+                    Self::process_reference_deferred(
+                        ctx,
+                        graph,
+                        &mut cfg_ops,
+                        lhs,
+                        symbol_id,
+                        compact_idx,
+                        var_decl,
+                        decl_node,
+                        &mut used_compact_indices,
+                    );
+                    pending_assignment_lhs = None;
                 }
 
-                // reorder reference to handle assignment expression like a = a + 1
-                let references = ctx.symbol_references(symbol_id);
-                let ordered_refs = Self::reordered_references(ctx, references);
-
-                for reference in ordered_refs {
-                    let op_node = reference.node_id();
-
-                    if reference.is_read() {
-                        let ref_block = *graph.node_weight(ctx.nodes().cfg_id(op_node)).expect("expected a valid node id in graph");
-                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-
-                        ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
-                        used_symbols.set_bit(symbol_id.index());
+                if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
+                    if let Some(prev) = pending_assignment_lhs.take() {
+                        Self::process_reference_deferred(
+                            ctx,
+                            graph,
+                            &mut cfg_ops,
+                            prev,
+                            symbol_id,
+                            compact_idx,
+                            var_decl,
+                            decl_node,
+                            &mut used_compact_indices,
+                        );
                     }
-
-                    if reference.is_write() {
-                        if matches!(
-                            &var_decl.id,
-                            BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
-                        ) && decl_node
-                            .span()
-                            .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
-                        {
-                            continue;
-                        }
-
-                        let ref_block = *graph.node_weight(ctx.nodes().cfg_id(op_node)).expect("expected a valid node id in graph");
-                        let ref_ops_vec = Self::get_ops_mut(&mut cfg_ops, ref_block, symbol_id);
-
-                        ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
-                    }
+                    pending_assignment_lhs = Some(reference);
+                } else {
+                    Self::process_reference_deferred(
+                        ctx,
+                        graph,
+                        &mut cfg_ops,
+                        reference,
+                        symbol_id,
+                        compact_idx,
+                        var_decl,
+                        decl_node,
+                        &mut used_compact_indices,
+                    );
                 }
+            }
+
+            if let Some(lhs) = pending_assignment_lhs {
+                Self::process_reference_deferred(
+                    ctx,
+                    graph,
+                    &mut cfg_ops,
+                    lhs,
+                    symbol_id,
+                    compact_idx,
+                    var_decl,
+                    decl_node,
+                    &mut used_compact_indices,
+                );
             }
         }
 
-        let mut scratch_live = BitSet::new_in(num_symbols, &allocator);
-        let mut scratch_catch = BitSet::new_in(num_symbols, &allocator);
+        let num_tracked = num_tracked as usize;
+
+        // Now allocate BitSets with the correct size
+        let mut used_symbols = BitSet::new_in(num_tracked, &allocator);
+        for idx in &used_compact_indices {
+            used_symbols.set_bit(*idx as usize);
+        }
+
+        let mut cfg_traverse_state: CfgTraverseState<'_> =
+            CfgTraverseState::with_capacity(num_blocks);
+        cfg_traverse_state
+            .resize_with(num_blocks, || TraverseState::new(num_tracked, &allocator));
+
+        let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
+        let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
+
+        // Pre-allocate scratch BitSets for loop analysis (reused via clear())
+        let mut scratch_loop_req = BitSet::new_in(num_tracked, &allocator);
+        let mut scratch_loop_visited = BitSet::new_in(num_blocks, &allocator);
+        let mut scratch_loop_killed = BitSet::new_in(num_tracked, &allocator);
+        let mut scratch_find_loop = BitSet::new_in(graph.node_count(), &allocator);
 
         depth_first_search(
             graph,
@@ -232,15 +300,18 @@ impl Rule for NoUselessAssignment {
             |e| match e {
                 // backtrack and merge child block symbol operations
                 DfsEvent::Finish(block_node_id, _) => {
-                    let current_block_id = *graph.node_weight(block_node_id).expect("expected a valid node id in graph");
+                    let current_block_id = *graph
+                        .node_weight(block_node_id)
+                        .expect("expected a valid node id in graph");
                     scratch_live.clear();
                     scratch_catch.clear();
 
-                    let successors =
-                        graph.edges_directed(block_node_id, Direction::Outgoing);
+                    let successors = graph.edges_directed(block_node_id, Direction::Outgoing);
 
                     for edge in successors {
-                        let succ_id = *graph.node_weight(edge.target()).expect("expected a valid node id in graph");
+                        let succ_id = *graph
+                            .node_weight(edge.target())
+                            .expect("expected a valid node id in graph");
 
                         match edge.weight() {
                             // Normal Flow: We will process these through the block's Ops
@@ -256,30 +327,35 @@ impl Rule for NoUselessAssignment {
                                 scratch_catch.union(&cfg_traverse_state[succ_id].live);
                             }
                             EdgeType::Backedge => {
-                                if let Some(loop_header) = Self::find_loop_start(graph, block_node_id, &allocator)
-                                {
-                                    let loop_header_block_id =
-                                        *graph.node_weight(loop_header).expect("expected a valid node id in graph");
+                                scratch_find_loop.clear();
+                                if let Some(loop_header) = Self::find_loop_start(
+                                    graph,
+                                    block_node_id,
+                                    &mut scratch_find_loop,
+                                ) {
+                                    let loop_header_block_id = *graph
+                                        .node_weight(loop_header)
+                                        .expect("expected a valid node id in graph");
 
-                                    scratch_live.union(&cfg_traverse_state[loop_header_block_id].live);
+                                    scratch_live
+                                        .union(&cfg_traverse_state[loop_header_block_id].live);
 
-                                    let mut loop_requirements =
-                                        BitSet::new_in(num_symbols, &allocator);
-                                    let mut visited = BitSet::new_in(num_blocks, &allocator);
-                                    let mut killed_on_path =
-                                        BitSet::new_in(num_symbols, &allocator);
+                                    scratch_loop_req.clear();
+                                    scratch_loop_visited.clear();
+                                    scratch_loop_killed.clear();
 
                                     Self::analyze_loop_recursive(
                                         graph,
                                         loop_header,
                                         loop_header,
                                         &cfg_ops,
-                                        &mut loop_requirements,
-                                        &mut killed_on_path,
-                                        &mut visited,
+                                        &compact_map,
+                                        &mut scratch_loop_req,
+                                        &mut scratch_loop_killed,
+                                        &mut scratch_loop_visited,
                                     );
 
-                                    scratch_live.union(&loop_requirements);
+                                    scratch_live.union(&scratch_loop_req);
                                 }
                             }
                             EdgeType::Unreachable => {}
@@ -289,9 +365,10 @@ impl Rule for NoUselessAssignment {
                     // Walk back from the end of the block to the start
                     {
                         for (symbol_id, ops) in &cfg_ops[current_block_id] {
-                            let sym_idx = symbol_id.index();
+                            let compact_idx = compact_map[symbol_id.index()] as usize;
 
-                            if !used_symbols.has_bit(sym_idx) && !Self::is_exported(ctx, *symbol_id)
+                            if !used_symbols.has_bit(compact_idx)
+                                && !Self::is_exported(ctx, *symbol_id)
                             {
                                 // We don't need to track liveness for unused vars
                                 continue;
@@ -300,8 +377,8 @@ impl Rule for NoUselessAssignment {
                             for op in ops.iter().rev() {
                                 match op.op {
                                     Operation::Write => {
-                                        if !scratch_live.has_bit(sym_idx)
-                                            && !scratch_catch.has_bit(sym_idx)
+                                        if !scratch_live.has_bit(compact_idx)
+                                            && !scratch_catch.has_bit(compact_idx)
                                             && !Self::is_exported(ctx, *symbol_id)
                                             && !Self::is_in_try_block(graph, block_node_id)
                                             && Self::has_same_parent_variable_scope(
@@ -314,10 +391,10 @@ impl Rule for NoUselessAssignment {
                                                 ctx.nodes().get_node(op.node).span(),
                                             ));
                                         }
-                                        scratch_live.unset_bit(sym_idx);
+                                        scratch_live.unset_bit(compact_idx);
                                     }
                                     Operation::Read => {
-                                        scratch_live.set_bit(sym_idx);
+                                        scratch_live.set_bit(compact_idx);
                                     }
                                 }
                             }
@@ -326,7 +403,10 @@ impl Rule for NoUselessAssignment {
 
                     scratch_live.union(&scratch_catch);
 
-                    std::mem::swap(&mut scratch_live, &mut cfg_traverse_state[current_block_id].live);
+                    std::mem::swap(
+                        &mut scratch_live,
+                        &mut cfg_traverse_state[current_block_id].live,
+                    );
 
                     Control::<()>::Continue
                 }
@@ -345,52 +425,55 @@ impl NoUselessAssignment {
             })
     }
 
-    fn reordered_references<'a>(
+    #[expect(clippy::too_many_arguments)]
+    fn process_reference_deferred(
         ctx: &LintContext,
-        references: impl Iterator<Item = &'a Reference>,
-    ) -> Vec<&'a Reference> {
-        let mut result = Vec::new();
-        let mut pending_assignment_lhs: Option<&Reference> = None;
+        graph: &Graph,
+        cfg_ops: &mut CfgOps,
+        reference: &Reference,
+        symbol_id: SymbolId,
+        compact_idx: u32,
+        var_decl: &oxc_ast::ast::VariableDeclarator,
+        decl_node: &oxc_semantic::AstNode,
+        used_compact_indices: &mut Vec<u32>,
+    ) {
+        let op_node = reference.node_id();
 
-        for reference in references {
-            if let Some(lhs) = pending_assignment_lhs
-                && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
+        if reference.is_read() {
+            let ref_block = *graph
+                .node_weight(ctx.nodes().cfg_id(op_node))
+                .expect("expected a valid node id in graph");
+            let ref_ops_vec = Self::get_ops_mut(cfg_ops, ref_block, symbol_id);
+            ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
+            used_compact_indices.push(compact_idx);
+        }
+
+        if reference.is_write() {
+            if matches!(
+                &var_decl.id,
+                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+            ) && decl_node
+                .span()
+                .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
             {
-                let assign_node = ctx.nodes().get_node(assign_node_id);
-
-                if assign_node
-                    .span()
-                    .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
-                {
-                    result.push(reference);
-                    continue;
-                }
-                result.push(lhs);
-                pending_assignment_lhs = None;
+                return;
             }
 
-            if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
-                if let Some(prev) = pending_assignment_lhs.take() {
-                    result.push(prev);
-                }
-
-                pending_assignment_lhs = Some(reference);
-            } else {
-                result.push(reference);
-            }
+            let ref_block = *graph
+                .node_weight(ctx.nodes().cfg_id(op_node))
+                .expect("expected a valid node id in graph");
+            let ref_ops_vec = Self::get_ops_mut(cfg_ops, ref_block, symbol_id);
+            ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
         }
-
-        if let Some(lhs) = pending_assignment_lhs {
-            result.push(lhs);
-        }
-
-        result
     }
 
-    fn find_loop_start(graph: &Graph, loop_end: BlockNodeId, allocator: &Allocator) -> Option<BlockNodeId> {
+    fn find_loop_start(
+        graph: &Graph,
+        loop_end: BlockNodeId,
+        visited: &mut BitSet,
+    ) -> Option<BlockNodeId> {
         let mut current = loop_end;
         let mut last: Option<BlockNodeId> = None;
-        let mut visited = BitSet::new_in(graph.node_count(), allocator);
 
         loop {
             let idx = current.index();
@@ -457,6 +540,7 @@ impl NoUselessAssignment {
         node: BlockNodeId,
         loop_header_id: BlockNodeId,
         cfg_ops: &CfgOps,
+        compact_map: &[u32],
         result_gen: &mut BitSet,
         killed_on_path: &mut BitSet,
         visited: &mut BitSet,
@@ -472,20 +556,20 @@ impl NoUselessAssignment {
         let mut newly_killed: SmallVec<[usize; 8]> = SmallVec::new();
 
         for (symbol_id, ops) in &cfg_ops[block_id] {
-            let sym_idx = symbol_id.index();
+            let compact_idx = compact_map[symbol_id.index()] as usize;
 
-            if result_gen.has_bit(sym_idx) || killed_on_path.has_bit(sym_idx) {
+            if result_gen.has_bit(compact_idx) || killed_on_path.has_bit(compact_idx) {
                 continue;
             }
 
             if let Some(first_op) = ops.first() {
                 match first_op.op {
                     Operation::Read => {
-                        result_gen.set_bit(sym_idx);
+                        result_gen.set_bit(compact_idx);
                     }
                     Operation::Write => {
-                        killed_on_path.set_bit(sym_idx);
-                        newly_killed.push(sym_idx);
+                        killed_on_path.set_bit(compact_idx);
+                        newly_killed.push(compact_idx);
                     }
                 }
             }
@@ -504,6 +588,7 @@ impl NoUselessAssignment {
                         target,
                         loop_header_id,
                         cfg_ops,
+                        compact_map,
                         result_gen,
                         killed_on_path,
                         visited,
