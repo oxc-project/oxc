@@ -341,7 +341,9 @@ impl ReactCompiler {
                     let outlined_fns = std::mem::take(&mut compiled.outlined);
 
                     // Determine if gating should be applied for this function.
-                    let gating_output = if self.gating.is_some() {
+                    let gating_output = if self.gating.is_some()
+                        || self.dynamic_gating.is_some()
+                    {
                         // Check for dynamic gating directive.
                         let directives = get_statement_directives(&stmt);
                         let dynamic_gating = extract_dynamic_gating_directive(
@@ -466,13 +468,16 @@ impl ReactCompiler {
         // to find ALL function nodes at any depth, not just top-level ones.
         //
         // Key behaviors matching TS:
-        // - In `all` mode, only top-level functions are compiled (skip nested discovery)
         // - Skip class bodies (ClassDeclaration/ClassExpression)
         // - Skip walking into already-compiled function bodies (fn.skip() in TS)
         // - `alreadyCompiled` set prevents double-compilation
-        let compilation_mode = parse_compilation_mode(self.options.compilation_mode.as_deref());
+        // Note: In `all` mode, nested functions (including those inside module-level
+        // if/for/while blocks) still need to be discovered and compiled. The nested
+        // walker handles this correctly because already-compiled top-level statements
+        // are skipped via `compiled_stmt_indices`, and `should_compile_function` in
+        // `all` mode returns Some for all functions.
         let mut compiled_any_nested = false;
-        if compilation_mode != CompilationMode::All {
+        {
             let mut nested_scope_assign_indices: Vec<usize> = Vec::new();
             let mut nested_outlined: Vec<OutlinedOutput<'a>> = Vec::new();
             for (idx, stmt) in new_body.iter_mut().enumerate() {
@@ -610,9 +615,12 @@ impl ReactCompiler {
                 .map(|output| (output, fn_name))
             }
             Statement::VariableDeclaration(declaration) => {
-                // For variable declarations, we only compile the first function-like
-                // initializer we find. Multiple declarations in one statement with
-                // separate compiled functions would be unusual.
+                // TODO: This only compiles the FIRST function-like initializer found in
+                // the VariableDeclaration. If `const A = () => {}, B = () => {}` has two
+                // compilable functions, only `A` gets compiled. This is extremely rare in
+                // practice but differs from upstream which visits each function node
+                // independently via Babel's traverse. A proper fix requires changing the
+                // return type to support multiple results per statement.
                 for declarator in &declaration.declarations {
                     let binding_name = match &declarator.id {
                         BindingPattern::BindingIdentifier(identifier) => {
@@ -1194,8 +1202,18 @@ impl ReactCompiler {
                     );
                 }
             }
-            // If statements: recurse into consequent and alternate.
+            // If statements: walk test expression and recurse into consequent and alternate.
             Statement::IfStatement(if_stmt) => {
+                self.walk_expression_for_nested_functions(
+                    &mut if_stmt.test,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
                 self.walk_statement_for_nested_functions(
                     &mut if_stmt.consequent,
                     cache_identifier_name,
@@ -1217,8 +1235,72 @@ impl ReactCompiler {
                     );
                 }
             }
-            // For/while/do-while: recurse into body.
+            // For/while/do-while: walk expressions and recurse into body.
             Statement::ForStatement(for_stmt) => {
+                // Walk init expression (may contain function expressions).
+                if let Some(init) = &mut for_stmt.init {
+                    match init {
+                        ForStatementInit::VariableDeclaration(var_decl) => {
+                            for declarator in &mut var_decl.declarations {
+                                if let Some(init_expr) = &mut declarator.init {
+                                    let binding_name = match &declarator.id {
+                                        BindingPattern::BindingIdentifier(id) => Some(id.name),
+                                        _ => None,
+                                    };
+                                    self.walk_expression_for_nested_functions(
+                                        init_expr,
+                                        binding_name.as_deref(),
+                                        cache_identifier_name,
+                                        needs_memo_import,
+                                        compiled_any,
+                                        outlined_outputs,
+                                        inside_class,
+                                        ctx,
+                                    );
+                                }
+                            }
+                        }
+                        init_expr => {
+                            // ForStatementInit inherits Expression variants
+                            if let Some(expr) = init_expr.as_expression_mut() {
+                                self.walk_expression_for_nested_functions(
+                                    expr,
+                                    None,
+                                    cache_identifier_name,
+                                    needs_memo_import,
+                                    compiled_any,
+                                    outlined_outputs,
+                                    inside_class,
+                                    ctx,
+                                );
+                            }
+                        }
+                    }
+                }
+                if let Some(test) = &mut for_stmt.test {
+                    self.walk_expression_for_nested_functions(
+                        test,
+                        None,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+                if let Some(update) = &mut for_stmt.update {
+                    self.walk_expression_for_nested_functions(
+                        update,
+                        None,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
                 self.walk_statement_for_nested_functions(
                     &mut for_stmt.body,
                     cache_identifier_name,
@@ -1252,6 +1334,16 @@ impl ReactCompiler {
                 );
             }
             Statement::WhileStatement(while_stmt) => {
+                self.walk_expression_for_nested_functions(
+                    &mut while_stmt.test,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
                 self.walk_statement_for_nested_functions(
                     &mut while_stmt.body,
                     cache_identifier_name,
@@ -1272,9 +1364,29 @@ impl ReactCompiler {
                     inside_class,
                     ctx,
                 );
+                self.walk_expression_for_nested_functions(
+                    &mut do_while.test,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
             }
-            // Switch: recurse into case consequents.
+            // Switch: walk discriminant and recurse into case consequents.
             Statement::SwitchStatement(switch_stmt) => {
+                self.walk_expression_for_nested_functions(
+                    &mut switch_stmt.discriminant,
+                    None,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
                 for case in &mut switch_stmt.cases {
                     for inner_stmt in &mut case.consequent {
                         self.walk_statement_for_nested_functions(
@@ -2102,14 +2214,22 @@ fn extract_dynamic_gating_directive(
         }
     }
 
-    if matches.len() == 1 {
-        Some(ExternalFunction {
+    match matches.len() {
+        1 => Some(ExternalFunction {
             source: dynamic_gating_config.source.clone(),
             import_specifier_name: matches.into_iter().next().unwrap(),
-        })
-    } else {
-        // 0 matches => no dynamic gating, >1 matches => error (ignored for now)
-        None
+        }),
+        n if n > 1 => {
+            // Multiple dynamic gating directives found — this is an error.
+            // Upstream TS: `CompilerError.throwTodo({ ... reason: 'Expected exactly one ...' })`
+            // We return None and let the caller handle the absence of dynamic gating.
+            // TODO: propagate this as a CompilerError diagnostic when ctx is available here.
+            None
+        }
+        _ => {
+            // 0 matches => no dynamic gating
+            None
+        }
     }
 }
 
@@ -2484,17 +2604,113 @@ fn extract_function_as_expr<'a>(stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>)
 fn replace_function_in_statement_with_expr<'a>(
     mut stmt: Statement<'a>,
     expr: Expression<'a>,
-    _ctx: &TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Vec<Statement<'a>> {
     match &mut stmt {
         Statement::ExportDefaultDeclaration(export) => {
             export.declaration = ExportDefaultDeclarationKind::from(expr);
             vec![stmt]
         }
-        _ => {
-            // For other cases, just wrap in an expression statement
-            // This shouldn't normally happen for Inline mode.
+        Statement::FunctionDeclaration(function) => {
+            // `function Name() {}` → `const Name = <expr>;`
+            if let Some(id) = &function.id {
+                let name = id.name.as_str();
+                let binding = ctx
+                    .ast
+                    .binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                let declarator = ctx.ast.variable_declarator(
+                    SPAN,
+                    VariableDeclarationKind::Const,
+                    binding,
+                    NONE,
+                    Some(expr),
+                    false,
+                );
+                let mut declarators = ctx.ast.vec_with_capacity(1);
+                declarators.push(declarator);
+                let var_decl = ctx.ast.alloc_variable_declaration(
+                    SPAN,
+                    VariableDeclarationKind::Const,
+                    declarators,
+                    false,
+                );
+                vec![Statement::VariableDeclaration(var_decl)]
+            } else {
+                // Anonymous function declaration — wrap as expression statement
+                let expr_stmt = ctx.ast.alloc_expression_statement(SPAN, expr);
+                vec![Statement::ExpressionStatement(expr_stmt)]
+            }
+        }
+        Statement::VariableDeclaration(var_decl) => {
+            // Replace the first function-like initializer with the ternary expression.
+            for declarator in &mut var_decl.declarations {
+                if let Some(init) = &declarator.init
+                    && matches!(
+                        init,
+                        Expression::FunctionExpression(_)
+                            | Expression::ArrowFunctionExpression(_)
+                    )
+                {
+                    declarator.init = Some(expr);
+                    return vec![stmt];
+                }
+            }
             vec![stmt]
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(declaration) = &mut export.declaration {
+                match declaration {
+                    Declaration::FunctionDeclaration(function) => {
+                        // `export function Name() {}` → `export const Name = <expr>;`
+                        if let Some(id) = &function.id {
+                            let name = id.name.as_str();
+                            let binding = ctx
+                                .ast
+                                .binding_pattern_binding_identifier(SPAN, ctx.ast.atom(name));
+                            let declarator = ctx.ast.variable_declarator(
+                                SPAN,
+                                VariableDeclarationKind::Const,
+                                binding,
+                                NONE,
+                                Some(expr),
+                                false,
+                            );
+                            let mut declarators = ctx.ast.vec_with_capacity(1);
+                            declarators.push(declarator);
+                            let var_decl = ctx.ast.alloc_variable_declaration(
+                                SPAN,
+                                VariableDeclarationKind::Const,
+                                declarators,
+                                false,
+                            );
+                            export.declaration =
+                                Some(Declaration::VariableDeclaration(var_decl));
+                        }
+                    }
+                    Declaration::VariableDeclaration(var_decl) => {
+                        // Replace the first function-like initializer with the ternary.
+                        for declarator in &mut var_decl.declarations {
+                            if let Some(init) = &declarator.init
+                                && matches!(
+                                    init,
+                                    Expression::FunctionExpression(_)
+                                        | Expression::ArrowFunctionExpression(_)
+                                )
+                            {
+                                declarator.init = Some(expr);
+                                return vec![stmt];
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            vec![stmt]
+        }
+        _ => {
+            // Fallback: wrap as expression statement
+            let expr_stmt = ctx.ast.alloc_expression_statement(SPAN, expr);
+            vec![Statement::ExpressionStatement(expr_stmt)]
         }
     }
 }
