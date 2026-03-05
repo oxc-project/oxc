@@ -173,5 +173,4 @@ mod tests {
             insta::assert_snapshot!(snapshot);
         });
     }
-
 }
