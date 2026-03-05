@@ -1,6 +1,5 @@
 ---
 source: tasks/website_linter/src/rules/mod.rs
-assertion_line: 173
 expression: snapshot
 ---
 --- eslint/no-unused-vars.md ---
