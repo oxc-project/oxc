@@ -51,20 +51,11 @@ impl std::ops::Deref for ReactCompilerRule {
 ///
 /// All `environment` fields default to the ESLint plugin's lint-mode defaults,
 /// which are **stricter** than the compiler's own defaults.
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ReactCompilerConfig {
     pub compilation_mode: CompilationModeConfig,
     pub environment: EnvironmentConfigOverrides,
-}
-
-impl Default for ReactCompilerConfig {
-    fn default() -> Self {
-        Self {
-            compilation_mode: CompilationModeConfig::default(),
-            environment: EnvironmentConfigOverrides::default(),
-        }
-    }
 }
 
 /// Which functions the compiler should compile/validate.
@@ -93,6 +84,7 @@ impl From<CompilationModeConfig> for CompilationMode {
 ///
 /// Defaults match the ESLint plugin's `COMPILER_OPTIONS` in lint mode,
 /// which enables stricter validation than the compiler's own defaults.
+#[expect(clippy::struct_field_names)]
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct EnvironmentConfigOverrides {
@@ -132,23 +124,24 @@ impl Default for EnvironmentConfigOverrides {
 
 impl EnvironmentConfigOverrides {
     fn to_environment_config(&self) -> EnvironmentConfig {
-        let mut config = EnvironmentConfig::default();
-        config.validate_hooks_usage = self.validate_hooks_usage;
-        config.validate_ref_access_during_render = self.validate_ref_access_during_render;
-        config.validate_no_set_state_in_render = self.validate_no_set_state_in_render;
-        config.validate_no_set_state_in_effects = self.validate_no_set_state_in_effects;
-        config.validate_no_jsx_in_try_statements = self.validate_no_jsx_in_try_statements;
-        config.validate_no_impure_functions_in_render = self.validate_no_impure_functions_in_render;
-        config.validate_static_components = self.validate_static_components;
-        config.validate_no_derived_computations_in_effects =
-            self.validate_no_derived_computations_in_effects;
-        config.validate_no_capitalized_calls = self.validate_no_capitalized_calls.clone();
-        config.validate_blocklisted_imports = self.validate_blocklisted_imports.clone();
-        config.validate_preserve_existing_memoization_guarantees =
-            self.validate_preserve_existing_memoization_guarantees;
-        config.validate_exhaustive_memoization_dependencies =
-            self.validate_exhaustive_memoization_dependencies;
-        config
+        EnvironmentConfig {
+            validate_hooks_usage: self.validate_hooks_usage,
+            validate_ref_access_during_render: self.validate_ref_access_during_render,
+            validate_no_set_state_in_render: self.validate_no_set_state_in_render,
+            validate_no_set_state_in_effects: self.validate_no_set_state_in_effects,
+            validate_no_jsx_in_try_statements: self.validate_no_jsx_in_try_statements,
+            validate_no_impure_functions_in_render: self.validate_no_impure_functions_in_render,
+            validate_static_components: self.validate_static_components,
+            validate_no_derived_computations_in_effects: self
+                .validate_no_derived_computations_in_effects,
+            validate_no_capitalized_calls: self.validate_no_capitalized_calls.clone(),
+            validate_blocklisted_imports: self.validate_blocklisted_imports.clone(),
+            validate_preserve_existing_memoization_guarantees: self
+                .validate_preserve_existing_memoization_guarantees,
+            validate_exhaustive_memoization_dependencies: self
+                .validate_exhaustive_memoization_dependencies,
+            ..EnvironmentConfig::default()
+        }
     }
 }
 
