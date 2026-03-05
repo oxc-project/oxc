@@ -11,17 +11,15 @@
 /// - `$[idx] !== dep` checks for dependency changes
 /// - `$[idx] = value` assignments to cache new values
 /// - `$[idx]` reads for cached values
-use hmac::{Hmac, Mac};
 use oxc_allocator::{CloneIn, Vec as AVec};
 use oxc_ast::AstBuilder;
 use oxc_ast::NONE;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
-use sha2::Sha256;
 
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
@@ -678,18 +676,8 @@ pub fn codegen_function<'a>(
         options.cache_identifier_name,
     );
 
-    // Fast Refresh reuses component instances at runtime even as the source of the
-    // component changes. The generated code needs to prevent values from one version of
-    // the code being reused after a code change.
-    let fast_refresh_state = if options.enable_reset_cache_on_source_file_changes {
-        options.code.map(|code| {
-            let hash = compute_source_hash(&code);
-            let cache_index = cx.alloc_cache_index();
-            FastRefreshState { cache_index, hash }
-        })
-    } else {
-        None
-    };
+    // TODO: Fast Refresh / HMR: compute source hash and allocate cache index for
+    // tracking source changes (enable_reset_cache_on_source_file_changes).
 
     // Register function params as declared and as temporaries
     for param in &reactive_fn.params {
@@ -802,36 +790,6 @@ fn codegen_inner_function<'a>(
     codegen_function(&reactive_fn, options, cx.ast)
 }
 
-/// State for HMR/Fast Refresh cache reset.
-struct FastRefreshState {
-    /// The cache index allocated for tracking the source hash.
-    cache_index: u32,
-    /// The hex-encoded HMAC-SHA256 hash of the source code.
-    hash: String,
-}
-
-/// Compute an HMAC-SHA256 hash of the source code.
-fn compute_source_hash(code: &str) -> String {
-    type HmacSha256 = Hmac<Sha256>;
-    let Ok(mut mac) = HmacSha256::new_from_slice(code.as_bytes()) else {
-        return String::new();
-    };
-    mac.update(b"");
-    let result = mac.finalize();
-    let bytes = result.into_bytes();
-    hex_encode(&bytes[..])
-}
-
-/// Encode bytes as a lowercase hexadecimal string.
-fn hex_encode(bytes: &[u8]) -> String {
-    let mut hex = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        use std::fmt::Write;
-        let _ = write!(hex, "{byte:02x}");
-    }
-    hex
-}
-
 // =====================================================================================
 // MemoCounter — counts memo blocks/values via visitor
 // =====================================================================================
@@ -854,57 +812,6 @@ impl ReactiveVisitor for MemoCounter {
         self.pruned_memo_blocks += 1;
         self.pruned_memo_values += u32::try_from(scope.declarations.len()).unwrap_or(u32::MAX);
     }
-}
-
-// =====================================================================================
-// Hook guard helpers
-// =====================================================================================
-
-/// Create a try-finally statement that wraps `stmts` with hook guard calls.
-///
-/// Produces:
-/// ```js
-/// try {
-///   guardFn(before);
-///   ...stmts
-/// } finally {
-///   guardFn(after);
-/// }
-/// ```
-fn create_hook_guard<'a>(
-    cx: &CodegenContext<'a>,
-    guard_fn_name: &str,
-    stmts: AVec<'a, Statement<'a>>,
-    before: GuardKind,
-    after: GuardKind,
-) -> Statement<'a> {
-    // Build: guardFn(before)
-    let before_args = cx.ast.vec1(Argument::from(make_number(cx, before as u8 as f64)));
-    let before_call = make_call(cx, make_id(cx, guard_fn_name), before_args);
-    let before_stmt = make_expr_stmt(cx, before_call);
-
-    // Build try block: { guardFn(before); ...stmts }
-    let mut try_stmts = cx.ast.vec_with_capacity(1 + stmts.len());
-    try_stmts.push(before_stmt);
-    try_stmts.extend(stmts);
-    let try_block = stmts_to_block_body(cx, try_stmts);
-
-    // Build: guardFn(after)
-    let after_args = cx.ast.vec1(Argument::from(make_number(cx, after as u8 as f64)));
-    let after_call = make_call(cx, make_id(cx, guard_fn_name), after_args);
-    let after_stmt = make_expr_stmt(cx, after_call);
-
-    // Build finally block: { guardFn(after); }
-    let finally_stmts = cx.ast.vec1(after_stmt);
-    let finally_block = stmts_to_block_body(cx, finally_stmts);
-
-    // Build try-finally statement (no catch handler)
-    cx.ast.statement_try(
-        SPAN,
-        try_block,
-        None::<oxc_allocator::Box<'_, CatchClause<'_>>>,
-        Some(finally_block),
-    )
 }
 
 /// Check if an identifier represents a hook by looking up its type in the shape registry.
@@ -2536,23 +2443,6 @@ fn codegen_reactive_value_to_expression<'a>(
 // Helper functions
 // =====================================================================================
 
-/// Join multi-child JSX children with appropriate newline separators.
-fn join_jsx_children_multiline(children: &[String]) -> String {
-    let mut result = String::new();
-    for (i, child) in children.iter().enumerate() {
-        if i > 0 {
-            let prev = &children[i - 1];
-            let prev_is_expr = prev.starts_with('{') || prev.starts_with('<');
-            let curr_is_expr = child.starts_with('{') || child.starts_with('<');
-            if prev_is_expr && curr_is_expr {
-                result.push('\n');
-            }
-        }
-        result.push_str(child);
-    }
-    result
-}
-
 /// Generate a JSX attribute.
 ///
 /// Handles namespaced attributes (e.g., `xmlns:xlink`) and string value escaping.
@@ -2692,13 +2582,6 @@ fn codegen_place_to_expression<'a>(cx: &CodegenContext<'a>, place: &Place) -> Ex
     make_id(cx, &name)
 }
 
-/// Convert a Place to an expression WITHOUT wrapping assignment expressions.
-/// With AST-based codegen, there is no string-level paren wrapping needed,
-/// so this is identical to `codegen_place_to_expression`.
-fn codegen_place_to_expression_raw<'a>(cx: &CodegenContext<'a>, place: &Place) -> Expression<'a> {
-    codegen_place_to_expression(cx, place)
-}
-
 /// Get the string name of an identifier.
 fn identifier_name(identifier: &crate::hir::Identifier) -> String {
     match &identifier.name {
@@ -2707,15 +2590,6 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
     }
 }
 
-/// Generate a sequence expression for ExpressionStatement context.
-/// With AST-based codegen, parenthesization decisions are handled by oxc_codegen,
-/// so this delegates directly to `codegen_reactive_value_to_expression`.
-fn codegen_sequence_for_expr_stmt<'a>(
-    cx: &mut CodegenContext<'a>,
-    value: &ReactiveValue,
-) -> Expression<'a> {
-    codegen_reactive_value_to_expression(cx, value)
-}
 
 /// Generate a label string from a BlockId.
 fn codegen_label(id: crate::hir::BlockId) -> String {
@@ -2743,56 +2617,6 @@ fn codegen_primitive<'a>(cx: &CodegenContext<'a>, value: &PrimitiveValueKind) ->
     }
 }
 
-/// Escape special characters in a double-quoted string literal.
-fn escape_string(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '"' => result.push_str("\\\""),
-            '\\' => result.push_str("\\\\"),
-            '\n' => result.push_str("\\n"),
-            '\r' => result.push_str("\\r"),
-            '\t' => result.push_str("\\t"),
-            '\u{0008}' => result.push_str("\\b"),
-            '\u{000C}' => result.push_str("\\f"),
-            '\u{000B}' => result.push_str("\\v"),
-            '\0' => result.push_str("\\0"),
-            c if c.is_control() => {
-                for unit in c.encode_utf16(&mut [0; 2]) {
-                    result.push_str(&format!("\\u{unit:04x}"));
-                }
-            }
-            _ => result.push(c),
-        }
-    }
-    result
-}
-
-/// Escape special characters in a single-quoted string literal.
-fn escape_string_single_quote(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '\'' => result.push_str("\\'"),
-            '\\' => result.push_str("\\\\"),
-            '\n' => result.push_str("\\n"),
-            '\r' => result.push_str("\\r"),
-            '\t' => result.push_str("\\t"),
-            '\u{0008}' => result.push_str("\\b"),
-            '\u{000C}' => result.push_str("\\f"),
-            '\u{000B}' => result.push_str("\\v"),
-            '\0' => result.push_str("\\0"),
-            c if c.is_control() => {
-                for unit in c.encode_utf16(&mut [0; 2]) {
-                    result.push_str(&format!("\\u{unit:04x}"));
-                }
-            }
-            _ => result.push(c),
-        }
-    }
-    result
-}
-
 /// Generate a member access expression.
 fn codegen_member_access<'a>(
     cx: &CodegenContext<'a>,
@@ -2805,20 +2629,6 @@ fn codegen_member_access<'a>(
             make_computed_member(cx, object, make_number(cx, *n as f64))
         }
     }
-}
-
-/// Check if a string is a valid JavaScript identifier name.
-fn is_valid_identifier_name(s: &str) -> bool {
-    if s.is_empty() {
-        return false;
-    }
-    let mut chars = s.chars();
-    if let Some(first) = chars.next() {
-        if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
-            return false;
-        }
-    }
-    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
 }
 
 /// Generate an object property key.
