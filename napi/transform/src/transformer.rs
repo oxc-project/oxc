@@ -519,6 +519,21 @@ pub struct ReactCompilerOptions {
     ///
     /// @default "react-19"
     pub target: Option<String>,
+
+    /// Whether to validate hooks usage (Rules of Hooks).
+    ///
+    /// @default true
+    pub validate_hooks_usage: Option<bool>,
+
+    /// Whether to validate ref access during render.
+    ///
+    /// @default true
+    pub validate_ref_access_during_render: Option<bool>,
+
+    /// Whether to validate no setState in render.
+    ///
+    /// @default true
+    pub validate_no_set_state_in_render: Option<bool>,
 }
 
 #[napi(object)]
@@ -578,6 +593,9 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             compilation_mode: options.compilation_mode,
             panic_threshold: options.panic_threshold,
             target: options.target,
+            validate_hooks_usage: options.validate_hooks_usage,
+            validate_ref_access_during_render: options.validate_ref_access_during_render,
+            validate_no_set_state_in_render: options.validate_no_set_state_in_render,
             ..Default::default()
         }
     }
