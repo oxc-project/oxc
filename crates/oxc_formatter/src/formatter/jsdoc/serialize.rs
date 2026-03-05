@@ -789,10 +789,6 @@ pub fn format_jsdoc_comment<'a>(
     // Reorder @param tags to match the function signature order
     reorder_param_tags(&mut effective_tags, comment, source_text);
 
-    // Pre-build FormatOptions for type formatting — avoids cloning the full
-    // FormatOptions (which contains heap Vecs) per tag.
-    let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
-
     // Pre-process @import tags: merge by module, sort, format
     let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
     let has_imports = !import_lines.is_empty();
@@ -891,8 +887,9 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
-                &type_format_options,
+                format_options,
                 external_callbacks,
+                allocator,
                 &mut content_lines,
             );
         } else if is_type_comment_tag(normalized_kind) {
@@ -903,8 +900,9 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
-                &type_format_options,
+                format_options,
                 external_callbacks,
+                allocator,
                 &mut content_lines,
             );
         } else {
@@ -1463,7 +1461,11 @@ pub(super) fn format_embedded_js(
 /// Wraps the type as `type __t = {type_str};`, parses as TSX, formats, then extracts
 /// the formatted type. Handles `...Type` rest params by formatting the inner type
 /// separately. Returns `None` on parse/format failure.
-fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> Option<String> {
+fn format_type_via_formatter(
+    type_str: &str,
+    format_options: &FormatOptions,
+    allocator: &Allocator,
+) -> Option<String> {
     if type_str.is_empty() {
         return None;
     }
@@ -1476,7 +1478,7 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
             return None;
         }
         let wrapped = format!("({rest})[]");
-        let formatted = format_type_via_formatter(&wrapped, format_options)?;
+        let formatted = format_type_via_formatter(&wrapped, format_options, allocator)?;
         let inner = formatted.strip_suffix("[]")?;
         return Some(format!("...{inner}"));
     }
@@ -1491,19 +1493,19 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
 
     let input = format!("type __t = {type_str};");
 
-    let allocator = Allocator::default();
-    // The caller is expected to pass pre-built options with jsdoc: None.
-    // Clone is cheap here since the expensive Vec fields are already owned.
-    let options = format_options.clone();
+    // Clone and disable jsdoc to prevent recursive formatting.
+    // This clone only happens for complex types (union/intersection/object/function),
+    // not for simple identifiers which are filtered by needs_formatter_pass() above.
+    let options = FormatOptions { jsdoc: None, ..format_options.clone() };
 
-    let ret = Parser::new(&allocator, &input, SourceType::tsx())
+    let ret = Parser::new(allocator, &input, SourceType::tsx())
         .with_options(get_parse_options())
         .parse();
     if ret.panicked || !ret.errors.is_empty() {
         return None;
     }
 
-    let formatted = Formatter::new(&allocator, options).build(&ret.program);
+    let formatted = Formatter::new(allocator, options).build(&ret.program);
     let formatted = formatted.trim_end();
 
     // Strip the `type __t = ` prefix (11 chars) using slice, matching upstream's
@@ -1737,6 +1739,7 @@ fn format_type_name_comment_tag(
     bracket_spacing: bool,
     format_options: &FormatOptions,
     external_callbacks: &ExternalCallbacks,
+    allocator: &Allocator,
     content_lines: &mut Vec<String>,
 ) {
     let (type_part, name_part, comment_part) = tag.type_name_comment();
@@ -1765,7 +1768,7 @@ fn format_type_name_comment_tag(
             // Try formatting via the formatter (simulates upstream's formatType())
             if !preserve_quotes
                 && let Some(formatted) =
-                    format_type_via_formatter(&normalized_type_str, format_options)
+                    format_type_via_formatter(&normalized_type_str, format_options, allocator)
             {
                 normalized_type_str = Cow::Owned(formatted);
             }
@@ -2048,6 +2051,7 @@ fn format_type_comment_tag(
     bracket_spacing: bool,
     format_options: &FormatOptions,
     external_callbacks: &ExternalCallbacks,
+    allocator: &Allocator,
     content_lines: &mut Vec<String>,
 ) {
     let (type_part, comment_part) = tag.type_comment();
@@ -2079,7 +2083,7 @@ fn format_type_comment_tag(
                 && !normalized_type_str.starts_with('{');
             if !skip_formatter
                 && let Some(formatted) =
-                    format_type_via_formatter(&normalized_type_str, format_options)
+                    format_type_via_formatter(&normalized_type_str, format_options, allocator)
             {
                 normalized_type_str = Cow::Owned(formatted);
             }
@@ -2611,7 +2615,8 @@ mod tests {
     }
 
     fn fmt_type(type_str: &str) -> Option<String> {
-        format_type_via_formatter(type_str, &FormatOptions::default())
+        let allocator = Allocator::default();
+        format_type_via_formatter(type_str, &FormatOptions::default(), &allocator)
     }
 
     #[test]
