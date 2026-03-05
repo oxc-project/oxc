@@ -36,6 +36,7 @@ natord = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
+smallvec = { workspace = true }
 unicode-width = { workspace = true }
 
 [dev-dependencies]

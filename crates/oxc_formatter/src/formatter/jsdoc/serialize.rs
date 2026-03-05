@@ -220,41 +220,45 @@ fn reorder_param_tags(
         return;
     }
 
-    // Check that ALL @param tags have type annotations and names
     let param_tags = &effective_tags[param_start..param_end];
-    let has_all_types_and_names = param_tags.iter().all(|(tag, _)| {
-        let (type_part, name_part, _) = tag.type_name_comment();
-        type_part.is_some() && name_part.is_some()
-    });
-    if !has_all_types_and_names {
-        return; // Some params lack types or names — don't reorder
+
+    // Parse type_name_comment() once per tag, cache the results.
+    // Each call does O(n) brace-counting, and we'd otherwise call it 4x per tag.
+    let parsed: Vec<_> = param_tags
+        .iter()
+        .map(|(tag, _)| {
+            let (type_part, name_part, _) = tag.type_name_comment();
+            (type_part.is_some(), name_part.map(|n| n.parsed()))
+        })
+        .collect();
+
+    // Check that ALL @param tags have type annotations and names
+    if !parsed.iter().all(|(has_type, name)| *has_type && name.is_some()) {
+        return;
     }
+
+    // Extract the cached names (we verified all are Some above)
+    let names: Vec<&str> = parsed.iter().map(|(_, name)| name.unwrap_or("")).collect();
 
     // Extract function parameter names from the source text after the comment
     let fn_params = extract_function_params(comment, source_text);
-    if fn_params.len() != param_tags.len() {
+    if fn_params.len() != names.len() {
         return;
     }
 
     // Already in order?
-    if param_tags.iter().zip(fn_params.iter()).all(|((tag, _), p)| {
-        let (_, name_part, _) = tag.type_name_comment();
-        name_part.map_or("", |n| n.parsed()) == *p
-    }) {
+    if names.iter().zip(fn_params.iter()).all(|(name, p)| *name == *p) {
         return;
     }
 
     // Check same set of names (lengths already verified equal, param lists are small)
-    if !param_tags.iter().all(|(tag, _)| {
-        let (_, name_part, _) = tag.type_name_comment();
-        let name = name_part.map_or("", |n| n.parsed());
-        fn_params.contains(&name)
-    }) {
+    if !names.iter().all(|name| fn_params.contains(name)) {
         return;
     }
 
-    // Sort @param tags by their position in the function signature
-    effective_tags[param_start..param_end].sort_by_key(|(tag, _)| {
+    // Sort @param tags by their position in the function signature.
+    // Use sort_by_cached_key to call the key function once per element.
+    effective_tags[param_start..param_end].sort_by_cached_key(|(tag, _)| {
         let (_, name_part, _) = tag.type_name_comment();
         let name = name_part.map_or("", |n| n.parsed());
         fn_params.iter().position(|p| *p == name).unwrap_or(usize::MAX)
@@ -616,23 +620,46 @@ fn sort_tags_by_groups<'a>(
         return Vec::new();
     }
 
-    // Split into groups at TAGS_GROUP_HEAD boundaries, but only when a
+    // Build normalized list once (avoids calling normalize_tag_kind twice per tag).
+    let mut normalized: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> =
+        tags.iter().map(|tag| (tag, normalize_tag_kind(tag.kind.parsed()))).collect();
+
+    // Fast path: check if any group split is actually needed.
+    // A split only occurs when a TAGS_GROUP_HEAD appears after a TAGS_GROUP_CONDITION.
+    let mut needs_split = false;
+    let mut seen_condition = false;
+    for &(_, kind) in &normalized {
+        if is_tags_group_condition(kind) {
+            seen_condition = true;
+        }
+        if is_tags_group_head(kind) && seen_condition {
+            needs_split = true;
+            break;
+        }
+    }
+
+    if !needs_split {
+        // Single group — sort in-place, no Vec-of-Vec overhead
+        normalized.sort_by_key(|(_, kind)| tag_sort_priority(kind));
+        return normalized;
+    }
+
+    // Multi-group path: split at TAGS_GROUP_HEAD boundaries when a
     // TAGS_GROUP_CONDITION tag has been seen first (matching upstream behavior).
     let mut groups: Vec<Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)>> = Vec::new();
     let mut current_group: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> = Vec::new();
     let mut can_group_next_tags = false;
 
-    for tag in tags {
-        let normalized_kind = normalize_tag_kind(tag.kind.parsed());
-        if is_tags_group_head(normalized_kind) && can_group_next_tags && !current_group.is_empty() {
+    for (tag, kind) in normalized {
+        if is_tags_group_head(kind) && can_group_next_tags && !current_group.is_empty() {
             groups.push(current_group);
             current_group = Vec::new();
             can_group_next_tags = false;
         }
-        if is_tags_group_condition(normalized_kind) {
+        if is_tags_group_condition(kind) {
             can_group_next_tags = true;
         }
-        current_group.push((tag, normalized_kind));
+        current_group.push((tag, kind));
     }
     if !current_group.is_empty() {
         groups.push(current_group);
@@ -762,6 +789,10 @@ pub fn format_jsdoc_comment<'a>(
     // Reorder @param tags to match the function signature order
     reorder_param_tags(&mut effective_tags, comment, source_text);
 
+    // Pre-build FormatOptions for type formatting — avoids cloning the full
+    // FormatOptions (which contains heap Vecs) per tag.
+    let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
+
     // Pre-process @import tags: merge by module, sort, format
     let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
     let has_imports = !import_lines.is_empty();
@@ -860,7 +891,7 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
-                format_options,
+                &type_format_options,
                 external_callbacks,
                 &mut content_lines,
             );
@@ -872,7 +903,7 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
-                format_options,
+                &type_format_options,
                 external_callbacks,
                 &mut content_lines,
             );
@@ -1362,9 +1393,9 @@ pub(super) fn format_embedded_js(
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
     let line_width = LineWidth::try_from(width).unwrap();
 
-    // Build options from parent, overriding line_width and disabling JSDoc
-    // to prevent recursive formatting
-    let make_options = || FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
+    // Clone once upfront — subsequent clones of base_options are cheap since
+    // the Vec fields (sort_imports, sort_tailwindcss) are already owned.
+    let base_options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| -> Option<String> {
@@ -1374,7 +1405,7 @@ pub(super) fn format_embedded_js(
         if ret.panicked || !ret.errors.is_empty() {
             return None;
         }
-        let mut formatted = Formatter::new(&allocator, make_options()).build(&ret.program);
+        let mut formatted = Formatter::new(&allocator, base_options.clone()).build(&ret.program);
         truncate_trim_end(&mut formatted);
         Some(formatted)
     };
@@ -1393,6 +1424,10 @@ pub(super) fn format_embedded_js(
     let trimmed = code.trim();
     if trimmed.starts_with('{') {
         let wrapped = format!("({trimmed})");
+        // Use TrailingCommas::None for object literals since JSON-like code
+        // shouldn't have trailing commas
+        let obj_options =
+            FormatOptions { trailing_commas: TrailingCommas::None, ..base_options.clone() };
 
         let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
             let allocator = Allocator::default();
@@ -1402,10 +1437,7 @@ pub(super) fn format_embedded_js(
             if ret.panicked || !ret.errors.is_empty() {
                 return None;
             }
-            // Use TrailingCommas::None for object literals since JSON-like code
-            // shouldn't have trailing commas
-            let options = FormatOptions { trailing_commas: TrailingCommas::None, ..make_options() };
-            let formatted = Formatter::new(&allocator, options).build(&ret.program);
+            let formatted = Formatter::new(&allocator, obj_options.clone()).build(&ret.program);
             let formatted = formatted.trim_end();
             // Remove the wrapping parens and trailing semicolon
             if let Some(inner) = formatted.strip_prefix('(')
@@ -1460,8 +1492,9 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
     let input = format!("type __t = {type_str};");
 
     let allocator = Allocator::default();
-    let line_width = format_options.line_width;
-    let options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
+    // The caller is expected to pass pre-built options with jsdoc: None.
+    // Clone is cheap here since the expensive Vec fields are already owned.
+    let options = format_options.clone();
 
     let ret = Parser::new(&allocator, &input, SourceType::tsx())
         .with_options(get_parse_options())
@@ -2468,9 +2501,9 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
 /// `@import` tags can fall through to `format_generic_tag()`).
 fn process_import_tags(
     tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
-) -> (Vec<String>, rustc_hash::FxHashSet<usize>) {
+) -> (Vec<String>, smallvec::SmallVec<[usize; 4]>) {
     let mut imports = Vec::new();
-    let mut parsed_indices = rustc_hash::FxHashSet::default();
+    let mut parsed_indices = smallvec::SmallVec::<[usize; 4]>::new();
 
     for (idx, &(tag, kind)) in tags.iter().enumerate() {
         if kind != "import" {
@@ -2479,7 +2512,7 @@ fn process_import_tags(
         let comment = tag.comment().parsed();
         if let Some(info) = parse_import_tag(&comment) {
             imports.push(info);
-            parsed_indices.insert(idx);
+            parsed_indices.push(idx);
         }
     }
 
