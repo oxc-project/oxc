@@ -933,11 +933,19 @@ fn is_optional_dependency(identifier: &Identifier, reactive: &FxHashSet<Identifi
 }
 
 fn is_stable_type(ty: &Type) -> bool {
-    matches!(
-        ty,
-        Type::Function(FunctionType { shape_id: Some(id), .. })
-        if matches!(id.as_str(), "BuiltInSetState" | "BuiltInUseReducerDispatch" | "BuiltInUseRef")
-    )
+    match ty {
+        Type::Function(FunctionType { shape_id: Some(id), .. }) => matches!(
+            id.as_str(),
+            "BuiltInSetState"
+                | "BuiltInSetActionState"
+                | "BuiltInDispatch"
+                | "BuiltInUseReducerDispatch"
+                | "BuiltInStartTransition"
+                | "BuiltInSetOptimistic"
+        ),
+        Type::Object(ObjectType { shape_id: Some(id) }) => id == "BuiltInUseRefId",
+        _ => false,
+    }
 }
 
 fn print_inferred_dependency(dep: &Temporary) -> String {
