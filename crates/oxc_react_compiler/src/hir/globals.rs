@@ -22,7 +22,7 @@ use super::{
         HookKind, ShapeRegistry, add_function, add_hook, add_object,
         parse_aliasing_signature_config,
     },
-    type_schema::{AliasingEffectConfig, AliasingSignatureConfig},
+    type_schema::{AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName, ModuleTypeConfig},
     types::{FunctionType, ObjectType, Type},
 };
 
@@ -1315,17 +1315,20 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Read,
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![AliasingEffectConfig::Assign {
-                    from: "@value".to_string(),
-                    into: "@return".to_string(),
-                }],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![AliasingEffectConfig::Assign {
+                        from: "@value".to_string(),
+                        into: "@return".to_string(),
+                    }],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1348,17 +1351,20 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Read,
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![AliasingEffectConfig::Assign {
-                    from: "@value".to_string(),
-                    into: "@return".to_string(),
-                }],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![AliasingEffectConfig::Assign {
+                        from: "@value".to_string(),
+                        into: "@return".to_string(),
+                    }],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1381,24 +1387,27 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Read,
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@return".to_string(),
-                        value: ValueKind::Mutable,
-                        reason: ValueReason::KnownReturnSignature,
-                    },
-                    AliasingEffectConfig::Alias {
-                        from: "@value".to_string(),
-                        into: "@return".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@return".to_string(),
+                            value: ValueKind::Mutable,
+                            reason: ValueReason::KnownReturnSignature,
+                        },
+                        AliasingEffectConfig::Alias {
+                            from: "@value".to_string(),
+                            into: "@return".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1421,24 +1430,27 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Read,
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@return".to_string(),
-                        value: ValueKind::Mutable,
-                        reason: ValueReason::KnownReturnSignature,
-                    },
-                    AliasingEffectConfig::Capture {
-                        from: "@value".to_string(),
-                        into: "@return".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@return".to_string(),
+                            value: ValueKind::Mutable,
+                            reason: ValueReason::KnownReturnSignature,
+                        },
+                        AliasingEffectConfig::Capture {
+                            from: "@value".to_string(),
+                            into: "@return".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1463,17 +1475,20 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Read,
             return_type: Type::Poly,
             return_value_kind: ValueKind::Mutable,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![AliasingEffectConfig::CreateFrom {
-                    from: "@value".to_string(),
-                    into: "@return".to_string(),
-                }],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![AliasingEffectConfig::CreateFrom {
+                        from: "@value".to_string(),
+                        into: "@return".to_string(),
+                    }],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1496,25 +1511,28 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
             callee_effect: Effect::Store,
             return_type: Type::Primitive,
             return_value_kind: ValueKind::Primitive,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string(), "@value".to_string()],
-                rest: None,
-                returns: "@return".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@return".to_string(),
-                        value: ValueKind::Primitive,
-                        reason: ValueReason::KnownReturnSignature,
-                    },
-                    AliasingEffectConfig::Mutate { value: "@object".to_string() },
-                    AliasingEffectConfig::Capture {
-                        from: "@value".to_string(),
-                        into: "@object".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@object".to_string(), "@value".to_string()],
+                    rest: None,
+                    returns: "@return".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@return".to_string(),
+                            value: ValueKind::Primitive,
+                            reason: ValueReason::KnownReturnSignature,
+                        },
+                        AliasingEffectConfig::Mutate { value: "@object".to_string() },
+                        AliasingEffectConfig::Capture {
+                            from: "@value".to_string(),
+                            into: "@object".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -1911,37 +1929,40 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             return_value_kind: ValueKind::Frozen,
             callee_effect: Effect::Read,
             hook_kind: Some(HookKind::UseEffect),
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec![],
-                rest: Some("@rest".to_string()),
-                returns: "@returns".to_string(),
-                temporaries: vec!["@effect".to_string()],
-                effects: vec![
-                    // Freezes the function and deps
-                    AliasingEffectConfig::Freeze {
-                        value: "@rest".to_string(),
-                        reason: ValueReason::Effect,
-                    },
-                    // Internally creates an effect object that captures the function and deps
-                    AliasingEffectConfig::Create {
-                        into: "@effect".to_string(),
-                        value: ValueKind::Frozen,
-                        reason: ValueReason::KnownReturnSignature,
-                    },
-                    // The effect stores the function and dependencies
-                    AliasingEffectConfig::Capture {
-                        from: "@rest".to_string(),
-                        into: "@effect".to_string(),
-                    },
-                    // Returns undefined
-                    AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
-                        value: ValueKind::Primitive,
-                        reason: ValueReason::KnownReturnSignature,
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec![],
+                    rest: Some("@rest".to_string()),
+                    returns: "@returns".to_string(),
+                    temporaries: vec!["@effect".to_string()],
+                    effects: vec![
+                        // Freezes the function and deps
+                        AliasingEffectConfig::Freeze {
+                            value: "@rest".to_string(),
+                            reason: ValueReason::Effect,
+                        },
+                        // Internally creates an effect object that captures the function and deps
+                        AliasingEffectConfig::Create {
+                            into: "@effect".to_string(),
+                            value: ValueKind::Frozen,
+                            reason: ValueReason::KnownReturnSignature,
+                        },
+                        // The effect stores the function and dependencies
+                        AliasingEffectConfig::Capture {
+                            from: "@rest".to_string(),
+                            into: "@effect".to_string(),
+                        },
+                        // Returns undefined
+                        AliasingEffectConfig::Create {
+                            into: "@returns".to_string(),
+                            value: ValueKind::Primitive,
+                            reason: ValueReason::KnownReturnSignature,
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -2114,25 +2135,28 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
-                rest: None,
-                returns: "@returns".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
-                        reason: ValueReason::KnownReturnSignature,
-                        value: ValueKind::Mutable,
-                    },
-                    // Only keys are captured, and keys are immutable
-                    AliasingEffectConfig::ImmutableCapture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@object".to_string()],
+                    rest: None,
+                    returns: "@returns".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@returns".to_string(),
+                            reason: ValueReason::KnownReturnSignature,
+                            value: ValueKind::Mutable,
+                        },
+                        // Only keys are captured, and keys are immutable
+                        AliasingEffectConfig::ImmutableCapture {
+                            from: "@object".to_string(),
+                            into: "@returns".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -2145,25 +2169,28 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
-                rest: None,
-                returns: "@returns".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
-                        reason: ValueReason::KnownReturnSignature,
-                        value: ValueKind::Mutable,
-                    },
-                    // Object values are captured into the return
-                    AliasingEffectConfig::Capture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@object".to_string()],
+                    rest: None,
+                    returns: "@returns".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@returns".to_string(),
+                            reason: ValueReason::KnownReturnSignature,
+                            value: ValueKind::Mutable,
+                        },
+                        // Object values are captured into the return
+                        AliasingEffectConfig::Capture {
+                            from: "@object".to_string(),
+                            into: "@returns".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -2176,25 +2203,28 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
-            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
-                receiver: "@receiver".to_string(),
-                params: vec!["@object".to_string()],
-                rest: None,
-                returns: "@returns".to_string(),
-                temporaries: vec![],
-                effects: vec![
-                    AliasingEffectConfig::Create {
-                        into: "@returns".to_string(),
-                        reason: ValueReason::KnownReturnSignature,
-                        value: ValueKind::Mutable,
-                    },
-                    // Object values are captured into the return
-                    AliasingEffectConfig::Capture {
-                        from: "@object".to_string(),
-                        into: "@returns".to_string(),
-                    },
-                ],
-            }).expect("built-in config should not contain Impure effects")),
+            aliasing: Some(
+                parse_aliasing_signature_config(&AliasingSignatureConfig {
+                    receiver: "@receiver".to_string(),
+                    params: vec!["@object".to_string()],
+                    rest: None,
+                    returns: "@returns".to_string(),
+                    temporaries: vec![],
+                    effects: vec![
+                        AliasingEffectConfig::Create {
+                            into: "@returns".to_string(),
+                            reason: ValueReason::KnownReturnSignature,
+                            value: ValueKind::Mutable,
+                        },
+                        // Object values are captured into the return
+                        AliasingEffectConfig::Capture {
+                            from: "@object".to_string(),
+                            into: "@returns".to_string(),
+                        },
+                    ],
+                })
+                .expect("built-in config should not contain Impure effects"),
+            ),
             ..FunctionSignature::default()
         },
     );
@@ -2592,5 +2622,124 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
     if let Some(shape) = shapes.get_mut(&global_shape_id) {
         shape.properties.insert("global".to_string(), global_type);
         shape.properties.insert("globalThis".to_string(), global_this_type);
+    }
+}
+
+// =====================================================================================
+// installTypeConfig — convert a ModuleTypeConfig into a Type
+// =====================================================================================
+
+/// Convert a `ModuleTypeConfig` into a `Type` by registering shapes in the `ShapeRegistry`.
+///
+/// Port of `installTypeConfig()` from `HIR/Globals.ts` (lines 937-1022).
+///
+/// This is used by the module type provider to convert declarative type configs
+/// (from `DefaultModuleTypeProvider`) into concrete `Type` values with registered
+/// shapes in the shape registry.
+pub fn install_type_config(
+    shapes: &mut ShapeRegistry,
+    config: ModuleTypeConfig,
+    module_name: &str,
+) -> Type {
+    match config {
+        ModuleTypeConfig::TypeReference { name } => match name {
+            BuiltInTypeName::Any => Type::Poly,
+            BuiltInTypeName::Primitive => Type::Primitive,
+            BuiltInTypeName::Array => {
+                Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) })
+            }
+            BuiltInTypeName::MixedReadonly => {
+                Type::Object(ObjectType { shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()) })
+            }
+            BuiltInTypeName::Ref => {
+                Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) })
+            }
+        },
+        ModuleTypeConfig::Function {
+            positional_params,
+            rest_param,
+            callee_effect,
+            return_type,
+            return_value_kind,
+            no_alias,
+            mutable_only_if_operands_are_mutable,
+            impure,
+            canonical_name,
+            aliasing,
+            known_incompatible,
+        } => {
+            let return_type = install_type_config(shapes, *return_type, module_name);
+            let aliasing = aliasing.and_then(|config| {
+                parse_aliasing_signature_config(&config).ok()
+            });
+            let signature = FunctionSignature {
+                positional_params,
+                rest_param,
+                callee_effect,
+                return_type: return_type.clone(),
+                return_value_kind,
+                return_value_reason: None,
+                hook_kind: None,
+                no_alias,
+                mutable_only_if_operands_are_mutable,
+                impure,
+                known_incompatible,
+                canonical_name,
+                aliasing,
+            };
+            let shape_id = add_function(shapes, None, Vec::new(), signature);
+            Type::Function(FunctionType {
+                shape_id: Some(shape_id),
+                return_type: Box::new(return_type),
+                is_constructor: false,
+            })
+        }
+        ModuleTypeConfig::Hook {
+            positional_params,
+            rest_param,
+            return_type,
+            return_value_kind,
+            no_alias,
+            aliasing,
+            known_incompatible,
+        } => {
+            let return_type = install_type_config(shapes, *return_type, module_name);
+            let aliasing = aliasing.and_then(|config| {
+                parse_aliasing_signature_config(&config).ok()
+            });
+            let signature = FunctionSignature {
+                positional_params: positional_params.unwrap_or_default(),
+                rest_param: Some(rest_param.unwrap_or(Effect::Freeze)),
+                callee_effect: Effect::Read,
+                return_type: return_type.clone(),
+                return_value_kind: return_value_kind.unwrap_or(ValueKind::Frozen),
+                return_value_reason: None,
+                hook_kind: Some(HookKind::Custom),
+                no_alias,
+                mutable_only_if_operands_are_mutable: false,
+                impure: false,
+                known_incompatible,
+                canonical_name: None,
+                aliasing,
+            };
+            let shape_id = add_hook(shapes, None, signature);
+            Type::Function(FunctionType {
+                shape_id: Some(shape_id),
+                return_type: Box::new(return_type),
+                is_constructor: false,
+            })
+        }
+        ModuleTypeConfig::Object { properties } => {
+            let converted_properties: Vec<(String, Type)> = properties
+                .into_iter()
+                .map(|(key, value)| {
+                    let t = install_type_config(shapes, value, module_name);
+                    (key, t)
+                })
+                .collect();
+            let generated_id = format!("<module_{module_name}_{}>", shapes.len());
+            let shape_id = add_object(shapes, &generated_id, converted_properties);
+            Type::Object(ObjectType { shape_id: Some(shape_id) })
+        }
     }
 }

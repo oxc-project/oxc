@@ -602,7 +602,7 @@ fn test_console_method_type_resolution() {
         CompilerOutputMode, Environment, EnvironmentConfig,
     };
 
-    let env = Environment::new(
+    let mut env = Environment::new(
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
@@ -610,7 +610,9 @@ fn test_console_method_type_resolution() {
 
     // Helper to verify a console-like object has a "log" method with Read effects.
     let verify_console_log =
-        |console_type: &oxc_react_compiler::hir::types::Type, label: &str| match console_type {
+        |env: &Environment,
+         console_type: &oxc_react_compiler::hir::types::Type,
+         label: &str| match console_type {
             oxc_react_compiler::hir::types::Type::Object(obj) => {
                 assert!(obj.shape_id.is_some(), "{label} should have a shape_id");
 
@@ -655,7 +657,7 @@ fn test_console_method_type_resolution() {
         .expect("should not error")
         .expect("console should be a registered global");
     let console_type = oxc_react_compiler::hir::globals::Global::to_type(&console_global);
-    verify_console_log(&console_type, "console");
+    verify_console_log(&env, &console_type, "console");
 
     // 2. Verify `global.console` resolves correctly
     let global_global = env
@@ -668,7 +670,7 @@ fn test_console_method_type_resolution() {
     let global_type = oxc_react_compiler::hir::globals::Global::to_type(&global_global);
     let global_console_type = env.get_property_type(&global_type, "console");
     assert!(global_console_type.is_some(), "global.console should resolve to a type");
-    verify_console_log(&global_console_type.unwrap(), "global.console");
+    verify_console_log(&env, &global_console_type.unwrap(), "global.console");
 
     // 3. Verify `globalThis.console` resolves correctly
     let global_this = env
@@ -681,7 +683,7 @@ fn test_console_method_type_resolution() {
     let global_this_type = oxc_react_compiler::hir::globals::Global::to_type(&global_this);
     let global_this_console_type = env.get_property_type(&global_this_type, "console");
     assert!(global_this_console_type.is_some(), "globalThis.console should resolve to a type");
-    verify_console_log(&global_this_console_type.unwrap(), "globalThis.console");
+    verify_console_log(&env, &global_this_console_type.unwrap(), "globalThis.console");
 }
 
 #[test]

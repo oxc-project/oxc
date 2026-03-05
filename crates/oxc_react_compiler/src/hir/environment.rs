@@ -9,7 +9,8 @@ use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{
-    globals::{Global, GlobalRegistry},
+    default_module_type_provider::{DefaultModuleTypeProvider, ModuleTypeProvider},
+    globals::{Global, GlobalRegistry, install_type_config},
     hir_types::{
         Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
     },
@@ -620,7 +621,7 @@ impl Environment {
     /// Returns a `CompilerError` if a type provider gives a type that is inconsistent
     /// with the hook naming convention (e.g., a hook name mapped to a non-hook type).
     pub fn get_global_declaration(
-        &self,
+        &mut self,
         binding: &NonLocalBinding,
         loc: crate::compiler_error::SourceLocation,
     ) -> Result<Option<Global>, crate::compiler_error::CompilerError> {
@@ -808,12 +809,18 @@ impl Environment {
     ///
     /// Port of `#resolveModuleType()` from `HIR/Environment.ts`.
     ///
-    /// In the Rust port we only support pre-registered module types (e.g.,
-    /// the reanimated module registered via `enable_custom_type_definition_for_reanimated`).
-    /// The TS version also supports a dynamic `moduleTypeProvider` callback
-    /// which is not yet ported.
-    fn resolve_module_type(&self, module_name: &str) -> Option<Type> {
-        self.module_types.get(module_name).cloned()
+    /// Checks the module type cache first, then consults the
+    /// `DefaultModuleTypeProvider` on cache miss to install type configs
+    /// for known npm modules (e.g., react-hook-form, @tanstack/react-table).
+    fn resolve_module_type(&mut self, module_name: &str) -> Option<Type> {
+        if let Some(t) = self.module_types.get(module_name) {
+            return Some(t.clone());
+        }
+        // Consult the default module type provider on cache miss
+        let config = DefaultModuleTypeProvider.get_type(module_name)?;
+        let t = install_type_config(&mut self.shapes, config, module_name);
+        self.module_types.insert(module_name.to_string(), t.clone());
+        Some(t)
     }
 
     /// Look up a property type from the shape registry.
