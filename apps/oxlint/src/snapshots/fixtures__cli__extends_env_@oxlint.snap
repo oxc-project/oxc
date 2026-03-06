@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/extends_env
+----------
+
+  x eslint(no-undef): 'console' is not defined.
+   ,-[overrides_extends/test.js:2:1]
+ 1 | // only this file should report, because we override the extends env
+ 2 | console.log('a');
+   : ^^^^^^^
+   `----
+  help: Either define 'console' or remove the reference to it. If 'console' is a global variable, add it to the 'globals' configuration.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 3 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
