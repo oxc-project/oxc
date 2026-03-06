@@ -535,9 +535,9 @@ fn generate(codegen: &Codegen) -> Codes {
     let walk_dts_parser = "
         import type * as ESTree from '@oxc-project/types';
 
-        type VisitFn = ((node: ESTree.Node) => void) | null;
-        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
-        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+        type VisitFn = (node: ESTree.Node) => void;
+        type EnterExit = { enter: VisitFn; exit: VisitFn };
+        type CompiledVisitors = (VisitFn | EnterExit | null)[];
 
         export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;
     ".to_string();
@@ -550,10 +550,9 @@ fn generate(codegen: &Codegen) -> Codes {
     #[rustfmt::skip]
     let walk_dts_oxlint = "
         import type { Node, Program } from './types.d.ts';
+        import type { VisitFn, EnterExit } from '../plugins/visitor.ts';
 
-        type VisitFn = ((node: Node) => void) | null;
-        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
-        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+        type CompiledVisitors = (VisitFn | EnterExit | null)[];
 
         export declare function walkProgram(program: Program, visitors: CompiledVisitors): void;
         export declare const ancestors: Node[];
