@@ -5,6 +5,7 @@ use editorconfig_parser::{
     MaxLineLength,
 };
 use fast_glob::glob_match;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 use tracing::instrument;
 
@@ -479,6 +480,168 @@ fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool 
         }
     }
 }
+
+// ---
+
+/// Store for base and nested `ConfigResolver`s.
+///
+/// In monorepo setups, different packages may have their own `.oxfmtrc.json`.
+/// `ConfigStore` resolves the nearest config for each file by walking up from the file's directory.
+#[derive(Debug)]
+pub struct ConfigStore {
+    base: ConfigResolver,
+    /// Nested configs keyed by their config file's parent directory.
+    nested: FxHashMap<PathBuf, ConfigResolver>,
+}
+
+impl ConfigStore {
+    pub fn new(base: ConfigResolver, nested: FxHashMap<PathBuf, ConfigResolver>) -> Self {
+        Self { base, nested }
+    }
+
+    /// Resolve format options for a specific file, using the nearest config.
+    pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
+        self.get_nearest_resolver(strategy.path()).resolve(strategy)
+    }
+
+    /// Walk up from file's parent directory to find the nearest nested config.
+    /// Falls back to the base resolver.
+    fn get_nearest_resolver(&self, path: &Path) -> &ConfigResolver {
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if let Some(resolver) = self.nested.get(dir) {
+                return resolver;
+            }
+            current = dir.parent();
+        }
+        &self.base
+    }
+}
+
+// ---
+
+/// Discover nested config files by walking UP from each target path's ancestors.
+///
+/// For each target path, walks up through parent directories looking for
+/// `.oxfmtrc.json` / `.oxfmtrc.jsonc` files (preferring `.json`).
+/// Skips the `root_config_dir` (already loaded as the base config).
+pub fn discover_nested_configs(
+    target_paths: &[PathBuf],
+    root_config_dir: Option<&Path>,
+) -> Vec<PathBuf> {
+    let mut config_paths = Vec::new();
+    let mut visited_dirs = FxHashSet::default();
+
+    for path in target_paths {
+        let start = if path.is_dir() { path.as_path() } else { path.parent().unwrap_or(path) };
+        let mut current = Some(start);
+        while let Some(dir) = current {
+            if !visited_dirs.insert(dir.to_path_buf()) {
+                break;
+            }
+            // Stop at root config directory — already loaded as base, don't look above it
+            if root_config_dir.is_some_and(|root| root == dir) {
+                break;
+            }
+            if let Some(config_path) = find_oxfmtrc_in_dir(dir) {
+                config_paths.push(config_path);
+            }
+            current = dir.parent();
+        }
+    }
+
+    config_paths
+}
+
+/// Discover config files by walking DOWN from a root directory.
+///
+/// Used by LSP where we have a workspace root and need to discover all configs upfront.
+#[cfg(feature = "napi")]
+pub fn discover_configs_in_tree(root: &Path) -> Vec<PathBuf> {
+    use std::sync::mpsc;
+
+    struct ConfigWalkBuilder {
+        sender: mpsc::Sender<PathBuf>,
+    }
+    impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigWalkBuilder {
+        fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
+            Box::new(ConfigWalkVisitor { sender: self.sender.clone() })
+        }
+    }
+    struct ConfigWalkVisitor {
+        sender: mpsc::Sender<PathBuf>,
+    }
+    impl ignore::ParallelVisitor for ConfigWalkVisitor {
+        fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
+            if let Ok(entry) = entry {
+                let name = entry.file_name();
+                if name == ".oxfmtrc.json" || name == ".oxfmtrc.jsonc" {
+                    let _ = self.sender.send(entry.into_path());
+                }
+            }
+            ignore::WalkState::Continue
+        }
+    }
+
+    let walker = ignore::WalkBuilder::new(root)
+        .hidden(false)
+        .parents(false)
+        .ignore(false)
+        .git_global(false)
+        .follow_links(true)
+        .build_parallel();
+
+    let (sender, receiver) = mpsc::channel::<PathBuf>();
+
+    let mut builder = ConfigWalkBuilder { sender };
+    walker.visit(&mut builder);
+    drop(builder);
+
+    // Deduplicate: if both .json and .jsonc exist in same dir, prefer .json
+    let mut dir_map: FxHashMap<PathBuf, PathBuf> = FxHashMap::default();
+    for path in receiver {
+        let dir = path.parent().unwrap().to_path_buf();
+        let existing = dir_map.get(&dir);
+        // Prefer .json over .jsonc
+        if existing.is_none() || path.extension().and_then(|e| e.to_str()) == Some("json") {
+            dir_map.insert(dir, path);
+        }
+    }
+
+    dir_map.into_values().collect()
+}
+
+/// Find `.oxfmtrc.json` or `.oxfmtrc.jsonc` in a directory, preferring `.json`.
+fn find_oxfmtrc_in_dir(dir: &Path) -> Option<PathBuf> {
+    for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
+        let config_path = dir.join(filename);
+        if config_path.exists() {
+            return Some(config_path);
+        }
+    }
+    None
+}
+
+/// Build a nested `ConfigResolver` from a config file path.
+///
+/// Returns `(config_dir, resolver, ignore_patterns)`.
+pub fn build_nested_resolver(
+    config_path: &Path,
+) -> Result<(PathBuf, ConfigResolver, Vec<String>), String> {
+    let config_dir = config_path
+        .parent()
+        .ok_or_else(|| format!("Config path has no parent: {}", config_path.display()))?;
+    let editorconfig_path = resolve_editorconfig_path(config_dir);
+    let mut resolver = ConfigResolver::from_config_paths(
+        config_dir,
+        Some(config_path),
+        editorconfig_path.as_deref(),
+    )?;
+    let ignore_patterns = resolver.build_and_validate()?;
+    Ok((config_dir.to_path_buf(), resolver, ignore_patterns))
+}
+
+// ---
 
 /// Apply `.editorconfig` properties to `FormatConfig`.
 ///

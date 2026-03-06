@@ -23,6 +23,7 @@ impl Walk {
         with_node_modules: bool,
         oxfmtrc_path: Option<&Path>,
         ignore_patterns: &[String],
+        nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
@@ -138,6 +139,11 @@ impl Walk {
         }
 
         //
+        // Build nested ignore matcher for oxlint-style precedence
+        //
+        let nested_matcher = NestedIgnoreMatcher::new(matchers, nested_ignore_patterns);
+
+        //
         // Filter positional paths by formatter ignores
         //
         // Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
@@ -147,7 +153,7 @@ impl Walk {
         // But it's OK because in cases like `husky`, they are never staged.
         let target_paths: Vec<_> = target_paths
             .into_iter()
-            .filter(|path| !is_ignored(&matchers, path, path.is_dir(), true))
+            .filter(|path| !nested_matcher.is_ignored(path, path.is_dir(), true))
             .collect();
 
         // If no target paths remain after filtering, return `None`.
@@ -188,8 +194,8 @@ impl Walk {
                 }
             }
 
-            // Check ignore files, patterns
-            if is_ignored(&matchers, entry.path(), is_dir, false) {
+            // Check ignore files, patterns (with nested config precedence)
+            if nested_matcher.is_ignored(entry.path(), is_dir, false) {
                 return false;
             }
 
@@ -221,29 +227,80 @@ impl Walk {
 
 // ---
 
-/// Check if a path should be ignored by any of the matchers.
-/// A path is ignored if any matcher says it's ignored (and not whitelisted in that same matcher).
+/// Handles ignore matching with nested config precedence.
 ///
-/// When `check_ancestors: true`, also checks if any parent directory is ignored.
-/// This is more expensive, but necessary when paths (to be ignored) are passed directly via CLI arguments.
-/// For normal walking, walk is done in a top-down manner, so only the current path needs to be checked.
-fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors: bool) -> bool {
-    for matcher in matchers {
-        let matched = if check_ancestors {
-            // `matched_path_or_any_parents()` panics if path is not under matcher's root.
-            // Skip this matcher if the path is outside its scope.
-            if !path.starts_with(matcher.path()) {
-                continue;
-            }
-            matcher.matched_path_or_any_parents(path, is_dir)
-        } else {
-            matcher.matched(path, is_dir)
-        };
-        if matched.is_ignore() && !matched.is_whitelist() {
-            return true;
-        }
+/// When a file is under a nested config's directory, only that config's ignore patterns apply
+/// (deepest match wins, no fallback to base). Files outside any nested scope use base matchers.
+struct NestedIgnoreMatcher {
+    /// Base matchers (ignore files, root ignorePatterns, exclude patterns).
+    base: Vec<Gitignore>,
+    /// Nested ignore matchers sorted deepest-to-shallowest.
+    nested: Vec<(Option<Gitignore>, PathBuf)>,
+}
+
+impl NestedIgnoreMatcher {
+    fn new(
+        base_matchers: Vec<Gitignore>,
+        mut nested_patterns: Vec<(Vec<String>, PathBuf)>,
+    ) -> Self {
+        // Sort deepest-to-shallowest for correct precedence
+        nested_patterns
+            .sort_unstable_by(|a, b| b.1.components().count().cmp(&a.1.components().count()));
+
+        let nested = nested_patterns
+            .into_iter()
+            .map(|(patterns, root)| {
+                if patterns.is_empty() {
+                    (None, root)
+                } else {
+                    let mut builder = GitignoreBuilder::new(&root);
+                    for pat in &patterns {
+                        let _ = builder.add_line(None, pat);
+                    }
+                    (builder.build().ok(), root)
+                }
+            })
+            .collect();
+
+        Self { base: base_matchers, nested }
     }
-    false
+
+    /// Check if a path should be ignored.
+    ///
+    /// When `check_ancestors: true`, also checks if any parent directory is ignored.
+    /// This is more expensive, but necessary when paths are passed directly via CLI arguments.
+    fn is_ignored(&self, path: &Path, is_dir: bool, check_ancestors: bool) -> bool {
+        // Check nested configs first (deepest wins)
+        for (ignore, root) in &self.nested {
+            if path.starts_with(root) {
+                // File is under a nested config — only that config's patterns apply
+                return ignore.as_ref().is_some_and(|gi| {
+                    if check_ancestors {
+                        gi.matched_path_or_any_parents(path, is_dir).is_ignore()
+                    } else {
+                        let m = gi.matched(path, is_dir);
+                        m.is_ignore() && !m.is_whitelist()
+                    }
+                });
+            }
+        }
+
+        // Fall back to base matchers
+        for matcher in &self.base {
+            let matched = if check_ancestors {
+                if !path.starts_with(matcher.path()) {
+                    continue;
+                }
+                matcher.matched_path_or_any_parents(path, is_dir)
+            } else {
+                matcher.matched(path, is_dir)
+            };
+            if matched.is_ignore() && !matched.is_whitelist() {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 /// Check if a path string looks like a glob pattern.
