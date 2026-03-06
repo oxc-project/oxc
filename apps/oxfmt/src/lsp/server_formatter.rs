@@ -257,13 +257,8 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                let mut p: Vec<String> =
-                    FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect();
-                // Watch for nested config files
-                for file in FORMAT_CONFIG_FILES {
-                    p.push(format!("**/{file}"));
-                }
-                p
+                // Watch for config files in root and nested directories
+                FORMAT_CONFIG_FILES.iter().map(|file| format!("**/{file}")).collect()
             };
 
         patterns.push(".editorconfig".to_string());

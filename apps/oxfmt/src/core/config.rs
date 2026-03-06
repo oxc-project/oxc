@@ -520,62 +520,33 @@ impl ConfigStore {
 
 // ---
 
-/// Discover nested config files by walking UP from each target path's ancestors.
+/// Discover nested config files from raw CLI target paths.
 ///
-/// Resolves raw CLI target paths to absolute directories, then walks up through
-/// parent directories looking for `.oxfmtrc.json` / `.oxfmtrc.jsonc` files.
-/// Stops at `root_config_dir` (already loaded as the base config) or `cwd` if no root config.
+/// - For **file targets**: walks UP through ancestors to find configs between the file and the boundary.
+/// - For **directory targets** (including globs, which expand under cwd): walks DOWN into
+///   subdirectories to find nested configs. This handles the common `oxfmt .` monorepo case.
+///
+/// The boundary is `root_config_dir` if a root config exists, otherwise `cwd`.
+/// Configs at the boundary itself are skipped (already loaded as the base config).
 pub fn discover_nested_configs(
     cwd: &Path,
     target_paths: &[PathBuf],
     root_config_dir: Option<&Path>,
 ) -> Vec<PathBuf> {
-    // Resolve raw CLI paths to absolute directories for ancestor walking.
-    // Glob patterns and `!` excludes are skipped; for globs, cwd is used instead
-    // since matched files could be anywhere under it.
     let boundary = root_config_dir.unwrap_or(cwd);
-    let start_dirs = resolve_target_dirs(cwd, target_paths);
 
-    let mut config_paths = Vec::new();
-    let mut visited_dirs = FxHashSet::default();
-
-    for start in &start_dirs {
-        let mut current = Some(start.as_path());
-        while let Some(dir) = current {
-            if !visited_dirs.insert(dir.to_path_buf()) {
-                break;
-            }
-            // Stop at boundary (root config dir, or cwd if no root config)
-            if dir == boundary {
-                break;
-            }
-            if let Some(config_path) = find_oxfmtrc_in_dir(dir) {
-                config_paths.push(config_path);
-            }
-            current = dir.parent();
-        }
-    }
-
-    config_paths
-}
-
-/// Resolve raw CLI target paths to absolute directories for config discovery.
-///
-/// Skips `!` exclude patterns and glob patterns (for which `cwd` is used instead,
-/// since glob-matched files could be anywhere under it).
-fn resolve_target_dirs(cwd: &Path, paths: &[PathBuf]) -> Vec<PathBuf> {
-    let mut dirs = FxHashSet::default();
+    // Resolve raw CLI paths, separating files (walk up) from directories (walk down)
+    let mut file_start_dirs = FxHashSet::default();
+    let mut walk_down_dirs = Vec::new();
     let mut has_glob = false;
 
-    for path in paths {
+    for path in target_paths {
         let path_str = path.to_string_lossy();
-        // Skip exclude patterns
         if path_str.starts_with('!') {
             continue;
         }
         let normalized =
             if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
-        // Glob patterns: files could be anywhere under cwd
         if normalized.contains('*')
             || normalized.contains('?')
             || normalized.contains('[')
@@ -584,7 +555,6 @@ fn resolve_target_dirs(cwd: &Path, paths: &[PathBuf]) -> Vec<PathBuf> {
             has_glob = true;
             continue;
         }
-        // Resolve to absolute
         let abs = if path.is_absolute() {
             path.clone()
         } else if normalized == "." {
@@ -592,21 +562,82 @@ fn resolve_target_dirs(cwd: &Path, paths: &[PathBuf]) -> Vec<PathBuf> {
         } else {
             cwd.join(normalized)
         };
-        let dir = if abs.is_dir() { abs } else { abs.parent().unwrap_or(&abs).to_path_buf() };
-        dirs.insert(dir);
+        if abs.is_dir() {
+            walk_down_dirs.push(abs);
+        } else {
+            file_start_dirs.insert(abs.parent().unwrap_or(&abs).to_path_buf());
+        }
     }
 
-    // For globs or empty paths, include cwd
-    if has_glob || dirs.is_empty() {
-        dirs.insert(cwd.to_path_buf());
+    // Globs expand under cwd, so walk down from cwd
+    if has_glob {
+        walk_down_dirs.push(cwd.to_path_buf());
+    }
+    // Default to walking down from cwd if no targets resolved
+    if file_start_dirs.is_empty() && walk_down_dirs.is_empty() {
+        walk_down_dirs.push(cwd.to_path_buf());
     }
 
-    dirs.into_iter().collect()
+    // Dedup by config directory, preferring .json over .jsonc
+    let mut found: FxHashMap<PathBuf, PathBuf> = FxHashMap::default();
+
+    // Walk UP from file parents to find configs between file and boundary
+    let mut visited_dirs = FxHashSet::default();
+    for start in &file_start_dirs {
+        let mut current = Some(start.as_path());
+        while let Some(dir) = current {
+            if !visited_dirs.insert(dir.to_path_buf()) {
+                break;
+            }
+            if dir == boundary {
+                break;
+            }
+            if let Some(config_path) = find_oxfmtrc_in_dir(dir) {
+                found.entry(dir.to_path_buf()).or_insert(config_path);
+            }
+            current = dir.parent();
+        }
+    }
+
+    // Walk DOWN from directory targets to find nested configs in subdirectories
+    walk_down_dirs.dedup();
+    for dir in &walk_down_dirs {
+        for entry in ignore::WalkBuilder::new(dir)
+            .hidden(false)
+            .parents(false)
+            .ignore(false)
+            .git_global(false)
+            .follow_links(false)
+            .build()
+        {
+            let Ok(entry) = entry else { continue };
+            let name = entry.file_name();
+            if name != ".oxfmtrc.json" && name != ".oxfmtrc.jsonc" {
+                continue;
+            }
+            let path = entry.into_path();
+            let Some(parent) = path.parent() else { continue };
+            // Skip root config directory
+            if parent == boundary {
+                continue;
+            }
+            let dir_key = parent.to_path_buf();
+            // Prefer .json over .jsonc
+            if !found.contains_key(&dir_key)
+                || path.extension().and_then(|e| e.to_str()) == Some("json")
+            {
+                found.insert(dir_key, path);
+            }
+        }
+    }
+
+    found.into_values().collect()
 }
 
 /// Discover config files by walking DOWN from a root directory.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs upfront.
+/// Uses parallel walk for performance in large workspaces.
 #[cfg(feature = "napi")]
 pub fn discover_configs_in_tree(root: &Path) -> Vec<PathBuf> {
     use std::sync::mpsc;
@@ -736,5 +767,61 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    fn default_resolver() -> ConfigResolver {
+        ConfigResolver::from_config_paths(Path::new("."), None, None).unwrap()
+    }
+
+    #[test]
+    fn test_get_nearest_resolver_finds_deepest() {
+        let base = default_resolver();
+        let nested_a = default_resolver();
+
+        let mut nested = FxHashMap::default();
+        nested.insert(PathBuf::from("/repo/packages/a"), nested_a);
+
+        let store = ConfigStore::new(base, nested);
+
+        // File under nested → nested resolver (not base)
+        let resolver = store.get_nearest_resolver(Path::new("/repo/packages/a/src/file.js"));
+        assert!(std::ptr::eq(resolver, store.nested.get(Path::new("/repo/packages/a")).unwrap()));
+
+        // File outside nested → base resolver
+        let resolver = store.get_nearest_resolver(Path::new("/repo/src/file.js"));
+        assert!(std::ptr::eq(resolver, &store.base));
+    }
+
+    #[test]
+    fn test_get_nearest_resolver_empty_nested() {
+        let store = ConfigStore::new(default_resolver(), FxHashMap::default());
+
+        // Any path falls back to base
+        let resolver = store.get_nearest_resolver(Path::new("/repo/any/deep/path/file.js"));
+        assert!(std::ptr::eq(resolver, &store.base));
+    }
+
+    #[test]
+    fn test_get_nearest_resolver_multiple_nested() {
+        let base = default_resolver();
+        let mut nested = FxHashMap::default();
+        nested.insert(PathBuf::from("/repo/a"), default_resolver());
+        nested.insert(PathBuf::from("/repo/a/b"), default_resolver());
+
+        let store = ConfigStore::new(base, nested);
+
+        // File in /repo/a/b/src → deepest (/repo/a/b)
+        let resolver = store.get_nearest_resolver(Path::new("/repo/a/b/src/file.js"));
+        assert!(std::ptr::eq(resolver, store.nested.get(Path::new("/repo/a/b")).unwrap()));
+
+        // File in /repo/a/src → /repo/a
+        let resolver = store.get_nearest_resolver(Path::new("/repo/a/src/file.js"));
+        assert!(std::ptr::eq(resolver, store.nested.get(Path::new("/repo/a")).unwrap()));
     }
 }

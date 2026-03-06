@@ -488,3 +488,79 @@ impl ignore::ParallelVisitor for WalkVisitor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_nested_ignore_deepest_wins() {
+        // Base scoped ignores *.js
+        let base_scoped = {
+            let mut b = GitignoreBuilder::new("/repo");
+            b.add_line(None, "*.js").unwrap();
+            Some(b.build().unwrap())
+        };
+
+        let nested = vec![
+            // Nested at /repo/pkg — empty patterns (overrides base with nothing)
+            (vec![], PathBuf::from("/repo/pkg")),
+            // Nested at /repo/pkg/sub — ignores *.ts
+            (vec!["*.ts".to_string()], PathBuf::from("/repo/pkg/sub")),
+        ];
+
+        let matcher = NestedIgnoreMatcher::new(vec![], base_scoped, nested);
+
+        // /repo/file.js → base scoped applies → ignored
+        assert!(matcher.is_ignored(Path::new("/repo/file.js"), false, false));
+        // /repo/file.ts → base scoped doesn't match → not ignored
+        assert!(!matcher.is_ignored(Path::new("/repo/file.ts"), false, false));
+
+        // /repo/pkg/file.js → under /repo/pkg (empty patterns) → not ignored
+        assert!(!matcher.is_ignored(Path::new("/repo/pkg/file.js"), false, false));
+        // /repo/pkg/file.ts → under /repo/pkg (empty patterns) → not ignored
+        assert!(!matcher.is_ignored(Path::new("/repo/pkg/file.ts"), false, false));
+
+        // /repo/pkg/sub/file.ts → under /repo/pkg/sub (deepest) → ignored
+        assert!(matcher.is_ignored(Path::new("/repo/pkg/sub/file.ts"), false, false));
+        // /repo/pkg/sub/file.js → under /repo/pkg/sub (deepest, only *.ts) → not ignored
+        assert!(!matcher.is_ignored(Path::new("/repo/pkg/sub/file.js"), false, false));
+    }
+
+    #[test]
+    fn test_global_matchers_always_apply() {
+        // Global matcher ignores *.log files
+        let global = {
+            let mut b = GitignoreBuilder::new("/repo");
+            b.add_line(None, "*.log").unwrap();
+            vec![b.build().unwrap()]
+        };
+
+        // Nested at /repo/pkg — no scoped patterns
+        let nested = vec![(vec![], PathBuf::from("/repo/pkg"))];
+
+        let matcher = NestedIgnoreMatcher::new(global, None, nested);
+
+        // /repo/app.log → global ignores *.log → ignored
+        assert!(matcher.is_ignored(Path::new("/repo/app.log"), false, false));
+        // /repo/pkg/app.log → under nested scope, but global still applies → ignored
+        assert!(matcher.is_ignored(Path::new("/repo/pkg/app.log"), false, false));
+        // /repo/pkg/src/file.js → not ignored by anything
+        assert!(!matcher.is_ignored(Path::new("/repo/pkg/src/file.js"), false, false));
+    }
+
+    #[test]
+    fn test_no_nested_configs_uses_base() {
+        let base_scoped = {
+            let mut b = GitignoreBuilder::new("/repo");
+            b.add_line(None, "*.log").unwrap();
+            Some(b.build().unwrap())
+        };
+
+        let matcher = NestedIgnoreMatcher::new(vec![], base_scoped, vec![]);
+
+        assert!(matcher.is_ignored(Path::new("/repo/app.log"), false, false));
+        assert!(!matcher.is_ignored(Path::new("/repo/app.js"), false, false));
+    }
+}
