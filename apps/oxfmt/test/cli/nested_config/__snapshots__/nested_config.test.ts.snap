@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`nested_config > write mode applies correct config per file 1`] = `
+"--- FILE -----------
+src/root.js
+--- BEFORE ---------
+const a = 1
+
+--- AFTER ----------
+const a = 1;
+
+--------------------
+
+--- FILE -----------
+pkg-a/src/file.js
+--- BEFORE ---------
+const a = 1;
+
+--- AFTER ----------
+const a = 1
+
+--------------------
+
+--- FILE -----------
+pkg-b/src/file.js
+--- BEFORE ---------
+const a = 1;
+
+--- AFTER ----------
+const a = 1
+
+--------------------"
+`;
