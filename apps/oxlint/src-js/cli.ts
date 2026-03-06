@@ -25,19 +25,19 @@ let loadJsConfigs: typeof import("./js_config.ts").loadJsConfigs | null = null;
  */
 function loadPluginWrapper(
   path: string,
-  pluginName: string | null,
+  pluginName: string | null | undefined,
   pluginNameIsAlias: boolean,
-  workspaceUri: string | null,
+  workspaceUri: string | null | undefined,
 ): Promise<string> {
   if (loadPlugin === null) {
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
       ({ loadPlugin, lintFile, setupRuleConfigs } = mod);
-      return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
+      return loadPlugin(path, pluginName ?? null, pluginNameIsAlias, workspaceUri ?? null);
     });
   }
-  return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
+  return loadPlugin(path, pluginName ?? null, pluginNameIsAlias, workspaceUri ?? null);
 }
 
 /**
@@ -71,12 +71,12 @@ function setupRuleConfigsWrapper(optionsJSON: string): string | null {
 function lintFileWrapper(
   filePath: string,
   bufferId: number,
-  buffer: Uint8Array | null,
+  buffer: Uint8Array | null | undefined,
   ruleIds: number[],
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
-  workspaceUri: string | null,
+  workspaceUri: string | null | undefined,
 ): string | null {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
@@ -84,12 +84,12 @@ function lintFileWrapper(
   return lintFile(
     filePath,
     bufferId,
-    buffer,
+    buffer ?? null,
     ruleIds,
     optionsIds,
     settingsJSON,
     globalsJSON,
-    workspaceUri,
+    workspaceUri ?? null,
   );
 }
 

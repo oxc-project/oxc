@@ -125,7 +125,7 @@ declare const node: Node;
 
 // Options with `filter` only -> `Token[]`
 {
-  const opts = { filter: (token: Token) => token.type === "Keyword" };
+  const opts = { filter: (token: TokenOrComment) => token.type === "Keyword" };
   const result = getTokens(node, opts);
   true satisfies IsExact<typeof result, Token[]>;
 }
@@ -277,7 +277,7 @@ declare const node: Node;
 
 // Options with `filter` only -> `Token | null`
 {
-  const opts = { filter: (token: Token) => token.type === "Keyword" };
+  const opts = { filter: (token: TokenOrComment) => token.type === "Keyword" };
   const result = getFirstToken(node, opts);
   true satisfies IsExact<typeof result, Token | null>;
 }

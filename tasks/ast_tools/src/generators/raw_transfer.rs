@@ -208,10 +208,11 @@ fn generate_deserializers(
     #[rustfmt::skip]
     let code_type_definition_linter = "
         import type { Program } from './types.d.ts';
+        import type { Node, Comment } from '../plugins/types.ts';
         import type { Location as SourceLocation } from '../plugins/location.ts';
 
         type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
-        type GetLoc = (node: { range: [number, number] }) => SourceLocation;
+        type GetLoc = (node: Node | Comment) => SourceLocation;
 
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
