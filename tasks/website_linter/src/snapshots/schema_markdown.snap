@@ -10,13 +10,7 @@ search: false
 
 This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 
-Usage: `oxlint -c oxlintrc.json --import-plugin`
-
-::: danger NOTE
-
-Only the `.json` format is supported. You can use comments in configuration files.
-
-:::
+Usage: `oxlint -c oxlintrc.json`
 
 Example
 
@@ -66,6 +60,42 @@ Example
     }
   ]
 }
+```
+
+`oxlint.config.ts`
+
+```ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+plugins: ["import", "typescript", "unicorn"],
+env: {
+"browser": true
+},
+globals: {
+"foo": "readonly"
+},
+settings: {
+react: {
+version: "18.2.0"
+},
+custom: { option: true }
+},
+rules: {
+"eqeqeq": "warn",
+"import/no-cycle": "error",
+"react/self-closing-comp": ["error", { "html": false }]
+},
+overrides: [
+{
+files: ["*.test.ts", "*.spec.ts"],
+rules: {
+"@typescript-eslint/no-explicit-any": "off"
+}
+}
+]
+}
+});
 ```
 
 
@@ -324,6 +354,17 @@ Specify a warning threshold. Exits with an error status if warnings exceed this 
 Equivalent to passing `--max-warnings` on the CLI.
 
 
+### options.reportUnusedDisableDirectives
+
+
+
+Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+
+Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+CLI flags take precedence over this value when both are set.
+Only supported in the root configuration file.
+
+
 ### options.typeAware
 
 type: `boolean`
@@ -332,6 +373,8 @@ type: `boolean`
 Enable rules that require type information.
 
 Equivalent to passing `--type-aware` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
 
 
 ### options.typeCheck
@@ -342,6 +385,8 @@ type: `boolean`
 Enable experimental type checking (includes TypeScript compiler diagnostics).
 
 Equivalent to passing `--type-check` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
 
 
 ## overrides

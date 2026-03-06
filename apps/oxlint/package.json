@@ -53,7 +53,7 @@
     "eslint-vitest-rule-tester": "^3.0.1",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
-    "json-schema-to-typescript": "^15.0.4",
+    "json-schema-to-typescript": "catalog:",
     "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.116.0",
     "rolldown": "catalog:",

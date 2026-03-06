@@ -225,21 +225,29 @@ impl FormatRunner {
 
         // Count the processed files
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
-        let print_stats = |stdout| {
-            let elapsed_ms = start_time.elapsed().as_millis();
+        let print_stats = |stdout, stderr| {
             utils::print_and_flush(
                 stdout,
                 &format!(
-                    "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                    "Finished in {}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                    start_time.elapsed().as_millis()
                 ),
             );
+            // Config stats: only show when no config is found
+            if oxfmtrc_path.is_none() && editorconfig_path.is_none() {
+                let hint = "No config found, using defaults. Please add `.oxfmtrc.json` or try `oxfmt --init` if needed.\n";
+                #[cfg(not(feature = "napi"))]
+                let hint =
+                    "No config found, using defaults. Please add `.oxfmtrc.json` if needed.\n";
+                utils::print_and_flush(stderr, hint);
+            }
         };
 
         // Check if no files were found
         if total_target_files_count == 0 {
             if runtime_options.no_error_on_unmatched_pattern {
                 utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 return CliRunResult::None;
             }
 
@@ -266,7 +274,7 @@ impl FormatRunner {
             // `--check` outputs friendly summary
             (OutputMode::Check, 0) => {
                 utils::print_and_flush(stdout, "All matched files use the correct format.\n");
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 CliRunResult::FormatSucceeded
             }
             (OutputMode::Check, changed_count) => {
@@ -277,16 +285,17 @@ impl FormatRunner {
                         "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
                     ),
                 );
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 CliRunResult::FormatMismatch
             }
-            // Default (write) does not output anything
+            // Default (write) outputs only stats
             (OutputMode::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,
                     "In write mode, changed_count should not be counted"
                 );
+                print_stats(stdout, stderr);
                 CliRunResult::FormatSucceeded
             }
         }

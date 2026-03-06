@@ -18,7 +18,7 @@ import {
   getTokensBetween,
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
-} from "../src-js/plugins/tokens.ts";
+} from "../src-js/plugins/tokens_methods.ts";
 import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
 import { buffers } from "../src-js/plugins/lint.ts";
 import {
@@ -26,10 +26,12 @@ import {
   resetSourceAndAst,
   setupSourceForFile,
 } from "../src-js/plugins/source_code.ts";
+import { getLoc } from "../src-js/plugins/location.ts";
 import { parse as parseRaw } from "../src-js/package/parse.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
 import type { Node } from "../src-js/plugins/types.ts";
+import type { TokenOrComment } from "../src-js/plugins/tokens.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
@@ -1299,7 +1301,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
     setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getFirstToken({ range: [0, 25] } as Node);
+    let token: TokenOrComment | null = getFirstToken({ range: [0, 25] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1327,7 +1329,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
     setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getFirstToken({ range: [0, 23] } as Node);
+    let token: TokenOrComment | null = getFirstToken({ range: [0, 23] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1358,7 +1360,7 @@ describe("when calling getLastToken & getTokenBefore", () => {
     setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getLastToken({ range: [0, 25] } as Node);
+    let token: TokenOrComment | null = getLastToken({ range: [0, 25] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1386,7 +1388,7 @@ describe("when calling getLastToken & getTokenBefore", () => {
     setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getLastToken({ range: [0, 23] } as Node);
+    let token: TokenOrComment | null = getLastToken({ range: [0, 23] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1408,5 +1410,305 @@ describe("when calling getLastToken & getTokenBefore", () => {
       "}",
       ")",
     ]);
+  });
+});
+
+// Regression tests for token `loc` correctness across pooled token reuse.
+// Token objects are cached and reused across files. These tests verify that `loc` values
+// are correct on the second file after token objects have been reused, and that stale
+// cached `loc` from the first file does not leak into the second.
+describe("token loc across sequential files", () => {
+  // Two source texts with different line structures.
+  // File 1 has everything on one line, file 2 spreads tokens across multiple lines.
+  // If stale `loc` leaks from file 1, the line/column values for file 2 would be wrong.
+  const FILE_1 = "var x = 1;";
+  const FILE_2 = "var\n  y\n  =\n  2;";
+
+  it("should compute correct `token.loc` on second file after accessing `loc` on first file", () => {
+    // File 1: access `loc` on all tokens to cache it
+    setup(FILE_1);
+    const tokens1 = getTokens({ range: [0, FILE_1.length] } as Node);
+    expect(tokens1.map((t) => t.value)).toEqual(["var", "x", "=", "1", ";"]);
+    for (const token of tokens1) {
+      // Access `loc` to trigger caching
+      expect(token.loc.start.line).toBeGreaterThan(0);
+    }
+
+    // File 2: verify `loc` is correct, not stale from file 1
+    setup(FILE_2);
+    const tokens2 = getTokens({ range: [0, FILE_2.length] } as Node);
+    expect(tokens2.map((t) => t.value)).toEqual(["var", "y", "=", "2", ";"]);
+
+    // `var` is at start of line 1
+    expect(tokens2[0].loc).toEqual({ start: { line: 1, column: 0 }, end: { line: 1, column: 3 } });
+    // `y` is at line 2, column 2
+    expect(tokens2[1].loc).toEqual({ start: { line: 2, column: 2 }, end: { line: 2, column: 3 } });
+    // `=` is at line 3, column 2
+    expect(tokens2[2].loc).toEqual({ start: { line: 3, column: 2 }, end: { line: 3, column: 3 } });
+    // `2` is at line 4, column 2
+    expect(tokens2[3].loc).toEqual({ start: { line: 4, column: 2 }, end: { line: 4, column: 3 } });
+    // `;` is at line 4, column 3
+    expect(tokens2[4].loc).toEqual({ start: { line: 4, column: 3 }, end: { line: 4, column: 4 } });
+  });
+
+  it("should compute correct `getLoc(token)` on second file after accessing `getLoc` on first file", () => {
+    // File 1: access `getLoc` on all tokens
+    setup(FILE_1);
+    const tokens1 = getTokens({ range: [0, FILE_1.length] } as Node);
+    for (const token of tokens1) {
+      expect(getLoc(token).start.line).toBeGreaterThan(0);
+    }
+
+    // File 2: verify `getLoc` returns correct values
+    setup(FILE_2);
+    const tokens2 = getTokens({ range: [0, FILE_2.length] } as Node);
+
+    expect(getLoc(tokens2[0])).toEqual({
+      start: { line: 1, column: 0 },
+      end: { line: 1, column: 3 },
+    });
+    expect(getLoc(tokens2[1])).toEqual({
+      start: { line: 2, column: 2 },
+      end: { line: 2, column: 3 },
+    });
+    expect(getLoc(tokens2[2])).toEqual({
+      start: { line: 3, column: 2 },
+      end: { line: 3, column: 3 },
+    });
+  });
+
+  it("should return same `loc` object from `token.loc` and `getLoc(token)`", () => {
+    setup(FILE_2);
+    const tokens2 = getTokens({ range: [0, FILE_2.length] } as Node);
+
+    for (const token of tokens2) {
+      // Both access paths should return the same cached object
+      expect(getLoc(token)).toBe(token.loc);
+    }
+  });
+
+  it("should compute correct `loc` when second file has fewer tokens than first", () => {
+    // File with many tokens, then file with few tokens.
+    // Tests the `previousTokens.length >= tokensLen` reuse path in `initTokens`.
+    const manyTokens = "a + b + c + d + e + f;";
+    const fewTokens = "x\n+\ny;";
+
+    setup(manyTokens);
+    const tokens1 = getTokens({ range: [0, manyTokens.length] } as Node);
+    for (const token of tokens1) {
+      expect(token.loc.start.line).toBe(1);
+    }
+
+    setup(fewTokens);
+    const tokens2 = getTokens({ range: [0, fewTokens.length] } as Node);
+    expect(tokens2.map((t) => t.value)).toEqual(["x", "+", "y", ";"]);
+
+    expect(tokens2[0].loc).toEqual({ start: { line: 1, column: 0 }, end: { line: 1, column: 1 } });
+    expect(tokens2[1].loc).toEqual({ start: { line: 2, column: 0 }, end: { line: 2, column: 1 } });
+    expect(tokens2[2].loc).toEqual({ start: { line: 3, column: 0 }, end: { line: 3, column: 1 } });
+    expect(tokens2[3].loc).toEqual({ start: { line: 3, column: 1 }, end: { line: 3, column: 2 } });
+  });
+
+  it("should compute correct `loc` across three sequential files", () => {
+    const file1 = "let a = 1;";
+    const file2 = "let\n  b\n  =\n  2;";
+    const file3 = "let c\n= 3;";
+
+    // File 1
+    setup(file1);
+    for (const token of getTokens({ range: [0, file1.length] } as Node)) {
+      expect(token.loc.start.line).toBe(1);
+    }
+
+    // File 2
+    setup(file2);
+    for (const token of getTokens({ range: [0, file2.length] } as Node)) {
+      expect(token.loc.start.line).toBeGreaterThan(0);
+    }
+
+    // File 3: verify locations are from file 3, not file 1 or 2
+    setup(file3);
+    const tokens3 = getTokens({ range: [0, file3.length] } as Node);
+    expect(tokens3.map((t) => t.value)).toEqual(["let", "c", "=", "3", ";"]);
+
+    // `let` on line 1
+    expect(tokens3[0].loc).toEqual({ start: { line: 1, column: 0 }, end: { line: 1, column: 3 } });
+    // `c` on line 1
+    expect(tokens3[1].loc).toEqual({ start: { line: 1, column: 4 }, end: { line: 1, column: 5 } });
+    // `=` on line 2
+    expect(tokens3[2].loc).toEqual({ start: { line: 2, column: 0 }, end: { line: 2, column: 1 } });
+    // `3` on line 2
+    expect(tokens3[3].loc).toEqual({ start: { line: 2, column: 2 }, end: { line: 2, column: 3 } });
+    // `;` on line 2
+    expect(tokens3[4].loc).toEqual({ start: { line: 2, column: 3 }, end: { line: 2, column: 4 } });
+  });
+});
+
+// Regression tests for token `regex` property correctness across pooled token reuse.
+// Token objects are cached and reused across files. These tests verify that `regex` is correctly
+// set for RegularExpression tokens and reset to `undefined` when the token object is reused
+// for a non-regex token in a subsequent file.
+describe("token regex across sequential files", () => {
+  it("should have `regex` undefined on second file when first file had regex tokens", () => {
+    // File 1: has a regex token
+    const withRegex = "var x = /abc/gi;";
+    setup(withRegex);
+    const tokens1 = getTokens({ range: [0, withRegex.length] } as Node);
+    const regexToken1 = tokens1.find((t) => t.type === "RegularExpression");
+    expect(regexToken1).toBeDefined();
+    expect(regexToken1!.regex).toEqual({ pattern: "abc", flags: "gi" });
+
+    // File 2: no regex tokens - reused token objects should have `regex: undefined`
+    const withoutRegex = "var y = 1;";
+    setup(withoutRegex);
+    const tokens2 = getTokens({ range: [0, withoutRegex.length] } as Node);
+    for (const token of tokens2) {
+      expect(token.regex).toBeUndefined();
+    }
+  });
+
+  it("should set `regex` correctly on second file when first file had no regex", () => {
+    // File 1: no regex
+    const withoutRegex = "var x = 1;";
+    setup(withoutRegex);
+    const tokens1 = getTokens({ range: [0, withoutRegex.length] } as Node);
+    for (const token of tokens1) {
+      expect(token.regex).toBeUndefined();
+    }
+
+    // File 2: has a regex token
+    const withRegex = "var y = /foo/m;";
+    setup(withRegex);
+    const tokens2 = getTokens({ range: [0, withRegex.length] } as Node);
+    const regexToken2 = tokens2.find((t) => t.type === "RegularExpression");
+    expect(regexToken2).toBeDefined();
+    expect(regexToken2!.regex).toEqual({ pattern: "foo", flags: "m" });
+
+    // Non-regex tokens should still have `regex: undefined`
+    for (const token of tokens2) {
+      if (token.type !== "RegularExpression") {
+        // oxlint-disable-next-line vitest/no-conditional-expect
+        expect(token.regex).toBeUndefined();
+      }
+    }
+  });
+
+  it("should update `regex` correctly across files that both have regex tokens", () => {
+    // File 1: regex with one pattern
+    const regex1 = "var x = /abc/g;";
+    setup(regex1);
+    const tokens1 = getTokens({ range: [0, regex1.length] } as Node);
+    const regexToken1 = tokens1.find((t) => t.type === "RegularExpression");
+    expect(regexToken1!.regex).toEqual({ pattern: "abc", flags: "g" });
+
+    // File 2: regex with a different pattern - should not carry over from file 1
+    const regex2 = "var y = /xyz/i;";
+    setup(regex2);
+    const tokens2 = getTokens({ range: [0, regex2.length] } as Node);
+    const regexToken2 = tokens2.find((t) => t.type === "RegularExpression");
+    expect(regexToken2!.regex).toEqual({ pattern: "xyz", flags: "i" });
+  });
+
+  it("should handle multiple regex tokens followed by a file with no regex", () => {
+    // File 1: multiple regex tokens
+    const multiRegex = "/a/g; /b/i; /c/m;";
+    setup(multiRegex);
+    const tokens1 = getTokens({ range: [0, multiRegex.length] } as Node);
+    const regexTokens1 = tokens1.filter((t) => t.type === "RegularExpression");
+    expect(regexTokens1).toHaveLength(3);
+    expect(regexTokens1[0].regex).toEqual({ pattern: "a", flags: "g" });
+    expect(regexTokens1[1].regex).toEqual({ pattern: "b", flags: "i" });
+    expect(regexTokens1[2].regex).toEqual({ pattern: "c", flags: "m" });
+
+    // File 2: no regex - all tokens should have `regex: undefined`
+    const noRegex = "x + y + z;";
+    setup(noRegex);
+    const tokens2 = getTokens({ range: [0, noRegex.length] } as Node);
+    for (const token of tokens2) {
+      expect(token.regex).toBeUndefined();
+    }
+  });
+});
+
+// Tests for `for (const key in token)` enumeration.
+// All token properties (including the `loc` getter and `regex`) should be enumerable.
+describe("token property enumeration", () => {
+  it("should enumerate all properties including `loc` for a non-regex token", () => {
+    const tokens = getTokens({ range: [0, SOURCE_TEXT.length] } as Node);
+    const token = tokens[0]; // `var` keyword
+
+    const keys: string[] = [];
+    for (const key in token) {
+      keys.push(key);
+    }
+
+    expect(keys).toContain("type");
+    expect(keys).toContain("value");
+    expect(keys).toContain("regex");
+    expect(keys).toContain("start");
+    expect(keys).toContain("end");
+    expect(keys).toContain("range");
+    expect(keys).toContain("loc");
+  });
+
+  it("should enumerate all properties after `token.loc` has been accessed", () => {
+    const tokens = getTokens({ range: [0, SOURCE_TEXT.length] } as Node);
+    const token = tokens[0]; // `var` keyword
+
+    // Access `loc` to trigger caching
+    expect(token.loc.start.line).toBe(1);
+
+    const keys: string[] = [];
+    for (const key in token) {
+      keys.push(key);
+    }
+
+    expect(keys).toContain("type");
+    expect(keys).toContain("value");
+    expect(keys).toContain("regex");
+    expect(keys).toContain("start");
+    expect(keys).toContain("end");
+    expect(keys).toContain("range");
+    expect(keys).toContain("loc");
+  });
+
+  it("should enumerate all properties after `getLoc(token)` has been called", () => {
+    const tokens = getTokens({ range: [0, SOURCE_TEXT.length] } as Node);
+    const token = tokens[0]; // `var` keyword
+
+    // Access `loc` via `getLoc` to trigger caching
+    expect(getLoc(token).start.line).toBe(1);
+
+    const keys: string[] = [];
+    for (const key in token) {
+      keys.push(key);
+    }
+
+    expect(keys).toContain("type");
+    expect(keys).toContain("value");
+    expect(keys).toContain("regex");
+    expect(keys).toContain("start");
+    expect(keys).toContain("end");
+    expect(keys).toContain("range");
+    expect(keys).toContain("loc");
+  });
+
+  it("should enumerate all properties for a regex token", () => {
+    setup("var x = /abc/g;");
+    const tokens = getTokens({ range: [0, 15] } as Node);
+    const regexToken = tokens.find((t) => t.type === "RegularExpression")!;
+
+    const keys: string[] = [];
+    for (const key in regexToken) {
+      keys.push(key);
+    }
+
+    expect(keys).toContain("type");
+    expect(keys).toContain("value");
+    expect(keys).toContain("regex");
+    expect(keys).toContain("start");
+    expect(keys).toContain("end");
+    expect(keys).toContain("range");
+    expect(keys).toContain("loc");
   });
 });

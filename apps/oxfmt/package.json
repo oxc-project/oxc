@@ -15,7 +15,9 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "vitest --dir test run",
-    "download-prettier-fixtures": "node scripts/download-prettier-fixtures.js"
+    "conformance": "node conformance/run.ts",
+    "download-fixtures": "node conformance/download-fixtures.js",
+    "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {
     "prettier": "3.8.1",
@@ -28,6 +30,7 @@
     "@types/node": "catalog:",
     "degit": "^2.8.4",
     "execa": "^9.6.0",
+    "json-schema-to-typescript": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",

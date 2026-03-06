@@ -129,6 +129,17 @@ help: The promise must end with a call to .catch, or end with a call to .then wi
 --------------------"
 `;
 
+exports[`LSP linting > config options > should apply config from unused-disable-directive-from-config/test.ts 1`] = `
+"--- FILE -----------
+unused-disable-directive-from-config/test.ts
+--- Diagnostics ---------
+> 1 | // oxlint-disable-next-line debugger
+    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Error: Unused eslint-disable directive (no problems were reported).
+  2 | console.log("This directive is not used");
+  3 |
+--------------------"
+`;
+
 exports[`LSP linting > initializationOptions > should use custom config path from configPath 1`] = `
 "--- FILE -----------
 custom-config-path/test.ts

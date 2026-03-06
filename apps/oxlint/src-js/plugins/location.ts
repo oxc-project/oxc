@@ -7,7 +7,7 @@ import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { NodeOrToken } from "./types.ts";
+import type { NodeOrToken, Node, Comment } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
 /**
@@ -254,39 +254,31 @@ export function getRange(nodeOrToken: NodeOrToken): Range {
  * @param nodeOrToken - Node or token to get the location of
  * @returns Location of the node or token
  */
-// Note: We cannot expose `getNodeLoc` as public method, because it always recalculates the location,
-// and returns a new object each time. It would be misleading if `node.loc !== sourceCode.getLoc(node)`.
+// Both AST nodes and tokens handle lazy `loc` computation and caching via their respective getters
+// (AST nodes via `NodeProto` prototype getter which caches via `Object.defineProperty`,
+// tokens via `Token` class getter which caches in a private field).
+// So accessing `.loc` gives the right behavior for both, including stable object identity.
 export function getLoc(nodeOrToken: NodeOrToken): Location {
-  // If location is already calculated for this node or token, return it
-  if (Object.hasOwn(nodeOrToken, "loc")) return nodeOrToken.loc;
-  // Calculate location
-  return getNodeLoc(nodeOrToken);
+  return nodeOrToken.loc;
 }
 
 /**
- * Calculate the `Location` for an AST node or token.
+ * Calculate the `Location` for an AST node or comment, and cache it on the node.
  *
- * Used in `loc` getters on AST nodes.
+ * Used in `loc` getters on AST nodes and comments (not tokens - tokens use their own caching via `Token` class).
  *
- * Defines a `loc` property on the node/token with the calculated `Location`, so accessing `loc` twice on same node
+ * Defines a `loc` property on the node/comment with the calculated `Location`, so accessing `loc` twice on same node
  * results in the same object each time.
  *
  * For internal use only.
  *
- * @param nodeOrToken - AST node or token
+ * @param nodeOrComment - AST node or comment
  * @returns Location
  */
-export function getNodeLoc(nodeOrToken: NodeOrToken): Location {
-  // Build `lines` and `lineStartIndices` tables if they haven't been already.
-  // This also decodes `sourceText` if it wasn't already.
-  if (lines.length === 0) initLines();
+export function getNodeLoc(nodeOrComment: Node | Comment): Location {
+  const loc = computeLoc(nodeOrComment.start, nodeOrComment.end);
 
-  const loc = {
-    start: getLineColumnFromOffsetUnchecked(nodeOrToken.start),
-    end: getLineColumnFromOffsetUnchecked(nodeOrToken.end),
-  };
-
-  // Define `loc` property with the calculated `Location`, so accessing `loc` twice on same node/token
+  // Define `loc` property with the calculated `Location`, so accessing `loc` twice on same node
   // results in the same object each time.
   //
   // We do not make the `loc` property enumerable, because it wasn't present before.
@@ -295,9 +287,27 @@ export function getNodeLoc(nodeOrToken: NodeOrToken): Location {
   //
   // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
   // because the access would fall through to the getter on the prototype.
-  Object.defineProperty(nodeOrToken, "loc", { value: loc, writable: true });
+  Object.defineProperty(nodeOrComment, "loc", { value: loc, writable: true });
 
   return loc;
+}
+
+/**
+ * Compute a `Location` from `start` and `end` source offsets.
+ *
+ * Pure computation - does not cache the result.
+ * Initializes `lines` and `lineStartIndices` tables if they haven't been already.
+ *
+ * @param start - Start offset
+ * @param end - End offset
+ * @returns Location
+ */
+export function computeLoc(start: number, end: number): Location {
+  if (lines.length === 0) initLines();
+  return {
+    start: getLineColumnFromOffsetUnchecked(start),
+    end: getLineColumnFromOffsetUnchecked(end),
+  };
 }
 
 /**

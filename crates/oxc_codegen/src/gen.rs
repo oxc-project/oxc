@@ -1040,6 +1040,10 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.print_str("from");
                 p.print_soft_space();
                 p.print_string_literal(source, false);
+                if let Some(with_clause) = &self.with_clause {
+                    p.print_soft_space();
+                    with_clause.print(p, ctx);
+                }
             }
             p.print_semicolon_after_statement();
         }
@@ -3671,6 +3675,9 @@ impl Gen for TSTypeParameterInstantiation<'_> {
 
 impl Gen for TSIndexSignature<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.r#static {
+            p.print_str("static ");
+        }
         if self.readonly {
             p.print_str("readonly ");
         }

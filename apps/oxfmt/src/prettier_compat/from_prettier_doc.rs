@@ -5,8 +5,8 @@ use serde_json::Value;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter::{
-    Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    Align, Condition, DedentMode, EmbeddedDocResult, FormatElement, Group, GroupId, GroupMode,
+    IndentWidth, LineMode, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -14,33 +14,45 @@ use oxc_formatter::{
 /// See `src-js/lib/apis.ts` for details.
 const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 
-/// Converts a Prettier Doc JSON value into a flat `Vec<FormatElement<'a>>`,
-/// with template-specific text escaping applied as post-processing.
+/// Converts parsed Prettier Doc JSON values into an [`EmbeddedDocResult`].
+///
+/// Handles language-specific processing:
+/// - GraphQL: converts each doc independently → [`EmbeddedDocResult::MultipleDocs`]
+/// - CSS, HTML: merges consecutive Text nodes, counts placeholders → [`EmbeddedDocResult::DocWithPlaceholders`]
 pub fn to_format_elements_for_template<'a>(
-    doc: &Value,
+    language: &str,
+    doc_jsons: &[Value],
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
-) -> Result<Vec<FormatElement<'a>>, String> {
-    let mut ctx = FmtCtx::new(allocator, group_id_builder);
-    let mut out = vec![];
-    convert_doc(doc, &mut out, &mut ctx)?;
+) -> Result<EmbeddedDocResult<'a>, String> {
+    let convert = |doc_json: &Value| -> Result<(Vec<FormatElement<'a>>, usize), String> {
+        let mut ctx = FmtCtx::new(allocator, group_id_builder);
+        let mut out = vec![];
+        convert_doc(doc_json, &mut out, &mut ctx)?;
+        let placeholder_count = postprocess(&mut out, allocator);
+        Ok((out, placeholder_count))
+    };
 
-    postprocess(&mut out, |fe| {
-        if let FormatElement::Text { text, width } = fe {
-            // Some characters (e.g. backticks) should be escaped in template literals
-            let escaped = escape_template_characters(text, allocator);
-            if !std::ptr::eq(*text, escaped) {
-                *text = escaped;
-                // NOTE: `IndentWidth` only affects tab character width calculation.
-                // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
-                // the width could be miscalculated when `options.indent_width` != 2.
-                // However, the default value is sufficient in practice.
-                *width = TextWidth::from_text(escaped, IndentWidth::default());
-            }
+    match language {
+        "tagged-css" => {
+            let doc_json = doc_jsons
+                .first()
+                .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
+            let (ir, count) = convert(doc_json)?;
+            Ok(EmbeddedDocResult::DocWithPlaceholders(ir, count))
         }
-    });
-
-    Ok(out)
+        "tagged-graphql" => {
+            let irs = doc_jsons
+                .iter()
+                .map(|doc_json| {
+                    let (ir, _) = convert(doc_json)?;
+                    Ok(ir)
+                })
+                .collect::<Result<Vec<_>, String>>()?;
+            Ok(EmbeddedDocResult::MultipleDocs(irs))
+        }
+        _ => unreachable!("Unsupported embedded_doc language: {language}"),
+    }
 }
 
 // ---
@@ -333,14 +345,19 @@ fn extract_group_id(
 
 // ---
 
-/// Post-process `FormatElement`s:
-/// - strip trailing hardline
-/// - collapse consecutive hardlines into empty lines
+/// Post-process FormatElements in a single compaction pass:
+/// - strip trailing hardline (useless for embedded parts)
+/// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
+/// - merge consecutive Text nodes (SCSS emits split strings like `"@"` + `"prettier-placeholder-0-id"`)
+/// - escape template characters (`\`, `` ` ``, `${`)
+/// - count `@prettier-placeholder-N-id` patterns
 ///
-/// And apply a per-element callback for custom transformations.
-fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, mut each: impl FnMut(&mut FormatElement<'a>)) {
-    // Strip trailing `hardline` pattern from FormatElement output.
-    // Trailing line is useless for embedded parts.
+/// Returns the placeholder count (0 for non-CSS languages).
+fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) -> usize {
+    const PREFIX: &str = "@prettier-placeholder-";
+    const SUFFIX: &str = "-id";
+
+    // Strip trailing hardline
     if ir.len() >= 2
         && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
         && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
@@ -348,14 +365,11 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, mut each: impl FnMut(&mut Fo
         ir.truncate(ir.len() - 2);
     }
 
-    // Collapse consecutive `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]` into `[Line(Empty), ExpandParent]`.
-    //
-    // In Prettier's Doc format, a blank line is represented as `hardline,
-    // hardline` which expands to `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]`.
-    // However, `oxc_formatter`'s printer needs `Line(Empty)` instead.
+    let mut placeholder_count = 0;
     let mut write = 0;
     let mut read = 0;
     while read < ir.len() {
+        // Collapse double-hardline → empty line
         if read + 3 < ir.len()
             && matches!(ir[read], FormatElement::Line(LineMode::Hard))
             && matches!(ir[read + 1], FormatElement::ExpandParent)
@@ -366,17 +380,57 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, mut each: impl FnMut(&mut Fo
             ir[write + 1] = FormatElement::ExpandParent;
             write += 2;
             read += 4;
+        } else if matches!(ir[read], FormatElement::Text { .. }) {
+            // Merge consecutive Text nodes + escape + count placeholders
+            let run_start = read;
+            read += 1;
+            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
+                read += 1;
+            }
+
+            let escaped = if read - run_start == 1 {
+                let FormatElement::Text { text, .. } = &ir[run_start] else { unreachable!() };
+                escape_template_characters(text, allocator)
+            } else {
+                let mut sb = StringBuilder::new_in(allocator);
+                for element in &ir[run_start..read] {
+                    if let FormatElement::Text { text, .. } = element {
+                        sb.push_str(text);
+                    }
+                }
+                escape_template_characters(sb.into_str(), allocator)
+            };
+            let width = TextWidth::from_text(escaped, IndentWidth::default());
+            ir[write] = FormatElement::Text { text: escaped, width };
+            write += 1;
+
+            // Count placeholders
+            let mut remaining = escaped;
+            while let Some(start) = remaining.find(PREFIX) {
+                let after_prefix = &remaining[start + PREFIX.len()..];
+                let digit_end = after_prefix
+                    .bytes()
+                    .position(|b| !b.is_ascii_digit())
+                    .unwrap_or(after_prefix.len());
+                if digit_end > 0
+                    && let Some(rest) = after_prefix[digit_end..].strip_prefix(SUFFIX)
+                {
+                    placeholder_count += 1;
+                    remaining = rest;
+                    continue;
+                }
+                remaining = &remaining[start + PREFIX.len()..];
+            }
         } else {
             if write != read {
                 ir[write] = ir[read].clone();
             }
-            each(&mut ir[write]);
             write += 1;
             read += 1;
         }
     }
-
     ir.truncate(write);
+    placeholder_count
 }
 
 /// Escape characters that would break template literal syntax.
