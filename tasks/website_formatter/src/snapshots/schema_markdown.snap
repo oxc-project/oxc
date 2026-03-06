@@ -164,7 +164,7 @@ type: `boolean`
 
 
 
-### jsdoc.keep_unparseable_example_indent
+### jsdoc.keep_unparsable_example_indent
 
 type: `boolean`
 
@@ -412,7 +412,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.keep_unparseable_example_indent
+###### overrides[n].options.jsdoc.keep_unparsable_example_indent
 
 type: `boolean`
 
