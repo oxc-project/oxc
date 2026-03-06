@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use std::{ffi::OsStr, fs, path::Path, sync::Arc};
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -18,7 +19,7 @@ pub struct Filename(String);
 
 impl Filename {
     pub fn new(path: &Path) -> Self {
-        Self(path.as_os_str().to_string_lossy().to_string())
+        Self(path.as_os_str().to_string_lossy().cow_replace('\\', "/").to_string())
     }
 }
 
