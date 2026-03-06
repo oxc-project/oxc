@@ -117,7 +117,7 @@ impl SuppressionManager {
 
     pub fn has_been_updated(&mut self) {
         if self.manager_status == OxlintSuppressionFileAction::Exists {
-            self.manager_status = OxlintSuppressionFileAction::Updated
+            self.manager_status = OxlintSuppressionFileAction::Updated;
         }
     }
 
@@ -138,7 +138,7 @@ impl SuppressionManager {
             return;
         };
 
-        file.update(diff)
+        file.update(diff);
     }
 
     pub fn write(&self) -> Result<(), OxcDiagnostic> {
@@ -213,7 +213,9 @@ impl SuppressionManager {
         }
 
         for rule_key in new_violations {
-            let runtime_diagnostic = runtime_suppression.get(rule_key).unwrap();
+            let Some(runtime_diagnostic) = runtime_suppression.get(rule_key) else {
+                continue;
+            };
 
             diff.push(SuppressionDiff::Appeared {
                 file: filename.clone(),
@@ -224,7 +226,9 @@ impl SuppressionManager {
 
         for rule_key in existing_violations {
             let file_diagnostic = &static_suppression[rule_key];
-            let runtime_diagnostic = runtime_suppression.get(rule_key).unwrap();
+            let Some(runtime_diagnostic) = runtime_suppression.get(rule_key) else {
+                continue;
+            };
 
             if file_diagnostic.count > runtime_diagnostic.count {
                 diff.push(SuppressionDiff::Decreased {

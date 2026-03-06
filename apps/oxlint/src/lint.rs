@@ -447,7 +447,7 @@ impl CliRunner {
         match lint_runner.lint_files(
             &files_to_lint,
             tx_error.clone(),
-            &mut suppression_manager,
+            &suppression_manager,
             suppression_sender.clone(),
         ) {
             Ok(lint_runner) => {
@@ -1697,7 +1697,8 @@ mod suppression {
     #[test]
     fn test_suppression_with_suppress_all_arg_and_no_file() {
         let args = &["--suppress-all"];
-        let suppression = SuppressionTester::new("suppression_with_suppress_all_arg_and_no_file")
+        let suppression = SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
             .with_expected_file(true);
 
         suppression.test(args);
@@ -1710,7 +1711,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_prune_all_arg_and_no_file() {
-        SuppressionTester::new("suppression_with_suppress_all_arg_and_no_file")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_arg_and_no_file")
             .with_setup_file(false)
             .with_expected_file(false)
             .test(&["--prune-suppressions"]);
@@ -1718,7 +1720,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_and_fix_arg_and_no_file() {
-        SuppressionTester::new("suppression_with_suppress_all_and_fix_arg_and_no_file")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_and_fix_arg_and_no_file")
             .with_setup_file(false)
             .with_expected_file(false)
             .with_backup_file(false)
@@ -1728,7 +1731,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_and_fix_arg_and_file() {
-        SuppressionTester::new("suppression_with_suppress_all_and_fix_arg_and_file")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_suppress_all_and_fix_arg_and_file")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1738,7 +1742,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_not_filtered_dangerous_fix_not_applied() {
-        SuppressionTester::new("suppression_not_filtered_dangerous_fix_not_applied")
+        SuppressionTester::new()
+            .with_cwd("suppression_not_filtered_dangerous_fix_not_applied")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1748,7 +1753,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_updated_dangerous_fix_applied() {
-        SuppressionTester::new("suppression_updated_dangerous_fix_applied")
+        SuppressionTester::new()
+            .with_cwd("suppression_updated_dangerous_fix_applied")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1758,7 +1764,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_not_filtered_suggestion_fix_not_applied() {
-        SuppressionTester::new("suppression_not_filtered_suggestion_fix_not_applied")
+        SuppressionTester::new()
+            .with_cwd("suppression_not_filtered_suggestion_fix_not_applied")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1768,7 +1775,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_updated_suggestion_fix_applied() {
-        SuppressionTester::new("suppression_updated_suggestion_fix_applied")
+        SuppressionTester::new()
+            .with_cwd("suppression_updated_suggestion_fix_applied")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1778,7 +1786,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
-        SuppressionTester::new("suppression_with_arg_and_pruned_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_pruned_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1787,7 +1796,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_pruned_errors() {
-        SuppressionTester::new("suppression_with_arg_and_pruned_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_pruned_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1796,7 +1806,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_increased_errors() {
-        SuppressionTester::new("suppression_with_arg_and_increased_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_increased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1805,7 +1816,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_increased_errors() {
-        SuppressionTester::new("suppression_with_arg_and_increased_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_increased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1814,7 +1826,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_decreased_errors() {
-        SuppressionTester::new("suppression_with_arg_and_decreased_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_decreased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
@@ -1823,7 +1836,8 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_decreased_errors() {
-        SuppressionTester::new("suppression_with_arg_and_decreased_errors")
+        SuppressionTester::new()
+            .with_cwd("suppression_with_arg_and_decreased_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
