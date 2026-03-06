@@ -145,9 +145,9 @@ pub struct JsdocOptions {
     /// Emit `@description` tag instead of inline description. Default: false.
     /// Maps to upstream's `jsdocDescriptionTag`.
     pub description_tag: bool,
-    /// Preserve indentation in unparseable @example code. Default: false.
+    /// Preserve indentation in unparsable @example code. Default: false.
     /// Maps to upstream's `jsdocKeepUnParseAbleExampleIndent`.
-    pub keep_unparseable_example_indent: bool,
+    pub keep_unparsable_example_indent: bool,
 }
 
 impl Default for JsdocOptions {
@@ -163,7 +163,7 @@ impl Default for JsdocOptions {
             prefer_code_fences: false,
             line_wrapping_style: LineWrappingStyle::default(),
             description_tag: false,
-            keep_unparseable_example_indent: false,
+            keep_unparsable_example_indent: false,
         }
     }
 }

@@ -265,7 +265,7 @@ pub struct JsdocConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description_tag: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub keep_unparseable_example_indent: Option<bool>,
+    pub keep_unparsable_example_indent: Option<bool>,
 }
 
 fn deserialize_jsdoc_config<'de, D>(deserializer: D) -> Result<Option<JsdocConfig>, D::Error>
@@ -300,8 +300,8 @@ where
                     .and_then(Value::as_bool),
                 bracket_spacing: map.get("bracket_spacing").and_then(Value::as_bool),
                 description_tag: map.get("description_tag").and_then(Value::as_bool),
-                keep_unparseable_example_indent: map
-                    .get("keep_unparseable_example_indent")
+                keep_unparsable_example_indent: map
+                    .get("keep_unparsable_example_indent")
                     .and_then(Value::as_bool),
             };
             Ok(Some(config))

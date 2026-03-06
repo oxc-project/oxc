@@ -109,7 +109,7 @@ impl JsdocFormatter<'_, '_> {
         // Fallback: pass through with 2-space indent
         for line in code.lines() {
             let line_content =
-                if self.options.keep_unparseable_example_indent { line } else { line.trim() };
+                if self.options.keep_unparsable_example_indent { line } else { line.trim() };
             if line_content.is_empty() {
                 self.content_lines.push_empty();
             } else {
@@ -167,7 +167,7 @@ impl JsdocFormatter<'_, '_> {
                 } else {
                     // Fallback for unparsable inner code
                     for line in inner_code.lines() {
-                        let content = if self.options.keep_unparseable_example_indent {
+                        let content = if self.options.keep_unparsable_example_indent {
                             line
                         } else {
                             line.trim()
@@ -186,7 +186,7 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 // Non-JS/TS fenced code: preserve with 2-space indent
                 for line in inner_code.lines() {
-                    let content = if self.options.keep_unparseable_example_indent {
+                    let content = if self.options.keep_unparsable_example_indent {
                         line
                     } else {
                         line.trim()

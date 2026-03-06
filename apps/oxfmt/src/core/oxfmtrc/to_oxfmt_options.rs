@@ -317,8 +317,8 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         if let Some(v) = jsdoc_config.description_tag {
             opts.description_tag = v;
         }
-        if let Some(v) = jsdoc_config.keep_unparseable_example_indent {
-            opts.keep_unparseable_example_indent = v;
+        if let Some(v) = jsdoc_config.keep_unparsable_example_indent {
+            opts.keep_unparsable_example_indent = v;
         }
         format_options.jsdoc = Some(opts);
     }
