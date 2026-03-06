@@ -6,6 +6,7 @@
     "target": "ESNext",
     "allowImportingTsExtensions": true,
     "noUnusedLocals": true,
-    "strict": false
+    "strict": false,
+    "types": ["node"]
   }
 }
