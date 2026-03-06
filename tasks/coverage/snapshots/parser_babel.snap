@@ -1,9 +1,9 @@
-commit: 308c8d85
+commit: de54b9b2
 
 parser_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
 Positive Passed: 2213/2227 (99.37%)
-Negative Passed: 1676/1692 (99.05%)
+Negative Passed: 1688/1704 (99.06%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -2421,6 +2421,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-binary-argument/input.js:1:9]
+ 1 │ true || () => {}
+   ·         ──
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-class-heritage/input.js:1:17]
+ 1 │ class C extends () => {} {}
+   ·                 ──
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-unary-argument/input.js:1:20]
+ 1 │ console.log(typeof () => {});
+   ·                    ──
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
@@ -2428,6 +2446,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ───
  4 │     third
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-binary-argument/input.js:1:10]
+ 1 │ true || x => {}
+   ·          ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-class-heritage/input.js:1:19]
+ 1 │ class C extends x => {} {}
+   ·                   ─┬
+   ·                    ╰── `{` expected
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-unary-argument/input.js:1:9]
+ 1 │ typeof x => {}
+   ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/no-binary-left/input.js:1:9]
@@ -4492,12 +4531,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ╰── `{` expected
    ╰────
 
-  × Empty parenthesized expression
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/38/input.js:1:20]
- 1 │ console.log(typeof () => {});
-   ·                    ──
-   ╰────
-
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/386/input.js:1:8]
  1 │ export typeof foo;
@@ -4947,6 +4980,49 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-binary-argument/input.js:1:17]
+ 1 │ true || async () => {}
+   ·                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-class-heritage/input.js:1:26]
+ 1 │ class C extends async () => {} {}
+   ·                          ─┬
+   ·                           ╰── `{` expected
+   ╰────
+
+  × Expected `,` or `)` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-unary-argument/input.js:1:29]
+ 1 │ console.log(typeof async () => {});
+   ·            ┬                ─┬
+   ·            │                 ╰── `,` or `)` expected
+   ·            ╰── Opened here
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-binary-argument/input.js:1:14]
+ 1 │ true || async x => {}
+   ·              ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-class-heritage/input.js:1:23]
+ 1 │ class C extends async x => {} {}
+   ·                       ┬
+   ·                       ╰── `{` expected
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-unary-argument/input.js:1:13]
+ 1 │ typeof async x => {}
+   ·             ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:28]
@@ -12190,6 +12266,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ <T>(a: T): T => a;
    ·               ▲
  3 │ 
+   ╰────
+
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/invalid-class-implements/input.ts:1:22]
+ 1 │ class Q implements x => void {}
+   ·                      ─┬
+   ·                       ╰── `{` expected
    ╰────
 
   × Keywords cannot contain escape characters

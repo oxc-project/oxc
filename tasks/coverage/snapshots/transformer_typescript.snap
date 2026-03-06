@@ -1,8 +1,8 @@
-commit: 34725489
+commit: 0c2c7a35
 
 transformer_typescript Summary:
-AST Parsed     : 9834/9834 (100.00%)
-Positive Passed: 9812/9834 (99.78%)
+AST Parsed     : 9827/9827 (100.00%)
+Positive Passed: 9805/9827 (99.78%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts

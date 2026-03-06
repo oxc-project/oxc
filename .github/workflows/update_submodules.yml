@@ -269,6 +269,10 @@ jobs:
         if: steps.check-updates.outputs.updates_needed == 'true'
         run: just fmt
 
+      - name: Clone submodules and update fixtures
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        run: just submodules
+
       - name: Run coverage tests
         if: steps.check-updates.outputs.updates_needed == 'true'
         env:
