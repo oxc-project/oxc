@@ -200,6 +200,7 @@ impl ConfigResolver {
         cwd: &Path,
         oxfmtrc_path: Option<&Path>,
         editorconfig_path: Option<&Path>,
+        config_dir_override: Option<&Path>,
     ) -> Result<Self, String> {
         // Read and parse config file, or use empty JSON if not found
         let json_string = match oxfmtrc_path {
@@ -219,8 +220,11 @@ impl ConfigResolver {
         // Parse as raw JSON value
         let raw_config: Value =
             serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
-        // Store the config directory for override path resolution
-        let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
+        // Store the config directory for override path resolution.
+        // If config_dir_override is provided, use it instead of deriving from the config file path.
+        let config_dir = config_dir_override
+            .map(Path::to_path_buf)
+            .or_else(|| oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf)));
 
         let editorconfig = match editorconfig_path {
             Some(path) => {

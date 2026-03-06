@@ -146,6 +146,16 @@ pub struct ConfigOptions {
     /// Path to the configuration file
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+
+    /// Base directory for resolving relative paths in the configuration file.
+    ///
+    /// When a config file is stored in a different location than the project root
+    /// (e.g., in a cache directory), use this flag to specify where relative paths
+    /// in the config should be resolved from.
+    ///
+    /// If not provided, relative paths are resolved from the config file's parent directory.
+    #[bpaf(long("config-dir"), argument("DIR"), hide_usage)]
+    pub config_dir: Option<PathBuf>,
 }
 
 /// Ignore Options

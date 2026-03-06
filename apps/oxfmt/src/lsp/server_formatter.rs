@@ -47,7 +47,7 @@ impl ServerFormatterBuilder {
 
         // Build `ConfigResolver` from config paths
         let (config_resolver, ignore_patterns) =
-            match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
+            match Self::build_config_resolver(&root_path, options.config_path.as_ref(), options.config_dir.as_ref()) {
                 Ok((resolver, patterns)) => (resolver, patterns),
                 Err(err) => {
                     warn!("Failed to build config resolver: {err}, falling back to default config");
@@ -108,15 +108,18 @@ impl ServerFormatterBuilder {
     fn build_config_resolver(
         root_path: &Path,
         config_path: Option<&String>,
+        config_dir: Option<&String>,
     ) -> Result<(ConfigResolver, Vec<String>), String> {
         let oxfmtrc_path =
             resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
         let editorconfig_path = resolve_editorconfig_path(root_path);
+        let config_dir_path = config_dir.filter(|s| !s.is_empty()).map(PathBuf::from);
 
         let mut resolver = ConfigResolver::from_config_paths(
             root_path,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            config_dir_path.as_deref(),
         )?;
 
         // Validate config and cache options, returns ignore patterns
@@ -127,7 +130,7 @@ impl ServerFormatterBuilder {
 
     /// Create a default `ConfigResolver` when config loading fails.
     fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
-        let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None)
+        let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None, None)
             .expect("Default ConfigResolver should never fail");
         let ignore_patterns = resolver
             .build_and_validate()
