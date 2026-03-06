@@ -394,7 +394,9 @@ fn classify_prop(
         3 // regular
     };
 
-    PropInfo { name, group_rank, sort_first_index: sort_first_index.map(|i| i as u8) }
+    #[expect(clippy::cast_possible_truncation)]
+    let sort_first_index = sort_first_index.map(|i| i as u8);
+    PropInfo { name, group_rank, sort_first_index }
 }
 
 /// Check if a prop name is a callback (starts with "on" followed by uppercase).
@@ -586,8 +588,7 @@ fn compute_comment_grouping(
             let second_nl = count_newlines(source, span.start, second.span.start);
             let second_next_line = second_nl == 1;
 
-            if second_next_line && next_attr.is_some() {
-                let next = next_attr.unwrap();
+            if second_next_line && let Some(next) = next_attr {
                 let next_span = attr_span(next);
                 let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
                 result.push(CommentGrouping {
@@ -644,9 +645,8 @@ fn compute_comment_grouping(
                     consumed: false,
                 });
                 i += 1;
-            } else if first_next_line && next_attr.is_some() {
+            } else if first_next_line && let Some(next) = next_attr {
                 // Comment on the next line, with a following attribute.
-                let next = next_attr.unwrap();
                 let next_span = attr_span(next);
                 let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
                 result.push(CommentGrouping {
@@ -1317,7 +1317,7 @@ fn test() {
         // ── Comment-handling fail tests ──────────────────────────
         // Test 1: same-line line comments + standalone comment between attrs.
         (
-            r#"<foo
+            r"<foo
   m={0}
   n={0} // this is n
   o={0}
@@ -1327,12 +1327,12 @@ fn test() {
   a={0}
   b={0}
   d={0}
-/>"#,
+/>",
             None,
         ),
         // Test 2: all same-line line comments (no grouping needed).
         (
-            r#"<foo
+            r"<foo
   m={0}
   n={0} // this is n
   o={0}
@@ -1342,12 +1342,12 @@ fn test() {
   a={0}
   b={0}
   d={0}
-/>"#,
+/>",
             None,
         ),
         // Test 3: mixed same-line and next-line comments consuming attrs.
         (
-            r#"<foo
+            r"<foo
   a1={0}
   g={0}
   d={0} // comment for d
@@ -1358,12 +1358,12 @@ fn test() {
   e={1}
   ab={1} // comment for ab
   f={0}
-/>"#,
+/>",
             None,
         ),
         // Test 4: next-line comment consuming following attr.
         (
-            r#"<foo
+            r"<foo
   a1={0}
   ab={1}
   // comment for ab and f
@@ -1374,7 +1374,7 @@ fn test() {
   e={1}
   d={0}
   aa={1} // comment for aa
-/>"#,
+/>",
             None,
         ),
         // Test 5: inline block comment /* */ between attrs on same line.
@@ -1797,7 +1797,7 @@ fn test() {
         (
             r#"<App a className="test" b />"#,
             r#"<App className="test" a b />"#,
-            Some(sort_first_args.clone()),
+            Some(sort_first_args),
         ),
         // sortFirst + reservedFirst: sortFirst takes priority over reserved.
         (
@@ -1861,7 +1861,7 @@ fn test() {
         // Test 1: standalone comment between c and f → c absorbs fofof+f,
         // has_comment=true so c(+group) sorts to end.
         (
-            r#"<foo
+            r"<foo
   m={0}
   n={0} // this is n
   o={0}
@@ -1871,8 +1871,8 @@ fn test() {
   a={0}
   b={0}
   d={0}
-/>"#,
-            r#"<foo
+/>",
+            r"<foo
   a={0}
   b={0}
   d={0}
@@ -1882,13 +1882,13 @@ fn test() {
   c={0} // this is c
   // fofof
   f={0} // this is f
-/>"#,
+/>",
             None,
         ),
         // Test 2: same-line line comments travel with their attribute,
         // no grouping needed, pure alphabetical sort.
         (
-            r#"<foo
+            r"<foo
   m={0}
   n={0} // this is n
   o={0}
@@ -1898,8 +1898,8 @@ fn test() {
   a={0}
   b={0}
   d={0}
-/>"#,
-            r#"<foo
+/>",
+            r"<foo
   a={0}
   b={0}
   c={0} // this is c
@@ -1909,13 +1909,13 @@ fn test() {
   m={0}
   n={0} // this is n
   o={0}
-/>"#,
+/>",
             None,
         ),
         // Test 3: d absorbs (// comment for d and aa + aa),
         // c absorbs (// comment for c and e + e).
         (
-            r#"<foo
+            r"<foo
   a1={0}
   g={0}
   d={0} // comment for d
@@ -1926,8 +1926,8 @@ fn test() {
   e={1}
   ab={1} // comment for ab
   f={0}
-/>"#,
-            r#"<foo
+/>",
+            r"<foo
   a1={0}
   ab={1} // comment for ab
   f={0}
@@ -1938,13 +1938,13 @@ fn test() {
   d={0} // comment for d
   // comment for d and aa
   aa={0}
-/>"#,
+/>",
             None,
         ),
         // Test 4: ab absorbs (// comment for ab and f + f),
         // c absorbs (// comment for c and e + e).
         (
-            r#"<foo
+            r"<foo
   a1={0}
   ab={1}
   // comment for ab and f
@@ -1955,8 +1955,8 @@ fn test() {
   e={1}
   d={0}
   aa={1} // comment for aa
-/>"#,
-            r#"<foo
+/>",
+            r"<foo
   a1={0}
   aa={1} // comment for aa
   d={0}
@@ -1967,7 +1967,7 @@ fn test() {
   c={0} // comment for c
   // comment for c and e
   e={1}
-/>"#,
+/>",
             None,
         ),
         // Test 5: inline block comment → b absorbs /* comment */ + ab,
