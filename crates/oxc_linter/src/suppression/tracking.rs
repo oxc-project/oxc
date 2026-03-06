@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs, path::Path, sync::Arc};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
@@ -64,18 +64,33 @@ impl std::fmt::Display for RuleName {
 }
 
 type FileSuppressionsMap = FxHashMap<RuleName, DiagnosticCounts>;
-type AllSuppressionsMap = FxHashMap<Filename, FileSuppressionsMap>;
+type AllSuppressionsMap = Arc<FxHashMap<Filename, FileSuppressionsMap>>;
+
+fn serialize_arc_map<S>(map: &AllSuppressionsMap, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    map.as_ref().serialize(serializer)
+}
+
+fn deserialize_arc_map<'de, D>(deserializer: D) -> Result<AllSuppressionsMap, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    FxHashMap::<Filename, FileSuppressionsMap>::deserialize(deserializer).map(Arc::new)
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct SuppressionTracking {
     version: String,
+    #[serde(deserialize_with = "deserialize_arc_map", serialize_with = "serialize_arc_map")]
     suppressions: AllSuppressionsMap,
 }
 
 impl Default for SuppressionTracking {
     fn default() -> Self {
-        Self { version: "0.1.0".to_string(), suppressions: FxHashMap::default() }
+        Self { version: "0.1.0".to_string(), suppressions: Arc::new(FxHashMap::default()) }
     }
 }
 
@@ -120,27 +135,28 @@ impl SuppressionTracking {
     }
 
     pub fn update(&mut self, diff: SuppressionDiff) {
+        let map = Arc::make_mut(&mut self.suppressions);
         match diff {
             SuppressionDiff::Increased { file, rule, from: _, to }
             | SuppressionDiff::Decreased { file, rule, from: _, to } => {
-                self.suppressions.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
+                map.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
             }
             SuppressionDiff::PrunedRuled { file, rule } => {
-                let file_map = &self.suppressions[&file];
+                let file_map = &map[&file];
 
                 if file_map.len() == 1 {
-                    self.suppressions.remove(&file);
+                    map.remove(&file);
                 } else {
-                    self.suppressions.get_mut(&file).unwrap().remove(&rule);
+                    map.get_mut(&file).unwrap().remove(&rule);
                 }
             }
             SuppressionDiff::Appeared { file, rule, count } => {
-                if let Some(file) = self.suppressions.get_mut(&file) {
+                if let Some(file) = map.get_mut(&file) {
                     file.insert(rule, DiagnosticCounts { count });
                 } else {
                     let mut file_diagnostic: FileSuppressionsMap = FxHashMap::default();
                     file_diagnostic.insert(rule, DiagnosticCounts { count });
-                    self.suppressions.insert(file, file_diagnostic);
+                    map.insert(file, file_diagnostic);
                 }
             }
         }
