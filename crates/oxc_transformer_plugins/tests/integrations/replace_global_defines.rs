@@ -151,7 +151,7 @@ fn dot_with_postfix_mixed() {
 
 #[test]
 fn optional_chain() {
-    let config = config(&[("a.b.c", "1")]);
+    let config = config(&[("a.b.c", "1"), ("process.env", "{}")]);
     test("foo(a.b.c)", "foo(1)", &config);
     test("foo(a?.b.c)", "foo(1)", &config);
     test("foo(a.b?.c)", "foo(1)", &config);
@@ -159,9 +159,13 @@ fn optional_chain() {
     test("foo(a?.['b']['c'])", "foo(1)", &config);
     test("foo(a['b']?.['c'])", "foo(1)", &config);
 
-    test_same("a[b][c]", &config);
+    // `process?.env` replaced by `{}`, ChainExpression unwrapped since no optional markers remain.
+    test("process?.env[0]", "({})[0]", &config);
+
+    // Chains where optional markers remain should NOT be unwrapped.
     test_same("a?.[b][c]", &config);
     test_same("a[b]?.[c]", &config);
+    test_same("a[b][c]", &config);
 }
 
 #[test]
@@ -324,27 +328,51 @@ log(__MEMBER__);
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }
 
-/// Reproduce: ReplaceGlobalDefines + optional chaining lowering (target < ES2020)
-/// panics when define replaces the member expression that carries `optional: true`,
-/// leaving a `ChainExpression` with no optional markers.
-///
-/// This matches the playground pipeline where define runs before the transformer.
-#[test]
-fn define_then_transform_optional_chain() {
-    use oxc_transformer::{TransformOptions, Transformer};
-    use std::path::Path;
+/// Run ReplaceGlobalDefines then Transformer (like the playground pipeline).
+/// This reproduces the panic when define replaces the member expression that
+/// carries `optional: true`, leaving a `ChainExpression` with no optional markers.
+#[track_caller]
+fn test_define_then_transform(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+) {
+    test_define_then_transform_impl(source_text, expected, define_config, SourceType::mjs());
+}
 
-    let source_text = "console.log(process?.env[0]);";
-    let source_type = SourceType::mjs();
+#[track_caller]
+fn test_define_then_transform_ts(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+) {
+    test_define_then_transform_impl(
+        source_text,
+        expected,
+        define_config,
+        SourceType::ts().with_module(true),
+    );
+}
+
+#[track_caller]
+fn test_define_then_transform_impl(
+    source_text: &str,
+    expected: &str,
+    define_config: &ReplaceGlobalDefinesConfig,
+    source_type: SourceType,
+) {
+    use std::path::Path;
+    use oxc_transformer::{TransformOptions, Transformer};
+
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
 
     // Step 1: Run define plugin first (like the playground does)
-    let define_config = config(&[("process.env", "{}")]);
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let _ret = ReplaceGlobalDefines::new(&allocator, define_config).build(scoping, &mut program);
+    let _ret =
+        ReplaceGlobalDefines::new(&allocator, define_config.clone()).build(scoping, &mut program);
 
     // Step 2: Rebuild semantic for transformer
     let scoping =
@@ -352,7 +380,8 @@ fn define_then_transform_optional_chain() {
 
     // Step 3: Run transformer with ES2019 target (lowers optional chaining)
     let options = TransformOptions::from_target("es2019").unwrap();
-    let ret = Transformer::new(&allocator, Path::new("test.mjs"), &options)
+    let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
+    let ret = Transformer::new(&allocator, Path::new(filename), &options)
         .build_with_scoping(scoping, &mut program);
     assert!(ret.errors.is_empty());
 
@@ -360,5 +389,30 @@ fn define_then_transform_optional_chain() {
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
-    assert_eq!(result, "console.log({}[0]);\n");
+    let expected = codegen(expected, source_type);
+    assert_eq!(result, expected, "for source {source_text}");
+}
+
+#[test]
+fn define_then_transform_optional_chain() {
+    let c = config(&[("process.env", "{}")]);
+
+    // All optional markers removed → ChainExpression unwrapped, no panic.
+    test_define_then_transform("console.log(process?.env[0]);", "console.log({}[0])", &c);
+    test_define_then_transform("process?.env[0]", "({})[0]", &c);
+
+    // Optional markers hidden behind TS non-null assertion should still be detected.
+    // `process?.env!` — TSNonNullExpression wraps the optional member.
+    test_define_then_transform_ts("process?.env!", "({})", &c);
+
+    // Parenthesized expression wrapping an optional chain.
+    test_define_then_transform("(process?.env)[0]", "({})[0]", &c);
+
+    // Nested chain: the inner `a?.b` is replaced by `'replaced'`, but outer `?.c` keeps optional.
+    let c2 = config(&[("a.b", "'replaced'")]);
+    test_define_then_transform(
+        "a?.b?.c",
+        "var _replaced; (_replaced = 'replaced') === null || _replaced === void 0 ? void 0 : _replaced.c",
+        &c2,
+    );
 }

@@ -729,7 +729,12 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     /// Check whether an expression (as part of a chain) has any `optional: true` markers.
     fn expr_has_optional(expr: &Expression<'a>) -> bool {
+        // Unwrap parenthesized expressions and TS type assertions first.
+        let expr = expr.get_inner_expression();
         match expr {
+            Expression::ChainExpression(chain) => {
+                Self::chain_element_has_optional(&chain.expression)
+            }
             Expression::ComputedMemberExpression(m) => {
                 m.optional || Self::expr_has_optional(&m.object)
             }
