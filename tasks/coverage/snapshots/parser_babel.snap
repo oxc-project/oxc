@@ -13271,36 +13271,68 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:3:20]
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:2:15]
+ 1 │ declare namespace invalid_namespace_var {
+ 2 │   await using A;
+   ·               ─
+ 3 │   await using A1 = 0;
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:3:15]
  2 │   await using A;
  3 │   await using A1 = 0;
-   ·                    ─
+   ·               ──
  4 │   await using A2: number = 0;
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:4:28]
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:4:15]
  3 │   await using A1 = 0;
  4 │   await using A2: number = 0;
-   ·                            ─
+   ·               ──
  5 │   await using B, C;
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:3:14]
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:15]
+ 4 │   await using A2: number = 0;
+ 5 │   await using B, C;
+   ·               ─
+ 6 │ }
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:2:9]
+ 1 │ declare namespace invalid_namespace_var {
+ 2 │   using A;
+   ·         ─
+ 3 │   using A1 = 0;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:3:9]
  2 │   using A;
  3 │   using A1 = 0;
-   ·              ─
+   ·         ──
  4 │   using A2: number = 0;
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:4:22]
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:4:9]
  3 │   using A1 = 0;
  4 │   using A2: number = 0;
-   ·                      ─
+   ·         ──
  5 │   using B, C;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:9]
+ 4 │   using A2: number = 0;
+ 5 │   using B, C;
+   ·         ─
+ 6 │ }
    ╰────
 
   × TS(1039): Initializers are not allowed in ambient contexts.

@@ -3,7 +3,7 @@ commit: 0c2c7a35
 parser_typescript Summary:
 AST Parsed     : 9824/9827 (99.97%)
 Positive Passed: 9813/9827 (99.86%)
-Negative Passed: 1530/2586 (59.16%)
+Negative Passed: 1532/2586 (59.24%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1968,11 +1968,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
@@ -25872,6 +25868,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this code in a block or use a module
 
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
+ 1 │ declare namespace N {
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·                 ─
+ 3 │     await using y: null;
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 3 │     await using y: null;
+   ·                 ─
+ 4 │ }
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
+ 5 │ declare module 'M' {
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·                 ─
+ 7 │     await using y: null;
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 7 │     await using y: null;
+   ·                 ─
+ 8 │ }
+   ╰────
+
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
  2 │     case 0:
@@ -26027,6 +26055,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ declare using y: null;
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
+ 1 │ declare namespace N {
+ 2 │     using x: { [Symbol.dispose](): void };
+   ·           ─
+ 3 │     using y: null;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:3:11]
+ 2 │     using x: { [Symbol.dispose](): void };
+ 3 │     using y: null;
+   ·           ─
+ 4 │ }
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:6:11]
+ 5 │ declare module 'M' {
+ 6 │     using x: { [Symbol.dispose](): void };
+   ·           ─
+ 7 │     using y: null;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:7:11]
+ 6 │     using x: { [Symbol.dispose](): void };
+ 7 │     using y: null;
+   ·           ─
+ 8 │ }
+   ╰────
 
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
