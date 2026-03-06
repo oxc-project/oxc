@@ -32,7 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{Filename, SuppressionDiff, SuppressionFile, SuppressionManager},
+    suppression::{Filename, SuppressionFile, SuppressionManager, SuppressionSender},
     utils::read_to_arena_str,
 };
 
@@ -588,6 +588,7 @@ impl Runtime {
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
         suppression_manager: &mut SuppressionManager,
+        suppression_sender: &SuppressionSender,
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
@@ -596,9 +597,6 @@ impl Runtime {
         let file_exists = suppression_manager.exists_suppression_file();
         let concurrent_tracking_map = suppression_manager.concurrent_map();
         let ignore_suppression = suppression_manager.ignore();
-
-        let (suppression_diff_channel, tx_suppression_diff_channel) =
-            std::sync::mpsc::channel::<SuppressionDiff>();
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -728,10 +726,8 @@ impl Runtime {
                                     );
                                     tx_error.send(diagnostics).unwrap();
                                 } else if !diffs.is_empty() && is_updating_suppression_file {
-                                    let diff_suppression_sender = suppression_diff_channel.clone();
-
                                     for diff in diffs {
-                                        diff_suppression_sender.send(diff.clone()).unwrap();
+                                        suppression_sender.send(diff.clone()).unwrap();
                                     }
                                 }
                             }
@@ -759,20 +755,6 @@ impl Runtime {
                 },
             );
         });
-
-        let mut have_at_least_one_diff = false;
-        while let Ok(diff) = tx_suppression_diff_channel.recv() {
-            if !have_at_least_one_diff {
-                have_at_least_one_diff = true;
-            }
-
-            suppression_manager.update(diff);
-        }
-
-        if have_at_least_one_diff && suppression_manager.is_updating_file() {
-            suppression_manager.has_been_updated();
-            suppression_manager.write(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
-        }
     }
 
     // language_server: the language server needs line and character position
