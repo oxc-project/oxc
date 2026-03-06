@@ -262,10 +262,10 @@ impl JsdocTestRunner {
         if json.get("description_tag").and_then(serde_json::Value::as_bool) == Some(true) {
             options.description_tag = true;
         }
-        if json.get("keep_unparseable_example_indent").and_then(serde_json::Value::as_bool)
+        if json.get("keep_unparsable_example_indent").and_then(serde_json::Value::as_bool)
             == Some(true)
         {
-            options.keep_unparseable_example_indent = true;
+            options.keep_unparsable_example_indent = true;
         }
         if json.get("single_quote").and_then(serde_json::Value::as_bool) == Some(true) {
             quote_style = QuoteStyle::Single;

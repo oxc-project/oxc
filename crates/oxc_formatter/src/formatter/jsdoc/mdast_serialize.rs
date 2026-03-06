@@ -111,7 +111,7 @@ pub fn format_description_mdast(
         return String::new();
     }
 
-    let jsdoc_opts = format_options.and_then(|fo| fo.jsdoc.as_ref());
+    let jsdoc_opts = format_options.and_then(|opts| opts.jsdoc.as_ref());
     let description_with_dot = jsdoc_opts.is_some_and(|o| o.description_with_dot);
     let prefer_code_fences = jsdoc_opts.is_some_and(|o| o.prefer_code_fences);
     let line_wrapping_style =

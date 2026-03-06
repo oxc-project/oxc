@@ -472,7 +472,7 @@
             "null"
           ]
         },
-        "keep_unparseable_example_indent": {
+        "keep_unparsable_example_indent": {
           "type": [
             "boolean",
             "null"
