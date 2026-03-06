@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::DiagnosticSender;
 
-use crate::{Linter, SuppressionManager};
+use crate::{Linter, SuppressionManager, suppression::SuppressionSender};
 
 mod runtime;
 use runtime::Runtime;
@@ -77,8 +77,9 @@ impl LintService {
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
         suppression_manager: &mut SuppressionManager,
+        suppression_sender: &SuppressionSender,
     ) {
-        self.runtime.run(file_system, paths, tx_error, suppression_manager);
+        self.runtime.run(file_system, paths, tx_error, suppression_manager, suppression_sender);
     }
 
     pub fn set_disable_directives_map(
