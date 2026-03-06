@@ -359,8 +359,12 @@ impl Oxlintrc {
             .collect::<Vec<_>>();
 
         let settings = self.settings.clone();
-        let env = self.env.clone();
-        let globals = self.globals.clone();
+
+        let mut globals = OxlintGlobals::default();
+        other.env.override_globals(&mut globals);
+        other.globals.override_globals(&mut globals);
+        self.env.override_globals(&mut globals);
+        self.globals.override_globals(&mut globals);
 
         let mut overrides = other.overrides;
         overrides.extend(self.overrides.clone());
@@ -390,7 +394,7 @@ impl Oxlintrc {
             categories,
             rules: OxlintRules::new(rules),
             settings,
-            env,
+            env: OxlintEnv::default(), // env does not merge directly, it is used to override globals
             globals,
             overrides,
             options,
