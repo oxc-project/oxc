@@ -1603,7 +1603,6 @@ export { redundant };
 
 #[cfg(test)]
 mod suppression {
-    
 
     use crate::tester::{SuppressionTester, Tester};
 
