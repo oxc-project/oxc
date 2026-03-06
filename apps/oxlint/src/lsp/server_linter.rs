@@ -1355,7 +1355,7 @@ mod test {
         assert_eq!(
             code_actions.len(),
             3,
-            "Quickfix Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+            "Default Context after running file: Should return 3 code actions: 1 rule fix + 2 ignore actions"
         );
     }
 
