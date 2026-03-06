@@ -18,11 +18,13 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
-        BlockId, Effect, FunctionExpressionValue, HIRFunction, Identifier, IdentifierId,
-        Instruction, InstructionKind, InstructionValue, Pattern, Phi, Place, ReactFunctionType,
-        ReactiveParam, ValueKind, ValueReason,
+        BlockId, DeclarationId, Effect, FunctionExpressionValue, HIRFunction, Identifier,
+        IdentifierId, Instruction, InstructionKind, InstructionValue, Pattern, Phi, Place,
+        ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
         hir_builder::{compute_rpo_order, each_terminal_successor},
-        visitors::{PatternItem, each_instruction_value_operand, each_pattern_item},
+        visitors::{
+            PatternItem, each_instruction_value_operand, each_pattern_item, each_terminal_operand,
+        },
     },
     inference::aliasing_effects::{AliasingEffect, AliasingSignature, MutationReason},
 };
@@ -604,6 +606,49 @@ fn is_jsx_or_phi_jsx(ty: &crate::hir::types::Type) -> bool {
     }
 }
 
+/// Scan the function's blocks for `DeclareContext` instructions with hoisted declaration
+/// kinds (`HoistedConst`, `HoistedFunction`, `HoistedLet`), and build a map from their
+/// `DeclarationId` to the first access location (or `None` if not yet accessed).
+///
+/// Port of TS `findHoistedContextDeclarations` (InferMutationAliasingEffects.ts lines 226-261).
+fn find_hoisted_context_declarations(func: &HIRFunction) -> FxHashMap<DeclarationId, Option<Place>> {
+    let mut hoisted: FxHashMap<DeclarationId, Option<Place>> = FxHashMap::default();
+
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            if let InstructionValue::DeclareContext(v) = &instr.value {
+                let kind = v.lvalue_kind;
+                if matches!(
+                    kind,
+                    InstructionKind::HoistedConst
+                        | InstructionKind::HoistedFunction
+                        | InstructionKind::HoistedLet
+                ) {
+                    hoisted.insert(v.lvalue_place.identifier.declaration_id, None);
+                }
+            } else {
+                // For non-DeclareContext instructions, check operands for first access
+                for operand in each_instruction_value_operand(&instr.value) {
+                    let decl_id = operand.identifier.declaration_id;
+                    if matches!(hoisted.get(&decl_id), Some(None)) {
+                        // First load of this hoisted value - store the access location
+                        hoisted.insert(decl_id, Some(operand.clone()));
+                    }
+                }
+            }
+        }
+        // Also check terminal operands
+        for operand in each_terminal_operand(&block.terminal) {
+            let decl_id = operand.identifier.declaration_id;
+            if matches!(hoisted.get(&decl_id), Some(None)) {
+                hoisted.insert(decl_id, Some(operand.clone()));
+            }
+        }
+    }
+
+    hoisted
+}
+
 /// Infer mutation/aliasing effects for the given function.
 ///
 /// # Errors
@@ -692,6 +737,10 @@ pub fn infer_mutation_aliasing_effects(
     // not on the inference state. Used in both the fixpoint iteration and the effect
     // annotation replay pass.
     let non_mutating_spreads = find_non_mutating_spreads(func);
+
+    // Discover hoisted context declarations for TDZ checks.
+    // Port of TS `findHoistedContextDeclarations` call at the start of inference.
+    let hoisted_context_declarations = find_hoisted_context_declarations(func);
 
     // Fixpoint iteration over the CFG
     // Port of TS fixpoint loop from InferMutationAliasingEffects.ts lines 186-211.
@@ -789,6 +838,7 @@ pub fn infer_mutation_aliasing_effects(
                     instr,
                     &func.env,
                     &non_mutating_spreads,
+                    &hoisted_context_declarations,
                 )?;
                 // Filter mutation effects through abstract state: convert Mutate on
                 // frozen/global values to MutateFrozen/MutateGlobal error effects.
@@ -800,7 +850,7 @@ pub fn infer_mutation_aliasing_effects(
                 // drop Capture effects whose destination hasn't been created in the
                 // abstract state yet (the state reflects BEFORE this instruction, so
                 // newly-created lvalues don't exist yet).
-                let effects = filter_mutation_effects(&replay_state, raw_effects);
+                let effects = filter_mutation_effects(&replay_state, raw_effects, &hoisted_context_declarations);
                 instr.effects = Some(effects);
 
                 // Match TS applyEffect for CreateFunction: demote context operands
@@ -1003,6 +1053,15 @@ fn infer_instruction_effects(
         InstructionValue::LoadContext(v) => {
             if let Some(val) = state.get(&v.place).cloned() {
                 state.define(&instr.lvalue, val);
+            } else if check_invariants && v.place.identifier.name.is_some() {
+                // Invariant: named context variables should be initialized after fixpoint
+                // converges (via DeclareContext or StoreContext). Matches TS state.kind()
+                // invariant in the CreateFrom effect handler.
+                return Err(CompilerError::invariant(
+                    "[InferMutationAliasingEffects] Expected value kind to be initialized",
+                    Some(&format!("{:?}", v.place.identifier.name)),
+                    v.place.loc,
+                ));
             }
         }
 
@@ -1011,8 +1070,19 @@ fn infer_instruction_effects(
             if let Some(val) = state.get(&v.value).cloned() {
                 state.define(&v.lvalue.place, val);
                 state.add_identity_alias(v.value.identifier.id, v.lvalue.place.identifier.id);
+            } else if check_invariants && v.value.identifier.name.is_some() {
+                // Invariant: after fixpoint converges, named values being stored should
+                // be in state. Unnamed temporaries may legitimately be missing when value
+                // blocks produce results on conditional branches. Matches TS state.kind()
+                // invariant in the Assign effect handler.
+                return Err(CompilerError::invariant(
+                    "[InferMutationAliasingEffects] Expected value kind to be initialized",
+                    Some(&format!("{:?}", v.value.identifier.name)),
+                    v.value.loc,
+                ));
             } else {
-                // Fallback: if the value isn't in the state yet, define lvalue as mutable
+                // Fixpoint phase or unnamed temporary: value isn't in the state yet,
+                // define lvalue as mutable as a conservative approximation.
                 state.define(&v.lvalue.place, AbstractValue::mutable());
             }
             // Propagate function value tracking through StoreLocal
@@ -1268,9 +1338,16 @@ fn infer_instruction_effects(
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
 
+        // DeclareContext: context variables are mutable boxes.
+        // Define the context variable place in state (matching TS Create(Mutable) effect
+        // from computeSignatureForInstruction) so that subsequent LoadContext finds it.
+        InstructionValue::DeclareContext(v) => {
+            state.define(&v.lvalue_place, AbstractValue::mutable());
+            state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
         // Other values
-        InstructionValue::DeclareContext(_)
-        | InstructionValue::Debugger(_)
+        InstructionValue::Debugger(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::TaggedTemplateExpression(_)
         | InstructionValue::ComputedStore(_)
@@ -2213,6 +2290,53 @@ fn make_mutation_error_effect(
     }
 }
 
+/// Create a TDZ (Temporal Dead Zone) error effect for a hoisted context variable
+/// that is accessed before its declaration.
+///
+/// Port of TS lines 1205-1247: when `mutationKind === 'mutate-frozen'` and the
+/// declaration is in `hoistedContextDeclarations`, emit a specific diagnostic about
+/// accessing a variable before it is declared.
+fn make_tdz_error_effect(value: &Place, hoisted_access: Option<&Place>) -> AliasingEffect {
+    let variable = match &value.identifier.name {
+        Some(crate::hir::IdentifierName::Named(name)) => Some(format!("`{name}`")),
+        _ => None,
+    };
+
+    let mut diagnostic = CompilerDiagnostic::create(
+        ErrorCategory::Immutability,
+        "Cannot access variable before it is declared".to_string(),
+        Some(format!(
+            "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
+            variable.as_deref().unwrap_or("This variable")
+        )),
+        None,
+    );
+
+    // Add detail for the first access location (if found and different from declaration)
+    if let Some(access) = hoisted_access
+        && access.loc != value.loc
+    {
+        diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
+            loc: Some(access.loc),
+            message: Some(format!(
+                "{} accessed before it is declared",
+                variable.as_deref().unwrap_or("variable")
+            )),
+        });
+    }
+
+    // Add detail for the declaration location
+    diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
+        loc: Some(value.loc),
+        message: Some(format!(
+            "{} is declared here",
+            variable.as_deref().unwrap_or("variable")
+        )),
+    });
+
+    AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic }
+}
+
 /// Port of TS `applySignature` lines 538-583 from `InferMutationAliasingEffects.ts`.
 ///
 /// For FunctionExpression/ObjectMethod instructions, eagerly validate that the inner
@@ -2286,6 +2410,7 @@ fn emit_inner_function_frozen_mutation_errors(
 fn filter_mutation_effects(
     state: &InferenceState,
     raw_effects: Vec<AliasingEffect>,
+    hoisted_context_declarations: &FxHashMap<DeclarationId, Option<Place>>,
 ) -> Vec<AliasingEffect> {
     let mut filtered = Vec::with_capacity(raw_effects.len());
 
@@ -2299,7 +2424,26 @@ fn filter_mutation_effects(
                 }
                 match state.get(value) {
                     Some(av) => match av.kind {
-                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                        ValueKind::Frozen | ValueKind::MaybeFrozen => {
+                            // Check for TDZ: hoisted context declaration accessed before declared
+                            // Port of TS lines 1205-1247
+                            let decl_id = value.identifier.declaration_id;
+                            if hoisted_context_declarations.contains_key(&decl_id) {
+                                filtered.push(make_tdz_error_effect(
+                                    value,
+                                    hoisted_context_declarations
+                                        .get(&decl_id)
+                                        .and_then(|v| v.as_ref()),
+                                ));
+                            } else {
+                                filtered.push(make_mutation_error_effect(
+                                    value,
+                                    av,
+                                    reason.as_ref(),
+                                ));
+                            }
+                        }
+                        ValueKind::Global => {
                             filtered.push(make_mutation_error_effect(value, av, reason.as_ref()));
                         }
                         // Mutable, Context, Primitive: keep as-is.
@@ -2325,7 +2469,20 @@ fn filter_mutation_effects(
                 }
                 match state.get(value) {
                     Some(av) => match av.kind {
-                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                        ValueKind::Frozen | ValueKind::MaybeFrozen => {
+                            let decl_id = value.identifier.declaration_id;
+                            if hoisted_context_declarations.contains_key(&decl_id) {
+                                filtered.push(make_tdz_error_effect(
+                                    value,
+                                    hoisted_context_declarations
+                                        .get(&decl_id)
+                                        .and_then(|v| v.as_ref()),
+                                ));
+                            } else {
+                                filtered.push(make_mutation_error_effect(value, av, None));
+                            }
+                        }
+                        ValueKind::Global => {
                             filtered.push(make_mutation_error_effect(value, av, None));
                         }
                         _ => {
@@ -2548,6 +2705,7 @@ fn compute_instruction_effects(
     instr: &Instruction,
     env: &crate::hir::environment::Environment,
     non_mutating_spreads: &FxHashSet<IdentifierId>,
+    hoisted_context_declarations: &FxHashMap<DeclarationId, Option<Place>>,
 ) -> Result<Vec<AliasingEffect>, CompilerError> {
     use crate::hir::CallArg;
     use crate::inference::aliasing_effects::CreateFunctionKind;
@@ -3072,8 +3230,13 @@ fn compute_instruction_effects(
         }
 
         // StoreContext: Mutate/Create for context box + Capture + Assign
+        // Port of TS lines 2174-2201: emit Mutate if Reassign OR if the declaration
+        // is hoisted (even for non-Reassign kinds).
         InstructionValue::StoreContext(v) => {
-            if v.lvalue_kind == InstructionKind::Reassign {
+            if v.lvalue_kind == InstructionKind::Reassign
+                || hoisted_context_declarations
+                    .contains_key(&v.lvalue_place.identifier.declaration_id)
+            {
                 effects
                     .push(AliasingEffect::Mutate { value: v.lvalue_place.clone(), reason: None });
             } else {
@@ -3105,12 +3268,31 @@ fn compute_instruction_effects(
         }
 
         // DeclareContext: Create(Mutable) or Mutate + Create(Primitive) for lvalue
+        // Port of TS lines 2137-2172: if this context variable is hoisted and this is
+        // NOT the original hoisting declaration, emit Mutate instead of Create.
         InstructionValue::DeclareContext(v) => {
-            effects.push(AliasingEffect::Create {
-                into: v.lvalue_place.clone(),
-                value: ValueKind::Mutable,
-                reason: ValueReason::Other,
-            });
+            let decl_id = v.lvalue_place.identifier.declaration_id;
+            let kind = v.lvalue_kind;
+            let is_hoisting_declaration = matches!(
+                kind,
+                InstructionKind::HoistedConst
+                    | InstructionKind::HoistedFunction
+                    | InstructionKind::HoistedLet
+            );
+            if !hoisted_context_declarations.contains_key(&decl_id) || is_hoisting_declaration {
+                // Not hoisted, or this IS the hoisting declaration - create the box
+                effects.push(AliasingEffect::Create {
+                    into: v.lvalue_place.clone(),
+                    value: ValueKind::Mutable,
+                    reason: ValueReason::Other,
+                });
+            } else {
+                // This is a re-declaration of a hoisted variable - mutate the existing box
+                effects.push(AliasingEffect::Mutate {
+                    value: v.lvalue_place.clone(),
+                    reason: None,
+                });
+            }
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Primitive,
