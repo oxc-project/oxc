@@ -2,14 +2,6 @@
 ///
 /// These tests verify that the HIR lowering layer produces correct output for
 /// various JavaScript input patterns.
-///
-/// NOTE: The current HirBuilder has a known block-ID collision between the entry
-/// block (ID 0) and the first reserved continuation block (also ID 0). This means
-/// that statement-level control-flow terminals (If, While, For, etc.) placed on
-/// the entry block are overwritten by the final void Return terminal. However,
-/// child blocks (consequent, alternate, loop body, etc.) created via `enter()`
-/// receive unique IDs and ARE preserved. Tests are written to verify the
-/// behavior that IS correct and stable.
 use rustc_hash::FxHashMap;
 
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
@@ -925,11 +917,10 @@ mod statement_lowering {
     fn return_statement_produces_return_terminal() {
         let hir = lower_function_source("function Component() { return 42; }");
 
-        // Should have at least one Return terminal (the void return at the end).
-        // The explicit return may or may not survive depending on block ID collision,
-        // but the void return is always present since it's the final terminator.
+        // Should have 2 Return terminals: the explicit `return 42` and the implicit
+        // void return at the end of the function body.
         let return_count = count_terminals(&hir, |t| matches!(t, Terminal::Return(_)));
-        assert!(return_count >= 1, "Expected at least 1 Return terminal, found {return_count}");
+        assert_eq!(return_count, 2, "Expected 2 Return terminals, found {return_count}");
     }
 
     #[test]

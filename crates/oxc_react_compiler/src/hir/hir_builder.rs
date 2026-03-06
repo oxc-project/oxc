@@ -706,7 +706,7 @@ impl HirBuilder {
     pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
         let WipBlock { id, kind, instructions } = std::mem::replace(
             &mut self.current,
-            new_block(BlockId(0), BlockKind::Block), // placeholder
+            new_block(BlockId::PLACEHOLDER, BlockKind::Block),
         );
         let block_id = id;
         self.completed.insert(
@@ -775,24 +775,11 @@ impl HirBuilder {
         let terminal = f(self);
         let WipBlock { id, kind, instructions } = std::mem::replace(&mut self.current, prev);
 
-        // After the closure executes, self.current may have changed from the
-        // original wip block if `terminate(_, None)` was called as the last
-        // action inside the closure. In that case, `terminate` leaves a
-        // placeholder with `BlockId(0)` as current, while the actual block
-        // was already completed by `terminate`. We must NOT overwrite an
-        // already-completed block that has a different ID from our wip block
-        // (this would clobber unrelated blocks, such as the entry block at
-        // BlockId(0)).
-        //
-        // The check: if the current block's ID changed from the wip block's
-        // original ID, it means `terminate` or `terminate_with_continuation`
-        // already completed the wip block. The current block is a stale
-        // placeholder or a continuation. If its ID is already in
-        // `completed` (and it's not the wip block), skip the insert.
-        if id != wip_id && self.completed.contains_key(&id) {
-            // The wip block was already completed by terminate() inside the
-            // closure. The current placeholder has a different ID (e.g.
-            // BlockId(0)) that already exists in completed. Don't overwrite.
+        // After the closure executes, self.current may have been replaced if
+        // `terminate(_, None)` was called as the last action. In that case
+        // `terminate` leaves a `BlockId::PLACEHOLDER` sentinel as current,
+        // while the actual wip block was already completed. Don't re-insert.
+        if id == BlockId::PLACEHOLDER {
             return;
         }
 

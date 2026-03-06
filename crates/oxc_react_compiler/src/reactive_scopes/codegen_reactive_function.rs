@@ -2783,12 +2783,11 @@ fn codegen_place_to_expression<'a>(cx: &CodegenContext<'a>, place: &Place) -> Ex
     }
 
     // TS invariant: convertIdentifier checks that the identifier has a name.
-    // If unnamed, this is an invariant violation indicating the identifier
-    // was not promoted by an earlier pass (PromoteUsedTemporaries).
+    // If unnamed, record an invariant error — codegen output will be discarded.
     if place.identifier.name.is_none() {
         cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
-            "Expected temporaries to be promoted to named identifiers in an earlier pass",
-            Some(&format!("identifier {} is unnamed.", place.identifier.id.0)),
+            "Expected temporaries to be promoted to named identifiers before codegen",
+            Some(&format!("identifier {} is unnamed", place.identifier.id.0)),
             crate::compiler_error::GENERATED_SOURCE,
         ));
     }
@@ -2797,6 +2796,8 @@ fn codegen_place_to_expression<'a>(cx: &CodegenContext<'a>, place: &Place) -> Ex
 }
 
 /// Get the string name of an identifier.
+/// Returns a synthetic `t$<id>` for unnamed temporaries (the codegen error
+/// is already recorded by the caller so the output will be discarded).
 fn identifier_name(identifier: &crate::hir::Identifier) -> String {
     match &identifier.name {
         Some(HirIdentifierName::Named(name) | HirIdentifierName::Promoted(name)) => name.clone(),
