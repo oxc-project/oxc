@@ -8,7 +8,9 @@ use oxc_allocator::Allocator;
 use crate::{ExternalCallbacks, FormatOptions};
 
 use super::line_buffer::LineBuffer;
-use super::wrap::{format_table_block, wrap_paragraph, wrap_plain_paragraphs};
+use super::wrap::{
+    format_table_block, wrap_paragraph, wrap_plain_paragraphs, wrap_plain_paragraphs_balance,
+};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
 /// Uses a format that `tokenize_words` won't split (no spaces, looks like a word).
@@ -108,26 +110,56 @@ pub fn format_description_mdast(
         return String::new();
     }
 
+    let jsdoc_opts = format_options.and_then(|fo| fo.jsdoc.as_ref());
+    let description_with_dot = jsdoc_opts.is_some_and(|o| o.description_with_dot);
+    let prefer_code_fences = jsdoc_opts.is_some_and(|o| o.prefer_code_fences);
+    let line_wrapping_style =
+        jsdoc_opts.map_or(crate::LineWrappingStyle::default(), |o| o.line_wrapping_style);
+
     // Fast path: if text has no markdown constructs requiring AST parsing,
     // use lightweight wrap_plain_paragraphs() directly.
     if !needs_mdast_parsing(text) {
-        let result = wrap_plain_paragraphs(text, max_width);
-        if !capitalize {
+        // Balance mode: try to preserve original line breaks per paragraph
+        let result = if matches!(line_wrapping_style, crate::LineWrappingStyle::Balance) {
+            wrap_plain_paragraphs_balance(text, max_width)
+        } else {
+            wrap_plain_paragraphs(text, max_width)
+        };
+        if !capitalize && !description_with_dot {
             return result;
         }
         // Capitalize the first word of each paragraph (after blank lines),
         // matching the mdast path's per-paragraph capitalization.
-        let mut out = String::with_capacity(result.len());
+        // Also apply trailing dot if enabled.
+        let mut out = String::with_capacity(result.len() + 1);
+        let lines_vec: Vec<&str> = result.split('\n').collect();
+        let total = lines_vec.len();
         let mut at_paragraph_start = true;
-        for (i, line) in result.split('\n').enumerate() {
+        for (i, line) in lines_vec.iter().enumerate() {
             if i > 0 {
                 out.push('\n');
             }
+            // A line is "last in paragraph" if it's the final line overall or
+            // the next line is empty (paragraph boundary).
+            let is_last_in_para = i == total - 1
+                || lines_vec.get(i + 1).is_some_and(|next| next.is_empty());
             if line.is_empty() {
                 at_paragraph_start = true;
             } else if at_paragraph_start {
-                out.push_str(&super::normalize::capitalize_first(line));
+                let line = if capitalize {
+                    super::normalize::capitalize_first(line)
+                } else {
+                    Cow::Borrowed(*line)
+                };
+                if description_with_dot && is_last_in_para {
+                    out.push_str(&super::normalize::append_trailing_dot(&line));
+                } else {
+                    out.push_str(&line);
+                }
                 at_paragraph_start = false;
+                continue;
+            } else if description_with_dot && is_last_in_para {
+                out.push_str(&super::normalize::append_trailing_dot(line));
                 continue;
             }
             out.push_str(line);
@@ -171,6 +203,9 @@ pub fn format_description_mdast(
     let opts = SerializeOptions {
         max_width,
         capitalize,
+        description_with_dot,
+        prefer_code_fences,
+        line_wrapping_style,
         placeholders: &placeholders,
         source: &protected,
         format_options,
@@ -185,6 +220,9 @@ pub fn format_description_mdast(
 struct SerializeOptions<'a> {
     max_width: usize,
     capitalize: bool,
+    description_with_dot: bool,
+    prefer_code_fences: bool,
+    line_wrapping_style: crate::LineWrappingStyle,
     placeholders: &'a [&'a str],
     source: &'a str,
     format_options: Option<&'a FormatOptions>,
@@ -519,21 +557,77 @@ fn serialize_paragraph(
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::wrap::indent_str(indent);
 
+    // Balance mode: try to preserve original line breaks if all lines fit
+    if matches!(opts.line_wrapping_style, crate::LineWrappingStyle::Balance)
+        && let Some(position) = para.position.as_ref()
+    {
+        let raw = &opts.source[position.start.offset..position.end.offset];
+        let original_lines: Vec<&str> =
+            raw.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
+
+        if original_lines.len() > 1
+            && original_lines.iter().all(|l| l.len() <= effective_width)
+        {
+            // Preserve original line breaks
+            let total = original_lines.len();
+            for (i, orig_line) in original_lines.iter().enumerate() {
+                let restored = restore_in_string(orig_line, opts.placeholders);
+                let is_first = i == 0;
+                let is_last = i == total - 1;
+
+                let line: String = {
+                    let mut s = restored.into_owned();
+                    if is_first && opts.capitalize {
+                        s = super::normalize::capitalize_first(&s).into_owned();
+                    }
+                    if is_last && opts.description_with_dot {
+                        s = super::normalize::append_trailing_dot(&s).into_owned();
+                    }
+                    s
+                };
+
+                if indent > 0 {
+                    let s = lines.begin_line();
+                    s.push_str(&ind);
+                    s.push_str(&line);
+                } else {
+                    lines.push(&line);
+                }
+            }
+            return;
+        }
+        // Fall through to greedy wrapping
+    }
+
     let mut para_buf = LineBuffer::new();
     wrap_paragraph(&inline_text, effective_width, 0, &mut para_buf);
     let para_str = para_buf.into_string();
 
+    let line_count = para_str.split('\n').count();
     for (i, line) in para_str.split('\n').enumerate() {
+        let is_last = i == line_count - 1;
         if indent > 0 {
             if line.is_empty() {
                 lines.push_empty();
+            } else if opts.description_with_dot && is_last {
+                let dotted = super::normalize::append_trailing_dot(line);
+                let s = lines.begin_line();
+                s.push_str(&ind);
+                s.push_str(&dotted);
             } else {
                 let s = lines.begin_line();
                 s.push_str(&ind);
                 s.push_str(line);
             }
         } else if opts.capitalize && i == 0 {
-            lines.push(super::normalize::capitalize_first(line));
+            let cap = super::normalize::capitalize_first(line);
+            if opts.description_with_dot && is_last {
+                lines.push(super::normalize::append_trailing_dot(&cap));
+            } else {
+                lines.push(cap);
+            }
+        } else if opts.description_with_dot && is_last {
+            lines.push(super::normalize::append_trailing_dot(line));
         } else {
             lines.push(line);
         }
@@ -789,14 +883,17 @@ fn serialize_code(
     let code_width = opts.max_width.saturating_sub(4);
     let formatted_value = format_code_value(&code.value, code.lang.as_deref(), code_width, opts);
 
-    if let Some(lang) = &code.lang
-        && !lang.is_empty()
-    {
-        // Fenced code block with language
+    let has_lang = code.lang.as_ref().is_some_and(|l| !l.is_empty());
+    let use_fence = has_lang || opts.prefer_code_fences;
+
+    if use_fence {
+        // Fenced code block
         {
             let s = lines.begin_line();
             s.push_str("```");
-            s.push_str(lang);
+            if let Some(lang) = &code.lang {
+                s.push_str(lang);
+            }
         }
         for line in formatted_value.lines() {
             lines.push(line);

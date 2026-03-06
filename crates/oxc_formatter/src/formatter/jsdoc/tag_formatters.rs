@@ -108,14 +108,15 @@ impl JsdocFormatter<'_, '_> {
 
         // Fallback: pass through with 2-space indent
         for line in code.lines() {
-            let line_trimmed = line.trim();
-            if line_trimmed.is_empty() {
+            let line_content =
+                if self.options.keep_unparseable_example_indent { line } else { line.trim() };
+            if line_content.is_empty() {
                 self.content_lines.push_empty();
             } else {
                 {
                     let s = self.content_lines.begin_line();
                     s.push_str("  ");
-                    s.push_str(line_trimmed);
+                    s.push_str(line_content);
                 }
             }
         }
@@ -166,14 +167,18 @@ impl JsdocFormatter<'_, '_> {
                 } else {
                     // Fallback for unparsable inner code
                     for line in inner_code.lines() {
-                        let trimmed = line.trim();
-                        if trimmed.is_empty() {
+                        let content = if self.options.keep_unparseable_example_indent {
+                            line
+                        } else {
+                            line.trim()
+                        };
+                        if content.is_empty() {
                             self.content_lines.push_empty();
                         } else {
                             {
                                 let s = self.content_lines.begin_line();
                                 s.push_str("  ");
-                                s.push_str(trimmed);
+                                s.push_str(content);
                             }
                         }
                     }
@@ -181,14 +186,18 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 // Non-JS/TS fenced code: preserve with 2-space indent
                 for line in inner_code.lines() {
-                    let trimmed = line.trim();
-                    if trimmed.is_empty() {
+                    let content = if self.options.keep_unparseable_example_indent {
+                        line
+                    } else {
+                        line.trim()
+                    };
+                    if content.is_empty() {
                         self.content_lines.push_empty();
                     } else {
                         {
                             let s = self.content_lines.begin_line();
                             s.push_str("  ");
-                            s.push_str(trimmed);
+                            s.push_str(content);
                         }
                     }
                 }
@@ -309,7 +318,8 @@ impl JsdocFormatter<'_, '_> {
         let desc_raw = desc_normalized.trim();
 
         // Strip existing "Default is ..." from description when we have an actual default value
-        let desc_raw = if default_value.is_some() {
+        // and `add_default_to_description` is enabled (we'll re-append a normalized version)
+        let desc_raw = if default_value.is_some() && self.options.add_default_to_description {
             strip_default_is_suffix(desc_raw)
         } else {
             Cow::Borrowed(desc_raw)
@@ -375,8 +385,12 @@ impl JsdocFormatter<'_, '_> {
             Cow::Borrowed(first_text)
         };
 
+        // When add_default_to_description is false, don't append "Default is ..." to description
+        let default_value_for_desc =
+            if self.options.add_default_to_description { default_value } else { None };
+
         // Default suffix length: "Default is `" (12) + value + "`" (1) = 13 + dv.len()
-        let default_suffix_len: Option<usize> = default_value.map(|dv| 13 + dv.len());
+        let default_suffix_len: Option<usize> = default_value_for_desc.map(|dv| 13 + dv.len());
 
         if first_text.is_empty() && default_suffix_len.is_none() && rest_of_desc.is_none() {
             self.content_lines.push(tag_line);
@@ -417,7 +431,7 @@ impl JsdocFormatter<'_, '_> {
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push_str(separator);
-            if let Some(dv) = default_value {
+            if let Some(dv) = default_value_for_desc {
                 if first_text.is_empty() {
                     s.push_str("Default is `");
                     s.push_str(dv);
@@ -434,6 +448,9 @@ impl JsdocFormatter<'_, '_> {
                     s.push_str(dv);
                     s.push('`');
                 }
+            } else if self.options.description_with_dot {
+                let dotted = super::normalize::append_trailing_dot(&first_text);
+                s.push_str(&dotted);
             } else {
                 s.push_str(&first_text);
             }
@@ -529,11 +546,12 @@ impl JsdocFormatter<'_, '_> {
                 self.push_indented_desc(indent, desc);
             }
 
-            // Add default value as a separate paragraph with blank line
-            if let Some(dv) = default_value
-                && !first_text.is_empty()
-            {
-                self.content_lines.push_empty();
+            // Add default value as a separate paragraph
+            if let Some(dv) = default_value_for_desc {
+                // Add blank line separator when there's preceding description text
+                if !first_text.is_empty() {
+                    self.content_lines.push_empty();
+                }
                 let s = self.content_lines.begin_line();
                 s.push_str(indent);
                 s.push_str("Default is `");

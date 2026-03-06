@@ -266,6 +266,23 @@ pub fn capitalize_first(s: &str) -> Cow<'_, str> {
     }
 }
 
+/// Append a trailing dot to the end of a string if the last character is a word character.
+/// Matches upstream's `jsdocDescriptionWithDot` behavior:
+/// `text.replace(/([\w\p{L}])$/u, "$1.")`
+/// Note: `\w` matches `[a-zA-Z0-9_]` and `\p{L}` matches Unicode letters (not digits).
+/// Combined, this matches ASCII alphanumerics, underscore, and Unicode letters.
+pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
+    if let Some(last_char) = s.chars().next_back()
+        && (last_char.is_alphabetic() || last_char.is_ascii_digit() || last_char == '_')
+    {
+        let mut result = String::with_capacity(s.len() + 1);
+        result.push_str(s);
+        result.push('.');
+        return Cow::Owned(result);
+    }
+    Cow::Borrowed(s)
+}
+
 /// Normalize JSDoc type expression syntax:
 /// - `?Type` → `Type | null`
 /// - `Type?` → `Type | null` (except inside quotes)

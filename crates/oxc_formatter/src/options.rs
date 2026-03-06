@@ -86,29 +86,84 @@ pub struct FormatOptions {
     pub jsdoc: Option<JsdocOptions>,
 }
 
+/// How to format JSDoc comment blocks: single-line, multi-line, or preserve original.
+///
+/// Maps to upstream's `jsdocCommentLineStrategy`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum CommentLineStrategy {
+    /// Convert to single-line `/** content */` when possible.
+    #[default]
+    SingleLine,
+    /// Always use multi-line format.
+    Multiline,
+    /// Preserve original formatting (single-line stays single-line, multi-line stays multi-line).
+    Keep,
+}
+
+/// Strategy for wrapping description lines at print width.
+///
+/// Maps to upstream's `jsdocLineWrappingStyle`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum LineWrappingStyle {
+    /// Always re-wrap text to fit within print width.
+    #[default]
+    Greedy,
+    /// Preserve original line breaks if all lines fit within print width.
+    Balance,
+}
+
 /// Options for JSDoc comment formatting.
 #[derive(Debug, Clone)]
 pub struct JsdocOptions {
     /// Capitalize the first letter of tag descriptions. Default: true.
+    /// Maps to upstream's `jsdocCapitalizeDescription`.
     pub capitalize_descriptions: bool,
-    /// Convert short JSDoc to single-line when possible. Default: true.
-    pub single_line_when_possible: bool,
+    /// How to format comment blocks. Default: SingleLine.
+    /// Maps to upstream's `jsdocCommentLineStrategy`.
+    pub comment_line_strategy: CommentLineStrategy,
     /// Add blank lines between different tag groups (e.g. between @param and @returns). Default: false.
+    /// Maps to upstream's `jsdocSeparateTagGroups`.
     pub separate_tag_groups: bool,
     /// Add a blank line between the last @param and @returns. Default: false.
+    /// Maps to upstream's `jsdocSeparateReturnsFromParam`.
     pub separate_returns_from_param: bool,
     /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`. Default: false.
+    /// Maps to upstream's `jsdocBracketSpacing`.
     pub bracket_spacing: bool,
+    /// Add a trailing dot to the end of descriptions. Default: false.
+    /// Maps to upstream's `jsdocDescriptionWithDot`.
+    pub description_with_dot: bool,
+    /// Append default values to @param descriptions (e.g. "Default is \`value\`"). Default: true.
+    /// Maps to upstream's `jsdocAddDefaultToDescription`.
+    pub add_default_to_description: bool,
+    /// Use fenced code blocks (```) instead of 4-space indentation for code without a language tag. Default: false.
+    /// Maps to upstream's `jsdocPreferCodeFences`.
+    pub prefer_code_fences: bool,
+    /// Strategy for wrapping description lines. Default: Greedy.
+    /// Maps to upstream's `jsdocLineWrappingStyle`.
+    pub line_wrapping_style: LineWrappingStyle,
+    /// Emit `@description` tag instead of inline description. Default: false.
+    /// Maps to upstream's `jsdocDescriptionTag`.
+    pub description_tag: bool,
+    /// Preserve indentation in unparseable @example code. Default: false.
+    /// Maps to upstream's `jsdocKeepUnParseAbleExampleIndent`.
+    pub keep_unparseable_example_indent: bool,
 }
 
 impl Default for JsdocOptions {
     fn default() -> Self {
         Self {
             capitalize_descriptions: true,
-            single_line_when_possible: true,
+            comment_line_strategy: CommentLineStrategy::default(),
             separate_tag_groups: false,
             separate_returns_from_param: false,
             bracket_spacing: false,
+            description_with_dot: false,
+            add_default_to_description: true,
+            prefer_code_fences: false,
+            line_wrapping_style: LineWrappingStyle::default(),
+            description_tag: false,
+            keep_unparseable_example_indent: false,
         }
     }
 }

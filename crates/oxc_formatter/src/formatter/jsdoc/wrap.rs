@@ -290,6 +290,50 @@ pub fn wrap_plain_paragraphs(text: &str, max_width: usize) -> String {
     lines.into_string()
 }
 
+/// Balance mode variant of `wrap_plain_paragraphs`.
+/// For each paragraph, if the original line breaks result in all lines fitting within
+/// `max_width`, preserve the original breaks. Otherwise fall back to greedy wrapping.
+pub fn wrap_plain_paragraphs_balance(text: &str, max_width: usize) -> String {
+    let mut lines = super::line_buffer::LineBuffer::new();
+    // Collect paragraphs with their original lines
+    let mut para_lines: Vec<&str> = Vec::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            if !para_lines.is_empty() {
+                flush_paragraph_balance(&para_lines, max_width, &mut lines);
+                para_lines.clear();
+            }
+            if !lines.last_is_empty() {
+                lines.push_empty();
+            }
+        } else {
+            para_lines.push(trimmed);
+        }
+    }
+    if !para_lines.is_empty() {
+        flush_paragraph_balance(&para_lines, max_width, &mut lines);
+    }
+    lines.into_string()
+}
+
+fn flush_paragraph_balance(
+    original_lines: &[&str],
+    max_width: usize,
+    lines: &mut super::line_buffer::LineBuffer,
+) {
+    // If multiple lines and all fit, preserve original breaks
+    if original_lines.len() > 1 && original_lines.iter().all(|l| l.len() <= max_width) {
+        for l in original_lines {
+            lines.push(l);
+        }
+    } else {
+        // Fall back to greedy wrapping
+        let joined: String = original_lines.join(" ");
+        wrap_paragraph(joined.trim(), max_width, 0, lines);
+    }
+}
+
 /// Wrap text into lines, preserving structured content (lists, code blocks, tables, etc.)
 /// and wrapping plain paragraphs to the given max width.
 ///
