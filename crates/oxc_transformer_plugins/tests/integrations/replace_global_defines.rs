@@ -331,8 +331,8 @@ log(__MEMBER__);
 /// This matches the playground pipeline where define runs before the transformer.
 #[test]
 fn define_then_transform_optional_chain() {
-    use std::path::Path;
     use oxc_transformer::{TransformOptions, Transformer};
+    use std::path::Path;
 
     let source_text = "console.log(process?.env[0]);";
     let source_type = SourceType::mjs();
@@ -347,11 +347,8 @@ fn define_then_transform_optional_chain() {
     let _ret = ReplaceGlobalDefines::new(&allocator, define_config).build(scoping, &mut program);
 
     // Step 2: Rebuild semantic for transformer
-    let scoping = SemanticBuilder::new()
-        .with_excess_capacity(2.0)
-        .build(&program)
-        .semantic
-        .into_scoping();
+    let scoping =
+        SemanticBuilder::new().with_excess_capacity(2.0).build(&program).semantic.into_scoping();
 
     // Step 3: Run transformer with ES2019 target (lowers optional chaining)
     let options = TransformOptions::from_target("es2019").unwrap();

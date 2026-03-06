@@ -447,7 +447,6 @@ impl<'a> ReplaceGlobalDefines<'a> {
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
-                dbg!(&chain);
                 let Some(new_expr) =
                     chain.expression.as_member_expression_mut().and_then(|item| match item {
                         MemberExpression::ComputedMemberExpression(computed_member_expr) => {
@@ -462,7 +461,6 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     return false;
                 };
                 *expr = new_expr;
-                dbg!(&expr);
                 return true;
             }
             Expression::StaticMemberExpression(member) => {
@@ -707,7 +705,6 @@ impl<'a> ReplaceGlobalDefines<'a> {
         if Self::chain_element_has_optional(&chain.expression) {
             return;
         }
-        dbg!(&expr);
         let chain_expr = mem::replace(expr, Dummy::dummy(allocator));
         let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
         *expr = Expression::from(chain.unbox().expression);
