@@ -187,3 +187,59 @@ source: crates/oxc_linter/src/tester.rs
    ·   ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName("foo");
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName('foo');
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName(`foo`);
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName(`${'foo'}`);
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName(null);
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName("");
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName(foo + "bar");
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName("multiple name should be fixable");
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).

@@ -150,7 +150,7 @@ mod test {
 
     #[test]
     fn test_walk_with_extensions() {
-        let fixture = env::current_dir().unwrap().join("fixtures/walk_dir");
+        let fixture = env::current_dir().unwrap().join("fixtures/cli/walk_dir");
         let fixtures = vec![fixture.clone()];
         let ignore_options = IgnoreOptions {
             no_ignore: false,

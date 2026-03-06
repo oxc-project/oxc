@@ -26,9 +26,11 @@ const commonConfig = defineConfig({
   unbundle: false,
   hash: false,
   fixedExtension: false,
-  // tsdown warns about final bundled modules by `unbundle` + `external`.
-  // But we know what we are doing, just suppress the warnings.
-  inlineOnly: false,
+  deps: {
+    // tsdown warns about final bundled modules by `unbundle` + `deps.neverBundle`.
+    // But we know what we are doing, just suppress the warnings.
+    onlyAllowBundle: false,
+  },
 });
 
 // Minification options.
@@ -75,11 +77,14 @@ export default defineConfig([
     ...commonConfig,
     entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins-dev.ts"],
     format: "esm",
-    external: [
-      // External native bindings
-      "./oxlint.*.node",
-      "@oxlint/*",
-    ],
+    deps: {
+      ...commonConfig.deps,
+      neverBundle: [
+        // External native bindings
+        "./oxlint.*.node",
+        "@oxlint/*",
+      ],
+    },
     minify: minifyConfig,
     dts: true,
     attw: { profile: "esm-only" },
