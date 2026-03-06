@@ -205,8 +205,12 @@ impl SuppressionManager {
             let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
                 FxHashMap::default();
             for message in diagnostics {
+                let Ok(key) = RuleName::try_from(message) else {
+                    continue;
+                };
+
                 suppression_tracking
-                    .entry(message.into())
+                    .entry(key)
                     .or_insert(DiagnosticCounts { count: 0 }) // Make a default
                     .count += 1;
             }
@@ -231,7 +235,10 @@ impl SuppressionManager {
                 let diagnostics_filtered = lint_diagnostics
                     .into_iter()
                     .filter(|message| {
-                        let key = RuleName::from(message);
+                        let Ok(key) = RuleName::try_from(message) else {
+                            return true;
+                        };
+
                         let Some(count_file) = recorded_violations.get(&key) else {
                             return true;
                         };
