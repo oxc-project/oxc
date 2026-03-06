@@ -1,4 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, mpsc},
+};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -21,6 +24,7 @@ pub enum OxlintSuppressionFileAction {
     Exists,
     Created,
     Malformed(OxcDiagnostic),
+    UnableToPerformFsOperation(OxcDiagnostic),
 }
 
 impl OxlintSuppressionFileAction {
@@ -31,18 +35,30 @@ impl OxlintSuppressionFileAction {
     }
 }
 
-#[derive(Clone, Debug)]
+pub type SuppressionSender = mpsc::Sender<SuppressionDiff>;
+pub type SuppressionReceiver = mpsc::Receiver<SuppressionDiff>;
+
+#[derive(Debug)]
 pub struct SuppressionManager {
     pub suppressions_by_file: Option<SuppressionTracking>,
     pub manager_status: OxlintSuppressionFileAction,
+    suppression_path: PathBuf,
     suppress_all: bool,
     prune_suppression: bool,
     //If the source of truth exists
     file_exists: bool,
+    receiver: SuppressionReceiver,
 }
 
 impl SuppressionManager {
-    pub fn load(path: &Path, suppress_all: bool, prune_suppression: bool) -> Self {
+    pub fn load(
+        path: &Path,
+        suppress_all: bool,
+        prune_suppression: bool,
+    ) -> (Self, SuppressionSender) {
+        let (sender, receiver): (SuppressionSender, SuppressionReceiver) =
+            std::sync::mpsc::channel();
+
         if !path.exists() {
             let manager_status = if suppress_all {
                 OxlintSuppressionFileAction::Created
@@ -53,30 +69,45 @@ impl SuppressionManager {
             let suppressions_by_file =
                 if suppress_all { Some(SuppressionTracking::default()) } else { None };
 
-            return Self {
-                suppressions_by_file,
-                manager_status,
-                file_exists: false,
-                prune_suppression,
-                suppress_all,
-            };
+            return (
+                Self {
+                    suppressions_by_file,
+                    manager_status,
+                    file_exists: false,
+                    suppression_path: path.into(),
+                    prune_suppression,
+                    suppress_all,
+                    receiver,
+                },
+                sender,
+            );
         }
 
         match SuppressionTracking::from_file(path) {
-            Ok(suppression_file) => Self {
-                suppressions_by_file: Some(suppression_file),
-                manager_status: OxlintSuppressionFileAction::Exists,
-                file_exists: true,
-                prune_suppression,
-                suppress_all,
-            },
-            Err(err) => Self {
-                suppressions_by_file: None,
-                manager_status: OxlintSuppressionFileAction::Malformed(err),
-                file_exists: true,
-                prune_suppression,
-                suppress_all,
-            },
+            Ok(suppression_file) => (
+                Self {
+                    suppressions_by_file: Some(suppression_file),
+                    manager_status: OxlintSuppressionFileAction::Exists,
+                    suppression_path: path.into(),
+                    file_exists: true,
+                    prune_suppression,
+                    suppress_all,
+                    receiver,
+                },
+                sender,
+            ),
+            Err(err) => (
+                Self {
+                    suppressions_by_file: None,
+                    manager_status: OxlintSuppressionFileAction::Malformed(err),
+                    suppression_path: path.into(),
+                    file_exists: true,
+                    prune_suppression,
+                    suppress_all,
+                    receiver,
+                },
+                sender,
+            ),
         }
     }
 
@@ -110,7 +141,7 @@ impl SuppressionManager {
         file.update(diff)
     }
 
-    pub fn write(&self, path: &Path) -> Result<(), OxcDiagnostic> {
+    pub fn write(&self) -> Result<(), OxcDiagnostic> {
         if !self.file_exists && self.prune_suppression {
             return Err(OxcDiagnostic::error(
                 "You can't prune error messages if a bulk suppression file doesn't exist.",
@@ -123,7 +154,25 @@ impl SuppressionManager {
             ));
         };
 
-        file.save(path)
+        file.save(&self.suppression_path)
+    }
+
+    pub fn report_suppression(&mut self) -> Result<(), OxcDiagnostic> {
+        let mut have_at_least_one_diff = false;
+        while let Ok(diff) = self.receiver.recv() {
+            if !have_at_least_one_diff {
+                have_at_least_one_diff = true;
+            }
+
+            self.update(diff);
+        }
+
+        if have_at_least_one_diff && self.is_updating_file() {
+            self.has_been_updated();
+            self.write()
+        } else {
+            Ok(())
+        }
     }
 
     pub fn diff_filename(

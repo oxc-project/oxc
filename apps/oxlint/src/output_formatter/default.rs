@@ -54,6 +54,9 @@ impl InternalFormatter for DefaultOutputFormatter {
             OxlintSuppressionFileAction::Malformed(error) => {
                 format!("{}\n", &error.message.to_string())
             }
+            OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
+                format!("{}\n", &error.message.to_string())
+            }
         };
 
         finished_text.insert_str(0, oxlint_suppression_action_text.as_ref());
