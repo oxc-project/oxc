@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{Mutex, mpsc},
 };
@@ -66,7 +67,7 @@ impl Walk {
         // Expand glob patterns and add to target paths
         // NOTE: See `expand_glob_patterns()` for why we pre-expand globs here
         if !glob_patterns.is_empty() {
-            target_paths.extend(expand_glob_patterns(cwd, &glob_patterns)?);
+            target_paths.extend(expand_glob_patterns(cwd, &glob_patterns, with_node_modules)?);
         }
 
         // Default to `cwd` if no positive paths were specified.
@@ -174,16 +175,7 @@ impl Walk {
                 // it means we want to include hidden files and directories.
                 // However, we (and also Prettier) still skip traversing certain directories.
                 // https://prettier.io/docs/ignore#ignoring-files-prettierignore
-                let is_ignored_dir = {
-                    let dir_name = entry.file_name();
-                    dir_name == ".git"
-                        || dir_name == ".jj"
-                        || dir_name == ".sl"
-                        || dir_name == ".svn"
-                        || dir_name == ".hg"
-                        || (!with_node_modules && dir_name == "node_modules")
-                };
-                if is_ignored_dir {
+                if is_ignored_dir(entry.file_name(), with_node_modules) {
                     return false;
                 }
             }
@@ -246,6 +238,17 @@ fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors
     false
 }
 
+/// Check if a directory should be skipped during walking.
+/// VCS internal directories are always skipped, and `node_modules` is skipped by default.
+fn is_ignored_dir(dir_name: &OsStr, with_node_modules: bool) -> bool {
+    dir_name == ".git"
+        || dir_name == ".jj"
+        || dir_name == ".sl"
+        || dir_name == ".svn"
+        || dir_name == ".hg"
+        || (!with_node_modules && dir_name == "node_modules")
+}
+
 /// Check if a path string looks like a glob pattern.
 /// Glob-like characters are also valid path characters on some environments.
 /// If the path actually exists on disk, it is treated as a concrete path.
@@ -270,7 +273,11 @@ fn is_glob_pattern(s: &str, cwd: &Path) -> bool {
 // `ignore::Overrides` have the highest priority in the `ignore` crate,
 // so files matching the glob would be collected even if they're in `.gitignore`!
 /// Expand glob patterns to concrete file paths.
-fn expand_glob_patterns(cwd: &Path, patterns: &[String]) -> Result<Vec<PathBuf>, String> {
+fn expand_glob_patterns(
+    cwd: &Path,
+    patterns: &[String],
+    with_node_modules: bool,
+) -> Result<Vec<PathBuf>, String> {
     let mut ob = OverrideBuilder::new(cwd);
     for pattern in patterns {
         ob.add(pattern).map_err(|e| format!("Invalid glob pattern `{pattern}`: {e}"))?;
@@ -279,6 +286,11 @@ fn expand_glob_patterns(cwd: &Path, patterns: &[String]) -> Result<Vec<PathBuf>,
 
     let mut builder = ignore::WalkBuilder::new(cwd);
     builder.overrides(overrides);
+    // Skip ignored directories to align with the main walk behavior.
+    builder.filter_entry(move |entry| {
+        !(entry.file_type().is_some_and(|ft| ft.is_dir())
+            && is_ignored_dir(entry.file_name(), with_node_modules))
+    });
 
     let paths = Mutex::new(vec![]);
     apply_walk_settings(&mut builder).build_parallel().run(|| {

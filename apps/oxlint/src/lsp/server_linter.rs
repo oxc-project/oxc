@@ -4,7 +4,9 @@ use std::sync::{Arc, OnceLock};
 use ignore::gitignore::Gitignore;
 use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
-use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
+use tower_lsp_server::ls_types::{
+    CodeActionContext, DiagnosticOptions, DiagnosticServerCapabilities,
+};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -590,7 +592,7 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
+        context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(uri);
 
@@ -605,7 +607,7 @@ impl Tool for ServerLinter {
         let actions =
             actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
         // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
-        let is_source_fix_all = only_code_action_kinds.is_some_and(|only| {
+        let is_source_fix_all = context.only.as_ref().is_some_and(|only| {
             only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
                 || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
         });

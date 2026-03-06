@@ -254,6 +254,8 @@ fn check(
     readonly_config: &ArrayOption,
     ctx: &LintContext,
 ) {
+    let type_annotation = type_annotation.without_parenthesized();
+
     if let TSType::TSArrayType(array_type) = &type_annotation {
         check_and_report_error_generic(
             default_config,
@@ -279,6 +281,18 @@ fn check(
 
     if let TSType::TSTypeReference(ts_type_reference) = &type_annotation {
         check_and_report_error_reference(default_config, readonly_config, ts_type_reference, ctx);
+    }
+
+    if let TSType::TSUnionType(ts_union_type) = &type_annotation {
+        for type_annotation in &ts_union_type.types {
+            check(type_annotation, default_config, readonly_config, ctx);
+        }
+    }
+
+    if let TSType::TSIntersectionType(ts_intersection_type) = &type_annotation {
+        for type_annotation in &ts_intersection_type.types {
+            check(type_annotation, default_config, readonly_config, ctx);
+        }
     }
 }
 
@@ -1100,6 +1114,7 @@ const instance = new MyClass<number>(42);",
         ),
         ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
         ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("interface I { b: string | string[]; }", Some(serde_json::json!([{"default":"generic"}]))),
         ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
         (
             "let a: readonly (string | number)[] = [];",
@@ -1660,6 +1675,11 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         (
             "let a: (string | number)[] = [];",
             "let a: Array<string | number> = [];",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "interface I { b: string | string[]; }",
+            "interface I { b: string | Array<string>; }",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
         (
