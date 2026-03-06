@@ -43,7 +43,7 @@ impl InternalFormatter for DefaultOutputFormatter {
         let oxlint_suppression_action_text = match &lint_command_info.oxlint_suppression_file_action
         {
             OxlintSuppressionFileAction::None | OxlintSuppressionFileAction::Exists => {
-                "".to_string()
+                String::new()
             }
             OxlintSuppressionFileAction::Created => {
                 "'oxlint-suppressions.json' has been created in the root folder.\n".to_string()
@@ -51,10 +51,8 @@ impl InternalFormatter for DefaultOutputFormatter {
             OxlintSuppressionFileAction::Updated => {
                 "'oxlint-suppressions.json' has been updated.\n".to_string()
             }
-            OxlintSuppressionFileAction::Malformed(error) => {
-                format!("{}\n", &error.message.to_string())
-            }
-            OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
+            OxlintSuppressionFileAction::Malformed(error)
+            | OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
                 format!("{}\n", &error.message.to_string())
             }
         };
