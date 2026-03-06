@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     AllowWarnDeny,
@@ -295,7 +295,7 @@ impl ConfigStore {
         }
     }
 
-    /// Returns the total number of rules, inclusive of JS Plugin rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
+    /// Returns the total number of rules, inclusive of JS Plugin rules and overrides, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         // If there are nested configs the number of rules may vary per-file, so return `None`.
         // Note: this is `> 1` due to https://github.com/oxc-project/oxc/issues/16356
@@ -303,13 +303,45 @@ impl ConfigStore {
             return None;
         }
 
-        let builtin_count = if type_aware_enabled {
-            self.base.base.rules.len()
+        let mut builtin_rules = if type_aware_enabled {
+            self.base.base.rules.iter().map(|(rule, _)| rule.clone()).collect::<FxHashSet<_>>()
         } else {
-            self.base.base.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()).count()
+            self.base
+                .base
+                .rules
+                .iter()
+                .filter(|(rule, _)| !rule.is_tsgolint_rule())
+                .map(|(rule, _)| rule.clone())
+                .collect::<FxHashSet<_>>()
         };
 
-        Some(builtin_count + self.base.base.external_rules.len())
+        let mut external_rules = self
+            .base
+            .base
+            .external_rules
+            .iter()
+            .map(|(rule_id, _, _)| *rule_id)
+            .collect::<FxHashSet<_>>();
+
+        for override_config in self.base.overrides.iter() {
+            for (rule, severity) in &override_config.rules.builtin_rules {
+                if !severity.is_warn_deny() {
+                    continue;
+                }
+                if !type_aware_enabled && rule.is_tsgolint_rule() {
+                    continue;
+                }
+                builtin_rules.insert(rule.clone());
+            }
+
+            for (rule_id, _, severity) in &override_config.rules.external_rules {
+                if severity.is_warn_deny() {
+                    external_rules.insert(*rule_id);
+                }
+            }
+        }
+
+        Some(builtin_rules.len() + external_rules.len())
     }
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
@@ -406,8 +438,8 @@ mod test {
         },
         rule::Rule,
         rules::{
-            EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny,
-            TypescriptNoMisusedPromises,
+            EslintAccessorPairs, EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension,
+            TypescriptNoExplicitAny, TypescriptNoMisusedPromises,
         },
     };
 
@@ -555,13 +587,135 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(false), Some(1));
+        assert_eq!(store.number_of_rules(false), Some(2));
 
         assert_eq!(store.resolve("App.tsx".as_ref()).rules.len(), 1);
         assert_eq!(store.resolve("src/App.tsx".as_ref()).rules.len(), 2);
         assert_eq!(store.resolve("src/App.ts".as_ref()).rules.len(), 2);
         assert_eq!(store.resolve("src/foo/bar/baz/App.tsx".as_ref()).rules.len(), 2);
         assert_eq!(store.resolve("src/foo/bar/baz/App.spec.tsx".as_ref()).rules.len(), 2);
+    }
+
+    #[test]
+    fn test_number_of_rules_override_only() {
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![
+                    (
+                        RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                        AllowWarnDeny::Warn,
+                    ),
+                    (
+                        RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+                        AllowWarnDeny::Warn,
+                    ),
+                ],
+                external_rules: vec![],
+            },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![(
+                    RuleEnum::EslintAccessorPairs(EslintAccessorPairs::default()),
+                    AllowWarnDeny::Warn,
+                )],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert_eq!(store.number_of_rules(false), Some(3));
+        assert_eq!(store.number_of_rules(true), Some(3));
+    }
+
+    #[test]
+    fn test_number_of_rules_dedupes_same_rule_across_overrides() {
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.ts"]),
+                plugins: None,
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![
+                        (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Warn),
+                        (
+                            RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+                            AllowWarnDeny::Warn,
+                        ),
+                    ],
+                    external_rules: vec![],
+                },
+            },
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.tsx"]),
+                plugins: None,
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![(
+                        RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+                        AllowWarnDeny::Deny,
+                    )],
+                    external_rules: vec![],
+                },
+            },
+        ]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert_eq!(store.number_of_rules(false), Some(2));
+    }
+
+    #[test]
+    fn test_number_of_rules_dedupes_root_and_override_same_rule() {
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.ts"]),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                    AllowWarnDeny::Deny,
+                )],
+                external_rules: vec![],
+            },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![no_explicit_any()],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert_eq!(store.number_of_rules(false), Some(1));
+        assert_eq!(store.number_of_rules(true), Some(1));
     }
 
     #[test]
