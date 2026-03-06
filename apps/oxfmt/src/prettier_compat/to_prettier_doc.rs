@@ -1,9 +1,15 @@
 use rustc_hash::FxHashMap;
 use serde_json::{Value, json};
 
+use oxc_allocator::Allocator;
+use oxc_ast::ast::TemplateElement;
+use oxc_ast_visit::Visit;
 use oxc_formatter::{
     BestFittingElement, DedentMode, FormatElement, GroupId, LineMode, PrintMode, Tag,
+    get_parse_options,
 };
+use oxc_parser::Parser;
+use oxc_span::{Span, SourceType};
 
 // TODO: Currently, we build a Prettier Doc tree using `serde_json::Value`,
 // then serialize it to a string.
@@ -13,8 +19,14 @@ use oxc_formatter::{
 // - caching interned elements
 // - reusing constant Doc structures like `{type: "line", hard: true}`
 
-/// Splits a printed string by newlines and joins with Prettier `hardline` docs.
-pub fn printed_string_to_hardline_doc(text: &str) -> Value {
+/// Splits a printed string by newlines and joins with Prettier docs.
+/// Newlines inside template literal text use `literalline` (ignores parent indent),
+/// all other newlines use `hardline` (respects parent indent).
+///
+/// This is critical for `vueIndentScriptAndStyle: true` where Prettier wraps
+/// the `textToDoc()` result with `indent()`. Without `literalline`, template
+/// literal content gains extra indentation on each format pass (non-idempotent).
+pub fn printed_string_to_doc_with_template_literals(text: &str, source_ext: &str) -> Value {
     // `lines()` will remove trailing newlines, but it is fine.
     // For js-in-xxx fragments, do not need to preserve trailing newlines.
     let lines: Vec<&str> = text.lines().collect();
@@ -23,18 +35,92 @@ pub fn printed_string_to_hardline_doc(text: &str) -> Value {
         return Value::String(text.to_string());
     }
 
+    // Collect template literal element byte ranges from the formatted code.
+    let template_literal_ranges = collect_template_element_spans(text, source_ext);
+
+    // Build the Doc, choosing `literalline` vs `hardline` per newline position.
     let mut parts: Vec<Value> = Vec::with_capacity(lines.len() * 3);
+    let mut byte_offset: usize = 0;
+
     for (i, line) in lines.iter().enumerate() {
         if 0 < i {
-            // hardline = [{ type: "line", hard: true } + break-parent]
-            // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/document/builders/line.js#L27
-            parts.push(json!({"type": "line", "hard": true}));
-            parts.push(json!({"type": "break-parent"}));
+            // The newline character is at `byte_offset - 1` (we advanced past it).
+            // But we compute it as: the byte just after the previous line's content.
+            let newline_pos = byte_offset;
+            if is_in_template_literal(newline_pos, &template_literal_ranges) {
+                // literalline = { type: "line", hard: true, literal: true } + break-parent
+                push_literal_line(&mut parts);
+            } else {
+                // hardline = { type: "line", hard: true } + break-parent
+                parts.push(json!({"type": "line", "hard": true}));
+                parts.push(json!({"type": "break-parent"}));
+            }
+            // Account for the newline character(s)
+            // Handle both \n and \r\n
+            if byte_offset < text.len() && text.as_bytes()[byte_offset] == b'\r' {
+                byte_offset += 1;
+            }
+            if byte_offset < text.len() && text.as_bytes()[byte_offset] == b'\n' {
+                byte_offset += 1;
+            }
         }
         parts.push(Value::String((*line).to_string()));
+        byte_offset += line.len();
     }
 
     normalize_array(parts)
+}
+
+/// Check if a byte offset falls within any template literal element span.
+fn is_in_template_literal(pos: usize, ranges: &[Span]) -> bool {
+    // Ranges are sorted, so binary search for efficiency.
+    ranges.binary_search_by(|span| {
+        let start = span.start as usize;
+        let end = span.end as usize;
+        if pos < start {
+            std::cmp::Ordering::Greater
+        } else if pos >= end {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Equal
+        }
+    }).is_ok()
+}
+
+/// Parse the formatted code and collect all `TemplateElement` spans.
+/// These spans cover the raw text portions of template literals
+/// (between `\`` and `${` or `}` and `\``).
+fn collect_template_element_spans(text: &str, source_ext: &str) -> Vec<Span> {
+    let Ok(source_type) = SourceType::from_extension(source_ext) else {
+        return Vec::new();
+    };
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, text, source_type)
+        .with_options(get_parse_options())
+        .parse();
+
+    // If parsing fails, fall back to all-hardline (no literallines).
+    if !ret.errors.is_empty() {
+        return Vec::new();
+    }
+
+    let mut visitor = TemplateElementCollector { spans: Vec::new() };
+    visitor.visit_program(&ret.program);
+    // Sort by start position for binary search.
+    visitor.spans.sort_unstable_by_key(|s| s.start);
+    visitor.spans
+}
+
+/// AST visitor that collects spans of `TemplateElement` nodes.
+struct TemplateElementCollector {
+    spans: Vec<Span>,
+}
+
+impl<'a> Visit<'a> for TemplateElementCollector {
+    fn visit_template_element(&mut self, elem: &TemplateElement<'a>) {
+        self.spans.push(elem.span);
+    }
 }
 
 /// Converts `oxc_formatter` IR (`FormatElement` slice) into Prettier Doc.

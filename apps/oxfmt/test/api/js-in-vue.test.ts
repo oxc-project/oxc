@@ -52,4 +52,37 @@ const cls = clsx("p-4 flex");
     expect(result.code).toMatchSnapshot();
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should be idempotent for template literals with vueIndentScriptAndStyle", async () => {
+    const input = `
+<script setup lang="ts">
+const msg = \`
+  hello
+  world
+\`;
+
+function greet(name: string) {
+  return \`
+Hello, \${name}!
+How are you?
+\`;
+}
+</script>
+<template>
+  <div>{{ msg }}</div>
+</template>
+`;
+    const options = { vueIndentScriptAndStyle: true };
+
+    const first = await format("a.vue", input, options);
+    expect(first.errors).toStrictEqual([]);
+
+    const second = await format("a.vue", first.code, options);
+    expect(second.errors).toStrictEqual([]);
+
+    // Formatting should be idempotent: second pass should produce identical output.
+    // Before the fix, each pass would add +2 spaces to template literal content.
+    expect(second.code).toBe(first.code);
+    expect(second.code).toMatchSnapshot();
+  });
 });

@@ -1,5 +1,25 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should be idempotent for template literals with vueIndentScriptAndStyle 1`] = `
+"<script setup lang="ts">
+  const msg = \`
+  hello
+  world
+\`;
+
+  function greet(name: string) {
+    return \`
+Hello, \${name}!
+How are you?
+\`;
+  }
+</script>
+<template>
+  <div>{{ msg }}</div>
+</template>
+"
+`;
+
 exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
 "<script lang="ts">
   import a from "a";
