@@ -41,3 +41,25 @@
 | File | Note |
 | :--- | :--- |
 | comment-tag.js | `/* GraphQL */` comment tag not yet supported |
+
+## css-in-js
+
+### Option 1: 16/17 (94.12%)
+
+```json
+{"printWidth":80}
+```
+
+| File | Note |
+| :--- | :--- |
+| styled-components.js | Multiple issues: `Button.extend` not recognized as tag |
+
+### Option 2: 16/17 (94.12%)
+
+```json
+{"printWidth":100}
+```
+
+| File | Note |
+| :--- | :--- |
+| styled-components.js | Multiple issues: `Button.extend` not recognized as tag |
