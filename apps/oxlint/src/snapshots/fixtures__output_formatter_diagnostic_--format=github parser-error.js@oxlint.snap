@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=github parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+::error file=parser-error.js,line=3,endLine=3,col=9,endColumn=10,title=oxlint::Expected `;` but found `:`
+----------
+CLI result: LintFoundErrors
+----------

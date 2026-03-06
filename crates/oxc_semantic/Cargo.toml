@@ -1,6 +1,6 @@
 [package]
 name = "oxc_semantic"
-version = "0.114.0"
+version = "0.115.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,6 +28,7 @@ oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
+oxc_jsdoc = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
@@ -46,5 +47,6 @@ serde_json = { workspace = true }
 [features]
 default = []
 cfg = ["dep:oxc_cfg"]
-linter = []
+jsdoc = ["dep:oxc_jsdoc"]
+linter = ["jsdoc"]
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]

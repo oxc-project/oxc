@@ -20,6 +20,7 @@ use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -568,6 +569,24 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
+        let (tokens_offset, tokens_len) =
+            if let Some(tokens) = ctx_host.current_sub_host().parser_tokens() {
+                let tokens_json = to_estree_tokens_json(
+                    tokens,
+                    program,
+                    original_source_text,
+                    &span_converter,
+                    EstreeTokenOptions::linter(),
+                );
+                let tokens_json = allocator.alloc_str(&tokens_json);
+                let tokens_offset = tokens_json.as_ptr() as u32;
+                #[expect(clippy::cast_possible_truncation)]
+                let tokens_len = tokens_json.len() as u32;
+                (tokens_offset, tokens_len)
+            } else {
+                (0, 0)
+            };
+
         span_converter.convert_program(program);
         span_converter.convert_comments(&mut program.comments);
 
@@ -577,7 +596,14 @@ impl Linter {
         // Write offset of `Program` in metadata at end of buffer
         let is_ts = program.source_type.is_typescript();
         let is_jsx = program.source_type.is_jsx();
-        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx, has_bom);
+        let metadata = RawTransferMetadata::new(
+            program_offset,
+            is_ts,
+            is_jsx,
+            has_bom,
+            tokens_offset,
+            tokens_len,
+        );
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -726,14 +752,24 @@ pub struct RawTransferMetadata2 {
     pub is_jsx: bool,
     /// `true` if source text has a BOM.
     pub has_bom: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// Offset of serialized ESTree tokens JSON within buffer.
+    pub tokens_offset: u32,
+    /// UTF-8 byte length of serialized ESTree tokens JSON.
+    pub tokens_len: u32,
 }
 
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool, has_bom: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx, has_bom, _padding: 0 }
+    pub fn new(
+        data_offset: u32,
+        is_ts: bool,
+        is_jsx: bool,
+        has_bom: bool,
+        tokens_offset: u32,
+        tokens_len: u32,
+    ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
+        Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

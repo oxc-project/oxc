@@ -2482,9 +2482,16 @@ impl Gen for JSXEmptyExpression {
 
 impl Gen for JSXExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            Self::EmptyExpression(expr) => expr.print(p, ctx),
-            _ => p.print_expression(self.to_expression()),
+        if let Self::EmptyExpression(expr) = self {
+            expr.print(p, ctx);
+        } else {
+            let expr = self.to_expression();
+            let start = expr.span().start;
+            if p.has_comment(start) {
+                p.print_comments_at(start);
+                p.print_indent();
+            }
+            p.print_expression(expr);
         }
     }
 }
@@ -2515,7 +2522,11 @@ impl Gen for JSXAttributeValue<'_> {
 
 impl Gen for JSXSpreadAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_str("{...");
+        p.print_ascii_byte(b'{');
+        if p.print_comments_in_range(self.span.start, self.argument.span().start) {
+            p.print_indent();
+        }
+        p.print_str("...");
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
     }
@@ -2655,6 +2666,11 @@ impl Gen for MethodDefinition<'_> {
             p.print_str("static");
             p.print_soft_space();
         }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
+            p.print_soft_space();
+        }
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
@@ -2735,6 +2751,11 @@ impl Gen for PropertyDefinition<'_> {
         if self.r#static {
             p.print_space_before_identifier();
             p.print_str("static");
+            p.print_soft_space();
+        }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
             p.print_soft_space();
         }
         if self.readonly {

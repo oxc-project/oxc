@@ -1,8 +1,8 @@
-commit: ad32683b
+commit: 308c8d85
 
 semantic_babel Summary:
-AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2025/2224 (91.05%)
+AST Parsed     : 2227/2227 (100.00%)
+Positive Passed: 2027/2227 (91.02%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -208,6 +208,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["v"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-call-in-conditional/input.ts
+Unresolved references mismatch:
+after transform: ["a", "arguments", "async", "b"]
+rebuilt        : ["a", "arguments", "async"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-false-positive/input.ts
 Unresolved references mismatch:

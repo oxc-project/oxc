@@ -181,6 +181,33 @@ mod test {
         }
     }
 
+    // Regression test for https://github.com/oxc-project/oxc/issues/19588
+    // Parser errors with colons in their message (e.g. 'Expected `;` but found `:`')
+    // were being truncated to just the character after the first colon.
+    #[test]
+    fn test_output_formatter_diagnostic_formats_with_parser_error() {
+        let mut formats: Vec<&str> =
+            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+
+        // disabled for windows
+        // json will output the offset which will be different for windows
+        // when there are multiple lines (`\r\n` vs `\n`)
+        if cfg!(not(target_os = "windows")) {
+            formats.push("json");
+        }
+
+        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        if cfg!(not(target_endian = "big")) {
+            formats.push("gitlab");
+        }
+
+        for fmt in &formats {
+            let args_vec = [format!("--format={fmt}"), "parser-error.js".to_string()];
+            let args_ref: Vec<&str> = args_vec.iter().map(std::string::String::as_str).collect();
+            Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(&args_ref);
+        }
+    }
+
     // Test that each of the formatters can output the disable directive violations.
     #[test]
     fn test_output_formatter_diagnostic_formats_with_disable_directive() {

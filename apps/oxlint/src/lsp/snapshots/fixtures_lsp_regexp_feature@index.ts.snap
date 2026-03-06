@@ -9,7 +9,7 @@ File URI: file://<variable>/fixtures/lsp/regexp_feature/index.ts
 
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
-message: "Unexpected control character"
+message: "Unexpected control character\nhelp: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead."
 range: Range { start: Position { line: 1, character: 16 }, end: Position { line: 1, character: 22 } }
 related_information[0].message: "'U+0000' is a control character."
 related_information[0].location.uri: "file://<variable>/fixtures/lsp/regexp_feature/index.ts"

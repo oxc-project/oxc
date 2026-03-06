@@ -40,6 +40,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
    ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => console.log(123));
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
  1 │ jest.fn().mockImplementation(() => "hello world")
    ·           ──────────────────
    ╰────
@@ -742,6 +749,13 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────
    ╰────
   help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => console.log(123));
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
 
   ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
    ╭─[prefer_mock_return_shorthand.tsx:1:9]

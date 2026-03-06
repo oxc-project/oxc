@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 7958b56 linter: Fix syntax error reporting in some output formatters.  (#19590) (connorshea)
+
 ## [0.107.0] - 2026-01-05
 
 ### 🚀 Features

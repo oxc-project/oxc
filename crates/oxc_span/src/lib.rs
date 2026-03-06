@@ -3,10 +3,12 @@
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
 mod cmp;
+mod edit_distance;
 mod source_type;
 mod span;
 
 pub use cmp::ContentEq;
+pub use edit_distance::{best_match, min_edit_distance};
 pub use oxc_str::ident;
 pub use oxc_str::{
     ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,

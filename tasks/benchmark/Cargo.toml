@@ -67,6 +67,7 @@ oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
+oxc_estree_tokens = { workspace = true, optional = true }
 oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
@@ -103,6 +104,7 @@ compiler = [
   "dep:oxc_ast",
   "dep:oxc_ast_visit",
   "dep:oxc_codegen",
+  "dep:oxc_estree_tokens",
   "dep:oxc_formatter",
   "dep:oxc_isolated_declarations",
   "dep:oxc_mangler",

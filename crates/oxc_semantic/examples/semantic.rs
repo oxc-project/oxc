@@ -91,9 +91,7 @@ fn main() -> std::io::Result<()> {
 
         for sym in semantic.semantic.scoping().symbol_ids() {
             let symbol_name = semantic.semantic.scoping().symbol_name(sym);
-            let declaration_node_id = semantic.semantic.scoping().symbol_declaration(sym);
-            let declaration_span =
-                semantic.semantic.nodes().get_node(declaration_node_id).kind().span();
+            let declaration_span = semantic.semantic.scoping().symbol_span(sym);
 
             let reference_spans = semantic.semantic.symbol_references(sym).map(|reference| {
                 (

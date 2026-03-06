@@ -438,7 +438,10 @@ where
     let path = path.iter().rev();
 
     for e in paths {
-        if e.as_ref().iter().zip(path.clone()).all(|(x, y)| x == y) {
+        let expected_path = e.as_ref();
+        if expected_path.len() == path.len()
+            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
+        {
             return true;
         }
     }

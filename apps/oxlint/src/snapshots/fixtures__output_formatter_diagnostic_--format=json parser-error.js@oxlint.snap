@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=json parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+{ "diagnostics": [{"message": "Expected `;` but found `:`","severity": "error","causes": [],"filename": "parser-error.js","labels": [{"label": "`;` expected","span": {"offset": 53,"length": 1,"line": 3,"column": 9}}],"related": []}],
+              "number_of_files": 1,
+              "number_of_rules": 2,
+              "threads_count": 1,
+              "start_time": <variable>
+            }
+            ----------
+CLI result: LintFoundErrors
+----------

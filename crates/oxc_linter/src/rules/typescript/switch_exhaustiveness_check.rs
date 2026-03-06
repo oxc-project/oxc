@@ -133,7 +133,8 @@ declare_oxc_lint!(
     SwitchExhaustivenessCheck(tsgolint),
     typescript,
     pedantic,
-    pending,
+    // Does not have a suggestion for all cases, e.g. nothing for an unnecessary `default` branch right now.
+    conditional_suggestion,
     config = SwitchExhaustivenessCheckConfig,
 );
 

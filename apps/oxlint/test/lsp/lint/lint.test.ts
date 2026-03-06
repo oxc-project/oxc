@@ -21,8 +21,23 @@ describe("LSP linting", () => {
       ["config-severity/test.ts", "typescript"],
       ["config-js-plugin/test.js", "javascript"],
       ["config-ts-config/test.js", "javascript"],
+      ["config-ts-type-aware/test.ts", "typescript"],
+      ["config-ts-nested-type-aware-invalid/nested/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await lintFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+    });
+
+    it("should allow LSP typeAware option to override ts config", async () => {
+      expect(
+        await lintFixture(
+          FIXTURES_DIR,
+          "config-ts-type-aware/test-with-lsp-config.ts",
+          "typescript",
+          {
+            typeAware: false,
+          },
+        ),
+      ).toMatchSnapshot();
     });
   });
 

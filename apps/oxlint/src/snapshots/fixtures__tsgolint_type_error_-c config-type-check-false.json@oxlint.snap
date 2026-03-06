@@ -1,0 +1,30 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config-type-check-false.json
+working directory: fixtures/tsgolint_type_error
+----------
+
+  ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[index.js:2:7]
+ 1 | "use strict";
+ 2 | const foo = "42";
+   :       ^|^
+   :        `-- 'foo' is declared here
+   `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[index.ts:1:7]
+ 1 | const foo: number = "42";
+   :       ^|^
+   :        `-- 'foo' is declared here
+   `----
+  help: Consider removing this declaration.
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 107 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

@@ -1,6 +1,7 @@
 #![allow(clippy::module_inception)]
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_span::GetSpan;
 
 use crate::options::FormatOptions;
 
@@ -225,6 +226,19 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// ```
     pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast> {
         FillBuilder::new(self)
+    }
+
+    /// Speculatively formats `content` and returns whether the result would break across lines.
+    ///
+    /// This snapshots and restores the comment state so that the speculative formatting
+    /// doesn't permanently advance the comment cursor. Comments before the content's span
+    /// are skipped so they don't get incorrectly included as leading comments.
+    pub fn speculate_will_break(&mut self, content: &(impl Format<'ast> + GetSpan)) -> bool {
+        let snapshot = self.context().comments().snapshot();
+        self.context_mut().comments_mut().skip_comments_before(content.span().start);
+        let will_break = self.intern(content).is_some_and(|e| e.will_break());
+        self.context_mut().comments_mut().restore(snapshot);
+        will_break
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.

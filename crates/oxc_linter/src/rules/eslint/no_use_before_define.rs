@@ -132,6 +132,9 @@ impl Rule for NoUseBeforeDefine {
         }
 
         let Some(symbol_id) = reference.symbol_id() else {
+            if self.0.ignore_type_references && is_type_reference(reference, node, ctx) {
+                return;
+            }
             if let Some(declaration_span) =
                 unresolved_initializer_reference_declaration_span(identifier, node, ctx)
             {
@@ -2507,6 +2510,19 @@ fn test_typescript_eslint() {
             const baz = '';
                   ",
             Some(serde_json::json!([{ "ignoreTypeReferences": true }])),
+        ),
+        (
+            "
+            declare global {
+              type foo = string;
+            }
+
+            export function fn(x: unknown) {
+              const foo = x as foo;
+              return foo;
+            }
+                  ",
+            Some(serde_json::json!([{ "ignoreTypeReferences": true, "variables": true }])),
         ),
         (
             "

@@ -405,6 +405,19 @@ impl Scoping {
         *self.symbol_table.symbol_declarations(symbol_id)
     }
 
+    /// Get all declaration node IDs for a symbol.
+    ///
+    /// Most symbols have a single declaration, but TypeScript allows merged type/value
+    /// declarations (e.g. `interface Foo {}` + `const Foo = ...`).
+    /// This iterator yields all declaration nodes in those cases.
+    #[inline]
+    pub fn symbol_declarations(&self, symbol_id: SymbolId) -> impl Iterator<Item = NodeId> + '_ {
+        let redeclarations = self.symbol_redeclarations(symbol_id);
+        std::iter::once(self.symbol_declaration(symbol_id))
+            .filter(move |_| redeclarations.is_empty())
+            .chain(redeclarations.iter().map(|redeclaration| redeclaration.declaration))
+    }
+
     /// Create a new symbol and append symbol metadata to the symbol table.
     pub fn create_symbol(
         &mut self,

@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.50.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 7958b56 linter: Fix syntax error reporting in some output formatters.  (#19590) (connorshea)
+- 024f51c linter: Add help text to more eslint diagnostics (#19591) (Anthony Amaro)
+- 50fc70d linter/type-aware: Use correct span for disable directives (#19576) (camc314)
+- 421a99c linter: Add help guidance to eslint diagnostic messages (#19562) (Anthony Amaro)
+- 89b58d0 linter: Add help text to more eslint rule diagnostics (#19561) (Anthony Amaro)
+
+### 🛡️ Security
+
+- c67f9dc linter: Update ajv version. (#19613) (connorshea)
+
 ## [1.49.0] - 2026-02-19
 
 ### 💥 BREAKING CHANGES

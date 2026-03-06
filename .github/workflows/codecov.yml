@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   coverage:
+    if: github.repository == 'oxc-project/oxc'
     name: Code Coverage
     runs-on: ubuntu-latest
     steps:

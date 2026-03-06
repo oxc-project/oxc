@@ -14,6 +14,7 @@ on:
 
 jobs:
   lint_rules:
+    if: github.repository == 'oxc-project/oxc'
     runs-on: ubuntu-slim
     permissions:
       contents: read

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 933ff72 semantic: Emit correct error code for reserved type name (#19545) (camc314)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

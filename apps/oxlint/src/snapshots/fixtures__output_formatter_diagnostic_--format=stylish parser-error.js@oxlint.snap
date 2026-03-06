@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=stylish parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+[4mparser-error.js[0m
+  [2m3:9[0m  [31merror[0m  Expected `;` but found `:`  [2m[0m
+
+[31m✖ 1 problem (1 error, 0 warnings)[0m
+----------
+CLI result: LintFoundErrors
+----------

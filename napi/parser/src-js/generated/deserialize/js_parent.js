@@ -26,7 +26,7 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   float64 = buffer.float64;
   sourceText = sourceTextInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
-  return deserialize(uint32[536870902]);
+  return deserialize(uint32[536870900]);
 }
 
 export function resetBuffer() {

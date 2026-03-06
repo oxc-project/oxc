@@ -9,7 +9,14 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_loss_of_precision_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("This number literal will lose precision at runtime.").with_label(span)
+    OxcDiagnostic::warn("This number literal will lose precision at runtime.")
+        .with_help(
+            "Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.",
+        )
+        .with_note(
+            "In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt` supports arbitrarily large integers.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

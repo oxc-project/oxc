@@ -118,6 +118,9 @@ conformance *args='':
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
+test-estree-tokens *args='':
+  cargo run -p oxc_coverage --profile coverage -- estree_tokens {{args}}
+
 # Get code coverage
 codecov:
   cargo codecov --html

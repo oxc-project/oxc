@@ -88,6 +88,10 @@ impl<'a> Formatted<'a> {
 }
 
 impl Formatted<'_> {
+    /// Prints the formatted document to a string.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
     pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
         let (elements, sorted_tailwind_classes) =
@@ -96,6 +100,10 @@ impl Formatted<'_> {
         Ok(printed)
     }
 
+    /// Prints the formatted document to a string, starting at the given indentation level.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
     pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
         let (elements, sorted_tailwind_classes) =

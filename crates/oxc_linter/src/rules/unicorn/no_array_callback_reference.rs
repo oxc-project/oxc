@@ -6,7 +6,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_import_symbol,
+};
 
 fn no_array_callback_reference_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing a function reference directly to iterator methods")
@@ -94,7 +96,7 @@ impl Rule for NoArrayCallbackReference {
             }
 
             let object = member_expr.object();
-            if is_ignored_object(object) {
+            if is_ignored_object(object, ctx) {
                 return;
             }
 
@@ -196,9 +198,13 @@ fn is_allowed_builtin(name: &str) -> bool {
     )
 }
 
-fn is_ignored_object(expr: &Expression) -> bool {
+fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
     match expr {
         Expression::Identifier(ident) => {
+            if is_import_symbol(ident, "effect", "Effect", ctx) {
+                return true;
+            }
+
             matches!(
                 ident.name.as_str(),
                 "Promise"
@@ -298,6 +304,7 @@ fn test() {
         "foo.reduce(_ ? () => {} : _ ? () => {} : () => {})",
         "foo.every(_ ? Boolean : _ ? Boolean : Boolean)",
         "foo.map(_ ? String : _ ? Number : Boolean)",
+        r#"import { Effect as E } from "effect"; const foo = "boo"; E.some(foo)"#,
     ];
 
     let fail = vec![

@@ -38,6 +38,7 @@ fn main() {
         "minifier" => app_args.run_minifier(&data),
         "runtime" => app_args.run_runtime(),
         "estree" => app_args.run_estree(&data),
+        "estree_tokens" => app_args.run_estree_tokens(&data),
         "all" => {
             app_args.run_all();
             app_args.run_runtime();

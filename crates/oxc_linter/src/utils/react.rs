@@ -789,4 +789,93 @@ mod test {
         assert!(!is_react_hook_name("user"));
         assert!(!is_react_hook_name("use_state"));
     }
+
+    #[test]
+    fn test_is_es5_component() {
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        // Returns true if any of the nodes in the code snippets are an es5 component.
+        let cases: Vec<(&str, bool)> = vec![
+            ("createReactClass({})", true),
+            ("React.createReactClass({})", true),
+            ("createReactClass({ render() {} })", true),
+            ("/* createReactClass({ render() {} }) */", false),
+            ("// createReactClass({ render() {} })", false),
+            ("somethingElse({})", false),
+            ("React.somethingElse({})", false),
+            ("let x = 1;", false),
+        ];
+
+        for (source, expected) in cases {
+            let allocator = Allocator::default();
+            let source_type = SourceType::jsx();
+            let parser_ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            let semantic =
+                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+
+            let found = semantic.nodes().iter().any(|node| is_es5_component(node));
+            assert_eq!(found, expected, "Failed for: {source}");
+        }
+    }
+
+    #[test]
+    fn test_is_es6_component() {
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        // Returns true if any of the nodes in the code snippets are an es6 component.
+        let cases: Vec<(&str, bool)> = vec![
+            ("class Foo extends React.Component {}", true),
+            ("class Foo extends React.PureComponent {}", true),
+            ("class Foo extends Component {}", true),
+            ("class Foo extends PureComponent {}", true),
+            ("class Foo extends Bar {}", false),
+            ("/* class Foo extends PureComponent {} */", false),
+            ("// class Foo extends PureComponent {}", false),
+            ("class Foo {}", false),
+            ("function Foo() {}", false),
+            ("const Foo = () => {}", false),
+            ("const Component = () => {}", false),
+            ("let Component = () => {}", false),
+            // Not an es6 component, this is a function component.
+            (
+                "
+                export function Foo({ to, children }: { to: string; children: React.ReactNode }) {
+                  return (
+                    <Link className={linkClass} to={to}>
+                      {children}
+                    </Link>
+                  )
+                }",
+                false,
+            ),
+            (
+                r#"
+                export const Bar = ({ ...props }: React.ComponentProps<'button'>) => {
+                  return (
+                    <button type="button" className={linkClass} {...props}>
+                      <Foo />
+                    </button>
+                  )
+                }"#,
+                false,
+            ),
+        ];
+
+        for (source, expected) in cases {
+            let allocator = Allocator::default();
+            let source_type = SourceType::tsx();
+            let parser_ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+            let semantic =
+                SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+
+            let found = semantic.nodes().iter().any(|node| is_es6_component(node));
+            assert_eq!(found, expected, "Failed for: {source}");
+        }
+    }
 }

@@ -783,9 +783,10 @@ fn test_property_access() {
     test("[...'a'][0]", false);
     test("[...'a'][1]", true);
 
-    test("import.meta.url", false);
-    test("import.meta['url']", false);
-    test("import.meta[`url`]", false);
+    test("import.meta.url", true);
+    test("import.meta['url']", true);
+    test("import.meta[`url`]", true);
+    test_in_function("function f() { new.target.url }", true);
     test("[...'😀'][0]", false);
     test("[...'😀'][1]", true);
     test("[...a, 1][0]", true); // "...a" may have a sideeffect

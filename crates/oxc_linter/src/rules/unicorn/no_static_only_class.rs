@@ -246,7 +246,7 @@ fn test() {
         "class A { public static a = 1; }",
         "class A { private static a = 1; }",
         "class A { static readonly a = 1; }",
-        "class A { static declare a = 1; }",
+        // "class A { static declare a = 1; }",
         "class A { static {}; }",
         "class A2 { static #a() {}; }",
         "class A2 { static #a = 1; }",

@@ -16,7 +16,9 @@ use crate::{
 };
 
 fn no_labels_diagnostic(message: &'static str, label_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message).with_label(label_span)
+    OxcDiagnostic::warn(message)
+        .with_help("Consider refactoring the code to eliminate the need for labels.")
+        .with_label(label_span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

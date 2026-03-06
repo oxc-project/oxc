@@ -81,8 +81,11 @@ impl Rule for NoDupeKeys {
                 continue;
             };
             let Some(name) = prop.key.static_name() else {
-                return;
+                continue;
             };
+            if is_proto_setter_property(prop, &name) {
+                continue;
+            }
             if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
                 && (prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
@@ -93,6 +96,14 @@ impl Rule for NoDupeKeys {
             }
         }
     }
+}
+
+fn is_proto_setter_property(prop: &oxc_ast::ast::ObjectProperty<'_>, name: &str) -> bool {
+    name == "__proto__"
+        && prop.kind == PropertyKind::Init
+        && !prop.computed
+        && !prop.shorthand
+        && !prop.method
 }
 
 fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
@@ -114,38 +125,58 @@ fn test() {
         "var x = { foo: 1, bar: 2 };",
         "var x = { '': 1, bar: 2 };",
         "var x = { '': 1, ' ': 2 };",
-        "var x = { '': 1, [null]: 2 };",
-        "var x = { '': 1, [a]: 2 };",
-        "var x = { [a]: 1, [a]: 2 };",
+        "var x = { '': 1, [null]: 2 };", // { "ecmaVersion": 6 },
+        "var x = { '': 1, [a]: 2 };",    // { "ecmaVersion": 6 },
+        "var x = { [a]: 1, [a]: 2 };",   // { "ecmaVersion": 6 },
         "+{ get a() { }, set a(b) { } };",
-        "var x = { a: b, [a]: b };",
-        "var x = { a: b, ...c }",
-        "var x = { get a() {}, set a (value) {} };",
-        "var x = { a: 1, b: { a: 2 } };",
-        "var x = ({ null: 1, [/(?<zero>0)/]: 2 })",
-        "var {a, a} = obj",
-        // Syntax:error: the '0' prefixed octal literals is not allowed.
-        // "var x = { 012: 1, 12: 2 };"
-        "var x = { 1_0: 1, 1: 2 };",
+        "var x = { a: b, [a]: b };", // { "ecmaVersion": 6 },
+        "var x = { a: b, ...c }",    // { "ecmaVersion": 2018 },
+        "var x = { get a() {}, set a (value) {} };", // { "ecmaVersion": 6 },
+        "var x = { a: 1, b: { a: 2 } };", // { "ecmaVersion": 6 },
+        "var x = ({ null: 1, [/(?<zero>0)/]: 2 })", // { "ecmaVersion": 2018 },
+        "var {a, a} = obj",          // { "ecmaVersion": 6 },
+        "var x = { 012: 1, 12: 2 };",
+        "var x = { 1_0: 1, 1: 2 };", // { "ecmaVersion": 2021 },
+        "var x = { __proto__: null, ['__proto__']: null };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, __proto__: null };", // { "ecmaVersion": 6 },
+        "var x = { '__proto__': null, ['__proto__']: null };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, '__proto__': null };", // { "ecmaVersion": 6 },
+        "var x = { __proto__: null, __proto__ };", // { "ecmaVersion": 6 },
+        "var x = { __proto__, __proto__: null };", // { "ecmaVersion": 6 },
+        "var x = { __proto__: null, __proto__() {} };", // { "ecmaVersion": 6 },
+        "var x = { __proto__() {}, __proto__: null };", // { "ecmaVersion": 6 },
+        "var x = { __proto__: null, get __proto__() {} };", // { "ecmaVersion": 6 },
+        "var x = { get __proto__() {}, __proto__: null };", // { "ecmaVersion": 6 },
+        "var x = { __proto__: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
+        "var x = { set __proto__(value) {}, __proto__: null };", // { "ecmaVersion": 6 }
     ];
 
     let fail = vec![
-        "var x = { a: b, ['a']: b };",
+        "var x = { a: b, ['a']: b };", // { "ecmaVersion": 6 },
         "var x = { y: 1, y: 2 };",
         "var x = { '': 1, '': 2 };",
-        "var x = { '': 1, [``]: 2 };",
+        "var x = { '': 1, [``]: 2 };", // { "ecmaVersion": 6 },
         "var foo = { 0x1: 1, 1: 2};",
         "var x = { 012: 1, 10: 2 };",
-        "var x = { 0b1: 1, 1: 2 };",
-        "var x = { 0o1: 1, 1: 2 };",
-        "var x = { 1_0: 1, 10: 2 };",
-        "var x = { 1n: 1, 1: 2 };",
-        "var x = { \"z\": 1, z: 2 };",
-        "var foo = {\n  bar: 1,\n  bar: 1,\n}",
-        "var x = { a: 1, get a() {} };",
-        "var x = { a: 1, set a(value) {} };",
-        "var x = { a: 1, b: { a: 2 }, get b() {} };",
-        "var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })",
+        "var x = { 0b1: 1, 1: 2 };",  // { "ecmaVersion": 6 },
+        "var x = { 0o1: 1, 1: 2 };",  // { "ecmaVersion": 6 },
+        "var x = { 1n: 1, 1: 2 };",   // { "ecmaVersion": 2020 },
+        "var x = { 1_0: 1, 10: 2 };", // { "ecmaVersion": 2021 },
+        r#"var x = { "z": 1, z: 2 };"#,
+        "var foo = {
+              bar: 1,
+              bar: 1,
+            }",
+        "var x = { a: 1, get a() {} };",      // { "ecmaVersion": 6 },
+        "var x = { a: 1, set a(value) {} };", // { "ecmaVersion": 6 },
+        "var x = { a: 1, b: { a: 2 }, get b() {} };", // { "ecmaVersion": 6 },
+        "var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })", // { "ecmaVersion": 2018 },
+        "var x = { ['__proto__']: null, ['__proto__']: null };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, __proto__ };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, __proto__() {} };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, get __proto__() {} };", // { "ecmaVersion": 6 },
+        "var x = { ['__proto__']: null, set __proto__(value) {} };", // { "ecmaVersion": 6 },
+        "var x = { __proto__: null, a: 5, a: 6 };", // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();

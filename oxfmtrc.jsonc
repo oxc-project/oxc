@@ -9,6 +9,7 @@
     "apps/oxlint/test/fixtures/fixes/files/**",
     "apps/oxlint/test/fixtures/suggestions/files/**",
     "apps/oxlint/test/fixtures/sourceCode_token_methods/files/**",
+    "apps/oxlint/test/fixtures/tokens/files/**",
     "**/dist/**",
     "**/generated/**",
     "**/CHANGELOG.md",

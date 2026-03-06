@@ -10,11 +10,13 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_catch_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary try/catch wrapper")
+        .with_help("Remove the try/catch wrapper, since it does not provide any additional error handling or functionality.")
         .with_labels([catch.label("is caught here"), rethrow.label("and re-thrown here")])
 }
 
 fn no_useless_catch_finalizer_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary catch clause")
+        .with_help("Remove the catch clause, since it does not provide any additional error handling or functionality beyond what the finalizer already provides.")
         .with_labels([catch.label("is caught here"), rethrow.label("and re-thrown here")])
 }
 

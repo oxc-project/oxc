@@ -1,0 +1,24 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=gitlab parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+[
+  {
+    "description": "Expected `;` but found `:`",
+    "check_name": "",
+    "fingerprint": "5f141d44128bf58e",
+    "severity": "critical",
+    "location": {
+      "path": "apps/oxlint/parser-error.js",
+      "lines": {
+        "begin": 3,
+        "end": 3
+      }
+    }
+  }
+]----------
+CLI result: LintFoundErrors
+----------
