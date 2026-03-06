@@ -1376,7 +1376,7 @@ mod test {
         assert_eq!(
             code_actions.len(),
             3,
-            "Quickfix Context: Should return 3 code actions: 1 rule fix + 2 ignore actions, Even if the file was not linted before."
+            "Invoked Context: Should return 3 code actions: 1 rule fix + 2 ignore actions, Even if the file was not linted before."
         );
     }
 
