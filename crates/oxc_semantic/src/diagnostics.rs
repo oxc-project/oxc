@@ -354,6 +354,16 @@ pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
+/// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
+#[cold]
+pub fn infer_declaration_only_permitted_in_extends_clause(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1338",
+        "'infer' declarations are only permitted in the 'extends' clause of a conditional type.",
+    )
+    .with_label(span)
+}
+
 /// - Abstract properties can only appear within an abstract class. (1253)
 /// - Abstract methods can only appear within an abstract class. (1244)
 #[cold]
@@ -425,11 +435,12 @@ pub fn accessor_without_body(span: Span) -> OxcDiagnostic {
 }
 
 /// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+/// The left-hand side of a 'for...in' statement cannot use a type annotation. (2404)
 #[cold]
 pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
-    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
+    let (for_of_or_in, code) = if is_for_in { ("for...in", "2404") } else { ("for...of", "2483") };
     ts_error(
-        "2483",
+        code,
         format!(
             "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
         ),

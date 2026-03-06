@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 4888a99 oxfmt/lsp: Support other schemes beside `file://` and `untitled://` (#19872) (Sysix)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 8e3842d oxfmt: Avoid embedded TSFN crash by returning errors as data (take2) (#19806) (Yuji Sugiura)
+- e540585 oxfmt: Support tailwind sort for CSS/LESS/SCSS (#19803) (leaysgur)
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
 ## [0.35.0] - 2026-02-23
 
 ### 🚀 Features

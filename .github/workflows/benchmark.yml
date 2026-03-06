@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         with:
           cache-key: benchmark-${{ matrix.feature }}
           save-cache: ${{ github.ref_name == 'main' }}
@@ -93,7 +93,7 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@4deb3275dd364fb96fb074c953133d29ec96f80f # v4.10.6
+        uses: CodSpeedHQ/action@2ac572851726409c88c02a307f1ea2632a9ea59b # v4.11.0
         timeout-minutes: 30
         with:
           mode: simulation

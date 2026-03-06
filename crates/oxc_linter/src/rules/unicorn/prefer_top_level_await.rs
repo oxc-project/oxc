@@ -334,12 +334,33 @@ fn test() {
                 (async () => {})(),
                 /* hole */,
                 foo(),
+                foo?.(),
                 foo.then(bar),
                 foo.catch(bar),
             ]);
             await Promise.allSettled([foo()]);
             await Promise?.any([foo()]);
             await Promise.race?.([foo()]);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "async function getStat() {}
+            const [core, pure, bundle] = await Promise.all([
+                getStat('core-js'),
+                ALL && getStat('core-js-pure'),
+                ALL && getStat('core-js-bundle'),
+            ]);",
+            None,
+            None,
+            None,
+        ),
+        (
+            "async function getStat() {}
+            const [core] = await Promise.all([
+                ALL ? getStat('core-js') : getStat('core-js-pure'),
+            ]);",
             None,
             None,
             None,

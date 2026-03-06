@@ -1086,13 +1086,13 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn as_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+    ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
 #[cold]
 pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+    ts_error("8037", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
@@ -1119,6 +1119,11 @@ pub fn parameter_modifiers_in_ts(
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
         .with_label(modifier.span)
         .with_allowed_modifier_help(allowed)
+}
+
+#[cold]
+pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
 }
 
 #[cold]

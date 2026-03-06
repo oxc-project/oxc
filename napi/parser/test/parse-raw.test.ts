@@ -21,6 +21,7 @@ import {
   TEST_TYPE_LAZY,
   TEST_TYPE_PRETTY,
   TEST_TYPE_RANGE_PARENT,
+  TEST_TYPE_TOKENS,
   TEST_TYPE_TEST262,
   TEST_TYPE_TS,
   TS_ESTREE_DIR_PATH,
@@ -35,6 +36,10 @@ const { env } = process;
 const isEnabled = (envValue) => envValue === "true" || envValue === "1";
 
 const [describeRangeParent, itRangeParent] = isEnabled(env.RUN_RAW_RANGE_TESTS)
+  ? [describe, it]
+  : ((noop) => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
+
+const [describeTokens, _itTokens] = isEnabled(env.RUN_RAW_TOKENS_TESTS)
   ? [describe, it]
   : ((noop) => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
@@ -133,6 +138,13 @@ describeRangeParent.concurrent("range & parent test262", () => {
   );
 });
 
+describeTokens.concurrent("tokens test262", () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(test262FixturePaths)("%s", (path) =>
+    runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_TOKENS, path),
+  );
+});
+
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent("lazy test262", () => {
   // oxlint-disable-next-line jest/expect-expect
@@ -160,6 +172,11 @@ describeRangeParent.concurrent("range & parent JSX", () => {
   it.each(jsxFixturePaths)("%s", (filename) =>
     runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_RANGE_PARENT, filename),
   );
+});
+
+describeTokens.concurrent("tokens JSX", () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(jsxFixturePaths)("%s", (path) => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_TOKENS, path));
 });
 
 // Check lazy deserialization doesn't throw
@@ -193,6 +210,11 @@ describeRangeParent.concurrent("range & parent TypeScript", () => {
   it.each(tsFixturePaths)("%s", (path) =>
     runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_RANGE_PARENT, path),
   );
+});
+
+describeTokens.concurrent("tokens TypeScript", () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(tsFixturePaths)("%s", (path) => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_TOKENS, path));
 });
 
 // Check lazy deserialization doesn't throw

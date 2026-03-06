@@ -96,6 +96,8 @@ fn test() {
         "parentNode.removeChild(undefined)",
         "new parentNode.removeChild(bar);",
         "removeChild(foo);",
+        // TODO: Get this passing.
+        // "parentNode['removeChild'](bar);",
         "parentNode[removeChild](bar);",
         "parentNode.foo(bar);",
         "parentNode.removeChild(bar, extra);",

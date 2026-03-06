@@ -247,6 +247,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
 
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:1:27]
+ 1 │ interface I { b: string | string[]; }
+   ·                           ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
  1 │ let a: readonly number[] = [];

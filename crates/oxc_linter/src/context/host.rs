@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::Box as ArenaBox;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
@@ -38,8 +38,9 @@ pub struct ContextSubHost<'a> {
     pub(super) disable_directives: DisableDirectives,
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
     pub(super) framework_options: FrameworkOptions,
-    /// Parser tokens collected during parsing, when available.
-    pub(super) parser_tokens: Option<ArenaVec<'a, Token>>,
+    /// Parser tokens collected during parsing.
+    /// Empty if parsing failed, or tokens are disabled (no JS plugins).
+    pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -55,7 +56,7 @@ impl<'a> ContextSubHost<'a> {
             module_record,
             source_text_offset,
             FrameworkOptions::Default,
-            None,
+            ArenaBox::new_empty_boxed_slice(),
         )
     }
 
@@ -66,7 +67,7 @@ impl<'a> ContextSubHost<'a> {
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
-        parser_tokens: Option<ArenaVec<'a, Token>>,
+        parser_tokens: ArenaBox<'a, [Token]>,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -108,11 +109,6 @@ impl<'a> ContextSubHost<'a> {
     /// Shared reference to the [`FrameworkOptions`]
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
-    }
-
-    /// Parser tokens collected for this script block.
-    pub fn parser_tokens(&self) -> Option<&[Token]> {
-        self.parser_tokens.as_ref().map(|tokens| &tokens[..])
     }
 }
 
@@ -237,6 +233,16 @@ impl<'a> ContextHost<'a> {
     /// Shared reference to the [`DisableDirectives`] of the current script block.
     pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
+    }
+
+    /// Shared reference to the parser tokens collected for this script block.
+    pub fn parser_tokens(&self) -> &[Token] {
+        &self.current_sub_host().parser_tokens[..]
+    }
+
+    /// Mutable reference to the parser tokens collected for this script block.
+    pub fn parser_tokens_mut(&mut self) -> &mut ArenaBox<'a, [Token]> {
+        &mut self.current_sub_host_mut().parser_tokens
     }
 
     /// Path to the file being linted.

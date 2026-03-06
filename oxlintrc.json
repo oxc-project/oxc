@@ -81,5 +81,9 @@
     "napi/*/src-js/wasi-worker.mjs",
     "napi/*/src-js/wasi-worker-browser.mjs",
     "npm/oxlint-plugins/**"
-  ]
+  ],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  }
 }

@@ -158,11 +158,13 @@ impl Group {
         Self { id: None, mode: Cell::new(GroupMode::Flat) }
     }
 
+    #[must_use]
     pub fn with_id(mut self, id: Option<GroupId>) -> Self {
         self.id = id;
         self
     }
 
+    #[must_use]
     pub fn with_mode(mut self, mode: GroupMode) -> Self {
         self.mode = Cell::new(mode);
         self
@@ -208,6 +210,7 @@ impl Condition {
         Self { mode, group_id: None }
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, id: Option<GroupId>) -> Self {
         self.group_id = id;
         self
@@ -226,6 +229,10 @@ impl Condition {
 pub struct Align(pub(crate) NonZeroU8);
 
 impl Align {
+    pub fn new(count: NonZeroU8) -> Self {
+        Self(count)
+    }
+
     pub fn count(&self) -> NonZeroU8 {
         self.0
     }

@@ -67,6 +67,12 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state().group_id(debug_name)
     }
 
+    /// Returns a reference to the unique group id builder for this document.
+    #[inline]
+    pub fn group_id_builder(&self) -> &super::UniqueGroupIdBuilder {
+        self.state().group_id_builder()
+    }
+
     /// Joins multiple [Format] together without any separator
     ///
     /// ## Examples

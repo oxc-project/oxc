@@ -101,7 +101,7 @@ declare_oxc_lint!(
     NoUselessConstructor,
     eslint,
     suspicious,
-    fix
+    suggestion
 );
 
 impl Rule for NoUselessConstructor {
@@ -166,7 +166,7 @@ fn lint_empty_constructor<'a>(
         return;
     }
 
-    ctx.diagnostic_with_fix(no_empty_constructor(constructor.span), |fixer| {
+    ctx.diagnostic_with_suggestion(no_empty_constructor(constructor.span), |fixer| {
         fixer.delete_range(constructor.span)
     });
 }
@@ -188,7 +188,7 @@ fn lint_redundant_super_call<'a>(
         && !has_decorated_params(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             no_redundant_super_call(constructor.key.span(), super_call.span),
             |fixer| fixer.delete_range(constructor.span),
         );

@@ -1745,6 +1745,13 @@ impl RuleRunner
 }
 
 impl RuleRunner
+    for crate::rules::typescript::no_unnecessary_type_conversion::NoUnnecessaryTypeConversion
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
+impl RuleRunner
     for crate::rules::typescript::no_unnecessary_type_parameters::NoUnnecessaryTypeParameters
 {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
@@ -3200,7 +3207,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_classlist_toggle::PreferClassl
 
 impl RuleRunner for crate::rules::unicorn::prefer_code_point::PreferCodePoint {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

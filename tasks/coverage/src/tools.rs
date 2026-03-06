@@ -11,7 +11,7 @@ use oxc::{
     span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
-use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_pretty_json};
+use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
@@ -854,7 +854,7 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
                 &program,
                 source_text,
                 &span_converter,
-                EstreeTokenOptions::test262(),
+                ESTreeTokenOptions::new(false),
             );
 
             span_converter.convert_program_with_ascending_order_checks(&mut program);
@@ -904,7 +904,7 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
                 &program,
                 source_text,
                 &span_converter,
-                EstreeTokenOptions::test262(),
+                ESTreeTokenOptions::new(false),
             );
 
             span_converter.convert_program_with_ascending_order_checks(&mut program);
@@ -1080,7 +1080,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                     &program,
                     source_text,
                     &span_converter,
-                    EstreeTokenOptions::typescript(),
+                    ESTreeTokenOptions::new(true),
                 );
 
                 span_converter.convert_program_with_ascending_order_checks(&mut program);

@@ -15,7 +15,7 @@ use super::{
     FormatFileStrategy,
     oxfmtrc::{
         EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
-        finalize_external_options, sync_external_options,
+        finalize_external_options, sync_external_options, to_oxfmt_options,
     },
     utils,
 };
@@ -65,7 +65,7 @@ pub fn resolve_options_from_value(
 
     let mut external_options =
         serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
-    let oxfmt_options = format_config.into_oxfmt_options()?;
+    let oxfmt_options = to_oxfmt_options(format_config)?;
 
     sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
@@ -285,7 +285,7 @@ impl ConfigResolver {
             .expect("FormatConfig serialization should not fail");
 
         // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
-        let oxfmt_options = format_config.into_oxfmt_options()?;
+        let oxfmt_options = to_oxfmt_options(format_config)?;
 
         // Apply common Prettier mappings for caching.
         // Plugin options will be added later in `resolve()` via `finalize_external_options()`.
@@ -350,8 +350,7 @@ impl ConfigResolver {
         // NOTE: See `build_and_validate()` for details about `external_options` handling
         let mut external_options = serde_json::to_value(&format_config)
             .expect("FormatConfig serialization should not fail");
-        let oxfmt_options = format_config
-            .into_oxfmt_options()
+        let oxfmt_options = to_oxfmt_options(format_config)
             .expect("If this fails, there is an issue with override values");
 
         sync_external_options(&oxfmt_options.format_options, &mut external_options);

@@ -1,8 +1,5 @@
+mod css;
 mod graphql;
-
-use std::num::NonZeroU8;
-
-use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::ast::*;
@@ -10,12 +7,7 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    external_formatter::EmbeddedIR,
-    formatter::{
-        FormatElement, Formatter, GroupId,
-        format_element::{TextWidth, tag},
-        prelude::*,
-    },
+    formatter::{Formatter, prelude::*},
     write,
 };
 
@@ -26,7 +18,7 @@ pub(super) fn try_format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_tag_name(&tagged.tag) {
-        Some("css" | "styled") => try_embed_css(tagged, f),
+        Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
         Some("html") => try_embed_html(tagged, f),
         Some("md" | "markdown") => try_embed_markdown(tagged, f),
@@ -69,17 +61,10 @@ pub(super) fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    // TODO: Support expressions in the css-in-js
-    if !template_literal.is_no_substitution_template() {
-        return false;
-    }
-
     if !is_in_css_jsx(template_literal) {
         return false;
     }
-
-    let template_content = template_literal.quasis()[0].value.raw.as_str();
-    format_embedded_template(f, "styled-jsx", template_content)
+    css::format_css_doc(template_literal, f)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
@@ -117,18 +102,17 @@ pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    // TODO: Support expressions in the css-in-js and html-in-js
-    // Also need to split html or css path with using `.raw` for css, `.cooked` for html
-    if !template_literal.is_no_substitution_template() {
-        return false;
+    match get_angular_component_language(template_literal) {
+        Some("angular-template") => {
+            if !template_literal.is_no_substitution_template() {
+                return false;
+            }
+            let template_content = template_literal.quasis()[0].value.raw.as_str();
+            format_embedded_template(f, "angular-template", template_content)
+        }
+        Some("angular-styles") => css::format_css_doc(template_literal, f),
+        _ => false,
     }
-
-    let Some(language) = get_angular_component_language(template_literal) else {
-        return false;
-    };
-
-    let template_content = template_literal.quasis()[0].value.raw.as_str();
-    format_embedded_template(f, language, template_content)
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
@@ -175,18 +159,6 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
 }
 
 // ---
-
-fn try_embed_css<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    // TODO: Remove this check and use placeholder approach for expressions
-    if !tagged.quasi.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = tagged.quasi.quasis[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-css", template_content)
-}
 
 fn try_embed_html<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
@@ -275,152 +247,6 @@ fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
         }
         let strip = line.bytes().take_while(u8::is_ascii_whitespace).count().min(min_indent);
         result.push_str(&line[strip..]);
-    }
-
-    result.into_str()
-}
-
-// ---
-
-/// Write a sequence of `EmbeddedIR` elements into the formatter buffer,
-/// converting each to the corresponding `FormatElement<'a>`.
-pub(super) fn write_embedded_ir(
-    ir: &[EmbeddedIR],
-    f: &mut Formatter<'_, '_>,
-    group_id_map: &mut FxHashMap<u32, GroupId>,
-) {
-    let indent_width = f.options().indent_width;
-    for item in ir {
-        match item {
-            EmbeddedIR::Space => f.write_element(FormatElement::Space),
-            EmbeddedIR::HardSpace => f.write_element(FormatElement::HardSpace),
-            EmbeddedIR::Line(mode) => f.write_element(FormatElement::Line(*mode)),
-            EmbeddedIR::ExpandParent => f.write_element(FormatElement::ExpandParent),
-            EmbeddedIR::Text(s) => {
-                // Escape template characters to avoid breaking template literal syntax
-                let escaped = escape_template_characters(s, f.allocator());
-                let width = TextWidth::from_text(escaped, indent_width);
-                f.write_element(FormatElement::Text { text: escaped, width });
-            }
-            EmbeddedIR::LineSuffixBoundary => {
-                f.write_element(FormatElement::LineSuffixBoundary);
-            }
-            EmbeddedIR::StartIndent => {
-                f.write_element(FormatElement::Tag(tag::Tag::StartIndent));
-            }
-            EmbeddedIR::EndIndent => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndIndent));
-            }
-            EmbeddedIR::StartAlign(n) => {
-                if let Some(nz) = NonZeroU8::new(*n) {
-                    f.write_element(FormatElement::Tag(tag::Tag::StartAlign(tag::Align(nz))));
-                }
-            }
-            EmbeddedIR::EndAlign => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndAlign));
-            }
-            EmbeddedIR::StartDedent { to_root } => {
-                let mode = if *to_root { tag::DedentMode::Root } else { tag::DedentMode::Level };
-                f.write_element(FormatElement::Tag(tag::Tag::StartDedent(mode)));
-            }
-            EmbeddedIR::EndDedent { to_root } => {
-                let mode = if *to_root { tag::DedentMode::Root } else { tag::DedentMode::Level };
-                f.write_element(FormatElement::Tag(tag::Tag::EndDedent(mode)));
-            }
-            EmbeddedIR::StartGroup { id, should_break } => {
-                let gid = id.map(|n| resolve_group_id(n, group_id_map, f));
-                let mode =
-                    if *should_break { tag::GroupMode::Expand } else { tag::GroupMode::Flat };
-                f.write_element(FormatElement::Tag(tag::Tag::StartGroup(
-                    tag::Group::new().with_id(gid).with_mode(mode),
-                )));
-            }
-            EmbeddedIR::EndGroup => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndGroup));
-            }
-            EmbeddedIR::StartConditionalContent { mode, group_id } => {
-                let gid = group_id.map(|n| resolve_group_id(n, group_id_map, f));
-                f.write_element(FormatElement::Tag(tag::Tag::StartConditionalContent(
-                    tag::Condition::new(*mode).with_group_id(gid),
-                )));
-            }
-            EmbeddedIR::EndConditionalContent => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndConditionalContent));
-            }
-            EmbeddedIR::StartIndentIfGroupBreaks(id) => {
-                let gid = resolve_group_id(*id, group_id_map, f);
-                f.write_element(FormatElement::Tag(tag::Tag::StartIndentIfGroupBreaks(gid)));
-            }
-            EmbeddedIR::EndIndentIfGroupBreaks(id) => {
-                let gid = resolve_group_id(*id, group_id_map, f);
-                f.write_element(FormatElement::Tag(tag::Tag::EndIndentIfGroupBreaks(gid)));
-            }
-            EmbeddedIR::StartFill => {
-                f.write_element(FormatElement::Tag(tag::Tag::StartFill));
-            }
-            EmbeddedIR::EndFill => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndFill));
-            }
-            EmbeddedIR::StartEntry => {
-                f.write_element(FormatElement::Tag(tag::Tag::StartEntry));
-            }
-            EmbeddedIR::EndEntry => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndEntry));
-            }
-            EmbeddedIR::StartLineSuffix => {
-                f.write_element(FormatElement::Tag(tag::Tag::StartLineSuffix));
-            }
-            EmbeddedIR::EndLineSuffix => {
-                f.write_element(FormatElement::Tag(tag::Tag::EndLineSuffix));
-            }
-        }
-    }
-}
-
-/// Look up or create a `GroupId` for the given numeric ID.
-fn resolve_group_id(id: u32, map: &mut FxHashMap<u32, GroupId>, f: &Formatter<'_, '_>) -> GroupId {
-    *map.entry(id).or_insert_with(|| f.group_id("embedded"))
-}
-
-/// Escape characters that would break template literal syntax.
-///
-/// Equivalent to Prettier's `uncookTemplateElementValue`:
-/// `cookedValue.replaceAll(/([\\`]|\$\{)/gu, String.raw`\$1`);`
-/// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/print/template-literal.js#L276-L278>
-///
-/// Returns the original string (arena-copied) when no escaping is needed,
-/// avoiding a temporary `String` allocation.
-fn escape_template_characters<'a>(s: &str, allocator: &'a Allocator) -> &'a str {
-    let bytes = s.as_bytes();
-    let len = bytes.len();
-
-    // Fast path: scan for characters that need escaping.
-    let first_escape = (0..len).find(|&i| {
-        let ch = bytes[i];
-        ch == b'\\' || ch == b'`' || (ch == b'$' && i + 1 < len && bytes[i + 1] == b'{')
-    });
-
-    let Some(first) = first_escape else {
-        return allocator.alloc_str(s);
-    };
-
-    // Slow path: build escaped string in the arena.
-    let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
-    result.push_str(&s[..first]);
-
-    let mut i = first;
-    while i < len {
-        let ch = bytes[i];
-        if ch == b'\\' || ch == b'`' {
-            result.push('\\');
-            result.push(ch as char);
-        } else if ch == b'$' && i + 1 < len && bytes[i + 1] == b'{' {
-            result.push_str("\\${");
-            i += 1; // skip '{'
-        } else {
-            result.push(ch as char);
-        }
-        i += 1;
     }
 
     result.into_str()

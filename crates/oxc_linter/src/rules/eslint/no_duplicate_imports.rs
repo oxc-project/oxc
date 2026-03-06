@@ -508,7 +508,7 @@ fn test() {
     let pass = vec![
         (
             r#"import os from "os";
-			import fs from "fs";"#,
+            import fs from "fs";"#,
             None,
         ),
         (r#"import { merge } from "lodash-es";"#, None),
@@ -517,82 +517,82 @@ fn test() {
         (r#"import "foo""#, None),
         (
             r#"import os from "os";
-			export { something } from "os";"#,
+            export { something } from "os";"#,
             None,
         ),
         (
             r#"import * as bar from "os";
-			import { baz } from "os";"#,
+            import { baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, * as bar from "os";
-			import { baz } from "os";"#,
+            import { baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, { bar } from "os";
-			import * as baz from "os";"#,
+            import * as baz from "os";"#,
             None,
         ),
         (
             r#"import os from "os";
-			export { hello } from "hello";"#,
+            export { hello } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export * from "hello";"#,
+            export * from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export { hello as hi } from "hello";"#,
+            export { hello as hi } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export default function(){};"#,
+            export default function(){};"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { merge } from "lodash-es";
-			export { merge as lodashMerge }"#,
+            export { merge as lodashMerge }"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export { something } from "os";
-			export * as os from "os";"#,
+            export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { something } from "os";
-			export * as os from "os";"#,
+            export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import * as os from "os";
-			export { something } from "os";"#,
+            export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export { something } from "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type { Os } from "os";
-			import type { Fs } from "fs";"#,
+            import type { Fs } from "fs";"#,
             None,
         ),
         (
             r#"import { type Os } from "os";
-			import type { Fs } from "fs";"#,
+            import type { Fs } from "fs";"#,
             None,
         ),
         (r#"import type { Merge } from "lodash-es";"#, None),
@@ -600,87 +600,87 @@ fn test() {
         (r#"import type * as Foobar from "async";"#, None),
         (
             r#"import type Os from "os";
-			export type { Something } from "os";"#,
+            export type { Something } from "os";"#,
             None,
         ),
         (
             r#"import type Os from "os";
-			export { type Something } from "os";"#,
+            export { type Something } from "os";"#,
             None,
         ),
         (
             r#"import type * as Bar from "os";
-			import { type Baz } from "os";"#,
+            import { type Baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, * as bar from "os";
-			import { type Baz } from "os";"#,
+            import { type Baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, { type bar } from "os";
-			import type * as Baz from "os";"#,
+            import type * as Baz from "os";"#,
             None,
         ),
         (
             r#"import type { Merge } from "lodash-es";
-			import type _ from "lodash-es";"#,
+            import type _ from "lodash-es";"#,
             None,
         ),
         (
             r#"import type Os from "os";
-			export { type Hello } from "hello";"#,
+            export { type Hello } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export type * from "hello";"#,
+            export type * from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export { type Hello as Hi } from "hello";"#,
+            export { type Hello as Hi } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export default function(){};"#,
+            export default function(){};"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { type Merge } from "lodash-es";
-			export { Merge as lodashMerge }"#,
+            export { Merge as lodashMerge }"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export type { Something } from "os";
-			export * as os from "os";"#,
+            export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { type Something } from "os";
-			export * as os from "os";"#,
+            export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type * as Os from "os";
-			export { something } from "os";"#,
+            export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export type { Something } from "os";"#,
+            export type { Something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export type { Something } from "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
@@ -689,37 +689,37 @@ fn test() {
         ),
         (
             r#"import { foo } from "module";
-			import type { Bar } from "module";"#,
+            import type { Bar } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			import type { Bar } from "module";"#,
+            import type { Bar } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             r#"import { foo, type Bar } from "module";
-			export { type Baz } from "module2";"#,
+            export { type Baz } from "module2";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import type { Foo } from "module";
-			export { bar, type Baz } from "module";"#,
+            export { bar, type Baz } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			export type { Bar } from "module";"#,
+            export type { Bar } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import type * as Foo from "module";
-			export { type Bar } from "module";"#,
+            export { type Bar } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			export type * as Bar from "module";"#,
+            export type * as Bar from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
     ];
@@ -727,193 +727,193 @@ fn test() {
     let fail = vec![
         (
             r#"import "fs";
-			import "fs""#,
+            import "fs""#,
             None,
         ),
         (
             r#"import { merge } from "lodash-es";
-			import { find } from "lodash-es";"#,
+            import { find } from "lodash-es";"#,
             None,
         ),
         (
             r#"import { merge } from "lodash-es";
-			import _ from "lodash-es";"#,
+            import _ from "lodash-es";"#,
             None,
         ),
         (
             r#"import os from "os";
-			import { something } from "os";
-			import * as foobar from "os";"#,
+            import { something } from "os";
+            import * as foobar from "os";"#,
             None,
         ),
         (
             r#"import * as modns from "lodash-es";
-			import { merge } from "lodash-es";
-			import { baz } from "lodash-es";"#,
+            import { merge } from "lodash-es";
+            import { baz } from "lodash-es";"#,
             None,
         ),
         (
             r#"export { os } from "os";
-			export { something } from "os";"#,
+            export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export { os as foobar } from "os";
-			export { something } from "os";"#,
+            export { os as foobar } from "os";
+            export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export { something } from "os";"#,
+            export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-			export * as os from "os";"#,
+            export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export * as os from "os";
-			import os from "os";"#,
+            import os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import * as modns from "mod";
-			export * as  modns from "mod";"#,
+            export * as  modns from "mod";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export * from "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import "os";
-			export * from "os";"#,
+            export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import "fs";
-			import "fs""#,
+            import "fs""#,
             None,
         ),
         (
             r#"import { type Merge } from "lodash-es";
-			import { type Find } from "lodash-es";"#,
+            import { type Find } from "lodash-es";"#,
             None,
         ),
         (
             r#"import { type Merge } from "lodash-es";
-			import type { Find } from "lodash-es";"#,
+            import type { Find } from "lodash-es";"#,
             None,
         ),
         (
             r#"import type { Merge } from "lodash-es";
-			import type { Find } from "lodash-es";"#,
+            import type { Find } from "lodash-es";"#,
             None,
         ),
         (
             r#"import type Os from "os";
-			import type { Something } from "os";
-			import type * as Foobar from "os";"#,
+            import type { Something } from "os";
+            import type * as Foobar from "os";"#,
             None,
         ),
         (
             r#"import type * as Modns from "lodash-es";
-			import type { Merge } from "lodash-es";
-			import type { Baz } from "lodash-es";"#,
+            import type { Merge } from "lodash-es";
+            import type { Baz } from "lodash-es";"#,
             None,
         ),
         (
             r#"import { type Foo } from "module";
-			export type { Bar } from "module";"#,
+            export type { Bar } from "module";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export { os } from "os";
-			export type { Something } from "os";"#,
+            export type { Something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export type { Os } from "os";
-			export type { Something } from "os";"#,
+            export type { Something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type { Os } from "os";
-			export type { Os as Foobar } from "os";
-			export type { Something } from "os";"#,
+            export type { Os as Foobar } from "os";
+            export type { Something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type { Os } from "os";
-			export type { Something } from "os";"#,
+            export type { Something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type Os from "os";
-			export type * as Os from "os";"#,
+            export type * as Os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import type * as Modns from "mod";
-			export type * as Modns from "mod";"#,
+            export type * as Modns from "mod";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export type * from "os";
-			export type * from "os";"#,
+            export type * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import "os";
-			export type { Os } from "os";"#,
+            export type { Os } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             "import { someValue } from 'module';
-			import { anotherValue } from 'module';",
+            import { anotherValue } from 'module';",
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             r#"import type { Merge } from "lodash-es";
-			import type { Find } from "lodash-es";"#,
+            import type { Find } from "lodash-es";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             "import { someValue, type Foo } from 'module';
-			import type { SomeType } from 'module';
-			import type { AnotherType } from 'module';",
+            import type { SomeType } from 'module';
+            import type { AnotherType } from 'module';",
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             "import { type Foo } from 'module';
-			import { type Bar } from 'module';",
+            import { type Bar } from 'module';",
             Some(serde_json::json!([{ "allowSeparateTypeImports": true }])),
         ),
         (
             r#"export type { Foo } from "module";
-			export type { Bar } from "module";"#,
+            export type { Bar } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			export { type Bar } from "module";
-			export { type Baz } from "module";"#,
+            export { type Bar } from "module";
+            export { type Baz } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			export { type Bar } from "module";
-			export { regular } from "module";"#,
+            export { type Bar } from "module";
+            export { regular } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
         (
             r#"import { type Foo } from "module";
-			import { regular } from "module";
-			export { type Bar } from "module";
-			export { regular as other } from "module";"#,
+            import { regular } from "module";
+            export { type Bar } from "module";
+            export { regular as other } from "module";"#,
             Some(serde_json::json!([{ "allowSeparateTypeImports": true, "includeExports": true }])),
         ),
     ];

@@ -90,13 +90,7 @@ export type CustomComponent =
  *
  * This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
  *
- * Usage: `oxlint -c oxlintrc.json --import-plugin`
- *
- * ::: danger NOTE
- *
- * Only the `.json` format is supported. You can use comments in configuration files.
- *
- * :::
+ * Usage: `oxlint -c oxlintrc.json`
  *
  * Example
  *
@@ -104,34 +98,120 @@ export type CustomComponent =
  *
  * ```json
  * {
- * "$schema": "./node_modules/oxlint/configuration_schema.json",
- * "plugins": ["import", "typescript", "unicorn"],
- * "env": {
+ *   "$schema": "./node_modules/oxlint/configuration_schema.json",
+ *   "plugins": [
+ *     "import",
+ *     "typescript",
+ *     "unicorn"
+ *   ],
+ *   "env": {
+ *     "browser": true
+ *   },
+ *   "globals": {
+ *     "foo": "readonly"
+ *   },
+ *   "settings": {
+ *     "react": {
+ *       "version": "18.2.0"
+ *     },
+ *     "custom": {
+ *       "option": true
+ *     }
+ *   },
+ *   "rules": {
+ *     "eqeqeq": "warn",
+ *     "import/no-cycle": "error",
+ *     "react/self-closing-comp": [
+ *       "error",
+ *       {
+ *         "html": false
+ *       }
+ *     ]
+ *   },
+ *   "overrides": [
+ *     {
+ *       "files": [
+ *         "*.test.ts",
+ *         "*.spec.ts"
+ *       ],
+ *       "rules": {
+ *         "@typescript-eslint/no-explicit-any": "off"
+ *       }
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * `oxlint.config.ts`
+ *
+ * ```ts
+ * import { defineConfig } from "oxlint";
+ *
+ * export default defineConfig({
+ * plugins: ["import", "typescript", "unicorn"],
+ * env: {
  * "browser": true
  * },
- * "globals": {
+ * globals: {
  * "foo": "readonly"
  * },
- * "settings": {
- * "react": {
- * "version": "18.2.0"
+ * settings: {
+ * react: {
+ * version: "18.2.0"
  * },
- * "custom": { "option": true }
+ * custom: { option: true }
  * },
- * "rules": {
+ * rules: {
  * "eqeqeq": "warn",
  * "import/no-cycle": "error",
  * "react/self-closing-comp": ["error", { "html": false }]
  * },
- * "overrides": [
+ * overrides: [
  * {
- * "files": ["*.test.ts", "*.spec.ts"],
- * "rules": {
+ * files: ["*.test.ts", "*.spec.ts"],
+ * rules: {
  * "@typescript-eslint/no-explicit-any": "off"
  * }
  * }
  * ]
  * }
+ * });
+ * ```
+ *
+ * `oxlint.config.ts`
+ *
+ * ```ts
+ * import { defineConfig } from "oxlint";
+ *
+ * export default defineConfig({
+ * plugins: ["import", "typescript", "unicorn"],
+ * env: {
+ * "browser": true
+ * },
+ * globals: {
+ * "foo": "readonly"
+ * },
+ * settings: {
+ * react: {
+ * version: "18.2.0"
+ * },
+ * custom: { option: true }
+ * },
+ * rules: {
+ * "eqeqeq": "warn",
+ * "import/no-cycle": "error",
+ * "react/self-closing-comp": ["error", { "html": false }]
+ * },
+ * overrides: [
+ * {
+ * files: ["*.test.ts", "*.spec.ts"],
+ * rules: {
+ * "@typescript-eslint/no-explicit-any": "off"
+ * }
+ * }
+ * ]
+ * }
+ * });
  * ```
  */
 export interface Oxlintrc {
@@ -173,10 +253,12 @@ export interface Oxlintrc {
    *
    * ```json
    * {
-   * "jsPlugins": ["./custom-plugin.js"],
-   * "rules": {
-   * "custom/rule-name": "warn"
-   * }
+   *   "jsPlugins": [
+   *     "./custom-plugin.js"
+   *   ],
+   *   "rules": {
+   *     "custom/rule-name": "warn"
+   *   }
    * }
    * ```
    *
@@ -185,14 +267,19 @@ export interface Oxlintrc {
    *
    * ```json
    * {
-   * "plugins": ["import"],
-   * "jsPlugins": [
-   * { "name": "import-js", "specifier": "eslint-plugin-import" }
-   * ],
-   * "rules": {
-   * "import/no-cycle": "error",
-   * "import-js/no-unresolved": "warn"
-   * }
+   *   "plugins": [
+   *     "import"
+   *   ],
+   *   "jsPlugins": [
+   *     {
+   *       "name": "import-js",
+   *       "specifier": "eslint-plugin-import"
+   *     }
+   *   ],
+   *   "rules": {
+   *     "import/no-cycle": "error",
+   *     "import-js/no-unresolved": "warn"
+   *   }
    * }
    * ```
    */
@@ -221,12 +308,17 @@ export interface Oxlintrc {
    *
    * ```json
    * {
-   * "$schema": "./node_modules/oxlint/configuration_schema.json",
-   * "rules": {
-   * "eqeqeq": "warn",
-   * "import/no-cycle": "error",
-   * "prefer-const": ["error", { "ignoreReadBeforeAssign": true }]
-   * }
+   *   "$schema": "./node_modules/oxlint/configuration_schema.json",
+   *   "rules": {
+   *     "eqeqeq": "warn",
+   *     "import/no-cycle": "error",
+   *     "prefer-const": [
+   *       "error",
+   *       {
+   *         "ignoreReadBeforeAssign": true
+   *       }
+   *     ]
+   *   }
    * }
    * ```
    *
@@ -249,13 +341,13 @@ export interface Oxlintrc {
  * Example
  * ```json
  * {
- *     "$schema": "./node_modules/oxlint/configuration_schema.json",
- *     "categories": {
- *         "correctness": "warn"
- *     },
- *     "rules": {
- *         "eslint/no-unused-vars": "error"
- *     }
+ *   "$schema": "./node_modules/oxlint/configuration_schema.json",
+ *   "categories": {
+ *     "correctness": "warn"
+ *   },
+ *   "rules": {
+ *     "eslint/no-unused-vars": "error"
+ *   }
  * }
  * ```
  */
@@ -289,17 +381,15 @@ export interface OxlintEnv {
  * you might use this config:
  *
  * ```json
- *
  * {
- * "$schema": "./node_modules/oxlint/configuration_schema.json",
- * "env": {
- * "es6": true
- * },
- * "globals": {
- * "Promise": "off"
+ *   "$schema": "./node_modules/oxlint/configuration_schema.json",
+ *   "env": {
+ *     "es6": true
+ *   },
+ *   "globals": {
+ *     "Promise": "off"
+ *   }
  * }
- * }
- *
  * ```
  *
  * You may also use `"readable"` or `false` to represent `"readonly"`, and
@@ -313,15 +403,39 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
+   * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+   *
+   * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+   * CLI flags take precedence over this value when both are set.
+   * Only supported in the root configuration file.
+   */
+  reportUnusedDisableDirectives?: AllowWarnDeny | null;
+  /**
+   * Ensure warnings produce a non-zero exit code.
+   *
+   * Equivalent to passing `--deny-warnings` on the CLI.
+   */
+  denyWarnings?: boolean | null;
+  /**
+   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
+   *
+   * Equivalent to passing `--max-warnings` on the CLI.
+   */
+  maxWarnings?: number | null;
+  /**
    * Enable rules that require type information.
    *
    * Equivalent to passing `--type-aware` on the CLI.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
   typeAware?: boolean | null;
   /**
    * Enable experimental type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
   typeCheck?: boolean | null;
 }
@@ -370,22 +484,25 @@ export interface DummyRuleMap {
  *
  * ```json
  * {
- * "settings": {
- * "next": {
- * "rootDir": "apps/dashboard/"
- * },
- * "react": {
- * "linkComponents": [
- * { "name": "Link", "linkAttribute": "to" }
- * ]
- * },
- * "jsx-a11y": {
- * "components": {
- * "Link": "a",
- * "Button": "button"
- * }
- * }
- * }
+ *   "settings": {
+ *     "next": {
+ *       "rootDir": "apps/dashboard/"
+ *     },
+ *     "react": {
+ *       "linkComponents": [
+ *         {
+ *           "name": "Link",
+ *           "linkAttribute": "to"
+ *         }
+ *       ]
+ *     },
+ *     "jsx-a11y": {
+ *       "components": {
+ *         "Link": "a",
+ *         "Button": "button"
+ *       }
+ *     }
+ *   }
  * }
  * ```
  */
@@ -447,13 +564,16 @@ export interface JSXA11YPluginSettings {
    *
    * ```json
    * {
-   * "settings": {
-   * "jsx-a11y": {
-   * "attributes": {
-   * "for": ["htmlFor", "for"]
-   * }
-   * }
-   * }
+   *   "settings": {
+   *     "jsx-a11y": {
+   *       "attributes": {
+   *         "for": [
+   *           "htmlFor",
+   *           "for"
+   *         ]
+   *       }
+   *     }
+   *   }
    * }
    * ```
    */
@@ -468,14 +588,14 @@ export interface JSXA11YPluginSettings {
    *
    * ```json
    * {
-   * "settings": {
-   * "jsx-a11y": {
-   * "components": {
-   * "Link": "a",
-   * "IconButton": "button"
-   * }
-   * }
-   * }
+   *   "settings": {
+   *     "jsx-a11y": {
+   *       "components": {
+   *         "Link": "a",
+   *         "IconButton": "button"
+   *       }
+   *     }
+   *   }
    * }
    * ```
    */
@@ -513,11 +633,11 @@ export interface NextPluginSettings {
    *
    * ```json
    * {
-   * "settings": {
-   * "next": {
-   * "rootDir": "apps/dashboard/"
-   * }
-   * }
+   *   "settings": {
+   *     "next": {
+   *       "rootDir": "apps/dashboard/"
+   *     }
+   *   }
    * }
    * ```
    */

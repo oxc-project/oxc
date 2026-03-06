@@ -24,9 +24,9 @@ pub fn run(
     source_text: String,
     options: Option<Value>,
     init_external_formatter_cb: JsInitExternalFormatterCb,
+    format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
-    format_file_cb: JsFormatFileCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> ApiFormatResult {
     // NOTE: In NAPI context, we don't have a config file path, since options are passed directly as a JSON.
@@ -37,9 +37,9 @@ pub fn run(
 
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
+        format_file_cb,
         format_embedded_cb,
         format_embedded_doc_cb,
-        format_file_cb,
         sort_tailwind_classes_cb,
     );
 

@@ -10,8 +10,8 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn consistent_assert_diagnostic(assert_identifier: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Inconsistent assert usage")
-        .with_help(format!("Prefer {assert_identifier}.ok(...) over {assert_identifier}(...)"))
+    OxcDiagnostic::warn("Inconsistent assert usage.")
+        .with_help(format!("Prefer `{assert_identifier}.ok(...)` over `{assert_identifier}(...)`."))
         .with_label(span)
 }
 
@@ -25,7 +25,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Inconsistent usage of the `assert` module can lead to confusion and errors.
+    /// Inconsistent usage of the `assert` module can make code
+    /// harder to follow and understand.
+    ///
+    /// `assert.ok(...)` is preferred as it makes the intent of
+    /// the assertion clearer.
     ///
     /// ### Examples
     ///

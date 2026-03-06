@@ -1305,9 +1305,9 @@ struct Constants {
     is_jsx_pos: u32,
     /// Offset within buffer of `bool` indicating if source text has BOM
     has_bom_pos: u32,
-    /// Offset within buffer of `u32` containing serialized ESTree tokens JSON start
+    /// Offset within buffer of `u32` containing position of lexer `Token`s
     tokens_offset_pos: u32,
-    /// Offset within buffer of `u32` containing serialized ESTree tokens JSON length
+    /// Offset within buffer of `u32` containing number of lexer `Token`s
     tokens_len_pos: u32,
     /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,

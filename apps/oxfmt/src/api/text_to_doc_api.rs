@@ -51,9 +51,9 @@ pub fn run(
     oxfmt_plugin_options_json: &str,
     parent_context: &str,
     init_external_formatter_cb: JsInitExternalFormatterCb,
+    format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
-    format_file_cb: JsFormatFileCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
     let fragment_kind = match parent_context {
@@ -72,9 +72,9 @@ pub fn run(
             source_text,
             oxfmt_plugin_options_json,
             init_external_formatter_cb,
+            format_file_cb,
             format_embedded_cb,
             format_embedded_doc_cb,
-            format_file_cb,
             sort_tailwind_classes_cb,
         )?
     };
@@ -93,9 +93,9 @@ fn run_full(
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     init_external_formatter_cb: JsInitExternalFormatterCb,
+    format_file_cb: JsFormatFileCb,
     format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
-    format_file_cb: JsFormatFileCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
     let num_of_threads = 1;
@@ -107,9 +107,9 @@ fn run_full(
 
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
+        format_file_cb,
         format_embedded_cb,
         format_embedded_doc_cb,
-        format_file_cb,
         sort_tailwind_classes_cb,
     );
 

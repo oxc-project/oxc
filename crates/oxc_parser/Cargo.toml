@@ -1,6 +1,6 @@
 [package]
 name = "oxc_parser"
-version = "0.115.0"
+version = "0.116.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -22,7 +22,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "fieldless_enum"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_regular_expression = { workspace = true, optional = true }
@@ -47,5 +47,8 @@ pico-args = { workspace = true }
 default = ["regular_expression"]
 # Parse regex
 regular_expression = ["dep:oxc_regular_expression"]
+# Feature to enable mutation of tokens.
+# Should not ordinarily be enabled. Only used by ESTree tokens conversion.
+mutate_tokens = []
 # Expose Lexer for benchmarks
 benchmarking = []

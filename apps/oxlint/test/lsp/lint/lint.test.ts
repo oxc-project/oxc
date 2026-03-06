@@ -23,6 +23,7 @@ describe("LSP linting", () => {
       ["config-ts-config/test.js", "javascript"],
       ["config-ts-type-aware/test.ts", "typescript"],
       ["config-ts-nested-type-aware-invalid/nested/test.ts", "typescript"],
+      ["unused-disable-directive-from-config/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await lintFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });

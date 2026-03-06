@@ -281,6 +281,10 @@ linter-config-ts:
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
 
+# Generate formatter config TypeScript types for `apps/oxfmt/src-js/config.generated.ts`
+formatter-config-ts:
+  pnpm --filter oxfmt-app generate-config-types
+
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:
   cargo binstall cargo-autoinherit

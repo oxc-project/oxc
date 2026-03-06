@@ -161,6 +161,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
+            } else if decl.kind.is_using() {
+                self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
             }
         }
     }
@@ -186,18 +188,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations = self.ast.vec();
         loop {
-            let declaration =
-                self.parse_variable_declarator(VariableDeclarationParent::Statement, kind);
+            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+                VariableDeclarationParent::For
+            } else {
+                VariableDeclarationParent::Statement
+            };
+            let declaration = self.parse_variable_declarator(decl_parent, kind);
 
             if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            // Excluding `for` loops, an initializer is required in a UsingDeclaration.
-            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
-                self.error(diagnostics::using_declarations_must_be_initialized(
                     declaration.id.span(),
                 ));
             }

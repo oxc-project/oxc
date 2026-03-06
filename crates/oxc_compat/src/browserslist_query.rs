@@ -28,11 +28,7 @@ impl BrowserslistQuery {
             return Ok(v.clone());
         }
 
-        let options = browserslist::Opts {
-            mobile_to_desktop: true,
-            ignore_unknown_versions: true,
-            ..browserslist::Opts::default()
-        };
+        let options = browserslist::Opts { mobile_to_desktop: true, ignore_unknown_versions: true };
 
         let result = match self {
             BrowserslistQuery::Single(s) => {

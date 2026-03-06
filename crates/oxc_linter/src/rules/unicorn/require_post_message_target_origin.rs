@@ -147,6 +147,8 @@ fn test() {
         "self.postMessage(message)",
         "globalThis.postMessage(message)",
         "foo.postMessage(message )",
+        // TODO: Get this passing.
+        // "foo?.postMessage(message )",
         "foo.postMessage( ((message)) )",
         "foo.postMessage(message,)",
         "foo.postMessage(message , )",

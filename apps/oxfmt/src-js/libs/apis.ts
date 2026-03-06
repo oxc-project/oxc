@@ -44,6 +44,30 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
+export type FormatFileParam = {
+  code: string;
+  options: Options;
+};
+
+/**
+ * Format non-js file
+ *
+ * @returns Formatted code
+ */
+export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
+  const prettier = await loadPrettier();
+
+  // Enable Tailwind CSS plugin for non-JS files if needed
+  await setupTailwindPlugin(options);
+  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
+  // NOTE: This must be last since Prettier plugins are applied in order
+  await setupOxfmtPlugin(options);
+
+  return prettier.format(code, options);
+}
+
+// ---
+
 export type FormatEmbeddedCodeParam = {
   code: string;
   options: Options;
@@ -125,30 +149,6 @@ export async function formatEmbeddedDoc({
       });
     }),
   );
-}
-
-// ---
-
-export type FormatFileParam = {
-  code: string;
-  options: Options;
-};
-
-/**
- * Format non-js file
- *
- * @returns Formatted code
- */
-export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
-  const prettier = await loadPrettier();
-
-  // Enable Tailwind CSS plugin for non-JS files if needed
-  await setupTailwindPlugin(options);
-  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
-  // NOTE: This must be last since Prettier plugins are applied in order
-  await setupOxfmtPlugin(options);
-
-  return prettier.format(code, options);
 }
 
 // ---
