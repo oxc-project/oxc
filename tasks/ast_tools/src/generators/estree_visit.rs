@@ -507,11 +507,12 @@ fn generate(codegen: &Codegen) -> Codes {
         }}
     ");
 
-    // See https://github.com/DefinitelyTyped/DefinitelyTyped/pull/20219 for why we need "Bivariance hack"
     #[rustfmt::skip]
     let visitor_type_oxlint = format!("
         import type * as ESTree from './types.d.ts';
 
+        // To understand why we need the \"Bivariance hack\", see: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/20219
+        // For downsides, see: https://github.com/oxc-project/oxc/issues/18154#issuecomment-4012955607
         type BivarianceHackHandler<Handler extends (...args: any) => any> = {{
             bivarianceHack(...args: Parameters<Handler>): ReturnType<Handler>;
         }}[\"bivarianceHack\"];
