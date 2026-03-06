@@ -66,6 +66,7 @@ jobs:
     name: Test Windows
     runs-on: windows-latest
     steps:
+      - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
       # Unsung heroes of the internet, who led me here to speed up Windows' slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
