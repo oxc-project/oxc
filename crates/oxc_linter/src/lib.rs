@@ -27,7 +27,6 @@ use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_parser::Token;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 mod ast_util;
 mod config;
@@ -100,7 +99,6 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    suppression::{DiagnosticCounts, RuleName, SuppressionFile},
     utils::iter_possible_jest_call_node,
 };
 
