@@ -102,7 +102,7 @@ impl FormatRunner {
         let mut nested_ignore_patterns: Vec<(Vec<String>, PathBuf)> = Vec::new();
 
         if !explicit_config {
-            let nested_config_paths = discover_nested_configs(&paths, root_config_dir);
+            let nested_config_paths = discover_nested_configs(&cwd, &paths, root_config_dir);
             for config_path in &nested_config_paths {
                 match build_nested_resolver(config_path) {
                     Ok((config_dir, resolver, patterns)) => {

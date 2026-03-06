@@ -522,25 +522,31 @@ impl ConfigStore {
 
 /// Discover nested config files by walking UP from each target path's ancestors.
 ///
-/// For each target path, walks up through parent directories looking for
-/// `.oxfmtrc.json` / `.oxfmtrc.jsonc` files (preferring `.json`).
-/// Skips the `root_config_dir` (already loaded as the base config).
+/// Resolves raw CLI target paths to absolute directories, then walks up through
+/// parent directories looking for `.oxfmtrc.json` / `.oxfmtrc.jsonc` files.
+/// Stops at `root_config_dir` (already loaded as the base config) or `cwd` if no root config.
 pub fn discover_nested_configs(
+    cwd: &Path,
     target_paths: &[PathBuf],
     root_config_dir: Option<&Path>,
 ) -> Vec<PathBuf> {
+    // Resolve raw CLI paths to absolute directories for ancestor walking.
+    // Glob patterns and `!` excludes are skipped; for globs, cwd is used instead
+    // since matched files could be anywhere under it.
+    let boundary = root_config_dir.unwrap_or(cwd);
+    let start_dirs = resolve_target_dirs(cwd, target_paths);
+
     let mut config_paths = Vec::new();
     let mut visited_dirs = FxHashSet::default();
 
-    for path in target_paths {
-        let start = if path.is_dir() { path.as_path() } else { path.parent().unwrap_or(path) };
-        let mut current = Some(start);
+    for start in &start_dirs {
+        let mut current = Some(start.as_path());
         while let Some(dir) = current {
             if !visited_dirs.insert(dir.to_path_buf()) {
                 break;
             }
-            // Stop at root config directory — already loaded as base, don't look above it
-            if root_config_dir.is_some_and(|root| root == dir) {
+            // Stop at boundary (root config dir, or cwd if no root config)
+            if dir == boundary {
                 break;
             }
             if let Some(config_path) = find_oxfmtrc_in_dir(dir) {
@@ -551,6 +557,51 @@ pub fn discover_nested_configs(
     }
 
     config_paths
+}
+
+/// Resolve raw CLI target paths to absolute directories for config discovery.
+///
+/// Skips `!` exclude patterns and glob patterns (for which `cwd` is used instead,
+/// since glob-matched files could be anywhere under it).
+fn resolve_target_dirs(cwd: &Path, paths: &[PathBuf]) -> Vec<PathBuf> {
+    let mut dirs = FxHashSet::default();
+    let mut has_glob = false;
+
+    for path in paths {
+        let path_str = path.to_string_lossy();
+        // Skip exclude patterns
+        if path_str.starts_with('!') {
+            continue;
+        }
+        let normalized =
+            if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
+        // Glob patterns: files could be anywhere under cwd
+        if normalized.contains('*')
+            || normalized.contains('?')
+            || normalized.contains('[')
+            || normalized.contains('{')
+        {
+            has_glob = true;
+            continue;
+        }
+        // Resolve to absolute
+        let abs = if path.is_absolute() {
+            path.clone()
+        } else if normalized == "." {
+            cwd.to_path_buf()
+        } else {
+            cwd.join(normalized)
+        };
+        let dir = if abs.is_dir() { abs } else { abs.parent().unwrap_or(&abs).to_path_buf() };
+        dirs.insert(dir);
+    }
+
+    // For globs or empty paths, include cwd
+    if has_glob || dirs.is_empty() {
+        dirs.insert(cwd.to_path_buf());
+    }
+
+    dirs.into_iter().collect()
 }
 
 /// Discover config files by walking DOWN from a root directory.

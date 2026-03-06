@@ -79,16 +79,15 @@ impl Walk {
         //
         // Build ignores
         //
-        // Use multiple matchers, each with correct root for pattern resolution:
-        // - Ignore files: root = parent directory of the ignore file
-        // - `.ignorePatterns`: root = parent directory of `.oxfmtrc.json`
-        // - Exclude paths (`!` prefix): root = cwd
+        // Matchers are split into two categories:
+        // - Global: always apply regardless of nested config scope (ignore files, `!` excludes)
+        // - Scoped: follow deepest-match-wins precedence (root/nested `ignorePatterns`)
         //
         // NOTE: Git ignore files are handled by `WalkBuilder` itself
-        let mut matchers: Vec<Gitignore> = vec![];
+        let mut global_matchers: Vec<Gitignore> = vec![];
 
         // 1. Handle formatter ignore files (`.prettierignore`, or `--ignore-path`)
-        // Patterns are relative to the ignore file location
+        // These are global — always apply regardless of nested config scope
         for ignore_path in &load_ignore_paths(cwd, ignore_paths)? {
             let (gitignore, err) = Gitignore::new(ignore_path);
             if let Some(err) = err {
@@ -97,12 +96,11 @@ impl Walk {
                     ignore_path.display()
                 ));
             }
-            matchers.push(gitignore);
+            global_matchers.push(gitignore);
         }
 
-        // 2. Handle `oxfmtrc.ignorePatterns`
-        // Patterns are relative to the config file location
-        if !ignore_patterns.is_empty()
+        // 2. Handle root `oxfmtrc.ignorePatterns` — scoped (only applies outside nested configs)
+        let base_scoped = if !ignore_patterns.is_empty()
             && let Some(oxfmtrc_path) = oxfmtrc_path
         {
             let mut builder = GitignoreBuilder::new(
@@ -115,12 +113,12 @@ impl Walk {
                     ));
                 }
             }
-            let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
-            matchers.push(gitignore);
-        }
+            Some(builder.build().map_err(|_| "Failed to build ignores".to_string())?)
+        } else {
+            None
+        };
 
-        // 3. Handle `!` prefixed paths
-        // These are relative to cwd
+        // 3. Handle `!` prefixed paths — global (always apply)
         if !exclude_patterns.is_empty() {
             let mut builder = GitignoreBuilder::new(cwd);
             for pattern in &exclude_patterns {
@@ -135,13 +133,14 @@ impl Walk {
                 }
             }
             let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
-            matchers.push(gitignore);
+            global_matchers.push(gitignore);
         }
 
         //
-        // Build nested ignore matcher for oxlint-style precedence
+        // Build nested ignore matcher
         //
-        let nested_matcher = NestedIgnoreMatcher::new(matchers, nested_ignore_patterns);
+        let nested_matcher =
+            NestedIgnoreMatcher::new(global_matchers, base_scoped, nested_ignore_patterns);
 
         //
         // Filter positional paths by formatter ignores
@@ -229,25 +228,31 @@ impl Walk {
 
 /// Handles ignore matching with nested config precedence.
 ///
-/// When a file is under a nested config's directory, only that config's ignore patterns apply
-/// (deepest match wins, no fallback to base). Files outside any nested scope use base matchers.
+/// Two categories of matchers:
+/// - **Global** (ignore files like `.prettierignore`, `!` CLI excludes): always checked.
+/// - **Scoped** (`ignorePatterns` from configs): deepest nested config wins, root only
+///   applies outside any nested scope. Follows the same pattern as oxlint's `LintIgnoreMatcher`
+///   in `crates/oxc_linter/src/config/ignore_matcher.rs`.
 struct NestedIgnoreMatcher {
-    /// Base matchers (ignore files, root ignorePatterns, exclude patterns).
-    base: Vec<Gitignore>,
-    /// Nested ignore matchers sorted deepest-to-shallowest.
-    nested: Vec<(Option<Gitignore>, PathBuf)>,
+    /// Always-apply matchers (ignore files, `!` CLI excludes).
+    global: Vec<Gitignore>,
+    /// Root `ignorePatterns` — only applies outside any nested config scope.
+    base_scoped: Option<Gitignore>,
+    /// Nested `ignorePatterns` sorted deepest-to-shallowest.
+    nested_scoped: Vec<(Option<Gitignore>, PathBuf)>,
 }
 
 impl NestedIgnoreMatcher {
     fn new(
-        base_matchers: Vec<Gitignore>,
+        global: Vec<Gitignore>,
+        base_scoped: Option<Gitignore>,
         mut nested_patterns: Vec<(Vec<String>, PathBuf)>,
     ) -> Self {
         // Sort deepest-to-shallowest for correct precedence
         nested_patterns
             .sort_unstable_by(|a, b| b.1.components().count().cmp(&a.1.components().count()));
 
-        let nested = nested_patterns
+        let nested_scoped = nested_patterns
             .into_iter()
             .map(|(patterns, root)| {
                 if patterns.is_empty() {
@@ -262,7 +267,7 @@ impl NestedIgnoreMatcher {
             })
             .collect();
 
-        Self { base: base_matchers, nested }
+        Self { global, base_scoped, nested_scoped }
     }
 
     /// Check if a path should be ignored.
@@ -270,37 +275,59 @@ impl NestedIgnoreMatcher {
     /// When `check_ancestors: true`, also checks if any parent directory is ignored.
     /// This is more expensive, but necessary when paths are passed directly via CLI arguments.
     fn is_ignored(&self, path: &Path, is_dir: bool, check_ancestors: bool) -> bool {
-        // Check nested configs first (deepest wins)
-        for (ignore, root) in &self.nested {
-            if path.starts_with(root) {
-                // File is under a nested config — only that config's patterns apply
-                return ignore.as_ref().is_some_and(|gi| {
-                    if check_ancestors {
-                        gi.matched_path_or_any_parents(path, is_dir).is_ignore()
-                    } else {
-                        let m = gi.matched(path, is_dir);
-                        m.is_ignore() && !m.is_whitelist()
-                    }
-                });
-            }
+        // Global matchers always apply (ignore files, `!` excludes)
+        if check_ignored_by(&self.global, path, is_dir, check_ancestors) {
+            return true;
         }
 
-        // Fall back to base matchers
-        for matcher in &self.base {
-            let matched = if check_ancestors {
-                if !path.starts_with(matcher.path()) {
-                    continue;
-                }
-                matcher.matched_path_or_any_parents(path, is_dir)
-            } else {
-                matcher.matched(path, is_dir)
-            };
-            if matched.is_ignore() && !matched.is_whitelist() {
-                return true;
+        // Scoped matchers: deepest nested wins, root only outside nested scope
+        for (ignore, root) in &self.nested_scoped {
+            if path.starts_with(root) {
+                return check_ignored_by_single(ignore.as_ref(), path, is_dir, check_ancestors);
             }
         }
-        false
+        check_ignored_by_single(self.base_scoped.as_ref(), path, is_dir, check_ancestors)
     }
+}
+
+/// Check if any matcher in the list ignores the path.
+fn check_ignored_by(
+    matchers: &[Gitignore],
+    path: &Path,
+    is_dir: bool,
+    check_ancestors: bool,
+) -> bool {
+    for matcher in matchers {
+        let matched = if check_ancestors {
+            if !path.starts_with(matcher.path()) {
+                continue;
+            }
+            matcher.matched_path_or_any_parents(path, is_dir)
+        } else {
+            matcher.matched(path, is_dir)
+        };
+        if matched.is_ignore() && !matched.is_whitelist() {
+            return true;
+        }
+    }
+    false
+}
+
+/// Check if a single optional matcher ignores the path.
+fn check_ignored_by_single(
+    matcher: Option<&Gitignore>,
+    path: &Path,
+    is_dir: bool,
+    check_ancestors: bool,
+) -> bool {
+    matcher.is_some_and(|gi| {
+        if check_ancestors {
+            gi.matched_path_or_any_parents(path, is_dir).is_ignore()
+        } else {
+            let m = gi.matched(path, is_dir);
+            m.is_ignore() && !m.is_whitelist()
+        }
+    })
 }
 
 /// Check if a path string looks like a glob pattern.
