@@ -1,11 +1,3 @@
-// Lazy implementation
-/*
-// Visitor object returned by a `Rule`'s `create` function.
-export interface Visitor {
-  [key: string]: VisitFn;
-}
-*/
-
 import type { Span } from "./location.ts";
 import type { Token } from "./tokens.ts";
 

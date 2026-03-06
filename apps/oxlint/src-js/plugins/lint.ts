@@ -19,12 +19,6 @@ import {
   VISITOR_CFG,
 } from "./visitor.ts";
 
-// Lazy implementation
-/*
-import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
-import { walkProgram } from '../generated/walk.js';
-*/
-
 import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
@@ -237,21 +231,6 @@ export function lintFileImpl(
     }
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
-
-    // Lazy implementation
-    /*
-    const sourceIsAscii = sourceText.length === sourceByteLen;
-    const ast = {
-      buffer,
-      sourceText,
-      sourceByteLen,
-      sourceIsAscii,
-      nodes: new Map(),
-      token: TOKEN,
-    };
-
-    walkProgram(programPos, ast, compiledVisitor);
-    */
   }
 
   // Run `after` hooks
