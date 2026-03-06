@@ -1,0 +1,48 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/cli/typescript_eslint/eslintrc.json fixtures/cli/typescript_eslint/test.ts
+working directory: 
+----------
+
+  ! typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
+   ,-[fixtures/cli/typescript_eslint/test.ts:1:1]
+ 1 | namespace X {
+   : ^^^^^^^^^
+ 2 | }
+   `----
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
+  ! eslint(no-unused-vars): Variable 'X' is declared but never used.
+   ,-[fixtures/cli/typescript_eslint/test.ts:1:11]
+ 1 | namespace X {
+   :           |
+   :           `-- 'X' is declared here
+ 2 | }
+   `----
+  help: Consider removing this declaration.
+
+  x eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ,-[fixtures/cli/typescript_eslint/test.ts:4:1]
+ 3 | 
+ 4 | 9007199254740993 // no-loss-of-precision
+   : ^^^^^^^^^^^^^^^^
+   `----
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt`
+           supports arbitrarily large integers.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+   ,-[fixtures/cli/typescript_eslint/test.ts:4:1]
+ 3 | 
+ 4 | 9007199254740993 // no-loss-of-precision
+   : ^^^^^^^^^^^^^^^^
+   `----
+  help: Consider using this expression or removing it
+
+Found 3 warnings and 1 error.
+Finished in <variable>ms on 1 file with 68 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

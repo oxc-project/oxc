@@ -1,0 +1,50 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_config
+----------
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[console.ts:1:1]
+ 1 | console.log("test");
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[debugger.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[package2-no-config/console.ts:1:1]
+ 1 | console.log("test");
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[package2-no-config/debugger.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[package3-deep-config/src/components/component.js:2:3]
+ 1 | export function Component() {
+ 2 |   console.log("hello");
+   :   ^^^^^^^^^^^
+ 3 | }
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 5 errors.
+Finished in <variable>ms on 7 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

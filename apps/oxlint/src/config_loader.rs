@@ -795,17 +795,17 @@ mod test {
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
         // Test case 1: Invalid path that should fail
-        let invalid_config = PathBuf::from("child/../../fixtures/linter/eslintrc.json");
+        let invalid_config = PathBuf::from("child/../../fixtures/cli/linter/eslintrc.json");
         let result = loader.load_root_config(&cwd, Some(&invalid_config));
         assert!(result.is_err(), "Expected config lookup to fail with invalid path");
 
         // Test case 2: Valid path that should pass
-        let valid_config = PathBuf::from("fixtures/linter/eslintrc.json");
+        let valid_config = PathBuf::from("fixtures/cli/linter/eslintrc.json");
         let result = loader.load_root_config(&cwd, Some(&valid_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
 
         // Test case 3: Valid path using parent directory (..) syntax that should pass
-        let valid_parent_config = PathBuf::from("fixtures/linter/../linter/eslintrc.json");
+        let valid_parent_config = PathBuf::from("fixtures/cli/linter/../linter/eslintrc.json");
         let result = loader.load_root_config(&cwd, Some(&valid_parent_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
 
@@ -827,7 +827,7 @@ mod test {
 
         // Test case 1: Search from nested directory should find config in parent
         // Uses fixture: ancestor_search/apps/app1 -> should find ancestor_search/.oxlintrc.json
-        let nested_dir = cwd.join("apps/oxlint/fixtures/ancestor_search/apps/app1");
+        let nested_dir = cwd.join("apps/oxlint/fixtures/cli/ancestor_search/apps/app1");
         if nested_dir.exists() {
             let result = loader.load_root_config_with_ancestor_search(&nested_dir, None);
             assert!(result.is_ok(), "Expected ancestor search to find config or return default");
@@ -844,7 +844,8 @@ mod test {
 
         // Test case 2: Explicit config path should still work
         // Uses dedicated fixture with .oxlintrc.json
-        let valid_config = PathBuf::from("fixtures/ancestor_search_explicit_config/.oxlintrc.json");
+        let valid_config =
+            PathBuf::from("fixtures/cli/ancestor_search_explicit_config/.oxlintrc.json");
         let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with explicit path");
 

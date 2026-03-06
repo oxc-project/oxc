@@ -131,7 +131,7 @@ impl OutputFormatter {
 mod test {
     use crate::tester::Tester;
 
-    const TEST_CWD: &str = "fixtures/output_formatter_diagnostic";
+    const TEST_CWD: &str = "fixtures/cli/output_formatter_diagnostic";
 
     #[test]
     fn test_output_formatter_diagnostic_formats() {
