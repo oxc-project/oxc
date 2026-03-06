@@ -95,56 +95,69 @@ impl<'a> JSDocCommentPart<'a> {
     /// to preserve paragraph breaks, vertical structure, and indentation in the original text.
     /// This is important for preserving indented code blocks (4+ spaces) and other structured content.
     pub fn parsed_preserving_whitespace(&self) -> String {
-        if self.raw.lines().count() == 1 {
+        if !self.raw.contains('\n') {
             return self.raw.trim().to_string();
         }
 
-        self.raw
-            .lines()
-            .map(|line| {
-                let trimmed = line.trim();
-                if let Some(rest) = trimmed.strip_prefix('*') {
-                    // Strip `*` as a comment continuation prefix UNLESS it looks like
-                    // markdown emphasis (`*word*`). Emphasis has `*` followed by an
-                    // alphanumeric char; continuation prefixes have `*` followed by
-                    // space, backtick, punctuation, or nothing.
-                    let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
-                    if !is_emphasis {
-                        // Strip at most one leading space after `*` (the conventional ` * ` prefix)
-                        // to preserve any additional indentation (e.g. for indented code blocks)
-                        return rest.strip_prefix(' ').unwrap_or(rest);
-                    }
+        let mut result = String::with_capacity(self.raw.len());
+        for (i, line) in self.raw.lines().enumerate() {
+            if i > 0 {
+                result.push('\n');
+            }
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix('*') {
+                // Strip `*` as a comment continuation prefix UNLESS it looks like
+                // markdown emphasis (`*word*`). Emphasis has `*` followed by an
+                // alphanumeric char; continuation prefixes have `*` followed by
+                // space, backtick, punctuation, or nothing.
+                let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                if !is_emphasis {
+                    // Strip at most one leading space after `*` (the conventional ` * ` prefix)
+                    // to preserve any additional indentation (e.g. for indented code blocks)
+                    result.push_str(rest.strip_prefix(' ').unwrap_or(rest));
+                    continue;
                 }
-                trimmed
-            })
-            .collect::<Vec<_>>()
-            .join("\n")
+            }
+            result.push_str(trimmed);
+        }
+        result
     }
 
     /// Returns the content of the comment part without leading `*` in each line.
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
-        if self.raw.lines().count() == 1 {
+        if !self.raw.contains('\n') {
             return self.raw.trim().to_string();
         }
 
-        self.raw
-            .lines()
+        let mut result = String::with_capacity(self.raw.len());
+        for line in self.raw.lines() {
             // Trim leading `*` only when it's a continuation prefix (`* text` or `*` alone),
             // not when it's a markdown emphasis marker (`*word*`)
-            .map(|line| {
-                let trimmed = line.trim();
-                if let Some(rest) = trimmed.strip_prefix('*') {
-                    let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
-                    if !is_emphasis {
-                        return rest.trim();
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix('*') {
+                let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                if !is_emphasis {
+                    let content = rest.trim();
+                    if content.is_empty() {
+                        continue;
                     }
+                    if !result.is_empty() {
+                        result.push('\n');
+                    }
+                    result.push_str(content);
+                    continue;
                 }
-                trimmed
-            })
-            .filter(|line| !line.is_empty())
-            .collect::<Vec<_>>()
-            .join("\n")
+            }
+            if trimmed.is_empty() {
+                continue;
+            }
+            if !result.is_empty() {
+                result.push('\n');
+            }
+            result.push_str(trimmed);
+        }
+        result
     }
 }
 

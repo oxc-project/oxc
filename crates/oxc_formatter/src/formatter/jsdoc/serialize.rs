@@ -43,7 +43,13 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         available_width: usize,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
-        let type_format_options = FormatOptions { jsdoc: None, ..format_options.clone() };
+        // Null out Vec-containing fields to make clone cheap (they're irrelevant for JSDoc)
+        let type_format_options = FormatOptions {
+            jsdoc: None,
+            sort_imports: None,
+            sort_tailwindcss: None,
+            ..format_options.clone()
+        };
         Self {
             options,
             format_options,
@@ -89,7 +95,8 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             merged_desc.push_str(desc_trimmed);
         }
         // Collect effective tags, absorbing @description tag content
-        let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
+        let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> =
+            Vec::with_capacity(sorted_tags.len());
         for (tag, normalized_kind) in &sorted_tags {
             if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
                 continue;
@@ -600,7 +607,10 @@ fn sort_tags_by_groups<'a>(
     if !needs_split {
         // Single group — sort directly by priority.
         let mut sorted: Vec<_> = tags.iter().map(normalize).collect();
-        sorted.sort_by_key(|(_, kind)| tag_sort_priority(kind));
+        // Skip sort if already in priority order (common case: well-formatted comments)
+        if !sorted.windows(2).all(|w| tag_sort_priority(w[0].1) <= tag_sort_priority(w[1].1)) {
+            sorted.sort_by_key(|(_, kind)| tag_sort_priority(kind));
+        }
         return sorted;
     }
 
@@ -1013,8 +1023,10 @@ mod tests {
         // Simple types return None (no formatting needed — fast path)
         assert_eq!(fmt_type("string"), None);
         assert_eq!(fmt_type("number"), None);
-        // Types with operators go through the formatter
-        assert_eq!(fmt_type("string | number"), Some("string | number".to_string()));
+        // Types with operators go through the formatter but return None when unchanged
+        assert_eq!(fmt_type("string | number"), None);
+        // Types that would actually change
+        assert_eq!(fmt_type("string|number"), Some("string | number".to_string()));
         assert_eq!(fmt_type(""), None);
     }
 

@@ -211,7 +211,7 @@ pub(super) fn format_type_via_formatter(
     let result = result.strip_prefix('|').unwrap_or(result);
     let result = result.trim();
 
-    if result.is_empty() {
+    if result.is_empty() || result == type_str {
         return None;
     }
 
