@@ -56,6 +56,26 @@ const categories: Category[] = [
       "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
     },
   },
+  {
+    name: "css-in-js",
+    sources: [
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-css"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "jsx/embed"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(EDGE_CASES_DIR, "css-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
+    notes: {
+      "styled-components.js": "Multiple issues: `Button.extend` not recognized as tag",
+    },
+  },
 ];
 
 // ---

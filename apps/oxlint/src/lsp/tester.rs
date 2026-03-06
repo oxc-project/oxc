@@ -2,8 +2,8 @@ use std::{fmt::Write, path::PathBuf};
 
 use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges};
 use tower_lsp_server::ls_types::{
-    CodeAction, CodeActionKind, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString,
-    Position, Range, Uri,
+    CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, CodeDescription,
+    Diagnostic, NumberOrString, Position, Range, Uri,
 };
 
 use crate::lsp::server_linter::{ServerLinter, ServerLinterBuilder};
@@ -211,22 +211,20 @@ impl Tester<'_> {
 
     pub fn test_and_snapshot_multiple_file(&self, relative_file_paths: &[&str]) {
         let mut snapshot_result = String::new();
+        let context = CodeActionContext::default();
+        let fix_all_context = CodeActionContext {
+            only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+            ..Default::default()
+        };
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let linter = self.create_linter();
+            let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {
                 diagnostic: linter.run_diagnostic(&uri, None),
-                actions: linter.get_code_actions_or_commands(
-                    &uri,
-                    &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
-                    None,
-                ),
+                actions: linter.get_code_actions_or_commands(&uri, &range, &context),
                 fix_all_action: linter
-                    .get_code_actions_or_commands(
-                        &uri,
-                        &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
-                        Some(&vec![CodeActionKind::SOURCE_FIX_ALL]),
-                    )
+                    .get_code_actions_or_commands(&uri, &range, &fix_all_context)
                     .into_iter()
                     .next(),
             };

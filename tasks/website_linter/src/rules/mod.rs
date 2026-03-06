@@ -148,6 +148,7 @@ mod tests {
                 | "nextjs/no-duplicate-head"
                 | "oxc/no-barrel-file"
                 | "promise/no-callback-in-promise"
+                | "react/forbid-dom-props"
                 | "react/no-will-update-set-state"
                 | "react/rules-of-hooks"
                 | "typescript/class-literal-property-style"
