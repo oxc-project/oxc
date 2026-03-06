@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, utils};
+use crate::core::{ConfigStore, FormatFileStrategy, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     Changed(String),
@@ -17,7 +17,7 @@ pub struct FormatService {
     cwd: Box<Path>,
     format_mode: OutputMode,
     formatter: SourceFormatter,
-    config_resolver: ConfigResolver,
+    config_store: ConfigStore,
 }
 
 impl FormatService {
@@ -25,12 +25,12 @@ impl FormatService {
         cwd: T,
         format_mode: OutputMode,
         formatter: SourceFormatter,
-        config_resolver: ConfigResolver,
+        config_store: ConfigStore,
     ) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), format_mode, formatter, config_resolver }
+        Self { cwd: cwd.into(), format_mode, formatter, config_store }
     }
 
     /// Process entries as they are received from the channel
@@ -64,7 +64,7 @@ impl FormatService {
             };
 
             // Resolve options for this specific file entry
-            let resolved_options = self.config_resolver.resolve(&entry);
+            let resolved_options = self.config_store.resolve(&entry);
 
             let (code, is_changed) =
                 match self.formatter.format(&entry, &source_text, resolved_options) {

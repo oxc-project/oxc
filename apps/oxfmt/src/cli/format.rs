@@ -9,8 +9,11 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
+use rustc_hash::FxHashMap;
+
 use crate::core::{
-    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ConfigStore, SourceFormatter, build_nested_resolver, discover_nested_configs,
+    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 
 #[derive(Debug)]
@@ -65,10 +68,10 @@ impl FormatRunner {
         };
         let num_of_threads = rayon::current_num_threads();
 
-        // Find and load config file
-        // NOTE: Currently, we only load single config file.
+        // Find and load base config file
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
+        let explicit_config = config_options.config.is_some();
         let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
         let mut config_resolver = match ConfigResolver::from_config_paths(
@@ -92,6 +95,35 @@ impl FormatRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        // Discover and load nested configs (skip if --config was explicit)
+        let root_config_dir = oxfmtrc_path.as_deref().and_then(|p| p.parent());
+        let mut nested_resolvers = FxHashMap::default();
+        let mut nested_ignore_patterns: Vec<(Vec<String>, PathBuf)> = Vec::new();
+
+        if !explicit_config {
+            let nested_config_paths = discover_nested_configs(&paths, root_config_dir);
+            for config_path in &nested_config_paths {
+                match build_nested_resolver(config_path) {
+                    Ok((config_dir, resolver, patterns)) => {
+                        nested_ignore_patterns.push((patterns, config_dir.clone()));
+                        nested_resolvers.insert(config_dir, resolver);
+                    }
+                    Err(err) => {
+                        utils::print_and_flush(
+                            stderr,
+                            &format!(
+                                "Failed to load nested config {}.\n{err}\n",
+                                config_path.display()
+                            ),
+                        );
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                }
+            }
+        }
+
+        let config_store = ConfigStore::new(config_resolver, nested_resolvers);
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
@@ -122,6 +154,7 @@ impl FormatRunner {
             ignore_options.with_node_modules,
             oxfmtrc_path.as_deref(),
             &ignore_patterns,
+            nested_ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,
             // All target paths are ignored
@@ -165,7 +198,7 @@ impl FormatRunner {
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
             let format_service =
-                FormatService::new(cwd, format_mode_clone, source_formatter, config_resolver);
+                FormatService::new(cwd, format_mode_clone, source_formatter, config_store);
             format_service.run_streaming(rx_entry, &tx_error, &tx_success);
         });
 

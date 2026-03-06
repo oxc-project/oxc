@@ -7,9 +7,12 @@ use tracing::{debug, error, warn};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
+use rustc_hash::FxHashMap;
+
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ConfigStore, ExternalFormatter, FormatFileStrategy, FormatResult,
+    SourceFormatter, build_nested_resolver, discover_configs_in_tree, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
@@ -45,8 +48,10 @@ impl ServerFormatterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
 
+        let explicit_config = options.config_path.as_ref().is_some_and(|s| !s.is_empty());
+
         // Build `ConfigResolver` from config paths
-        let (config_resolver, ignore_patterns) =
+        let (base_resolver, ignore_patterns) =
             match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
                 Ok((resolver, patterns)) => (resolver, patterns),
                 Err(err) => {
@@ -54,6 +59,33 @@ impl ServerFormatterBuilder {
                     Self::default_config_resolver()
                 }
             };
+
+        // Discover nested configs (skip if explicit --config)
+        let mut nested_resolvers = FxHashMap::default();
+        if !explicit_config {
+            let nested_config_paths = discover_configs_in_tree(&root_path);
+            // Skip root config (already loaded as base) — compare by parent directory
+            // to avoid path construction differences between resolve_oxfmtrc_path and WalkBuilder
+            let root_config_dir = resolve_oxfmtrc_path(&root_path, None)
+                .and_then(|p| p.parent().map(Path::to_path_buf));
+            for config_path in nested_config_paths {
+                if root_config_dir.as_deref() == config_path.parent() {
+                    continue;
+                }
+                match build_nested_resolver(&config_path) {
+                    Ok((config_dir, resolver, _patterns)) => {
+                        // NOTE: Nested ignore patterns are not used in LSP.
+                        // LSP formats explicitly opened files, so ignorePatterns don't apply.
+                        nested_resolvers.insert(config_dir, resolver);
+                    }
+                    Err(err) => {
+                        warn!("Failed to load nested config {}: {err}", config_path.display());
+                    }
+                }
+            }
+        }
+
+        let config_store = ConfigStore::new(base_resolver, nested_resolvers);
 
         let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
             Ok(glob) => Some(glob),
@@ -78,7 +110,7 @@ impl ServerFormatterBuilder {
         ServerFormatter::new(
             root_path.to_path_buf(),
             source_formatter,
-            config_resolver,
+            config_store,
             gitignore_glob,
         )
     }
@@ -160,7 +192,7 @@ impl ServerFormatterBuilder {
 pub struct ServerFormatter {
     root_path: PathBuf,
     source_formatter: SourceFormatter,
-    config_resolver: ConfigResolver,
+    config_store: ConfigStore,
     gitignore_glob: Option<Gitignore>,
 }
 
@@ -225,7 +257,13 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+                let mut p: Vec<String> =
+                    FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect();
+                // Watch for nested config files
+                for file in FORMAT_CONFIG_FILES {
+                    p.push(format!("**/{file}"));
+                }
+                p
             };
 
         patterns.push(".editorconfig".to_string());
@@ -316,10 +354,10 @@ impl ServerFormatter {
     pub fn new(
         root_path: PathBuf,
         source_formatter: SourceFormatter,
-        config_resolver: ConfigResolver,
+        config_store: ConfigStore,
         gitignore_glob: Option<Gitignore>,
     ) -> Self {
-        Self { root_path, source_formatter, config_resolver, gitignore_glob }
+        Self { root_path, source_formatter, config_store, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -356,7 +394,7 @@ impl ServerFormatter {
             return None;
         };
         // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
+        let resolved_options = self.config_store.resolve(&strategy);
         debug!("resolved_options = {resolved_options:?}");
 
         Some(tokio::task::block_in_place(|| {
@@ -382,7 +420,7 @@ impl ServerFormatter {
         };
 
         // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
+        let resolved_options = self.config_store.resolve(&strategy);
         debug!("resolved_options = {resolved_options:?}");
 
         Some(tokio::task::block_in_place(|| {
