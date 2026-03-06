@@ -18,6 +18,7 @@ target/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
+/napi/parser/tsconfig.browser.tsbuildinfo
 
 # Cloned conformance repos
 tasks/coverage/babel/

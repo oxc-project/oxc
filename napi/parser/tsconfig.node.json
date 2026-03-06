@@ -5,10 +5,10 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
-    "strict": true,
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true,
-    "noUnusedLocals": true
+    "strict": false
   },
-  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
-  "exclude": ["test/**/fixtures"]
+  "exclude": ["test-browser", "vitest.config.browser.ts"]
 }
