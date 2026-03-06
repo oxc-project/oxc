@@ -360,5 +360,5 @@ fn define_then_transform_optional_chain() {
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code;
-    assert!(!result.is_empty(), "codegen should produce output");
+    assert_eq!(result, "console.log({}[0]);\n");
 }
