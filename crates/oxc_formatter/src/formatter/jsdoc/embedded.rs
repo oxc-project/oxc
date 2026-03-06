@@ -79,9 +79,15 @@ pub(super) fn format_embedded_js(
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
     let line_width = LineWidth::try_from(width).unwrap();
 
-    // Clone once upfront — subsequent clones of base_options are cheap since
-    // the Vec fields (sort_imports, sort_tailwindcss) are already owned.
-    let base_options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
+    // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
+    // to embedded code, and their Vec fields make cloning expensive.
+    let base_options = FormatOptions {
+        line_width,
+        jsdoc: None,
+        sort_imports: None,
+        sort_tailwindcss: None,
+        ..format_options.clone()
+    };
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| -> Option<String> {
@@ -225,11 +231,15 @@ pub(super) fn format_type_via_formatter(
 /// - `=>`: function type arrows
 /// - Newlines: multi-line types need reformatting
 pub(super) fn needs_formatter_pass(type_str: &str) -> bool {
-    for &b in type_str.as_bytes() {
-        match b {
+    let bytes = type_str.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
             b'|' | b'&' | b'{' | b'}' | b'(' | b')' | b'\n' => return true,
+            b'=' if bytes.get(i + 1) == Some(&b'>') => return true,
             _ => {}
         }
+        i += 1;
     }
-    type_str.contains("=>")
+    false
 }
