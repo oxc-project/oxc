@@ -1,0 +1,6 @@
+{
+  "extends": ["../.oxlintrc.json"],
+  "rules": {
+    "no-undef": "error"
+  }
+}
