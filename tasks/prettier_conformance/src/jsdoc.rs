@@ -151,9 +151,10 @@ impl JsdocTestRunner {
         let source_text = std::fs::read_to_string(input_path).unwrap();
         let expected = std::fs::read_to_string(expected_path).unwrap();
 
-        let (jsdoc_options, quote_style) = Self::load_jsdoc_options(input_path);
+        let (jsdoc_options, quote_style, line_width) = Self::load_jsdoc_options(input_path);
 
-        let Some(actual) = Self::run_oxfmt(&source_text, input_path, &jsdoc_options, quote_style)
+        let Some(actual) =
+            Self::run_oxfmt(&source_text, input_path, &jsdoc_options, quote_style, line_width)
         else {
             if self.debug || print_diff {
                 println!(
@@ -186,7 +187,7 @@ impl JsdocTestRunner {
     /// Load per-fixture JsdocOptions and format overrides.
     /// Checks for a per-file sidecar `{stem}.options.json` first, then
     /// directory-level `options.json`. Falls back to default options.
-    fn load_jsdoc_options(input_path: &Path) -> (JsdocOptions, QuoteStyle) {
+    fn load_jsdoc_options(input_path: &Path) -> (JsdocOptions, QuoteStyle, Option<u16>) {
         let dir = input_path.parent().unwrap();
 
         // Per-file options: e.g. 033-not-capitalizing-false.options.json
@@ -202,16 +203,17 @@ impl JsdocTestRunner {
             return Self::parse_jsdoc_options(&dir_options_path);
         }
 
-        (JsdocOptions::default(), QuoteStyle::default())
+        (JsdocOptions::default(), QuoteStyle::default(), None)
     }
 
-    fn parse_jsdoc_options(path: &Path) -> (JsdocOptions, QuoteStyle) {
+    fn parse_jsdoc_options(path: &Path) -> (JsdocOptions, QuoteStyle, Option<u16>) {
         let content = std::fs::read_to_string(path).unwrap();
         let json: serde_json::Value = serde_json::from_str(&content)
             .unwrap_or_else(|e| panic!("Failed to parse {}: {e}", path.display()));
 
         let mut options = JsdocOptions::default();
         let mut quote_style = QuoteStyle::default();
+        let mut line_width: Option<u16> = None;
 
         if json.get("capitalize_descriptions").and_then(serde_json::Value::as_bool) == Some(false) {
             options.capitalize_descriptions = false;
@@ -229,13 +231,51 @@ impl JsdocTestRunner {
         }
         if json.get("single_line_when_possible").and_then(serde_json::Value::as_bool) == Some(false)
         {
-            options.single_line_when_possible = false;
+            options.comment_line_strategy = oxc_formatter::CommentLineStrategy::Multiline;
+        }
+        if let Some(strategy) = json.get("comment_line_strategy").and_then(serde_json::Value::as_str)
+        {
+            options.comment_line_strategy = match strategy {
+                "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
+                "keep" => oxc_formatter::CommentLineStrategy::Keep,
+                _ => oxc_formatter::CommentLineStrategy::SingleLine,
+            };
+        }
+        if json.get("description_with_dot").and_then(serde_json::Value::as_bool) == Some(true) {
+            options.description_with_dot = true;
+        }
+        if json.get("add_default_to_description").and_then(serde_json::Value::as_bool)
+            == Some(false)
+        {
+            options.add_default_to_description = false;
+        }
+        if json.get("prefer_code_fences").and_then(serde_json::Value::as_bool) == Some(true) {
+            options.prefer_code_fences = true;
+        }
+        if let Some(style) =
+            json.get("line_wrapping_style").and_then(serde_json::Value::as_str)
+        {
+            options.line_wrapping_style = match style {
+                "balance" => oxc_formatter::LineWrappingStyle::Balance,
+                _ => oxc_formatter::LineWrappingStyle::Greedy,
+            };
+        }
+        if json.get("description_tag").and_then(serde_json::Value::as_bool) == Some(true) {
+            options.description_tag = true;
+        }
+        if json.get("keep_unparseable_example_indent").and_then(serde_json::Value::as_bool)
+            == Some(true)
+        {
+            options.keep_unparseable_example_indent = true;
         }
         if json.get("single_quote").and_then(serde_json::Value::as_bool) == Some(true) {
             quote_style = QuoteStyle::Single;
         }
+        if let Some(w) = json.get("print_width").and_then(serde_json::Value::as_u64) {
+            line_width = u16::try_from(w).ok();
+        }
 
-        (options, quote_style)
+        (options, quote_style, line_width)
     }
 
     fn run_oxfmt(
@@ -243,6 +283,7 @@ impl JsdocTestRunner {
         path: &Path,
         jsdoc_options: &JsdocOptions,
         quote_style: QuoteStyle,
+        line_width_override: Option<u16>,
     ) -> Option<String> {
         let allocator = Allocator::default();
 
@@ -257,8 +298,9 @@ impl JsdocTestRunner {
         }
 
         // Use printWidth=80 to match Prettier's default (oxfmt defaults to 100)
+        let width = line_width_override.unwrap_or(80);
         let options = FormatOptions {
-            line_width: LineWidth::try_from(80).unwrap(),
+            line_width: LineWidth::try_from(width).unwrap(),
             quote_style,
             jsdoc: Some(jsdoc_options.clone()),
             ..FormatOptions::default()
