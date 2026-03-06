@@ -143,8 +143,8 @@ pub fn format_description_mdast(
             }
             // A line is "last in paragraph" if it's the final line overall or
             // the next line is empty (paragraph boundary).
-            let is_last_in_para = i == total - 1
-                || lines_vec.get(i + 1).is_some_and(|next| next.is_empty());
+            let is_last_in_para =
+                i == total - 1 || lines_vec.get(i + 1).is_some_and(|next| next.is_empty());
             if line.is_empty() {
                 at_paragraph_start = true;
             } else if at_paragraph_start {
@@ -427,7 +427,13 @@ fn is_block_node(node: &Node) -> bool {
     )
 }
 
-fn serialize_node(node: &Node, indent: usize, first_para_offset: usize, opts: &SerializeOptions<'_>, lines: &mut LineBuffer) {
+fn serialize_node(
+    node: &Node,
+    indent: usize,
+    first_para_offset: usize,
+    opts: &SerializeOptions<'_>,
+    lines: &mut LineBuffer,
+) {
     match node {
         Node::Root(_) => {
             serialize_children(node, indent, 0, opts, lines);

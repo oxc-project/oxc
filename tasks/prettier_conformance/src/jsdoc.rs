@@ -233,7 +233,8 @@ impl JsdocTestRunner {
         {
             options.comment_line_strategy = oxc_formatter::CommentLineStrategy::Multiline;
         }
-        if let Some(strategy) = json.get("comment_line_strategy").and_then(serde_json::Value::as_str)
+        if let Some(strategy) =
+            json.get("comment_line_strategy").and_then(serde_json::Value::as_str)
         {
             options.comment_line_strategy = match strategy {
                 "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
@@ -252,9 +253,7 @@ impl JsdocTestRunner {
         if json.get("prefer_code_fences").and_then(serde_json::Value::as_bool) == Some(true) {
             options.prefer_code_fences = true;
         }
-        if let Some(style) =
-            json.get("line_wrapping_style").and_then(serde_json::Value::as_str)
-        {
+        if let Some(style) = json.get("line_wrapping_style").and_then(serde_json::Value::as_str) {
             options.line_wrapping_style = match style {
                 "balance" => oxc_formatter::LineWrappingStyle::Balance,
                 _ => oxc_formatter::LineWrappingStyle::Greedy,

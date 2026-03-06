@@ -462,8 +462,7 @@ mod tests {
 
     #[test]
     fn test_wrap_empty_lines() {
-        let result =
-            wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None, None);
+        let result = wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None, None);
         assert_eq!(result, "Paragraph one\n\nParagraph two");
     }
 
@@ -475,15 +474,8 @@ mod tests {
 
     #[test]
     fn test_numbered_list_removes_blank_lines() {
-        let result = wrap_text(
-            "1. Thing 1\n\n2. Thing 2\n\n3. Thing 3",
-            80,
-            0,
-            false,
-            None,
-            None,
-            None,
-        );
+        let result =
+            wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
         assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
