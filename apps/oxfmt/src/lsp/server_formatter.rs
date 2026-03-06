@@ -46,14 +46,17 @@ impl ServerFormatterBuilder {
         debug!("root_path = {:?}", root_path.display());
 
         // Build `ConfigResolver` from config paths
-        let (config_resolver, ignore_patterns) =
-            match Self::build_config_resolver(&root_path, options.config_path.as_ref(), options.config_dir.as_ref()) {
-                Ok((resolver, patterns)) => (resolver, patterns),
-                Err(err) => {
-                    warn!("Failed to build config resolver: {err}, falling back to default config");
-                    Self::default_config_resolver()
-                }
-            };
+        let (config_resolver, ignore_patterns) = match Self::build_config_resolver(
+            &root_path,
+            options.config_path.as_ref(),
+            options.config_dir.as_ref(),
+        ) {
+            Ok((resolver, patterns)) => (resolver, patterns),
+            Err(err) => {
+                warn!("Failed to build config resolver: {err}, falling back to default config");
+                Self::default_config_resolver()
+            }
+        };
 
         let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
             Ok(glob) => Some(glob),
