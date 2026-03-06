@@ -41,11 +41,19 @@ pub struct NoUselessPromiseResolveRejectOptions {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows returning values wrapped in `Promise.resolve` or `Promise.reject` in an async function or a `Promise#then`/`catch`/`finally` callback.
+    /// Disallows returning values wrapped in `Promise.resolve` or `Promise.reject`
+    /// in an async function or a `Promise#then`/`catch`/`finally` callback.
     ///
     /// ### Why is this bad?
     ///
-    /// Wrapping a return value in `Promise.resolve` in an async function or a `Promise#then`/`catch`/`finally` callback is unnecessary as all return values in async functions and promise callback functions are already wrapped in a `Promise`. Similarly, returning an error wrapped in `Promise.reject` is equivalent to simply `throw`ing the error. This is the same for `yield`ing in async generators as well.
+    /// Wrapping a return value in `Promise.resolve` in an async function
+    /// or a `Promise#then`/`catch`/`finally` callback is unnecessary as all
+    /// return values in async functions and promise callback functions are
+    /// already wrapped in a `Promise`.
+    ///
+    /// Similarly, returning an error wrapped in `Promise.reject` is equivalent
+    /// to simply `throw`ing the error. This is the same for `yield`ing in
+    /// async generators as well.
     ///
     /// ### Examples
     ///

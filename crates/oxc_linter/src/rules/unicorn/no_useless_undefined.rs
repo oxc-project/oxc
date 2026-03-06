@@ -33,7 +33,7 @@ fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
 pub struct NoUselessUndefined {
     /// Whether to check for useless `undefined` in function call arguments.
     check_arguments: bool,
-    ///Whether to check for useless `undefined` in arrow function bodies.
+    /// Whether to check for useless `undefined` in arrow function bodies.
     check_arrow_function_body: bool,
 }
 
@@ -46,22 +46,32 @@ impl Default for NoUselessUndefined {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Do not use useless `undefined`.
+    /// Prevents usage of `undefined` in cases where it would be useless.
+    ///
+    /// ::: warning
+    /// This rule can conflict with the default behaviors of the `eslint/array-callback-return`
+    /// and `eslint/getter-return` rules. For both rules, you can set
+    /// the `allowImplicit` option to avoid conflicts.
+    /// :::
     ///
     /// ### Why is this bad?
     ///
-    /// `undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.
+    /// `undefined` is the default value for new variables, parameters,
+    /// return statements, etc, so specifying `undefined` in these cases
+    /// is pointless.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let foo = undefined;
+    /// const noop = () => undefined;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// let foo;
+    /// const noop = () => {};
     /// ```
     NoUselessUndefined,
     unicorn,

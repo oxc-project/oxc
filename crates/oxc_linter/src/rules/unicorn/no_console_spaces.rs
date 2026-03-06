@@ -30,7 +30,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    /// The `console.log()` method and similar methods join the parameters
+    /// with a space so adding a leading/trailing space to a parameter,
+    /// results in two spaces being added.
     ///
     /// ### Examples
     ///

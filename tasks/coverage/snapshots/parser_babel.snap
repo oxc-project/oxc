@@ -2,7 +2,7 @@ commit: 308c8d85
 
 parser_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 2214/2227 (99.42%)
+Positive Passed: 2213/2227 (99.37%)
 Negative Passed: 1676/1692 (99.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -295,6 +295,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·      ╰── It can not be redeclared here
  32 │ }
     ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts:1:15]
+ 1 │ let x: `foo-${infer bar}`;
+   ·               ─────────
+   ╰────
 
 
   × Invalid function declaration

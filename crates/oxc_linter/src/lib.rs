@@ -475,9 +475,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host
-            .parser_tokens_mut()
-            .map(|tokens| tokens.take_in(allocator).into_bump_slice_mut());
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
 
         self.convert_and_call_external_linter(
             external_rules,
@@ -537,7 +535,7 @@ impl Linter {
         };
 
         // Clone tokens into fixed-size allocator
-        let tokens = ctx_host.parser_tokens().map(|tokens| js_allocator.alloc_slice_copy(tokens));
+        let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
 
         self.convert_and_call_external_linter(
             external_rules,
@@ -562,7 +560,7 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost<'_>,
         program: &mut Program<'_>,
-        tokens: Option<&mut [Token]>,
+        tokens: &mut [Token],
         allocator: &Allocator,
     ) {
         // If has BOM, remove it
@@ -586,12 +584,11 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
-        let (tokens_offset, tokens_len) = if let Some(tokens) = tokens {
+        // Convert tokens for raw transfer
+        #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
+        let (tokens_offset, tokens_len) = if !tokens.is_empty() {
             update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
-            let tokens_offset = tokens.as_ptr() as u32;
-            #[expect(clippy::cast_possible_truncation)]
-            let tokens_len = tokens.len() as u32;
-            (tokens_offset, tokens_len)
+            (tokens.as_ptr() as u32, tokens.len() as u32)
         } else {
             (0, 0)
         };

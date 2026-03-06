@@ -301,16 +301,18 @@ impl ExternalFormatter {
                                     "Failed to get Doc for embedded code (parser '{parser_name}'): {err}"
                                 )
                             })?;
-                        doc_json_strs
+                        let doc_jsons = doc_json_strs
                             .into_iter()
-                            .map(|doc_json_str| {
-                                let doc_json: serde_json::Value =
-                                    serde_json::from_str(&doc_json_str).map_err(|err| {
-                                        format!("Failed to parse Doc JSON: {err}")
-                                    })?;
-                                from_prettier_doc::to_format_elements_for_template(&doc_json, allocator, group_id_builder)
-                            })
-                            .collect()
+                            .map(|s| serde_json::from_str(&s))
+                            .collect::<Result<Vec<_>, _>>()
+                            .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
+
+                        from_prettier_doc::to_format_elements_for_template(
+                            language,
+                            &doc_jsons,
+                            allocator,
+                            group_id_builder,
+                        )
                     })
             }))
         } else {
@@ -363,13 +365,11 @@ impl ExternalFormatter {
 /// This is the single source of truth for supported embedded languages.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
-        // TODO: "tagged-css" should use `scss` parser to support quasis
-        "tagged-css" | "styled-jsx" => Some("css"),
+        "tagged-css" | "styled-jsx" | "angular-styles" => Some("scss"),
         "tagged-graphql" => Some("graphql"),
         "tagged-html" => Some("html"),
         "tagged-markdown" => Some("markdown"),
         "angular-template" => Some("angular"),
-        "angular-styles" => Some("scss"),
         _ => None,
     }
 }

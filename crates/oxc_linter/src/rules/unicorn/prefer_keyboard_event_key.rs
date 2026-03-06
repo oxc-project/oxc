@@ -18,6 +18,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn prefer_keyboard_event_key_diagnostic(span: Span, deprecated_prop: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `.key` instead of `.{deprecated_prop}`"))
         .with_help(format!("The `{deprecated_prop}` property is deprecated."))
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key")
         .with_label(span)
 }
 
@@ -27,38 +28,42 @@ pub struct PreferKeyboardEventKey;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces the use of [`KeyboardEvent#key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) over [`KeyboardEvent#keyCode`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode) which is deprecated.
+    /// Enforces the use of [`KeyboardEvent#key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
+    /// over [`KeyboardEvent#keyCode`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode),
+    /// which is deprecated.
+    ///
     /// The `.key` property is also more semantic and readable.
     ///
     /// ### Why is this bad?
     ///
-    /// The `keyCode`, `which`, and `charCode` properties are deprecated and should be avoided in favor of the `key` property.
+    /// The `keyCode`, `which`, and `charCode` properties are deprecated
+    /// and should be avoided in favor of the `key` property.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// window.addEventListener('keydown', event => {
-    ///     if (event.keyCode === 8) {
-    ///         console.log('Backspace was pressed');
-    ///     }
+    ///   if (event.keyCode === 8) {
+    ///     console.log('Backspace was pressed');
+    ///   }
     /// });
     ///
     /// window.addEventListener('keydown', event => {
-    ///     console.log(event.keyCode);
+    ///   console.log(event.keyCode);
     /// });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// window.addEventListener('keydown', event => {
-    ///     if (event.key === 'Backspace') {
-    ///       console.log('Backspace was pressed');
-    ///     }
+    ///   if (event.key === 'Backspace') {
+    ///     console.log('Backspace was pressed');
+    ///   }
     /// });
     ///
     /// window.addEventListener('click', event => {
-    ///     console.log(event.key);
+    ///   console.log(event.key);
     /// });
     /// ```
     PreferKeyboardEventKey,

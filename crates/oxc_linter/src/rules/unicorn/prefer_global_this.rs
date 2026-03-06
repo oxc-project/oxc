@@ -9,6 +9,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn prefer_global_this_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.")
         .with_help("Replace the alias with `globalThis`.")
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis")
         .with_label(span)
 }
 
@@ -20,15 +21,17 @@ declare_oxc_lint!(
     ///
     /// Enforces the use of [`globalThis`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis) instead of
     /// environment‑specific global object aliases (`window`, `self`, or `global`).
+    ///
     /// Using the standard `globalThis` makes your code portable across browsers, Web Workers, Node.js,
     /// and future JavaScript runtimes.
     ///
     /// ### Why is this bad?
     ///
-    /// • **Portability** – `window` is only defined in browser main threads, `self` is used in Web Workers,
-    /// and `global` is Node‑specific.  Choosing the wrong alias causes runtime crashes when the code is
+    /// **Portability** – `window` is only defined in browser main threads, `self` is used in Web Workers,
+    /// and `global` is Node‑specific. Choosing the wrong alias causes runtime crashes when the code is
     /// executed outside of its original environment.
-    /// • **Clarity** – `globalThis` clearly communicates that you are referring to the global object itself
+    ///
+    /// **Clarity** – `globalThis` clearly communicates that you are referring to the global object itself
     /// rather than a particular platform.
     ///
     /// ### Examples

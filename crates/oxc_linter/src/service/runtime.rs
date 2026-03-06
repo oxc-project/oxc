@@ -19,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
@@ -127,8 +127,9 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
-    /// None if section parsing failed, or token collection was not requested.
-    parser_tokens: Option<ArenaVec<'a, Token>>,
+    /// Parser tokens for the section.
+    /// Empty if section parsing failed, or if token collection was not requested (no JS plugins).
+    parser_tokens: ArenaBox<'a, [Token]>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -1008,7 +1009,7 @@ impl Runtime {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: None,
-                            parser_tokens: None,
+                            parser_tokens: ArenaBox::new_empty_boxed_slice(),
                         });
                     }
                 }
@@ -1025,7 +1026,7 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         check_syntax_errors: bool,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, Option<ArenaVec<'a, Token>>), Vec<OxcDiagnostic>>
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
     {
         let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)
@@ -1055,6 +1056,8 @@ impl Runtime {
 
         let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
+        let tokens = ret.tokens.into_boxed_slice();
+
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
         // If import plugin is enabled.
@@ -1073,11 +1076,6 @@ impl Runtime {
                 })
                 .collect();
         }
-        let parser_tokens = collect_tokens.then_some(ret.tokens);
-        Ok((
-            ResolvedModuleRecord { module_record, resolved_module_requests },
-            semantic,
-            parser_tokens,
-        ))
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
     }
 }

@@ -17,27 +17,34 @@ pub struct NoProcessExit;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `process.exit()`.
+    /// Disallow all usage of `process.exit()`.
     ///
     /// ### Why is this bad?
     ///
-    /// Only use `process.exit()` in CLI apps. Throw an error instead.
+    /// `process.exit()` should generally only be used in command-line utilities. In all other
+    /// types of applications, the code should throw an error instead.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// if (problem) process.exit(1);
+    /// if (problem) {
+    ///   process.exit(1);
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// if (problem) throw new Error("message");
+    /// if (problem) {
+    ///   throw new Error("message");
+    /// }
     /// ```
     ///
     /// ```
     /// #!/usr/bin/env node
-    /// if (problem) process.exit(1);
+    /// if (problem) {
+    ///   process.exit(1);
+    /// }
     /// ```
     NoProcessExit,
     unicorn,

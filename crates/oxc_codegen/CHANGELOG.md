@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- abc7e19 codegen: Improve parenthesised checks when printing types (#19880) (camc314)
+- 1710f56 codegen: Remove double indentation for enum inside namespace (#19775) (Dunqing)
+- 9e4995c codegen: Print type annotation on `CatchParameter` (#19790) (camc314)
+- 297b2bb codegen: Wrap `TSConditionalType` in parens when necessary (#19788) (camc314)
+- cec7878 codegen: Print `definite` property on AccessorProperty (#19786) (camc314)
+- 6f395cf codegen: Print `definite` property on PropertyDefinition (#19785) (camc314)
+- b749373 codegen: Correctly parenthesise TSArrayType (#19784) (camc314)
+- 876dc1b codegen: Print object property `this` param (#19783) (camc314)
+- ed17bbf codegen: Print `override` keyword for method and property definitions (#19753) (Dunqing)
+- 3b96f41 codegen: Print comments in JSX expression containers and spread attributes (#19701) (Boshen)
+
 ## [0.115.0] - 2026-02-23
 
 ### 🐛 Bug Fixes

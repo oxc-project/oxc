@@ -4,7 +4,9 @@ use std::sync::{Arc, OnceLock};
 use ignore::gitignore::Gitignore;
 use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
-use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
+use tower_lsp_server::ls_types::{
+    CodeActionContext, DiagnosticOptions, DiagnosticServerCapabilities,
+};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -151,20 +153,25 @@ impl ServerLinterBuilder {
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
-        let lint_options = LintOptions {
-            fix: fix_kind,
-            report_unused_directive: match options.unused_disable_directives {
-                UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
-                UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
-                UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
-            },
-            ..Default::default()
-        };
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
-
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+
+        let lint_options = LintOptions {
+            fix: fix_kind,
+            report_unused_directive: match options.unused_disable_directives {
+                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
+                Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
+                None => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
+            },
+            ..Default::default()
+        };
+
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
@@ -482,15 +489,21 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON and TS config files
-                vec!["**/.oxlintrc.json".to_string(), "**/oxlint.config.ts".to_string()]
+                // Watch both JSON/JSONC and TS config files
+                vec![
+                    "**/.oxlintrc.json".to_string(),
+                    "**/.oxlintrc.jsonc".to_string(),
+                    "**/oxlint.config.ts".to_string(),
+                ]
             }
             Some(v) => vec![v.to_string()],
         };
 
         for path in &self.extended_paths {
             // ignore .oxlintrc.json and oxlint.config.ts files when using nested configs
-            if (path.ends_with(".oxlintrc.json") || path.ends_with("oxlint.config.ts"))
+            if (path.ends_with(".oxlintrc.json")
+                || path.ends_with(".oxlintrc.jsonc")
+                || path.ends_with("oxlint.config.ts"))
                 && options.use_nested_configs()
             {
                 continue;
@@ -579,7 +592,7 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
+        context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(uri);
 
@@ -594,7 +607,7 @@ impl Tool for ServerLinter {
         let actions =
             actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
         // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
-        let is_source_fix_all = only_code_action_kinds.is_some_and(|only| {
+        let is_source_fix_all = context.only.as_ref().is_some_and(|only| {
             only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
                 || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
         });
@@ -1034,9 +1047,10 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1049,9 +1063,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1073,11 +1088,12 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 3 watchers (json, ts, lint.json)
-            assert_eq!(patterns.len(), 3);
+            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[2], "lint.json".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "lint.json".to_string());
         }
 
         #[test]
@@ -1105,10 +1121,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[2], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1159,10 +1176,11 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 3);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
         }
     }
 }

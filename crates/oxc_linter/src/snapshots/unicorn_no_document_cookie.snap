@@ -2,65 +2,74 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:1]
  1 │ document.cookie = "foo=bar"
    · ───────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:1]
  1 │ document.cookie += ";foo=bar"
    · ───────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:1]
  1 │ document.cookie = document.cookie + ";foo=bar"
    · ───────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:1]
  1 │ document.cookie &&= true
    · ───────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:7]
  1 │ foo = document.cookie = "foo=bar"
    ·       ───────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:21]
  1 │ var doc = document; doc.cookie = "foo=bar"
    ·                     ──────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:21]
  1 │ let doc = document; doc.cookie = "foo=bar"
    ·                     ──────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:34]
  1 │ const doc = globalThis.document; doc.cookie = "foo=bar"
    ·                                  ──────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API
 
-  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
+  ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly.
    ╭─[no_document_cookie.tsx:1:1]
  1 │ window.document.cookie = "foo=bar"
    · ──────────────────────
    ╰────
-  help: Use the Cookie Store API or a cookie library instead
+  help: Use the Cookie Store API or a cookie library instead.
+  note: https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API

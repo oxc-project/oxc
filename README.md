@@ -78,6 +78,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
 </p>
 
 → [oxlint documentation](https://oxc.rs/docs/guide/usage/linter/cli.html)
+→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxlint`
 
 ### Formatter
 
@@ -88,6 +89,7 @@ npx oxfmt@latest
 ```
 
 → [Formatter documentation](https://oxc.rs/docs/guide/usage/formatter)
+→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxfmt`
 
 ### Parser (Node.js)
 

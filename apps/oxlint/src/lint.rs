@@ -255,7 +255,7 @@ impl CliRunner {
                                 ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
                                     "Error: JavaScript/TypeScript config files found but JS runtime not available.\n\
                                      This is an experimental feature that requires running oxlint via Node.js.\n\
-                                     Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n".to_string()
+                                     Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {
                                     let report = render_report(&handler, error);
@@ -338,17 +338,37 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
-        let report_unused_directives = match inline_config_options.report_unused_directives {
-            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
-            _ => None,
-        };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
         let type_check = self.options.type_check || config_store.type_check_enabled();
+        if type_check && !type_aware {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check` option requires type-aware linting.\nUse `--type-aware --type-check` or enable `options.typeAware` in your config.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
+        }
+        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
+        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+
+        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
+        let report_unused_directives = match inline_config_options.report_unused_directives {
+            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                Some(severity)
+            }
+            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+            _ => match config_store.report_unused_disable_directives() {
+                Some(severity) if severity.is_warn_deny() => Some(severity),
+                _ => None,
+            },
+        };
+        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
+            &output_formatter,
+            &warning_options,
+            &misc_options,
+            max_warnings,
+        );
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -438,7 +458,7 @@ impl CliRunner {
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
-        } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
+        } else if deny_warnings && diagnostic_result.warnings_count() > 0 {
             CliRunResult::LintNoWarningsAllowed
         } else if diagnostic_result.max_warnings_exceeded() {
             CliRunResult::LintMaxWarningsExceeded
@@ -466,13 +486,14 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        max_warnings: Option<usize>,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(max_warnings),
             sender,
         )
     }
@@ -713,6 +734,14 @@ mod test {
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
         Tester::new().with_cwd("fixtures/auto_config_detection".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn oxlint_config_auto_detection_jsonc() {
+        let args = &["debugger.js"];
+        Tester::new()
+            .with_cwd("fixtures/auto_config_detection_jsonc".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
@@ -1059,6 +1088,26 @@ mod test {
     }
 
     #[test]
+    fn test_report_unused_directives_from_config() {
+        // Verify that `reportUnusedDisableDirectives` in the config file enables reporting
+        // without needing a CLI flag.
+        let args = &["-c", ".oxlintrc-with-rudd.json"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_cli_overrides_config() {
+        // Verify that the CLI flag takes precedence over the config file value.
+        // Config has `reportUnusedDisableDirectives: "warn"`, but CLI passes `off`,
+        // so no unused-directive diagnostics should be reported.
+        let args =
+            &["-c", ".oxlintrc-with-rudd.json", "--report-unused-disable-directives-severity=off"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config() {
         let args = &[];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
@@ -1298,6 +1347,13 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_requires_type_aware() {
+        let args = &["--type-check"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_check_via_config_file() {
         let args = &["-c", "config-type-check.json"];
         Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
@@ -1315,6 +1371,30 @@ mod test {
     fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
         let args = &["--type-check", "-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_via_config_file() {
+        let args = &["-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_overridden_by_cli_flag() {
+        let args = &["--max-warnings", "1", "-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_via_config_file() {
+        let args = &["-c", "config-deny-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_overridden_by_cli_flag() {
+        let args = &["--deny-warnings", "-c", "config-deny-warnings-false.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
     }
 
     #[test]

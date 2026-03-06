@@ -342,6 +342,21 @@ impl ConfigStoreBuilder {
         self.config.options.type_check
     }
 
+    #[inline]
+    pub fn deny_warnings(&self) -> Option<bool> {
+        self.config.options.deny_warnings
+    }
+
+    #[inline]
+    pub fn max_warnings(&self) -> Option<usize> {
+        self.config.options.max_warnings
+    }
+
+    #[inline]
+    pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
+        self.config.options.report_unused_disable_directives
+    }
+
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
@@ -1415,6 +1430,53 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
         );
         assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config =
+            config_store_from_str(r#"{ "options": {"reportUnusedDisableDirectives": "error" } }"#);
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Deny)
+        );
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/deny_warnings_true.json"],
+                "options": {"denyWarnings": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_10.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(10));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/max_warnings_10.json"],
+                "options": {"maxWarnings": 1 }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(1));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/max_warnings_0.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.max_warnings, Some(0));
     }
 
     #[test]

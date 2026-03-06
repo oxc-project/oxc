@@ -40,16 +40,16 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// const response = await fetch('/', {method: 'GET', body: 'foo=bar'});
+    /// const response = await fetch('/', { method: 'GET', body: 'foo=bar' });
     ///
-    /// const request = new Request('/', {method: 'GET', body: 'foo=bar'});
+    /// const request = new Request('/', { method: 'GET', body: 'foo=bar' });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// const response = await fetch('/', {method: 'POST', body: 'foo=bar'});
+    /// const response = await fetch('/', { method: 'POST', body: 'foo=bar' });
     ///
-    /// const request = new Request('/', {method: 'POST', body: 'foo=bar'});
+    /// const request = new Request('/', { method: 'POST', body: 'foo=bar' });
     /// ```
     NoInvalidFetchOptions,
     unicorn,

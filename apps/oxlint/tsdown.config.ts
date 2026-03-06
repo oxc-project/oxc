@@ -157,7 +157,7 @@ function createReplaceAssertsPlugin(): Plugin {
     name: "replace-asserts",
     transform: {
       // Only process TS files in `src-js` directory
-      filter: { id: /\/src-js\/.+\.ts$/ },
+      filter: { id: /\/src-js\/.+(?<!\.d)\.ts$/ },
 
       async handler(code, path, meta) {
         const magicString = meta.magicString!;
@@ -265,7 +265,7 @@ function createReplaceGlobalsPlugin(): Plugin {
     name: "replace-globals",
     transform: {
       // Only process TS files in `src-js` directory
-      filter: { id: /\/src-js\/.+\.ts$/ },
+      filter: { id: /\/src-js\/.+(?<!\.d)\.ts$/ },
 
       async handler(code, path, meta) {
         const magicString = meta.magicString!;

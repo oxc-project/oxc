@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
 ## [0.113.0] - 2026-02-10
 
 ### 🐛 Bug Fixes

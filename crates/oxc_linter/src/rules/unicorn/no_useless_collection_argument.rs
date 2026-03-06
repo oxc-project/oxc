@@ -26,12 +26,15 @@ pub struct NoUselessCollectionArgument;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow useless values or fallbacks in Set, Map, WeakSet, or WeakMap
+    /// Disallow useless values or fallbacks in `Set`, `Map`, `WeakSet`, or `WeakMap`.
     ///
     /// ### Why is this bad?
     ///
-    /// It's unnecessary to pass an empty array or string when constructing a Set, Map, WeakSet, or WeakMap, since they accept nullish values.
-    /// It's also unnecessary to provide a fallback for possible nullish values.
+    /// It is unnecessary to pass an empty array or empty string when
+    /// constructing a `Set`, `Map`, `WeakSet`, or `WeakMap`, since
+    /// they accept nullish values.
+    ///
+    /// It is also unnecessary to provide a fallback for possible nullish values.
     ///
     /// ### Examples
     ///
@@ -45,6 +48,7 @@ declare_oxc_lint!(
     /// ```js
     /// const set = new Set();
     /// ```
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// const set = new Set(foo ?? []);
