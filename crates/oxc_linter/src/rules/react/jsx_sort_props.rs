@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cmp::Ordering;
 
 use icu_collator::options::{CollatorOptions, Strength};
@@ -63,6 +64,7 @@ fn reserved_first_invalid_props_diagnostic(invalid_words: &str, span: Span) -> O
 }
 
 const ALL_RESERVED_PROPS: &[&str] = &["children", "dangerouslySetInnerHTML", "key", "ref"];
+const NON_DOM_RESERVED_PROPS: &[&str] = &["children", "key", "ref"];
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -155,12 +157,11 @@ impl Rule for JsxSortProps {
         // Validate reservedFirst config and determine the effective reserved list.
         let reserved_list: Vec<&str> = match &config.reserved_first {
             ReservedFirst::Bool(true) => {
-                let mut list = ALL_RESERVED_PROPS.to_vec();
-                // dangerouslySetInnerHTML is only reserved on DOM components
-                if !is_dom_component(jsx_opening_elem) {
-                    list.retain(|&p| p != "dangerouslySetInnerHTML");
+                if is_dom_component(jsx_opening_elem) {
+                    ALL_RESERVED_PROPS.to_vec()
+                } else {
+                    NON_DOM_RESERVED_PROPS.to_vec()
                 }
-                list
             }
             ReservedFirst::Array(arr) => {
                 if arr.is_empty() {
@@ -186,13 +187,7 @@ impl Rule for JsxSortProps {
                     }
                     return;
                 }
-                let mut list: Vec<&str> = arr
-                    .iter()
-                    .filter_map(|s| {
-                        let s_str = s.as_str();
-                        if ALL_RESERVED_PROPS.contains(&s_str) { Some(s_str) } else { None }
-                    })
-                    .collect();
+                let mut list: Vec<&str> = arr.iter().map(String::as_str).collect();
                 // dangerouslySetInnerHTML is only reserved on DOM components
                 if !is_dom_component(jsx_opening_elem) {
                     list.retain(|&p| p != "dangerouslySetInnerHTML");
@@ -215,7 +210,7 @@ impl Rule for JsxSortProps {
                 continue;
             }
 
-            let prop_infos: Vec<PropInfo> = group
+            let prop_infos: Vec<PropInfo<'_>> = group
                 .iter()
                 .map(|&attr| classify_prop(attr, config, &reserved_list, ctx))
                 .collect();
@@ -331,8 +326,8 @@ fn collect_groups<'a, 'b>(
 }
 
 /// Information about a single JSX prop used for sorting.
-struct PropInfo {
-    name: String,
+struct PropInfo<'a> {
+    name: Cow<'a, str>,
     group_rank: u8,
     /// Index in the `sortFirst` list, if this prop is in that list.
     /// `u8` is sufficient — sortFirst lists are tiny (typically 0–3 items).
@@ -340,34 +335,39 @@ struct PropInfo {
 }
 
 /// Classify a prop into its group rank and extract its name.
-fn classify_prop(
-    attr: &JSXAttributeItem,
+fn classify_prop<'a>(
+    attr: &JSXAttributeItem<'a>,
     config: &JsxSortPropsConfig,
     reserved_list: &[&str],
-    ctx: &LintContext,
-) -> PropInfo {
+    ctx: &LintContext<'a>,
+) -> PropInfo<'a> {
     let JSXAttributeItem::Attribute(jsx_attr) = attr else {
         unreachable!("spread attributes are filtered out before calling classify_prop");
     };
 
-    let name = match &jsx_attr.name {
-        JSXAttributeName::Identifier(ident) => ident.name.to_string(),
+    let name: Cow<'a, str> = match &jsx_attr.name {
+        JSXAttributeName::Identifier(ident) => Cow::Borrowed(ident.name.as_str()),
         JSXAttributeName::NamespacedName(ns) => {
-            format!("{}:{}", ns.namespace.name, ns.name.name)
+            Cow::Owned(format!("{}:{}", ns.namespace.name, ns.name.name))
         }
     };
 
-    let is_callback = is_callback_prop(&name);
+    let name_str: &str = &name;
+    let is_callback = is_callback_prop(name_str);
     let is_shorthand = jsx_attr.value.is_none();
     let is_multiline = is_multiline_prop(attr_span(attr), ctx);
-    let is_reserved = !reserved_list.is_empty() && reserved_list.contains(&name.as_str());
+    let is_reserved = !reserved_list.is_empty() && reserved_list.contains(&name_str);
 
     // Check if this prop is in the sortFirst list.
     let sort_first_index = if config.sort_first.is_empty() {
         None
     } else {
         config.sort_first.iter().position(|s| {
-            if config.ignore_case { s.eq_ignore_ascii_case(&name) } else { s == &name }
+            if config.ignore_case {
+                s.eq_ignore_ascii_case(name_str)
+            } else {
+                s.as_str() == name_str
+            }
         })
     };
 
@@ -415,22 +415,15 @@ fn is_multiline_prop(span: Span, ctx: &LintContext) -> bool {
 
 /// Compare two props for sorting.
 fn compare_props(
-    a: &PropInfo,
-    b: &PropInfo,
+    a: &PropInfo<'_>,
+    b: &PropInfo<'_>,
     config: &JsxSortPropsConfig,
     collator: Option<&CollatorBorrowed<'_>>,
 ) -> Ordering {
     // sortFirst takes highest priority: props in sortFirst come before all others,
     // and within sortFirst they maintain the order specified in the config array.
     match (a.sort_first_index, b.sort_first_index) {
-        (Some(ai), Some(bi)) => {
-            let cmp = ai.cmp(&bi);
-            if cmp != Ordering::Equal {
-                return cmp;
-            }
-            // Same sortFirst index (duplicate prop names) — treat as equal.
-            return Ordering::Equal;
-        }
+        (Some(ai), Some(bi)) => return ai.cmp(&bi),
         (Some(_), None) => return Ordering::Less,
         (None, Some(_)) => return Ordering::Greater,
         (None, None) => {}
@@ -462,7 +455,7 @@ fn compare_props(
 /// Zero-allocation case-insensitive byte-order comparison.
 /// Only folds ASCII characters, matching `cow_to_ascii_lowercase` behavior.
 fn cmp_ignore_ascii_case(a: &str, b: &str) -> Ordering {
-    a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+    a.bytes().map(|c| c.to_ascii_lowercase()).cmp(b.bytes().map(|c| c.to_ascii_lowercase()))
 }
 
 /// Create an ICU collator for the given locale string.
@@ -548,6 +541,13 @@ fn extended_end_with_next_trailing(
     next_span.end
 }
 
+/// Push a comment-grouping pair: the current attribute with `has_comment=true`,
+/// and its consumed successor with `has_comment=false`.
+fn push_consumed_pair(result: &mut Vec<CommentGrouping>, extended_end: u32) {
+    result.push(CommentGrouping { extended_end, has_comment: true, consumed: false });
+    result.push(CommentGrouping { extended_end, has_comment: false, consumed: true });
+}
+
 /// Build the comment-grouping map for every attribute in `group`.
 ///
 /// The algorithm mirrors ESLint's `getGroupsOfSortableAttributes` logic:
@@ -591,16 +591,7 @@ fn compute_comment_grouping(
             if second_next_line && let Some(next) = next_attr {
                 let next_span = attr_span(next);
                 let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: true,
-                    consumed: false,
-                });
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: false,
-                    consumed: true,
-                });
+                push_consumed_pair(&mut result, ext);
                 i += 2;
             } else {
                 // Default for multiple comments that don't match the
@@ -616,16 +607,7 @@ fn compute_comment_grouping(
                     let next_span = attr_span(next);
                     let ext =
                         extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
-                    result.push(CommentGrouping {
-                        extended_end: ext,
-                        has_comment: true,
-                        consumed: false,
-                    });
-                    result.push(CommentGrouping {
-                        extended_end: ext,
-                        has_comment: false,
-                        consumed: true,
-                    });
+                    push_consumed_pair(&mut result, ext);
                     i += 2;
                 } else {
                     // Block comment after the last attribute.
@@ -649,16 +631,7 @@ fn compute_comment_grouping(
                 // Comment on the next line, with a following attribute.
                 let next_span = attr_span(next);
                 let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: true,
-                    consumed: false,
-                });
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: false,
-                    consumed: true,
-                });
+                push_consumed_pair(&mut result, ext);
                 i += 2;
             } else {
                 // Comment is ≥2 lines away, or next-line with no following
@@ -675,7 +648,7 @@ fn compute_comment_grouping(
 /// Find the first violation and return the appropriate diagnostic function.
 /// Uses index-based access to avoid cloning PropInfo into separate Vecs.
 fn find_first_violation(
-    prop_infos: &[PropInfo],
+    prop_infos: &[PropInfo<'_>],
     sortable_idx: &[usize],
     sorted_order: &[usize],
     config: &JsxSortPropsConfig,
