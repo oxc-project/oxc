@@ -394,16 +394,10 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        let mut suppression_manager = SuppressionManager::load(
+        let (mut suppression_manager, suppression_sender) = SuppressionManager::load(
             options.cwd().join("oxlint-suppressions.json").as_path(),
             suppression_options.suppress_all,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
-
-        println!(
-            "{:?} and ignored {}",
-            suppression_manager.manager_status,
-            suppression_manager.ignore()
         );
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
@@ -450,7 +444,12 @@ impl CliRunner {
             }
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), &mut suppression_manager) {
+        match lint_runner.lint_files(
+            &files_to_lint,
+            tx_error.clone(),
+            &mut suppression_manager,
+            suppression_sender.clone(),
+        ) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -461,15 +460,23 @@ impl CliRunner {
         }
 
         drop(tx_error);
+        drop(suppression_sender);
 
+        let result = suppression_manager.report_suppression();
         let diagnostic_result = diagnostic_service.run(stdout);
+
+        let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
+            OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
+        } else {
+            suppression_manager.manager_status
+        };
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
-            oxlint_suppression_file_action: suppression_manager.manager_status,
+            oxlint_suppression_file_action,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
