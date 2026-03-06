@@ -323,3 +323,45 @@ log(__MEMBER__);
     let snapshot = visualizer.get_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }
+
+/// Reproduce: ReplaceGlobalDefines + optional chaining lowering (target < ES2020)
+/// panics when define replaces the member expression that carries `optional: true`,
+/// leaving a `ChainExpression` with no optional markers.
+///
+/// This matches the playground pipeline where define runs before the transformer.
+#[test]
+fn define_then_transform_optional_chain() {
+    use std::path::Path;
+    use oxc_transformer::{TransformOptions, Transformer};
+
+    let source_text = "console.log(process?.env[0]);";
+    let source_type = SourceType::mjs();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
+    let mut program = ret.program;
+
+    // Step 1: Run define plugin first (like the playground does)
+    let define_config = config(&[("process.env", "{}")]);
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let _ret = ReplaceGlobalDefines::new(&allocator, define_config).build(scoping, &mut program);
+
+    // Step 2: Rebuild semantic for transformer
+    let scoping = SemanticBuilder::new()
+        .with_excess_capacity(2.0)
+        .build(&program)
+        .semantic
+        .into_scoping();
+
+    // Step 3: Run transformer with ES2019 target (lowers optional chaining)
+    let options = TransformOptions::from_target("es2019").unwrap();
+    let ret = Transformer::new(&allocator, Path::new("test.mjs"), &options)
+        .build_with_scoping(scoping, &mut program);
+    assert!(ret.errors.is_empty());
+
+    let result = Codegen::new()
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+        .build(&program)
+        .code;
+    assert!(!result.is_empty(), "codegen should produce output");
+}
