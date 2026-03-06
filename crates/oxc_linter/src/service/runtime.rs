@@ -587,7 +587,7 @@ impl Runtime {
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
-        suppression_manager: &mut SuppressionManager,
+        suppression_manager: &SuppressionManager,
         suppression_sender: &SuppressionSender,
     ) {
         self.modules_by_path.pin().reserve(paths.len());

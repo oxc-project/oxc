@@ -224,7 +224,7 @@ impl LintRunner {
         mut self,
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
-        suppression_manager: &mut SuppressionManager,
+        suppression_manager: &SuppressionManager,
         suppression_sender: SuppressionSender,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)

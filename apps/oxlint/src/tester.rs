@@ -163,9 +163,8 @@ pub struct SuppressionTester {
 }
 
 impl SuppressionTester {
-    pub fn new(fixture_name: &str) -> Self {
-        let mut cwd = env::current_dir().unwrap();
-        cwd.push(format!("fixtures/{fixture_name}"));
+    pub fn new() -> Self {
+        let cwd = env::current_dir().unwrap();
 
         // disable multiple workers for diagnostic
         // because the snapshot could change every time when we are analyzing multiple files
@@ -174,13 +173,19 @@ impl SuppressionTester {
 
         Self {
             cwd,
-            fixture_name: fixture_name.to_string(),
+            fixture_name: String::new(),
             have_backup_file: false,
             have_expected_file: false,
             have_setup_file: false,
             have_files_fixed: false,
             oxlint_suppression_file_name: String::from("oxlint-suppressions.json"),
         }
+    }
+
+    pub fn with_cwd(mut self, fixture_name: &str) -> Self {
+        self.cwd.push(format!("fixtures/{fixture_name}"));
+        self.fixture_name = fixture_name.to_string();
+        self
     }
 
     pub fn with_setup_file(mut self, have_setup_file: bool) -> Self {
@@ -219,7 +224,7 @@ impl SuppressionTester {
             self.assert_message(self.have_setup_file)
         );
 
-        Tester::new().with_cwd(self.cwd.to_path_buf()).test(args);
+        Tester::new().with_cwd(self.cwd.clone()).test(args);
 
         assert!(
             fs::exists(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref())).unwrap()
@@ -232,9 +237,9 @@ impl SuppressionTester {
             let new_content = fs::read_to_string(
                 self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()),
             )
-            .expect(
-                format!("Unable to read the new {}", self.oxlint_suppression_file_name).as_ref(),
-            );
+            .unwrap_or_else(|_| {
+                panic!("Unable to read the new {}", self.oxlint_suppression_file_name)
+            });
             let expected_content = fs::read_to_string(
                 self.cwd.join("oxlint-suppressions-expected.json"),
             )
@@ -250,13 +255,18 @@ impl SuppressionTester {
 
 impl Drop for SuppressionTester {
     fn drop(&mut self) {
-        match fs::remove_file(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref())) {
-            Ok(_) => {}
-            Err(err) => println!(
-                "Unable to delete the setup file in fixture {} with error {}",
-                self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()).to_string_lossy(),
-                err
-            ),
+        if self.have_expected_file {
+            match fs::remove_file(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()))
+            {
+                Ok(()) => {}
+                Err(err) => panic!(
+                    "Unable to delete the setup file in fixture {} with error {}",
+                    self.cwd
+                        .join::<&str>(self.oxlint_suppression_file_name.as_ref())
+                        .to_string_lossy(),
+                    err
+                ),
+            }
         }
 
         if self.have_backup_file {
@@ -265,7 +275,7 @@ impl Drop for SuppressionTester {
             let oxlint_file_source = self.cwd.join("oxlint-suppressions-backup.json");
             match fs::copy(oxlint_file_source, oxlint_file_dest) {
                 Ok(_) => {}
-                Err(err) => println!(
+                Err(err) => panic!(
                     "Unable to replace the suppression setup with the backup in fixture {} with error {}",
                     self.cwd
                         .join::<&str>(self.oxlint_suppression_file_name.as_ref())
@@ -280,7 +290,7 @@ impl Drop for SuppressionTester {
             let js_file_source = self.cwd.join("files/test-backup.js");
             match fs::copy(js_file_source, js_file_dest) {
                 Ok(_) => {}
-                Err(err) => println!(
+                Err(err) => panic!(
                     "Unable to replace the js linted filed with the backup in fixture {} with error {}",
                     self.cwd
                         .join::<&str>(self.oxlint_suppression_file_name.as_ref())
