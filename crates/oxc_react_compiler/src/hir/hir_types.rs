@@ -23,6 +23,13 @@ use super::types::{PropertyLiteral, Type};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlockId(pub u32);
 
+impl BlockId {
+    /// Sentinel value used as a placeholder in `HirBuilder::terminate` when
+    /// swapping out the current WIP block. Must never collide with a real
+    /// block ID (real IDs start at 0 and increment).
+    pub const PLACEHOLDER: Self = Self(u32::MAX);
+}
+
 /// Unique identifier for a reactive scope.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScopeId(pub u32);

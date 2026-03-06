@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 9025
 expression: snapshot
 ---
 Error fixture conformance: 277/281 (98.6%)
@@ -11,7 +10,7 @@ Failure breakdown:
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
+  [unexpected_success] error.bug-invariant-expected-consistent-destructuring.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
-  [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
