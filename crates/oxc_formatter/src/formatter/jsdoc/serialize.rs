@@ -75,54 +75,56 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             return Some(self.allocator.alloc_str(""));
         }
 
-        // Format description using mdast parsing (handles heading normalization,
-        // emphasis conversion, horizontal rule removal, reference links, nested lists, etc.)
-        let desc_trimmed = description.trim();
-        if !desc_trimmed.is_empty() {
-            let desc = format_description_mdast(
-                desc_trimmed,
-                self.wrap_width,
-                self.options.capitalize_descriptions,
-                Some(self.format_options),
-                Some(self.external_callbacks),
-                Some(self.allocator),
-            );
-            self.content_lines.push(desc);
-        }
-
         // Sort tags by priority within groups.
         // @typedef and @callback are TAGS_GROUP_HEAD — they start new groups.
         // Tags sort within their group by weight, but groups keep their relative order.
         let tags = jsdoc.tags();
         let sorted_tags = sort_tags_by_groups(tags);
 
-        // Collect effective tags, merging @description into the description area
+        // Merge all description sources: header description + @description tags
+        // (upstream always merges these, regardless of the description_tag option)
+        let mut merged_desc = String::new();
+        let desc_trimmed = description.trim();
+        if !desc_trimmed.is_empty() {
+            merged_desc.push_str(desc_trimmed);
+        }
+        // Collect effective tags, absorbing @description tag content
         let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
         for (tag, normalized_kind) in &sorted_tags {
             if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
                 continue;
             }
-            // @description tag: merge its content into the main description
             if *normalized_kind == "description" {
                 let desc_content = tag.comment().parsed();
                 let desc_content = desc_content.trim();
                 if !desc_content.is_empty() {
-                    if !self.content_lines.is_empty() && !self.content_lines.last_is_empty() {
-                        self.content_lines.push_empty();
+                    if !merged_desc.is_empty() {
+                        merged_desc.push_str("\n\n");
                     }
-                    let desc = format_description_mdast(
-                        desc_content,
-                        self.wrap_width,
-                        self.options.capitalize_descriptions,
-                        Some(self.format_options),
-                        Some(self.external_callbacks),
-                        Some(self.allocator),
-                    );
-                    self.content_lines.push(desc);
+                    merged_desc.push_str(desc_content);
                 }
                 continue;
             }
             effective_tags.push((tag, normalized_kind));
+        }
+
+        // Format and emit the merged description
+        if !merged_desc.is_empty() {
+            let desc = format_description_mdast(
+                &merged_desc,
+                self.wrap_width,
+                self.options.capitalize_descriptions,
+                Some(self.format_options),
+                Some(self.external_callbacks),
+                Some(self.allocator),
+            );
+            if self.options.description_tag {
+                // Emit as @description tag
+                let first_line = format!("@description {desc}");
+                self.content_lines.push(first_line);
+            } else {
+                self.content_lines.push(desc);
+            }
         }
 
         // Reorder @param tags to match the function signature order
@@ -257,7 +259,15 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // The plugin prefers single-line even if it slightly exceeds printWidth,
         // since the wrapping logic already constrains the content width.
         let second = iter.next();
-        if self.options.single_line_when_possible && second.is_none() {
+        let use_single_line = match self.options.comment_line_strategy {
+            crate::options::CommentLineStrategy::SingleLine => second.is_none(),
+            crate::options::CommentLineStrategy::Multiline => false,
+            crate::options::CommentLineStrategy::Keep => {
+                // Preserve original: only use single-line if original was single-line
+                second.is_none() && !content.contains('\n')
+            }
+        };
+        if use_single_line {
             let formatted = self.allocator.alloc_concat_strs_array(["/** ", first, " */"]);
             if formatted == content {
                 return None;
