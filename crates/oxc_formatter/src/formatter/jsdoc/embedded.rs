@@ -95,17 +95,9 @@ pub(super) fn format_embedded_js(
         Some(formatted)
     };
 
-    // Try JSX first (most @example code in React projects uses JSX),
-    // then TSX (for TypeScript code with JSX).
-    if let Some(result) = try_format(code, SourceType::jsx()) {
-        return Some(result);
-    }
-    if let Some(result) = try_format(code, SourceType::tsx()) {
-        return Some(result);
-    }
-
-    // If direct parsing fails, try wrapping in expression context
-    // to handle object literals like `{ "key": value }` that parse as blocks
+    // If code starts with `{`, try expression wrapping FIRST to handle object
+    // literals like `{ key: value }` that would otherwise parse as block statements
+    // with labels. The upstream plugin uses `parser: "json"` for this case.
     let trimmed = code.trim();
     if trimmed.starts_with('{') {
         let wrapped = allocator.alloc_concat_strs_array(["(", trimmed, ")"]);
@@ -138,6 +130,16 @@ pub(super) fn format_embedded_js(
             return Some(result);
         }
     }
+
+    // Try JSX first (most @example code in React projects uses JSX),
+    // then TSX (for TypeScript code with JSX).
+    if let Some(result) = try_format(code, SourceType::jsx()) {
+        return Some(result);
+    }
+    if let Some(result) = try_format(code, SourceType::tsx()) {
+        return Some(result);
+    }
+
     None
 }
 

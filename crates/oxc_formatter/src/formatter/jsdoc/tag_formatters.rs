@@ -9,10 +9,10 @@ use super::{
         normalize_type_preserve_quotes, normalize_type_return, strip_optional_type_suffix,
     },
     serialize::{
-        JsdocFormatter, format_default_value, is_named_generic_tag, join_iter, join_words,
+        JsdocFormatter, format_default_value, is_named_generic_tag, join_iter,
         strip_default_is_suffix,
     },
-    wrap::{tokenize_words, wrap_text},
+    wrap::{str_width, wrap_text},
 };
 
 impl JsdocFormatter<'_, '_> {
@@ -328,7 +328,7 @@ impl JsdocFormatter<'_, '_> {
 
         if desc_raw.is_empty() && default_value.is_none() {
             // Try type wrapping if line is too long
-            if tag_line.len() > self.wrap_width
+            if str_width(&tag_line) > self.wrap_width
                 && !normalized_type_str.is_empty()
                 && self.wrap_type_expression(
                     &tag_line[..tag_prefix_len],
@@ -354,10 +354,12 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
             let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
-            let indent_width = self.wrap_width.saturating_sub(indent.len());
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
             let mut desc = wrap_text(
                 desc_raw,
                 indent_width,
+                0,
+                false,
                 Some(self.format_options),
                 Some(self.external_callbacks),
                 Some(self.allocator),
@@ -412,18 +414,18 @@ impl JsdocFormatter<'_, '_> {
         let has_remaining = !remaining_desc.trim().is_empty();
 
         // Compute one-liner length without allocating
-        let prefix_len = tag_line.len() + separator.len();
+        let prefix_len = str_width(&tag_line) + str_width(separator);
         let one_liner_len = if has_remaining {
-            prefix_len + first_text.len()
+            prefix_len + str_width(&first_text)
         } else if let Some(ds_len) = default_suffix_len {
             if first_text.is_empty() {
                 prefix_len + ds_len
             } else {
                 // +2 for ". " or " " before default suffix
-                prefix_len + first_text.len() + 2 + ds_len
+                prefix_len + str_width(&first_text) + 2 + ds_len
             }
         } else {
-            prefix_len + first_text.len()
+            prefix_len + str_width(&first_text)
         };
 
         if !has_remaining && one_liner_len <= self.wrap_width {
@@ -455,95 +457,67 @@ impl JsdocFormatter<'_, '_> {
                 s.push_str(&first_text);
             }
         } else {
-            // Multi-line: wrap first text line with tag line
-            let first_line_content_width = self.wrap_width.saturating_sub(prefix_len);
-
-            let words: Vec<&str> = tokenize_words(&first_text);
-            let mut first_line = String::new();
-            let mut remaining_start = 0;
-
-            for (i, word) in words.iter().enumerate() {
-                if first_line.is_empty() {
-                    if word.len() <= first_line_content_width {
-                        first_line.push_str(word);
-                        remaining_start = i + 1;
-                    } else {
-                        break;
-                    }
-                } else if first_line.len() + 1 + word.len() <= first_line_content_width {
-                    first_line.push(' ');
-                    first_line.push_str(word);
-                    remaining_start = i + 1;
-                } else {
-                    break;
-                }
-            }
-
-            if first_line.is_empty() {
-                self.content_lines.push(tag_line);
-            } else {
-                let s = self.content_lines.begin_line();
-                s.push_str(&tag_line);
-                s.push_str(separator);
-                s.push_str(&first_line);
-            }
-
-            // @typedef/@callback descriptions use no indent (plugin passes no beginningSpace).
-            // @param/@property and other tags use 2-space continuation indent.
+            // Multi-line: pass full description through wrap_text with tag_string_length.
+            // This matches upstream's approach of passing the entire description through
+            // formatDescription with a tagStringLength parameter that controls first-line offset.
             let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
-            let indent_width = self.wrap_width.saturating_sub(indent.len());
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
 
-            // Remaining words from first text line
-            let mut remaining_first_text = String::new();
-            if remaining_start < words.len() {
-                remaining_first_text = join_words(&words[remaining_start..]);
-            }
-
-            // Combine remaining first text with remaining description lines
-            // to preserve structural content (tables, code blocks, etc.)
-            let full_remaining = if !remaining_first_text.is_empty() && has_remaining {
-                let mut s =
-                    String::with_capacity(remaining_first_text.len() + 1 + remaining_desc.len());
-                s.push_str(&remaining_first_text);
+            // Build full description text (first line + remaining)
+            let full_desc = if has_remaining {
+                let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
+                s.push_str(&first_text);
                 s.push('\n');
                 s.push_str(&remaining_desc);
                 s
-            } else if !remaining_first_text.is_empty() {
-                remaining_first_text
             } else {
-                remaining_desc
+                String::from(first_text.as_ref())
             };
 
-            let full_remaining = full_remaining.trim();
-            if !full_remaining.is_empty() {
+            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+
+            // Upstream: tagString.length + firstWord.length > printWidth → new line
+            let first_word_w = full_desc.split_whitespace().next().map_or(0, str_width);
+            if prefix_len + first_word_w >= self.wrap_width {
+                // Tag prefix + first word don't fit → description starts on new line
+                self.content_lines.push(tag_line);
                 let desc = wrap_text(
-                    full_remaining,
+                    &full_desc,
                     indent_width,
+                    0,
+                    false,
                     Some(self.format_options),
                     Some(self.external_callbacks),
                     Some(self.allocator),
                 );
-
-                // In markdown, a list or table after a paragraph needs a blank line separator.
-                // The plugin's markdown AST processing (remark) handles this naturally.
-                // We detect when the first wrapped content is a list item or table row
-                // and insert a blank line between the tag's first text line and the
-                // structured content.
-                let first_desc_is_structural = desc.split('\n').next().is_some_and(|first| {
-                    let t = first.trim();
-                    t.starts_with("- ")
-                        || t.starts_with("* ")
-                        || t.starts_with("+ ")
-                        || t.starts_with('|')
-                        || (t.len() > 2
-                            && t.chars().next().is_some_and(|c| c.is_ascii_digit())
-                            && t.contains(". "))
-                });
-                if first_desc_is_structural && !first_line.is_empty() {
-                    self.content_lines.push_empty();
-                }
-
                 self.push_indented_desc(indent, desc);
+            } else {
+                // Append description inline with tag_string_length offset
+                let desc = wrap_text(
+                    &full_desc,
+                    indent_width,
+                    tag_str_len,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                let mut iter = desc.split('\n');
+                if let Some(first) = iter.next() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push_str(separator);
+                    s.push_str(first);
+                }
+                for line in iter {
+                    if line.is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        let s = self.content_lines.begin_line();
+                        s.push_str(indent);
+                        s.push_str(line);
+                    }
+                }
             }
 
             // Add default value as a separate paragraph
@@ -632,7 +606,7 @@ impl JsdocFormatter<'_, '_> {
 
         if desc_text.is_empty() {
             // Try type wrapping if line is too long
-            if tag_line.len() > self.wrap_width
+            if str_width(&tag_line) > self.wrap_width
                 && !normalized_type_str.is_empty()
                 && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
             {
@@ -645,73 +619,75 @@ impl JsdocFormatter<'_, '_> {
         let desc_text: Cow<'_, str> =
             if should_capitalize { capitalize_first(desc_text) } else { Cow::Borrowed(desc_text) };
 
-        let prefix_len = tag_line.len() + 1; // tag_line + " "
-        let one_liner_len = prefix_len + desc_text.len();
+        let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
+        let one_liner_len = prefix_len + str_width(&desc_text);
         if one_liner_len <= self.wrap_width {
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push(' ');
             s.push_str(&desc_text);
         } else if !normalized_type_str.is_empty()
-            && tag_line.len() > self.wrap_width
+            && str_width(&tag_line) > self.wrap_width
             && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
         {
             // Type was wrapped. Add description as continuation.
             let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(indent.len());
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
             let desc = wrap_text(
                 &desc_text,
                 indent_width,
+                0,
+                false,
                 Some(self.format_options),
                 Some(self.external_callbacks),
                 Some(self.allocator),
             );
             self.push_indented_desc(indent, desc);
         } else {
-            // Regular word-wrapping of description
-            let first_line_content_width = self.wrap_width.saturating_sub(prefix_len);
-            let words: Vec<&str> = tokenize_words(&desc_text);
-            let mut first_line = String::new();
-            let mut remaining_start = 0;
-
-            for (i, word) in words.iter().enumerate() {
-                if first_line.is_empty() {
-                    if word.len() <= first_line_content_width {
-                        first_line.push_str(word);
-                        remaining_start = i + 1;
-                    } else {
-                        break;
-                    }
-                } else if first_line.len() + 1 + word.len() <= first_line_content_width {
-                    first_line.push(' ');
-                    first_line.push_str(word);
-                    remaining_start = i + 1;
-                } else {
-                    break;
-                }
-            }
-
-            if first_line.is_empty() {
-                self.content_lines.push(tag_line);
-            } else {
-                let s = self.content_lines.begin_line();
-                s.push_str(&tag_line);
-                s.push(' ');
-                s.push_str(&first_line);
-            }
-
+            // Pass description through wrap_text with tag_string_length offset
             let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(indent.len());
-            if remaining_start < words.len() {
-                let remaining = join_words(&words[remaining_start..]);
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+
+            let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
+            if prefix_len + first_word_w >= self.wrap_width {
+                self.content_lines.push(tag_line);
                 let desc = wrap_text(
-                    &remaining,
+                    &desc_text,
                     indent_width,
+                    0,
+                    false,
                     Some(self.format_options),
                     Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
+            } else {
+                let desc = wrap_text(
+                    &desc_text,
+                    indent_width,
+                    tag_str_len,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                let mut iter = desc.split('\n');
+                if let Some(first) = iter.next() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push(' ');
+                    s.push_str(first);
+                }
+                for line in iter {
+                    if line.is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        let s = self.content_lines.begin_line();
+                        s.push_str(indent);
+                        s.push_str(line);
+                    }
+                }
             }
         }
     }
@@ -765,57 +741,57 @@ impl JsdocFormatter<'_, '_> {
             Cow::Borrowed(desc_text)
         };
 
-        let prefix_len = tag_line.len() + 1; // tag_line + " "
-        if prefix_len + desc_text.len() <= self.wrap_width {
+        let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
+        if prefix_len + str_width(&desc_text) <= self.wrap_width {
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push(' ');
             s.push_str(&desc_text);
         } else {
-            // Try to fit some description on the first line
-            let first_line_content_width = self.wrap_width.saturating_sub(prefix_len);
-            let words: Vec<&str> = tokenize_words(&desc_text);
-            let mut first_line = String::new();
-            let mut remaining_start = 0;
-
-            for (i, word) in words.iter().enumerate() {
-                if first_line.is_empty() {
-                    if word.len() <= first_line_content_width {
-                        first_line.push_str(word);
-                        remaining_start = i + 1;
-                    } else {
-                        break;
-                    }
-                } else if first_line.len() + 1 + word.len() <= first_line_content_width {
-                    first_line.push(' ');
-                    first_line.push_str(word);
-                    remaining_start = i + 1;
-                } else {
-                    break;
-                }
-            }
-
-            if first_line.is_empty() {
-                self.content_lines.push(tag_line);
-            } else {
-                let s = self.content_lines.begin_line();
-                s.push_str(&tag_line);
-                s.push(' ');
-                s.push_str(&first_line);
-            }
-
+            // Pass description through wrap_text with tag_string_length offset
             let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(indent.len());
-            if remaining_start < words.len() {
-                let remaining = join_words(&words[remaining_start..]);
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+
+            let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
+            if prefix_len + first_word_w >= self.wrap_width {
+                self.content_lines.push(tag_line);
                 let desc = wrap_text(
-                    &remaining,
+                    &desc_text,
                     indent_width,
+                    0,
+                    false,
                     Some(self.format_options),
                     Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
+            } else {
+                let desc = wrap_text(
+                    &desc_text,
+                    indent_width,
+                    tag_str_len,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                let mut iter = desc.split('\n');
+                if let Some(first) = iter.next() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push(' ');
+                    s.push_str(first);
+                }
+                for line in iter {
+                    if line.is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        let s = self.content_lines.begin_line();
+                        s.push_str(indent);
+                        s.push_str(line);
+                    }
+                }
             }
         }
     }

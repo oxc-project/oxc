@@ -113,6 +113,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             let desc = format_description_mdast(
                 &merged_desc,
                 self.wrap_width,
+                0,
                 self.options.capitalize_descriptions,
                 Some(self.format_options),
                 Some(self.external_callbacks),
@@ -423,22 +424,6 @@ pub(super) fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> S
         }
     }
     result
-}
-
-/// Join a slice of words with spaces, pre-allocating capacity.
-pub(super) fn join_words(words: &[&str]) -> String {
-    if words.is_empty() {
-        return String::new();
-    }
-    let cap: usize = words.iter().map(|w| w.len()).sum::<usize>() + words.len() - 1;
-    let mut s = String::with_capacity(cap);
-    for (i, w) in words.iter().enumerate() {
-        if i > 0 {
-            s.push(' ');
-        }
-        s.push_str(w);
-    }
-    s
 }
 
 /// Tags whose descriptions should NOT be capitalized.

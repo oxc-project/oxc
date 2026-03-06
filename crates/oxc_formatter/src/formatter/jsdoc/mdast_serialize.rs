@@ -101,6 +101,7 @@ fn needs_mdast_parsing(text: &str) -> bool {
 pub fn format_description_mdast(
     text: &str,
     max_width: usize,
+    tag_string_length: usize,
     capitalize: bool,
     format_options: Option<&FormatOptions>,
     external_callbacks: Option<&ExternalCallbacks>,
@@ -118,7 +119,8 @@ pub fn format_description_mdast(
 
     // Fast path: if text has no markdown constructs requiring AST parsing,
     // use lightweight wrap_plain_paragraphs() directly.
-    if !needs_mdast_parsing(text) {
+    // Skip fast path when tag_string_length > 0 (first-line offset needs mdast threading).
+    if tag_string_length == 0 && !needs_mdast_parsing(text) {
         // Balance mode: try to preserve original line breaks per paragraph
         let result = if matches!(line_wrapping_style, crate::LineWrappingStyle::Balance) {
             wrap_plain_paragraphs_balance(text, max_width)
@@ -202,6 +204,7 @@ pub fn format_description_mdast(
     let mut lines = LineBuffer::new();
     let opts = SerializeOptions {
         max_width,
+        tag_string_length,
         capitalize,
         description_with_dot,
         prefer_code_fences,
@@ -212,13 +215,14 @@ pub fn format_description_mdast(
         external_callbacks,
         allocator,
     };
-    serialize_children(&root, 0, &opts, &mut lines);
+    serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
     lines.into_string()
 }
 
 struct SerializeOptions<'a> {
     max_width: usize,
+    tag_string_length: usize,
     capitalize: bool,
     description_with_dot: bool,
     prefer_code_fences: bool,
@@ -389,6 +393,7 @@ fn replace_placeholders(s: &str, placeholders: &[&str]) -> String {
 fn serialize_children(
     node: &Node,
     indent: usize,
+    first_para_offset: usize,
     opts: &SerializeOptions<'_>,
     lines: &mut LineBuffer,
 ) {
@@ -402,7 +407,9 @@ fn serialize_children(
             lines.push_empty();
         }
 
-        serialize_node(child, indent, opts, lines);
+        // Only the first paragraph gets the tag-string-length offset
+        let offset = if i == 0 { first_para_offset } else { 0 };
+        serialize_node(child, indent, offset, opts, lines);
     }
 }
 
@@ -420,13 +427,13 @@ fn is_block_node(node: &Node) -> bool {
     )
 }
 
-fn serialize_node(node: &Node, indent: usize, opts: &SerializeOptions<'_>, lines: &mut LineBuffer) {
+fn serialize_node(node: &Node, indent: usize, first_para_offset: usize, opts: &SerializeOptions<'_>, lines: &mut LineBuffer) {
     match node {
         Node::Root(_) => {
-            serialize_children(node, indent, opts, lines);
+            serialize_children(node, indent, 0, opts, lines);
         }
         Node::Paragraph(para) => {
-            serialize_paragraph(para, indent, opts, lines);
+            serialize_paragraph(para, indent, first_para_offset, opts, lines);
         }
         Node::Heading(heading) => {
             let text = collect_inline_text(node);
@@ -489,6 +496,7 @@ fn serialize_node(node: &Node, indent: usize, opts: &SerializeOptions<'_>, lines
 fn serialize_paragraph(
     para: &markdown::mdast::Paragraph,
     indent: usize,
+    first_line_offset: usize,
     opts: &SerializeOptions<'_>,
     lines: &mut LineBuffer,
 ) {
@@ -566,7 +574,10 @@ fn serialize_paragraph(
             raw.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
 
         if original_lines.len() > 1
-            && original_lines.iter().all(|l| l.len() <= effective_width)
+            && original_lines.iter().all(|l| {
+                let restored = restore_in_string(l, opts.placeholders);
+                super::wrap::str_width(&restored) <= effective_width
+            })
         {
             // Preserve original line breaks
             let total = original_lines.len();
@@ -600,7 +611,7 @@ fn serialize_paragraph(
     }
 
     let mut para_buf = LineBuffer::new();
-    wrap_paragraph(&inline_text, effective_width, 0, &mut para_buf);
+    wrap_paragraph(&inline_text, effective_width, first_line_offset, 0, &mut para_buf);
     let para_str = para_buf.into_string();
 
     let line_count = para_str.split('\n').count();
@@ -704,7 +715,7 @@ fn serialize_pipe_prefixed_paragraph(
             let text = restore_in_string(&joined, opts.placeholders);
             let effective_width = opts.max_width.saturating_sub(indent);
             let mut para_buf = LineBuffer::new();
-            wrap_paragraph(&text, effective_width, 0, &mut para_buf);
+            wrap_paragraph(&text, effective_width, 0, 0, &mut para_buf);
             let para_str = para_buf.into_string();
 
             for (i, line) in para_str.split('\n').enumerate() {
@@ -799,7 +810,7 @@ fn serialize_list(
                 }
 
                 if matches!(item_child, Node::Definition(_)) {
-                    serialize_node(item_child, 0, opts, lines);
+                    serialize_node(item_child, 0, 0, opts, lines);
                 }
                 // Nested lists align to the parent item's content block. At the
                 // first nesting level that is the parent marker width; at deeper
@@ -811,7 +822,7 @@ fn serialize_list(
                     } else {
                         indent + marker_width + marker_width
                     };
-                    serialize_node(item_child, nested_indent, opts, lines);
+                    serialize_node(item_child, nested_indent, 0, opts, lines);
                 } else {
                     let child_str =
                         serialize_node_for_list_item(item_child, marker_width, false, opts);
@@ -854,14 +865,14 @@ fn serialize_node_for_list_item(
         let inline_text = restore_in_string(&inline_text, opts.placeholders);
         let mut buf = LineBuffer::new();
         if is_first_child {
-            wrap_paragraph(&inline_text, opts.max_width, marker_width, &mut buf);
+            wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
         } else {
-            wrap_paragraph(&inline_text, opts.max_width, 0, &mut buf);
+            wrap_paragraph(&inline_text, opts.max_width, 0, 0, &mut buf);
         }
         buf.into_string()
     } else {
         let mut buf = LineBuffer::new();
-        serialize_node(node, 0, opts, &mut buf);
+        serialize_node(node, 0, 0, opts, &mut buf);
         buf.into_string()
     }
 }
@@ -985,7 +996,7 @@ fn serialize_blockquote(
             lines.push_empty();
         }
         let mut inner_buf = LineBuffer::new();
-        serialize_node(child, 0, opts, &mut inner_buf);
+        serialize_node(child, 0, 0, opts, &mut inner_buf);
         for line in inner_buf.into_string().split('\n') {
             if line.is_empty() {
                 lines.push(">");
