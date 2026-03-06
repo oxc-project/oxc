@@ -606,24 +606,57 @@ impl Tool for ServerLinter {
 
         let actions =
             actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
-        // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
-        let is_source_fix_all = context.only.as_ref().is_some_and(|only| {
-            only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
-                || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
-        });
 
-        if is_source_fix_all {
-            return apply_all_fix_code_action(actions, uri.clone())
-                .map_or(vec![], |code_actions| {
-                    vec![CodeActionOrCommand::CodeAction(code_actions)]
-                });
-        }
+        // `context.only` is a special case here. ESLint behavior is if `source.fixAll` is the first element in `context.only`,
+        // then only return fix all code action, and ignore other code actions, even if they are requested.
+        // https://github.com/microsoft/vscode-eslint/blob/1572a25c619861a812c6593c9b130ee52361bcf0/server/src/eslintServer.ts#L587-L589
+        // This works for zed editor too, it sends always with this layout: `"only": ["quickfix", "source.fixAll.oxc", "source.fixAll"]`
+        // https://github.com/oxc-project/oxc-zed/issues/133#issuecomment-4007046920
+        // To align more with the official LSP specs, we implement it a bit differently:
+        // If no `context.only` is applied, only return the quick fix code actions.
+        // If it is provided, we should loop over it and return the actions in the same order.
+        // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext
+        let applying_kinds = match &context.only {
+            Some(only) => {
+                // `source.fixAll` and `source.fixAll.oxc` should behave the same, filter duplicate out
+                let mut seen = FxHashSet::default();
+                only.iter()
+                    .filter_map(|kind| {
+                        if kind == &CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
+                            || kind == &CodeActionKind::SOURCE_FIX_ALL
+                        {
+                            if seen.contains(&CodeActionKind::SOURCE_FIX_ALL) {
+                                None
+                            } else {
+                                seen.insert(CodeActionKind::SOURCE_FIX_ALL);
+                                Some(CodeActionKind::SOURCE_FIX_ALL)
+                            }
+                        } else {
+                            Some(kind.clone())
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            }
+            // if `only` is not provided, only return quickfixes
+            None => vec![CodeActionKind::QUICKFIX],
+        };
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
-        for action in actions {
-            let fix_actions = apply_fix_code_actions(action, uri);
-            code_actions_vec.extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
+        for kind in applying_kinds {
+            // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
+            if kind == CodeActionKind::SOURCE_FIX_ALL {
+                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                    continue;
+                };
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
+            } else if kind == CodeActionKind::QUICKFIX {
+                for action in actions.clone() {
+                    let fix_actions = apply_fix_code_actions(action, uri);
+                    code_actions_vec
+                        .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
+                }
+            }
         }
 
         code_actions_vec
@@ -1189,11 +1222,14 @@ mod test_watchers {
 mod test {
     use std::path::PathBuf;
 
+    use oxc_language_server::Tool;
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
+    use tower_lsp_server::ls_types::{CodeActionContext, CodeActionKind, Position, Range};
 
     use crate::lsp::{
+        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1219,6 +1255,70 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[test]
+    fn test_code_action() {
+        // this directory does not exist, but it doesn't matter because we are directly calling the linter methods, and not relying on the file system for this test.
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("quickfix.js");
+        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let code_actions =
+            linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Default Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext { only: Some(vec![CodeActionKind::QUICKFIX]), ..Default::default() },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Quickfix Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::QUICKFIX, CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            4,
+            "Quickfix & FixAll Context: Should return 4 code actions: 1 rule fix + 2 ignore actions, and 1 fix all action"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![
+                    CodeActionKind::QUICKFIX,
+                    CodeActionKind::SOURCE_FIX_ALL,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+                ]),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            4,
+            "Quickfix & FixAll Context: Should return 4 code actions even if both `source.fixAll` and `source.fixAll.oxc` are requested,
+            because they are the same action, we should filter out duplicates."
+        );
     }
 
     #[test]
