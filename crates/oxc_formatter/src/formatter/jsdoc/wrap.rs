@@ -1,3 +1,10 @@
+/// Compute the display width of a string, matching JavaScript's `.length` (UTF-16 code units).
+/// For BMP characters (Latin, Cyrillic, CJK, etc.), this equals the character count.
+/// Supplementary characters (above U+FFFF) count as 2, matching JS surrogate pairs.
+pub fn str_width(s: &str) -> usize {
+    s.encode_utf16().count()
+}
+
 /// Lookup table of pre-allocated indent strings (0–12 spaces).
 /// Avoids `" ".repeat(n)` heap allocations for common indent widths.
 const INDENTS: [&str; 13] = [
@@ -81,7 +88,7 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
     for row in &all_cells {
         for (j, cell) in row.iter().enumerate() {
             if j < num_cols {
-                col_widths[j] = col_widths[j].max(cell.len());
+                col_widths[j] = col_widths[j].max(str_width(cell));
             }
         }
     }
@@ -110,7 +117,7 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
                 let cell = cells.get(j).copied().unwrap_or("");
                 row.push_str(cell);
                 // Pad with spaces to column width
-                for _ in cell.len()..width {
+                for _ in str_width(cell)..width {
                     row.push(' ');
                 }
             }
@@ -181,6 +188,9 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
 /// Wrap a single paragraph of plain text to the given max width with optional indent for
 /// continuation lines.
 ///
+/// `first_line_offset` reduces the first line's capacity (e.g., when the paragraph starts
+/// mid-line after a tag prefix like `@param {type} name - `).
+///
 /// Uses word-by-word greedy approach with `tokenize_words` to preserve atomic tokens
 /// like `{@link ...}`. After building all lines, applies a post-processing step to match
 /// the prettier-plugin-jsdoc `breakDescriptionToLines` behavior: when the last
@@ -189,6 +199,7 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
 pub fn wrap_paragraph(
     text: &str,
     max_width: usize,
+    first_line_offset: usize,
     continuation_indent: usize,
     lines: &mut super::line_buffer::LineBuffer,
 ) {
@@ -202,18 +213,23 @@ pub fn wrap_paragraph(
     }
 
     let indent_s = indent_str(continuation_indent);
+    let first_line_max = max_width.saturating_sub(first_line_offset);
     let effective_max = max_width.saturating_sub(continuation_indent);
     let mut current_line = String::with_capacity(max_width);
+    let mut current_width: usize = 0;
     let mut is_first_line = true;
 
     for word in words {
-        let capacity = if is_first_line { max_width } else { effective_max };
+        let word_width = str_width(word);
+        let capacity = if is_first_line { first_line_max } else { effective_max };
 
         if current_line.is_empty() {
             current_line.push_str(word);
-        } else if current_line.len() + 1 + word.len() <= capacity {
+            current_width = word_width;
+        } else if current_width + 1 + word_width <= capacity {
             current_line.push(' ');
             current_line.push_str(word);
+            current_width += 1 + word_width;
         } else {
             // Word doesn't fit, push current line and start new one
             if is_first_line {
@@ -227,6 +243,7 @@ pub fn wrap_paragraph(
                 current_line.clear();
             }
             current_line.push_str(word);
+            current_width = word_width;
         }
     }
 
@@ -235,7 +252,7 @@ pub fn wrap_paragraph(
         // The plugin prepends `\n` to continuation text, which causes `str.length >= maxWidth`
         // to trigger an extra wrap when remaining content is exactly `maxWidth` characters.
         if !is_first_line
-            && current_line.len() == effective_max
+            && current_width == effective_max
             && let Some(last_space) = current_line.rfind(' ')
         {
             let overflow_start = last_space + 1;
@@ -271,7 +288,7 @@ pub fn wrap_plain_paragraphs(text: &str, max_width: usize) -> String {
         let trimmed = line.trim();
         if trimmed.is_empty() {
             if !paragraph.is_empty() {
-                wrap_paragraph(paragraph.trim(), max_width, 0, &mut lines);
+                wrap_paragraph(paragraph.trim(), max_width, 0, 0, &mut lines);
                 paragraph.clear();
             }
             if !lines.last_is_empty() {
@@ -285,7 +302,7 @@ pub fn wrap_plain_paragraphs(text: &str, max_width: usize) -> String {
         }
     }
     if !paragraph.is_empty() {
-        wrap_paragraph(paragraph.trim(), max_width, 0, &mut lines);
+        wrap_paragraph(paragraph.trim(), max_width, 0, 0, &mut lines);
     }
     lines.into_string()
 }
@@ -323,14 +340,14 @@ fn flush_paragraph_balance(
     lines: &mut super::line_buffer::LineBuffer,
 ) {
     // If multiple lines and all fit, preserve original breaks
-    if original_lines.len() > 1 && original_lines.iter().all(|l| l.len() <= max_width) {
+    if original_lines.len() > 1 && original_lines.iter().all(|l| str_width(l) <= max_width) {
         for l in original_lines {
             lines.push(l);
         }
     } else {
         // Fall back to greedy wrapping
         let joined: String = original_lines.join(" ");
-        wrap_paragraph(joined.trim(), max_width, 0, lines);
+        wrap_paragraph(joined.trim(), max_width, 0, 0, lines);
     }
 }
 
@@ -341,6 +358,8 @@ fn flush_paragraph_balance(
 pub fn wrap_text(
     text: &str,
     max_width: usize,
+    tag_string_length: usize,
+    capitalize: bool,
     format_options: Option<&crate::FormatOptions>,
     external_callbacks: Option<&crate::ExternalCallbacks>,
     allocator: Option<&oxc_allocator::Allocator>,
@@ -351,7 +370,8 @@ pub fn wrap_text(
     super::mdast_serialize::format_description_mdast(
         text,
         max_width,
-        false,
+        tag_string_length,
+        capitalize,
         format_options,
         external_callbacks,
         allocator,
@@ -364,7 +384,7 @@ mod tests {
 
     #[test]
     fn test_wrap_simple_text() {
-        let result = wrap_text("This is a short line", 80, None, None, None);
+        let result = wrap_text("This is a short line", 80, 0, false, None, None, None);
         assert_eq!(result, "This is a short line");
     }
 
@@ -373,6 +393,8 @@ mod tests {
         let result = wrap_text(
             "This is a long line that should be wrapped because it exceeds the maximum width",
             40,
+            0,
+            false,
             None,
             None,
             None,
@@ -387,7 +409,8 @@ mod tests {
 
     #[test]
     fn test_wrap_preserves_markdown_list() {
-        let result = wrap_text("- item one\n- item two\n- item three", 80, None, None, None);
+        let result =
+            wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None, None);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -396,6 +419,8 @@ mod tests {
         let result = wrap_text(
             "- This is a very long list item that should be wrapped to the next line with proper indent",
             40,
+            0,
+            false,
             None,
             None,
             None,
@@ -411,6 +436,8 @@ mod tests {
         let result = wrap_text(
             "Some text\n```\ncode here\n  indented\n```\nMore text",
             80,
+            0,
+            false,
             None,
             None,
             None,
@@ -421,26 +448,42 @@ mod tests {
 
     #[test]
     fn test_wrap_preserves_code_fence_with_language() {
-        let result =
-            wrap_text("Some text\n```js\nconst x = 1;\n```\nMore text", 80, None, None, None);
+        let result = wrap_text(
+            "Some text\n```js\nconst x = 1;\n```\nMore text",
+            80,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
         assert_eq!(result, "Some text\n\n```js\nconst x = 1;\n```\n\nMore text");
     }
 
     #[test]
     fn test_wrap_empty_lines() {
-        let result = wrap_text("Paragraph one\n\nParagraph two", 80, None, None, None);
+        let result =
+            wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None, None);
         assert_eq!(result, "Paragraph one\n\nParagraph two");
     }
 
     #[test]
     fn test_wrap_empty_text() {
-        let result = wrap_text("", 80, None, None, None);
+        let result = wrap_text("", 80, 0, false, None, None, None);
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_numbered_list_removes_blank_lines() {
-        let result = wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, None, None, None);
+        let result = wrap_text(
+            "1. Thing 1\n\n2. Thing 2\n\n3. Thing 3",
+            80,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
         assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
@@ -449,6 +492,8 @@ mod tests {
         let result = wrap_text(
             "- Consider caching this for the lifetime of the component, or possibly being able to share this cache between any `ScrollMap` view.",
             77,
+            0,
+            false,
             None,
             None,
             None,
@@ -465,6 +510,8 @@ mod tests {
         let result = wrap_text(
             "- Consider caching this for the lifetime of the component, or possibly being able to share this\ncache between any `ScrollMap` view.",
             77,
+            0,
+            false,
             None,
             None,
             None,
