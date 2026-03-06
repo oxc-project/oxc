@@ -32,20 +32,27 @@ impl std::fmt::Display for Filename {
 #[serde(default)]
 pub struct RuleName(String);
 
-// TODO: Try instead of From
-impl From<&Message> for RuleName {
-    fn from(val: &Message) -> Self {
-        let a = val.error.as_ref();
+impl TryFrom<&Message> for RuleName {
+    type Error = String;
 
-        let Some(ref scope) = a.code.scope else {
-            return Self::new("plugin_name", "rule_name");
+    fn try_from(value: &Message) -> Result<Self, Self::Error> {
+        let error_ref = value.error.as_ref();
+
+        if !error_ref.code.is_some() {
+            return Err("Message lack of an error code".to_string());
+        }
+
+        let plugin_name = match error_ref.code.scope {
+            Some(ref scope) => scope,
+            None => "",
         };
 
-        let Some(ref number) = a.code.number else {
-            return Self::new("plugin_name", "rule_name");
+        let rule_name = match error_ref.code.number {
+            Some(ref number) => number,
+            None => "",
         };
 
-        RuleName::new(scope, number)
+        Ok(RuleName::new(plugin_name, rule_name))
     }
 }
 
