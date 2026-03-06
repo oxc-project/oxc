@@ -306,9 +306,7 @@ where
             };
             Ok(Some(config))
         }
-        Some(_) => Err(serde::de::Error::custom(
-            "jsdoc must be a boolean or an object",
-        )),
+        Some(_) => Err(serde::de::Error::custom("jsdoc must be a boolean or an object")),
     }
 }
 
