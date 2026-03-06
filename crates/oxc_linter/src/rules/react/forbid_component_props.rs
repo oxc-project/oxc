@@ -83,31 +83,24 @@ pub enum ForbidItem {
     Object(ForbidItemObject),
 }
 
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ForbidItemObject {
     /// Exact prop name to forbid.
-    #[serde(default)]
     prop_name: Option<CompactStr>,
     /// Glob pattern to match prop names against.
-    #[serde(default)]
     prop_name_pattern: Option<CompactStr>,
     /// Component names for which this prop is **allowed** (all others are
     /// forbidden).
-    #[serde(default)]
     allowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **allowed**.
-    #[serde(default)]
     allowed_for_patterns: Vec<CompactStr>,
     /// Component names for which this prop is **disallowed** (all others are
     /// allowed).
-    #[serde(default)]
     disallowed_for: Vec<CompactStr>,
     /// Glob patterns for component names where the prop is **disallowed**.
-    #[serde(default)]
     disallowed_for_patterns: Vec<CompactStr>,
     /// Custom message to display.
-    #[serde(default)]
     message: Option<String>,
 }
 
