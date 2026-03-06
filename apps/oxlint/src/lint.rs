@@ -1603,42 +1603,9 @@ export { redundant };
 
 #[cfg(test)]
 mod suppression {
-    use std::{env, fs};
+    
 
     use crate::tester::{SuppressionTester, Tester};
-
-    fn fix_suppression_tester(fixture_name: &str, args: &[&str]) {
-        let cwd = env::current_dir().unwrap();
-        let fixture_buf = cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json"));
-        let expected_buf =
-            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
-        let backup_buf =
-            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-backup.json"));
-
-        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
-            .unwrap();
-        fs::copy(backup_buf, cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
-            .unwrap();
-
-        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/files/test.js"))).unwrap();
-        fs::copy(
-            cwd.join(format!("fixtures/{fixture_name}/files/test-backup.js")),
-            cwd.join(format!("fixtures/{fixture_name}/files/test.js")),
-        )
-        .unwrap();
-    }
 
     #[test]
     fn test_suppression_not_file_reporting_errors() {
