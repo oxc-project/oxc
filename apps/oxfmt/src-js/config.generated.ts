@@ -29,7 +29,7 @@ export interface Oxfmtrc {
    */
   arrowParens?: ArrowParensConfig | null;
   /**
-   * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+   * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
    * - Default: `false`
@@ -42,7 +42,7 @@ export interface Oxfmtrc {
    */
   bracketSpacing?: boolean | null;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.
    *
    * NOTE: XXX-in-JS support is incomplete.
    *
@@ -59,7 +59,7 @@ export interface Oxfmtrc {
    */
   endOfLine?: EndOfLineConfig | null;
   /**
-   * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+   * Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.
    *
    * - Default: `"css"`
    */
@@ -132,7 +132,7 @@ export interface Oxfmtrc {
    */
   semi?: boolean | null;
   /**
-   * Enforce single attribute per line in HTML, Vue, and JSX.
+   * Enforce single attribute per line in HTML, Vue, Svelte, and JSX.
    *
    * - Default: `false`
    */
@@ -174,6 +174,16 @@ export interface Oxfmtrc {
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssConfig | null;
+  /**
+   * Svelte formatting options.
+   *
+   * These options are passed through to `prettier-plugin-svelte`.
+   * Option names omit the `svelte` prefix used in the original plugin.
+   * (e.g., `sortOrder` instead of `svelteSortOrder`)
+   *
+   * - Default: All plugin defaults
+   */
+  svelte?: FormatSvelteConfig | null;
   /**
    * Specify the number of spaces per indentation-level.
    *
@@ -228,7 +238,7 @@ export interface FormatConfig {
    */
   arrowParens?: ArrowParensConfig | null;
   /**
-   * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+   * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
    * - Default: `false`
@@ -241,7 +251,7 @@ export interface FormatConfig {
    */
   bracketSpacing?: boolean | null;
   /**
-   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+   * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.
    *
    * NOTE: XXX-in-JS support is incomplete.
    *
@@ -258,7 +268,7 @@ export interface FormatConfig {
    */
   endOfLine?: EndOfLineConfig | null;
   /**
-   * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+   * Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.
    *
    * - Default: `"css"`
    */
@@ -317,7 +327,7 @@ export interface FormatConfig {
    */
   semi?: boolean | null;
   /**
-   * Enforce single attribute per line in HTML, Vue, and JSX.
+   * Enforce single attribute per line in HTML, Vue, Svelte, and JSX.
    *
    * - Default: `false`
    */
@@ -359,6 +369,16 @@ export interface FormatConfig {
    * - Default: Disabled
    */
   sortTailwindcss?: SortTailwindcssConfig | null;
+  /**
+   * Svelte formatting options.
+   *
+   * These options are passed through to `prettier-plugin-svelte`.
+   * Option names omit the `svelte` prefix used in the original plugin.
+   * (e.g., `sortOrder` instead of `svelteSortOrder`)
+   *
+   * - Default: All plugin defaults
+   */
+  svelte?: FormatSvelteConfig | null;
   /**
    * Specify the number of spaces per indentation-level.
    *
@@ -615,5 +635,41 @@ export interface SortTailwindcssConfig {
    * - Default: Installed Tailwind CSS's `theme.css`
    */
   stylesheet?: string | null;
+  [k: string]: unknown;
+}
+/**
+ * Configuration options for Svelte formatting.
+ *
+ * These options are passed through to `prettier-plugin-svelte`.
+ * Option names omit the `svelte` prefix used in the original plugin.
+ */
+export interface FormatSvelteConfig {
+  /**
+   * Allow attribute shorthand when attribute name and expression match.
+   *
+   * - Default: `true`
+   */
+  allowShorthand?: boolean | null;
+  /**
+   * Indent code inside `<script>` and `<style>` tags.
+   *
+   * - Default: `true`
+   */
+  indentScriptAndStyle?: boolean | null;
+  /**
+   * Sort order for Svelte component sections.
+   *
+   * Join the keywords:
+   * `options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+   *
+   * - Default: `"options-scripts-markup-styles"`
+   */
+  sortOrder?: string | null;
+  /**
+   * More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+   *
+   * - Default: `false`
+   */
+  strictMode?: boolean | null;
   [k: string]: unknown;
 }

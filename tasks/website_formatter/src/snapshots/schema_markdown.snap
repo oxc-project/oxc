@@ -27,7 +27,7 @@ Include parentheses around a sole arrow function parameter.
 type: `boolean`
 
 
-Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,
 instead of being alone on the next line (does not apply to self closing elements).
 
 - Default: `false`
@@ -48,7 +48,7 @@ Print spaces between brackets in object literals.
 type: `"auto" | "off"`
 
 
-Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.
 
 NOTE: XXX-in-JS support is incomplete.
 
@@ -73,7 +73,7 @@ NOTE: `"auto"` is not supported.
 type: `"css" | "strict" | "ignore"`
 
 
-Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.
 
 - Default: `"css"`
 
@@ -182,7 +182,7 @@ Include parentheses around a sole arrow function parameter.
 type: `boolean`
 
 
-Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,
 instead of being alone on the next line (does not apply to self closing elements).
 
 - Default: `false`
@@ -203,7 +203,7 @@ Print spaces between brackets in object literals.
 type: `"auto" | "off"`
 
 
-Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.
 
 NOTE: XXX-in-JS support is incomplete.
 
@@ -228,7 +228,7 @@ NOTE: `"auto"` is not supported.
 type: `"css" | "strict" | "ignore"`
 
 
-Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.
 
 - Default: `"css"`
 
@@ -319,7 +319,7 @@ Print semicolons at the ends of statements.
 type: `boolean`
 
 
-Enforce single attribute per line in HTML, Vue, and JSX.
+Enforce single attribute per line in HTML, Vue, Svelte, and JSX.
 
 - Default: `false`
 
@@ -692,6 +692,63 @@ NOTE: Paths are resolved relative to the Oxfmt configuration file.
 - Default: Installed Tailwind CSS's `theme.css`
 
 
+##### overrides[n].options.svelte
+
+type: `object`
+
+
+Svelte formatting options.
+
+These options are passed through to `prettier-plugin-svelte`.
+Option names omit the `svelte` prefix used in the original plugin.
+(e.g., `sortOrder` instead of `svelteSortOrder`)
+
+- Default: All plugin defaults
+
+
+###### overrides[n].options.svelte.allowShorthand
+
+type: `boolean`
+
+
+Allow attribute shorthand when attribute name and expression match.
+
+- Default: `true`
+
+
+###### overrides[n].options.svelte.indentScriptAndStyle
+
+type: `boolean`
+
+
+Indent code inside `<script>` and `<style>` tags.
+
+- Default: `true`
+
+
+###### overrides[n].options.svelte.sortOrder
+
+type: `string`
+
+
+Sort order for Svelte component sections.
+
+Join the keywords:
+`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+
+- Default: `"options-scripts-markup-styles"`
+
+
+###### overrides[n].options.svelte.strictMode
+
+type: `boolean`
+
+
+More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+
+- Default: `false`
+
+
 ##### overrides[n].options.tabWidth
 
 type: `integer`
@@ -788,7 +845,7 @@ Print semicolons at the ends of statements.
 type: `boolean`
 
 
-Enforce single attribute per line in HTML, Vue, and JSX.
+Enforce single attribute per line in HTML, Vue, Svelte, and JSX.
 
 - Default: `false`
 
@@ -1159,6 +1216,63 @@ Path to your Tailwind CSS stylesheet (v4).
 NOTE: Paths are resolved relative to the Oxfmt configuration file.
 
 - Default: Installed Tailwind CSS's `theme.css`
+
+
+## svelte
+
+type: `object`
+
+
+Svelte formatting options.
+
+These options are passed through to `prettier-plugin-svelte`.
+Option names omit the `svelte` prefix used in the original plugin.
+(e.g., `sortOrder` instead of `svelteSortOrder`)
+
+- Default: All plugin defaults
+
+
+### svelte.allowShorthand
+
+type: `boolean`
+
+
+Allow attribute shorthand when attribute name and expression match.
+
+- Default: `true`
+
+
+### svelte.indentScriptAndStyle
+
+type: `boolean`
+
+
+Indent code inside `<script>` and `<style>` tags.
+
+- Default: `true`
+
+
+### svelte.sortOrder
+
+type: `string`
+
+
+Sort order for Svelte component sections.
+
+Join the keywords:
+`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+
+- Default: `"options-scripts-markup-styles"`
+
+
+### svelte.strictMode
+
+type: `boolean`
+
+
+More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+
+- Default: `false`
 
 
 ## tabWidth
