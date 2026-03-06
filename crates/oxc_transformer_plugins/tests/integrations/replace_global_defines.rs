@@ -361,8 +361,8 @@ fn test_define_then_transform_impl(
     define_config: &ReplaceGlobalDefinesConfig,
     source_type: SourceType,
 ) {
-    use std::path::Path;
     use oxc_transformer::{TransformOptions, Transformer};
+    use std::path::Path;
 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
