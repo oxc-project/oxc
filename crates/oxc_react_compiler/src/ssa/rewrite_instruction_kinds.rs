@@ -149,17 +149,39 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
 
                     for (decl_id, has_name) in &pattern_places {
                         if !has_name {
+                            // Unnamed/temporary operand — must be consistent (Const)
+                            if kind.is_some() && kind != Some(InstructionKind::Const) {
+                                return Err(CompilerError::invariant(
+                                    "Expected consistent kind for destructuring",
+                                    Some("other places were not `Const` but this operand is const"),
+                                    GENERATED_SOURCE,
+                                ));
+                            }
                             kind = Some(InstructionKind::Const);
                         } else if declarations.contains_key(decl_id) {
-                            // Reassignment of existing declaration
+                            // Reassignment of existing declaration — must be consistent (Reassign)
+                            if kind.is_some() && kind != Some(InstructionKind::Reassign) {
+                                return Err(CompilerError::invariant(
+                                    "Expected consistent kind for destructuring",
+                                    Some("other places were not `Reassign` but this operand is reassigned"),
+                                    GENERATED_SOURCE,
+                                ));
+                            }
                             needs_let.insert(*decl_id);
                             kind = Some(InstructionKind::Reassign);
                         } else {
-                            // First definition
+                            // First definition — must be consistent (Const)
                             if block_kind == Some(BlockKind::Value) {
                                 return Err(CompilerError::invariant(
                                     "Handle reassignment in a value block where the original declaration was removed by DCE",
                                     None,
+                                    GENERATED_SOURCE,
+                                ));
+                            }
+                            if kind.is_some() && kind != Some(InstructionKind::Const) {
+                                return Err(CompilerError::invariant(
+                                    "Expected consistent kind for destructuring",
+                                    Some("other places were not `Const` but this operand is const"),
                                     GENERATED_SOURCE,
                                 ));
                             }
@@ -178,10 +200,11 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     if let Some(k) = kind {
                         v.lvalue.kind = k;
                     } else {
-                        // Zero operands: this can happen with empty destructuring patterns
-                        // like `function Component({})`. DCE should have pruned these, but
-                        // as a safety net, default to Const.
-                        v.lvalue.kind = InstructionKind::Const;
+                        return Err(CompilerError::invariant(
+                            "Expected at least one operand",
+                            None,
+                            GENERATED_SOURCE,
+                        ));
                     }
                 }
                 InstructionValue::PrefixUpdate(v) => {
