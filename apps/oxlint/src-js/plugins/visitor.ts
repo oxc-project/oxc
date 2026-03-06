@@ -92,7 +92,8 @@ import {
 } from "./selector.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Node, Visitor } from "./types.ts";
+import type { Node } from "./types.ts";
+import type { VisitorObject } from "../generated/visitor.d.ts";
 
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
@@ -252,7 +253,7 @@ export function initCompiledVisitor(): void {
  *
  * @param visitor - Visitor object
  */
-export function addVisitorToCompiled(visitor: Visitor): void {
+export function addVisitorToCompiled(visitor: VisitorObject): void {
   if (visitor === null || typeof visitor !== "object") {
     throw new TypeError("Visitor returned from `create` method must be an object");
   }
