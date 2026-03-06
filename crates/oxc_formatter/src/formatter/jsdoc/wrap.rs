@@ -1,8 +1,12 @@
 /// Compute the display width of a string, matching JavaScript's `.length` (UTF-16 code units).
 /// For BMP characters (Latin, Cyrillic, CJK, etc.), this equals the character count.
 /// Supplementary characters (above U+FFFF) count as 2, matching JS surrogate pairs.
+///
+/// Fast path: for ASCII-only strings (99%+ of JSDoc content), `len()` equals UTF-16 count,
+/// so we skip the expensive `encode_utf16().count()` entirely.
+#[inline]
 pub fn str_width(s: &str) -> usize {
-    s.encode_utf16().count()
+    if s.is_ascii() { s.len() } else { s.encode_utf16().count() }
 }
 
 /// Lookup table of pre-allocated indent strings (0–12 spaces).
