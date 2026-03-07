@@ -350,8 +350,7 @@ impl NoConstantBinaryExpression {
             | Expression::RegExpLiteral(_) => true,
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
+                    return ctx.is_global_defined(&ident.name);
                 }
                 false
             }
