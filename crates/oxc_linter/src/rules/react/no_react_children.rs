@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
 
 fn no_react_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React.Children` should not be used.")
@@ -82,6 +82,10 @@ declare_oxc_lint!(
 
 impl Rule for NoReactChildren {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]
@@ -96,6 +100,19 @@ fn test() {
         // Violations in comments do not count.
         "const foo = []; /* React.Children */",
         "const foo = []; /* import { Children } from 'react'; */",
+        "<div>Children</div>",
+        "<MyComponent>Children</MyComponent>",
+        "<MyComponent>React.Children</MyComponent>",
+        r#""React.Children""#,
+        "import { Children } from 'something-else'; Children.toArray(children)",
+        "<Foo>{children}</Foo>",
+        r#"function Card({ children }) {
+             return (
+               <div className="card">
+                 {children}
+               </div>
+             );
+           }"#,
     ];
 
     let fail = vec![
