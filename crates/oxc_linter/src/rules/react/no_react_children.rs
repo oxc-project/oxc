@@ -17,30 +17,66 @@ pub struct NoReactChildren;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// FIXME: Briefly describe the rule's purpose.
+    /// Disallows the usage of `React.Children`, as it is considered a bad practice.
     ///
     /// ### Why is this bad?
     ///
-    /// FIXME: Explain why violating this rule is problematic.
+    /// Using `React.Children` is
+    /// [discouraged by the React documentation](https://react.dev/reference/react/Children).
+    ///
+    /// It is recommended to use alternative approaches for handling children.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Add at least one example of code that violates the rule.
+    /// ```jsx
+    /// import { Children } from 'react';
+    ///
+    /// Children.toArray(children)
+    /// Children.map(children, child => <div>{child}</div>)
+    /// Children.only(children)
+    /// Children.count(children)
+    /// Children.forEach(children, (child, index) => {})
+    /// ```
+    ///
+    /// ```jsx
+    /// import React from 'react';
+    ///
+    /// function Table({ children }) {
+    ///   const mappedChildren = React.Children.map(children, (child) =>
+    ///     <tr>{child}</tr>
+    ///   );
+    ///
+    ///   return <table>{mappedChildren}</table>;
+    /// }
+    /// ```
+    ///
+    /// ```jsx
+    /// import { Children } from 'react';
+    ///
+    /// function RowList({ children }) {
+    ///   return (
+    ///     <>
+    ///       <h1>Total rows: {Children.count(children)}</h1>
+    ///     </>
+    ///   );
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Add at least one example of code that is allowed with the rule.
+    /// ```jsx
+    /// function Card({ children }) {
+    ///   return (
+    ///     <div className="card">
+    ///       {children}
+    ///     </div>
+    ///   );
+    /// }
     /// ```
     NoReactChildren,
     react,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending, // TODO: describe fix capabilities. Remove or set to `none` if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    restriction,
+    none
 );
 
 impl Rule for NoReactChildren {
