@@ -1,0 +1,80 @@
+Implement the following plan:
+
+# Fix: Minifier performance regression with many declarators (Issue #17369)
+
+## Context
+
+A file only ~6% larger takes 2.5x longer to minify (282ms vs 704ms). The `bad.js` file contains ~10,000 root-level `var` declarations like:
+```js
+var import_react$9947 = /* @__PURE__ */ __toESM(require_react());
+```
+This is a common pattern produced by bundlers (esbuild) when deduplicating imports across module boundaries.
+
+### Root cause
+
+In `substitute_single_use_symbol_in_expression_from_declarators` (`minimize_statements.rs:1240`), for each declarator, `substitute_single_use_symbol_in_expression` does a **full recursive tree-walk** of `target_expr` searching for an identifier by name. With N declarators, this is O(N * M) where M is the expression tree size — even when the name doesn't appear in the expression at all.
+
+### Existing PR #17377
+
+Uses `FxHashSet<Atom>` (string-based) to collect identifier names. This causes allocation regression (e.g. `antd.js`: 99k → 157k sys allocs) and uses string hashing.
+
+## Plan
+
+Use `FxHashSet<SymbolId>` instead of `FxHashSet<Atom>` — leveraging the existing symbol infrastructure for an integer-based (u32) check that is faster and more correct (handles shadowing).
+
+### File: `crates/oxc_minifier/src/peephole/minimize_statements.rs`
+
+1. **Add a `SymbolCollector` visitor** that walks an expression and collects all resolved `SymbolId`s from `IdentifierReference` nodes into a `FxHashSet<SymbolId>`:
+   ```rust
+   struct SymbolCollector {
+       symbols: FxHashSet<SymbolId>,
+   }
+   ```
+   - For each `IdentifierReference`, look up its `reference_id` → `ctx.scoping().get_reference(ref_id).symbol_id()` → insert into set
+   - Problem: the `Visit` trait doesn't have access to `TraverseCtx`/`Scoping`. So we need a manual recursive walk of `target_expr` instead (similar to how `substitute_single_use_symbol_in_expression` already does), or we collect `ReferenceId`s first then resolve them.
+
+   **Better approach**: Walk `target_expr` collecting all `ReferenceId`s (available directly on `IdentifierReference.reference_id`), then resolve them to `SymbolId`s using scoping. Or even simpler — just collect `ReferenceId`s into a set, then check if any of the symbol's resolved reference IDs are in that set.
+
+   **Simplest approach**: Collect `FxHashSet<ReferenceId>` from all `IdentifierReference` nodes in target_expr using `Visit`. Then for each declarator's symbol, check `scoping.get_resolved_reference_ids(symbol_id)` and see if any are in the set. This is pure integer operations.
+
+2. **Modify `substitute_single_use_symbol_in_expression_from_declarators`** (line 1240):
+   - Before the `rposition` loop, lazily collect all `ReferenceId`s from `target_expr` into a `FxHashSet<ReferenceId>`
+   - Use a threshold (e.g., `declarators.len() >= 2`) to skip overhead on trivial cases
+   - Inside the loop, after getting `symbol_id` from `prev_decl_id.symbol_id()`, check if any of that symbol's resolved reference IDs are in the set. If none are → skip (the name can't be in target_expr)
+   - After a successful substitution, invalidate the cache (set to `None`) since `target_expr` is mutated
+
+3. **Update allocation snapshot**: `just allocs`
+
+### Key details
+
+- `IdentifierReference` has `.reference_id` directly accessible — no need for scoping to collect
+- `ReferenceId` is a u32 index — hashing is trivial
+- `scoping.get_resolved_reference_ids(symbol_id)` returns `&[ReferenceId]` — we just check if any is in the set
+- The cache invalidation after successful inline is important since `target_expr` changes
+- For symbols with `read_references_count == 1`, we only need to check 1 reference ID — but the set approach handles the general case cleanly
+
+## Verification
+
+1. `cargo test -p oxc_minifier` — all existing tests pass
+2. `just allocs` — update allocation snapshots
+3. `just minsize` — verify minification output sizes unchanged
+4. `just ready` — full check suite
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+i don't like the solution, check esbuild in /Users/boshen/github/esbuild
+
+---
+
+continue
+
+---
+
+use rust iterator?
+
+---
+
+create pr

@@ -1,0 +1,46 @@
+Implement the following plan:
+
+# Plan: Improve private identifier error recovery in parser
+
+## Context
+
+When `#ident` appears as a property key in invalid positions (object literals `{#x: 1}`, destructuring `const {#x} = y`, TS interface members `interface I { #x: string }`), the parser currently falls into `parse_identifier_name()` which produces an unhelpful "Unexpected token" error. No `PrivateIdentifier` AST node is created, so the semantic checker's `check_private_identifier_outside_class` never fires.
+
+The fix adds error recovery: parse private identifiers in `parse_property_name()` so they produce `PropertyKey::PrivateIdentifier` AST nodes, allowing the semantic checker to emit the proper "Private identifier '#x' is not allowed outside class bodies" error.
+
+## Changes
+
+### 1. `crates/oxc_parser/src/js/object.rs` — `parse_property_name()`
+
+Add a `Kind::PrivateIdentifier` arm before the `_` fallback:
+
+```rust
+Kind::PrivateIdentifier => {
+    let private_ident = self.parse_private_identifier();
+    PropertyKey::PrivateIdentifier(self.alloc(private_ident))
+}
+```
+
+This creates a proper AST node for error recovery. The semantic checker already handles the error reporting.
+
+### 2. Update conformance snapshots
+
+Run `cargo insta review` to update any snapshot changes (the error message will change from "Unexpected token" to the semantic error).
+
+## Verification
+
+1. `cargo test -p oxc_parser` — parser tests pass
+2. `cargo test -p oxc_semantic` — semantic tests pass
+3. `just conformance` — update snapshots for changed error messages
+4. Manual test: create files with `{#x: 1}`, `const {#x} = y`, etc. and verify the error message is now "Private identifier '#x' is not allowed outside class bodies"
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+need to fix estree mismatches
+
+---
+
+create pr
