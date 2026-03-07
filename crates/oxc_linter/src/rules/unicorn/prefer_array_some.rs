@@ -376,7 +376,7 @@ fn test() {
         "if (findLast(fn)) {}",
         // TODO: Get these passing.
         // r#"if (foo["findLast"](fn)) {}"#,
-        r#"if (foo["fi" + "nd"](fn) /* findLast */) {}"#,
+        r#"if (foo["fi" + "nd"](fn) /* findLast */) {}"#, // spellchecker:disable-line
         // TODO: Get these passing.
         // "if (foo[`findLast`](fn)) {}",
         "if (foo[findLast](fn)) {}",
