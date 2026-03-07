@@ -1187,6 +1187,12 @@ mod test {
     }
 
     #[test]
+    fn test_extends_env() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/extends_env".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_nested_config_multi_file_analysis_imports() {
         let args = &["issue_10054"];
         Tester::new().with_cwd("fixtures/cli".into()).test_and_snapshot(args);
