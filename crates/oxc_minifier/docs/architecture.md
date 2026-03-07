@@ -63,6 +63,40 @@ src/
 3. **Mangle** — Variable names are shortened (handled by `oxc_mangler`)
 4. **Codegen** — Minified output is emitted by `oxc_codegen`
 
+## Fixed-Point Loop
+
+Optimization passes interact — one pass's output often enables another pass to fire. Constant folding
+may produce a dead branch that dead code elimination can remove, which may leave a variable unused
+for unused code removal to clean up. A single traversal cannot catch all these cascading opportunities.
+
+The compressor therefore runs all optimization passes inside a **fixed-point loop**: traverse the AST,
+apply all passes, and repeat until an iteration produces no changes (convergence). Closure Compiler
+uses the same approach, with a convergence heuristic that stops when consecutive iterations yield
+less than 0.05% size reduction.
+
+### Selective subtree traversal
+
+The natural unit for revisiting is the **function**. Functions are self-contained scopes — most
+optimizations operate within a single function body, and the results of optimizing one function
+rarely affect the internals of another. After the first iteration, only functions whose bodies
+were modified (or whose external context changed, e.g. a call-site argument was simplified)
+need to be re-visited.
+
+The fixed-point loop should therefore track which functions changed and only re-traverse those
+on subsequent iterations. This applies to all optimization passes (not just peepholes) — any pass
+that modifies the AST within a function marks that function for re-visitation.
+
+The traversal needs a mechanism to **skip functions that haven't changed** since the last
+iteration. Closure Compiler provides this through `shouldTraverse(node)` — a predicate called
+before descending into a node's children. This separates two concerns:
+
+1. **The mechanism** — how the traversal skips (a predicate checked before descent)
+2. **The policy** — what decides which functions to skip (change tracking)
+
+Both concerns are unsolved for the new minifier. The generated walk functions currently always
+recurse into all children unconditionally, and there is no change tracking beyond a single
+global boolean.
+
 ## Design Plans
 
 See [progress.md](progress.md) for a full list of design documents.
