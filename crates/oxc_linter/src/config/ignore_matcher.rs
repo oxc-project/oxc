@@ -62,7 +62,7 @@ impl LintIgnoreMatcher {
         }
         self.base
             .as_ref()
-            .is_some_and(|base| base.matched_path_or_any_parents(path, false).is_ignore())
+            .is_some_and(|base| path.starts_with(base.path()) && base.matched_path_or_any_parents(path, false).is_ignore())
     }
 }
 
