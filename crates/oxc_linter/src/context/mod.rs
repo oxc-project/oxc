@@ -13,7 +13,7 @@ use oxc_span::Span;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintGlobals, OxlintSettings,
     WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
@@ -229,29 +229,9 @@ impl<'a> LintContext<'a> {
             return Some(*value);
         }
 
-        self.get_env_global_entry(name)
-    }
-
-    /// Runtime environments turned on/off by the user.
-    ///
-    /// Examples of environments are `builtin`, `browser`, `node`, etc.
-    #[inline]
-    pub fn env(&self) -> &OxlintEnv {
-        &self.parent.config.env
-    }
-
-    fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
         // builtin is always readonly
-        if GLOBALS["builtin"].contains_key(var) {
+        if GLOBALS["builtin"].contains_key(name) {
             return Some(GlobalValue::Readonly);
-        }
-
-        for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env)
-                && let Some(value) = env.get(var)
-            {
-                return Some(GlobalValue::from(*value));
-            }
         }
 
         None
@@ -271,19 +251,8 @@ impl<'a> LintContext<'a> {
         if self.globals().is_enabled(var) {
             return true;
         }
-        self.env_contains_var(var)
-    }
-
-    fn env_contains_var(&self, var: &str) -> bool {
         if GLOBALS["builtin"].contains_key(var) {
             return true;
-        }
-        for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env)
-                && env.contains_key(var)
-            {
-                return true;
-            }
         }
         false
     }

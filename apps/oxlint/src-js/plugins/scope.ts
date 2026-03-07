@@ -5,8 +5,7 @@
 import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manager";
 import { ecmaFeaturesOverride } from "./context.ts";
 import { ast, initAst } from "./source_code.ts";
-import { globals, envs, initGlobals } from "./globals.ts";
-import { ENVS } from "../generated/envs.ts";
+import { globals, initGlobals } from "./globals.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type {
@@ -153,33 +152,6 @@ function addGlobals(): void {
   // Ensure globals are initialized
   if (globals === null) initGlobals();
   debugAssertIsNonNull(globals);
-  debugAssertIsNonNull(envs);
-
-  // Create variables for enabled `envs`.
-  // All properties of `envs` are `true`, so no need to check the values.
-  // `envs` from JSON, so we can use simple `for..in` loop.
-  for (const envName in envs) {
-    // Get vars defined for this env.
-    // Rust side code ignores invalid env names, and passes them through to JS,
-    // so we can't assume they're valid here. But debug assert they're valid for tests.
-    const preset = ENVS.get(envName);
-    debugAssertIsNonNull(preset, `Unknown env: ${envName}`);
-    if (preset === undefined) continue;
-
-    const { readonly, writable } = preset;
-
-    for (let i = 0, len = readonly.length; i < len; i++) {
-      const varName = readonly[i];
-      // Skip vars that are defined in `globals`. They might be `"off"`.
-      if (!Object.hasOwn(globals, varName)) createGlobalVariable(varName, globalScope, false);
-    }
-
-    for (let i = 0, len = writable.length; i < len; i++) {
-      const varName = writable[i];
-      // Skip vars that are defined in `globals`. They might be `"off"`.
-      if (!Object.hasOwn(globals, varName)) createGlobalVariable(varName, globalScope, true);
-    }
-  }
 
   // Create variables for enabled `globals`.
   // `globals` from JSON, so we can use simple `for..in` loop.

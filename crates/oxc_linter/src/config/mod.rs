@@ -29,8 +29,6 @@ use crate::config::oxlintrc::OxlintOptions;
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
     pub(crate) settings: OxlintSettings,
-    /// Environments enable and disable collections of global variables.
-    pub(crate) env: OxlintEnv,
     /// Enabled or disabled specific global variables.
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
@@ -41,11 +39,14 @@ pub struct LintConfig {
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
+        let mut globals = OxlintGlobals::default();
+        config.env.override_globals(&mut globals);
+        config.globals.override_globals(&mut globals);
+
         Self {
             plugins: config.plugins.unwrap_or_default(),
             settings: config.settings,
-            env: config.env,
-            globals: config.globals,
+            globals,
             path: Some(config.path),
             options: config.options,
         }
@@ -61,7 +62,7 @@ mod test {
     use serde::Deserialize;
 
     use super::Oxlintrc;
-    use crate::{ExternalPluginStore, rules::RULES};
+    use crate::{ExternalPluginStore, config::LintConfig, rules::RULES};
 
     #[test]
     fn test_from_file() {
@@ -163,5 +164,19 @@ mod test {
         let (rule, _) = set.into_iter().next().unwrap();
         assert_eq!(rule.name(), "no-disabled-tests");
         assert_eq!(rule.plugin_name(), "jest");
+    }
+
+    #[test]
+    fn test_resolved_oxlintrc_env_to_globals() {
+        let env = Oxlintrc::deserialize(&serde_json::json!({
+            "env": {
+                "browser": true,
+                "node": true,
+            }
+        }))
+        .unwrap();
+        let config = LintConfig::from(env);
+        assert!(config.globals.is_enabled("window"));
+        assert!(config.globals.is_enabled("global"));
     }
 }
