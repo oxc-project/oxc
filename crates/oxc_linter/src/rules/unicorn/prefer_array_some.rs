@@ -362,7 +362,7 @@ fn test() {
         "if (find(fn)) {}",
         // TODO: Get these passing.
         // r#"if (foo["find"](fn)) {}"#,
-        r#"if (foo["fi" + "nd"](fn) /* find */) {}"#,
+        r#"if (foo["fi" + "nd"](fn) /* find */) {}"#, // spellchecker:disable-line
         // TODO: Get these passing.
         // "if (foo[`find`](fn)) {}",
         "if (foo[find](fn)) {}",
