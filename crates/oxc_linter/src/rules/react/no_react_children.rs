@@ -92,22 +92,21 @@ impl Rule for NoReactChildren {
         };
 
         // Pattern 1: Children.method() where Children is from React or unresolved
-        if let Some(ident) = member_expr.object().get_identifier_reference() {
-            if ident.name == "Children" && is_react_children_ref(ident, ctx) {
-                ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
-                return;
-            }
+        if let Some(ident) = member_expr.object().get_identifier_reference()
+            && ident.name == "Children"
+            && is_react_children_ref(ident, ctx)
+        {
+            ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
+            return;
         }
 
         // Pattern 2: React.Children.method()
-        if let Some(inner_member) = member_expr.object().as_member_expression() {
-            if inner_member.static_property_name() == Some("Children") {
-                if let Some(ident) = inner_member.object().get_identifier_reference() {
-                    if is_react_namespace_ref(ident, ctx) {
-                        ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
-                    }
-                }
-            }
+        if let Some(inner_member) = member_expr.object().as_member_expression()
+            && inner_member.static_property_name() == Some("Children")
+            && let Some(ident) = inner_member.object().get_identifier_reference()
+            && is_react_namespace_ref(ident, ctx)
+        {
+            ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
         }
     }
 
@@ -163,6 +162,8 @@ fn test() {
         "<MyComponent>React.Children</MyComponent>",
         r#""React.Children""#,
         "import { Children } from 'something-else'; Children.toArray(children)",
+        // Local React object, not an import
+        "const React = { Children: { map: () => {} } }; React.Children.map()",
         "<Foo>{children}</Foo>",
         r#"function Card({ children }) {
              return (
