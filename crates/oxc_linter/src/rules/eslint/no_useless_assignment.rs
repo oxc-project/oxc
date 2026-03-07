@@ -111,13 +111,14 @@ pub enum Operation {
     Write = 1,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct OpAtNode {
     pub op: Operation,
     pub node: NodeId,
+    pub compact_idx: u32,
 }
 
-pub type BlockOps = Vec<(SymbolId, Vec<OpAtNode>)>;
+pub type BlockOps = Vec<OpAtNode>;
 
 pub type CfgOps = IndexVec<BasicBlockId, BlockOps>;
 
@@ -136,17 +137,17 @@ pub type CfgTraverseState<'a> = IndexVec<BasicBlockId, TraverseState<'a>>;
 impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
         let allocator = Allocator::default();
-        let num_symbols = ctx.scoping().symbols_len();
         let graph = ctx.cfg().graph();
         let num_blocks = ctx.cfg().basic_blocks.len();
 
-        // Single pass: build compact_map AND collect ops simultaneously.
+        // Single pass: collect ops and build tracking data.
         // Defer BitSet allocations until num_tracked is known.
-        let mut compact_map = vec![u32::MAX; num_symbols];
         let mut num_tracked: u32 = 0;
         let mut cfg_ops: CfgOps = IndexVec::with_capacity(num_blocks);
         cfg_ops.resize_with(num_blocks, Vec::new);
-        let mut used_compact_indices: Vec<u32> = Vec::new();
+        let mut used_compact_indices: SmallVec<[u32; 32]> = SmallVec::new();
+        let mut compact_to_scope: Vec<ScopeId> = Vec::new();
+        let mut exported_compact_indices: SmallVec<[u32; 8]> = SmallVec::new();
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
@@ -165,26 +166,23 @@ impl Rule for NoUselessAssignment {
             }
 
             let compact_idx = num_tracked;
-            compact_map[symbol_id.index()] = compact_idx;
             num_tracked += 1;
+            compact_to_scope.push(ctx.scoping().symbol_scope_id(symbol_id));
+            if Self::is_exported(ctx, symbol_id) {
+                exported_compact_indices.push(compact_idx);
+            }
 
             // Collect ops for this symbol (formerly Pass 2)
             let block_id = *graph
                 .node_weight(ctx.nodes().cfg_id(decl_node.id()))
                 .expect("expected a valid node id in graph");
 
-            let block_ops_vec = &mut cfg_ops[block_id];
-
-            let ops_vec =
-                if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
-                    &mut block_ops_vec[pos].1
-                } else {
-                    block_ops_vec.push((symbol_id, Vec::new()));
-                    &mut block_ops_vec.last_mut().unwrap().1
-                };
-
             if var_decl.init.is_some() {
-                ops_vec.push(OpAtNode { op: Operation::Write, node: decl_node.id() });
+                cfg_ops[block_id].push(OpAtNode {
+                    op: Operation::Write,
+                    node: decl_node.id(),
+                    compact_idx,
+                });
             }
 
             // Process references inline with reordering for assignment expressions like a = a + 1
@@ -205,7 +203,6 @@ impl Rule for NoUselessAssignment {
                             graph,
                             &mut cfg_ops,
                             reference,
-                            symbol_id,
                             compact_idx,
                             var_decl,
                             decl_node,
@@ -218,7 +215,6 @@ impl Rule for NoUselessAssignment {
                         graph,
                         &mut cfg_ops,
                         lhs,
-                        symbol_id,
                         compact_idx,
                         var_decl,
                         decl_node,
@@ -234,7 +230,6 @@ impl Rule for NoUselessAssignment {
                             graph,
                             &mut cfg_ops,
                             prev,
-                            symbol_id,
                             compact_idx,
                             var_decl,
                             decl_node,
@@ -248,7 +243,6 @@ impl Rule for NoUselessAssignment {
                         graph,
                         &mut cfg_ops,
                         reference,
-                        symbol_id,
                         compact_idx,
                         var_decl,
                         decl_node,
@@ -263,7 +257,6 @@ impl Rule for NoUselessAssignment {
                     graph,
                     &mut cfg_ops,
                     lhs,
-                    symbol_id,
                     compact_idx,
                     var_decl,
                     decl_node,
@@ -274,16 +267,26 @@ impl Rule for NoUselessAssignment {
 
         let num_tracked = num_tracked as usize;
 
+        // Early exit if no symbols to track
+        if num_tracked == 0 {
+            return;
+        }
+
         // Now allocate BitSets with the correct size
         let mut used_symbols = BitSet::new_in(num_tracked, &allocator);
         for idx in &used_compact_indices {
             used_symbols.set_bit(*idx as usize);
         }
 
+        // Pre-compute exported symbols BitSet (avoids hash lookups in hot loop)
+        let mut exported_symbols = BitSet::new_in(num_tracked, &allocator);
+        for idx in &exported_compact_indices {
+            exported_symbols.set_bit(*idx as usize);
+        }
+
         let mut cfg_traverse_state: CfgTraverseState<'_> =
             CfgTraverseState::with_capacity(num_blocks);
-        cfg_traverse_state
-            .resize_with(num_blocks, || TraverseState::new(num_tracked, &allocator));
+        cfg_traverse_state.resize_with(num_blocks, || TraverseState::new(num_tracked, &allocator));
 
         let mut scratch_live = BitSet::new_in(num_tracked, &allocator);
         let mut scratch_catch = BitSet::new_in(num_tracked, &allocator);
@@ -349,7 +352,6 @@ impl Rule for NoUselessAssignment {
                                         loop_header,
                                         loop_header,
                                         &cfg_ops,
-                                        &compact_map,
                                         &mut scratch_loop_req,
                                         &mut scratch_loop_killed,
                                         &mut scratch_loop_visited,
@@ -363,40 +365,35 @@ impl Rule for NoUselessAssignment {
                     }
 
                     // Walk back from the end of the block to the start
-                    {
-                        for (symbol_id, ops) in &cfg_ops[current_block_id] {
-                            let compact_idx = compact_map[symbol_id.index()] as usize;
+                    for op in cfg_ops[current_block_id].iter().rev() {
+                        let compact_idx = op.compact_idx as usize;
 
-                            if !used_symbols.has_bit(compact_idx)
-                                && !Self::is_exported(ctx, *symbol_id)
-                            {
-                                // We don't need to track liveness for unused vars
-                                continue;
-                            }
+                        if !used_symbols.has_bit(compact_idx)
+                            && !exported_symbols.has_bit(compact_idx)
+                        {
+                            continue;
+                        }
 
-                            for op in ops.iter().rev() {
-                                match op.op {
-                                    Operation::Write => {
-                                        if !scratch_live.has_bit(compact_idx)
-                                            && !scratch_catch.has_bit(compact_idx)
-                                            && !Self::is_exported(ctx, *symbol_id)
-                                            && !Self::is_in_try_block(graph, block_node_id)
-                                            && Self::has_same_parent_variable_scope(
-                                                ctx,
-                                                ctx.scoping().symbol_scope_id(*symbol_id),
-                                                ctx.nodes().get_node(op.node).scope_id(),
-                                            )
-                                        {
-                                            ctx.diagnostic(no_useless_assignment_diagnostic(
-                                                ctx.nodes().get_node(op.node).span(),
-                                            ));
-                                        }
-                                        scratch_live.unset_bit(compact_idx);
-                                    }
-                                    Operation::Read => {
-                                        scratch_live.set_bit(compact_idx);
-                                    }
+                        match op.op {
+                            Operation::Write => {
+                                if !scratch_live.has_bit(compact_idx)
+                                    && !scratch_catch.has_bit(compact_idx)
+                                    && !exported_symbols.has_bit(compact_idx)
+                                    && !Self::is_in_try_block(graph, block_node_id)
+                                    && Self::has_same_parent_variable_scope(
+                                        ctx,
+                                        compact_to_scope[compact_idx],
+                                        ctx.nodes().get_node(op.node).scope_id(),
+                                    )
+                                {
+                                    ctx.diagnostic(no_useless_assignment_diagnostic(
+                                        ctx.nodes().get_node(op.node).span(),
+                                    ));
                                 }
+                                scratch_live.unset_bit(compact_idx);
+                            }
+                            Operation::Read => {
+                                scratch_live.set_bit(compact_idx);
                             }
                         }
                     }
@@ -431,11 +428,10 @@ impl NoUselessAssignment {
         graph: &Graph,
         cfg_ops: &mut CfgOps,
         reference: &Reference,
-        symbol_id: SymbolId,
         compact_idx: u32,
         var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
-        used_compact_indices: &mut Vec<u32>,
+        used_compact_indices: &mut SmallVec<[u32; 32]>,
     ) {
         let op_node = reference.node_id();
 
@@ -443,8 +439,7 @@ impl NoUselessAssignment {
             let ref_block = *graph
                 .node_weight(ctx.nodes().cfg_id(op_node))
                 .expect("expected a valid node id in graph");
-            let ref_ops_vec = Self::get_ops_mut(cfg_ops, ref_block, symbol_id);
-            ref_ops_vec.push(OpAtNode { op: Operation::Read, node: op_node });
+            cfg_ops[ref_block].push(OpAtNode { op: Operation::Read, node: op_node, compact_idx });
             used_compact_indices.push(compact_idx);
         }
 
@@ -462,8 +457,7 @@ impl NoUselessAssignment {
             let ref_block = *graph
                 .node_weight(ctx.nodes().cfg_id(op_node))
                 .expect("expected a valid node id in graph");
-            let ref_ops_vec = Self::get_ops_mut(cfg_ops, ref_block, symbol_id);
-            ref_ops_vec.push(OpAtNode { op: Operation::Write, node: op_node });
+            cfg_ops[ref_block].push(OpAtNode { op: Operation::Write, node: op_node, compact_idx });
         }
     }
 
@@ -540,7 +534,6 @@ impl NoUselessAssignment {
         node: BlockNodeId,
         loop_header_id: BlockNodeId,
         cfg_ops: &CfgOps,
-        compact_map: &[u32],
         result_gen: &mut BitSet,
         killed_on_path: &mut BitSet,
         visited: &mut BitSet,
@@ -555,22 +548,20 @@ impl NoUselessAssignment {
         // Track bits we set in THIS block so we can undo them later
         let mut newly_killed: SmallVec<[usize; 8]> = SmallVec::new();
 
-        for (symbol_id, ops) in &cfg_ops[block_id] {
-            let compact_idx = compact_map[symbol_id.index()] as usize;
+        for op in &cfg_ops[block_id] {
+            let compact_idx = op.compact_idx as usize;
 
             if result_gen.has_bit(compact_idx) || killed_on_path.has_bit(compact_idx) {
                 continue;
             }
 
-            if let Some(first_op) = ops.first() {
-                match first_op.op {
-                    Operation::Read => {
-                        result_gen.set_bit(compact_idx);
-                    }
-                    Operation::Write => {
-                        killed_on_path.set_bit(compact_idx);
-                        newly_killed.push(compact_idx);
-                    }
+            match op.op {
+                Operation::Read => {
+                    result_gen.set_bit(compact_idx);
+                }
+                Operation::Write => {
+                    killed_on_path.set_bit(compact_idx);
+                    newly_killed.push(compact_idx);
                 }
             }
         }
@@ -588,7 +579,6 @@ impl NoUselessAssignment {
                         target,
                         loop_header_id,
                         cfg_ops,
-                        compact_map,
                         result_gen,
                         killed_on_path,
                         visited,
@@ -601,21 +591,6 @@ impl NoUselessAssignment {
         // BACKTRACK: Remove only the bits that this specific block call added
         for sym_idx in newly_killed {
             killed_on_path.unset_bit(sym_idx);
-        }
-    }
-
-    fn get_ops_mut(
-        cfg_ops: &mut CfgOps,
-        block_id: BasicBlockId,
-        symbol_id: SymbolId,
-    ) -> &mut Vec<OpAtNode> {
-        let block_ops_vec = &mut cfg_ops[block_id];
-
-        if let Some(pos) = block_ops_vec.iter().position(|(id, _)| *id == symbol_id) {
-            &mut block_ops_vec[pos].1
-        } else {
-            block_ops_vec.push((symbol_id, Vec::new()));
-            &mut block_ops_vec.last_mut().unwrap().1
         }
     }
 }
