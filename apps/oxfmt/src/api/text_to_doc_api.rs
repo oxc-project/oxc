@@ -86,7 +86,8 @@ pub fn run(
 
 /// Full mode:
 /// - Format entire source as text
-/// - Return hardline-joined Doc string
+/// - Re-parse output to identify template literal spans
+/// - Return Doc using `literalline` for newlines inside template literals
 #[instrument(level = "debug", name = "oxfmt::text_to_doc::full", skip_all, fields(%source_ext))]
 fn run_full(
     source_ext: &str,
@@ -150,9 +151,10 @@ fn run_full(
     };
 
     external_formatter.cleanup();
-    Some(to_prettier_doc::printed_string_to_hardline_doc(&code))
+    Some(to_prettier_doc::printed_string_to_doc_with_template_literals(
+        &code, source_ext,
+    ))
 }
-
 // ---
 
 /// Fragment mode:
