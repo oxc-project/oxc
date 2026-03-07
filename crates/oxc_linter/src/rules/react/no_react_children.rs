@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_react_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React.Children` should not be used.")
