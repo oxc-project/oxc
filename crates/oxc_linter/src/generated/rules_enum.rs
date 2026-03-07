@@ -455,6 +455,7 @@ pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports
 pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
+pub use crate::rules::typescript::method_signature_style::MethodSignatureStyle as TypescriptMethodSignatureStyle;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
 pub use crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion as TypescriptNoConfusingNonNullAssertion;
@@ -932,6 +933,7 @@ pub enum RuleEnum {
     TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
+    TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
     TypescriptNoConfusingNonNullAssertion(TypescriptNoConfusingNonNullAssertion),
@@ -1639,7 +1641,9 @@ const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID 
 const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
-const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID: usize =
+    TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
+const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
     TYPESCRIPT_NO_BASE_TO_STRING_ID + 1usize;
@@ -2431,6 +2435,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
             }
+            Self::TypescriptMethodSignatureStyle(_) => TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID,
             Self::TypescriptNoArrayDelete(_) => TYPESCRIPT_NO_ARRAY_DELETE_ID,
             Self::TypescriptNoBaseToString(_) => TYPESCRIPT_NO_BASE_TO_STRING_ID,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -3237,6 +3242,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::NAME
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::NAME,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::NAME,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::NAME,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4041,6 +4047,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::CATEGORY,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::CATEGORY,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::CATEGORY,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4876,6 +4883,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::FIX
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::FIX,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::FIX,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::FIX,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -5708,6 +5716,9 @@ impl RuleEnum {
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::documentation()
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::documentation()
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::documentation(),
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::documentation(),
@@ -7001,6 +7012,10 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::config_schema(generator)
                     .or_else(|| TypescriptExplicitModuleBoundaryTypes::schema(generator))
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::config_schema(generator)
+                    .or_else(|| TypescriptMethodSignatureStyle::schema(generator))
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::config_schema(generator)
                 .or_else(|| TypescriptNoArrayDelete::schema(generator)),
@@ -8634,6 +8649,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
+            Self::TypescriptMethodSignatureStyle(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
             Self::TypescriptNoConfusingNonNullAssertion(_) => "typescript",
@@ -9785,6 +9801,9 @@ impl RuleEnum {
                     TypescriptExplicitModuleBoundaryTypes::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptMethodSignatureStyle(_) => Ok(Self::TypescriptMethodSignatureStyle(
+                TypescriptMethodSignatureStyle::from_configuration(value)?,
+            )),
             Self::TypescriptNoArrayDelete(_) => Ok(Self::TypescriptNoArrayDelete(
                 TypescriptNoArrayDelete::from_configuration(value)?,
             )),
@@ -11573,6 +11592,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
             Self::TypescriptNoBaseToString(rule) => rule.to_configuration(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.to_configuration(),
@@ -12277,6 +12297,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run(node, ctx),
@@ -12977,6 +12998,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_once(ctx),
@@ -13695,6 +13717,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptMethodSignatureStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => {
@@ -14477,6 +14500,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.should_run(ctx),
@@ -15226,6 +15250,9 @@ impl RuleEnum {
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptMethodSignatureStyle(_) => {
+                TypescriptMethodSignatureStyle::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::IS_TSGOLINT_RULE,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::IS_TSGOLINT_RULE,
@@ -16198,6 +16225,7 @@ impl RuleEnum {
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
             }
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::HAS_CONFIG,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::HAS_CONFIG,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::HAS_CONFIG,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -17040,6 +17068,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.types_info(),
@@ -17740,6 +17769,7 @@ impl RuleEnum {
             Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
+            Self::TypescriptMethodSignatureStyle(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_info(),
@@ -18476,6 +18506,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptExplicitModuleBoundaryTypes(
             TypescriptExplicitModuleBoundaryTypes::default(),
         ),
+        RuleEnum::TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle::default()),
         RuleEnum::TypescriptNoArrayDelete(TypescriptNoArrayDelete::default()),
         RuleEnum::TypescriptNoBaseToString(TypescriptNoBaseToString::default()),
         RuleEnum::TypescriptNoConfusingNonNullAssertion(
