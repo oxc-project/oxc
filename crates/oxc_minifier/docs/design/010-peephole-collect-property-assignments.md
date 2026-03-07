@@ -98,6 +98,20 @@ var o = {};
 o.self = o;
 ```
 
+### Consecutive property assignments into literal (const/let)
+
+Extend collection to `const` and `let` declarations, not just `var`. This is especially common in modern code. ([esbuild #3855](https://github.com/evanw/esbuild/issues/3855))
+
+```js
+// Before
+const o = {};
+o.a = 1;
+o.b = 2;
+
+// After
+const o = { a: 1, b: 2 };
+```
+
 ## References
 
 - `PeepholeCollectPropertyAssignments.java`

@@ -131,6 +131,10 @@ switch (1) {
 }
 ```
 
+### Correctness: peephole pitfalls
+
+Switch peephole optimizations have known correctness pitfalls. Fallthrough semantics and nested `break` must be carefully tracked to avoid miscompilation. In particular, when removing cases from a switch, a `break` inside a nested `if` or loop must not be confused with a switch-level `break`, and removing a case that falls through into another case can change which code executes. ([Closure #1234](https://github.com/google/closure-compiler/issues/1234))
+
 ## References
 
 - Terser: `switches` option. Constant discriminant evaluation, `branches_equivalent()` for body grouping, dead case pruning, switch→if conversion

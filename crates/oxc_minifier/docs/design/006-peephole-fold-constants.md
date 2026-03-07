@@ -202,6 +202,27 @@ Merge adjacent spread and non-spread elements when the spread target is a known 
 ];
 ```
 
+### TypeScript enum constant folding
+
+TypeScript-compiled enum IIFE patterns can be constant-folded when the enum member value is statically known. ([Terser #1064](https://github.com/terser/terser/issues/1064))
+
+```js
+// Before
+var Status; (function(Status) { Status[Status["Active"] = 0] = "Active"; })(Status || (Status = {}));
+Status.Active
+
+// After
+0
+```
+
+### Constant condition DCE after IIFE inlining
+
+After inlining IIFEs, constant conditions in the inlined code should trigger further dead code elimination. Multi-pass is needed to fully exploit this. ([Terser #160](https://github.com/terser/terser/issues/160), [Terser #507](https://github.com/terser/terser/issues/507))
+
+### Float precision edge case
+
+Constant folding on large floats must preserve IEEE 754 precision. Do not fold when the result would change the numeric value due to floating-point representation limits. ([SWC #9256](https://github.com/swc-project/swc/issues/9256))
+
 ## References
 
 - `PeepholeFoldConstants.java`

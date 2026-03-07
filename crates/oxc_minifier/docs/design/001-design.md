@@ -31,3 +31,13 @@ The following optimizations were considered but are deliberately excluded from s
 - **Rescope Global Symbols** — Move global declarations into a scope wrapper. Closure-only (`RescopeGlobalSymbols.java`). Changes module semantics.
 - **Private Field Mangling** — Rename `#privateField` to `#a`. No major minifier implements this. Complexity-to-benefit ratio is poor: private fields are rare, `#` prefix is always present, edge cases with `in` checks and subclass inheritance.
 - **Regex Optimization** — Shorten character classes, remove redundant escapes. No major JS minifier implements significant regex optimization. High complexity, minimal savings.
+
+## Correctness Invariants
+
+### Multi-pass diminishing returns
+
+The fixed-point optimization loop should compare output size between iterations and stop when further passes increase it. More passes can sometimes produce *worse* output due to interaction effects between transforms. ([Terser #1554](https://github.com/terser/terser/issues/1554))
+
+### Statement execution order preservation
+
+Optimization passes must never change statement evaluation order. Reordering statements can alter observable behavior when expressions have side effects. ([SWC #8437](https://github.com/swc-project/swc/issues/8437), [SWC #9485](https://github.com/swc-project/swc/issues/9485))

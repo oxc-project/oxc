@@ -85,6 +85,22 @@ element.style.color = Color.Red;
 element.style.color = "#ff0000";
 ```
 
+### TypeScript enum IIFE folding
+
+TypeScript compiles non-const enums into IIFE patterns. When the enum members have statically known values, these IIFEs can be constant-folded. This is a common pattern in bundled code and a significant optimization target. ([Terser #1064](https://github.com/terser/terser/issues/1064))
+
+```js
+// TypeScript compiled output
+var Status;
+(function (Status) {
+  Status[(Status["Active"] = 0)] = "Active";
+  Status[(Status["Inactive"] = 1)] = "Inactive";
+})(Status || (Status = {}));
+
+// After folding (when Status.Active is accessed)
+// Status.Active → 0
+```
+
 ## References
 
 - esbuild: `shouldFoldTypeScriptConstantExpressions`, `EInlinedEnum` in `js_parser.go`

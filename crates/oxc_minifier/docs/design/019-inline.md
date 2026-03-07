@@ -159,6 +159,27 @@ var x = sideEffect();
 use(x, x); // cannot replace both x with sideEffect()
 ```
 
+### Inline property functions used once
+
+When an object has a method that is only called once, inline the method body at the call site. ([Terser #889](https://github.com/terser/terser/issues/889))
+
+```js
+// Before
+const obj = { method() { return 42; } };
+obj.method();
+
+// After
+42
+```
+
+### Single-use variable inlining across exports
+
+Constants are sometimes not inlined when named exports exist. Inlining should work when the export binding is the only reference. ([Terser #1429](https://github.com/terser/terser/issues/1429))
+
+### Property access constant inlining
+
+Property access using constant keys can be compressed when the object is known and the property value is a constant. ([Terser #935](https://github.com/terser/terser/issues/935))
+
 ## References
 
 - `InlineVariables.java`, `InlineFunctions.java`, `InlineProperties.java`

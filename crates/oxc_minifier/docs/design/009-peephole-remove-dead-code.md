@@ -148,6 +148,26 @@ Function and class declarations need different handling.
 - Function declarations may need to be preserved when hoisting or Annex B block-function semantics make them visible outside the dead branch.
 - Class declarations are block-scoped and do not hoist like `var`; they can only be removed when dropping the dead block preserves block-scope semantics.
 
+### Self-assignment elimination
+
+Remove assignments where the target and value are the same variable. ([esbuild #3246](https://github.com/evanw/esbuild/issues/3246))
+
+```js
+// Before
+x = x;
+
+// After
+// (removed)
+```
+
+### Nested try/catch edge case
+
+Code after a `return` inside a `try` block might still be reachable via `catch`/`finally`. DCE must not remove statements that are reachable through exception flow. ([esbuild #4003](https://github.com/evanw/esbuild/issues/4003))
+
+### Switch statement dead cases
+
+Dead code in switch statements needs thorough handling — fallthrough semantics and nested break must be carefully tracked. Cross-reference with 017-optimize-switch.md. ([Closure #1722](https://github.com/google/closure-compiler/issues/1722), [SWC #9619](https://github.com/swc-project/swc/issues/9619))
+
 ## References
 
 - `PeepholeRemoveDeadCode.java`

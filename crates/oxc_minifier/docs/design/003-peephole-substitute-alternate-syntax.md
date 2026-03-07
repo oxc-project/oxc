@@ -189,6 +189,22 @@ foo === "x";
 
 Do not rewrite direct `eval(...)` to indirect eval such as `(0, eval)(...)`. That changes scope resolution semantics.
 
+### Regex pattern simplification
+
+Simplify character classes and quantifiers in regex literals to shorter equivalent patterns. ([esbuild #3181](https://github.com/evanw/esbuild/issues/3181))
+
+```js
+// Before
+/[A-Za-z0-9_]{0,}[0-9]{1,}/
+/[0-9]/
+/[A-Za-z0-9_]/
+
+// After
+/\w*\d+/
+/\d/
+/\w/
+```
+
 ## References
 
 - `PeepholeSubstituteAlternateSyntax.java`

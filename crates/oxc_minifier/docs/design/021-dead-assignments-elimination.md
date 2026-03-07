@@ -102,6 +102,25 @@ function f(a, b, unused) {
 }
 ```
 
+### Global scope dead assignments
+
+Extend dead assignment elimination to global scope, not just function scope. Global-scope variables that are assigned but never read can have their assignments removed. ([Closure #368](https://github.com/google/closure-compiler/issues/368))
+
+### Write-only variables
+
+Variables that are assigned but never read anywhere can have all their assignments removed, keeping only the side effects of the RHS expressions. ([Terser #572](https://github.com/terser/terser/issues/572))
+
+```js
+// Before
+let x = 1;
+x = 2;
+x = sideEffect();
+// x is never read
+
+// After
+sideEffect();
+```
+
 ## References
 
 - `DeadAssignmentsElimination.java`

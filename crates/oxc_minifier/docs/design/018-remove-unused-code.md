@@ -149,6 +149,55 @@ const {} = obj;
 
 Unused private class fields, methods, and accessors can be removed. However, removal must be skipped in scopes containing `eval()` since eval can reference private members dynamically via `#member in obj` syntax.
 
+### Remove unused destructured bindings
+
+When only some bindings from a destructuring pattern are used, remove the unused ones. ([esbuild #3276](https://github.com/evanw/esbuild/issues/3276), [Terser #105](https://github.com/terser/terser/issues/105))
+
+```js
+// Before
+const { a, b, c } = obj;
+use(a, c);
+
+// After
+const { a, c } = obj;
+use(a, c);
+```
+
+### Noop function call elimination
+
+When a function body is empty or only `return;`, calls to it can be removed if the return value is unused. ([esbuild #3676](https://github.com/evanw/esbuild/issues/3676))
+
+```js
+// Before
+function noop() {}
+noop();
+
+// After
+// (removed)
+```
+
+### Static property cascade removal
+
+Extend prototype assignment cascade to static properties. When a constructor/class is unused, its static property assignments are also dead. ([Terser #776](https://github.com/terser/terser/issues/776))
+
+```js
+// Before
+function Unused() {}
+Unused.propTypes = { /* ... */ };
+Unused.defaultProps = { /* ... */ };
+
+// After
+// (all removed)
+```
+
+### Side-effect-free constructor instances
+
+Unused `new` expressions for classes with no side-effect constructors can be removed. Unused private methods can also be dropped. ([SWC #11320](https://github.com/swc-project/swc/issues/11320), [esbuild #771](https://github.com/evanw/esbuild/issues/771))
+
+### Empty class constructors
+
+Empty constructors or constructors that only call `super(...args)` can be removed. Cross-reference with 033-optimize-calls.md. ([SWC #9727](https://github.com/swc-project/swc/issues/9727))
+
 ## References
 
 - `RemoveUnusedCode.java`

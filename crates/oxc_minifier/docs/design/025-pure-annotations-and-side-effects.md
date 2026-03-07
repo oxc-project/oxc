@@ -85,6 +85,22 @@ Examples include selected zero/one-argument cases for `WeakMap`, `WeakSet`, `Map
 
 This is intentionally narrower than "all built-in constructors are pure": constructors such as `Promise` or arbitrary typed-array forms require additional analysis and should not be blanket-annotated.
 
+### Object.keys/values/entries as side-effect-free
+
+`Object.keys()`, `Object.values()`, and `Object.entries()` can be treated as side-effect-free when the argument is also side-effect-free. ([Closure #4218](https://github.com/google/closure-compiler/issues/4218))
+
+```js
+// Before
+Object.keys(obj); // result unused, obj is side-effect-free
+
+// After
+// (removed)
+```
+
+### Pure function call inlining
+
+Functions marked via `pure_funcs` should also be candidates for constant inlining, not just removal. When a pure function always returns the same value for given constant arguments, the call can be replaced with the result. ([Terser #528](https://github.com/terser/terser/issues/528))
+
 ### Safety constraints
 
 - Only remove annotated calls when the result is provably unused

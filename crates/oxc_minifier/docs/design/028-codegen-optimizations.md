@@ -114,6 +114,14 @@ var é = "caf\u00E9";
 
 Default in esbuild (`--charset=ascii`), Terser (`ascii_only: true`).
 
+### Character escape range U+00A1-U+00FF
+
+Characters in the Latin-1 Supplement range (U+00A1-U+00FF) don't need `\uXXXX` escaping even in ASCII-safe mode. Avoiding unnecessary escapes saves 4 bytes per character. ([SWC #10609](https://github.com/swc-project/swc/issues/10609))
+
+### Object index minification
+
+Use `!0` instead of `(0, ...)` patterns to save bytes where applicable. ([esbuild #2214](https://github.com/evanw/esbuild/issues/2214))
+
 ### Whitespace edge cases
 
 Smart spacing is needed to prevent invalid output:
