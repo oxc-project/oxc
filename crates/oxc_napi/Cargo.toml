@@ -5,7 +5,7 @@ authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
-include = ["/src", "build.rs"]
+include = ["/src"]
 keywords.workspace = true
 license.workspace = true
 publish = true
@@ -30,9 +30,6 @@ oxc_syntax = { workspace = true }
 
 napi = { workspace = true }
 napi-derive = { workspace = true }
-
-[build-dependencies]
-napi-build = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["napi"]
