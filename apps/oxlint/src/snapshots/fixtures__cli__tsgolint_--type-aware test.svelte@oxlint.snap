@@ -16,6 +16,10 @@ working directory: fixtures/cli/tsgolint
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  test.svelte:2
+
 Finished in <variable>ms on 1 file with 59 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -9,6 +9,10 @@
   |     at after (<fixture>/plugin.ts:13:19)
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  <unknown>
+
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

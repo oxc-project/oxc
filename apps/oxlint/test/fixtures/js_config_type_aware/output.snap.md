@@ -12,6 +12,10 @@
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  files/test.js:3
+
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

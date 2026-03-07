@@ -21,6 +21,10 @@
    `----
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     2  files/test.ts:2
+
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

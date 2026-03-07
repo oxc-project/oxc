@@ -13,6 +13,10 @@ working directory: fixtures/cli/tsgolint_type_error
    `----
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  index.ts:1
+
 Finished in <variable>ms on 2 files with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

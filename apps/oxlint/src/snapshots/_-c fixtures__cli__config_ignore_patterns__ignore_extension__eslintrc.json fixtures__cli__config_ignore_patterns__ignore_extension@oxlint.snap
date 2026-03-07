@@ -12,6 +12,10 @@ working directory:
   help: Delete this file or add some code to it.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  fixtures/cli/config_ignore_patterns/ignore_extension/main.ts:1
+
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

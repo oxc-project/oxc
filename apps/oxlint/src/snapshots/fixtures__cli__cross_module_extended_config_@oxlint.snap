@@ -35,6 +35,11 @@ working directory: fixtures/cli/cross_module_extended_config
            ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     1  dep-a.ts:2
+     1  dep-b.ts:2
+
 Finished in <variable>ms on 2 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

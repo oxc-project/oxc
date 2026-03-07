@@ -264,6 +264,29 @@
   help: Remove the debugger statement
 
 Found 20 warnings and 20 errors.
+
+Errors  Files
+     1  files/01.js:1
+     1  files/02.js:1
+     1  files/03.js:1
+     1  files/04.js:1
+     1  files/05.js:1
+     1  files/06.js:1
+     1  files/07.js:1
+     1  files/08.js:1
+     1  files/09.js:1
+     1  files/10.js:1
+     1  files/11.js:1
+     1  files/12.js:1
+     1  files/13.js:1
+     1  files/14.js:1
+     1  files/15.js:1
+     1  files/16.js:1
+     1  files/17.js:1
+     1  files/18.js:1
+     1  files/19.js:1
+     1  files/20.js:1
+
 Finished in Xms on 20 files with 58 rules using X threads.
 ```
 

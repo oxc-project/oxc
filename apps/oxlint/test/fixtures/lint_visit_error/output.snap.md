@@ -15,6 +15,11 @@
    `----
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     1  <unknown>
+     1  files/2.js:1
+
 Finished in Xms on 2 files with 1 rules using X threads.
 ```
 

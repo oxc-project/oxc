@@ -40,6 +40,11 @@ working directory: fixtures/cli/tsgolint
   help: Remove the debugger statement
 
 Found 2 warnings and 2 errors.
+
+Errors  Files
+     1  non-tsgolint.ts:1
+     1  test.svelte:2
+
 Finished in <variable>ms on 60 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -28,6 +28,11 @@
    `----
 
 Found 0 warnings and 4 errors.
+
+Errors  Files
+     3  files/test.js:1
+     1  files/nested/index.js:1
+
 Finished in Xms on 2 files using X threads.
 ```
 

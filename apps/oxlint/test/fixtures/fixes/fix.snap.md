@@ -124,6 +124,16 @@
    `----
 
 Found 0 warnings and 24 errors.
+
+Errors  Files
+    12  <unknown>
+     2  files/range_end_negative.js:1
+     2  files/range_end_out_of_bounds.js:1
+     2  files/range_end_too_large.js:1
+     2  files/range_start_after_end.js:1
+     2  files/range_start_negative.js:1
+     2  files/range_start_too_large.js:1
+
 Finished in Xms on 12 files with 1 rules using X threads.
 ```
 

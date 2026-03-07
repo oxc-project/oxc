@@ -16,6 +16,10 @@ working directory:
   help: Add an initializer (e.g. ` = undefined`) here
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  fixtures/cli/vue/invalid.vue:3
+
 Finished in <variable>ms on 1 file with 93 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

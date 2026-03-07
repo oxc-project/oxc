@@ -356,6 +356,10 @@
    `----
 
 Found 0 warnings and 45 errors.
+
+Errors  Files
+    45  files/index.ts:1
+
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

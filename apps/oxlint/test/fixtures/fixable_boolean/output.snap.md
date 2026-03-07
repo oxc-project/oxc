@@ -18,6 +18,10 @@
    `----
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     2  files/index.js:1
+
 Finished in Xms on 1 file with 2 rules using X threads.
 ```
 

@@ -21,6 +21,11 @@ working directory: fixtures/cli/nested_config
   help: Remove the debugger statement
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     1  debugger.js:1
+     1  package2-no-config/debugger.js:1
+
 Finished in <variable>ms on 7 files using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -370,6 +370,22 @@
    `----
 
 Found 0 warnings and 58 errors.
+
+Errors  Files
+    12  <unknown>
+    12  files/index.js:1
+     5  files/bom_remove.js:1
+     5  files/bom_remove2.js:1
+     4  files/bom.js:1
+     4  files/bom_and_unicode.js:1
+     4  files/unicode.js:1
+     2  files/range_end_negative.js:1
+     2  files/range_end_out_of_bounds.js:1
+     2  files/range_end_too_large.js:1
+     2  files/range_start_after_end.js:1
+     2  files/range_start_negative.js:1
+     2  files/range_start_too_large.js:1
+
 Finished in Xms on 12 files with 1 rules using X threads.
 ```
 

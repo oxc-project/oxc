@@ -16,6 +16,10 @@ working directory: fixtures/cli/output_formatter_diagnostic
    `----
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  parser-error.js:3
+
 Finished in <variable>ms on 1 file with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -10,6 +10,10 @@
    `----
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  files/test.js:1
+
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

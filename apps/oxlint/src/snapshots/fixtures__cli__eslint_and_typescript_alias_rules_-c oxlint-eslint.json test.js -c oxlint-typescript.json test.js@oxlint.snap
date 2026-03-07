@@ -16,6 +16,10 @@ working directory: fixtures/cli/eslint_and_typescript_alias_rules
   help: Use a named constant instead of a magic number to make the code more readable and maintainable.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  test.js:4
+
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -36,6 +40,10 @@ working directory: fixtures/cli/eslint_and_typescript_alias_rules
   help: Use a named constant instead of a magic number to make the code more readable and maintainable.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  test.js:4
+
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
