@@ -135,6 +135,12 @@ if (require.main === module) {
         return;
       }
 
+      // No files changed — skip
+      if (files.length === 0) {
+        console.log("false");
+        return;
+      }
+
       // --crate mode: use cargo tree dependency resolution
       if (crates.length > 0) {
         const deps = getCrateDependencies(crates);
@@ -152,9 +158,7 @@ if (require.main === module) {
       }
 
       // Simple prefix matching (no --crate args)
-      const matched = files.some((file) =>
-        watchPaths.some((prefix) => file.startsWith(prefix) || file === prefix),
-      );
+      const matched = checkFilesAffectCrates(files, [], watchPaths);
       console.log(matched ? "true" : "false");
     })
     .catch((error) => {
