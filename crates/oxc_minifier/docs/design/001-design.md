@@ -15,3 +15,13 @@ Next-generation JavaScript/TypeScript minifier achieving best-in-class compressi
 - 100% correctness with comprehensive testing
 - Fixed-point iteration for optimal size
 - Arena allocation for performance
+
+## Not Included
+
+The following optimizations were considered but are deliberately excluded from scope:
+
+- **Property Flattening (Namespace Collapsing)** — Flatten `a.b.c` → `a$b$c`. Closure-only (`CollapseProperties.java`). Requires global namespace assumptions that don't hold for most modern JS.
+- **Cross-Module Code Motion** — Move definitions across module boundaries. Closure-only (`CrossModuleCodeMotion.java`). Requires bundler-level integration and whole-program module graph.
+- **Type-based Property Disambiguation** — Use type info to rename same-named properties on different types independently. Closure-only (`DisambiguateProperties.java`, `AmbiguateProperties.java`). Requires full type system.
+- **Method Devirtualization** — Convert instance methods to static functions. Closure-only (`DevirtualizeMethods.java`). Requires type info and class hierarchy analysis.
+- **Expression Decomposition** — Break complex expressions into temp variables to enable other passes. Closure-only (`ExpressionDecomposer.java`). Internal technique, not a user-facing optimization.
