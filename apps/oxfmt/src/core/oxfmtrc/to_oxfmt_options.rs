@@ -278,6 +278,51 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         });
     }
 
+    if let Some(jsdoc_config) = &config.jsdoc {
+        let mut opts = oxc_formatter::JsdocOptions::default();
+        if let Some(v) = jsdoc_config.capitalize_descriptions {
+            opts.capitalize_descriptions = v;
+        }
+        if let Some(v) = jsdoc_config.description_with_dot {
+            opts.description_with_dot = v;
+        }
+        if let Some(v) = jsdoc_config.add_default_to_description {
+            opts.add_default_to_description = v;
+        }
+        if let Some(v) = jsdoc_config.prefer_code_fences {
+            opts.prefer_code_fences = v;
+        }
+        if let Some(ref v) = jsdoc_config.line_wrapping_style {
+            opts.line_wrapping_style = match v.as_str() {
+                "balance" => oxc_formatter::LineWrappingStyle::Balance,
+                _ => oxc_formatter::LineWrappingStyle::Greedy,
+            };
+        }
+        if let Some(ref v) = jsdoc_config.comment_line_strategy {
+            opts.comment_line_strategy = match v.as_str() {
+                "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
+                "keep" => oxc_formatter::CommentLineStrategy::Keep,
+                _ => oxc_formatter::CommentLineStrategy::SingleLine,
+            };
+        }
+        if let Some(v) = jsdoc_config.separate_tag_groups {
+            opts.separate_tag_groups = v;
+        }
+        if let Some(v) = jsdoc_config.separate_returns_from_param {
+            opts.separate_returns_from_param = v;
+        }
+        if let Some(v) = jsdoc_config.bracket_spacing {
+            opts.bracket_spacing = v;
+        }
+        if let Some(v) = jsdoc_config.description_tag {
+            opts.description_tag = v;
+        }
+        if let Some(v) = jsdoc_config.keep_unparsable_example_indent {
+            opts.keep_unparsable_example_indent = v;
+        }
+        format_options.jsdoc = Some(opts);
+    }
+
     // Currently, there is a no options for TOML formatter
     let toml_options = build_toml_options(&format_options);
 

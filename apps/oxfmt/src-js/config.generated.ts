@@ -79,6 +79,18 @@ export interface Oxfmtrc {
    */
   insertFinalNewline?: boolean | null;
   /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Can be `true` (enable with defaults), `false` (disable), or an object with options.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig | null;
+  /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
@@ -204,6 +216,23 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean | null;
   [k: string]: unknown;
 }
+/**
+ * JSDoc configuration: either `true`/`false` or an object with fine-grained options.
+ */
+export interface JsdocConfig {
+  add_default_to_description?: boolean | null;
+  bracket_spacing?: boolean | null;
+  capitalize_descriptions?: boolean | null;
+  comment_line_strategy?: string | null;
+  description_tag?: boolean | null;
+  description_with_dot?: boolean | null;
+  keep_unparsable_example_indent?: boolean | null;
+  line_wrapping_style?: string | null;
+  prefer_code_fences?: boolean | null;
+  separate_returns_from_param?: boolean | null;
+  separate_tag_groups?: boolean | null;
+  [k: string]: unknown;
+}
 export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
@@ -270,6 +299,18 @@ export interface FormatConfig {
    * - Overrides `.editorconfig.insert_final_newline`
    */
   insertFinalNewline?: boolean | null;
+  /**
+   * Enable JSDoc comment formatting.
+   *
+   * When enabled, JSDoc comments are normalized and reformatted:
+   * tag aliases are canonicalized, descriptions are capitalized,
+   * long lines are wrapped, and short comments are collapsed to single-line.
+   *
+   * Can be `true` (enable with defaults), `false` (disable), or an object with options.
+   *
+   * - Default: Disabled
+   */
+  jsdoc?: JsdocConfig | null;
   /**
    * Use single quotes instead of double quotes in JSX.
    *

@@ -100,6 +100,110 @@ Whether to insert a final newline at the end of the file.
 - Overrides `.editorconfig.insert_final_newline`
 
 
+## jsdoc
+
+type: `object`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Can be `true` (enable with defaults), `false` (disable), or an object with options.
+
+- Default: Disabled
+
+
+### jsdoc.add_default_to_description
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.bracket_spacing
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.capitalize_descriptions
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.comment_line_strategy
+
+type: `string`
+
+
+
+
+
+### jsdoc.description_tag
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.description_with_dot
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.keep_unparsable_example_indent
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.line_wrapping_style
+
+type: `string`
+
+
+
+
+
+### jsdoc.prefer_code_fences
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.separate_returns_from_param
+
+type: `boolean`
+
+
+
+
+
+### jsdoc.separate_tag_groups
+
+type: `boolean`
+
+
+
+
+
 ## jsxSingleQuote
 
 type: `boolean`
@@ -242,6 +346,110 @@ Whether to insert a final newline at the end of the file.
 
 - Default: `true`
 - Overrides `.editorconfig.insert_final_newline`
+
+
+##### overrides[n].options.jsdoc
+
+type: `object`
+
+
+Enable JSDoc comment formatting.
+
+When enabled, JSDoc comments are normalized and reformatted:
+tag aliases are canonicalized, descriptions are capitalized,
+long lines are wrapped, and short comments are collapsed to single-line.
+
+Can be `true` (enable with defaults), `false` (disable), or an object with options.
+
+- Default: Disabled
+
+
+###### overrides[n].options.jsdoc.add_default_to_description
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.bracket_spacing
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.capitalize_descriptions
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.comment_line_strategy
+
+type: `string`
+
+
+
+
+
+###### overrides[n].options.jsdoc.description_tag
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.description_with_dot
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.keep_unparsable_example_indent
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.line_wrapping_style
+
+type: `string`
+
+
+
+
+
+###### overrides[n].options.jsdoc.prefer_code_fences
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.separate_returns_from_param
+
+type: `boolean`
+
+
+
+
+
+###### overrides[n].options.jsdoc.separate_tag_groups
+
+type: `boolean`
+
+
+
 
 
 ##### overrides[n].options.jsxSingleQuote
