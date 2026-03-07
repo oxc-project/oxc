@@ -23,6 +23,7 @@ declare_oxc_lint!(
     ///
     /// Using `React.Children` is
     /// [discouraged by the React documentation](https://react.dev/reference/react/Children).
+    /// It is an uncommon pattern and can lead to fragile code.
     ///
     /// It is recommended to use alternative approaches for handling children.
     ///
