@@ -238,14 +238,10 @@ function deserializeTokenInto(token: Token, pos: number): void {
   const start = uint32![pos32],
     end = uint32![pos32 + 1];
 
-  let value = sourceText!.slice(start, end);
-
   const kind = buffer![pos + KIND_FIELD_OFFSET];
+  let value = sourceText!.slice(kind === PRIVATE_IDENTIFIER_KIND ? start + 1 : start, end);
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
-    // Strip leading `#` from private identifiers
-    if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
-
     // Unescape if `escaped` flag is set
     if (buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
