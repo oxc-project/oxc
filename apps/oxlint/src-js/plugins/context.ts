@@ -31,10 +31,10 @@ import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
-import { envs, globals, initGlobals } from "./globals.ts";
+import { globals, initGlobals } from "./globals.ts";
 import { version as packageVersion } from "../../package.json" with { type: "json" };
 
-import type { Globals, Envs } from "./globals.ts";
+import type { Globals } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
 import type { Diagnostic } from "./report.ts";
@@ -258,16 +258,6 @@ const LANGUAGE_OPTIONS = {
     if (globals === null) initGlobals();
     debugAssertIsNonNull(globals);
     return globals;
-  },
-
-  /**
-   * Environments defined for the file being linted.
-   */
-  get env(): Readonly<Envs> {
-    // This is a property which ESLint does not have - it uses `ecmaVersion` instead for preset environments
-    if (envs === null) initGlobals();
-    debugAssertIsNonNull(envs);
-    return envs;
   },
 };
 
