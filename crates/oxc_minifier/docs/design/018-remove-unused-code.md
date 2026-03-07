@@ -183,8 +183,12 @@ Extend prototype assignment cascade to static properties. When a constructor/cla
 ```js
 // Before
 function Unused() {}
-Unused.propTypes = { /* ... */ };
-Unused.defaultProps = { /* ... */ };
+Unused.propTypes = {
+  /* ... */
+};
+Unused.defaultProps = {
+  /* ... */
+};
 
 // After
 // (all removed)

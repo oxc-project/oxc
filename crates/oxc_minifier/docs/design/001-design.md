@@ -36,7 +36,7 @@ The following optimizations were considered but are deliberately excluded from s
 
 ### Multi-pass diminishing returns
 
-The fixed-point optimization loop should compare output size between iterations and stop when further passes increase it. More passes can sometimes produce *worse* output due to interaction effects between transforms. ([Terser #1554](https://github.com/terser/terser/issues/1554))
+The fixed-point optimization loop should compare output size between iterations and stop when further passes increase it. More passes can sometimes produce _worse_ output due to interaction effects between transforms. ([Terser #1554](https://github.com/terser/terser/issues/1554))
 
 ### Statement execution order preservation
 

@@ -165,11 +165,15 @@ When an object has a method that is only called once, inline the method body at 
 
 ```js
 // Before
-const obj = { method() { return 42; } };
+const obj = {
+  method() {
+    return 42;
+  },
+};
 obj.method();
 
 // After
-42
+42;
 ```
 
 ### Single-use variable inlining across exports

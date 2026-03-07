@@ -208,11 +208,14 @@ TypeScript-compiled enum IIFE patterns can be constant-folded when the enum memb
 
 ```js
 // Before
-var Status; (function(Status) { Status[Status["Active"] = 0] = "Active"; })(Status || (Status = {}));
-Status.Active
+var Status;
+(function (Status) {
+  Status[(Status["Active"] = 0)] = "Active";
+})(Status || (Status = {}));
+Status.Active;
 
 // After
-0
+0;
 ```
 
 ### Constant condition DCE after IIFE inlining
