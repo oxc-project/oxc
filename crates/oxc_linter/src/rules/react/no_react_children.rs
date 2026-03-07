@@ -1,6 +1,7 @@
+use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
 
@@ -81,11 +82,68 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoReactChildren {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
+
+        // Pattern 1: Children.method() where Children is from React or unresolved
+        if let Some(ident) = member_expr.object().get_identifier_reference() {
+            if ident.name == "Children" && is_react_children_ref(ident, ctx) {
+                ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
+                return;
+            }
+        }
+
+        // Pattern 2: React.Children.method()
+        if let Some(inner_member) = member_expr.object().as_member_expression() {
+            if inner_member.static_property_name() == Some("Children") {
+                if let Some(ident) = inner_member.object().get_identifier_reference() {
+                    if is_react_namespace_ref(ident, ctx) {
+                        ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
+                    }
+                }
+            }
+        }
+    }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
+}
+
+/// Returns `true` if `Children` identifier is imported from 'react' or is unresolved.
+fn is_react_children_ref(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+    if is_imported_from_react(ident.name.as_str(), ctx) {
+        return true;
+    }
+    // If the identifier resolves to a local symbol, it's not React's Children.
+    // If unresolved, assume it's the React global.
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    reference.symbol_id().is_none()
+}
+
+/// Returns `true` if `ident` (e.g. `React`) is imported from 'react' or is an unresolved
+/// reference named "React".
+fn is_react_namespace_ref(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+    if is_imported_from_react(ident.name.as_str(), ctx) {
+        return true;
+    }
+    if ident.name == "React" {
+        let reference = ctx.scoping().get_reference(ident.reference_id());
+        return reference.symbol_id().is_none();
+    }
+    false
+}
+
+fn is_imported_from_react(local_name: &str, ctx: &LintContext) -> bool {
+    ctx.module_record().import_entries.iter().any(|entry| {
+        entry.module_request.name() == "react" && entry.local_name.name() == local_name
+    })
 }
 
 #[test]
