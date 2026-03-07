@@ -139,14 +139,6 @@ source: crates/oxc_linter/src/tester.rs
   note: https://react.dev/reference/react/Children
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
-   ╭─[no_react_children.tsx:1:46]
- 1 │ function Box({ children }) { const element = Children.only(children); }
-   ·                                              ─────────────
-   ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
-
-  ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:12]
  3 │            const result = [];
  4 │            React.Children.forEach(children, (child, index) => {
