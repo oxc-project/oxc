@@ -14,7 +14,7 @@ use crate::{
     AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
     RuleCategory, RuleEnum,
     config::{
-        ESLintRule, OxlintOverrides, OxlintRules,
+        ESLintRule, OxlintGlobals, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
@@ -257,11 +257,14 @@ impl ConfigStoreBuilder {
             categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
         }
 
+        let mut globals = OxlintGlobals::default();
+        oxlintrc.env.override_globals(&mut globals);
+        oxlintrc.globals.override_globals(&mut globals);
+
         let config = LintConfig {
             plugins,
             settings: oxlintrc.settings,
-            env: oxlintrc.env,
-            globals: oxlintrc.globals,
+            globals,
             path: Some(oxlintrc.path),
             options: oxlintrc.options,
         };
@@ -526,6 +529,22 @@ impl ConfigStoreBuilder {
                     external_plugin_store,
                 )?;
 
+                let globals = if override_config.env.is_some() || override_config.globals.is_some()
+                {
+                    let mut globals = OxlintGlobals::default();
+                    if let Some(override_env) = override_config.env {
+                        override_env.override_globals(&mut globals);
+                    }
+
+                    if let Some(override_globals) = override_config.globals {
+                        override_globals.override_globals(&mut globals);
+                    }
+
+                    Some(globals)
+                } else {
+                    None
+                };
+
                 // Convert to vectors
                 builtin_rules.extend(rules_map.into_iter());
                 external_rules.extend(
@@ -536,8 +555,7 @@ impl ConfigStoreBuilder {
 
                 Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
-                    env: override_config.env,
-                    globals: override_config.globals,
+                    globals,
                     plugins: override_config.plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
@@ -826,6 +844,8 @@ impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
 #[cfg(test)]
 mod test {
     use std::path::PathBuf;
+
+    use crate::config::GlobalValue;
 
     use super::*;
 
@@ -1130,6 +1150,118 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_overrides_globals() {
+        let base_config = config_store_from_str(
+            r#"
+            {
+              "globals": {
+                "window": "readonly"
+              },
+              "overrides": [
+                {
+                  "files": ["*.ts"],
+                  "globals": {
+                    "window": "off"
+                  }
+                }
+              ]
+            }
+        "#,
+        );
+
+        assert_eq!(base_config.base.config.globals.get("window").unwrap(), &GlobalValue::Readonly);
+        assert!(!base_config.overrides.is_empty());
+
+        let globals = base_config.overrides.iter().next().unwrap().globals.as_ref();
+        assert!(globals.is_some());
+        assert_eq!(globals.unwrap().get("window").unwrap(), &GlobalValue::Off);
+    }
+
+    #[test]
+    fn test_overrides_globals_by_env() {
+        let base_config = config_store_from_str(
+            r#"
+            {
+              "globals": {
+                "window": "off"
+              },
+              "overrides": [
+                {
+                  "files": ["*.ts"],
+                  "env": {
+                    "browser": true
+                  }
+                }
+              ]
+            }
+        "#,
+        );
+
+        assert_eq!(base_config.base.config.globals.get("window").unwrap(), &GlobalValue::Off);
+        assert!(!base_config.overrides.is_empty());
+
+        let globals = base_config.overrides.iter().next().unwrap().globals.as_ref();
+        assert!(globals.is_some());
+        assert_eq!(globals.unwrap().get("window").unwrap(), &GlobalValue::Readonly);
+    }
+
+    #[test]
+    fn test_overrides_env() {
+        let base_config = config_store_from_str(
+            r#"
+            {
+              "env": {
+                "browser": true
+              },
+              "overrides": [
+                {
+                  "files": ["*.ts"],
+                  "env": {
+                    "browser": false
+                  }
+                }
+              ]
+            }
+        "#,
+        );
+
+        assert_eq!(base_config.base.config.globals.get("window").unwrap(), &GlobalValue::Readonly);
+        assert!(!base_config.overrides.is_empty());
+
+        let globals = base_config.overrides.iter().next().unwrap().globals.as_ref();
+        assert!(globals.is_some());
+        assert_eq!(globals.unwrap().get("window").unwrap(), &GlobalValue::Off);
+    }
+
+    #[test]
+    fn test_overrides_env_by_global() {
+        let base_config = config_store_from_str(
+            r#"
+            {
+              "env": {
+                "browser": true
+              },
+              "overrides": [
+                {
+                  "files": ["*.ts"],
+                  "globals": {
+                    "window": "off"
+                  }
+                }
+              ]
+            }
+        "#,
+        );
+
+        assert_eq!(base_config.base.config.globals.get("window").unwrap(), &GlobalValue::Readonly);
+        assert!(!base_config.overrides.is_empty());
+
+        let globals = base_config.overrides.iter().next().unwrap().globals.as_ref();
+        assert!(globals.is_some());
+        assert_eq!(globals.unwrap().get("window").unwrap(), &GlobalValue::Off);
     }
 
     #[test]

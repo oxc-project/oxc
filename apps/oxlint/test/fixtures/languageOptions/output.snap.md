@@ -7,8 +7,14 @@
   | sourceType: commonjs
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"commonjs","ecmaFeatures":{"jsx":true,"globalReturn":true,"impliedStrict":false}}
-  | globals: {}
-  | env: {"builtin":true}
+  | globals: {"WeakMap":"readonly","parseInt":"readonly","decodeURIComponent":"readonly","Date":"readonly","Number":"readonly","Float16Array":"readonly","encodeURI":"readonly","Float64Array":"readonly","Type
+  | Error":"readonly","JSON":"readonly","RangeError":"readonly","escape":"readonly","Reflect":"readonly","WeakSet":"readonly","Iterator":"readonly","AggregateError":"readonly","Boolean":"readonly","
+  | Uint32Array":"readonly","Uint16Array":"readonly","Infinity":"readonly","Int8Array":"readonly","Set":"readonly","isFinite":"readonly","decodeURI":"readonly","Symbol":"readonly","Function":"readon
+  | ly","BigUint64Array":"readonly","Object":"readonly","Float32Array":"readonly","RegExp":"readonly","Error":"readonly","BigInt":"readonly","WeakRef":"readonly","ArrayBuffer":"readonly","EvalError"
+  | :"readonly","BigInt64Array":"readonly","Uint8Array":"readonly","encodeURIComponent":"readonly","Uint8ClampedArray":"readonly","Int32Array":"readonly","eval":"readonly","SyntaxError":"readonly","
+  | ReferenceError":"readonly","FinalizationRegistry":"readonly","Math":"readonly","unescape":"readonly","Proxy":"readonly","DataView":"readonly","globalThis":"readonly","URIError":"readonly","undef
+  | ined":"readonly","String":"readonly","Atomics":"readonly","Intl":"readonly","isNaN":"readonly","Map":"readonly","parseFloat":"readonly","Promise":"readonly","Int16Array":"readonly","NaN":"readon
+  | ly","SharedArrayBuffer":"readonly","Array":"readonly"}
    ,-[files/index.cjs:1:1]
  1 | let x;
    : ^
@@ -18,8 +24,14 @@
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":false}}
-  | globals: {}
-  | env: {"builtin":true}
+  | globals: {"WeakMap":"readonly","parseInt":"readonly","decodeURIComponent":"readonly","Date":"readonly","Number":"readonly","Float16Array":"readonly","encodeURI":"readonly","Float64Array":"readonly","Type
+  | Error":"readonly","JSON":"readonly","RangeError":"readonly","escape":"readonly","Reflect":"readonly","WeakSet":"readonly","Iterator":"readonly","AggregateError":"readonly","Boolean":"readonly","
+  | Uint32Array":"readonly","Uint16Array":"readonly","Infinity":"readonly","Int8Array":"readonly","Set":"readonly","isFinite":"readonly","decodeURI":"readonly","Symbol":"readonly","Function":"readon
+  | ly","BigUint64Array":"readonly","Object":"readonly","Float32Array":"readonly","RegExp":"readonly","Error":"readonly","BigInt":"readonly","WeakRef":"readonly","ArrayBuffer":"readonly","EvalError"
+  | :"readonly","BigInt64Array":"readonly","Uint8Array":"readonly","encodeURIComponent":"readonly","Uint8ClampedArray":"readonly","Int32Array":"readonly","eval":"readonly","SyntaxError":"readonly","
+  | ReferenceError":"readonly","FinalizationRegistry":"readonly","Math":"readonly","unescape":"readonly","Proxy":"readonly","DataView":"readonly","globalThis":"readonly","URIError":"readonly","undef
+  | ined":"readonly","String":"readonly","Atomics":"readonly","Intl":"readonly","isNaN":"readonly","Map":"readonly","parseFloat":"readonly","Promise":"readonly","Int16Array":"readonly","NaN":"readon
+  | ly","SharedArrayBuffer":"readonly","Array":"readonly"}
    ,-[files/index.js:1:1]
  1 | let x;
    : ^
@@ -806,8 +818,14 @@
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":true}}
-  | globals: {}
-  | env: {"builtin":true}
+  | globals: {"WeakMap":"readonly","parseInt":"readonly","decodeURIComponent":"readonly","Date":"readonly","Number":"readonly","Float16Array":"readonly","encodeURI":"readonly","Float64Array":"readonly","Type
+  | Error":"readonly","JSON":"readonly","RangeError":"readonly","escape":"readonly","Reflect":"readonly","WeakSet":"readonly","Iterator":"readonly","AggregateError":"readonly","Boolean":"readonly","
+  | Uint32Array":"readonly","Uint16Array":"readonly","Infinity":"readonly","Int8Array":"readonly","Set":"readonly","isFinite":"readonly","decodeURI":"readonly","Symbol":"readonly","Function":"readon
+  | ly","BigUint64Array":"readonly","Object":"readonly","Float32Array":"readonly","RegExp":"readonly","Error":"readonly","BigInt":"readonly","WeakRef":"readonly","ArrayBuffer":"readonly","EvalError"
+  | :"readonly","BigInt64Array":"readonly","Uint8Array":"readonly","encodeURIComponent":"readonly","Uint8ClampedArray":"readonly","Int32Array":"readonly","eval":"readonly","SyntaxError":"readonly","
+  | ReferenceError":"readonly","FinalizationRegistry":"readonly","Math":"readonly","unescape":"readonly","Proxy":"readonly","DataView":"readonly","globalThis":"readonly","URIError":"readonly","undef
+  | ined":"readonly","String":"readonly","Atomics":"readonly","Intl":"readonly","isNaN":"readonly","Map":"readonly","parseFloat":"readonly","Promise":"readonly","Int16Array":"readonly","NaN":"readon
+  | ly","SharedArrayBuffer":"readonly","Array":"readonly"}
    ,-[files/index.mjs:1:1]
  1 | let x;
    : ^
@@ -817,8 +835,14 @@
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":false,"globalReturn":false,"impliedStrict":false}}
-  | globals: {}
-  | env: {"builtin":true}
+  | globals: {"WeakMap":"readonly","parseInt":"readonly","decodeURIComponent":"readonly","Date":"readonly","Number":"readonly","Float16Array":"readonly","encodeURI":"readonly","Float64Array":"readonly","Type
+  | Error":"readonly","JSON":"readonly","RangeError":"readonly","escape":"readonly","Reflect":"readonly","WeakSet":"readonly","Iterator":"readonly","AggregateError":"readonly","Boolean":"readonly","
+  | Uint32Array":"readonly","Uint16Array":"readonly","Infinity":"readonly","Int8Array":"readonly","Set":"readonly","isFinite":"readonly","decodeURI":"readonly","Symbol":"readonly","Function":"readon
+  | ly","BigUint64Array":"readonly","Object":"readonly","Float32Array":"readonly","RegExp":"readonly","Error":"readonly","BigInt":"readonly","WeakRef":"readonly","ArrayBuffer":"readonly","EvalError"
+  | :"readonly","BigInt64Array":"readonly","Uint8Array":"readonly","encodeURIComponent":"readonly","Uint8ClampedArray":"readonly","Int32Array":"readonly","eval":"readonly","SyntaxError":"readonly","
+  | ReferenceError":"readonly","FinalizationRegistry":"readonly","Math":"readonly","unescape":"readonly","Proxy":"readonly","DataView":"readonly","globalThis":"readonly","URIError":"readonly","undef
+  | ined":"readonly","String":"readonly","Atomics":"readonly","Intl":"readonly","isNaN":"readonly","Map":"readonly","parseFloat":"readonly","Promise":"readonly","Int16Array":"readonly","NaN":"readon
+  | ly","SharedArrayBuffer":"readonly","Array":"readonly"}
    ,-[files/index.ts:1:1]
  1 | let x;
    : ^
