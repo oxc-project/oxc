@@ -182,10 +182,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:4:32]
+   ╭─[no_useless_assignment.tsx:4:51]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
-   ·                                ─
+   ·                                                   ─
  5 │                             console.log(c);
    ╰────
   help: Consider removing or reusing the assigned value.
@@ -200,29 +200,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing or reusing the assigned value.
 
   ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:4:51]
+   ╭─[no_useless_assignment.tsx:4:32]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
-   ·                                                   ─
- 5 │                             console.log(c);
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:4:32]
- 3 │                             console.log(a, b, c);
- 4 │                             ({ a = 'unused', foo: b, ...c } = fn());
    ·                                ─
- 5 │                         }
-   ╰────
-  help: Consider removing or reusing the assigned value.
-
-  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
-   ╭─[no_useless_assignment.tsx:4:51]
- 3 │                             console.log(a, b, c);
- 4 │                             ({ a = 'unused', foo: b, ...c } = fn());
-   ·                                                   ─
- 5 │                         }
+ 5 │                             console.log(c);
    ╰────
   help: Consider removing or reusing the assigned value.
 
@@ -231,6 +213,24 @@ source: crates/oxc_linter/src/tester.rs
  3 │                             console.log(a, b, c);
  4 │                             ({ a = 'unused', foo: b, ...c } = fn());
    ·                                                         ─
+ 5 │                         }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:51]
+ 3 │                             console.log(a, b, c);
+ 4 │                             ({ a = 'unused', foo: b, ...c } = fn());
+   ·                                                   ─
+ 5 │                         }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:32]
+ 3 │                             console.log(a, b, c);
+ 4 │                             ({ a = 'unused', foo: b, ...c } = fn());
+   ·                                ─
  5 │                         }
    ╰────
   help: Consider removing or reusing the assigned value.
