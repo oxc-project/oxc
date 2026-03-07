@@ -277,6 +277,10 @@ linter-schema-json:
 linter-config-ts:
   pnpm --filter oxlint-app generate-config-types
 
+# Generate built-in rules metadata for `apps/oxlint/src-js/package/built-in-rules.generated.ts`
+linter-built-in-rules-ts:
+  cargo run -p website_linter built-in-rules-ts > apps/oxlint/src-js/package/built-in-rules.generated.ts
+
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
