@@ -1,5 +1,8 @@
 # Peephole Collect Property Assignments
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass merges sequences of property assignments that immediately follow an object or array literal declaration into the literal itself. The separate assignment statements are removed and their values are folded into the initializer.

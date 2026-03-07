@@ -1,5 +1,8 @@
 # Optimize Switch
 
+- **Status:** Not Implemented
+- **Difficulty:** Medium
+
 ## What
 
 Optimize switch statement structure and cases. This includes folding constant discriminants, removing unreachable cases, converting trivial switches to `if` statements, and deduplicating identical case bodies.

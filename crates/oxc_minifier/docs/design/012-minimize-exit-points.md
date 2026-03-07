@@ -1,5 +1,8 @@
 # Minimize Exit Points
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass reduces the number of explicit exit statements (`return`, `break`, `continue`) in functions and loops. It removes redundant trailing exits and restructures control flow to eliminate unnecessary branching.

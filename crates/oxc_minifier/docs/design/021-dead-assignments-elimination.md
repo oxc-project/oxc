@@ -1,5 +1,8 @@
 # Dead Assignments Elimination
 
+- **Status:** Not Implemented
+- **Difficulty:** Complex
+
 ## What
 
 This pass removes assignments to variables whose values are never subsequently read. It uses dataflow analysis (liveness) on the control flow graph to determine which assignments are "dead" — overwritten before being read or never read at all.

@@ -1,5 +1,8 @@
 # Replace Arguments Access
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 Replace `arguments` object access with named parameters. When a function uses `arguments[N]` to access positional arguments, replace with the corresponding parameter name.

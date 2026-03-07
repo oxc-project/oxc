@@ -1,5 +1,8 @@
 # Normalize
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 AST normalization rewrites the program into a canonical form before optimization passes run. It does not change program behavior or reduce size directly — it simplifies the AST so that downstream passes can pattern-match against fewer syntactic variations.

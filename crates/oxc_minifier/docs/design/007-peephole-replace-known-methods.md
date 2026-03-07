@@ -1,5 +1,8 @@
 # Peephole Replace Known Methods
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass evaluates calls to well-known built-in methods at compile time when all arguments are constants. The method call is replaced with its computed result as a literal value.

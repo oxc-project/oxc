@@ -1,5 +1,8 @@
 # Statement Fusion
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass fuses consecutive expression statements into a single statement using the comma operator. It also folds expressions into `return`, `throw`, and loop constructs to reduce the total number of statements.

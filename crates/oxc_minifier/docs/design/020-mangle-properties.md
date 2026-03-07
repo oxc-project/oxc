@@ -1,5 +1,8 @@
 # Mangle Properties
 
+- **Status:** Not Implemented
+- **Difficulty:** Medium
+
 ## What
 
 This pass renames object property names to shorter identifiers, consistently replacing every occurrence of a given property name throughout the program. It is the property-level analog of variable name mangling (scope-based renaming).

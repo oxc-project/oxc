@@ -1,5 +1,8 @@
 # Remove Unused Code
 
+- **Status:** Not Implemented
+- **Difficulty:** Medium
+
 ## What
 
 This pass performs mark-and-sweep elimination of unreferenced declarations. It identifies variables, functions, classes, and properties that are never read and removes their declarations entirely. Unlike dead-assignment elimination (which works on individual assignments via dataflow), this pass works at the declaration level across the entire scope tree.

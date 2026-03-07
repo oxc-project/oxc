@@ -1,5 +1,8 @@
 # Module-Aware Optimizations
 
+- **Status:** Not Implemented
+- **Difficulty:** Trivial
+
 ## What
 
 Optimizations enabled when input is known to be an ES module. Module semantics provide guarantees that unlock additional transformations not available in script mode.

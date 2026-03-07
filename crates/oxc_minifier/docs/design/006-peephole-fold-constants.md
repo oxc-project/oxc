@@ -1,5 +1,8 @@
 # Peephole Fold Constants
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass evaluates constant expressions at compile time, replacing them with their computed results. It handles arithmetic, comparisons, logical operators, bitwise operations, string concatenation, `typeof`, and property access on literals.

@@ -1,5 +1,8 @@
 # Peephole Substitute Alternate Syntax
 
+- **Status:** Not Implemented
+- **Difficulty:** Trivial
+
 ## What
 
 This pass replaces common JavaScript constructs with shorter equivalent syntax. Each substitution preserves semantics while reducing code size by exploiting language quirks and shorter idioms.

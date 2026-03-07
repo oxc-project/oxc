@@ -1,5 +1,8 @@
 # Peephole Minimize Conditions
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass rewrites conditional expressions and control flow into shorter equivalent forms. It targets `if`/`else` statements, ternary expressions, logical operators, and comparison operators to find more compact representations.

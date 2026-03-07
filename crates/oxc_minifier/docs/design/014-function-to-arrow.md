@@ -1,5 +1,8 @@
 # Function to Arrow
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 Convert function expressions to arrow functions when safe. This saves the `function` keyword and enables concise body syntax for single-expression returns.

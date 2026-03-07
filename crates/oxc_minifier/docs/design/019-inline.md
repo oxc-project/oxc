@@ -1,5 +1,8 @@
 # Inline
 
+- **Status:** Not Implemented
+- **Difficulty:** Medium
+
 ## What
 
 This pass inlines variables, functions, and properties — replacing references with their values and call sites with function bodies. It covers three related transformations:

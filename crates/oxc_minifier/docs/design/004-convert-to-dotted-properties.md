@@ -1,5 +1,8 @@
 # Convert to Dotted Properties
 
+- **Status:** Not Implemented
+- **Difficulty:** Trivial
+
 ## What
 
 This pass converts bracket notation property access with string literal keys to dot notation, and computed property keys in object/class literals to static keys, when the key is a valid identifier.

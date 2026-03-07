@@ -1,5 +1,8 @@
 # Peephole Remove Dead Code
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple
+
 ## What
 
 This pass removes code that is provably unreachable or has no observable effect. It operates locally on small AST neighborhoods — "peephole" style — without requiring whole-program analysis.

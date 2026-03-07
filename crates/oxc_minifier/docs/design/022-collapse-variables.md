@@ -1,5 +1,8 @@
 # Collapse Variables
 
+- **Status:** Not Implemented
+- **Difficulty:** Very Complex
+
 ## What
 
 Flow-sensitive variable collapsing — inline non-constant single-use variables by tracking assignments through control flow. This extends beyond 015-inline.md which handles only constants, aliases, and simple single-use cases without flow sensitivity.

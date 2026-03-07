@@ -1,5 +1,8 @@
 # Optimize Loops
 
+- **Status:** Not Implemented
+- **Difficulty:** Simple-Medium
+
 ## What
 
 Optimize loop constructs beyond what normalization covers. This includes converting infinite loop patterns to `for(;;)`, eliminating dead loops, and merging break conditions into loop tests.
