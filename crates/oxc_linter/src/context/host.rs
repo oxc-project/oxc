@@ -15,7 +15,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
+    config::{LintConfig, LintPlugins, OxlintGlobals, OxlintSettings},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -280,11 +280,6 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn globals(&self) -> &OxlintGlobals {
         &self.config.globals
-    }
-
-    #[inline]
-    pub fn env(&self) -> &OxlintEnv {
-        &self.config.env
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
