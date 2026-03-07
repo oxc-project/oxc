@@ -97,6 +97,37 @@ Both concerns are unsolved for the new minifier. The generated walk functions cu
 recurse into all children unconditionally, and there is no change tracking beyond a single
 global boolean.
 
+## Symbol and Scope Synchronization
+
+Optimization passes mutate the AST: they remove declarations, inline variables, eliminate dead
+branches, and unwrap block scopes. Each mutation can make the symbol table and scope tree stale,
+because those structures are built once upfront and not automatically kept in sync with AST
+changes. Passes depend on this data for correctness — `symbol_is_unused()` gates whether a
+declaration can be removed, reference counts determine inlining eligibility, and scope parent
+pointers are used for name resolution.
+
+### How other minifiers handle this
+
+**Closure Compiler** builds scopes lazily. `SyntacticScopeCreator` constructs scope objects on
+demand during each `NodeTraversal`, so every traversal sees fresh data derived from the current
+AST state. `MemoizedScopeCreator` caches the results, but passes explicitly invalidate caches
+by calling `reportChangeToEnclosingScope()` when they modify declarations. Scope caches are
+also cleared at phase boundaries (type checking → optimization → codegen).
+
+**Terser** rebuilds from scratch. `figure_out_scope()` walks the entire AST and reconstructs
+all scope and variable data — parent pointers, enclosed variable sets, symbol definitions. This
+is called between compression passes to ensure each pass starts with accurate data.
+
+**esbuild** sidesteps the problem. Identifiers are referenced by 64-bit symbol IDs rather than
+names, so renaming cannot cause resolution errors. Parsing, scope construction, and optimization
+are merged into 2–3 tightly coupled passes rather than iterated independently, which minimizes
+the window where data can go stale.
+
+**SWC** uses strict pass ordering. A `resolver` pass runs first to assign `SyntaxContext` marks
+that encode scope chains directly on identifier nodes. Transforms run next without needing to
+query or update a separate scope tree. A `hygiene` pass runs last to rename identifiers whose
+marks conflict, restoring valid JavaScript output.
+
 ## Design Plans
 
 See [progress.md](progress.md) for a full list of design documents.
