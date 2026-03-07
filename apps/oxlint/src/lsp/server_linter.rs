@@ -42,7 +42,7 @@ use crate::{
         },
         lsp_file_system::LspFileSystem,
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-        utils::normalize_path,
+        utils::{normalize_path, range_overlaps},
     },
 };
 
@@ -863,10 +863,6 @@ impl ServerLinter {
         }
         false
     }
-}
-
-fn range_overlaps(a: Range, b: Range) -> bool {
-    a.start <= b.end && a.end >= b.start
 }
 
 #[cfg(test)]

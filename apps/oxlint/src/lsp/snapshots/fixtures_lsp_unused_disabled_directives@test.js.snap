@@ -208,12 +208,12 @@ Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 2,
+            line: 0,
             character: 2,
         },
         end: Position {
-            line: 2,
-            character: 11,
+            line: 0,
+            character: 56,
         },
     },
     new_text: "",
@@ -221,12 +221,12 @@ TextEdit: TextEdit {
 TextEdit: TextEdit {
     range: Range {
         start: Position {
-            line: 0,
+            line: 2,
             character: 2,
         },
         end: Position {
-            line: 0,
-            character: 56,
+            line: 2,
+            character: 11,
         },
     },
     new_text: "",
