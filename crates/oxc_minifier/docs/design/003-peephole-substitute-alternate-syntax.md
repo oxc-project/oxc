@@ -165,6 +165,42 @@ const obj = { method: function() { return 1; } };
 const obj = { method() { return 1; } };
 ```
 
+### Arrow function body simplification
+
+When an arrow function body is a block with a single `return` statement, replace with a concise body.
+
+```js
+// Before
+const f = () => { return x; };
+
+// After
+const f = () => x;
+```
+
+### Binary operand swap
+
+Moving a string literal from the left side to the right can save bytes when the left-hand side would otherwise need parenthesization.
+
+```js
+// Before
+"x" === foo
+
+// After
+foo === "x"
+```
+
+### Indirect eval optimization
+
+Indirect eval runs in global scope. Some patterns benefit from this transformation.
+
+```js
+// Before
+eval(code)
+
+// After
+(0, eval)(code)
+```
+
 ## References
 
 - `PeepholeSubstituteAlternateSyntax.java`

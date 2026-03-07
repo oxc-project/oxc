@@ -161,6 +161,54 @@ a ? false : b    →  !a && b
 a ? b : true     →  !a || b
 ```
 
+### Type-aware equality relaxation
+
+```js
+// typeof always returns a string, so === is unnecessary:
+typeof foo === 'number'  →  typeof foo == 'number'
+// instanceof always returns boolean:
+a instanceof b === true  →  a instanceof b
+```
+
+### Negation distribution into sequences
+
+```js
+!(a, b)  →  a, !b
+```
+
+### Conditional expression sequence hoisting
+
+```js
+(a, b) ? c : d  →  a, b ? c : d
+```
+
+### Assignment pattern in null checks
+
+```js
+// Before
+(a = foo.bar) === null || a === undefined
+
+// After
+(a = foo.bar) == null
+```
+
+### Boolean context minimization
+
+```js
+// In boolean context (if test, logical operand):
+!!a       →  a
+(a|b)===0 →  !(a|b)
+(a|b)!==0 →  !!(a|b)   // or just (a|b) in boolean context
+```
+
+### Remove side-effect-free values from logical chains
+
+```js
+// In boolean context, truthy constants in && and falsy constants in || can be removed:
+if (a && true)   →  if (a)
+if (a || false)  →  if (a)
+```
+
 ## References
 
 - `PeepholeMinimizeConditions.java`

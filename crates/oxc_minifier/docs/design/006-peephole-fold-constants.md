@@ -103,6 +103,26 @@ x
 42
 ```
 
+Side effects in the left operand must be preserved:
+
+```js
+// Before
+(a(), null) ?? 1
+
+// After
+(a(), null, 1)
+```
+
+### Optional chain folding
+
+When the base of an optional chain is known null/undefined, the entire chain evaluates to `undefined`.
+
+```js
+// Before
+null?.foo       →  void 0
+undefined?.foo  →  void 0
+```
+
 ### Bitwise operations
 
 Fold bitwise operations on integer constants.

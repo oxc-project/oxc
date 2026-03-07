@@ -129,6 +129,15 @@ if (false) {
 // (then dead code elimination removes the if block)
 ```
 
+### Inlining cost thresholds
+
+Values cheap enough to inline even with multiple references:
+- **Numbers**: integers from -99 to 999 (no fractional part) — at most 3 characters
+- **Strings**: ≤3 characters (including quotes, still small)
+- **Booleans**: `!0` and `!1` are 2 bytes each
+- **null, undefined** (`void 0`): always small
+- **Single reference**: always inline regardless of value size
+
 ### Safety constraints
 
 Inlining is only safe when:
@@ -136,6 +145,8 @@ Inlining is only safe when:
 - The evaluation order of surrounding expressions is preserved
 - The inlined expression does not reference variables that would have different values at the new location
 - For functions: `this`, `arguments`, `new.target`, and `super` references prevent inlining
+- `var` vs `let`/`const`: `var` declarations have different TDZ semantics, requiring extra care
+- Must detect write references to avoid inlining values that are later mutated
 
 ```js
 // NOT safe to inline — side effect would execute twice

@@ -56,6 +56,16 @@ for (; a < 10; a++) { body(); }
 for (a = 0; a < 10; a++) { body(); }
 ```
 
+Also applies to `var` declarations:
+
+```js
+// Before
+var a = 0; for(;a<n;a++) {}
+
+// After
+for(var a=0;a<n;a++) {}
+```
+
 ### Denormalize: collapse compound assignments
 
 ```js

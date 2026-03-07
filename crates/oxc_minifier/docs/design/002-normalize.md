@@ -95,6 +95,25 @@ x = x + 2;
 
 After optimization passes complete, the codegen phase may re-collapse these back into compound form if it is shorter.
 
+### Remove `ParenthesizedExpression` nodes
+
+Parenthesized expressions carry no semantic meaning after parsing — operator precedence is already encoded in the AST structure. Remove them so downstream passes don't need to handle wrapped variants.
+
+### Convert `Infinity`/`NaN` to raw numeric values
+
+Replace `Infinity`, `NaN`, and `Number.NaN` with their raw numeric representations early so that constant folding can operate on them directly.
+
+```js
+// Before
+Infinity   →  1/0
+NaN        →  0/0
+Number.NaN →  0/0
+```
+
+### Mark known pure constructors
+
+Annotate known side-effect-free constructors with `@__PURE__` so DCE can remove them when unused: `new WeakMap()`, `new WeakSet()`, `new Map()`, `new Set()`, `new Promise(r => r())`.
+
 ## References
 
 - `Normalize.java`

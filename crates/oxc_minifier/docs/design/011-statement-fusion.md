@@ -41,6 +41,16 @@ return c();
 return a(), b(), c();
 ```
 
+Also applies when the return value is a simple expression:
+
+```js
+// Before
+a(); return b;
+
+// After
+return a(), b;
+```
+
 ### Fuse into `throw`
 
 Merge preceding expression statements into a `throw` statement.
@@ -52,6 +62,14 @@ throw new Error("fail");
 
 // After
 throw cleanup(), new Error("fail");
+```
+
+```js
+// Before
+a(); throw b;
+
+// After
+throw a(), b;
 ```
 
 ### Fuse into `if` condition

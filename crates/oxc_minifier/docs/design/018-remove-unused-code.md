@@ -119,6 +119,22 @@ Unused.prototype.method = function() {};
 // (both removed)
 ```
 
+### Destructuring edge cases
+
+Empty destructuring patterns can still have observable effects:
+
+```js
+// Kept — triggers Symbol.iterator:
+const [] = iterable;
+
+// Can be removed — no observable effect for plain objects:
+const {} = obj;
+```
+
+### Private member removal
+
+Unused private class fields, methods, and accessors can be removed. However, removal must be skipped in scopes containing `eval()` since eval can reference private members dynamically via `#member in obj` syntax.
+
 ## References
 
 - `RemoveUnusedCode.java`

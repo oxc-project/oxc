@@ -47,6 +47,17 @@ Sort symbols by reference count descending. Assign names from a Base54 alphabet 
 
 Scan the source for character frequency. Sort the 54 identifier-start characters and 64 identifier-continuation characters so the most common characters in the source get the earliest positions. This improves gzip compression because the mangled names share characters with surrounding code.
 
+Typical frequency order: `etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579`
+
+First character uses base-54 (valid identifier starts), subsequent characters use base-64 (includes digits). Maximum name length: 6 characters for u32 range.
+
+### Slot-based renaming algorithm
+
+1. Compute "liveness" for each symbol — the set of scopes where the symbol is referenced
+2. Graph coloring: assign symbols to numbered slots, reusing a slot when its liveness doesn't intersect with the symbol's (greedy first-fit)
+3. Sibling scopes naturally share slots since their liveness sets don't overlap
+4. Precompute ancestor BitSets for O(1) scope membership testing during liveness intersection checks
+
 ### Gzip-aware sibling scope reuse
 
 Variables in non-overlapping scopes share the same slot index, so they receive the same mangled name. This creates repeated character sequences that compress well under gzip/brotli.
@@ -106,6 +117,19 @@ Refs: esbuild label symbols; Terser `mangle.label`.
 When `eval()` is present in a scope, all variables in the containing scope chain must retain their original names. This disables mangling for affected scopes because `eval` can reference any variable by name at runtime.
 
 Refs: esbuild direct eval deoptimization; Terser `eval` option.
+
+### `keep_names` implementation
+
+To preserve `.name` property on functions/classes while still renaming the binding, insert a wrapper:
+
+```js
+// Original
+function longName() {}
+
+// Mangled with keep_names
+var a = function longName() {};
+// The binding is 'a' but .name remains 'longName'
+```
 
 ## References
 

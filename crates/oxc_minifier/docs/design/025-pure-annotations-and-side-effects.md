@@ -75,6 +75,11 @@ a.b.c;
 // (removed entirely)
 ```
 
+### Auto-detected pure constructors
+
+The following constructors are known to be side-effect-free and can be automatically annotated as `@__PURE__`:
+`WeakMap`, `WeakSet`, `Map`, `Set`, `Date`, `RegExp`, `Error`, `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `Float32Array`, `Float64Array`, `BigInt64Array`, `BigUint64Array`, `ArrayBuffer`, `SharedArrayBuffer`, `DataView`, `Promise` (with trivial resolver).
+
 ### Safety constraints
 
 - Only remove annotated calls when the result is provably unused

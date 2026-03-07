@@ -114,6 +114,22 @@ for (;;) break;
 // (all removed, assuming no side effects in conditions)
 ```
 
+### `var` hoisting in dead code
+
+`var` declarations must be preserved even in dead code because they hoist. The initializer is removed but the declaration is kept.
+
+```js
+// Before
+if (false) { var x = 1; }
+
+// After
+var x;
+```
+
+### Function/class declarations in dead code
+
+Function and class declarations in dead code paths must be preserved because they hoist to the enclosing scope.
+
 ## References
 
 - `PeepholeRemoveDeadCode.java`

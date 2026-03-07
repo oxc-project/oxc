@@ -39,6 +39,8 @@ Count escape costs for single quotes, double quotes, and backticks. Pick the quo
 'it\'s a "test"' → "it's a \"test\""
 ```
 
+Algorithm: analyze string content and count escape costs — each quote character that would need escaping adds +1 cost for that quote style. Newlines reduce backtick cost (template literals don't need `\n` escapes). `${` sequences increase backtick cost. Pick the quote with lowest total cost. Preference when tied: double quote (most common convention).
+
 ### NaN and Infinity representation
 
 Replace global constants with shorter arithmetic equivalents.
@@ -85,6 +87,15 @@ new Foo()
 new Foo
 ```
 
+Caveat: `new Foo` without parens cannot appear in a postfix-precedence context:
+
+```js
+// This is ambiguous:
+new Foo.bar    // means new (Foo.bar), not (new Foo).bar
+// So parentheses must be kept when followed by member access:
+new Foo().bar  // cannot simplify to new Foo.bar
+```
+
 ### ASCII-only output mode
 
 Force `\uXXXX` escapes for all non-ASCII characters. This is the inverse of UTF-8 charset mode and ensures output is safe for any encoding context.
@@ -98,6 +109,13 @@ var \u00E9 = "caf\u00E9";
 ```
 
 Default in esbuild (`--charset=ascii`), Terser (`ascii_only: true`).
+
+### Whitespace edge cases
+
+Smart spacing is needed to prevent invalid output:
+- `return true` must not become `returntrue`
+- `typeof x` must not become `typeofx`
+- `/regex/` after `/` would form a comment `//`
 
 ## References
 
