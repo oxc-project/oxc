@@ -28,6 +28,8 @@ pub struct LintOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_dir: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
     pub unused_disable_directives: Option<UnusedDisableDirectives>,
     pub type_aware: Option<bool>,
@@ -109,6 +111,9 @@ impl TryFrom<Value> for LintOptions {
             config_path: object
                 .get("configPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            config_dir: object
+                .get("configDir")
+                .and_then(|config_dir| serde_json::from_value::<String>(config_dir.clone()).ok()),
             ts_config_path: object
                 .get("tsConfigPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),

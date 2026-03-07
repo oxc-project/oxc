@@ -494,19 +494,28 @@ impl<'a> ConfigLoader<'a> {
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
+        config_dir: Option<&Path>,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
-        if let Some(config_path) = config_path {
+        let mut config = if let Some(config_path) = config_path {
             let full_path = cwd.join(config_path);
             if is_js_config_path(&full_path) {
-                return self.load_root_js_config(&full_path);
+                self.load_root_js_config(&full_path)?
+            } else {
+                Oxlintrc::from_file(&full_path)?
             }
-            return Oxlintrc::from_file(&full_path);
+        } else {
+            match self.try_load_config_from_dir(cwd)? {
+                Some(config) => config,
+                None => Oxlintrc::default(),
+            }
+        };
+
+        if let Some(dir) = config_dir {
+            config.path = dir.join("oxlint.config.json");
+            config.set_config_dir(dir);
         }
 
-        match self.try_load_config_from_dir(cwd)? {
-            Some(config) => Ok(config),
-            None => Ok(Oxlintrc::default()),
-        }
+        Ok(config)
     }
 
     /// Load root config by searching up parent directories.
@@ -524,28 +533,36 @@ impl<'a> ConfigLoader<'a> {
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
+        config_dir: Option<&Path>,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
         // If an explicit config path is provided, use it directly
-        if let Some(config_path) = config_path {
+        let mut config = if let Some(config_path) = config_path {
             let full_path = cwd.join(config_path);
             if is_js_config_path(&full_path) {
-                return self.load_root_js_config(&full_path);
+                self.load_root_js_config(&full_path)?
+            } else {
+                Oxlintrc::from_file(&full_path)?
             }
-            return Oxlintrc::from_file(&full_path);
+        } else {
+            // Search up the directory tree for a config file
+            let mut found = None;
+            let mut current = Some(cwd);
+            while let Some(dir) = current {
+                if let Some(config) = self.try_load_config_from_dir(dir)? {
+                    found = Some(config);
+                    break;
+                }
+                current = dir.parent();
+            }
+            found.unwrap_or_default()
+        };
+
+        if let Some(dir) = config_dir {
+            config.path = dir.join("oxlint.config.json");
+            config.set_config_dir(dir);
         }
 
-        // Search up the directory tree for a config file
-        let mut current = Some(cwd);
-        while let Some(dir) = current {
-            if let Some(config) = self.try_load_config_from_dir(dir)? {
-                return Ok(config);
-            }
-            // Move to parent directory
-            current = dir.parent();
-        }
-
-        // No config found in any ancestor directory
-        Ok(Oxlintrc::default())
+        Ok(config)
     }
 
     fn load_root_js_config(&self, path: &Path) -> Result<Oxlintrc, OxcDiagnostic> {
@@ -589,10 +606,11 @@ impl<'a> ConfigLoader<'a> {
         &mut self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
+        config_dir: Option<&Path>,
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
     ) -> Result<LoadedConfigs, CliConfigLoadError> {
-        let oxlintrc = match self.load_root_config(cwd, config_path) {
+        let oxlintrc = match self.load_root_config(cwd, config_path, config_dir) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
@@ -796,17 +814,17 @@ mod test {
 
         // Test case 1: Invalid path that should fail
         let invalid_config = PathBuf::from("child/../../fixtures/cli/linter/eslintrc.json");
-        let result = loader.load_root_config(&cwd, Some(&invalid_config));
+        let result = loader.load_root_config(&cwd, Some(&invalid_config), None);
         assert!(result.is_err(), "Expected config lookup to fail with invalid path");
 
         // Test case 2: Valid path that should pass
         let valid_config = PathBuf::from("fixtures/cli/linter/eslintrc.json");
-        let result = loader.load_root_config(&cwd, Some(&valid_config));
+        let result = loader.load_root_config(&cwd, Some(&valid_config), None);
         assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
 
         // Test case 3: Valid path using parent directory (..) syntax that should pass
         let valid_parent_config = PathBuf::from("fixtures/cli/linter/../linter/eslintrc.json");
-        let result = loader.load_root_config(&cwd, Some(&valid_parent_config));
+        let result = loader.load_root_config(&cwd, Some(&valid_parent_config), None);
         assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
 
         // Verify the resolved path is correct
@@ -829,7 +847,7 @@ mod test {
         // Uses fixture: ancestor_search/apps/app1 -> should find ancestor_search/.oxlintrc.json
         let nested_dir = cwd.join("apps/oxlint/fixtures/cli/ancestor_search/apps/app1");
         if nested_dir.exists() {
-            let result = loader.load_root_config_with_ancestor_search(&nested_dir, None);
+            let result = loader.load_root_config_with_ancestor_search(&nested_dir, None, None);
             assert!(result.is_ok(), "Expected ancestor search to find config or return default");
 
             // Verify the config was actually found (not just default)
@@ -846,13 +864,13 @@ mod test {
         // Uses dedicated fixture with .oxlintrc.json
         let valid_config =
             PathBuf::from("fixtures/cli/ancestor_search_explicit_config/.oxlintrc.json");
-        let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config));
+        let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config), None);
         assert!(result.is_ok(), "Expected config lookup to succeed with explicit path");
 
         // Test case 3: When no config exists in any ancestor, should return default
         let temp_dir = std::env::temp_dir().join("oxc_test_no_config");
         std::fs::create_dir_all(&temp_dir).expect("Failed to create temporary test directory");
-        let result = loader.load_root_config_with_ancestor_search(&temp_dir, None);
+        let result = loader.load_root_config_with_ancestor_search(&temp_dir, None, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
     }
@@ -935,7 +953,7 @@ mod test {
         let loader = loader.with_js_config_loader(Some(&js_loader));
 
         let config = loader
-            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")), None)
             .unwrap();
 
         assert_eq!(config.options.type_aware, Some(true));
@@ -960,7 +978,7 @@ mod test {
         let loader = loader.with_js_config_loader(Some(&js_loader));
 
         let config = loader
-            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")), None)
             .unwrap();
 
         assert_eq!(config.options.type_check, Some(true));
@@ -1126,7 +1144,7 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
-        let result = loader.load_root_config(root_dir.path(), None);
+        let result = loader.load_root_config(root_dir.path(), None, None);
         assert!(result.is_ok(), "Expected .oxlintrc.jsonc to be discovered and loaded");
         let config = result.unwrap();
         assert!(
@@ -1147,7 +1165,7 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
-        let result = loader.load_root_config(root_dir.path(), None);
+        let result = loader.load_root_config(root_dir.path(), None, None);
         assert!(
             result.is_err(),
             "Expected an error when both .oxlintrc.json and .oxlintrc.jsonc exist"
@@ -1163,7 +1181,7 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
-        let result = loader.load_root_config(root_dir.path(), None);
+        let result = loader.load_root_config(root_dir.path(), None, None);
         assert!(result.is_err(), "Expected an error when both JSON and TS configs exist");
     }
 
@@ -1177,7 +1195,7 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
-        let result = loader.load_root_config(root_dir.path(), None);
+        let result = loader.load_root_config(root_dir.path(), None, None);
         assert!(result.is_err(), "Expected an error when both JSONC and TS configs exist");
     }
 }

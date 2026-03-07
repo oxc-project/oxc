@@ -75,6 +75,7 @@ impl FormatRunner {
             &cwd,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            config_options.config_dir.as_deref(),
         ) {
             Ok(r) => r,
             Err(err) => {

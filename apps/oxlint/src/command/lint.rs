@@ -123,6 +123,16 @@ pub struct BasicOptions {
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
+    /// Base directory for resolving relative paths in the configuration file.
+    ///
+    /// When a config file is stored in a different location than the project root
+    /// (e.g., in a cache directory), use this flag to specify where relative paths
+    /// in the config (such as plugin paths or ignore patterns) should be resolved from.
+    ///
+    /// If not provided, relative paths are resolved from the config file's parent directory.
+    #[bpaf(long("config-dir"), argument("DIR"), hide_usage)]
+    pub config_dir: Option<PathBuf>,
+
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
     /// If not provided, will look for `tsconfig.json` in the current working directory.
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
