@@ -154,10 +154,15 @@ watch-oxlint *args='':
   just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # oxlint release build for node.js
-# After building, you can run the built version of oxlint with
-# `node apps/oxlint/dist/cli.js`
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node:
   pnpm -C apps/oxlint run build
+
+# oxlint dev build, for testing with Node.js locally.
+# This will lack some functionality but build faster, as it skips `--release` and the allocator feature.
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
+oxlint-node-dev:
+  pnpm -C apps/oxlint run build-dev
 
 watch-oxlint-node *args='':
   just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
@@ -203,8 +208,15 @@ watch-oxfmt *args='':
   just watch 'cargo run -p oxfmt -- {{args}}'
 
 # Build oxfmt in release build
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node:
   pnpm -C apps/oxfmt run build
+
+# oxfmt dev build, for testing with Node.js locally.
+# This will lack some functionality but build faster.
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
+oxfmt-node-dev:
+  pnpm -C apps/oxfmt run build-dev
 
 watch-oxfmt-node *args='':
   just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'
