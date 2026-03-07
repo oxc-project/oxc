@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "3e9b676c57d2",
+  "session_id": "b365c78f-80b2-4f8e-a43c-6621b302ab55",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-28T07:34:59.989748Z",
+  "branch": "fix/minifier-substitute-declarators-esbuild-pattern",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "crates/oxc_minifier/src/peephole/minimize_statements.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 91,
+    "cache_creation_tokens": 158260,
+    "cache_read_tokens": 5892408,
+    "output_tokens": 48184,
+    "api_call_count": 82
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-28T07:34:59.866368Z",
+    "agent_lines": 12,
+    "human_added": 4878,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 4890,
+    "agent_percentage": 0.245398773006135
+  }
+}

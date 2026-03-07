@@ -3,14 +3,12 @@
   "checkpoint_id": "a3121e8c7091",
   "strategy": "manual-commit",
   "branch": "fix/parser-private-identifier-error-recovery",
-  "checkpoints_count": 1,
+  "checkpoints_count": 0,
   "files_touched": [
     "crates/oxc_codegen/src/comment.rs",
     "crates/oxc_codegen/src/gen.rs",
     "crates/oxc_codegen/src/lib.rs",
-    "crates/oxc_codegen/src/options.rs",
-    "crates/oxc_parser/src/diagnostics.rs",
-    "crates/oxc_parser/src/js/object.rs"
+    "crates/oxc_codegen/src/options.rs"
   ],
   "sessions": [
     {
@@ -19,20 +17,13 @@
       "context": "/a3/121e8c7091/0/context.md",
       "content_hash": "/a3/121e8c7091/0/content_hash.txt",
       "prompt": "/a3/121e8c7091/0/prompt.txt"
-    },
-    {
-      "metadata": "/a3/121e8c7091/1/metadata.json",
-      "transcript": "/a3/121e8c7091/1/full.jsonl",
-      "context": "/a3/121e8c7091/1/context.md",
-      "content_hash": "/a3/121e8c7091/1/content_hash.txt",
-      "prompt": "/a3/121e8c7091/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 82,
-    "cache_creation_tokens": 126516,
-    "cache_read_tokens": 3503778,
-    "output_tokens": 2604,
-    "api_call_count": 74
+    "input_tokens": 21,
+    "cache_creation_tokens": 90599,
+    "cache_read_tokens": 1495455,
+    "output_tokens": 782,
+    "api_call_count": 19
   }
 }
