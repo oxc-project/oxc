@@ -2336,6 +2336,11 @@ impl RuleRunner for crate::rules::jest::valid_title::ValidTitle {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
 
+impl RuleRunner for crate::rules::react::no_react_children::NoReactChildren {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::react::button_has_type::ButtonHasType {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::JSXOpeningElement]));
