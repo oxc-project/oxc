@@ -179,10 +179,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - name: Check if NAPI should run
         id: filter
         env:
@@ -193,6 +189,11 @@ jobs:
             --crate oxc_parser_napi --crate oxc_minify_napi --crate oxc_transform_napi \
             napi/ Cargo.lock Cargo.toml)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
         if: steps.filter.outputs.src == 'true'
       - uses: ./.github/actions/clone-submodules
@@ -222,10 +223,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        with:
-          cache-key: napi-oxlint
-          save-cache: ${{ github.ref_name == 'main' }}
       - name: Check if oxlint NAPI should run
         id: filter
         env:
@@ -235,6 +232,11 @@ jobs:
           SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
             --crate oxlint apps/oxlint/ Cargo.lock)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi-oxlint
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
@@ -248,10 +250,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        with:
-          cache-key: napi-oxfmt
-          save-cache: ${{ github.ref_name == 'main' }}
       - name: Check if oxfmt NAPI should run
         id: filter
         env:
@@ -261,6 +259,11 @@ jobs:
           SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
             --crate oxfmt apps/oxfmt/ Cargo.lock)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi-oxfmt
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
@@ -277,10 +280,6 @@ jobs:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
       - name: Check if NAPI should run
         id: filter
         env:
@@ -291,6 +290,11 @@ jobs:
             --crate oxc_parser_napi --crate oxc_minify_napi --crate oxc_transform_napi \
             napi/ Cargo.lock Cargo.toml)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
         if: steps.filter.outputs.src == 'true'
       - uses: ./.github/actions/clone-submodules
