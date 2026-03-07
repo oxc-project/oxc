@@ -15,7 +15,7 @@ pub(super) enum FoundStatus {
     #[default]
     NotFound,
     /// The target identifier was found and it meets ignore criteria
-    Ignored,
+    Ignored(IgnoreReason),
     /// The target identifier was found and does not meet ignore criteria
     NotIgnored,
 }
@@ -23,12 +23,15 @@ pub(super) enum FoundStatus {
 impl FoundStatus {
     #[inline]
     pub const fn is_found(self) -> bool {
-        matches!(self, Self::Ignored | Self::NotIgnored)
+        matches!(self, Self::Ignored(_) | Self::NotIgnored)
     }
 
     #[inline]
-    pub const fn is_ignored(self) -> bool {
-        matches!(self, Self::Ignored)
+    pub const fn into_ignored(self) -> Ignored {
+        match self {
+            Self::Ignored(reason) => Ignored::from_reason(reason),
+            _ => Ignored::not_ignored(),
+        }
     }
 
     #[inline]
@@ -40,10 +43,90 @@ impl FoundStatus {
     ///
     /// `false` does not make already ignored values not-ignored.
     #[inline]
-    pub fn ignore(self, is_ignored: bool) -> Self {
-        match self {
-            Self::NotIgnored if is_ignored => Self::Ignored,
+    pub fn ignore(self, reason: Ignored) -> Self {
+        match (self, reason.0) {
+            (Self::NotIgnored, Some(reason)) => Self::Ignored(reason),
+            // NamePattern takes priority
+            (Self::Ignored(_), Some(IgnoreReason::NamePattern)) => {
+                Self::Ignored(IgnoreReason::NamePattern)
+            }
             _ => self,
+        }
+    }
+}
+
+/// Informs why a [Symbol] was ignored.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum IgnoreReason {
+    /// Symbol is ignored because it is 1) rest sibling, 2) one or more of its siblings
+    /// are used, and 3) user has configured [ignoreRestSiblings] to `true`.
+    ///
+    /// [ignoreRestSiblings]: super::NoUnusedVarsOptions::ignore_rest_siblings
+    RestSibling,
+    /// Symbol is ignored because it's bound name matches a `<foo>IgnorePattern`
+    /// setting.
+    NamePattern,
+    /// Symbol is ignored because it is a class declaration with a `static`
+    /// initializer block.
+    ClassStaticInitBlock,
+    /// Symbol is ignored because it is declared inside of an ambient scope.
+    ///
+    /// Not all symbols in ambient scopes are ignored.
+    AmbientDeclaration,
+}
+
+/// Describes if a [Symbol] is ignored and why.
+/// `None` for not ignored, `Some(reason)` when ignored.
+#[derive(Debug, Clone, Copy)]
+pub(super) struct Ignored(Option<IgnoreReason>);
+
+impl Ignored {
+    pub fn new(is_ignored: bool, reason: IgnoreReason) -> Self {
+        Self(is_ignored.then_some(reason))
+    }
+
+    #[inline]
+    pub const fn not_ignored() -> Self {
+        Self(None)
+    }
+
+    #[inline]
+    pub const fn from_reason(reason: IgnoreReason) -> Self {
+        Self(Some(reason))
+    }
+
+    pub fn or(self, other: Self) -> Self {
+        // NamePattern takes priority
+        match (*self, *other) {
+            (_, Some(IgnoreReason::NamePattern)) | (Some(IgnoreReason::NamePattern), _) => {
+                Self::from_reason(IgnoreReason::NamePattern)
+            }
+            (Some(_), _) => self,
+            _ => other,
+        }
+    }
+}
+
+impl std::ops::Deref for Ignored {
+    type Target = Option<IgnoreReason>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<FoundStatus> for Ignored {
+    fn from(status: FoundStatus) -> Self {
+        status.into_ignored()
+    }
+}
+
+impl From<Ignored> for FoundStatus {
+    fn from(ignored: Ignored) -> Self {
+        match ignored.0 {
+            Some(reason) => FoundStatus::Ignored(reason),
+            None => FoundStatus::NotIgnored,
         }
     }
 }
@@ -52,7 +135,7 @@ impl NoUnusedVars {
     /// Check if a symbol should be ignored based on how it's declared.
     ///
     /// Does not handle ignore checks for re-assignments to array/object destructures.
-    pub(super) fn is_ignored(&self, symbol: &Symbol<'_, '_>) -> bool {
+    pub(super) fn is_ignored(&self, symbol: &Symbol<'_, '_>) -> Ignored {
         let declared_binding = symbol.name();
         match symbol.declaration().kind() {
             m if m.is_module_declaration() => self.is_ignored_var(declared_binding),
@@ -73,7 +156,10 @@ impl NoUnusedVars {
                 // (i.e., declared or in a declared module). Functions without bodies inside
                 // non-declared namespaces should still be checked.
                 if func.r#type.is_typescript_syntax() || func.body.is_none() {
-                    return func.declare || symbol.is_in_declared_module();
+                    return Ignored::new(
+                        func.declare || symbol.is_in_declared_module(),
+                        IgnoreReason::AmbientDeclaration,
+                    );
                 }
                 self.is_ignored_var(declared_binding)
             }
@@ -82,26 +168,22 @@ impl NoUnusedVars {
                     || self.ignore_class_with_static_init_block
                         && class.body.body.iter().any(ClassElement::is_static_block)
                 {
-                    return true;
+                    return Ignored::from_reason(IgnoreReason::ClassStaticInitBlock);
                 }
                 self.is_ignored_var(declared_binding)
             }
-            AstKind::CatchParameter(catch) => {
-                self.is_ignored_catch_err(declared_binding)
-                    || self.is_ignored_binding_pattern(symbol, &catch.pattern)
-            }
-            AstKind::VariableDeclarator(decl) => {
-                self.is_ignored_var(declared_binding)
-                    || self.is_ignored_binding_pattern(symbol, &decl.id)
-            }
-            AstKind::FormalParameter(param) => {
-                self.is_ignored_arg(declared_binding)
-                    || self.is_ignored_binding_pattern(symbol, &param.pattern)
-            }
-            AstKind::FormalParameterRest(param) => {
-                self.is_ignored_arg(declared_binding)
-                    || self.is_ignored_binding_pattern(symbol, &param.rest.argument)
-            }
+            AstKind::CatchParameter(catch) => self
+                .is_ignored_catch_err(declared_binding)
+                .or(self.is_ignored_binding_pattern(symbol, &catch.pattern)),
+            AstKind::VariableDeclarator(decl) => self
+                .is_ignored_var(declared_binding)
+                .or(self.is_ignored_binding_pattern(symbol, &decl.id)),
+            AstKind::FormalParameter(param) => self
+                .is_ignored_arg(declared_binding)
+                .or(self.is_ignored_binding_pattern(symbol, &param.pattern)),
+            AstKind::FormalParameterRest(param) => self
+                .is_ignored_arg(declared_binding)
+                .or(self.is_ignored_binding_pattern(symbol, &param.rest.argument)),
             s => {
                 // panic when running test cases so we can find unsupported node kinds
                 debug_assert!(
@@ -109,7 +191,7 @@ impl NoUnusedVars {
                     "is_ignored_decl did not know how to handle node of kind {}",
                     s.debug_name()
                 );
-                false
+                Ignored::not_ignored()
             }
         }
     }
@@ -118,18 +200,24 @@ impl NoUnusedVars {
         &self,
         symbol: &Symbol<'_, 'a>,
         binding: &BindingPattern<'a>,
-    ) -> bool {
-        self.should_search_destructures()
-            && self.search_binding_pattern(symbol, binding).is_ignored()
+    ) -> Ignored {
+        if self.should_search_destructures() {
+            self.search_binding_pattern(symbol, binding).into()
+        } else {
+            Ignored::not_ignored()
+        }
     }
 
     pub(super) fn is_ignored_assignment_target<'a>(
         &self,
         symbol: &Symbol<'_, 'a>,
         assignment: &AssignmentTarget<'a>,
-    ) -> bool {
-        self.should_search_destructures()
-            && self.search_assignment_target(symbol, assignment).is_ignored()
+    ) -> Ignored {
+        if self.should_search_destructures() {
+            self.search_assignment_target(symbol, assignment).into()
+        } else {
+            Ignored::not_ignored()
+        }
     }
 
     /// Do we need to search binding patterns to tell if a symbol is ignored, or
@@ -287,10 +375,11 @@ impl NoUnusedVars {
             // other destructure, mark it as ignored if it matches the
             // configured array destructure ignore pattern.
             if status.is_found() {
-                return status.ignore(
-                    el.is_simple_assignment_target()
-                        && self.is_ignored_array_destructured(target.name()),
-                );
+                return if el.is_simple_assignment_target() {
+                    status.ignore(self.is_ignored_array_destructured(target.name()))
+                } else {
+                    status
+                };
             }
             // continue with search
         }
@@ -309,8 +398,8 @@ impl NoUnusedVars {
     }
 
     #[inline]
-    fn is_ignored_spread_neighbor(&self, has_rest: bool) -> bool {
-        self.ignore_rest_siblings && has_rest
+    fn is_ignored_spread_neighbor(&self, has_rest: bool) -> Ignored {
+        Ignored::new(self.ignore_rest_siblings && has_rest, IgnoreReason::RestSibling)
     }
 
     // =========================================================================
@@ -318,24 +407,36 @@ impl NoUnusedVars {
     // =========================================================================
 
     #[inline]
-    pub(super) fn is_ignored_var(&self, name: &str) -> bool {
-        Self::is_none_or_match(self.vars_ignore_pattern.as_ref(), name)
+    pub(super) fn is_ignored_var(&self, name: &str) -> Ignored {
+        Ignored::new(
+            Self::is_none_or_match(self.vars_ignore_pattern.as_ref(), name),
+            IgnoreReason::NamePattern,
+        )
     }
 
     #[inline]
-    pub(super) fn is_ignored_arg(&self, name: &str) -> bool {
-        Self::is_none_or_match(self.args_ignore_pattern.as_ref(), name)
+    pub(super) fn is_ignored_arg(&self, name: &str) -> Ignored {
+        Ignored::new(
+            Self::is_none_or_match(self.args_ignore_pattern.as_ref(), name),
+            IgnoreReason::NamePattern,
+        )
     }
 
     #[inline]
-    pub(super) fn is_ignored_array_destructured(&self, name: &str) -> bool {
-        Self::is_none_or_match(self.destructured_array_ignore_pattern.as_ref(), name)
+    pub(super) fn is_ignored_array_destructured(&self, name: &str) -> Ignored {
+        Ignored::new(
+            Self::is_none_or_match(self.destructured_array_ignore_pattern.as_ref(), name),
+            IgnoreReason::NamePattern,
+        )
     }
 
     #[inline]
-    pub(super) fn is_ignored_catch_err(&self, name: &str) -> bool {
-        *!self.caught_errors
-            || Self::is_none_or_match(self.caught_errors_ignore_pattern.as_ref(), name)
+    pub(super) fn is_ignored_catch_err(&self, name: &str) -> Ignored {
+        Ignored::new(
+            *!self.caught_errors
+                || Self::is_none_or_match(self.caught_errors_ignore_pattern.as_ref(), name),
+            IgnoreReason::NamePattern,
+        )
     }
 
     #[inline]
@@ -353,7 +454,14 @@ mod test {
     use oxc_span::Atom;
 
     use super::super::NoUnusedVars;
+    use super::{IgnoreReason, Ignored};
     use crate::rule::Rule as _;
+
+    impl std::cmp::PartialEq for super::Ignored {
+        fn eq(&self, other: &Ignored) -> bool {
+            self.0.eq(&other.0)
+        }
+    }
 
     #[test]
     fn test_ignored() {
@@ -368,22 +476,46 @@ mod test {
         ]))
         .unwrap();
 
-        assert!(rule.is_ignored_var("_x"));
-        assert!(rule.is_ignored_var(&Atom::from("_x")));
-        assert!(!rule.is_ignored_var("notIgnored"));
+        assert_eq!(rule.is_ignored_var("_x"), Ignored::from_reason(IgnoreReason::NamePattern));
+        assert_eq!(
+            rule.is_ignored_var(&Atom::from("_x")),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(rule.is_ignored_var("notIgnored"), Ignored::not_ignored());
 
-        assert!(rule.is_ignored_arg("ignored"));
-        assert!(rule.is_ignored_arg("alsoIgnored"));
-        assert!(rule.is_ignored_arg(&Atom::from("ignored")));
-        assert!(rule.is_ignored_arg(&Atom::from("alsoIgnored")));
+        assert_eq!(rule.is_ignored_arg("ignored"), Ignored::from_reason(IgnoreReason::NamePattern));
+        assert_eq!(
+            rule.is_ignored_arg("alsoIgnored"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(
+            rule.is_ignored_arg(&Atom::from("ignored")),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(
+            rule.is_ignored_arg(&Atom::from("alsoIgnored")),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
 
-        assert!(rule.is_ignored_catch_err("err"));
-        assert!(rule.is_ignored_catch_err("error"));
-        assert!(!rule.is_ignored_catch_err("e"));
+        assert_eq!(
+            rule.is_ignored_catch_err("err"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(
+            rule.is_ignored_catch_err("error"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(rule.is_ignored_catch_err("e"), Ignored::not_ignored());
 
-        assert!(rule.is_ignored_array_destructured("_x"));
-        assert!(rule.is_ignored_array_destructured(&Atom::from("_x")));
-        assert!(!rule.is_ignored_array_destructured("notIgnored"));
+        assert_eq!(
+            rule.is_ignored_array_destructured("_x"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(
+            rule.is_ignored_array_destructured(&Atom::from("_x")),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(rule.is_ignored_array_destructured("notIgnored"), Ignored::not_ignored());
     }
 
     #[test]
@@ -395,9 +527,12 @@ mod test {
             }
         ]))
         .unwrap();
-        assert!(rule.is_ignored_catch_err("_"));
-        assert!(rule.is_ignored_catch_err("_err"));
-        assert!(!rule.is_ignored_catch_err("err"));
+        assert_eq!(rule.is_ignored_catch_err("_"), Ignored::from_reason(IgnoreReason::NamePattern));
+        assert_eq!(
+            rule.is_ignored_catch_err("_err"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(rule.is_ignored_catch_err("err"), Ignored::not_ignored());
 
         let rule = NoUnusedVars::from_configuration(serde_json::json!([
             {
@@ -405,8 +540,14 @@ mod test {
             }
         ]))
         .unwrap();
-        assert!(rule.is_ignored_catch_err("_"));
-        assert!(rule.is_ignored_catch_err("_err"));
-        assert!(rule.is_ignored_catch_err("err"));
+        assert_eq!(rule.is_ignored_catch_err("_"), Ignored::from_reason(IgnoreReason::NamePattern));
+        assert_eq!(
+            rule.is_ignored_catch_err("_err"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
+        assert_eq!(
+            rule.is_ignored_catch_err("err"),
+            Ignored::from_reason(IgnoreReason::NamePattern)
+        );
     }
 }
