@@ -179,15 +179,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - name: Check if NAPI should run
         id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-              - '!crates/oxc_language_server/**'
-              - '!editors/**'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
+            --crate oxc_parser_napi --crate oxc_minify_napi --crate oxc_transform_napi \
+            napi/ Cargo.lock Cargo.toml)
+          echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         if: steps.filter.outputs.src == 'true'
         with:
@@ -201,14 +202,14 @@ jobs:
           babel: false
           prettier: false
       - if: steps.filter.outputs.src == 'true'
-        name: Run tests in workspace
+        name: Build and test NAPI packages
         env:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm run build-test
-          pnpm run test
+          pnpm --filter oxc-minify --filter oxc-parser --filter oxc-transform build-test
+          pnpm --filter oxc-minify --filter oxc-parser --filter oxc-transform test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests
         working-directory: tasks/e2e
@@ -216,6 +217,60 @@ jobs:
       - if: steps.filter.outputs.src == 'true'
         run: |
           git diff --exit-code # Must commit everything
+
+  test-napi-oxlint:
+    name: Test NAPI (oxlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - name: Check if oxlint NAPI should run
+        id: filter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
+            --crate oxlint apps/oxlint/ Cargo.lock)
+          echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi-oxlint
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        name: Build and test oxlint NAPI
+        run: |
+          pnpm --filter oxlint-app build-test
+          pnpm --filter oxlint-app test
+
+  test-napi-oxfmt:
+    name: Test NAPI (oxfmt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - name: Check if oxfmt NAPI should run
+        id: filter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
+            --crate oxfmt apps/oxfmt/ Cargo.lock)
+          echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi-oxfmt
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        name: Build and test oxfmt NAPI
+        run: |
+          pnpm --filter oxfmt-app build-test
+          pnpm --filter oxfmt-app test
 
   test-napi-windows:
     name: Test NAPI (windows)
@@ -225,15 +280,16 @@ jobs:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - name: Check if NAPI should run
         id: filter
-        with:
-          predicate-quantifier: "every"
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-              - '!crates/oxc_language_server/**'
-              - '!editors/**'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js \
+            --crate oxc_parser_napi --crate oxc_minify_napi --crate oxc_transform_napi \
+            napi/ Cargo.lock Cargo.toml)
+          echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         if: steps.filter.outputs.src == 'true'
         with:

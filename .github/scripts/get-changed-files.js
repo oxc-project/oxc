@@ -102,16 +102,69 @@ async function getChangedFiles() {
 
 module.exports = { getChangedFiles };
 
-// If run directly as a script, output changed files as JSON
+// If run directly as a script:
+// - No args: output changed files as JSON
+// - With args: treat as path prefixes, output true/false if any changed file matches
+// - With --crate args: use cargo tree dependency resolution for precise filtering
 if (require.main === module) {
+  const { getCrateDependencies, checkFilesAffectCrates } = require("./utils.js");
+
+  // Parse --crate args and watch paths
+  const crates = [];
+  const watchPaths = [];
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--crate" && i + 1 < args.length) {
+      crates.push(args[++i]);
+    } else {
+      watchPaths.push(args[i]);
+    }
+  }
+
   getChangedFiles()
     .then((files) => {
-      console.log(JSON.stringify(files));
-      process.exit(0);
+      // No args at all: output file list as JSON (existing behavior)
+      if (crates.length === 0 && watchPaths.length === 0) {
+        console.log(JSON.stringify(files));
+        return;
+      }
+
+      // null means manual trigger or error — always run
+      if (files === null) {
+        console.log("true");
+        return;
+      }
+
+      // No files changed — skip
+      if (files.length === 0) {
+        console.log("false");
+        return;
+      }
+
+      // --crate mode: use cargo tree dependency resolution
+      if (crates.length > 0) {
+        const deps = getCrateDependencies(crates);
+        console.error(`Crate dependencies (${deps.length}): ${deps.join(", ")}`);
+
+        if (deps.length === 0) {
+          console.error("Warning: No dependencies found - running as fallback");
+          console.log("true");
+          return;
+        }
+
+        const matched = checkFilesAffectCrates(files, deps, watchPaths);
+        console.log(matched ? "true" : "false");
+        return;
+      }
+
+      // Simple prefix matching (no --crate args)
+      const matched = checkFilesAffectCrates(files, [], watchPaths);
+      console.log(matched ? "true" : "false");
     })
     .catch((error) => {
       console.error("Error:", error);
-      console.log(JSON.stringify(null));
+      // Fallback: always run on error
+      console.log(crates.length > 0 || watchPaths.length > 0 ? "true" : JSON.stringify(null));
       process.exit(1);
     });
 }
