@@ -1,0 +1,5 @@
+In oxfmt, bundle prettier-plugin-svelte and make format svelte work
+
+---
+
+add a test
