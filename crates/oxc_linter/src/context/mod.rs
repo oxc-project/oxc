@@ -285,6 +285,7 @@ impl<'a> LintContext<'a> {
         if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
             return;
         }
+
         message.error = message
             .error
             .with_error_code(self.current_plugin_prefix, self.current_rule_name)

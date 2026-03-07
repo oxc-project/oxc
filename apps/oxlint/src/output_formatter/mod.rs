@@ -15,6 +15,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_linter::OxlintSuppressionFileAction;
 use rustc_hash::FxHashSet;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
@@ -67,6 +68,8 @@ pub struct LintCommandInfo {
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
     pub start_time: Duration,
+    /// At least in default mode we want to notify if bulk-suppressions.json file has been created or update
+    pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
 }
 
 /// An Interface for the different output formats.
