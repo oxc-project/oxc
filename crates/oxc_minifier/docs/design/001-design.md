@@ -25,3 +25,7 @@ The following optimizations were considered but are deliberately excluded from s
 - **Type-based Property Disambiguation** — Use type info to rename same-named properties on different types independently. Closure-only (`DisambiguateProperties.java`, `AmbiguateProperties.java`). Requires full type system.
 - **Method Devirtualization** — Convert instance methods to static functions. Closure-only (`DevirtualizeMethods.java`). Requires type info and class hierarchy analysis.
 - **Expression Decomposition** — Break complex expressions into temp variables to enable other passes. Closure-only (`ExpressionDecomposer.java`). Internal technique, not a user-facing optimization.
+- **Inline Properties (type-based)** — Inline property accesses using type information. Closure-only (`InlineProperties.java`). Requires full type system.
+- **Function Rewriter** — Rewrite functions for optimization. Closure-only (`FunctionRewriter.java`). Off by default due to performance regressions.
+- **Replace Strings** — Replace string literals with shorter aliases. Closure-only (`ReplaceStrings.java`). Application-specific, not generally applicable.
+- **Rescope Global Symbols** — Move global declarations into a scope wrapper. Closure-only (`RescopeGlobalSymbols.java`). Changes module semantics.

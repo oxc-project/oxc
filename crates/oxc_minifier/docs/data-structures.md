@@ -162,3 +162,47 @@ Key instances:
 - Closure Compiler: `DataFlowAnalysis.java`, `LiveVariablesAnalysis.java`, `MustBeReachingVariableDef.java`
 - esbuild: no formal data flow framework — uses syntactic heuristics
 - Terser: `compress/reduce-vars.js` (single-pass variable tracking), `compress/evaluate.js` (constant evaluation)
+
+## Interference Graph & Graph Coloring
+
+### What
+
+An undirected graph where edges connect variables that are simultaneously live at any program point. Greedy graph coloring assigns "colors" (variable slots) so no two adjacent nodes share a color.
+
+### Why
+
+- **Variable coalescing (022)** — determines which variables can safely share the same name/slot because their live ranges don't overlap
+- **Variable mangling (034)** — enables sibling scope name reuse; variables in non-overlapping scopes get the same short name
+- **Dead assignments elimination (021)** — liveness analysis (the input to interference graph construction) identifies dead stores
+
+### How It Works
+
+Build from liveness analysis output: for each program point, all simultaneously-live variables get pairwise edges. Then greedy graph coloring (sorted by degree or frequency) assigns minimum colors. Variables with the same color can share a name.
+
+### References
+
+- Closure Compiler: `GraphColoring.java`, `LiveVariablesAnalysis.java`, `CoalesceVariableNames.java`
+
+## Type Inference (Value Type Tracking)
+
+### What
+
+Lightweight type predicates (`is_string()`, `is_number()`, `is_boolean()`, `is_bigint()`, `is_32_bit_integer()`) that propagate through expressions without a full type system.
+
+### Why
+
+- **Peephole fold constants (006)** — determines when arithmetic/string operations can be constant-folded (e.g., `"a" + "b"` requires knowing both sides are strings)
+- **Peephole minimize conditions (008)** — enables `===` to `==` conversion when operand types are known to match (no coercion risk)
+- **Peephole substitute alternate syntax (003)** — `typeof x === "undefined"` optimization requires knowing `x` is not a special type
+- **Peephole replace known methods (007)** — method call evaluation requires knowing receiver type (e.g., `.length` on string vs array)
+- **Modern syntax optimizations (030)** — context-aware numeric optimization (string-to-number in numeric context)
+
+### How It Works
+
+Chains through AST: sequences → type of last element; assignments → type of RHS; conditionals → type if both branches agree; binary ops → known result type (e.g., `+` with two numbers → number, `+` with a string → string). Does NOT use full type inference — just local propagation.
+
+### References
+
+- Terser: `inference.js`
+- SWC: `compress/optimize/evaluate.rs`
+- `oxc_ecmascript` crate
