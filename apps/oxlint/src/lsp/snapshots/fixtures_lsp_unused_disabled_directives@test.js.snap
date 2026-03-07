@@ -154,11 +154,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 0,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 0,
-            character: 56,
+            line: 1,
+            character: 0,
         },
     },
     new_text: "",
@@ -190,11 +190,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 8,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 8,
-            character: 52,
+            line: 9,
+            character: 0,
         },
     },
     new_text: "",
@@ -222,11 +222,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 0,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 0,
-            character: 56,
+            line: 1,
+            character: 0,
         },
     },
     new_text: "",
@@ -248,11 +248,11 @@ TextEdit: TextEdit {
     range: Range {
         start: Position {
             line: 8,
-            character: 2,
+            character: 0,
         },
         end: Position {
-            line: 8,
-            character: 52,
+            line: 9,
+            character: 0,
         },
     },
     new_text: "",
