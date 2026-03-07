@@ -27,7 +27,7 @@
     "build-test": "pnpm run build-napi-test && cross-env DEBUG=true pnpm run build-js",
     "build-conformance": "pnpm run build-napi-test && cross-env CONFORMANCE=true pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
-    "build-napi-test": "pnpm run build-napi --features testing",
+    "build-napi-test": "pnpm run build-napi --features testing --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.ts",
     "generate-config-types": "node scripts/generate-config-types.ts",
