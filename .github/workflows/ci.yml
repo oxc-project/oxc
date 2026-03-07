@@ -62,7 +62,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -75,7 +75,7 @@ jobs:
         with:
           workspace-copy: true
           drive-size: 8GB
-          drive-format: NTFS
+          drive-format: ReFS
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
@@ -97,7 +97,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
-          save-if: ${{ github.ref_name == 'main' }}
+          save-if: true
           shared-key: windows-latest
 
       - name: Run tests
@@ -220,7 +220,7 @@ jobs:
   test-napi-windows:
     name: Test NAPI (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     steps:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true
@@ -234,20 +234,45 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
-        with:
-          cache-key: napi
-          save-cache: ${{ github.ref_name == 'main' }}
-      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.src == 'true'
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
         with:
           babel: false
           prettier: false
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          workspace-copy: true
+          drive-size: 8GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      - name: Install Rust
+        if: steps.filter.outputs.src == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        if: steps.filter.outputs.src == 'true'
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: true
+          shared-key: windows-napi
+
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
@@ -256,11 +281,14 @@ jobs:
           pnpm run test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
+        shell: bash
         run: |
           pnpm install --frozen-lockfile
           pnpm run test
-        working-directory: tasks/e2e
       - if: steps.filter.outputs.src == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
         run: |
           git diff --exit-code # Must commit everything
 
