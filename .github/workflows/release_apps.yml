@@ -274,6 +274,7 @@ jobs:
     env:
       package_path: npm/oxlint
       plugins_package_path: npm/oxlint-plugins
+      plugin_eslint_package_path: npm/oxlint-plugin-eslint
       npm_dir: npm/oxlint-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
@@ -303,12 +304,17 @@ jobs:
         run: |
           cp apps/oxlint/dist-pkg-plugins/* ${plugins_package_path}/
 
+      - name: Copy dist files to oxlint-plugin-eslint npm package
+        run: |
+          cp -r apps/oxlint/dist-pkg-plugin-eslint/. ${plugin_eslint_package_path}/
+
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
         run: |
           node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
           node .github/scripts/check-npm-packages.js "${plugins_package_path}"
+          node .github/scripts/check-npm-packages.js "${plugin_eslint_package_path}"
 
       - name: Trusted Publish
         run: |
@@ -319,6 +325,8 @@ jobs:
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
           # Publish `@oxlint/plugins` package
           pnpm publish ${plugins_package_path}/ ${PUBLISH_FLAGS}
+          # Publish `oxlint-plugin-eslint` package
+          pnpm publish ${plugin_eslint_package_path}/ ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
