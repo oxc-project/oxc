@@ -13,7 +13,7 @@ mod worker;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
-pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
+pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 

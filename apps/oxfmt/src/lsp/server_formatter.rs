@@ -5,7 +5,9 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{
+    Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput,
+};
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
@@ -94,8 +96,8 @@ impl ToolBuilder for ServerFormatterBuilder {
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool> {
+        Box::new(self.build(tool_start_input.root_uri, tool_start_input.options))
     }
 }
 
@@ -174,9 +176,8 @@ impl Tool for ServerFormatter {
     fn handle_configuration_change(
         &self,
         builder: &dyn ToolBuilder,
-        root_uri: &Uri,
         old_options_json: &serde_json::Value,
-        new_options_json: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         let old_option = match serde_json::from_value::<LSPFormatOptions>(old_options_json.clone())
         {
@@ -189,8 +190,9 @@ impl Tool for ServerFormatter {
             }
         };
 
-        let new_option = match serde_json::from_value::<LSPFormatOptions>(new_options_json.clone())
-        {
+        let new_option = match serde_json::from_value::<LSPFormatOptions>(
+            tool_start_input.options.clone(),
+        ) {
             Ok(opts) => opts,
             Err(e) => {
                 warn!(
@@ -204,9 +206,10 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
-        let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
+        builder.shutdown(tool_start_input.root_uri);
+        let new_options = tool_start_input.options.clone();
+        let new_formatter = builder.build_boxed(tool_start_input);
+        let watch_patterns = new_formatter.get_watcher_patterns(new_options);
         ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
     }
 
@@ -236,12 +239,11 @@ impl Tool for ServerFormatter {
         &self,
         builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
-        builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, options);
+        builder.shutdown(tool_start_input.root_uri);
+        let new_formatter = builder.build_boxed(tool_start_input);
 
         ToolRestartChanges {
             tool: Some(new_formatter),

@@ -9,7 +9,9 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, Tool, ToolBuilder, ToolRestartChanges,
+    backend::Backend,
+    tool::{DiagnosticResult, ToolStartInput},
 };
 
 #[derive(Default)]
@@ -24,7 +26,7 @@ impl FakeToolBuilder {
 }
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
+    fn build_boxed(&self, _tool_start_input: ToolStartInput) -> Box<dyn Tool> {
         Box::new(FakeTool)
     }
 
@@ -81,17 +83,18 @@ impl Tool for FakeTool {
     fn handle_configuration_change(
         &self,
         builder: &dyn ToolBuilder,
-        root_uri: &Uri,
         _old_options_json: &serde_json::Value,
-        new_options_json: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
-        if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
+        if tool_start_input.options.as_u64() == Some(1)
+            || tool_start_input.options.as_u64() == Some(3)
+        {
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, new_options_json)),
+                tool: Some(builder.build_boxed(tool_start_input)),
                 watch_patterns: None,
             };
         }
-        if new_options_json.as_u64() == Some(2) {
+        if tool_start_input.options.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
@@ -114,12 +117,11 @@ impl Tool for FakeTool {
         &self,
         builder: &dyn ToolBuilder,
         changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         if changed_uri.as_str().ends_with("tool.config") {
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, options)),
+                tool: Some(builder.build_boxed(tool_start_input)),
                 watch_patterns: None,
             };
         }
