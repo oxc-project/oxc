@@ -87,9 +87,78 @@ impl Rule for NoReactChildren {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![];
+    let pass = vec![
+        "import React from 'react';",
+        "const children = []; children.map(x => x)",
+        "const Children = { map: () => {} }; Children.map()",
+        "import React from 'react'; React.createElement('div')",
+        // Violations in comments do not count.
+        "const foo = []; /* React.Children */",
+        "const foo = []; /* import { Children } from 'react'; */",
+    ];
 
-    let fail = vec![];
+    let fail = vec![
+        // Named import { Children } + each method
+        "import { Children } from 'react'; Children.toArray(children)",
+        "import { Children } from 'react'; Children.map(children, child => <div>{child}</div>)",
+        "import { Children } from 'react'; Children.only(children)",
+        "import { Children } from 'react'; Children.count(children)",
+        "import { Children } from 'react'; Children.forEach(children, (child, index) => {})",
+        // Default import React + React.Children.*
+        "import React from 'react'; React.Children.toArray(children)",
+        "import React from 'react'; React.Children.map(children, child => <div>{child}</div>)",
+        "import React from 'react'; React.Children.only(children)",
+        "import React from 'react'; React.Children.count(children)",
+        "import React from 'react'; React.Children.forEach(children, (child, index) => {})",
+        // Wildcard import * as React
+        "import * as React from 'react'; React.Children.map(children, child => <div>{child}</div>)",
+        // Combined import React, { Children }
+        "import React, { Children } from 'react'; Children.toArray(children)",
+        // Various complex examples
+        "import { Children } from 'react';
+         function RowList({ children }) {
+           return (
+             <><h1>Total rows: {Children.count(children)}</h1></>
+           );
+         }",
+        "import React from 'react';
+         export const Table = ({ children }) => {
+           const mappedChildren = React.Children.map(children, (child) =>
+             <tr>{child}</tr>
+           );
+           return <table>{mappedChildren}</table>;
+         }",
+        "import { Children } from 'react';
+         function SeparatorList({ children }) {
+           const result = [];
+           Children.forEach(children, (child, index) => {
+             result.push(child);
+             result.push(<hr key={index} />);
+           });
+         }",
+        r#"import { Children } from 'react';
+           function RowList({ children }) {
+             return (
+               <div className="RowList">
+                 {Children.map(children, child =>
+                   <div className="Row">
+                     {child}
+                   </div>
+                 )}
+               </div>
+             );
+           }"#,
+        "function Box({ children }) { const element = Children.only(children); }",
+        "import * as React from 'react';
+         function SeparatorList({ children }) {
+           const result = [];
+           React.Children.forEach(children, (child, index) => {
+             result.push(child);
+             result.push(<hr key={index} />);
+           });
+           // ...
+         }",
+    ];
 
     Tester::new(NoReactChildren::NAME, NoReactChildren::PLUGIN, pass, fail).test_and_snapshot();
 }
