@@ -28,6 +28,10 @@ declare_oxc_lint!(
     ///
     /// It is recommended to use alternative approaches for handling children.
     ///
+    /// Note that this rule is based on a combination of multiple rules from `@eslint-react/eslint-plugin`,
+    /// including [`@eslint-react/no-children-count`](https://www.eslint-react.xyz/docs/rules/no-children-count)
+    /// and [`@eslint-react/no-children-for-each`](https://www.eslint-react.xyz/docs/rules/no-children-for-each).
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -143,6 +147,7 @@ fn test() {
         // Local React object, not an import
         "const React = { Children: { map: () => {} } }; React.Children.map()",
         "<Foo>{children}</Foo>",
+        // Usage of `children` in the props for a React component is fine.
         r#"function Card({ children }) {
              return (
                <div className="card">
