@@ -91,27 +91,27 @@ fn test() {
     let pass = vec![
         (
             "
-			      <script>
-			      export * from 'foo'
-			      export default {}
-			      export class A {}
-			      </script>
-			      ",
+                  <script>
+                  export * from 'foo'
+                  export default {}
+                  export class A {}
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export * from 'foo'
-			      export default {}
-			      export class A {}
-			      </script>
-			      <script setup>
-			      let foo;
-			      </script>
-			      ",
+                  <script>
+                  export * from 'foo'
+                  export default {}
+                  export class A {}
+                  </script>
+                  <script setup>
+                  let foo;
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -121,44 +121,44 @@ fn test() {
     let fail = vec![
         (
             "
-			      <script setup>
-			      export * from 'foo'
-			      export default {}
-			      export class A {}
-			      export const test = '123'
-			      export function foo() {}
-			      const a = 1
-			      export { a }
-			      export { fao } from 'bar'
-			      </script>
-			      ",
+                  <script setup>
+                  export * from 'foo'
+                  export default {}
+                  export class A {}
+                  export const test = '123'
+                  export function foo() {}
+                  const a = 1
+                  export { a }
+                  export { fao } from 'bar'
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      let foo;
-			      </script>
-			      <script setup>
-			      export * from 'foo'
-			      export default {}
-			      export class A {}
-			      </script>
-			      ",
+                  <script>
+                  let foo;
+                  </script>
+                  <script setup>
+                  export * from 'foo'
+                  export default {}
+                  export class A {}
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			      export const Foo = {}
-			      export enum Bar {}
-			      export { }
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                  export const Foo = {}
+                  export enum Bar {}
+                  export { }
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
