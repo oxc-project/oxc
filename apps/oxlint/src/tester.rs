@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
@@ -133,5 +133,171 @@ impl Tester {
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_file_name, output_string);
         });
+    }
+}
+
+/**
+ * Some test for suppression required to handle files, and assert file contest. This struct exist only for:
+ * - Automatic dispose: If a test fail or success, all the files used are going to be reverted to his original form.
+ * - Save file on panic config: If a test is failing, we can keep the result. This file will be override each execution. JS files are no kept between execution, those will be always reverted.
+ * - Hide the boilerplate code to setup this tests.
+ *
+ * The suppression fixtures have always the same structure:
+ * /suppression_X
+ * |-----files/
+ * |--------- test.js (Required)
+ * |--------- test-backup.js (Required) The file content that should be reverted after the test is done.
+ * |-----oxlintrc.json
+ * |-----oxlint-suppression.json (Optional)
+ * |-----oxlint-suppression-expected.json (Optional) Be aware of adding an ending new line.
+ * |-----oxlint-suppression-backup.json: Required if an initial file is present. Otherwise the file generated will be deleted.
+ */
+pub struct SuppressionTester {
+    cwd: PathBuf,
+    fixture_name: String,
+    have_backup_file: bool,
+    have_expected_file: bool,
+    have_setup_file: bool,
+    have_files_fixed: bool,
+    oxlint_suppression_file_name: String,
+}
+
+impl SuppressionTester {
+    pub fn new() -> Self {
+        let cwd = env::current_dir().unwrap();
+
+        // disable multiple workers for diagnostic
+        // because the snapshot could change every time when we are analyzing multiple files
+        // do not unwrap because we can set it only one time.
+        let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
+
+        Self {
+            cwd,
+            fixture_name: String::new(),
+            have_backup_file: false,
+            have_expected_file: false,
+            have_setup_file: false,
+            have_files_fixed: false,
+            oxlint_suppression_file_name: String::from("oxlint-suppressions.json"),
+        }
+    }
+
+    pub fn with_cwd(mut self, fixture_name: &str) -> Self {
+        self.cwd.push(format!("fixtures/{fixture_name}"));
+        self.fixture_name = fixture_name.to_string();
+        self
+    }
+
+    pub fn with_setup_file(mut self, have_setup_file: bool) -> Self {
+        self.have_setup_file = have_setup_file;
+        self
+    }
+
+    pub fn with_expected_file(mut self, have_expected_file: bool) -> Self {
+        self.have_expected_file = have_expected_file;
+        self
+    }
+
+    pub fn with_backup_file(mut self, have_backup_file: bool) -> Self {
+        self.have_backup_file = have_backup_file;
+        self
+    }
+
+    pub fn with_files_fixed(mut self, have_files_fixed: bool) -> Self {
+        self.have_files_fixed = have_files_fixed;
+        self
+    }
+
+    fn assert_message(&self, expected_file: bool) -> String {
+        if expected_file {
+            format!("{} not found in {}/", self.oxlint_suppression_file_name, self.fixture_name)
+        } else {
+            format!("{} found in {}/", self.oxlint_suppression_file_name, self.fixture_name)
+        }
+    }
+
+    pub fn test(&self, args: &[&str]) {
+        assert!(
+            fs::exists(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref())).unwrap()
+                == self.have_setup_file,
+            "{}",
+            self.assert_message(self.have_setup_file)
+        );
+
+        Tester::new().with_cwd(self.cwd.clone()).test(args);
+
+        assert!(
+            fs::exists(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref())).unwrap()
+                == self.have_expected_file,
+            "{}",
+            self.assert_message(self.have_expected_file)
+        );
+
+        if self.have_expected_file {
+            let new_content = fs::read_to_string(
+                self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()),
+            )
+            .unwrap_or_else(|_| {
+                panic!("Unable to read the new {}", self.oxlint_suppression_file_name)
+            });
+            let expected_content = fs::read_to_string(
+                self.cwd.join("oxlint-suppressions-expected.json"),
+            )
+            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
+
+            assert_eq!(
+                new_content, expected_content,
+                "The suppression generated doesn't match the expected"
+            );
+        }
+    }
+}
+
+impl Drop for SuppressionTester {
+    fn drop(&mut self) {
+        if self.have_expected_file {
+            match fs::remove_file(self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()))
+            {
+                Ok(()) => {}
+                Err(err) => panic!(
+                    "Unable to delete the setup file in fixture {} with error {}",
+                    self.cwd
+                        .join::<&str>(self.oxlint_suppression_file_name.as_ref())
+                        .to_string_lossy(),
+                    err
+                ),
+            }
+        }
+
+        if self.have_backup_file {
+            let oxlint_file_dest =
+                self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref());
+            let oxlint_file_source = self.cwd.join("oxlint-suppressions-backup.json");
+            match fs::copy(oxlint_file_source, oxlint_file_dest) {
+                Ok(_) => {}
+                Err(err) => panic!(
+                    "Unable to replace the suppression setup with the backup in fixture {} with error {}",
+                    self.cwd
+                        .join::<&str>(self.oxlint_suppression_file_name.as_ref())
+                        .to_string_lossy(),
+                    err
+                ),
+            }
+        }
+
+        if self.have_files_fixed {
+            let js_file_dest = self.cwd.join("files/test.js");
+            let js_file_source = self.cwd.join("files/test-backup.js");
+            match fs::copy(js_file_source, js_file_dest) {
+                Ok(_) => {}
+                Err(err) => panic!(
+                    "Unable to replace the js linted filed with the backup in fixture {} with error {}",
+                    self.cwd
+                        .join::<&str>(self.oxlint_suppression_file_name.as_ref())
+                        .to_string_lossy(),
+                    err
+                ),
+            }
+        }
     }
 }
