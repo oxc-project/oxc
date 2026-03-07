@@ -120,10 +120,6 @@ impl Rule for NoReactChildren {
             ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
         }
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
-    }
 }
 
 fn is_imported_from_react(local_name: &str, ctx: &LintContext) -> bool {
