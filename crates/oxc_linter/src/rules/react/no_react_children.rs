@@ -2,24 +2,18 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_react_children_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    OxcDiagnostic::warn("`React.Children` should not be used.")
+        .with_help("Children passed to this React component should be handled in a different way, see the docs for alternatives.")
         .with_label(span)
+        .with_note("https://react.dev/reference/react/Children")
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoReactChildren;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
