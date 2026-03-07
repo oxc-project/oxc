@@ -139,7 +139,7 @@ fn test() {
         "const foo = []; /* import { Children } from 'react'; */",
         "<div>Children</div>",
         "<MyComponent>Children</MyComponent>",
-        "<MyComponent>React.Children</MyComponent>",
+        "import React from 'react'; return <MyComponent>React.Children</MyComponent>",
         r#""React.Children""#,
         "import { Children } from 'something-else'; Children.toArray(children)",
         // Unresolved Children reference (no import) - not flagged
@@ -148,7 +148,8 @@ fn test() {
         "const React = { Children: { map: () => {} } }; React.Children.map()",
         "<Foo>{children}</Foo>",
         // Usage of `children` in the props for a React component is fine.
-        r#"function Card({ children }) {
+        r#"import React from 'react';
+           function Card({ children }) {
              return (
                <div className="card">
                  {children}
