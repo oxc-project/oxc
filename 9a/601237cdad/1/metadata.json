@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "9a601237cdad",
+  "session_id": "6ba234f1-4ef8-4c43-b035-96234c4d1786",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T14:16:56.974838Z",
+  "branch": "boshen/ci-refs-dev-drive",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/ci.yml"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "32b9e2f3-50cc-4092-953a-93336f0ab78d",
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 14986,
+    "cache_read_tokens": 237969,
+    "output_tokens": 1741,
+    "api_call_count": 16
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T14:16:56.964028Z",
+    "agent_lines": 2,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2437,
+    "agent_percentage": 0.08206811653672548
+  }
+}
