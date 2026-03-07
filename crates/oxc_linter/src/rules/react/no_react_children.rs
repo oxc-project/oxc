@@ -38,11 +38,11 @@ declare_oxc_lint!(
     /// ```jsx
     /// import { Children } from 'react';
     ///
-    /// Children.toArray(children)
-    /// Children.map(children, child => <div>{child}</div>)
-    /// Children.only(children)
-    /// Children.count(children)
-    /// Children.forEach(children, (child, index) => {})
+    /// Children.toArray(children);
+    /// Children.map(children, child => <div>{child}</div>);
+    /// Children.only(children);
+    /// Children.count(children);
+    /// Children.forEach(children, (child, index) => {});
     /// ```
     ///
     /// ```jsx
