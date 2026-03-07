@@ -159,7 +159,8 @@ oxlint-node:
   pnpm -C apps/oxlint run build
 
 # oxlint dev build, for testing with Node.js locally.
-# This will lack some functionality but build faster, as it skips `--release` and the allocator feature.
+# This uses a non-release Rust build without the `allocator` feature (no mimalloc) and sets DEBUG options for the JS bundle,
+# which mainly affects build time, performance, and debug assertions rather than available linting functionality.
 # After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node-dev:
   pnpm -C apps/oxlint run build-dev
