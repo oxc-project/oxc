@@ -213,7 +213,7 @@ oxfmt-node:
   pnpm -C apps/oxfmt run build
 
 # oxfmt dev build, for testing with Node.js locally.
-# This will lack some functionality but build faster.
+# This builds faster than the release build and may differ in performance or behavior.
 # After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node-dev:
   pnpm -C apps/oxfmt run build-dev
