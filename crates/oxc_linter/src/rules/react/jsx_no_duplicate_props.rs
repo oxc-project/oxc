@@ -95,31 +95,30 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("<App />;", None),
-        ("<App {...this.props} />;", None),
-        ("<App a b c />;", None),
-        ("<App a b c A />;", None),
-        ("<App {...this.props} a b c />;", None),
-        ("<App c {...this.props} a b />;", None),
-        (r#"<App a="c" b="b" c="a" />;"#, None),
-        (r#"<App {...this.props} a="c" b="b" c="a" />;"#, None),
-        (r#"<App c="a" {...this.props} a="c" b="b" />;"#, None),
-        ("<App A a />;", None),
-        ("<App A b a />;", None),
-        (r#"<App A="a" b="b" B="B" />;"#, None),
+        "<App />;",
+        "<App {...this.props} />;",
+        "<App a b c />;",
+        "<App a b c A />;",
+        "<App {...this.props} a b c />;",
+        "<App c {...this.props} a b />;",
+        r#"<App a="c" b="b" c="a" />;"#,
+        r#"<App {...this.props} a="c" b="b" c="a" />;"#,
+        r#"<App c="a" {...this.props} a="c" b="b" />;"#,
+        "<App A a />;",
+        "<App A b a />;",
+        r#"<App A="a" b="b" B="B" />;"#,
     ];
 
     let fail = vec![
-        ("<App a a />;", None),
-        ("<App A b c A />;", None),
-        (r#"<App a="a" b="b" a="a" />;"#, None),
-        (r#"<App a="a" {...this.props} b="b" a="a" />;"#, None),
-        (r#"<App a b="b" {...this.props} a="a" />;"#, None),
-        (r#"<App a={[]} b="b" {...this.props} a="a" />;"#, None),
-        (r#"<App a="a" b="b" a="a" {...this.props} />;"#, None),
-        (r#"<App {...this.props} a="a" b="b" a="a" />;"#, None),
-        (
-            r#"
+        "<App a a />;",
+        "<App A b c A />;",
+        r#"<App a="a" b="b" a="a" />;"#,
+        r#"<App a="a" {...this.props} b="b" a="a" />;"#,
+        r#"<App a b="b" {...this.props} a="a" />;"#,
+        r#"<App a={[]} b="b" {...this.props} a="a" />;"#,
+        r#"<App a="a" b="b" a="a" {...this.props} />;"#,
+        r#"<App {...this.props} a="a" b="b" a="a" />;"#,
+        r#"
             <App
                 a="a"
                 {...this.props}
@@ -127,8 +126,6 @@ fn test() {
                 b="b"
             />;
         "#,
-            None,
-        ),
     ];
 
     Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::PLUGIN, pass, fail)
