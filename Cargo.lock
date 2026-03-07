@@ -1254,6 +1254,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "json5"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96b0db21af676c1ce64250b5f40f3ce2cf27e4e47cb91ed91eb6fe9350b430c1"
+dependencies = [
+ "pest",
+ "pest_derive",
+ "serde",
+]
+
+[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1927,6 +1938,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_formatter_core",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1938,6 +1950,29 @@ dependencies = [
  "serde",
  "serde_json",
  "unicode-width",
+]
+
+[[package]]
+name = "oxc_formatter_core"
+version = "0.1.0"
+dependencies = [
+ "cow-utils",
+ "oxc_allocator",
+ "oxc_data_structures",
+ "oxc_span",
+ "rustc-hash",
+ "unicode-width",
+]
+
+[[package]]
+name = "oxc_formatter_json"
+version = "0.1.0"
+dependencies = [
+ "json5",
+ "oxc_allocator",
+ "oxc_formatter_core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2231,6 +2266,8 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_formatter",
+ "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
@@ -2542,6 +2579,8 @@ dependencies = [
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_language_server",
  "oxc_napi",
  "oxc_parser",
