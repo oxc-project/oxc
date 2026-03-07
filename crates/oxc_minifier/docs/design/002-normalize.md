@@ -110,9 +110,11 @@ NaN        →  0/0
 Number.NaN →  0/0
 ```
 
-### Mark known pure constructors
+### Mark selected pure constructor calls
 
-Annotate known side-effect-free constructors with `@__PURE__` so DCE can remove them when unused: `new WeakMap()`, `new WeakSet()`, `new Map()`, `new Set()`, `new Promise(r => r())`.
+Annotate selected `new` expressions with `@__PURE__` when constructor-specific checks prove they are side-effect-free under the assumptions in [`../assumptions.md`](../assumptions.md). This is intentionally narrower than "all built-in constructors are pure": the callee must be the standard global, the arguments must be side-effect-free, and the constructor/arity combination must be known not to throw.
+
+See [025 - Pure Annotations and Side Effects](025-pure-annotations-and-side-effects.md) for the safety constraints and examples.
 
 ## References
 

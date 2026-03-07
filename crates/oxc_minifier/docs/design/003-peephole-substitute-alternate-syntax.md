@@ -153,17 +153,7 @@ const obj = { x: x, y: y };
 const obj = { x, y };
 ```
 
-### Method shorthand
-
-When an object literal has a property whose value is a function expression, use method shorthand syntax.
-
-```js
-// Before
-const obj = { method: function() { return 1; } };
-
-// After
-const obj = { method() { return 1; } };
-```
+Do not rewrite function-valued properties to concise methods. `{ method: function() {} }` and `{ method() {} }` are not equivalent: concise methods are not constructible and do not have a `.prototype` property.
 
 ### Arrow function body simplification
 
@@ -189,17 +179,7 @@ Moving a string literal from the left side to the right can save bytes when the 
 foo === "x"
 ```
 
-### Indirect eval optimization
-
-Indirect eval runs in global scope. Some patterns benefit from this transformation.
-
-```js
-// Before
-eval(code)
-
-// After
-(0, eval)(code)
-```
+Do not rewrite direct `eval(...)` to indirect eval such as `(0, eval)(...)`. That changes scope resolution semantics.
 
 ## References
 

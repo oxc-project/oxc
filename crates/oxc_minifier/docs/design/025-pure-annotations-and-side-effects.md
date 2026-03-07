@@ -77,8 +77,11 @@ a.b.c;
 
 ### Auto-detected pure constructors
 
-The following constructors are known to be side-effect-free and can be automatically annotated as `@__PURE__`:
-`WeakMap`, `WeakSet`, `Map`, `Set`, `Date`, `RegExp`, `Error`, `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `Float32Array`, `Float64Array`, `BigInt64Array`, `BigUint64Array`, `ArrayBuffer`, `SharedArrayBuffer`, `DataView`, `Promise` (with trivial resolver).
+Some `new` expressions can be marked `@__PURE__` automatically, but only after constructor-specific checks. The callee must resolve to the standard global constructor, the arguments must be side-effect-free, and the invocation must be proven non-throwing for the given arity/value types.
+
+Examples include selected zero/one-argument cases for `WeakMap`, `WeakSet`, `Map`, `Set`, `Date`, `ArrayBuffer`, boxed primitives, the standard `Error` constructors, `DataView`, and validated `RegExp` construction.
+
+This is intentionally narrower than "all built-in constructors are pure": constructors such as `Promise` or arbitrary typed-array forms require additional analysis and should not be blanket-annotated.
 
 ### Safety constraints
 

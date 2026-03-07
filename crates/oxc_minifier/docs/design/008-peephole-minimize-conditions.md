@@ -151,15 +151,19 @@ Only safe when `x` is side-effect-free (no getter). Refs: esbuild `MangleEquals`
 
 ### Simplify ternary to logical
 
-Ternary expressions with boolean literal branches can be simplified to logical expressions.
+When the surrounding context only observes truthiness, or when the test is already known to be boolean, ternary expressions with boolean literal branches can be simplified to logical expressions.
 
 ```js
-// Before → After
-a ? b : false    →  a && b
-a ? true : b     →  a || b
-a ? false : b    →  !a && b
-a ? b : true     →  !a || b
+// In boolean context:
+if (a ? b : false)  →  if (a && b)
+if (a ? true : b)   →  if (a || b)
+
+// If `a` is already known boolean:
+a ? b : false       →  a && b
+a ? true : b        →  a || b
 ```
+
+These rewrites are not valid for arbitrary `a`: for example, `0 ? b : false` evaluates to `false`, while `0 && b` evaluates to `0`.
 
 ### Type-aware equality relaxation
 

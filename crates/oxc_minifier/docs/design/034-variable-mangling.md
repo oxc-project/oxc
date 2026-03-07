@@ -118,17 +118,20 @@ When `eval()` is present in a scope, all variables in the containing scope chain
 
 Refs: esbuild direct eval deoptimization; Terser `eval` option.
 
-### `keep_names` implementation
+### `keep_names` handling
 
-To preserve `.name` property on functions/classes while still renaming the binding, insert a wrapper:
+`keep_names` is primarily a renaming constraint, not a wrapper rewrite. The mangler reserves symbols whose bindings determine the `.name` of functions/classes, and compressor passes must avoid removing function/class names when the corresponding `keep_names` option is enabled.
+
+This matters both for declarations and for anonymous expressions whose `.name` comes from the binding:
 
 ```js
-// Original
-function longName() {}
+// Before
+var longName = function() {};
 
-// Mangled with keep_names
-var a = function longName() {};
-// The binding is 'a' but .name remains 'longName'
+// With keep_names enabled
+var longName = function() {};
+// Not:
+// var a = function() {};
 ```
 
 ## References

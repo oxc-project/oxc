@@ -126,9 +126,12 @@ if (false) { var x = 1; }
 var x;
 ```
 
-### Function/class declarations in dead code
+### Function and class declarations in dead code
 
-Function and class declarations in dead code paths must be preserved because they hoist to the enclosing scope.
+Function and class declarations need different handling.
+
+- Function declarations may need to be preserved when hoisting or Annex B block-function semantics make them visible outside the dead branch.
+- Class declarations are block-scoped and do not hoist like `var`; they can only be removed when dropping the dead block preserves block-scope semantics.
 
 ## References
 
