@@ -7,96 +7,96 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import { Children } from 'react'; Children.toArray(children)
    ·                                   ────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.map(children, child => <div>{child}</div>)
    ·                                   ────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.only(children)
    ·                                   ─────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.count(children)
    ·                                   ──────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:35]
  1 │ import { Children } from 'react'; Children.forEach(children, (child, index) => {})
    ·                                   ────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.toArray(children)
    ·                            ──────────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.map(children, child => <div>{child}</div>)
    ·                            ──────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.only(children)
    ·                            ───────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.count(children)
    ·                            ────────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children.forEach(children, (child, index) => {})
    ·                            ──────────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:33]
  1 │ import * as React from 'react'; React.Children.map(children, child => <div>{child}</div>)
    ·                                 ──────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:42]
  1 │ import React, { Children } from 'react'; Children.toArray(children)
    ·                                          ────────────────
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:33]
@@ -105,8 +105,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────────────
  5 │            );
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:3:35]
@@ -115,8 +115,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────────
  4 │              <tr>{child}</tr>
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:12]
@@ -125,8 +125,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────
  5 │              result.push(child);
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:5:19]
@@ -135,8 +135,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────
  6 │                    <div className="Row">
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ eslint-plugin-react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:4:12]
@@ -145,5 +145,5 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────────────────
  5 │              result.push(child);
    ╰────
-  help: Children passed to this React component should be handled in a different way, see the docs for alternatives.
-  note: https://react.dev/reference/react/Children
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives

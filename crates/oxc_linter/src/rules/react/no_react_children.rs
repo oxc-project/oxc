@@ -7,9 +7,9 @@ use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
 
 fn no_react_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React.Children` should not be used.")
-        .with_help("Children passed to this React component should be handled in a different way, see the docs for alternatives.")
+        .with_help("`React.Children` is uncommon and leads to fragile React components.")
         .with_label(span)
-        .with_note("https://react.dev/reference/react/Children")
+        .with_note("https://react.dev/reference/react/Children#alternatives")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,7 +26,14 @@ declare_oxc_lint!(
     /// [discouraged by the React documentation](https://react.dev/reference/react/Children).
     /// It is an uncommon pattern and can lead to fragile code.
     ///
-    /// It is recommended to use alternative approaches for handling children.
+    /// It is recommended to use alternative approaches for handling children. See the
+    /// [React documentation](https://react.dev/reference/react/Children#alternatives) for
+    /// more information.
+    ///
+    /// ::: tip
+    /// Don't confuse `React.Children` with using the `children` prop (lowercase `c`), which is
+    /// good and encouraged.
+    /// :::
     ///
     /// Note that this rule is based on a combination of multiple rules from `@eslint-react/eslint-plugin`,
     /// including [`@eslint-react/no-children-count`](https://www.eslint-react.xyz/docs/rules/no-children-count)
