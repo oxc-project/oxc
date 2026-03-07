@@ -102,16 +102,36 @@ async function getChangedFiles() {
 
 module.exports = { getChangedFiles };
 
-// If run directly as a script, output changed files as JSON
+// If run directly as a script:
+// - No args: output changed files as JSON
+// - With args: treat as path prefixes, output true/false if any changed file matches
 if (require.main === module) {
+  const watchPaths = process.argv.slice(2);
+
   getChangedFiles()
     .then((files) => {
-      console.log(JSON.stringify(files));
-      process.exit(0);
+      // No path args: output file list as JSON (existing behavior)
+      if (watchPaths.length === 0) {
+        console.log(JSON.stringify(files));
+        return;
+      }
+
+      // With path args: check if any changed file matches, output true/false
+      // null means manual trigger or error — always run
+      if (files === null) {
+        console.log("true");
+        return;
+      }
+
+      const matched = files.some((file) =>
+        watchPaths.some((prefix) => file.startsWith(prefix) || file === prefix),
+      );
+      console.log(matched ? "true" : "false");
     })
     .catch((error) => {
       console.error("Error:", error);
-      console.log(JSON.stringify(null));
+      // Fallback: run if we have watch paths, null otherwise
+      console.log(watchPaths.length > 0 ? "true" : JSON.stringify(null));
       process.exit(1);
     });
 }

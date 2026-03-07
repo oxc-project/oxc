@@ -228,7 +228,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          SHOULD_RUN=$(node .github/scripts/check-napi-changes.js oxlint apps/oxlint/)
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js apps/oxlint/ crates/oxc_linter/ crates/oxc_language_server/ Cargo.lock)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         if: steps.filter.outputs.src == 'true'
@@ -254,7 +254,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          SHOULD_RUN=$(node .github/scripts/check-napi-changes.js oxfmt apps/oxfmt/)
+          SHOULD_RUN=$(node .github/scripts/get-changed-files.js apps/oxfmt/ crates/oxc_formatter/ Cargo.lock)
           echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         if: steps.filter.outputs.src == 'true'
