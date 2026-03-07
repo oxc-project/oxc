@@ -32,7 +32,7 @@ Property names are often long and descriptive (`backgroundColor`, `handleClickEv
 var obj = {
   backgroundColor: "red",
   fontSize: 14,
-  handleClick: function() {}
+  handleClick: function () {},
 };
 obj.backgroundColor = "blue";
 obj.handleClick();
@@ -41,7 +41,7 @@ obj.handleClick();
 var obj = {
   a: "red",
   b: 14,
-  c: function() {}
+  c: function () {},
 };
 obj.a = "blue";
 obj.c();
@@ -87,7 +87,7 @@ var { a: backgroundColor, b: fontSize } = getStyles();
 use(backgroundColor);
 ```
 
-Note: the destructured *binding* names (local variables) are handled by variable mangling, not property mangling.
+Note: the destructured _binding_ names (local variables) are handled by variable mangling, not property mangling.
 
 ### Quoted properties
 
@@ -109,9 +109,9 @@ Users can specify property names to exclude from mangling:
 ```js
 // Config: reserve ["onClick", "render"]
 var c = {
-  onClick: handler,      // preserved
-  render: function() {}, // preserved
-  internalState: {}      // mangled to "a"
+  onClick: handler, // preserved
+  render: function () {}, // preserved
+  internalState: {}, // mangled to "a"
 };
 ```
 

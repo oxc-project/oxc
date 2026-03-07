@@ -42,8 +42,8 @@ Handle enum members with computed values (auto-incrementing, expressions).
 // Before
 const enum Status {
   Active = 1,
-  Pending,    // auto-increments to 2
-  Disabled,   // auto-increments to 3
+  Pending, // auto-increments to 2
+  Disabled, // auto-increments to 3
 }
 check(Status.Pending);
 

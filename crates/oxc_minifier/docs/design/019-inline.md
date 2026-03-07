@@ -6,6 +6,7 @@
 ## What
 
 This pass inlines variables, functions, and properties — replacing references with their values and call sites with function bodies. It covers three related transformations:
+
 - **Variable inlining**: replace a variable reference with its assigned value
 - **Function inlining**: replace a function call with the function body
 - **Property inlining**: replace a property access with the property's constant value
@@ -67,7 +68,9 @@ When a function body is a single `return` expression, replace call sites with th
 
 ```js
 // Before
-function square(x) { return x * x; }
+function square(x) {
+  return x * x;
+}
 var result = square(5);
 
 // After
@@ -99,7 +102,7 @@ Immediately-invoked function expressions with no arguments and no `this`/`argume
 
 ```js
 // Before
-(function() {
+(function () {
   setup();
   configure();
 })();
@@ -132,6 +135,7 @@ if (false) {
 ### Inlining cost thresholds
 
 Values cheap enough to inline even with multiple references:
+
 - **Numbers**: integers from -99 to 999 (no fractional part) — at most 3 characters
 - **Strings**: ≤3 characters (including quotes, still small)
 - **Booleans**: `!0` and `!1` are 2 bytes each
@@ -141,6 +145,7 @@ Values cheap enough to inline even with multiple references:
 ### Safety constraints
 
 Inlining is only safe when:
+
 - The inlined expression has no side effects, or is evaluated exactly as many times as before
 - The evaluation order of surrounding expressions is preserved
 - The inlined expression does not reference variables that would have different values at the new location
@@ -151,7 +156,7 @@ Inlining is only safe when:
 ```js
 // NOT safe to inline — side effect would execute twice
 var x = sideEffect();
-use(x, x);  // cannot replace both x with sideEffect()
+use(x, x); // cannot replace both x with sideEffect()
 ```
 
 ## References

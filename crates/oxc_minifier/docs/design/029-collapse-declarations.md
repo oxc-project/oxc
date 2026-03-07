@@ -28,7 +28,9 @@ var b = 2;
 var c = 3;
 
 // After
-var a = 1, b = 2, c = 3;
+var a = 1,
+  b = 2,
+  c = 3;
 ```
 
 Only joins consecutive declarations of the same kind (`var`/`let`/`const`).
@@ -37,10 +39,14 @@ Only joins consecutive declarations of the same kind (`var`/`let`/`const`).
 
 ```js
 // Before
-var f = function() { return 1; };
+var f = function () {
+  return 1;
+};
 
 // After
-function f() { return 1; }
+function f() {
+  return 1;
+}
 ```
 
 Only safe when `f` is not reassigned and the declaration is in statement position (not inside an expression).
@@ -50,20 +56,25 @@ Only safe when `f` is not reassigned and the declaration is in statement positio
 ```js
 // Before
 a = 0;
-for (; a < 10; a++) { body(); }
+for (; a < 10; a++) {
+  body();
+}
 
 // After
-for (a = 0; a < 10; a++) { body(); }
+for (a = 0; a < 10; a++) {
+  body();
+}
 ```
 
 Also applies to `var` declarations:
 
 ```js
 // Before
-var a = 0; for(;a<n;a++) {}
+var a = 0;
+for (; a < n; a++) {}
 
 // After
-for(var a=0;a<n;a++) {}
+for (var a = 0; a < n; a++) {}
 ```
 
 ### Denormalize: collapse compound assignments

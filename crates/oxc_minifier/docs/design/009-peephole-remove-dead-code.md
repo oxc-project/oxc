@@ -19,7 +19,11 @@ When the condition of an `if`, ternary, or logical expression is a known constan
 
 ```js
 // Before
-if (true) { a(); } else { b(); }
+if (true) {
+  a();
+} else {
+  b();
+}
 
 // After
 a();
@@ -27,7 +31,9 @@ a();
 
 ```js
 // Before
-if (false) { a(); }
+if (false) {
+  a();
+}
 
 // After
 // (removed entirely)
@@ -49,11 +55,11 @@ An expression statement whose value is never used and that produces no side effe
 // Before
 "use strict";
 42;
-x;  // just a read, no side effect in sloppy mode
+x; // just a read, no side effect in sloppy mode
 a();
 
 // After
-"use strict";
+("use strict");
 a();
 ```
 
@@ -81,7 +87,10 @@ A `do { ... } while (false)` executes its body exactly once. Replace it with the
 
 ```js
 // Before
-do { a(); b(); } while (false);
+do {
+  a();
+  b();
+} while (false);
 
 // After
 a();
@@ -94,7 +103,11 @@ When a `try` block cannot throw (contains only simple statements), the `catch` b
 
 ```js
 // Before
-try { x = 1; } catch (e) { handle(e); }
+try {
+  x = 1;
+} catch (e) {
+  handle(e);
+}
 
 // After
 x = 1;
@@ -106,8 +119,8 @@ Empty statements (`;`), empty blocks (`{}`), and control structures with empty b
 
 ```js
 // Before
-if (x) {}
-;
+if (x) {
+}
 for (;;) break;
 
 // After
@@ -120,7 +133,9 @@ for (;;) break;
 
 ```js
 // Before
-if (false) { var x = 1; }
+if (false) {
+  var x = 1;
+}
 
 // After
 var x;

@@ -17,10 +17,14 @@ The `arguments` object is expensive — engines must create the object and maint
 
 ```js
 // Before
-function f(a, b) { return arguments[0] + arguments[1]; }
+function f(a, b) {
+  return arguments[0] + arguments[1];
+}
 
 // After
-function f(a, b) { return a + b; }
+function f(a, b) {
+  return a + b;
+}
 ```
 
 ### Add missing parameters
@@ -29,10 +33,14 @@ When `arguments[N]` exceeds the parameter count, add synthetic parameters to ena
 
 ```js
 // Before
-function f() { return arguments[0] + arguments[1]; }
+function f() {
+  return arguments[0] + arguments[1];
+}
 
 // After
-function f(argument_0, argument_1) { return argument_0 + argument_1; }
+function f(argument_0, argument_1) {
+  return argument_0 + argument_1;
+}
 ```
 
 ### Replace `arguments.length`
@@ -41,10 +49,14 @@ When the function has no rest parameters and arguments are not modified, replace
 
 ```js
 // Before
-function f(a, b) { return arguments.length; }
+function f(a, b) {
+  return arguments.length;
+}
 
 // After
-function f(a, b) { return 2; }
+function f(a, b) {
+  return 2;
+}
 ```
 
 Note: This is only safe for functions that are always called with exactly the declared number of arguments (requires call-site analysis or must be guarded).
@@ -52,6 +64,7 @@ Note: This is only safe for functions that are always called with exactly the de
 ### Safety constraints
 
 Do NOT replace when:
+
 - `arguments` is aliased (`var args = arguments`)
 - `arguments` is passed to another function (`f(arguments)`)
 - `arguments.callee` is used
@@ -64,10 +77,15 @@ Do NOT replace when:
 
 ```js
 // NOT safe — arguments is aliased
-function f(a) { var args = arguments; return args[0]; }
+function f(a) {
+  var args = arguments;
+  return args[0];
+}
 
 // NOT safe — arguments escapes
-function f(a) { g(arguments); }
+function f(a) {
+  g(arguments);
+}
 ```
 
 ## References

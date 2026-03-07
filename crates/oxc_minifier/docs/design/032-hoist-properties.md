@@ -17,11 +17,12 @@ Developers frequently group related constants or configuration values into objec
 
 ```js
 // Before
-var config = {width: 100, height: 200};
+var config = { width: 100, height: 200 };
 draw(config.width, config.height);
 
 // After
-var config_width = 100, config_height = 200;
+var config_width = 100,
+  config_height = 200;
 draw(config_width, config_height);
 ```
 
@@ -29,12 +30,12 @@ draw(config_width, config_height);
 
 ```js
 // Before
-var o = {a: 1, b: [2, 3]};
+var o = { a: 1, b: [2, 3] };
 f(o.a);
 
 // After (only hoist primitive properties)
 var o_a = 1;
-var o = {b: [2, 3]};
+var o = { b: [2, 3] };
 f(o_a);
 ```
 
@@ -44,11 +45,13 @@ The real benefit appears after variable name mangling:
 
 ```js
 // Before mangling
-var config_width = 100, config_height = 200;
+var config_width = 100,
+  config_height = 200;
 draw(config_width, config_height);
 
 // After mangling
-var a = 100, b = 200;
+var a = 100,
+  b = 200;
 draw(a, b);
 ```
 

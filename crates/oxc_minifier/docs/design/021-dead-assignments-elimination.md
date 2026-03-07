@@ -27,7 +27,7 @@ When the RHS is side-effect-free, remove the entire statement.
 ```js
 // Before
 function f(x) {
-  var y = x + 1;  // y is never read
+  var y = x + 1; // y is never read
   return x * 2;
 }
 
@@ -44,7 +44,7 @@ When the RHS has side effects, keep the expression but drop the assignment.
 ```js
 // Before
 function f() {
-  var result = sideEffect();  // result never read
+  var result = sideEffect(); // result never read
   return 0;
 }
 
@@ -61,7 +61,7 @@ When a variable is assigned twice with no read between, the first assignment is 
 
 ```js
 // Before
-x = computeA();  // dead — overwritten before read
+x = computeA(); // dead — overwritten before read
 x = computeB();
 use(x);
 
@@ -73,16 +73,16 @@ use(x);
 
 ### Handle conditional control flow
 
-Liveness analysis correctly handles branches — an assignment is only dead if *all* paths from the assignment point overwrite the variable before reading it.
+Liveness analysis correctly handles branches — an assignment is only dead if _all_ paths from the assignment point overwrite the variable before reading it.
 
 ```js
 // Before
-var x = 1;       // NOT dead — read on the else path
+var x = 1; // NOT dead — read on the else path
 if (cond) {
   x = 2;
   use(x);
 } else {
-  use(x);        // reads original x = 1
+  use(x); // reads original x = 1
 }
 ```
 

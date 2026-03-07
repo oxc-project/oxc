@@ -19,7 +19,9 @@ When an `if` body is a single expression statement with no `else`, rewrite as a 
 
 ```js
 // Before
-if (x) { a(); }
+if (x) {
+  a();
+}
 
 // After
 x && a();
@@ -33,7 +35,11 @@ When both branches of an `if`/`else` are single expression statements, rewrite a
 
 ```js
 // Before
-if (c) { a(); } else { b(); }
+if (c) {
+  a();
+} else {
+  b();
+}
 
 // After
 c ? a() : b();
@@ -41,7 +47,11 @@ c ? a() : b();
 
 ```js
 // Before
-if (c) { x = 1; } else { x = 2; }
+if (c) {
+  x = 1;
+} else {
+  x = 2;
+}
 
 // After
 x = c ? 1 : 2;
@@ -53,18 +63,22 @@ Distribute negation across logical operators to eliminate a `!` when the result 
 
 ```js
 // Before
-if (!a && !b) { x(); }
+if (!a && !b) {
+  x();
+}
 
 // After
-if (!(a || b)) { x(); }
+if (!(a || b)) {
+  x();
+}
 ```
 
 ```js
 // Before
-!(!a || !b)
+!(!a || !b);
 
 // After
-a && b
+a && b;
 ```
 
 ### Merge nested `if` statements
@@ -73,10 +87,16 @@ Consecutive or nested `if`s with no `else` can combine their conditions with `&&
 
 ```js
 // Before
-if (a) { if (b) { x(); } }
+if (a) {
+  if (b) {
+    x();
+  }
+}
 
 // After
-if (a && b) { x(); }
+if (a && b) {
+  x();
+}
 ```
 
 ### Flip negated comparisons
@@ -85,18 +105,18 @@ Remove leading `!` by using the negated comparison operator.
 
 ```js
 // Before
-!(a === b)
+!(a === b);
 
 // After
-a !== b
+a !== b;
 ```
 
 ```js
 // Before
-!(x > 0)
+!(x > 0);
 
 // After
-x <= 0
+x <= 0;
 ```
 
 ### Hoist `return` from `if`/`else`
@@ -105,7 +125,11 @@ When both branches of an `if`/`else` end with `return`, hoist the `return` and u
 
 ```js
 // Before
-if (c) { return a; } else { return b; }
+if (c) {
+  return a;
+} else {
+  return b;
+}
 
 // After
 return c ? a : b;
@@ -139,12 +163,12 @@ Strict equality checks against both `null` and `undefined` can be collapsed to a
 
 ```js
 // Before
-x === null || x === undefined
-x !== null && x !== undefined
+x === null || x === undefined;
+x !== null && x !== undefined;
 
 // After
-x == null
-x != null
+x == null;
+x != null;
 ```
 
 Only safe when `x` is side-effect-free (no getter). Refs: esbuild `MangleEquals`; Terser `comparisons`.
@@ -190,10 +214,13 @@ a instanceof b === true  →  a instanceof b
 
 ```js
 // Before
-(a = foo.bar) === null || a === undefined
-
-// After
-(a = foo.bar) == null
+(a = foo.bar) === null ||
+  (a ===
+    undefined(
+      // After
+      (a = foo.bar),
+    )) ==
+    null;
 ```
 
 ### Boolean context minimization

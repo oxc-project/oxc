@@ -21,7 +21,9 @@ Separate multi-binding declarations into one declaration per variable, making ea
 
 ```js
 // Before
-var a = 1, b = 2, c = 3;
+var a = 1,
+  b = 2,
+  c = 3;
 
 // After
 var a = 1;
@@ -35,10 +37,14 @@ Rewrite `while` loops as `for` loops so that all loops use a single construct.
 
 ```js
 // Before
-while (condition) { body(); }
+while (condition) {
+  body();
+}
 
 // After
-for (; condition;) { body(); }
+for (; condition; ) {
+  body();
+}
 ```
 
 ### Extract `for`-loop initializers
@@ -47,11 +53,15 @@ Pull complex initializers out of `for` headers into preceding statements.
 
 ```js
 // Before
-for (var x = expensive(); x < 10; x++) { use(x); }
+for (var x = expensive(); x < 10; x++) {
+  use(x);
+}
 
 // After
 var x = expensive();
-for (; x < 10; x++) { use(x); }
+for (; x < 10; x++) {
+  use(x);
+}
 ```
 
 ### Hoist function declarations
@@ -61,10 +71,14 @@ Move function declarations to the top of their scope, matching runtime hoisting 
 ```js
 // Before
 a();
-function a() { return 1; }
+function a() {
+  return 1;
+}
 
 // After
-function a() { return 1; }
+function a() {
+  return 1;
+}
 a();
 ```
 

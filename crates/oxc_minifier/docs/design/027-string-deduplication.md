@@ -34,10 +34,14 @@ Short or infrequent strings are not extracted:
 
 ```js
 // Before — "ok" appears 3 times but is too short
-f("ok"); g("ok"); h("ok");
+f("ok");
+g("ok");
+h("ok");
 
 // After (unchanged — extraction would increase size)
-f("ok"); g("ok"); h("ok");
+f("ok");
+g("ok");
+h("ok");
 ```
 
 ### Placement
@@ -46,13 +50,21 @@ The variable declaration is placed at the highest common scope of all occurrence
 
 ```js
 // Before
-function a() { log("event_name"); }
-function b() { log("event_name"); }
+function a() {
+  log("event_name");
+}
+function b() {
+  log("event_name");
+}
 
 // After
 var c = "event_name";
-function a() { log(c); }
-function b() { log(c); }
+function a() {
+  log(c);
+}
+function b() {
+  log(c);
+}
 ```
 
 ### Safety constraints

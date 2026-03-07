@@ -37,16 +37,16 @@ Fold comparisons between constants.
 
 ```js
 // Before
-1 === 1
-"a" < "b"
-null == undefined
-0 === null
+1 === 1;
+"a" < "b";
+null == undefined;
+0 === null;
 
 // After
-true
-true
-true
-false
+true;
+true;
+true;
+false;
 ```
 
 ### `typeof` on literals
@@ -55,18 +55,18 @@ Evaluate `typeof` when the operand is a literal.
 
 ```js
 // Before
-typeof 42
-typeof "hello"
-typeof true
-typeof undefined
-typeof null
+typeof 42;
+typeof "hello";
+typeof true;
+typeof undefined;
+typeof null;
 
 // After
-"number"
-"string"
-"boolean"
-"undefined"
-"object"
+("number");
+("string");
+("boolean");
+("undefined");
+("object");
 ```
 
 ### Logical short-circuit
@@ -75,16 +75,16 @@ Fold `&&` and `||` when the left operand determines the result.
 
 ```js
 // Before
-true && x
-false && x
-true || x
-false || x
+true && x;
+false && x;
+true || x;
+false || x;
 
 // After
-x
-false
-true
-x
+x;
+false;
+true;
+x;
 ```
 
 ### Nullish coalescing
@@ -93,24 +93,27 @@ Fold `??` when the left operand is known to be null/undefined or not.
 
 ```js
 // Before
-null ?? x
-undefined ?? x
-42 ?? x
+null ?? x;
+undefined ?? x;
+42 ?? x;
 
 // After
-x
-x
-42
+x;
+x;
+42;
 ```
 
 Side effects in the left operand must be preserved:
 
 ```js
 // Before
-(a(), null) ?? 1
-
-// After
-(a(), null, 1)
+(a(), null) ??
+  1(
+    // After
+    a(),
+    null,
+    1,
+  );
 ```
 
 ### Optional chain folding
@@ -129,20 +132,18 @@ Fold bitwise operations on integer constants.
 
 ```js
 // Before
-5 | 3
-5 & 3
-5 ^ 3
-~0
-1 << 4
--1 >>> 0
+5 | 3;
+5 & 3;
+5 ^ 3;
+~0;
+(1 << (4 - 1)) >>> 0;
 
 // After
-7
-1
-6
--1
-16
-4294967295
+7;
+1;
+6 - 1;
+16;
+4294967295;
 ```
 
 ### String concatenation
@@ -151,12 +152,12 @@ Fold string `+` operations.
 
 ```js
 // Before
-"hello" + " " + "world"
-"value: " + 42
+"hello" + " " + "world";
+"value: " + 42;
 
 // After
-"hello world"
-"value: 42"
+("hello world");
+("value: 42");
 ```
 
 ### Unary operations
@@ -165,16 +166,15 @@ Fold unary `+`, `-`, `!`, `~` on constants.
 
 ```js
 // Before
--(-5)
-+true
-!false
-!!0
+-(-5) + true;
+!false;
+!!0;
 
 // After
-5
-1
-true
-false
+5;
+1;
+true;
+false;
 ```
 
 ### Property access on literals
@@ -183,12 +183,11 @@ Fold known property access on literal values.
 
 ```js
 // Before
-"hello".length
-[1, 2, 3].length
+"hello".length[(1, 2, 3)].length;
 
 // After
-5
-3
+5;
+3;
 ```
 
 ### Spread flattening
@@ -197,10 +196,10 @@ Merge adjacent spread and non-spread elements when the spread target is a known 
 
 ```js
 // Before
-[1, ...[2, 3], 4]
-
-// After
-[1, 2, 3, 4]
+[1, ...[2, 3], 4][
+  // After
+  (1, 2, 3, 4)
+];
 ```
 
 ## References

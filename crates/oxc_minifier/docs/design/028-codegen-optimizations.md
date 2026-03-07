@@ -57,10 +57,14 @@ Use ASI (Automatic Semicolon Insertion) rules to omit semicolons where safe — 
 
 ```js
 // Before
-function f() { return 1; }
+function f() {
+  return 1;
+}
 
 // After
-function f(){return 1}
+function f() {
+  return 1;
+}
 ```
 
 ### UTF-8 charset mode
@@ -69,7 +73,7 @@ When the output charset is known to be UTF-8, emit non-ASCII identifiers and str
 
 ```js
 // ASCII-safe mode
-var \u00E9 = "\u00E9";
+var é = "\u00E9";
 
 // UTF-8 mode
 var é = "é";
@@ -81,19 +85,19 @@ When a constructor call has no arguments, the parentheses are optional per spec 
 
 ```js
 // Before
-new Foo()
+new Foo();
 
 // After
-new Foo
+new Foo();
 ```
 
 Caveat: `new Foo` without parens cannot appear in a postfix-precedence context:
 
 ```js
 // This is ambiguous:
-new Foo.bar    // means new (Foo.bar), not (new Foo).bar
+new Foo.bar(); // means new (Foo.bar), not (new Foo).bar
 // So parentheses must be kept when followed by member access:
-new Foo().bar  // cannot simplify to new Foo.bar
+new Foo().bar; // cannot simplify to new Foo.bar
 ```
 
 ### ASCII-only output mode
@@ -105,7 +109,7 @@ Force `\uXXXX` escapes for all non-ASCII characters. This is the inverse of UTF-
 var é = "café";
 
 // ASCII-only mode
-var \u00E9 = "caf\u00E9";
+var é = "caf\u00E9";
 ```
 
 Default in esbuild (`--charset=ascii`), Terser (`ascii_only: true`).
@@ -113,6 +117,7 @@ Default in esbuild (`--charset=ascii`), Terser (`ascii_only: true`).
 ### Whitespace edge cases
 
 Smart spacing is needed to prevent invalid output:
+
 - `return true` must not become `returntrue`
 - `typeof x` must not become `typeofx`
 - `/regex/` after `/` would form a comment `//`

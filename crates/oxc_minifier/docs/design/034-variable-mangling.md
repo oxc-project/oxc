@@ -64,12 +64,20 @@ Variables in non-overlapping scopes share the same slot index, so they receive t
 
 ```js
 // Before
-function foo() { let longName1 = 1; }
-function bar() { let longName2 = 2; }
+function foo() {
+  let longName1 = 1;
+}
+function bar() {
+  let longName2 = 2;
+}
 
 // After — both get "a" since scopes don't overlap
-function foo() { let a = 1; }
-function bar() { let a = 2; }
+function foo() {
+  let a = 1;
+}
+function bar() {
+  let a = 2;
+}
 ```
 
 ### Scope nesting and shadowing
@@ -126,10 +134,10 @@ This matters both for declarations and for anonymous expressions whose `.name` c
 
 ```js
 // Before
-var longName = function() {};
+var longName = function () {};
 
 // With keep_names enabled
-var longName = function() {};
+var longName = function () {};
 // Not:
 // var a = function() {};
 ```

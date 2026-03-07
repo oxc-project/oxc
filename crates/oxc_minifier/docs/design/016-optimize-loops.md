@@ -19,22 +19,34 @@ Loop constructs often contain redundancy. `while(true)` and `for(;true;)` waste 
 
 ```js
 // Before
-while (true) { body; }
-while (1) { body; }
-for (; true; ) { body; }
+while (true) {
+  body;
+}
+while (1) {
+  body;
+}
+for (; true; ) {
+  body;
+}
 
 // After
-for (;;) { body; }
+for (;;) {
+  body;
+}
 ```
 
 ### Remove redundant loop condition
 
 ```js
 // Before
-for (; true; update) { body; }
+for (; true; update) {
+  body;
+}
 
 // After
-for (;; update) { body; }
+for (; ; update) {
+  body;
+}
 ```
 
 ### Dead loop elimination
@@ -43,7 +55,10 @@ When the condition is statically false, extract the initializer and hoist `var` 
 
 ```js
 // Before
-for (init(); false; update()) { var x = 1; f(); }
+for (init(); false; update()) {
+  var x = 1;
+  f();
+}
 
 // After
 init();
@@ -56,18 +71,28 @@ When a loop body starts with `if (cond) break;`, merge the condition into the lo
 
 ```js
 // Before
-for (;;) { if (x > 10) break; body; }
+for (;;) {
+  if (x > 10) break;
+  body;
+}
 
 // After
-for (; x <= 10;) { body; }
+for (; x <= 10; ) {
+  body;
+}
 ```
 
 ```js
 // Before
-while (a) { if (b) break; body; }
+while (a) {
+  if (b) break;
+  body;
+}
 
 // After
-for (; a && !b;) { body; }
+for (; a && !b; ) {
+  body;
+}
 ```
 
 ### Eliminate instant-break loops
@@ -79,7 +104,8 @@ When a loop body is just `break`, the loop is equivalent to evaluating the initi
 for (a; b; c) break;
 
 // After
-a; b;
+a;
+b;
 ```
 
 ### Remove empty loops
@@ -88,8 +114,8 @@ When a loop body is empty and the condition has no side effects, remove entirely
 
 ```js
 // Before
-for (;;) {}  // infinite loop — cannot remove (intentional hang)
-for (init(); false;) {}  // dead — remove
+for (;;) {} // infinite loop — cannot remove (intentional hang)
+for (init(); false; ) {} // dead — remove
 
 // After
 init();

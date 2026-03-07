@@ -53,7 +53,9 @@ Replace calls to trivial prototype methods with the method body.
 
 ```js
 // Before
-A.prototype.getName = function() { return this.name; };
+A.prototype.getName = function () {
+  return this.name;
+};
 a.getName();
 
 // After

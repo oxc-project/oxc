@@ -13,7 +13,7 @@ Bundled JavaScript often includes library code, polyfills, and utility functions
 
 ## How It Works
 
-1. **Mark** — walk all expressions and statements, recording every identifier that is *read* (not just assigned). Build a set of referenced names.
+1. **Mark** — walk all expressions and statements, recording every identifier that is _read_ (not just assigned). Build a set of referenced names.
 2. **Sweep** — walk all declarations. If a declaration's binding is not in the referenced set, remove it.
 3. **Iterate** — removing a declaration may cause other declarations to become unreferenced (if the removed code was the only reader). Repeat until no more removals are possible (fixed-point).
 
@@ -31,7 +31,7 @@ console.log(used);
 
 // After
 var used = 1;
-expensiveComputation();  // kept for side effects
+expensiveComputation(); // kept for side effects
 console.log(used);
 ```
 
@@ -52,12 +52,18 @@ console.log(used);
 
 ```js
 // Before
-function usedFn() { return 1; }
-function unusedFn() { return 2; }
+function usedFn() {
+  return 1;
+}
+function unusedFn() {
+  return 2;
+}
 console.log(usedFn());
 
 // After
-function usedFn() { return 1; }
+function usedFn() {
+  return 1;
+}
 console.log(usedFn());
 ```
 
@@ -66,7 +72,9 @@ console.log(usedFn());
 ```js
 // Before
 class Logger {
-  log(msg) { console.log(msg); }
+  log(msg) {
+    console.log(msg);
+  }
 }
 class UnusedHelper {
   help() {}
@@ -75,7 +83,9 @@ new Logger().log("hi");
 
 // After
 class Logger {
-  log(msg) { console.log(msg); }
+  log(msg) {
+    console.log(msg);
+  }
 }
 new Logger().log("hi");
 ```
@@ -86,8 +96,12 @@ Removing one declaration may make others unreferenced.
 
 ```js
 // Before
-function helper() { return util(); }
-function util() { return 42; }
+function helper() {
+  return util();
+}
+function util() {
+  return 42;
+}
 // neither helper nor util is called
 
 // After
@@ -113,7 +127,7 @@ Assignments to prototypes of unreferenced constructors are also removed.
 ```js
 // Before
 function Unused() {}
-Unused.prototype.method = function() {};
+Unused.prototype.method = function () {};
 
 // After
 // (both removed)

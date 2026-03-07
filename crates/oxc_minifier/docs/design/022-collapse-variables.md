@@ -49,7 +49,7 @@ Track all assignments to a variable. When a variable has a single assignment tha
 
 ```js
 // Before
-var x = expensive();  // assigned once, read twice, never reassigned
+var x = expensive(); // assigned once, read twice, never reassigned
 use(x);
 use(x);
 
@@ -114,19 +114,19 @@ These constraints are the union of all minifiers' requirements:
 ```js
 // NOT safe — side effect between def and use
 var x = obj.a;
-obj.a = 42;  // modifies what x read
-f(x);        // x must remain 'obj.a' before mutation
+obj.a = 42; // modifies what x read
+f(x); // x must remain 'obj.a' before mutation
 
 // NOT safe — inside loop
 for (var i = 0; i < n; i++) {
-  var x = arr[i];  // different value each iteration
-  use(x);          // cannot collapse across iterations
+  var x = arr[i]; // different value each iteration
+  use(x); // cannot collapse across iterations
 }
 
 // NOT safe — eval
 var x = 1;
 eval("x = 2");
-use(x);  // x may have been modified by eval
+use(x); // x may have been modified by eval
 ```
 
 ## References

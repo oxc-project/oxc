@@ -25,7 +25,7 @@ o.y = 2;
 o.z = 3;
 
 // After
-var o = {x: 1, y: 2, z: 3};
+var o = { x: 1, y: 2, z: 3 };
 ```
 
 ### Array element collection
@@ -49,12 +49,12 @@ Append to non-empty literals when assignments follow immediately.
 
 ```js
 // Before
-var o = {a: 1};
+var o = { a: 1 };
 o.b = 2;
 o.c = 3;
 
 // After
-var o = {a: 1, b: 2, c: 3};
+var o = { a: 1, b: 2, c: 3 };
 ```
 
 ### Sparse arrays
@@ -68,7 +68,7 @@ a[0] = "first";
 a[3] = "fourth";
 
 // After
-var a = ["first",,, "fourth"];
+var a = ["first", , , "fourth"];
 ```
 
 ### Stop at non-trivial assignments
@@ -79,7 +79,7 @@ Stop collecting when an assignment's right-hand side references the target varia
 // Before
 var a = [];
 a[0] = 1;
-console.log("break");  // intervening statement
+console.log("break"); // intervening statement
 a[1] = 2;
 
 // After
@@ -91,7 +91,7 @@ a[1] = 2;
 ```js
 // Before
 var o = {};
-o.self = o;  // RHS references o — stop here
+o.self = o; // RHS references o — stop here
 
 // After (no change, RHS depends on o)
 var o = {};

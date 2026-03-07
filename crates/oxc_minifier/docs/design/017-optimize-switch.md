@@ -20,9 +20,15 @@ When the switch discriminant is a known constant, extract the matching case and 
 ```js
 // Before
 switch (1) {
-  case 0: a(); break;
-  case 1: b(); break;
-  case 2: c(); break;
+  case 0:
+    a();
+    break;
+  case 1:
+    b();
+    break;
+  case 2:
+    c();
+    break;
 }
 
 // After
@@ -36,13 +42,16 @@ Cases after a `return`/`throw`/`break` with no fallthrough are dead.
 ```js
 // Before
 switch (x) {
-  case 1: return a();
-  case 1: return b(); // duplicate case, unreachable
+  case 1:
+    return a();
+  case 1:
+    return b(); // duplicate case, unreachable
 }
 
 // After
 switch (x) {
-  case 1: return a();
+  case 1:
+    return a();
 }
 ```
 
@@ -51,7 +60,9 @@ switch (x) {
 ```js
 // Before
 switch (x) {
-  case 1: f(); break;
+  case 1:
+    f();
+    break;
 }
 
 // After
@@ -63,13 +74,17 @@ if (x === 1) f();
 ```js
 // Before
 switch (x) {
-  case 1: f(); break;
+  case 1:
+    f();
+    break;
   default:
 }
 
 // After
 switch (x) {
-  case 1: f(); break;
+  case 1:
+    f();
+    break;
 }
 ```
 
@@ -80,14 +95,20 @@ Merge adjacent cases with the same body.
 ```js
 // Before
 switch (x) {
-  case 1: f(); break;
-  case 2: f(); break;
+  case 1:
+    f();
+    break;
+  case 2:
+    f();
+    break;
 }
 
 // After
 switch (x) {
   case 1:
-  case 2: f(); break;
+  case 2:
+    f();
+    break;
 }
 ```
 
@@ -101,8 +122,12 @@ switch (x) {
 ```js
 // NOT safe to remove — var declaration must be hoisted
 switch (1) {
-  case 0: var x = 1; break;
-  case 1: use(x); break; // x is undefined but declared
+  case 0:
+    var x = 1;
+    break;
+  case 1:
+    use(x);
+    break; // x is undefined but declared
 }
 ```
 

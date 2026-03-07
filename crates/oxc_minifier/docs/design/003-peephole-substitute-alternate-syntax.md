@@ -45,10 +45,15 @@ A `return undefined` or `return void 0` at the end of a function is equivalent t
 
 ```js
 // Before
-function f() { doSomething(); return undefined; }
+function f() {
+  doSomething();
+  return undefined;
+}
 
 // After
-function f() { doSomething(); }
+function f() {
+  doSomething();
+}
 ```
 
 ### Constructor shortcuts
@@ -71,14 +76,15 @@ Replace wrapper function calls with shorter operator equivalents.
 
 ```js
 // Before
-Boolean(x)
-String(x)
-Number(x)
+Boolean(x);
+String(x);
+Number(x);
 
 // After
-!!x
-x + ""   // or "" + x
-+x
+!!x;
+x +
+  "" + // or "" + x
+  x;
 ```
 
 ### `typeof` comparisons
@@ -87,10 +93,10 @@ Rewrite `typeof x === "undefined"` to shorter form when in a boolean context.
 
 ```js
 // Before
-typeof x === "undefined"
+typeof x === "undefined";
 
 // After
-typeof x > "u"
+typeof x > "u";
 ```
 
 ### Template literal to string
@@ -135,10 +141,10 @@ Replace `Math.pow(a, b)` with `a ** b` when targeting ES2016+.
 
 ```js
 // Before
-Math.pow(x, 3)
+Math.pow(x, 3);
 
 // After
-x ** 3
+x ** 3;
 ```
 
 ### Property shorthand
@@ -161,7 +167,9 @@ When an arrow function body is a block with a single `return` statement, replace
 
 ```js
 // Before
-const f = () => { return x; };
+const f = () => {
+  return x;
+};
 
 // After
 const f = () => x;
@@ -173,10 +181,10 @@ Moving a string literal from the left side to the right can save bytes when the 
 
 ```js
 // Before
-"x" === foo
+"x" === foo;
 
 // After
-foo === "x"
+foo === "x";
 ```
 
 Do not rewrite direct `eval(...)` to indirect eval such as `(0, eval)(...)`. That changes scope resolution semantics.

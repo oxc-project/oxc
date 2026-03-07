@@ -29,9 +29,9 @@ var x = /*@__PURE__*/ createComponent();
 
 ```js
 // Before
-var Foo = /*@__PURE__*/ (function() {
+var Foo = /*@__PURE__*/ (function () {
   function Foo() {}
-  Foo.prototype.method = function() {};
+  Foo.prototype.method = function () {};
   return Foo;
 })();
 
@@ -44,7 +44,9 @@ var Foo = /*@__PURE__*/ (function() {
 ```js
 // Before
 /*@__NO_SIDE_EFFECTS__*/
-function helper(x) { return x + 1; }
+function helper(x) {
+  return x + 1;
+}
 var y = helper(2);
 
 // After (y is unused)

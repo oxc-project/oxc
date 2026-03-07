@@ -20,10 +20,15 @@ Skip `"use strict"` directives and enable strict-mode-only optimizations through
 ```js
 // Before
 "use strict";
-function f() { "use strict"; return this; }
+function f() {
+  "use strict";
+  return this;
+}
 
 // After
-function f() { return this; }
+function f() {
+  return this;
+}
 ```
 
 ### Top-level `this` is `undefined`
@@ -32,7 +37,9 @@ In modules, top-level `this` is always `undefined`. Fold comparisons and elimina
 
 ```js
 // Before
-if (this !== undefined) { setup(this); }
+if (this !== undefined) {
+  setup(this);
+}
 
 // After
 // (removed — condition is always false)

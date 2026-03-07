@@ -24,7 +24,7 @@ b();
 c();
 
 // After
-a(), b(), c();
+(a(), b(), c());
 ```
 
 ### Fuse into `return`
@@ -38,17 +38,18 @@ b();
 return c();
 
 // After
-return a(), b(), c();
+return (a(), b(), c());
 ```
 
 Also applies when the return value is a simple expression:
 
 ```js
 // Before
-a(); return b;
+a();
+return b;
 
 // After
-return a(), b;
+return (a(), b);
 ```
 
 ### Fuse into `throw`
@@ -61,15 +62,16 @@ cleanup();
 throw new Error("fail");
 
 // After
-throw cleanup(), new Error("fail");
+throw (cleanup(), new Error("fail"));
 ```
 
 ```js
 // Before
-a(); throw b;
+a();
+throw b;
 
 // After
-throw a(), b;
+throw (a(), b);
 ```
 
 ### Fuse into `if` condition
@@ -80,11 +82,15 @@ Merge preceding expression statements into the `if` test.
 // Before
 a();
 b();
-if (c) { d(); }
+if (c) {
+  d();
+}
 
 // After
-a(), b();
-if (c) { d(); }
+(a(), b());
+if (c) {
+  d();
+}
 ```
 
 Note: only some statements before the `if` are fused — the last expression statement before the `if` is fused into the condition only if it produces a boolean-compatible value or if the fused form is shorter.
@@ -97,10 +103,14 @@ Move expression statements into an empty `for` initializer.
 // Before
 x = 0;
 y = 1;
-for (; i < n; i++) { body(); }
+for (; i < n; i++) {
+  body();
+}
 
 // After
-for (x = 0, y = 1; i < n; i++) { body(); }
+for (x = 0, y = 1; i < n; i++) {
+  body();
+}
 ```
 
 ### Enable brace elimination
@@ -109,10 +119,13 @@ After fusion, single-statement blocks can drop their braces.
 
 ```js
 // Before (after minimize-conditions)
-if (c) { a(); b(); }
+if (c) {
+  a();
+  b();
+}
 
 // After fusion
-if (c) a(), b();
+if (c) (a(), b());
 ```
 
 ## References

@@ -19,10 +19,14 @@ Wrap IIFEs with `!` instead of parentheses to save one byte.
 
 ```js
 // Before (2 bytes for parens)
-(function(){ /* ... */ })();
+(function () {
+  /* ... */
+})();
 
 // After (1 byte for !)
-!function(){ /* ... */ }();
+!(function () {
+  /* ... */
+})();
 ```
 
 ### Optional chaining insertion
@@ -31,12 +35,12 @@ Replace null/undefined guard patterns with optional chaining (`?.`).
 
 ```js
 // Before
-a != null && a.b
-a && a.b && a.b.c
+a != null && a.b;
+a && a.b && a.b.c;
 
 // After
-a?.b
-a?.b?.c
+a?.b;
+a?.b?.c;
 ```
 
 ### Nullish coalescing optimization
@@ -45,10 +49,10 @@ Replace explicit null/undefined checks with `??`.
 
 ```js
 // Before
-a !== null && a !== undefined ? a : b
+a !== null && a !== undefined ? a : b;
 
 // After
-a ?? b
+a ?? b;
 ```
 
 ### Spread evaluation

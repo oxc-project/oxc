@@ -37,14 +37,21 @@ The last `case` in a `switch` does not need a `break`.
 ```js
 // Before
 switch (x) {
-  case 1: a(); break;
-  case 2: b(); break;
+  case 1:
+    a();
+    break;
+  case 2:
+    b();
+    break;
 }
 
 // After
 switch (x) {
-  case 1: a(); break;
-  case 2: b();
+  case 1:
+    a();
+    break;
+  case 2:
+    b();
 }
 ```
 
@@ -119,7 +126,9 @@ When combined with the minimize-conditions pass, this often leads to expression 
 
 ```js
 // Final
-function f(x) { return x ? a() : (b(), c()); }
+function f(x) {
+  return x ? a() : (b(), c());
+}
 ```
 
 ## References

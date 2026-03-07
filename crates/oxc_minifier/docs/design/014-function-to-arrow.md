@@ -19,7 +19,9 @@ When a function expression has a single `return` statement, convert to arrow wit
 
 ```js
 // Before
-var f = function(x) { return x * 2; };
+var f = function (x) {
+  return x * 2;
+};
 
 // After
 var f = (x) => x * 2;
@@ -31,10 +33,16 @@ When a function expression has a multi-statement body, convert to arrow with blo
 
 ```js
 // Before
-var f = function(x) { console.log(x); return x; };
+var f = function (x) {
+  console.log(x);
+  return x;
+};
 
 // After
-var f = (x) => { console.log(x); return x; };
+var f = (x) => {
+  console.log(x);
+  return x;
+};
 ```
 
 ### Single parameter parentheses removal
@@ -43,15 +51,16 @@ When an arrow has a single simple parameter, omit parentheses (codegen concern).
 
 ```js
 // Before
-(x) => x * 2
+(x) => x * 2;
 
 // After
-x => x * 2
+(x) => x * 2;
 ```
 
 ### Safety constraints
 
 Only convert when the function does NOT:
+
 - Use `this` (arrows inherit `this` from enclosing scope)
 - Use `arguments` (arrows have no own `arguments`)
 - Use `new.target` or `super`
@@ -61,10 +70,16 @@ Only convert when the function does NOT:
 
 ```js
 // NOT safe — uses `this`
-var obj = { f: function() { return this.x; } };
+var obj = {
+  f: function () {
+    return this.x;
+  },
+};
 
 // NOT safe — used as constructor
-var F = function(x) { this.x = x; };
+var F = function (x) {
+  this.x = x;
+};
 new F(1);
 ```
 

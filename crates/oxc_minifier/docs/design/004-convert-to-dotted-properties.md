@@ -19,16 +19,16 @@ Convert `obj["prop"]` to `obj.prop` when the string is a valid identifier name.
 
 ```js
 // Before
-obj["foo"]
-obj["bar"]
-arr["length"]
-this["name"]
+obj["foo"];
+obj["bar"];
+arr["length"];
+this["name"];
 
 // After
-obj.foo
-obj.bar
-arr.length
-this.name
+obj.foo;
+obj.bar;
+arr.length;
+this.name;
 ```
 
 ### Computed property keys to static keys
@@ -39,13 +39,13 @@ Convert computed property keys in object literals when the key is a string liter
 // Before
 var o = {
   ["foo"]: 1,
-  ["bar"]: function() {}
+  ["bar"]: function () {},
 };
 
 // After
 var o = {
   foo: 1,
-  bar: function() {}
+  bar: function () {},
 };
 ```
 
@@ -56,13 +56,17 @@ Same transformation applies to class method and property definitions.
 ```js
 // Before
 class C {
-  ["method"]() { return 1; }
+  ["method"]() {
+    return 1;
+  }
   ["prop"] = 2;
 }
 
 // After
 class C {
-  method() { return 1; }
+  method() {
+    return 1;
+  }
   prop = 2;
 }
 ```
@@ -73,14 +77,14 @@ The key must be a valid JavaScript identifier. Do not convert when the string co
 
 ```js
 // These stay as bracket notation:
-obj["foo-bar"]      // hyphen is not valid in identifiers
-obj["123"]          // starts with digit
-obj["class"]        // reserved word (safe in ES5+ property access, but context-dependent)
-obj[""]             // empty string
-obj["hello world"]  // contains space
+obj["foo-bar"]; // hyphen is not valid in identifiers
+obj["123"]; // starts with digit
+obj["class"]; // reserved word (safe in ES5+ property access, but context-dependent)
+obj[""]; // empty string
+obj["hello world"]; // contains space
 ```
 
-Note: In ES5+, reserved words *are* valid as property names in dot notation and object literals. So `obj["class"]` → `obj.class` is actually safe in modern JavaScript. The implementation should allow this conversion when targeting ES5+.
+Note: In ES5+, reserved words _are_ valid as property names in dot notation and object literals. So `obj["class"]` → `obj.class` is actually safe in modern JavaScript. The implementation should allow this conversion when targeting ES5+.
 
 ### Numeric keys
 
@@ -88,10 +92,10 @@ Convert numeric literal keys to their string equivalent when shorter.
 
 ```js
 // Before
-var o = {0: "a", 1: "b"};
+var o = { 0: "a", 1: "b" };
 
 // After (no change — numeric keys are already shorter than quoted)
-var o = {0: "a", 1: "b"};
+var o = { 0: "a", 1: "b" };
 ```
 
 ## References

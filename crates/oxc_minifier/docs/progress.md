@@ -5,12 +5,14 @@
 - [001 - Design](design/001-design.md)
 
 ### Trivial
+
 - [003 - Peephole Substitute Alternate Syntax](design/003-peephole-substitute-alternate-syntax.md)
 - [004 - Convert To Dotted Properties](design/004-convert-to-dotted-properties.md)
 - [005 - Module-Aware Optimizations](design/005-module-aware-optimizations.md)
 - [023 - Drop Statements](design/023-drop-statements.md)
 
 ### Simple
+
 - [002 - Normalize](design/002-normalize.md)
 - [006 - Peephole Fold Constants](design/006-peephole-fold-constants.md)
 - [007 - Peephole Replace Known Methods](design/007-peephole-replace-known-methods.md)
@@ -32,11 +34,13 @@
 - [031 - TypeScript Optimizations](design/031-typescript-optimizations.md)
 
 ### Simple-Medium
+
 - [016 - Optimize Loops](design/016-optimize-loops.md)
 - [032 - Hoist Properties](design/032-hoist-properties.md)
 - [033 - Optimize Calls](design/033-optimize-calls.md)
 
 ### Medium
+
 - [017 - Optimize Switch](design/017-optimize-switch.md)
 - [018 - Remove Unused Code](design/018-remove-unused-code.md)
 - [019 - Inline](design/019-inline.md)
@@ -44,7 +48,9 @@
 - [034 - Variable Mangling](design/034-variable-mangling.md)
 
 ### Complex
+
 - [021 - Dead Assignments Elimination](design/021-dead-assignments-elimination.md)
 
 ### Very Complex
+
 - [022 - Collapse Variables](design/022-collapse-variables.md)
