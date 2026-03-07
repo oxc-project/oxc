@@ -141,8 +141,33 @@ Math.pow(x, 3)
 x ** 3
 ```
 
+### Property shorthand
+
+When an object literal has a property whose value is an identifier with the same name as the key, use shorthand syntax.
+
+```js
+// Before
+const obj = { x: x, y: y };
+
+// After
+const obj = { x, y };
+```
+
+### Method shorthand
+
+When an object literal has a property whose value is a function expression, use method shorthand syntax.
+
+```js
+// Before
+const obj = { method: function() { return 1; } };
+
+// After
+const obj = { method() { return 1; } };
+```
+
 ## References
 
 - `PeepholeSubstituteAlternateSyntax.java`
 - `js_printer.go:2909`, `js_parser.go:14674`
 - `compress/index.js:3469,1677,2952`
+- Terser: `shorthand` option; SWC: `shorthand`

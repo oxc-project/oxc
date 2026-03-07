@@ -29,3 +29,5 @@ The following optimizations were considered but are deliberately excluded from s
 - **Function Rewriter** — Rewrite functions for optimization. Closure-only (`FunctionRewriter.java`). Off by default due to performance regressions.
 - **Replace Strings** — Replace string literals with shorter aliases. Closure-only (`ReplaceStrings.java`). Application-specific, not generally applicable.
 - **Rescope Global Symbols** — Move global declarations into a scope wrapper. Closure-only (`RescopeGlobalSymbols.java`). Changes module semantics.
+- **Private Field Mangling** — Rename `#privateField` to `#a`. No major minifier implements this. Complexity-to-benefit ratio is poor: private fields are rare, `#` prefix is always present, edge cases with `in` checks and subclass inheritance.
+- **Regex Optimization** — Shorten character classes, remove redundant escapes. No major JS minifier implements significant regex optimization. High complexity, minimal savings.

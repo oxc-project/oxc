@@ -87,6 +87,19 @@ new Array(1, 2, 3)
 
 Note: `new Array(n)` with a single numeric argument cannot be replaced with `[n]` as it creates a sparse array of length `n`.
 
+### Logical assignment operators
+
+Replace self-assignment patterns with logical assignment operators (ES2021).
+
+```js
+// Before
+x = x ?? y    →  x ??= y
+x = x && y    →  x &&= y
+x = x || y    →  x ||= y
+```
+
+Gated by target environment supporting ES2021+. Refs: SWC logical assignment optimization; Terser `logical` option.
+
 ## References
 
 - esbuild: `TryToInsertOptionalChain` in `js_parser.go`

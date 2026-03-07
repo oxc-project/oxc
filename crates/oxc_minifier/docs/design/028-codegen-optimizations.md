@@ -73,6 +73,32 @@ var \u00E9 = "\u00E9";
 var é = "é";
 ```
 
+### Remove `new` parentheses
+
+When a constructor call has no arguments, the parentheses are optional per spec and can be omitted.
+
+```js
+// Before
+new Foo()
+
+// After
+new Foo
+```
+
+### ASCII-only output mode
+
+Force `\uXXXX` escapes for all non-ASCII characters. This is the inverse of UTF-8 charset mode and ensures output is safe for any encoding context.
+
+```js
+// UTF-8 mode
+var é = "café";
+
+// ASCII-only mode
+var \u00E9 = "caf\u00E9";
+```
+
+Default in esbuild (`--charset=ascii`), Terser (`ascii_only: true`).
+
 ## References
 
 - esbuild: `js_printer.go` — number printing, quote selection

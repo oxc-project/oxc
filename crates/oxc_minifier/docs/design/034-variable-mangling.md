@@ -87,6 +87,26 @@ function outer() {
 }
 ```
 
+### Label mangling
+
+Labels have their own namespace and can be renamed independently using the same Base54 alphabet.
+
+```js
+// Before
+outer: for (...) { inner: for (...) { continue outer; } }
+
+// After
+a: for (...) { b: for (...) { continue a; } }
+```
+
+Refs: esbuild label symbols; Terser `mangle.label`.
+
+### Eval safety
+
+When `eval()` is present in a scope, all variables in the containing scope chain must retain their original names. This disables mangling for affected scopes because `eval` can reference any variable by name at runtime.
+
+Refs: esbuild direct eval deoptimization; Terser `eval` option.
+
 ## References
 
 - Closure Compiler: `RenameVars.java`

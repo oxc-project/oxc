@@ -133,6 +133,34 @@ if (!a) {
 return x;
 ```
 
+### Collapse null/undefined checks to loose equality
+
+Strict equality checks against both `null` and `undefined` can be collapsed to a single loose equality check.
+
+```js
+// Before
+x === null || x === undefined
+x !== null && x !== undefined
+
+// After
+x == null
+x != null
+```
+
+Only safe when `x` is side-effect-free (no getter). Refs: esbuild `MangleEquals`; Terser `comparisons`.
+
+### Simplify ternary to logical
+
+Ternary expressions with boolean literal branches can be simplified to logical expressions.
+
+```js
+// Before → After
+a ? b : false    →  a && b
+a ? true : b     →  a || b
+a ? false : b    →  !a && b
+a ? b : true     →  !a || b
+```
+
 ## References
 
 - `PeepholeMinimizeConditions.java`
