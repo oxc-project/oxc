@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 229
 ---
 ==================== Input ====================
 // This file copies from https://github.com/prettier/prettier/blob/main/tests/format/js/ignore/ignore.js,
@@ -68,6 +69,10 @@ export const item={  a:1,b:2}; // prettier-ignore
 
 const config={  retries:10,timeout:5000}; // prettier-ignore
 let data=[ 1,2,3 ]; // prettier-ignore
+
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
 
 function demo() {
   return   {a:1,b:2}; // prettier-ignore
@@ -169,6 +174,10 @@ export const item={  a:1,b:2}; // prettier-ignore
 const config={  retries:10,timeout:5000}; // prettier-ignore
 let data=[ 1,2,3 ]; // prettier-ignore
 
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
+
 function demo() {
   return   {a:1,b:2}; // prettier-ignore
 }
@@ -267,6 +276,10 @@ export const item={  a:1,b:2}; // prettier-ignore
 
 const config={  retries:10,timeout:5000}; // prettier-ignore
 let data=[ 1,2,3 ]; // prettier-ignore
+
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
 
 function demo() {
   return   {a:1,b:2}; // prettier-ignore
