@@ -66,6 +66,8 @@ jobs:
     name: Test Windows
     runs-on: windows-latest
     steps:
+      - name: Enable long paths on Windows
+        run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
       # Unsung heroes of the internet, who led me here to speed up Windows' slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
@@ -243,7 +245,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           workspace-copy: true
-          drive-size: 8GB
+          drive-size: 12GB
           drive-format: ReFS
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
