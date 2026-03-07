@@ -98,12 +98,14 @@ impl Rule for NoReactChildren {
             return;
         };
 
-        let Some(member_expr) = call_expr.callee.as_member_expression() else {
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
             return;
         };
 
+        let object = member_expr.object().get_inner_expression();
+
         // Pattern 1: Children.method() where Children is imported from 'react'
-        if let Some(ident) = member_expr.object().get_identifier_reference()
+        if let Some(ident) = object.get_identifier_reference()
             && ident.name == "Children"
             && is_imported_from_react(ident.name.as_str(), ctx)
         {
@@ -112,9 +114,10 @@ impl Rule for NoReactChildren {
         }
 
         // Pattern 2: React.Children.method() where React is imported from 'react'
-        if let Some(inner_member) = member_expr.object().as_member_expression()
+        if let Some(inner_member) = object.as_member_expression()
             && inner_member.static_property_name() == Some("Children")
-            && let Some(ident) = inner_member.object().get_identifier_reference()
+            && let Some(ident) =
+                inner_member.object().get_inner_expression().get_identifier_reference()
             && is_imported_from_react(ident.name.as_str(), ctx)
         {
             ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
@@ -221,6 +224,12 @@ fn test() {
            });
            // ...
          }",
+        // Optional chaining
+        "import React from 'react'; React.Children?.map(children, child => child)",
+        // Parenthesized expressions
+        "import { Children } from 'react'; (Children).map(children, child => child)",
+        "import React from 'react'; (React.Children).map(children, child => child)",
+        "import React from 'react'; (React.Children as any).map(children, child => child)",
     ];
 
     Tester::new(NoReactChildren::NAME, NoReactChildren::PLUGIN, pass, fail).test_and_snapshot();
