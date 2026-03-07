@@ -59,6 +59,7 @@ json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 memchr = { workspace = true }
+natord = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
