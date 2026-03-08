@@ -1,0 +1,38 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=bitbucket test.js
+working directory: fixtures/cli/output_formatter_diagnostic
+----------
+[
+  {
+    "external_id": "oxlint-7765f70321217d",
+    "summary": "`debugger` statement is not allowed",
+    "details": "eslint(no-debugger)",
+    "annotation_type": "BUG",
+    "severity": "HIGH",
+    "path": "apps/oxlint/test.js",
+    "line": 5
+  },
+  {
+    "external_id": "oxlint-7d16105a507dfcf1",
+    "summary": "Function 'foo' is declared but never used.",
+    "details": "eslint(no-unused-vars)",
+    "annotation_type": "CODE_SMELL",
+    "severity": "MEDIUM",
+    "path": "apps/oxlint/test.js",
+    "line": 1
+  },
+  {
+    "external_id": "oxlint-9b0babde6f2aa6f1",
+    "summary": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'.",
+    "details": "eslint(no-unused-vars)",
+    "annotation_type": "CODE_SMELL",
+    "severity": "MEDIUM",
+    "path": "apps/oxlint/test.js",
+    "line": 1
+  }
+]----------
+CLI result: LintFoundErrors
+----------
