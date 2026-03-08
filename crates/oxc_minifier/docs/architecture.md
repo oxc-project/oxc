@@ -2,8 +2,10 @@
 
 ## Overview
 
-The oxc_minifier is a JavaScript/TypeScript minifier that achieves maximum compression
-through fixed-point iteration of peephole optimizations.
+This chapter describes the architecture of the new single-file JavaScript/TypeScript
+compressor Oxc is building. Oxc does not have this new minifier yet. The current crate
+contains legacy/reference code and existing experiments, while the design here describes
+the intended compressor architecture.
 
 ## Source Layout
 
@@ -58,10 +60,12 @@ src/
 
 ## Pipeline
 
+The intended single-file compression pipeline is:
+
 1. **Parse** — AST is produced by `oxc_parser`
-2. **Compress** — `Compressor` runs peephole passes in a fixed-point loop until no further changes occur
-3. **Mangle** — Variable names are shortened (handled by `oxc_mangler`)
-4. **Codegen** — Minified output is emitted by `oxc_codegen`
+2. **Normalize + Analyze** — establish canonical forms and compressor reasoning
+3. **Optimize** — run local and flow-sensitive compression passes to fixed point
+4. **Codegen** — emit compressed output
 
 ## Pass Ordering and Phase Design
 
@@ -69,18 +73,18 @@ The 4-step pipeline above is a simplification. Internally, compression has disti
 with specific ordering requirements. Understanding this structure is essential for knowing
 where each optimization pass belongs and why.
 
-This document describes the intended optimization architecture, not just the currently
-implemented passes. A large part of the remaining work is not adding more local rewrites,
-but defining the middle-end concepts that let advanced optimizations be both correct and
-fast on real-world code.
+This document describes the intended compressor architecture, not just the currently
+implemented reference code. A large part of the remaining work is not adding more local
+rewrites, but defining the middle-end concepts that let advanced optimizations be both
+correct and fast on real-world single-file code.
 
 ### Phase Pipeline
 
 ```
-  ┌─────────┐   ┌──────────┐   ┌──────────────────────┐   ┌────────────────────┐   ┌──────────┐   ┌─────────┐
-  │  Parse  │──▶│ Semantic  │──▶│  Normalize + Analyze │──▶│  Optimization Loop │──▶│  Mangle  │──▶│ Codegen │
-  │         │   │          │   │  (once)              │   │  (fixed-point)     │   │          │   │         │
-  └─────────┘   └──────────┘   └──────────────────────┘   └────────────────────┘   └──────────┘   └─────────┘
+  ┌─────────┐   ┌──────────┐   ┌──────────────────────┐   ┌────────────────────┐   ┌─────────┐
+  │  Parse  │──▶│ Semantic  │──▶│  Normalize + Analyze │──▶│  Optimization Loop │──▶│ Codegen │
+  │         │   │          │   │  (once)              │   │  (fixed-point)     │   │         │
+  └─────────┘   └──────────┘   └──────────────────────┘   └────────────────────┘   └─────────┘
                      │                    │
                      ▼                    ▼
               symbols, scopes,    call graph, escape analysis,
@@ -92,7 +96,7 @@ fast on real-world code.
 **Phase 1: Parse** — Produce the AST from source text.
 
 **Phase 2: Semantic** — Build symbols, scopes, and CFG from the AST. This data is consumed
-by all subsequent phases.
+by all subsequent compression phases.
 
 **Phase 3: Normalize + Analyze** — Rewrite AST into canonical forms and establish the
 compiler reasoning that later optimizations depend on. Runs once before the loop.
@@ -118,13 +122,10 @@ Conceptually, this phase should provide:
 - **Profitability signals** — enough size-oriented reasoning to distinguish transforms
   that are merely legal from transforms that are worth applying
 
-**Phase 4: Optimization Loop** — Peephole passes run in a single traversal, repeated until
-no changes. This is the core of the minifier.
+**Phase 4: Optimization Loop** — Compression passes run in a single traversal, repeated
+until no changes. This is the core of the new minifier.
 
-**Phase 5: Mangle** — Variable and property renaming. Separate from compression. Rebuilds
-semantic data.
-
-**Phase 6: Codegen** — Emit minified output with codegen-level optimizations.
+**Phase 5: Codegen** — Emit compressed output with codegen-level optimizations.
 
 ### Missing Middle-End Concepts
 
@@ -149,8 +150,7 @@ calls. This is what separates "can rewrite" from "must preserve as written."
 
 Even in single-file mode, many important opportunities span function boundaries. The
 minifier needs lightweight reasoning about direct callees, argument usage, return usage,
-escape of function values, and small purity summaries. This is not whole-program analysis;
-it is a constrained, file-local form of function reasoning.
+escape of function values, and small purity summaries. This stays strictly file-local.
 
 **Profitability model**
 
@@ -159,10 +159,27 @@ time too much. The optimizer therefore needs a concept of profitability: byte-or
 reasoning about whether a transform is worthwhile, when fixed-point iteration should stop,
 and which more expensive analyses should even run.
 
+### Related Oxc Name-Mangling Work
+
+Name mangling is related to output size, but it is not part of the new minifier described
+in this chapter. The compressor should be documented and designed independently from any
+variable or property renaming work.
+
+The design directory still contains adjacent Oxc name-mangling docs:
+
+| #   | Doc                  | Topic                                |
+| --- | -------------------- | ------------------------------------ |
+| 020 | Mangle Properties    | Property renaming                    |
+| 034 | Variable Mangling    | Binding/label renaming               |
+| 039 | Ambiguate Properties | Property-name reuse across disjoint shapes |
+
+These are related size-reduction topics, but they are outside the minifier phase map below.
+
 ### Pass Classification
 
-Each of the 39 design documents maps to exactly one phase. The `#` column refers to the
-design document number in [progress.md](progress.md).
+The compression design docs map to the phases below. The `#` column refers to the design
+document number in [progress.md](progress.md). The separate mangling docs (020, 034, 039)
+are intentionally excluded from this phase map.
 
 **Phase 3 — Normalize + Analyze (pre-loop, run once)**
 
@@ -215,15 +232,7 @@ These run inside the loop but require infrastructure not yet built:
 | 032 | Hoist Properties             | Escape analysis + alias reasoning                         |
 | 035 | Flow-Sensitive Inline        | CFG + reaching definitions + effect reasoning             |
 
-**Phase 5 — Mangle (separate from compression)**
-
-| #   | Pass                 | Rationale                            |
-| --- | -------------------- | ------------------------------------ |
-| 020 | Mangle Properties    | Property renaming                    |
-| 034 | Variable Mangling    | Variable renaming via scope analysis |
-| 039 | Ambiguate Properties | Cross-type property name reuse       |
-
-**Phase 6 — Codegen**
+**Phase 5 — Codegen**
 
 | #   | Pass                  | Rationale                                          |
 | --- | --------------------- | -------------------------------------------------- |
@@ -260,8 +269,10 @@ Our phase structure parallels Closure Compiler's pipeline:
   `MarkNoSideEffectCalls`)
 - **Phase 4** ≈ Closure's `PeepholeOptimizationsPass` within `optimizeLoops()`
 - **Phase 4b** ≈ Closure's `FlowSensitiveInlineVariables`, `DeadAssignmentsElimination`
-- **Phase 5** ≈ Closure's `RenameVars`, `RenameProperties`, `AmbiguateProperties`
-- **Phase 6** ≈ Closure's `CodePrinter` with its built-in optimizations
+- **Phase 5** ≈ Closure's `CodePrinter` with its built-in optimizations
+
+Closure's `RenameVars`, `RenameProperties`, and `AmbiguateProperties` are related Oxc
+name-mangling work, not part of the minifier architecture in this document.
 
 ## Fixed-Point Loop
 

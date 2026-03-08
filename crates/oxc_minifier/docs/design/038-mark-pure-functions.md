@@ -56,7 +56,7 @@ This design depends on two shared concepts:
 
 ## References
 
-- Closure Compiler: `PureFunctionIdentifier.java` — whole-program analysis that marks functions as side-effect-free
+- Closure Compiler: `PureFunctionIdentifier.java` — global purity analysis that marks functions as side-effect-free
 - Design 025 (Pure Annotations and Side Effects) — complementary pass that handles user-provided annotations
 - esbuild: uses `@__PURE__` annotations only, no auto-detection
 - Terser: uses `pure_funcs` option and `@__PURE__` annotations, no auto-detection

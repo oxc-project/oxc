@@ -3,17 +3,26 @@
 - **Status:** Not Implemented
 - **Difficulty:** Medium
 
+This doc describes related Oxc name-mangling work. It is not part of the new single-file
+minifier described in the compressor architecture docs.
+
 ## What
 
-This pass renames object property names to shorter identifiers, consistently replacing every occurrence of a given property name throughout the program. It is the property-level analog of variable name mangling (scope-based renaming).
+This pass renames object property names to shorter identifiers, consistently replacing every
+occurrence of a given property name throughout a single file. It is the property-level
+analog of variable name mangling (scope-based renaming).
 
 ## Why
 
-Property names are often long and descriptive (`backgroundColor`, `handleClickEvent`, `isAuthenticated`). Unlike variable names — which are scoped and can be shortened independently per scope — property names are global: every access to `.backgroundColor` across the program must use the same name. Shortening them yields substantial savings in property-heavy code, but requires careful consistency.
+Property names are often long and descriptive (`backgroundColor`, `handleClickEvent`,
+`isAuthenticated`). Unlike variable names — which are scoped and can be shortened
+independently per scope — property names must be renamed consistently anywhere they are
+observed within the same file. Shortening them yields substantial savings in property-heavy
+code, but requires careful consistency.
 
 ## How It Works
 
-1. **Collect** — scan the entire program for property names used in dot access, bracket access (with string literals), object literals, class definitions, destructuring patterns, and `Object.defineProperty` calls
+1. **Collect** — scan the entire file for property names used in dot access, bracket access (with string literals), object literals, class definitions, destructuring patterns, and `Object.defineProperty` calls
 2. **Filter** — exclude property names that must not be renamed:
    - DOM API properties (`innerHTML`, `addEventListener`, etc.)
    - Well-known symbols and protocol properties (`toString`, `valueOf`, `constructor`, `prototype`)
@@ -98,9 +107,10 @@ By default, quoted property names (`obj["foo"]`) are eligible for mangling. A `-
 obj["longPropertyName"]  →  obj["a"]  →  obj.a  // (after convert-to-dotted)
 ```
 
-### Consistency across files
+### Single-file consistency
 
-In a multi-file bundle, the same property name must always map to the same short name. The property renaming map can be serialized and reused across builds to ensure stability.
+Within a single file, the same property name must always map to the same short name at every
+site the transform rewrites.
 
 ### Reserved properties
 
@@ -117,7 +127,7 @@ var c = {
 
 ## Risks
 
-Property mangling is the most **dangerous** minification optimization because:
+Property mangling is the most **dangerous** name-shortening optimization because:
 
 - External code (libraries, APIs, JSON) must use the same property names at runtime
 - Dynamic property access (`obj[variable]`) cannot be statically analyzed

@@ -3,9 +3,13 @@
 - **Status:** Implemented
 - **Difficulty:** Medium
 
+This doc describes related Oxc name-mangling work. It is not part of the new single-file
+minifier described in the compressor architecture docs.
+
 ## What
 
-Rename local variables (and optionally global/exported variables) to the shortest possible names. This is typically the single largest size reduction in minification.
+Rename local variables (and optionally global/exported variables) to the shortest possible
+names. This is typically the single largest size reduction available from renaming.
 
 ## Why
 
@@ -137,7 +141,10 @@ Refs: esbuild direct eval deoptimization; Terser `eval` option.
 
 ### `keep_names` handling
 
-`keep_names` is primarily a renaming constraint, not a wrapper rewrite. The mangler reserves symbols whose bindings determine the `.name` of functions/classes, and compressor passes must avoid removing function/class names when the corresponding `keep_names` option is enabled.
+`keep_names` is primarily a renaming constraint, not a wrapper rewrite. The mangler reserves
+symbols whose bindings determine the `.name` of functions/classes, and adjacent compression
+work must avoid removing function/class names when the corresponding `keep_names` option is
+enabled.
 
 This matters both for declarations and for anonymous expressions whose `.name` comes from the binding:
 

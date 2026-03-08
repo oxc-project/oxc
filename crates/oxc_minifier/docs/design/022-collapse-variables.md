@@ -20,7 +20,7 @@ This design depends on three shared compiler concepts:
 - **Effect and alias reasoning** — determines whether moving the value changes evaluation
   order or what mutable state the value can observe
 - **Profitability reasoning** — determines whether collapsing the variable actually shortens
-  output once the declaration, the value, and later mangling are taken into account
+  output once the declaration and the value are taken into account
 
 ## Transformations
 
@@ -69,7 +69,8 @@ use(expensive());
 use(expensive());
 ```
 
-Note: Only profitable when the expression is pure and shorter than the variable name (post-mangling).
+Note: Only profitable when the expression is pure and shorter than introducing or keeping
+the extra binding.
 
 ### Collapse into return
 

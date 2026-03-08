@@ -13,10 +13,10 @@ Functions often contain code that is unnecessary in context: return expressions 
 
 ## Conceptual Dependencies
 
-This design depends on **light interprocedural analysis**. Even without whole-program
-optimization, the minifier still needs file-local reasoning about which call sites target
-which functions, whether return values are observed, whether parameters are used, and whether
-the callee escapes through unknown references.
+This design depends on **light interprocedural analysis**. Even within a single file, the
+minifier still needs reasoning about which call sites target which functions, whether
+return values are observed, whether parameters are used, and whether the callee escapes
+through unknown references.
 
 ## Transformations
 

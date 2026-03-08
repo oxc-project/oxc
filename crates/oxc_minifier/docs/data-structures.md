@@ -1,14 +1,14 @@
 # Data Structures
 
-These are the shared infrastructure concepts consumed by the minifier. Some already exist in
-adjacent crates such as `oxc_semantic` and `oxc_cfg`; others are documented here because
-they represent reasoning the minifier will need even before their final implementation shape
-is settled.
+These are the shared infrastructure concepts consumed by the new single-file compressor
+Oxc is building. Some already exist in adjacent crates such as `oxc_semantic` and
+`oxc_cfg`; others are documented here because they represent reasoning the compressor will
+need even before their final implementation shape is settled.
 
 The important point is not the exact storage layout. It is the class of questions the
-optimizer must be able to answer: what reaches what, what may have side effects, what
-aliases what, which functions influence each other, and whether a legal rewrite is actually
-worth applying.
+compressor must be able to answer: what reaches what, what may have side effects, what
+aliases what, which functions influence each other within one file, and whether a legal
+rewrite is actually worth applying.
 
 ## Symbol Table
 
@@ -33,7 +33,6 @@ Nearly every minification pass queries the symbol table:
 
 - **Inlining** (015) checks whether a variable is assigned once and read once (single-use) or assigned a constant value
 - **Dead code** (013) checks whether a symbol has zero references
-- **Mangling** ranks symbols by reference frequency to assign the shortest names to the most-used identifiers
 - **Tree shaking** checks `@__NO_SIDE_EFFECTS__` and `@__PURE__` annotations stored in `Scoping::no_side_effects`
 
 ### How It Works
@@ -65,9 +64,9 @@ Bindings (name → `SymbolId` mappings) are stored per scope in `ScopingInner::b
 ### Why
 
 - **Name resolution** walks up the parent chain to find the declaring scope of an identifier
-- **Mangling** exploits the tree structure to reuse short names via shadowing — two variables in non-overlapping scopes can share the same mangled name
 - **Scope flags** (`ScopeFlags`) mark strict mode, function boundaries, arrow functions, and catch clauses — these affect which optimizations are safe
-- **`eval`/`with` detection** via scope flags disables name mangling and certain inlining in affected scopes
+- **`eval`/`with` detection** via scope flags disables inlining and other transformations
+  that rely on stable bindings in affected scopes
 
 ### How It Works
 
@@ -136,9 +135,9 @@ Per function, the call graph tracks:
 - **Address taken** — whether the function has any non-call reference (assigned to a variable, passed as an argument, stored in a property). If the address is taken, the function may be called from unknown sites, disabling optimizations that assume a known set of callers
 - **IIFE status** — whether the function is immediately invoked at its declaration site
 
-For minifier purposes, this analysis is intentionally light. The goal is not a whole-program
-optimizer, but enough cross-function reasoning to support parameter trimming, return-value
-optimization, small-function inlining, and purity propagation in single-file mode.
+For minifier purposes, this analysis is intentionally light. The goal is enough
+cross-function reasoning to support parameter trimming, return-value optimization,
+small-function inlining, and purity propagation within a single file.
 
 ### References
 
@@ -158,8 +157,6 @@ Instances include liveness analysis, reaching definitions, and constant propagat
 - **Dead assignment elimination** (012) — liveness analysis identifies assignments to variables that are never subsequently read
 - **Flow-sensitive inlining** (015) — reaching definitions determine which value a variable holds at a given use site
 - **Loop-invariant code motion** — constant propagation identifies expressions whose value does not change across loop iterations
-- **Variable mangling** (034) — liveness-like reasoning explains when two bindings can safely
-  share the same short name
 
 ### How It Works
 
@@ -192,26 +189,6 @@ and dominance boundaries.
 - Closure Compiler: `DataFlowAnalysis.java`, `LiveVariablesAnalysis.java`, `MustBeReachingVariableDef.java`
 - esbuild: no formal data flow framework — uses syntactic heuristics
 - Terser: `compress/reduce-vars.js` (single-pass variable tracking), `compress/evaluate.js` (constant evaluation)
-
-## Interference Graph & Graph Coloring
-
-### What
-
-An undirected graph where edges connect variables that are simultaneously live at any program point. Greedy graph coloring assigns "colors" (variable slots) so no two adjacent nodes share a color.
-
-### Why
-
-- **Variable coalescing (022)** — determines which variables can safely share the same name/slot because their live ranges don't overlap
-- **Variable mangling (034)** — enables sibling scope name reuse; variables in non-overlapping scopes get the same short name
-- **Dead assignments elimination (021)** — liveness analysis (the input to interference graph construction) identifies dead stores
-
-### How It Works
-
-Build from liveness analysis output: for each program point, all simultaneously-live variables get pairwise edges. Then greedy graph coloring (sorted by degree or frequency) assigns minimum colors. Variables with the same color can share a name.
-
-### References
-
-- Closure Compiler: `GraphColoring.java`, `LiveVariablesAnalysis.java`, `CoalesceVariableNames.java`
 
 ## Type Inference (Value Type Tracking)
 
@@ -341,8 +318,6 @@ optimizations, or cost too much compile time for too little benefit.
 - **String deduplication** only helps when the shared declaration is cheaper than repeating
   literals
 - **Fixed-point iteration** needs a notion of diminishing returns
-- **Mangling** benefits from byte-oriented and compression-oriented heuristics, not only from
-  legality
 
 ### How It Works
 
@@ -364,3 +339,15 @@ function.
 - Closure Compiler: optimization-loop heuristics and pass scheduling
 - Terser: pass counts, size-sensitive inlining, and repeated compression passes
 - esbuild: aggressive preference for cheap, high-payoff transforms
+
+## Related Oxc Name-Mangling Work
+
+Name mangling is a separate size-reduction topic in Oxc. It may reuse some adjacent
+infrastructure such as symbol and scope information, but it is not part of the compressor
+described in this chapter.
+
+The dedicated design docs for that work are:
+
+- Design 020 — property mangling
+- Design 034 — variable mangling
+- Design 039 — property ambiguation

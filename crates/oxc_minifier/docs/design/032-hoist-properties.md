@@ -5,11 +5,18 @@
 
 ## What
 
-Extract constant properties from object literals into standalone variables. When an object is only used for property access (never escapes as a whole), each property can be lifted to a separate variable, eliminating the object entirely. After mangling, the individual variables compress better than object property access chains.
+Extract constant properties from object literals into standalone variables. When an object is
+only used for property access (never escapes as a whole), each property can be lifted to a
+separate variable, eliminating the object entirely.
 
 ## Why
 
-Developers frequently group related constants or configuration values into objects. If these objects are only accessed by known property names, the object wrapper is overhead — property access (`o.x`) is longer than a direct variable reference (`a`), and the object literal syntax (`{x:1,y:2}`) is longer than separate declarations (`var a=1,b=2`). This pass converts structured access patterns into flat variable references that mangle and compress more effectively.
+Developers frequently group related constants or configuration values into objects. If these
+objects are only accessed by known property names, the object wrapper is overhead — property
+access (`o.x`) is longer than a direct variable reference (`a`), and the object literal
+syntax (`{x:1,y:2}`) is longer than separate declarations (`var a=1,b=2`). This pass
+converts structured access patterns into flat variable references that compress more
+effectively.
 
 ## Conceptual Dependencies
 
@@ -44,22 +51,6 @@ f(o.a);
 var o_a = 1;
 var o = { b: [2, 3] };
 f(o_a);
-```
-
-### After mangling
-
-The real benefit appears after variable name mangling:
-
-```js
-// Before mangling
-var config_width = 100,
-  config_height = 200;
-draw(config_width, config_height);
-
-// After mangling
-var a = 100,
-  b = 200;
-draw(a, b);
 ```
 
 ### Safety constraints

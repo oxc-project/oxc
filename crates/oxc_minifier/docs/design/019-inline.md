@@ -71,8 +71,6 @@ use(longVariableName);
 use(longVariableName);
 ```
 
-Note: after mangling, `longVariableName` becomes a short name, making this profitable.
-
 ### Inline simple functions (direct return)
 
 When a function body is a single `return` expression, replace call sites with the expression (substituting arguments for parameters).

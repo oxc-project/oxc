@@ -3,13 +3,22 @@
 - **Status:** Not Implemented
 - **Difficulty:** Very Complex
 
+This doc describes related Oxc name-mangling work. It is not part of the new single-file
+minifier described in the compressor architecture docs.
+
 ## What
 
-Rename unrelated properties on different object types to the same short name. If `Foo.alpha` and `Bar.beta` are never accessed on the same object, both can be renamed to `.a`. This maximizes property name reuse across the program, producing shorter output than renaming each property to a unique short name.
+Rename unrelated properties on different object shapes to the same short name. If
+`Foo.alpha` and `Bar.beta` are never accessed on the same object, both can be renamed to
+`.a`. This maximizes property name reuse within a single file, producing shorter output than
+renaming each property to a unique short name.
 
 ## Why
 
-Design 020 (Mangle Properties) renames all properties to unique short names: `.a`, `.b`, `.c`, etc. Ambiguation goes further by allowing _different_ original names to share the _same_ mangled name, as long as they belong to disjoint object types. This dramatically increases name reuse in programs with many types:
+Design 020 (Mangle Properties) renames all properties to unique short names: `.a`, `.b`,
+`.c`, etc. Ambiguation goes further by allowing _different_ original names to share the
+_same_ mangled name, as long as they belong to disjoint object shapes. This dramatically
+increases name reuse in files with many distinct object shapes:
 
 ```js
 // Before
@@ -53,7 +62,9 @@ class Cat {
 
 ### Safety constraints
 
-- **Requires type information** — without type annotations or whole-program inference, the analysis must be conservative. Any property accessed on an unknown-typed object must be assumed to interfere with all other properties of the same name
+- **Requires type information** — without type annotations or richer shape inference, the
+  analysis must be conservative. Any property accessed on an unknown-typed object must be
+  assumed to interfere with all other properties of the same name
 - **Prototype chains** — properties inherited through `__proto__` must be treated as belonging to all types in the chain
 - **Dynamic access** — `obj[expr]` with non-constant keys disables ambiguation for that object's type
 - **`Object.keys()`/`for...in`** — if property names are observed as runtime strings, renaming (and especially reuse) can change behavior
