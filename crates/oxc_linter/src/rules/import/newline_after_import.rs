@@ -209,9 +209,11 @@ impl Rule for NewlineAfterImport {
         }
 
         let source_text = ctx.source_text();
+        // Build a newline index once so offset-to-line lookups do not rescan the source.
+        let newline_positions = collect_newline_positions(source_text);
         let comments = ctx.semantic().comments();
         let comment_lines = if self.consider_comments {
-            Some(build_comment_lines(comments, source_text))
+            Some(build_comment_lines(comments, &newline_positions))
         } else {
             None
         };
@@ -227,7 +229,7 @@ impl Rule for NewlineAfterImport {
             };
 
             if self.consider_comments {
-                let end_line = line_number_at(source_text, stmt.span().end);
+                let end_line = line_number_at_with_newlines(&newline_positions, stmt.span().end);
                 if let Some(comment) = find_comment_in_line_range(
                     comments,
                     comment_lines.as_ref().expect("comment lines should be computed"),
@@ -236,7 +238,7 @@ impl Rule for NewlineAfterImport {
                 ) {
                     check_spacing(
                         ctx,
-                        source_text,
+                        &newline_positions,
                         stmt.span(),
                         comment.span.start,
                         count,
@@ -253,7 +255,7 @@ impl Rule for NewlineAfterImport {
 
             check_spacing(
                 ctx,
-                source_text,
+                &newline_positions,
                 stmt.span(),
                 next_statement_start(ctx, source_text, next_stmt),
                 count,
@@ -277,7 +279,7 @@ impl Rule for NewlineAfterImport {
             }
 
             if self.consider_comments {
-                let end_line = line_number_at(source_text, call_end);
+                let end_line = line_number_at_with_newlines(&newline_positions, call_end);
                 if let Some(comment) = find_comment_in_line_range(
                     comments,
                     comment_lines.as_ref().expect("comment lines should be computed"),
@@ -286,7 +288,7 @@ impl Rule for NewlineAfterImport {
                 ) {
                     check_spacing(
                         ctx,
-                        source_text,
+                        &newline_positions,
                         stmt.span(),
                         comment.span.start,
                         count,
@@ -299,7 +301,7 @@ impl Rule for NewlineAfterImport {
 
             check_spacing(
                 ctx,
-                source_text,
+                &newline_positions,
                 stmt.span(),
                 next_statement_start(ctx, source_text, next_stmt),
                 count,
@@ -318,6 +320,8 @@ fn collect_require_call_end_offsets<'a>(
     ctx: &LintContext<'a>,
     body: &[Statement<'a>],
 ) -> Vec<Option<u32>> {
+    // This vector is index-aligned with `body`:
+    // each slot stores the latest top-level static `require(...)` end offset in that statement.
     let mut require_call_end_offsets: Vec<Option<u32>> = vec![None; body.len()];
     let nodes = ctx.nodes();
 
@@ -377,6 +381,7 @@ fn find_statement_index(body: &[Statement<'_>], span: Span) -> Option<usize> {
 }
 
 fn next_statement_start(ctx: &LintContext<'_>, source_text: &str, stmt: &Statement<'_>) -> u32 {
+    // For decorated classes, spacing should be measured to the first decorator line.
     let mut start = first_decorator_start(stmt).unwrap_or(stmt.span().start);
     let bytes = source_text.as_bytes();
     let len = u32::try_from(bytes.len()).unwrap();
@@ -420,7 +425,7 @@ fn first_decorator_start(stmt: &Statement<'_>) -> Option<u32> {
 
 fn check_spacing(
     ctx: &LintContext<'_>,
-    source_text: &str,
+    newline_positions: &[usize],
     stmt_span: Span,
     next_start: u32,
     count: usize,
@@ -428,7 +433,7 @@ fn check_spacing(
     enforce_exact: bool,
 ) {
     let expected_line_diff = count + 1;
-    let line_diff = line_difference(source_text, stmt_span, next_start);
+    let line_diff = line_difference(newline_positions, stmt_span, next_start);
     let should_report =
         line_diff < expected_line_diff || (enforce_exact && line_diff != expected_line_diff);
 
@@ -450,26 +455,20 @@ fn check_spacing(
     }
 }
 
-fn line_difference(source_text: &str, current: Span, next_start: u32) -> usize {
-    let current_line = line_number_at(source_text, current.end);
-    let next_line = line_number_at(source_text, next_start);
+fn line_difference(newline_positions: &[usize], current: Span, next_start: u32) -> usize {
+    let current_line = line_number_at_with_newlines(newline_positions, current.end);
+    let next_line = line_number_at_with_newlines(newline_positions, next_start);
     next_line.saturating_sub(current_line)
 }
 
-fn line_number_at(source_text: &str, offset: u32) -> usize {
-    let offset = offset as usize;
-    source_text[..offset].bytes().filter(|&byte| byte == b'\n').count() + 1
-}
-
-fn build_comment_lines(comments: &[Comment], source_text: &str) -> Vec<usize> {
+fn build_comment_lines(comments: &[Comment], newline_positions: &[usize]) -> Vec<usize> {
     if comments.is_empty() {
         return Vec::new();
     }
 
-    let newline_positions = collect_newline_positions(source_text);
     comments
         .iter()
-        .map(|comment| line_number_at_with_newlines(&newline_positions, comment.span.start))
+        .map(|comment| line_number_at_with_newlines(newline_positions, comment.span.start))
         .collect()
 }
 
