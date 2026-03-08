@@ -208,12 +208,12 @@ design document number in [progress.md](progress.md).
 
 These run inside the loop but require infrastructure not yet built:
 
-| #   | Pass                         | Dependency                                              |
-| --- | ---------------------------- | ------------------------------------------------------- |
-| 021 | Dead Assignments Elimination | CFG + liveness dataflow + effect reasoning              |
+| #   | Pass                         | Dependency                                                |
+| --- | ---------------------------- | --------------------------------------------------------- |
+| 021 | Dead Assignments Elimination | CFG + liveness dataflow + effect reasoning                |
 | 022 | Collapse Variables           | CFG + reaching definitions + alias/effect + profitability |
-| 032 | Hoist Properties             | Escape analysis + alias reasoning                       |
-| 035 | Flow-Sensitive Inline        | CFG + reaching definitions + effect reasoning           |
+| 032 | Hoist Properties             | Escape analysis + alias reasoning                         |
+| 035 | Flow-Sensitive Inline        | CFG + reaching definitions + effect reasoning             |
 
 **Phase 5 — Mangle (separate from compression)**
 
