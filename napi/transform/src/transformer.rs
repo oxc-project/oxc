@@ -554,6 +554,31 @@ pub struct ReactCompilerOptions {
     /// Array of filename regex patterns to filter which files get compiled.
     /// When set, only files whose path matches at least one pattern will be compiled.
     pub sources: Option<Vec<String>>,
+
+    /// Enable optional dependency tracking for optional chain expressions.
+    ///
+    /// @default true
+    pub enable_optional_dependencies: Option<bool>,
+
+    /// Enable transitive freezing of function expression captures.
+    ///
+    /// @default true
+    pub enable_transitively_freeze_function_expressions: Option<bool>,
+
+    /// Enable treating ref-like identifiers as refs for type inference.
+    ///
+    /// @default true
+    pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
+
+    /// Validate that useMemo/useCallback results are not void.
+    ///
+    /// @default true
+    pub validate_no_void_use_memo: Option<bool>,
+
+    /// Validate exhaustive memoization dependencies.
+    ///
+    /// @default true
+    pub validate_exhaustive_memoization_dependencies: Option<bool>,
 }
 
 /// Configuration for an external function import used for gating.
@@ -648,6 +673,14 @@ impl From<ReactCompilerOptions> for oxc::transformer::ReactCompilerOptions {
             eslint_suppression_rules: options.eslint_suppression_rules,
             flow_suppressions: options.flow_suppressions,
             sources: options.sources,
+            enable_optional_dependencies: options.enable_optional_dependencies,
+            enable_transitively_freeze_function_expressions: options
+                .enable_transitively_freeze_function_expressions,
+            enable_treat_ref_like_identifiers_as_refs: options
+                .enable_treat_ref_like_identifiers_as_refs,
+            validate_no_void_use_memo: options.validate_no_void_use_memo,
+            validate_exhaustive_memoization_dependencies: options
+                .validate_exhaustive_memoization_dependencies,
         }
     }
 }
