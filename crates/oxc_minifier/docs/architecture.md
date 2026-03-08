@@ -167,10 +167,10 @@ variable or property renaming work.
 
 The design directory still contains adjacent Oxc name-mangling docs:
 
-| #   | Doc                  | Topic                                |
-| --- | -------------------- | ------------------------------------ |
-| 020 | Mangle Properties    | Property renaming                    |
-| 034 | Variable Mangling    | Binding/label renaming               |
+| #   | Doc                  | Topic                                      |
+| --- | -------------------- | ------------------------------------------ |
+| 020 | Mangle Properties    | Property renaming                          |
+| 034 | Variable Mangling    | Binding/label renaming                     |
 | 039 | Ambiguate Properties | Property-name reuse across disjoint shapes |
 
 These are related size-reduction topics, but they are outside the minifier phase map below.
