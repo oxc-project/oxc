@@ -52,10 +52,12 @@ pub struct SuppressionManager {
 
 impl SuppressionManager {
     pub fn load(
-        path: &Path,
+        cwd: &Path,
+        file_path: &str,
         suppress_all: bool,
         prune_suppression: bool,
     ) -> (Self, SuppressionSender) {
+        let path = cwd.join(file_path);
         let (sender, receiver): (SuppressionSender, SuppressionReceiver) =
             std::sync::mpsc::channel();
 
@@ -83,7 +85,7 @@ impl SuppressionManager {
             );
         }
 
-        match SuppressionTracking::from_file(path) {
+        match SuppressionTracking::from_file(&path, cwd) {
             Ok(suppression_file) => (
                 Self {
                     suppressions_by_file: Some(suppression_file),

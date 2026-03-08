@@ -1,5 +1,10 @@
 use cow_utils::CowUtils;
-use std::{ffi::OsStr, fs, path::Path, sync::Arc};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
@@ -103,11 +108,17 @@ impl Default for SuppressionTracking {
 }
 
 impl SuppressionTracking {
-    pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
+    pub fn from_file(path: &PathBuf, cwd: &Path) -> Result<Self, OxcDiagnostic> {
+        let path_to_error = if let Ok(path_error) = path.strip_prefix(cwd) {
+            path_error.display()
+        } else {
+            path.display()
+        };
+
         let string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!(
                 "Failed to parse suppression rules file {} with error {e:?}",
-                path.display()
+                path_to_error
             ))
         })?;
 
@@ -123,10 +134,7 @@ impl SuppressionTracking {
                     )
                 }
             };
-            OxcDiagnostic::error(format!(
-                "Failed to parse oxlint config {}.\n{err}",
-                path.display()
-            ))
+            OxcDiagnostic::error(format!("Failed to parse oxlint config {}.\n{err}", path_to_error))
         })?;
 
         let config = Self::deserialize(&json).map_err(|err| {
