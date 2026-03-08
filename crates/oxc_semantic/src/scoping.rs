@@ -735,11 +735,14 @@ impl Scoping {
     /// Add an unresolved reference to the root scope map.
     pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = name.clone_in(allocator);
-            cell.root_unresolved_references
-                .entry(name)
-                .or_insert_with(|| ArenaVec::new_in(allocator))
-                .push(reference_id);
+            if let Some(reference_ids) = cell.root_unresolved_references.get_mut(name.as_str()) {
+                reference_ids.push(reference_id);
+                return;
+            }
+
+            let mut reference_ids = ArenaVec::new_in(allocator);
+            reference_ids.push(reference_id);
+            cell.root_unresolved_references.insert(name.clone_in(allocator), reference_ids);
         });
     }
 
