@@ -1,4 +1,4 @@
-use lazy_regex::{Regex, RegexBuilder};
+use regress::{Flags as RegexFlags, Regex};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -91,8 +91,15 @@ impl CommentConfigJson {
     fn into_comment_config(self, base: &CommentConfigJson) -> CommentConfig {
         let pattern = self.ignore_pattern.as_ref().or(base.ignore_pattern.as_ref());
         CommentConfig {
-            ignore_pattern: pattern
-                .and_then(|p| RegexBuilder::new(&format!(r"^\s*(?:{p})")).build().ok()),
+            ignore_pattern: pattern.and_then(|p| {
+                // We use `regress` crate for compatibility with JS regexes.
+                // ESlint: `const regExp = RegExp(`^\\s*(?:${ignorePatternStr})`, "u");`
+                Regex::with_flags(
+                    &format!(r"^\s*(?:{p})"),
+                    RegexFlags { unicode: true, ..Default::default() },
+                )
+                .ok()
+            }),
             ignore_inline_comments: self
                 .ignore_inline_comments
                 .or(base.ignore_inline_comments)
@@ -214,7 +221,7 @@ impl Rule for CapitalizedComments {
 
             // Check ignorePattern (using normalized text, like ESLint)
             if let Some(ref pattern) = config.ignore_pattern
-                && pattern.is_match(&normalized)
+                && pattern.find(&normalized).is_some()
             {
                 continue;
             }
@@ -696,6 +703,32 @@ fn test() {
                 serde_json::json!(["always", { "line": { "ignorePattern": "lineCommentIgnorePattern" }, "block": { "ignorePattern": "blockCommentIgnorePattern" }}]),
             ),
         ),
+        // `[[]` is valid JS regex syntax (character class containing literal `[`)
+        // but invalid in Rust's `regex` crate (nested character class).
+        // Using `regress` crate ensures JS-compatible regex parsing.
+        ("// [foo] bar", Some(serde_json::json!(["always", { "ignorePattern": "[[]" }]))),
+        // `.` matches full Unicode code points (including astral characters like emoji)
+        (
+            {
+                const _: () = assert!('😀'.len_utf8() == 4);
+                const _: () = assert!('😀'.len_utf16() == 2);
+                "// 😀x"
+            },
+            Some(serde_json::json!(["always", { "ignorePattern": ".x" }])),
+        ),
+        // Unicode property escapes require the `u` flag
+        (
+            "// lowercase ignored by unicode property escape",
+            Some(serde_json::json!(["always", { "ignorePattern": "\\p{Script=Latin}" }])),
+        ),
+        // Positive lookahead: `foo(?=bar)` matches `foo` only when followed by `bar`
+        ("// foobar", Some(serde_json::json!(["always", { "ignorePattern": "foo(?=bar)" }]))),
+        // Negative lookahead: `foo(?!bar)` matches `foo` only when NOT followed by `bar`
+        ("// foobaz", Some(serde_json::json!(["always", { "ignorePattern": "foo(?!bar)" }]))),
+        // Positive lookbehind: `f(?<=f)oo` matches because after consuming `f`, lookbehind confirms it
+        ("// foo", Some(serde_json::json!(["always", { "ignorePattern": "f(?<=f)oo" }]))),
+        // Negative lookbehind: `f(?<!x)oo` matches because char behind is `f`, not `x`
+        ("// foo", Some(serde_json::json!(["always", { "ignorePattern": "f(?<!x)oo" }]))),
     ];
 
     let fail = vec![
@@ -885,6 +918,24 @@ fn test() {
         ),
         ("// should fail. https://github.com", Some(serde_json::json!(["always"]))),
         ("// Should fail. https://github.com", Some(serde_json::json!(["never"]))),
+        // `[[]` matches literal `[`, but comment doesn't contain `[`
+        ("// no bracket here", Some(serde_json::json!(["always", { "ignorePattern": "[[]" }]))),
+        // `.` matches one code point; comment starts with `a` which matches `.`,
+        // but then `x` doesn't match `b`, so `.x` fails
+        ("// ab", Some(serde_json::json!(["always", { "ignorePattern": ".x" }]))),
+        // `\p{Script=Greek}` doesn't match Latin characters
+        (
+            "// lowercase",
+            Some(serde_json::json!(["always", { "ignorePattern": "\\p{Script=Greek}" }])),
+        ),
+        // Positive lookahead: `foo(?=bar)` doesn't match `foo` when followed by `baz`
+        ("// foobaz", Some(serde_json::json!(["always", { "ignorePattern": "foo(?=bar)" }]))),
+        // Negative lookahead: `foo(?!bar)` doesn't match `foo` when followed by `bar`
+        ("// foobar", Some(serde_json::json!(["always", { "ignorePattern": "foo(?!bar)" }]))),
+        // Positive lookbehind: `f(?<=x)oo` doesn't match because lookbehind sees `f`, not `x`
+        ("// foo", Some(serde_json::json!(["always", { "ignorePattern": "f(?<=x)oo" }]))),
+        // Negative lookbehind: `f(?<!f)oo` doesn't match because char behind IS `f`
+        ("// foo", Some(serde_json::json!(["always", { "ignorePattern": "f(?<!f)oo" }]))),
     ];
 
     let fix = vec![
