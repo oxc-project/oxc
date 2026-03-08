@@ -444,20 +444,7 @@ impl<'a> Format<'a> for Comment {
             if let Some(formatted) =
                 super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
             {
-                // `format_jsdoc_comment` returns `Some("")` for empty JSDoc comments
-                // (no description and no tags) to signal removal — matching upstream
-                // prettier-plugin-jsdoc behavior. In that case we skip writing and return.
-                if !formatted.is_empty() {
-                    // Write line-by-line with hard_line_break() for proper indentation
-                    // (same approach as alignable multi-line comments)
-                    let mut lines = LineTerminatorSplitter::new(formatted);
-                    if let Some(first_line) = lines.next() {
-                        write!(f, [text(first_line.trim_end())]);
-                        for line in lines {
-                            write!(f, [hard_line_break(), " ", text(line.trim())]);
-                        }
-                    }
-                }
+                write!(f, [formatted]);
                 return;
             }
         }

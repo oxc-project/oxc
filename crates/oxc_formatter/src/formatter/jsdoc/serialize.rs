@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, StringBuilder};
+use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
@@ -8,13 +8,47 @@ use oxc_span::Span;
 use crate::ExternalCallbacks;
 use crate::FormatOptions;
 use crate::formatter::Formatter;
+use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
+use crate::write;
 
 use super::{
     imports::process_import_tags, line_buffer::LineBuffer,
     mdast_serialize::format_description_mdast, normalize::normalize_tag_kind,
     param_order::reorder_param_tags,
 };
+
+/// Result of formatting a JSDoc comment, ready to be emitted as IR.
+pub enum FormattedJsdoc<'a> {
+    /// Empty JSDoc (should be removed) — matches current `Some("")` behavior.
+    Empty,
+    /// Single-line: inner content only (e.g. "Description here").
+    SingleLine(&'a str),
+    /// Multi-line: \n-separated content lines (no `/** */` wrapper, no ` * ` prefixes).
+    MultiLine(&'a str),
+}
+
+impl<'a> Format<'a> for FormattedJsdoc<'a> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        match self {
+            FormattedJsdoc::Empty => {}
+            FormattedJsdoc::SingleLine(content) => {
+                write!(f, [token("/**"), " ", text(content), " ", token("*/")]);
+            }
+            FormattedJsdoc::MultiLine(content_str) => {
+                write!(f, [token("/**")]);
+                for line in content_str.split('\n') {
+                    if line.is_empty() {
+                        write!(f, [hard_line_break(), " ", token("*")]);
+                    } else {
+                        write!(f, [hard_line_break(), " ", token("*"), " ", text(line)]);
+                    }
+                }
+                write!(f, [hard_line_break(), " ", token("*/")]);
+            }
+        }
+    }
+}
 
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
 const LINE_PREFIX_LEN: usize = 3;
@@ -63,7 +97,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
     /// Format a JSDoc comment. Returns `Some(formatted)` if the comment was modified,
     /// `None` if no changes are needed.
-    fn format(mut self, comment: &Comment, source_text: &str) -> Option<&'a str> {
+    fn format(mut self, comment: &Comment, source_text: &str) -> Option<FormattedJsdoc<'a>> {
         let content = &source_text[comment.span.start as usize..comment.span.end as usize];
 
         // Extract inner content (between `/**` and `*/`)
@@ -78,7 +112,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Empty JSDoc: no description and no tags
         if description.trim().is_empty() && jsdoc.tags().is_empty() {
-            return Some(self.allocator.alloc_str(""));
+            return Some(FormattedJsdoc::Empty);
         }
 
         // Sort tags by priority within groups.
@@ -260,7 +294,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         let mut iter = content_str.split('\n').skip_while(|l| l.is_empty());
 
         let Some(first) = iter.next() else {
-            return Some(self.allocator.alloc_str(""));
+            return Some(FormattedJsdoc::Empty);
         };
 
         // Single-line check: convert to single-line if content is a single line.
@@ -276,39 +310,44 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             }
         };
         if use_single_line {
-            let formatted = self.allocator.alloc_concat_strs_array(["/** ", first, " */"]);
-            if formatted == content {
+            // Build temp string for comparison without arena-allocating
+            let mut tmp = String::with_capacity(4 + first.len() + 3);
+            tmp.push_str("/** ");
+            tmp.push_str(first);
+            tmp.push_str(" */");
+            if tmp == content {
                 return None;
             }
-            return Some(formatted);
+            let alloc_first = self.allocator.alloc_str(first);
+            return Some(FormattedJsdoc::SingleLine(alloc_first));
         }
 
-        // Build multiline comment
+        // Build temp string with `/** ... */` wrapper for comparison against original
         let capacity =
             content_str.len() + content_str.bytes().filter(|&b| b == b'\n').count() * 4 + 10;
-        let mut builder = StringBuilder::with_capacity_in(capacity, self.allocator);
-        builder.push_str("/**");
+        let mut tmp = String::with_capacity(capacity);
+        tmp.push_str("/**");
 
         for line in std::iter::once(first).chain(second).chain(iter) {
-            builder.push('\n');
+            tmp.push('\n');
             if line.is_empty() {
-                builder.push_str(" *");
+                tmp.push_str(" *");
             } else {
-                builder.push_str(" * ");
-                builder.push_str(line);
+                tmp.push_str(" * ");
+                tmp.push_str(line);
             }
         }
-        builder.push('\n');
-        builder.push_str(" */");
+        tmp.push('\n');
+        tmp.push_str(" */");
 
-        let result = builder.into_str();
-
-        // Compare with original
-        if result == content {
+        // Compare with original — if unchanged, return None
+        if tmp == content {
             return None;
         }
 
-        Some(result)
+        // Arena-allocate only the inner content (without /** */ wrapper)
+        let alloc_content = self.allocator.alloc_str(content_str);
+        Some(FormattedJsdoc::MultiLine(alloc_content))
     }
 
     /// Push a (possibly multi-line) description into `content_lines` as a single string,
@@ -908,15 +947,15 @@ pub(super) fn strip_default_is_suffix(desc: &str) -> Cow<'_, str> {
 /// Format a JSDoc comment. Returns `Some(formatted)` if the comment was modified,
 /// `None` if no changes are needed.
 ///
-/// The returned string is the full comment content (e.g. `/** ... */`), or empty
-/// string to signal the comment should be removed (empty JSDoc).
+/// The returned `FormattedJsdoc` implements `Format` and emits the `/** ... */`
+/// wrapper directly as IR tokens.
 pub fn format_jsdoc_comment<'a>(
     comment: &Comment,
     options: &JsdocOptions,
     source_text: &str,
     available_width: usize,
     f: &Formatter<'_, 'a>,
-) -> Option<&'a str> {
+) -> Option<FormattedJsdoc<'a>> {
     let fmt = JsdocFormatter::new(
         options,
         f.options(),
