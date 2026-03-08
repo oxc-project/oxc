@@ -86,6 +86,12 @@ The fixed-point loop should therefore track which functions changed and only re-
 on subsequent iterations. This applies to all optimization passes (not just peepholes) — any pass
 that modifies the AST within a function marks that function for re-visitation.
 
+Crucially, optimizing one function can dirty _another_. Removing a call to `f()` while
+processing its caller leaves `f` with a potentially-unused parameter; inlining a variable
+from an outer scope changes the reference counts visible to that scope's function. The dirty
+marking mechanism must therefore allow a pass to mark any function — not just the one currently
+being traversed — for re-visitation on the next iteration.
+
 The traversal needs a mechanism to **skip functions that haven't changed** since the last
 iteration. Closure Compiler provides this through `shouldTraverse(node)` — a predicate called
 before descending into a node's children. This separates two concerns:
