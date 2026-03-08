@@ -770,7 +770,6 @@ impl HirBuilder {
     /// Sets the given WIP block as the current block, executes the callback to populate it,
     /// and then resets to the previous block.
     pub fn enter_reserved(&mut self, wip: WipBlock, f: impl FnOnce(&mut Self) -> Terminal) {
-        let wip_id = wip.id;
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self);
         let WipBlock { id, kind, instructions } = std::mem::replace(&mut self.current, prev);

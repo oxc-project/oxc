@@ -120,9 +120,23 @@ export interface DecoratorOptions {
   emitDecoratorMetadata?: boolean
 }
 
+/** Configuration for dynamic gating via `use memo if(...)` directives. */
+export interface DynamicGatingConfig {
+  /** The module source to import from. */
+  source: string
+}
+
 export interface Es2015Options {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsOptions
+}
+
+/** Configuration for an external function import used for gating. */
+export interface ExternalFunctionConfig {
+  /** The module source to import from. */
+  source: string
+  /** The import specifier name. */
+  importSpecifierName: string
 }
 
 export declare const enum HelperMode {
@@ -357,6 +371,92 @@ export interface ReactCompilerOptions {
    * @default "react-19"
    */
   target?: string
+  /**
+   * Whether to validate hooks usage (Rules of Hooks).
+   *
+   * @default true
+   */
+  validateHooksUsage?: boolean
+  /**
+   * Whether to validate ref access during render.
+   *
+   * @default true
+   */
+  validateRefAccessDuringRender?: boolean
+  /**
+   * Whether to validate no setState in render.
+   *
+   * @default true
+   */
+  validateNoSetStateInRender?: boolean
+  /**
+   * Output mode: "client", "ssr", "lint".
+   * When not set, defaults to "client" (or "lint" if `noEmit` is true).
+   */
+  outputMode?: string
+  /**
+   * When true, the compiler still runs validation but does not emit compiled output.
+   * Equivalent to setting `outputMode` to "lint".
+   */
+  noEmit?: boolean
+  /** Whether to ignore "use no forget" / "use no memo" directives. */
+  ignoreUseNoForget?: boolean
+  /** Custom opt-out directives (in addition to "use no memo" / "use no forget"). */
+  customOptOutDirectives?: Array<string>
+  /**
+   * Gating function config. When set, emits gated output that wraps
+   * compiled + original functions behind a feature flag.
+   */
+  gating?: ExternalFunctionConfig
+  /** Dynamic gating config. When set, enables `use memo if(...)` directives. */
+  dynamicGating?: DynamicGatingConfig
+  /**
+   * ESLint suppression rules to check for when scanning for suppression comments.
+   *
+   * @default `["react-hooks/rules-of-hooks", "react-hooks/exhaustive-deps"]`
+   */
+  eslintSuppressionRules?: Array<string>
+  /**
+   * Whether to bail on Flow suppression comments.
+   *
+   * @default true
+   */
+  flowSuppressions?: boolean
+  /**
+   * Array of filename regex patterns to filter which files get compiled.
+   * When set, only files whose path matches at least one pattern will be compiled.
+   */
+  sources?: Array<string>
+  /**
+   * Enable optional dependency tracking for optional chain expressions.
+   *
+   * @default true
+   */
+  enableOptionalDependencies?: boolean
+  /**
+   * Enable transitive freezing of function expression captures.
+   *
+   * @default true
+   */
+  enableTransitivelyFreezeFunctionExpressions?: boolean
+  /**
+   * Enable treating ref-like identifiers as refs for type inference.
+   *
+   * @default true
+   */
+  enableTreatRefLikeIdentifiersAsRefs?: boolean
+  /**
+   * Validate that useMemo/useCallback results are not void.
+   *
+   * @default true
+   */
+  validateNoVoidUseMemo?: boolean
+  /**
+   * Validate exhaustive memoization dependencies.
+   *
+   * @default true
+   */
+  validateExhaustiveMemoizationDependencies?: boolean
 }
 
 export interface ReactRefreshOptions {
