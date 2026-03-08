@@ -117,6 +117,12 @@ A bidirectional map of function ↔ call-site relationships. Each edge connects 
 
 An AST walk registers every function declaration/expression and every call expression. Call targets are resolved via the symbol table: if the callee is an identifier that resolves to a `SymbolId` pointing to a function declaration, a direct edge is created. IIFEs (`(function(){...})()`) and immediately-invoked arrow functions are recognized as special cases with a known single call site. Unresolvable callees (member expressions, computed calls) produce edges to an "unknown" sentinel.
 
+Per function, the call graph tracks:
+
+- **Call count** — how many call sites invoke this function (single-call functions are safe to inline without size increase)
+- **Address taken** — whether the function has any non-call reference (assigned to a variable, passed as an argument, stored in a property). If the address is taken, the function may be called from unknown sites, disabling optimizations that assume a known set of callers
+- **IIFE status** — whether the function is immediately invoked at its declaration site
+
 ### References
 
 - Closure Compiler: `CallGraph.java`, `DefinitionUseSiteFinder.java`
@@ -206,3 +212,47 @@ Chains through AST: sequences → type of last element; assignments → type of 
 - Terser: `inference.js`
 - SWC: `compress/optimize/evaluate.rs`
 - `oxc_ecmascript` crate
+
+## Escape Analysis
+
+### What
+
+Tracks whether values escape their declaring function — i.e., whether a variable's value can be observed outside the function that creates it. A value escapes if it is returned, assigned to an outer-scope variable, stored in a property of an escaping object, or passed as an argument to a function that is not fully analyzable.
+
+### Why
+
+- **Hoist properties (032)** — an object can only be decomposed into standalone variables if it does not escape. If the object is passed to another function or returned, external code may observe the object as a whole, and property hoisting would break that contract
+- **Stack allocation** — values that do not escape can be allocated on the stack or arena rather than the heap (future optimization)
+
+### How It Works
+
+For each variable, the analysis walks all references and checks whether any reference causes the value to leave its declaring scope. A reference escapes if it appears as: a function call argument (unless the callee is known and analyzed), a return value, an assignment to a variable in an outer scope, or a property write on an escaping object. The analysis is conservative — if any reference is ambiguous, the value is marked as escaping.
+
+### References
+
+- Closure Compiler: `ReferenceCollection.isEscaped()` — checks whether a collected reference escapes its declaring function
+- esbuild: no formal escape analysis
+- Terser: no formal escape analysis — uses heuristics in `hoist_props`
+
+## Reference-to-BasicBlock Association
+
+### What
+
+Associates each variable reference with the CFG basic block in which it occurs. This is an augmentation of the existing reference data (which tracks symbol, read/write flags, and span) with control flow context.
+
+### Why
+
+This association enables two key queries:
+
+- **`is_well_defined(ref)`** — the variable's assignment dominates all uses (the assignment's basic block dominates the reference's basic block in the CFG). This is required for safe inlining: a variable can only be inlined at a use site if the assigned value is guaranteed to have been computed by that point
+- **`is_escaped(ref)`** — the reference is in a different hoist scope (function) than the variable's declaration. Combined with control flow, this detects cases where a closure captures a variable that may be reassigned between capture and invocation
+
+### How It Works
+
+During scope analysis (or as a post-pass over the reference list), each reference is tagged with the `BasicBlockId` of the block it falls within. The CFG's dominator tree then answers dominance queries: given an assignment in block A and a use in block B, the assignment reaches the use if A dominates B in the dominator tree.
+
+### References
+
+- Closure Compiler: `ReferenceCollector` stores `BasicBlock` context with each collected reference, used by `FlowSensitiveInlineVariables`
+- esbuild: no formal reference-to-block mapping
+- Terser: no formal reference-to-block mapping — uses syntactic heuristics in `reduce-vars.js`

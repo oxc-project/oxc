@@ -38,33 +38,38 @@ All plans are not yet implemented. The existing `oxc_minifier` crate is legacy r
 | 029 | [Collapse Declarations](design/029-collapse-declarations.md)                                 | Not Started |
 | 030 | [Modern Syntax Optimizations](design/030-modern-syntax-optimizations.md)                     | Not Started |
 | 031 | [TypeScript Optimizations](design/031-typescript-optimizations.md)                           | Not Started |
+| 037 | [Extract Prototype Members](design/037-extract-prototype-members.md)                         | Not Started |
 
 ## Simple-Medium
 
-| #   | Plan                                               | Status      |
-| --- | -------------------------------------------------- | ----------- |
-| 016 | [Optimize Loops](design/016-optimize-loops.md)     | Not Started |
-| 032 | [Hoist Properties](design/032-hoist-properties.md) | Not Started |
-| 033 | [Optimize Calls](design/033-optimize-calls.md)     | Not Started |
+| #   | Plan                                                         | Status      |
+| --- | ------------------------------------------------------------ | ----------- |
+| 016 | [Optimize Loops](design/016-optimize-loops.md)               | Not Started |
+| 032 | [Hoist Properties](design/032-hoist-properties.md)           | Not Started |
+| 033 | [Optimize Calls](design/033-optimize-calls.md)               | Not Started |
+| 036 | [Inline Simple Methods](design/036-inline-simple-methods.md) | Not Started |
 
 ## Medium
 
-| #   | Plan                                                   | Status      |
-| --- | ------------------------------------------------------ | ----------- |
-| 017 | [Optimize Switch](design/017-optimize-switch.md)       | Not Started |
-| 018 | [Remove Unused Code](design/018-remove-unused-code.md) | Not Started |
-| 019 | [Inline](design/019-inline.md)                         | Not Started |
-| 020 | [Mangle Properties](design/020-mangle-properties.md)   | Not Started |
-| 034 | [Variable Mangling](design/034-variable-mangling.md)   | Not Started |
+| #   | Plan                                                     | Status      |
+| --- | -------------------------------------------------------- | ----------- |
+| 017 | [Optimize Switch](design/017-optimize-switch.md)         | Not Started |
+| 018 | [Remove Unused Code](design/018-remove-unused-code.md)   | Not Started |
+| 019 | [Inline](design/019-inline.md)                           | Not Started |
+| 020 | [Mangle Properties](design/020-mangle-properties.md)     | Not Started |
+| 034 | [Variable Mangling](design/034-variable-mangling.md)     | Not Started |
+| 038 | [Mark Pure Functions](design/038-mark-pure-functions.md) | Not Started |
 
 ## Complex
 
 | #   | Plan                                                                       | Status      |
 | --- | -------------------------------------------------------------------------- | ----------- |
 | 021 | [Dead Assignments Elimination](design/021-dead-assignments-elimination.md) | Not Started |
+| 035 | [Flow-Sensitive Inline](design/035-flow-sensitive-inline.md)               | Not Started |
 
 ## Very Complex
 
-| #   | Plan                                                   | Status      |
-| --- | ------------------------------------------------------ | ----------- |
-| 022 | [Collapse Variables](design/022-collapse-variables.md) | Not Started |
+| #   | Plan                                                       | Status      |
+| --- | ---------------------------------------------------------- | ----------- |
+| 022 | [Collapse Variables](design/022-collapse-variables.md)     | Not Started |
+| 039 | [Ambiguate Properties](design/039-ambiguate-properties.md) | Not Started |

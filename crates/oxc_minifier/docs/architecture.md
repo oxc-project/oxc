@@ -72,7 +72,8 @@ for unused code removal to clean up. A single traversal cannot catch all these c
 The compressor therefore runs all optimization passes inside a **fixed-point loop**: traverse the AST,
 apply all passes, and repeat until an iteration produces no changes (convergence). Closure Compiler
 uses the same approach, with a convergence heuristic that stops when consecutive iterations yield
-less than 0.05% size reduction.
+less than 0.05% size reduction, plus a safety cap of 100 maximum iterations to guarantee termination
+even if the convergence threshold is never met.
 
 ### Selective subtree traversal
 
@@ -99,6 +100,12 @@ before descending into a node's children. This separates two concerns:
 1. **The mechanism** — how the traversal skips (a predicate checked before descent)
 2. **The policy** — what decides which functions to skip (change tracking)
 
+Closure Compiler implements this with a **monotonic change counter** and **per-function-scope
+timestamps**. Each pass increments a global counter when it modifies the AST. Each function scope
+records the counter value at which it was last optimized. On the next iteration, a function is
+skipped if its timestamp equals the current counter (no changes since last visit). The
+`shouldTraverse(node)` predicate checks this timestamp before descending into a function body.
+
 Both concerns are unsolved for the new minifier. The generated walk functions currently always
 recurse into all children unconditionally, and there is no change tracking beyond a single
 global boolean.
@@ -111,6 +118,11 @@ because those structures are built once upfront and not automatically kept in sy
 changes. Passes depend on this data for correctness — `symbol_is_unused()` gates whether a
 declaration can be removed, reference counts determine inlining eligibility, and scope parent
 pointers are used for name resolution.
+
+The single-pass model (all peephole passes in one traversal) makes this harder: there is no
+opportunity to rebuild scope/symbol data between individual passes the way Terser does with
+`figure_out_scope()`. Updates must happen in-traversal — each pass must incrementally fix up
+reference counts, scope bindings, and symbol flags as it mutates the AST.
 
 ### How other minifiers handle this
 
