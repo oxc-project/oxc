@@ -189,8 +189,9 @@ export function lintFileImpl(
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
-    ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+    Object.defineProperty(ruleDetails.context, "options", {
+      value: optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId],
+    });
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
