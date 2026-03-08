@@ -33,16 +33,19 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
         GITHUB_PR_NUMBER: ${{ inputs.pr-number }}
+        INPUT_PACKAGES: ${{ inputs.packages }}
+        INPUT_EXCLUDE: ${{ inputs.exclude }}
+        INPUT_PATHS: ${{ inputs.paths }}
       run: |
         ARGS=""
-        if [ -n "${{ inputs.packages }}" ]; then
-          ARGS="$ARGS --packages ${{ inputs.packages }}"
+        if [ -n "$INPUT_PACKAGES" ]; then
+          ARGS="$ARGS --packages $INPUT_PACKAGES"
         fi
-        if [ -n "${{ inputs.exclude }}" ]; then
-          ARGS="$ARGS --exclude ${{ inputs.exclude }}"
+        if [ -n "$INPUT_EXCLUDE" ]; then
+          ARGS="$ARGS --exclude $INPUT_EXCLUDE"
         fi
-        if [ -n "${{ inputs.paths }}" ]; then
-          ARGS="$ARGS --paths ${{ inputs.paths }}"
+        if [ -n "$INPUT_PATHS" ]; then
+          ARGS="$ARGS --paths $INPUT_PATHS"
         fi
         SHOULD_RUN=$(node .github/scripts/check-changes.js $ARGS)
         echo "changed=$SHOULD_RUN" >> $GITHUB_OUTPUT
