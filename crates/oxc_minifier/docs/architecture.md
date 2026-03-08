@@ -63,6 +63,158 @@ src/
 3. **Mangle** — Variable names are shortened (handled by `oxc_mangler`)
 4. **Codegen** — Minified output is emitted by `oxc_codegen`
 
+## Pass Ordering and Phase Design
+
+The 4-step pipeline above is a simplification. Internally, compression has distinct phases
+with specific ordering requirements. Understanding this structure is essential for knowing
+where each optimization pass belongs and why.
+
+### Phase Pipeline
+
+```
+  ┌─────────┐   ┌──────────┐   ┌──────────────────────┐   ┌────────────────────┐   ┌──────────┐   ┌─────────┐
+  │  Parse  │──▶│ Semantic  │──▶│  Normalize + Analyze │──▶│  Optimization Loop │──▶│  Mangle  │──▶│ Codegen │
+  │         │   │          │   │  (once)              │   │  (fixed-point)     │   │          │   │         │
+  └─────────┘   └──────────┘   └──────────────────────┘   └────────────────────┘   └──────────┘   └─────────┘
+                     │                    │
+                     ▼                    ▼
+              symbols, scopes,    call graph, escape analysis,
+              CFG                 pure annotations, ref→block map
+```
+
+### Phase Descriptions
+
+**Phase 1: Parse** — Produce the AST from source text.
+
+**Phase 2: Semantic** — Build symbols, scopes, and CFG from the AST. This data is consumed
+by all subsequent phases.
+
+**Phase 3: Normalize + Analyze** — Rewrite AST into canonical forms and build data structures
+that optimization passes depend on. Runs once before the loop. Produces:
+
+- **Normalized AST** — canonical forms (split declarations, while→for, const→let, etc.)
+  for simpler pattern matching
+- **Define plugin replacements** — compile-time constants (`process.env.NODE_ENV`, `__DEV__`)
+  replaced with literal values
+- **Pure function annotations** — `@__PURE__` / `@__NO_SIDE_EFFECTS__` annotations recognized
+  and marked
+- **Auto-detected pure functions** — functions analyzed for side effects and annotated
+- **Call graph** — function ↔ call-site relationships, call counts, address-taken flags,
+  IIFE status
+- **Escape analysis** — per-variable tracking of whether values escape their declaring function
+- **Reference-to-BasicBlock associations** — each variable reference tagged with its CFG
+  basic block for dominance queries
+
+**Phase 4: Optimization Loop** — Peephole passes run in a single traversal, repeated until
+no changes. This is the core of the minifier.
+
+**Phase 5: Mangle** — Variable and property renaming. Separate from compression. Rebuilds
+semantic data.
+
+**Phase 6: Codegen** — Emit minified output with codegen-level optimizations.
+
+### Pass Classification
+
+Each of the 39 design documents maps to exactly one phase. The `#` column refers to the
+design document number in [progress.md](progress.md).
+
+**Phase 3 — Normalize + Analyze (pre-loop, run once)**
+
+| #   | Pass | Rationale |
+|-----|------|-----------|
+| 002 | Normalize | Canonical AST forms for downstream pattern matching |
+| 005 | Module-Aware Optimizations | Apply ES module semantics (strict mode, this=undefined) |
+| 023 | Drop Statements | Remove debugger/console before optimization begins |
+| 024 | Define Plugin | Replace compile-time constants before fold constants can use them |
+| 025 | Pure Annotations and Side Effects | Annotate pure calls for DCE to consume |
+| 038 | Mark Pure Functions | Auto-detect pure functions by analyzing bodies |
+
+**Phase 4 — Optimization Loop (peephole, iterated to fixed point)**
+
+| #   | Pass | Rationale |
+|-----|------|-----------|
+| 003 | Substitute Alternate Syntax | Local rewrites: shorter syntax forms |
+| 004 | Convert to Dotted Properties | `a["b"]` → `a.b` |
+| 006 | Fold Constants | Evaluate constant expressions |
+| 007 | Replace Known Methods | Evaluate known built-in methods |
+| 008 | Minimize Conditions | Simplify conditional expressions |
+| 009 | Remove Dead Code | Eliminate unreachable branches |
+| 010 | Collect Property Assignments | Merge property assignments into initializers |
+| 011 | Statement Fusion | Fuse consecutive expression statements |
+| 012 | Minimize Exit Points | Remove redundant return/break/continue |
+| 013 | Exploit Assigns | Combine assignments into expressions |
+| 014 | Function to Arrow | Convert eligible functions to arrow syntax |
+| 015 | Replace Arguments Access | Replace `arguments[i]` with named parameters |
+| 016 | Optimize Loops | Loop-specific simplifications |
+| 017 | Optimize Switch | Switch statement optimizations |
+| 018 | Remove Unused Code | Mark-and-sweep unused declaration removal |
+| 019 | Inline | Variable, function, and property inlining |
+| 026 | Optimize Parameters | Remove unused trailing parameters |
+| 027 | String Deduplication | Extract repeated string literals into shared variables |
+| 029 | Collapse Declarations | Join consecutive var/let/const; collapse function expressions to declarations |
+| 030 | Modern Syntax Optimizations | Use modern JS features for shorter output |
+| 031 | TypeScript Optimizations | TS-specific size reductions |
+| 033 | Optimize Calls | Call-site and return-value optimizations |
+| 036 | Inline Simple Methods | Inline trivial method bodies at call sites |
+| 037 | Extract Prototype Members | Merge prototype property assignments into compound form |
+
+**Phase 4b — Optimization Loop, advanced passes (need CFG/dataflow)**
+
+These run inside the loop but require infrastructure not yet built:
+
+| #   | Pass | Dependency |
+|-----|------|------------|
+| 021 | Dead Assignments Elimination | CFG + liveness dataflow |
+| 022 | Collapse Variables | CFG + reaching definitions |
+| 032 | Hoist Properties | Escape analysis |
+| 035 | Flow-Sensitive Inline | CFG + reaching definitions |
+
+**Phase 5 — Mangle (separate from compression)**
+
+| #   | Pass | Rationale |
+|-----|------|-----------|
+| 020 | Mangle Properties | Property renaming |
+| 034 | Variable Mangling | Variable renaming via scope analysis |
+| 039 | Ambiguate Properties | Cross-type property name reuse |
+
+**Phase 6 — Codegen**
+
+| #   | Pass | Rationale |
+|-----|------|-----------|
+| 028 | Codegen Optimizations | Emit-time decisions (number formats, quote styles) |
+
+### Visitor Ordering Within a Peephole Traversal
+
+All Phase 4 passes execute within a single AST traversal. Their ordering matters because
+one pass's output feeds into another.
+
+**Enter visitors (top-down):**
+- Collect symbol metadata (pure function annotations, symbol values)
+- Push class scopes for private member tracking
+
+**Exit visitors (bottom-up):**
+Most optimization fires on exit, because children are optimized before parents.
+
+**Ordering constraints (exit phase):**
+1. **Fold constants** before **remove dead code** — folded constants reveal dead branches
+2. **Define plugin** before **fold constants** — replaced constants enable folding
+3. **Pure annotations** before **remove dead code** — marked pure calls can be removed
+4. **Minimize conditions** before **fold if** — simplified tests enable branch folding
+5. **All expression optimizations** before **remove unused assignments** — don't remove
+   what might get folded
+6. **Inline** after **fold constants** — inlined values should already be folded
+
+### Closure Compiler Correspondence
+
+Our phase structure parallels Closure Compiler's pipeline:
+
+- **Phase 3** ≈ Closure's `normalize` + early optimization passes (`ReplaceIdGenerators`,
+  `MarkNoSideEffectCalls`)
+- **Phase 4** ≈ Closure's `PeepholeOptimizationsPass` within `optimizeLoops()`
+- **Phase 4b** ≈ Closure's `FlowSensitiveInlineVariables`, `DeadAssignmentsElimination`
+- **Phase 5** ≈ Closure's `RenameVars`, `RenameProperties`, `AmbiguateProperties`
+- **Phase 6** ≈ Closure's `CodePrinter` with its built-in optimizations
+
 ## Fixed-Point Loop
 
 Optimization passes interact — one pass's output often enables another pass to fire. Constant folding
