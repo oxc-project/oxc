@@ -106,9 +106,7 @@ function shouldRunExclude(changedFiles, excludeCrates, paths) {
   const excludePaths = excludeCrates.map((c) => `crates/${c}/`);
 
   // Skip only if EVERY changed file is inside an excluded crate directory
-  const allExcluded = changedFiles.every((file) =>
-    excludePaths.some((ep) => file.startsWith(ep)),
-  );
+  const allExcluded = changedFiles.every((file) => excludePaths.some((ep) => file.startsWith(ep)));
 
   if (allExcluded) {
     console.error(
@@ -153,9 +151,7 @@ async function main() {
     console.error("Error in change detection:", error);
     // On error, run as a fallback
     console.log("true");
-    console.error(
-      "::warning title=Change detection error::Error occurred, running as fallback",
-    );
+    console.error("::warning title=Change detection error::Error occurred, running as fallback");
     process.exit(0);
   }
 }

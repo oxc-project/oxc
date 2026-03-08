@@ -332,8 +332,8 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_minifier
-          paths: tasks/minsize/
+          packages: oxc_minsize
+          paths: .github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -357,8 +357,8 @@ jobs:
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          packages: oxc_parser,oxc_minifier
-          paths: tasks/track_memory_allocations/
+          packages: oxc_track_memory_allocations
+          paths: .github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -412,7 +412,7 @@ jobs:
         id: filter
         with:
           packages: oxc_linter
-          paths: tasks/linter_codegen/
+          paths: tasks/linter_codegen/,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
