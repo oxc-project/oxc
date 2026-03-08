@@ -7,6 +7,7 @@ use crate::{
     Format,
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
+    options::ArrayExpand,
     utils::array::write_array_node,
     write,
 };
@@ -30,13 +31,20 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
         if self.elements.is_empty() && self.rest.is_none() {
             write!(f, [format_dangling_comments(self.span()).with_block_indent()]);
         } else {
+            let element_count = self.elements.len() + usize::from(self.rest.is_some());
+
+            let should_expand = match f.options().array_expand {
+                ArrayExpand::Auto | ArrayExpand::Never => false,
+                ArrayExpand::ForceAboveThreshold(threshold) => element_count >= threshold as usize,
+            };
+
             write!(
                 f,
                 group(&soft_block_indent(&format_with(|f| {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
-                            self.elements.len() + usize::from(self.rest.is_some()),
+                            element_count,
                             self.elements().iter().map(AstNode::as_ref),
                             f,
                         );
@@ -45,6 +53,7 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
                         write!(f, [has_element.then_some(soft_line_break_or_space()), rest]);
                     }
                 })))
+                .should_expand(should_expand)
             );
         }
 

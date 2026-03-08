@@ -13,6 +13,8 @@ use crate::{
 pub struct ArrayElementList<'a, 'b> {
     elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
+    /// When `true`, always use `OnePerLine` layout regardless of the fill heuristic.
+    force_one_per_line: bool,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
@@ -20,18 +22,24 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
         elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
-        Self { elements, group_id: Some(group_id) }
+        Self { elements, group_id: Some(group_id), force_one_per_line: false }
+    }
+
+    pub fn with_force_one_per_line(mut self, force: bool) -> Self {
+        self.force_one_per_line = force;
+        self
     }
 }
 
 impl<'a> Format<'a> for ArrayElementList<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let layout =
-            if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
-                ArrayLayout::Fill
-            } else {
-                ArrayLayout::OnePerLine
-            };
+        let layout = if self.force_one_per_line {
+            ArrayLayout::OnePerLine
+        } else if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
+            ArrayLayout::Fill
+        } else {
+            ArrayLayout::OnePerLine
+        };
 
         match layout {
             ArrayLayout::Fill => {
