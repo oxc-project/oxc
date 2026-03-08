@@ -24,17 +24,17 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `type T=                         { x: number; };` with `interface T { x: number; }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
-   ╭─[consistent_type_definitions.tsx:2:11]
+   ╭─[consistent_type_definitions.tsx:2:20]
  1 │ 
  2 │             export type W<T> = {
    ·                    ────
  3 │               x: T;
    ╰────
   help: Replace `type W<T> = {
-        			  x: T;
-        			};` with `interface W<T> {
-        			  x: T;
-        			}`.
+                      x: T;
+                    };` with `interface W<T> {
+                      x: T;
+                    }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
    ╭─[consistent_type_definitions.tsx:1:1]
@@ -79,59 +79,59 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `interface A extends B<T1>, C<T2> { x: number; }` with `type A = { x: number; } & B<T1> & C<T2>`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:2:11]
+   ╭─[consistent_type_definitions.tsx:2:20]
  1 │ 
  2 │             export interface W<T> {
    ·                    ─────────
  3 │               x: T;
    ╰────
   help: Replace `interface W<T> {
-        			  x: T;
-        			}` with `type W<T> = {
-        			  x: T;
-        			}`.
+                      x: T;
+                    }` with `type W<T> = {
+                      x: T;
+                    }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:3:6]
+   ╭─[consistent_type_definitions.tsx:3:15]
  2 │             namespace JSX {
  3 │               interface Array<T> {
    ·               ─────────
  4 │                 foo(x: (x: number) => T): T[];
    ╰────
   help: Replace `interface Array<T> {
-        			    foo(x: (x: number) => T): T[];
-        			  }` with `type Array<T> = {
-        			    foo(x: (x: number) => T): T[];
-        			  }`.
+                        foo(x: (x: number) => T): T[];
+                      }` with `type Array<T> = {
+                        foo(x: (x: number) => T): T[];
+                      }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:3:6]
+   ╭─[consistent_type_definitions.tsx:3:15]
  2 │             global {
  3 │               interface Array<T> {
    ·               ─────────
  4 │                 foo(x: (x: number) => T): T[];
    ╰────
   help: Replace `interface Array<T> {
-        			    foo(x: (x: number) => T): T[];
-        			  }` with `type Array<T> = {
-        			    foo(x: (x: number) => T): T[];
-        			  }`.
+                        foo(x: (x: number) => T): T[];
+                      }` with `type Array<T> = {
+                        foo(x: (x: number) => T): T[];
+                      }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:3:6]
+   ╭─[consistent_type_definitions.tsx:3:15]
  2 │             declare global {
  3 │               interface Array<T> {
    ·               ─────────
  4 │                 foo(x: (x: number) => T): T[];
    ╰────
   help: Replace `interface Array<T> {
-        			    foo(x: (x: number) => T): T[];
-        			  }` with `type Array<T> = {
-        			    foo(x: (x: number) => T): T[];
-        			  }`.
+                        foo(x: (x: number) => T): T[];
+                      }` with `type Array<T> = {
+                        foo(x: (x: number) => T): T[];
+                      }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:4:8]
+   ╭─[consistent_type_definitions.tsx:4:17]
  3 │               namespace Foo {
  4 │                 interface Bar {}
    ·                 ─────────
@@ -140,65 +140,65 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `interface Bar {}` with `type Bar = {}`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:2:19]
+   ╭─[consistent_type_definitions.tsx:2:28]
  1 │ 
  2 │             export default interface Test {
    ·                            ─────────
  3 │               bar(): string;
    ╰────
   help: Replace `export default interface Test {
-        			  bar(): string;
-        			  foo(): number;
-        			}` with `type Test = {
-        			  bar(): string;
-        			  foo(): number;
-        			}
+                      bar(): string;
+                      foo(): number;
+                    }` with `type Test = {
+                      bar(): string;
+                      foo(): number;
+                    }
         export default Test`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:2:19]
+   ╭─[consistent_type_definitions.tsx:2:28]
  1 │ 
  2 │             export default interface Test {
    ·                            ─────────
  3 │               bar(): string;
    ╰────
   help: Replace `interface Test {
-        			  bar(): string;
-        			  foo(): number;
-        			}` with `type Test = {
-        			  bar(): string;
-        			  foo(): number;
-        			}`.
+                      bar(): string;
+                      foo(): number;
+                    }` with `type Test = {
+                      bar(): string;
+                      foo(): number;
+                    }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
-   ╭─[consistent_type_definitions.tsx:2:19]
+   ╭─[consistent_type_definitions.tsx:2:28]
  1 │ 
  2 │             export declare type Test = {
    ·                            ────
  3 │               foo: string;
    ╰────
   help: Replace `type Test = {
-        			  foo: string;
-        			  bar: string;
-        			};` with `interface Test {
-        			  foo: string;
-        			  bar: string;
-        			}`.
+                      foo: string;
+                      bar: string;
+                    };` with `interface Test {
+                      foo: string;
+                      bar: string;
+                    }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `type` instead of `interface`.
-   ╭─[consistent_type_definitions.tsx:2:19]
+   ╭─[consistent_type_definitions.tsx:2:28]
  1 │ 
  2 │             export declare interface Test {
    ·                            ─────────
  3 │               foo: string;
    ╰────
   help: Replace `interface Test {
-        			  foo: string;
-        			  bar: string;
-        			}` with `type Test = {
-        			  foo: string;
-        			  bar: string;
-        			}`.
+                      foo: string;
+                      bar: string;
+                    }` with `type Test = {
+                      foo: string;
+                      bar: string;
+                    }`.
 
   ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:10]

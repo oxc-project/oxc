@@ -67,6 +67,8 @@ interface SuggestionBase {
  */
 export interface SuggestionReport {
   message: string;
+  // Not needed on Rust side, but `RuleTester` needs it
+  messageId: string | null;
   fixes: FixReport[];
 }
 
@@ -96,21 +98,22 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 /**
  * Report error.
  * @param diagnostic - Diagnostic object
+ * @param extraArgs - Extra arguments passed to `context.report()` (legacy positional forms)
  * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
  * @throws {TypeError} If `diagnostic` is invalid
  */
-export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
+export function report(
+  diagnostic: Diagnostic,
+  extraArgs: unknown[],
+  ruleDetails: RuleDetails,
+): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
-  let messageId: string | null = null;
-  if (Object.hasOwn(diagnostic, "messageId")) {
-    (messageId as string | null | undefined) = diagnostic.messageId;
-    if (messageId === undefined) messageId = null;
-  }
+  // Handle legacy positional forms
+  if (extraArgs.length > 0) diagnostic = convertLegacyCallArgs(diagnostic, extraArgs);
 
-  const message = getMessage(
+  const { message, messageId } = getMessage(
     Object.hasOwn(diagnostic, "message") ? diagnostic.message : null,
-    messageId,
     diagnostic,
     ruleDetails,
   );
@@ -201,24 +204,59 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 }
 
 /**
+ * Convert legacy `context.report()` arguments to a `Diagnostic` object.
+ *
+ * Supported:
+ * - `context.report(node, message, data?, fix?)`
+ * - `context.report(node, loc, message, data?, fix?)`
+ *
+ * @param node - Node to report (first argument)
+ * @param extraArgs - Extra arguments passed to `context.report()`
+ * @returns Diagnostic object
+ */
+function convertLegacyCallArgs(node: unknown, extraArgs: unknown[]): Diagnostic {
+  const firstExtraArg = extraArgs[0];
+  if (typeof firstExtraArg === "string") {
+    // `context.report(node, message, data, fix)`
+    return {
+      message: firstExtraArg,
+      node,
+      loc: undefined,
+      data: extraArgs[1],
+      fix: extraArgs[2],
+    } as Diagnostic;
+  }
+
+  // `context.report(node, loc, message, data, fix)`
+  return {
+    message: extraArgs[1],
+    node,
+    loc: firstExtraArg,
+    data: extraArgs[2],
+    fix: extraArgs[3],
+  } as Diagnostic;
+}
+
+/**
  * Get message from a diagnostic or suggestion.
  *
  * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
  *
  * @param message - Provided message string
- * @param messageId - Provided message ID
- * @param descriptor - Diagnostic or suggestion object
+ * @param descriptor - `Diagnostic` or `Suggestion` object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string
+ * @returns Object containing message string and message ID (if present in `descriptor`)
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
 export function getMessage(
   message: string | null | undefined,
-  messageId: string | null,
   descriptor: Diagnostic | Suggestion,
   ruleDetails: RuleDetails,
-): string {
+): { message: string; messageId: string | null } {
   // Resolve from `messageId` if present, otherwise use `message`
+  let messageId: string | null = null;
+  if (Object.hasOwn(descriptor, "messageId")) messageId = descriptor.messageId ?? null;
+
   if (messageId !== null) {
     if (typeof messageId !== "string") throw new TypeError("`messageId` must be a string");
     message = resolveMessageFromMessageId(messageId, ruleDetails);
@@ -234,7 +272,7 @@ export function getMessage(
     if (data != null) message = replacePlaceholders(message, data);
   }
 
-  return message;
+  return { message, messageId };
 }
 
 /**

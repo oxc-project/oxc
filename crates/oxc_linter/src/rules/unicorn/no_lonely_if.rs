@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// ```
     NoLonelyIf,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoLonelyIf {

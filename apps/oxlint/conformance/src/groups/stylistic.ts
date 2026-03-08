@@ -1,7 +1,7 @@
 import { unindent } from "eslint-vitest-rule-tester";
 import { RuleTester } from "../rule_tester.ts";
 
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type {
   ValidTestCase,
   InvalidTestCase,
@@ -31,7 +31,7 @@ const group: TestGroup = {
     return parts[0];
   },
 
-  prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, mock: MockFn) {
     // Load the copy of `@typescript-eslint/parser` which is used by the test cases
     const tsEslintParser = require("@typescript-eslint/parser") as TSEslintParser;
 
@@ -106,19 +106,6 @@ const group: TestGroup = {
       return true;
     }
 
-    // TS parser incorrectly parses closing JSX tag with whitespace before `/`.
-    // We don't skip these tests because we should be able to make them pass.
-    /*
-    if (
-      ruleName === "jsx-tag-spacing" &&
-      (code.startsWith('<App prop="foo">< /App>') ||
-        code.startsWith('<div className="bar">< /div>;') ||
-        compact(code).startsWith('<div className="bar"><\n /div>;'))
-    ) {
-      return true;
-    }
-    */
-
     return false;
   },
 
@@ -182,7 +169,7 @@ const OPTIONS_KEYS: KeysSet = new Set(OPTIONS_KEYS_ARRAY);
 
 /**
  * Create a module to replace `eslint-plugin-stylistic`'s rule runner module,
- * which presents the same API, but used conformance `RuleTester`.
+ * which presents the same API, but uses conformance `RuleTester`.
  *
  * @param tsEslintParser - TSESLint parser module
  * @returns Module to replace `eslint-plugin-stylistic`'s rule runner module with
@@ -215,6 +202,14 @@ function createStylisticRuleRunnerMock(tsEslintParser: TSEslintParser) {
         if (parser !== null) languageOptions.parser = parser;
         config.languageOptions = languageOptions;
       }
+
+      // Pass through `recursive` setting from test options.
+      // `eslint-vitest-rule-tester`'s default is `recursive: 10`, but `eslint-plugin-stylistic`'s
+      // test runner wrapper overrides this to `recursive: false` (no recursion).
+      // Individual rules can opt back in (e.g. `indent-binary-ops` sets `recursive: 10`).
+      // https://github.com/eslint-stylistic/eslint-stylistic/blob/5c4b512a225a314fa5f41eead9fdc4d51fc243d7/shared/test-utils/runner.ts#L38
+      // `false` is our `RuleTester`'s default, so we don't need to override a default of 10.
+      if (options.recursive != null) config.recursive = options.recursive;
 
       // Add other options to config.
       // These don't have any effect, but we add them so they appear in snapshot.

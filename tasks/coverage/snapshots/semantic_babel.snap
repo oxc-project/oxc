@@ -1,8 +1,8 @@
-commit: 92c052dc
+commit: de54b9b2
 
 semantic_babel Summary:
-AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2024/2224 (91.01%)
+AST Parsed     : 2227/2227 (100.00%)
+Positive Passed: 2026/2227 (90.97%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -208,6 +208,11 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["v"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-call-in-conditional/input.ts
+Unresolved references mismatch:
+after transform: ["a", "arguments", "async", "b"]
+rebuilt        : ["a", "arguments", "async"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-false-positive/input.ts
 Unresolved references mismatch:
@@ -655,12 +660,7 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "a", "b"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-require/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a"]
+after transform: ScopeId(0): ["B", "b"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
@@ -1391,6 +1391,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["bar"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
+'infer' declarations are only permitted in the 'extends' clause of a conditional type.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as/input.ts
 Unresolved references mismatch:

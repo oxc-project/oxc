@@ -11,4 +11,11 @@ describe("sort_imports", () => {
 
     expect(result.exitCode).toBe(0);
   });
+
+  it("should sort imports with customGroups using selector and modifiers", async () => {
+    const cwd = join(fixturesDir, "custom_groups_selector_modifiers");
+    const result = await runCli(cwd, ["--check", "input.ts"]);
+
+    expect(result.exitCode).toBe(0);
+  });
 });

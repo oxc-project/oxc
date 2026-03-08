@@ -1,0 +1,651 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return a;
+ 4 │ │                   } else{
+ 5 │ │                       return b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return await a;
+ 4 │ │                   } else{
+ 5 │ │                       return b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return await a;
+ 4 │ │                   } else{
+ 5 │ │                       return await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return;
+ 4 │ │                   } else{
+ 5 │ │                       return b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return;
+ 4 │ │                   } else{
+ 5 │ │                       return;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return;
+ 4 │ │                   } else{
+ 5 │ │                       return await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       return yield await (foo = a);
+ 4 │ │                   } else{
+ 5 │ │                       return yield await (foo = b);
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield a;
+ 4 │ │                   } else{
+ 5 │ │                       yield b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield;
+ 4 │ │                   } else{
+ 5 │ │                       yield b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield;
+ 4 │ │                   } else{
+ 5 │ │                       yield;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield;
+ 4 │ │                   } else{
+ 5 │ │                       yield await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield* a;
+ 4 │ │                   } else{
+ 5 │ │                       yield* b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield await a;
+ 4 │ │                   } else{
+ 5 │ │                       yield b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       yield await a;
+ 4 │ │                   } else{
+ 5 │ │                       yield await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       await doSomething1();
+ 4 │ │                   } else{
+ 5 │ │                       await doSomething2();
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       await a;
+ 4 │ │                   } else{
+ 5 │ │                       await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw new Error('a');
+ 4 │ │                   } else{
+ 5 │ │                       throw new TypeError('a');
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:53]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 /* comment cause wrong indention */ if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:53]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                                                     if (test) {
+ 3 │ │                                                           throw a;
+ 4 │ │                                                       } else {
+ 5 │ │                                                           throw b;
+ 6 │ ╰─▶                                                     }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw await a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw await a;
+ 4 │ │                   } else {
+ 5 │ │                       throw await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:3:17]
+ 2 │                     const error = new Error();
+ 3 │ ╭─▶                 if (test) {
+ 4 │ │                       throw a;
+ 5 │ │                   } else {
+ 6 │ │                       throw b;
+ 7 │ ╰─▶                 }
+ 8 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                     try {} catch(error) {
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                     function foo() {
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                     if (test) {
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:7:17]
+  6 │                     }
+  7 │ ╭─▶                 if (test) {
+  8 │ │                       throw a;
+  9 │ │                   } else {
+ 10 │ │                       throw b;
+ 11 │ ╰─▶                 }
+ 12 │                 }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:4:17]
+ 3 │                     throw error;
+ 4 │ ╭─▶                 if (test) {
+ 5 │ │                       throw a;
+ 6 │ │                   } else {
+ 7 │ │                       throw b;
+ 8 │ ╰─▶                 }
+ 9 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function outer() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       throw a;
+ 4 │ │                   } else {
+ 5 │ │                       throw b;
+ 6 │ ╰─▶                 }
+ 7 │                     function inner() {
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:8:21]
+  7 │                     function inner() {
+  8 │ ╭─▶                     if (test) {
+  9 │ │                           throw a;
+ 10 │ │                       } else {
+ 11 │ │                           throw b;
+ 12 │ ╰─▶                     }
+ 13 │                     }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:5:21]
+  4 │                     function inner() {
+  5 │ ╭─▶                     if (test) {
+  6 │ │                           throw a;
+  7 │ │                       } else {
+  8 │ │                           throw b;
+  9 │ ╰─▶                     }
+ 10 │                     }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:13]
+ 1 │ while (foo) if (test) {throw a} else {throw b}
+   ·             ──────────────────────────────────
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       foo = a;
+ 4 │ │                   } else{
+ 5 │ │                       foo = b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       foo *= a;
+ 4 │ │                   } else{
+ 5 │ │                       foo *= b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       foo = await a;
+ 4 │ │                   } else{
+ 5 │ │                       foo = b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       foo = await a;
+ 4 │ │                   } else{
+ 5 │ │                       foo = await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       foo.bar = a;
+ 4 │ │                   } else{
+ 5 │ │                       foo.bar = b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:3:17]
+ 2 │                     a()
+ 3 │ ╭─▶                 if (test) {
+ 4 │ │                       (foo)['b' + 'ar'] = a
+ 5 │ │                   } else{
+ 6 │ │                       foo.bar = b
+ 7 │ ╰─▶                 }
+ 8 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     async function* unicorn() {
+ 2 │ ╭─▶                 if(test){
+ 3 │ │                       foo = yield await a;
+ 4 │ │                   } else{
+ 5 │ │                       foo = yield await b;
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:1:1]
+  1 │ ╭─▶ if(test){
+  2 │ │                   $0 |= $1 ^= $2 &= $3 >>>= $4 >>= $5 <<= $6 %= $7 /= $8 *= $9 **= $10 -= $11 += $12 =
+  3 │ │                   _STOP_ =
+  4 │ │                   $0 |= $1 ^= $2 &= $3 >>>= $4 >>= $5 <<= $6 %= $7 /= $8 *= $9 **= $10 -= $11 += $12 =
+  5 │ │                   1;
+  6 │ │               } else{
+  7 │ │                   $0 |= $1 ^= $2 &= $3 >>>= $4 >>= $5 <<= $6 %= $7 /= $8 *= $9 **= $10 -= $11 += $12 =
+  8 │ │                   _STOP_2_ =
+  9 │ │                   $0 |= $1 ^= $2 &= $3 >>>= $4 >>= $5 <<= $6 %= $7 /= $8 *= $9 **= $10 -= $11 += $12 =
+ 10 │ │                   2;
+ 11 │ ╰─▶             }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (test) {
+ 2 │ │                   a = foo;
+ 3 │ │               } else {
+ 4 │ │                   a = bar;
+ 5 │ ╰─▶             }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (
+ 2 │ │                   (
+ 3 │ │                       test
+ 4 │ │                   )
+ 5 │ │               ) {
+ 6 │ │                   a = foo;
+ 7 │ │               } else {
+ 8 │ │                   a = bar;
+ 9 │ ╰─▶             }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (test) {
+ 2 │ │                   (
+ 3 │ │                       a = foo
+ 4 │ │                   );
+ 5 │ │               } else {
+ 6 │ │                   a = bar;
+ 7 │ ╰─▶             }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (test) {
+ 2 │ │                   a = foo
+ 3 │ │                   ;
+ 4 │ │               } else {
+ 5 │ │                   a = bar;
+ 6 │ ╰─▶             }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (test) {
+ 2 │ │                   ;;;;;;
+ 3 │ │                   a = foo;
+ 4 │ │                   ;;;;;;
+ 5 │ │               } else {
+ 6 │ │                   a = bar;
+ 7 │ ╰─▶             }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:3:17]
+ 2 │                     // There is an empty block inside consequent
+ 3 │ ╭─▶                 if (test) {
+ 4 │ │                       ;
+ 5 │ │                       return a;
+ 6 │ │                   } else {
+ 7 │ │                       return b;
+ 8 │ ╰─▶                 }
+ 9 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) {
+ 3 │ │                       foo = a
+ 4 │ ╰─▶                 } else foo = b;
+ 5 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function unicorn() {
+ 2 │ ╭─▶                 if (test) return a;
+ 3 │ ╰─▶                 else return b;
+ 4 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ ╭─▶ if (a = b) {
+ 2 │ │                   foo = 1;
+ 3 │ ╰─▶             } else foo = 2;
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if (yield a) {
+ 3 │ │                       foo = 1;
+ 4 │ ╰─▶                 } else foo = 2;
+ 5 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:2:17]
+ 1 │     function* unicorn() {
+ 2 │ ╭─▶                 if (yield* a) {
+ 3 │ │                       foo = 1;
+ 4 │ ╰─▶                 } else foo = 2;
+ 5 │                 }
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:5:21]
+  4 │                     } else {
+  5 │ ╭─▶                     if (b) {
+  6 │ │                           return 2;
+  7 │ │                       } else {
+  8 │ │                           return 3;
+  9 │ ╰─▶                     }
+ 10 │                     }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:3:21]
+ 2 │                     if (a) {
+ 3 │ ╭─▶                     if (b) {
+ 4 │ │                           return 1;
+ 5 │ │                       } else {
+ 6 │ │                           return 2;
+ 7 │ ╰─▶                     }
+ 8 │                     } else {
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+   ╭─[prefer_ternary.tsx:1:1]
+ 1 │ if (test) {foo = /* comment */1;} else {foo = 2;}
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.
+
+  ⚠ eslint-plugin-unicorn(prefer-ternary): Prefer ternary expressions over simple `if-else` statements.
+    ╭─[prefer_ternary.tsx:2:17]
+  1 │     function *foo(bool) {
+  2 │ ╭─▶                 if (!bool) {
+  3 │ │                       yield call(
+  4 │ │                           setOnTop,
+  5 │ │                           false,
+  6 │ │                       );
+  7 │ │                   } else {
+  8 │ │                       yield call(
+  9 │ │                           setOnTop,
+ 10 │ │                           true,
+ 11 │ │                           'normal',
+ 12 │ │                       ); // Keep this comment.
+ 13 │ ╰─▶                 }
+ 14 │                 }
+    ╰────
+  help: Rewrite this `if`/`else` as a ternary expression.

@@ -260,11 +260,14 @@ export function resetScopeManager() {
   tsScopeManager = null;
 }
 
-/**
- * @see https://eslint.org/docs/latest/developer-guide/scope-manager-interface#scopemanager-interface
- */
-// This is a wrapper around `@typescript-eslint/scope-manager` package's `ScopeManager` class.
-// We want to control what APIs are exposed to the user to limit breaking changes when we switch our implementation.
+// Wrapper around `@typescript-eslint/scope-manager` package's `ScopeManager` class.
+//
+// We only expose the methods and properties which ESLint lists as part of the `ScopeManager` interface:
+// https://eslint.org/docs/latest/extend/scope-manager-interface#scopemanager-interface
+// This does NOT include deprecated methods and properties.
+// In future, we'll re-implement the scope manager using scopes data from `oxc_semantic`, and remove the dependency
+// on `@typescript-eslint/scope-manager`. That will be easier with a more minimal API surface.
+// If we find real-world usage of deprecated methods/properties in ESLint plugins, we can add them to the API surface.
 //
 // Only one file is linted at a time, so we can reuse a single object for all files.
 //

@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
 
   ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
-   ╭─[prefer_object_from_entries.tsx:8:11]
+   ╭─[prefer_object_from_entries.tsx:8:32]
  7 │                                 Object
  8 │                             )).assign(
    ·                                ──────
@@ -266,6 +266,13 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, method: async function * (){}}), {});
+   ·       ──────
+   ╰────
+  help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.
+
+  ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
+   ╭─[prefer_object_from_entries.tsx:1:7]
+ 1 │ array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});
    ·       ──────
    ╰────
   help: Use `Object.fromEntries(pairs)` instead of manually building objects with `reduce` or `forEach`.

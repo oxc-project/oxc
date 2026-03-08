@@ -21,7 +21,9 @@ pub struct PreferQuerySelector;
 fn get_preferred_identifier_name(ident_name: &str) -> Option<&'static str> {
     match ident_name {
         "getElementById" => Some("querySelector"),
-        "getElementsByClassName" | "getElementsByTagName" => Some("querySelectorAll"),
+        "getElementsByClassName" | "getElementsByTagName" | "getElementsByName" => {
+            Some("querySelectorAll")
+        }
         _ => None,
     }
 }
@@ -29,7 +31,8 @@ fn get_preferred_identifier_name(ident_name: &str) -> Option<&'static str> {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `.querySelector()` over `.getElementById()`, `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.
+    /// Prefer `.querySelector()` over `.getElementById()`. And prefer `.querySelectorAll()`
+    /// over `.getElementsByClassName()`, `.getElementsByTagName()`, and `.getElementsByName()`.
     ///
     /// ### Why is this bad?
     ///
@@ -44,6 +47,7 @@ declare_oxc_lint!(
     /// document.getElementsByClassName('foo bar');
     /// document.getElementsByTagName('main');
     /// document.getElementsByClassName(fn());
+    /// document.getElementsByName('foo');
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -128,6 +132,10 @@ impl Rule for PreferQuerySelector {
                                 literal_value.split_whitespace().collect::<Vec<_>>().join(" .")
                             )
                         }
+                        "getElementsByName" => {
+                            let inner_quote = if quotes_symbol == '\'' { '"' } else { '\'' };
+                            format!("[name={inner_quote}{literal_value}{inner_quote}]")
+                        }
                         _ => literal_value.to_string(),
                     };
                     let span = property_span.merge(argument_expr.span());
@@ -169,22 +177,23 @@ fn test() {
         "document.getElementById();",
         "document?.getElementById('foo');",
         "document.getElementById?.('foo');",
-        "document.getElementsByClassName(\"foo\", \"bar\");",
-        "document.getElementById(...[\"id\"]);",
-        "document.querySelector(\"#foo\");",
-        "document.querySelector(\".bar\");",
-        "document.querySelector(\"main #foo .bar\");",
-        "document.querySelectorAll(\".foo .bar\");",
-        "document.querySelectorAll(\"li a\");",
-        "document.querySelector(\"li\").querySelectorAll(\"a\");",
+        r#"document.getElementsByClassName("foo", "bar");"#,
+        r#"document.getElementById(...["id"]);"#,
+        r##"document.querySelector("#foo");"##,
+        r#"document.querySelector(".bar");"#,
+        r#"document.querySelector("main #foo .bar");"#,
+        r#"document.querySelectorAll(".foo .bar");"#,
+        r#"document.querySelectorAll("li a");"#,
+        r#"document.querySelector("li").querySelectorAll("a");"#,
+        "document.getElementsByName();",
     ];
 
     let fail = vec![
-        "document.getElementById(\"foo\");",
-        "document.getElementsByClassName(\"foo\");",
-        "document.getElementsByClassName(\"foo bar\");",
-        "document.getElementsByTagName(\"foo\");",
-        "document.getElementById(\"\");",
+        r#"document.getElementById("foo");"#,
+        r#"document.getElementsByClassName("foo");"#,
+        r#"document.getElementsByClassName("foo bar");"#,
+        r#"document.getElementsByTagName("foo");"#,
+        r#"document.getElementById("");"#,
         "document.getElementById('foo');",
         "document.getElementsByClassName('foo');",
         "document.getElementsByClassName('foo bar');",
@@ -200,9 +209,20 @@ fn test() {
         "document.getElementsByClassName(null);",
         "document.getElementsByTagName(null);",
         "document.getElementsByClassName(fn());",
-        "document.getElementsByClassName(\"foo\" + fn());",
-        "document.getElementsByClassName(foo + \"bar\");",
+        r#"document.getElementsByClassName("foo" + fn());"#,
+        r#"document.getElementsByClassName(foo + "bar");"#,
+        r#"for (const div of document.body.getElementById("id").getElementsByClassName("class")) {
+                console.log(div.getElementsByTagName("div"));
+            }"#,
         "e.getElementById(3)",
+        r#"document.getElementsByName("foo");"#,
+        "document.getElementsByName('foo');",
+        "document.getElementsByName(`foo`);",
+        "document.getElementsByName(`${'foo'}`);",
+        "document.getElementsByName(null);",
+        r#"document.getElementsByName("");"#,
+        r#"document.getElementsByName(foo + "bar");"#,
+        r#"document.getElementsByName("multiple name should be fixable");"#,
     ];
 
     let fix = vec![
@@ -216,11 +236,26 @@ fn test() {
         ("document.getElementById(getId());", "document.getElementById(getId());"),
         ("document.getElementById(`${foo}`);", "document.getElementById(`${foo}`);"),
         ("document.getElementById(searchInputId);", "document.querySelector(`#${searchInputId}`);"),
+        (r#"document.getElementsByName("foo");"#, r#"document.querySelectorAll("[name='foo']");"#),
+        ("document.getElementsByName('foo');", r#"document.querySelectorAll('[name="foo"]');"#),
+        ("document.getElementsByName(`foo`);", "document.querySelectorAll(`[name='foo']`);"),
+        ("document.getElementsByName(null);", "document.querySelectorAll(null);"),
+        (r#"document.getElementsByName("");"#, r#"document.querySelectorAll("");"#),
+        (
+            r#"document.getElementsByName("multiple name should be fixable");"#,
+            r#"document.querySelectorAll("[name='multiple name should be fixable']");"#,
+        ),
+        // We do not fix these.
         (
             "document.getElementsByClassName(foo + \"bar\");",
             "document.getElementsByClassName(foo + \"bar\");",
         ),
         ("document.getElementsByClassName(fn());", "document.getElementsByClassName(fn());"),
+        ("document.getElementsByName(`${'foo'}`);", "document.getElementsByName(`${'foo'}`);"),
+        (
+            r#"document.getElementsByName(foo + "bar");"#,
+            r#"document.getElementsByName(foo + "bar");"#,
+        ),
     ];
 
     Tester::new(PreferQuerySelector::NAME, PreferQuerySelector::PLUGIN, pass, fail)

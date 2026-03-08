@@ -31,6 +31,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer `node:fs` over `fs`.
 
   ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[prefer_node_protocol.tsx:2:41]
+ 1 │ async function foo() {
+ 2 │                 const fs = await import('fs');
+   ·                                         ────
+ 3 │             }
+   ╰────
+  help: Prefer `node:fs` over `fs`.
+
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:16]
  1 │ import fs from "fs/promises";
    ·                ─────────────
@@ -41,6 +50,15 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_node_protocol.tsx:1:23]
  1 │ export {default} from "fs/promises";
    ·                       ─────────────
+   ╰────
+  help: Prefer `node:fs/promises` over `fs/promises`.
+
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[prefer_node_protocol.tsx:2:41]
+ 1 │ async function foo() {
+ 2 │                 const fs = await import('fs/promises');
+   ·                                         ─────────────
+ 3 │             }
    ╰────
   help: Prefer `node:fs/promises` over `fs/promises`.
 
@@ -64,6 +82,15 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Prefer `node:fs` over `fs`.
+
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
+   ╭─[prefer_node_protocol.tsx:2:41]
+ 1 │ async function foo() {
+ 2 │                 const fs = await import("fs/promises");
+   ·                                         ─────────────
+ 3 │             }
+   ╰────
+  help: Prefer `node:fs/promises` over `fs/promises`.
 
   ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:8]

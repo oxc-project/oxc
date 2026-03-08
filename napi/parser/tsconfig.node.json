@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "target": "ESNext",
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "exclude": ["test-browser", "vitest.config.browser.ts"]
+}

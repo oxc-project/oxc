@@ -1,6 +1,4 @@
-use super::{
-    Config, ESTree, ESTreeSerializer, Formatter, Serializer, SerializerPrivate, TracePathPart,
-};
+use super::{Config, ESTree, ESTreeSerializer, Formatter, Serializer, TracePathPart};
 
 /// Trait for sequence serializers.
 pub trait SequenceSerializer {

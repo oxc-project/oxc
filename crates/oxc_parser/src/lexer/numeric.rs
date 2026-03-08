@@ -1,10 +1,10 @@
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{Kind, Lexer, Span};
 
-impl Lexer<'_> {
+impl<C: Config> Lexer<'_, C> {
     /// 12.9.3 Numeric Literals with `0` prefix
     pub(super) fn read_zero(&mut self) -> Kind {
         match self.peek_byte() {

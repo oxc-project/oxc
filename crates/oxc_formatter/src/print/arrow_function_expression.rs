@@ -164,6 +164,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     };
                 }
 
+                write!(f, formatted_signature);
+
                 let body_has_soft_line_break =
                     arrow_expression.is_none_or(|expression| match expression {
                         Expression::ArrowFunctionExpression(_)
@@ -178,7 +180,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     });
 
                 if body_has_soft_line_break {
-                    write!(f, [formatted_signature, space(), format_body]);
+                    write!(f, [space(), format_body]);
                 } else {
                     let should_add_parens = arrow.expression && should_add_parens(body);
 
@@ -194,24 +196,21 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                     write!(
                         f,
-                        [
-                            formatted_signature,
-                            group(&format_args!(
-                                soft_line_indent_or_space(&format_with(|f| {
-                                    if should_add_parens {
-                                        write!(f, if_group_fits_on_line(&"("));
-                                    }
+                        group(&format_args!(
+                            soft_line_indent_or_space(&format_with(|f| {
+                                if should_add_parens {
+                                    write!(f, if_group_fits_on_line(&"("));
+                                }
 
-                                    write!(f, format_body);
+                                write!(f, format_body);
 
-                                    if should_add_parens {
-                                        write!(f, if_group_fits_on_line(&")"));
-                                    }
-                                })),
-                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                should_add_soft_line.then_some(soft_line_break())
-                            ))
-                        ]
+                                if should_add_parens {
+                                    write!(f, if_group_fits_on_line(&")"));
+                                }
+                            })),
+                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                            should_add_soft_line.then_some(soft_line_break())
+                        ))
                     );
                 }
             }

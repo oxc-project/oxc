@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Separate each assignment into its own statement
 
   ⚠ eslint(no-multi-assign): Do not use chained assignment
-   ╭─[no_multi_assign.tsx:2:5]
+   ╭─[no_multi_assign.tsx:2:14]
  1 │     a
  2 │ ╭─▶             =b
  3 │ ╰─▶             =c
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Separate each assignment into its own statement
 
   ⚠ eslint(no-multi-assign): Do not use chained assignment
-   ╭─[no_multi_assign.tsx:2:4]
+   ╭─[no_multi_assign.tsx:2:13]
  1 │     var a =
  2 │ ╭─▶             ((b))
  3 │ ╰─▶              = (c)
@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Separate each assignment into its own statement
 
   ⚠ eslint(no-multi-assign): Do not use chained assignment
-   ╭─[no_multi_assign.tsx:2:14]
+   ╭─[no_multi_assign.tsx:2:23]
  1 │ const x = {};
  2 │             const y = x.one = 1;
    ·                       ─────────

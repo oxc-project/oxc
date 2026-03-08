@@ -159,19 +159,19 @@ fn test() {
         "window['prompt'](foo)",
         "function alert() {} window.alert(foo)",
         "var alert = function() {};
-        	window.alert(foo)",
+            window.alert(foo)",
         "function foo(alert) { window.alert(); }",
         "function foo() { alert(); }",
         "function foo() { var alert = function() {}; }
-        	alert();",
+            alert();",
         "this.alert(foo)",
         "this['alert'](foo)",
         "function foo() { var window = bar; window.alert(); }
-        	window.alert();",
+            window.alert();",
         "globalThis['alert'](foo)", // { "ecmaVersion": 2020 },
         "globalThis.alert();",      // { "ecmaVersion": 2020 },
         "function foo() { var globalThis = bar; globalThis.alert(); }
-        	globalThis.alert();", // { "ecmaVersion": 2020 },
+            globalThis.alert();", // { "ecmaVersion": 2020 },
         "window?.alert(foo)",       // { "ecmaVersion": 2020 },
         "(window?.alert)(foo)",     // { "ecmaVersion": 2020 }
     ];

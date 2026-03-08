@@ -19,9 +19,9 @@ const group: TestGroup = {
     // `RuleTester` does not support enabling other rules beyond the rule under test.
     if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) return true;
 
-    // Skip test cases which include `// eslint-disable` comments.
+    // Skip test cases which include `// eslint-disable` or `/* eslint-disable` comments.
     // These are not handled by `RuleTester`.
-    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
+    if (code.match(/\/[/*]\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
 
     // Test relies on scope analysis to follow ES5 semantics where function declarations in blocks are bound in parent scope.
     // TS-ESLint scope manager does not support ES5. Oxc also doesn't support parsing/semantic as ES5.
@@ -37,13 +37,25 @@ const group: TestGroup = {
     if (
       ruleName === "no-invalid-this" &&
       code.includes("function (x, this: context) {") &&
-      err?.message === "Parsing failed"
+      err.message === "Parsing failed"
     ) {
       return true;
     }
 
-    // TypeScript parser does not support HTML comments
-    if (ruleName === "prefer-object-spread" && code.includes("<!--")) return true;
+    // Oxlint's suggestion message differs from ESLint's, but in a completely cosmetic way
+    if (
+      ruleName === "prefer-regex-literals" &&
+      code === "new RegExp(/a/ig, 'g');" &&
+      err.message.startsWith(
+        "Suggestion at index 1: Hydrated message " +
+          `"Replace with a regular expression literal with flags 'ig'."` +
+          " does not match " +
+          `"Replace with a regular expression literal with flags 'gi'."` +
+          "\n",
+      )
+    ) {
+      return true;
+    }
 
     return false;
   },

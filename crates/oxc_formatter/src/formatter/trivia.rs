@@ -424,7 +424,7 @@ impl<'a> Format<'a> for Comment {
             if is_alignable_comment(content) {
                 // Using `write_element` directly instead of `labelled()`
                 // to avoid allocating a `Vec` for `lines` iter
-                let sort_imports_enabled = f.options().experimental_sort_imports.is_some();
+                let sort_imports_enabled = f.options().sort_imports.is_some();
                 if sort_imports_enabled {
                     f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
                         JsLabels::AlignableBlockComment,

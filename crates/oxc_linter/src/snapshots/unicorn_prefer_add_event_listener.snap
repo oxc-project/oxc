@@ -40,6 +40,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = function (e) {
+   ·     ───────
+ 2 │                 console.log(e);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = null
    ·     ───────
    ╰────
@@ -72,6 +79,70 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onbeforeunload = () => 'foo'
    ·        ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:8]
+ 1 │ window.onbeforeunload = () => {
+   ·        ──────────────
+ 2 │                 return bar;
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:8]
+ 1 │ window.onbeforeunload = function () {
+   ·        ──────────────
+ 2 │                 return 'bar';
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:8]
+ 1 │ window.onbeforeunload = function () {
+   ·        ──────────────
+ 2 │                 return;
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:8]
+ 1 │ window.onbeforeunload = function () {
+   ·        ──────────────
+ 2 │                 (() => {
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:8]
+ 1 │ window.onbeforeunload = e => {
+   ·        ──────────────
+ 2 │                 console.log(e);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:2:17]
+ 1 │ const foo = require('foo');
+ 2 │             foo.onerror = () => {};
+   ·                 ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:2:17]
+ 1 │ import foo from 'foo';
+ 2 │             foo.onerror = () => {};
+   ·                 ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onerror = () => {};
+   ·     ───────
+ 2 │             function bar() {
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:4:21]
+ 3 │                 const koa = require('koa');
+ 4 │                 koa.onerror = () => {};
+   ·                     ───────
+ 5 │             }
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
@@ -114,6 +185,48 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_add_event_listener.tsx:1:8]
  1 │ window.onunload += function() {};
    ·        ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = true
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = 'bar'
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = `bar`
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = {}
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = []
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = void 0
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
+   ╭─[prefer_add_event_listener.tsx:1:5]
+ 1 │ foo.onclick = new Handler()
+   ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.

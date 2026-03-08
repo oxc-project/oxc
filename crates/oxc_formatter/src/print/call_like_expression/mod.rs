@@ -28,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
         let is_tailwind_call = f
             .options()
-            .experimental_tailwindcss
+            .sort_tailwindcss
             .as_ref()
             .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
 
@@ -94,7 +94,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 // If this IS a Tailwind function call, push the Tailwind context
                 let tailwind_ctx_to_push = if is_tailwind_call {
                     f.options()
-                        .experimental_tailwindcss
+                        .sort_tailwindcss
                         .as_ref()
                         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
                 } else {

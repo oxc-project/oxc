@@ -3,8 +3,8 @@
 
 import type * as ESTree from "@oxc-project/types";
 
-type VisitFn = ((node: ESTree.Node) => void) | null;
-type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
-type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+type VisitFn = (node: ESTree.Node) => void;
+type EnterExit = { enter: VisitFn; exit: VisitFn };
+type CompiledVisitors = (VisitFn | EnterExit | null)[];
 
 export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;

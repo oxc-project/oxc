@@ -32,6 +32,7 @@ import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import { envs, globals, initGlobals } from "./globals.ts";
+import { version as packageVersion } from "../../package.json" with { type: "json" };
 
 import type { Globals, Envs } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
@@ -91,13 +92,12 @@ const PARSER = Object.freeze({
   /**
    * Parser name.
    */
-  name: "oxc",
+  name: "oxlint",
 
   /**
    * Parser version.
    */
-  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
-  version: "0.0.0",
+  version: packageVersion,
 
   /**
    * Parse code into an AST.
@@ -516,6 +516,7 @@ export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
   return Object.freeze({
     // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
     __proto__: FILE_CONTEXT,
+
     // Rule ID, in form `<plugin>/<rule>`
     get id(): string {
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
@@ -523,20 +524,31 @@ export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
       if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
       return ruleDetails.fullName;
     },
+
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {
       if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
       debugAssertIsNonNull(ruleDetails.options);
       return ruleDetails.options;
     },
+
     /**
      * Report error.
+     *
+     * Normally called with a single `Diagnostic` object.
+     *
+     * Can also be called with legacy positional forms:
+     * - `context.report(node, message, data?, fix?)`
+     * - `context.report(node, loc, message, data?, fix?)`
+     * These legacy forms are not included in type def for this method, as they are deprecated,
+     * but some plugins still use them, so we support them.
+     *
      * @param diagnostic - Diagnostic object
      * @throws {TypeError} If `diagnostic` is invalid
      */
-    report(this: void, diagnostic: Diagnostic): void {
+    report(this: void, diagnostic: Diagnostic, ...extraArgs: unknown[]): void {
       // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
-      report(diagnostic, ruleDetails);
+      report(diagnostic, extraArgs, ruleDetails);
     },
   } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
 }

@@ -97,7 +97,8 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
+    context::TraverseCtx,
     state::TransformState,
     utils::ast_builder::create_property_access,
 };
@@ -123,8 +124,7 @@ pub(super) struct MethodMetadata<'a> {
     pub return_type: Option<Expression<'a>>,
 }
 
-pub struct LegacyDecoratorMetadata<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct LegacyDecoratorMetadata<'a> {
     /// Stack of method metadata.
     ///
     /// Only the method that needs to be pushed onto a stack is the method metadata,
@@ -141,10 +141,9 @@ pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     enum_types: FxHashMap<SymbolId, EnumType>,
 }
 
-impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+impl LegacyDecoratorMetadata<'_> {
+    pub fn new() -> Self {
         LegacyDecoratorMetadata {
-            ctx,
             method_metadata_stack: SparseStack::new(),
             constructor_metadata_stack: SparseStack::new(),
             enum_types: FxHashMap::default(),
@@ -152,7 +151,7 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
     #[inline]
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert!(
@@ -273,7 +272,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
     }
 }
 
-impl<'a> LegacyDecoratorMetadata<'a, '_> {
+impl<'a> LegacyDecoratorMetadata<'a> {
     /// Collects enum type information for decorator metadata generation.
     fn collect_enum_type(&mut self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) {
         let symbol_id = decl.id.symbol_id();
@@ -500,7 +499,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             // Reach here means the referent is a type symbol, so use `Object` as fallback.
             return Self::global_object(ctx);
         };
-        let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&serialized_type, ctx);
+        let binding = VarDeclarationsStore::create_uid_var_based_on_node(&serialized_type, ctx);
         let target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
@@ -518,6 +517,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     }
 
     /// Serializes an entity name which may not exist at runtime, but whose access shouldn't throw
+    #[expect(clippy::self_only_used_in_recursion)]
     fn serialize_entity_name_as_expression_fallback(
         &mut self,
         name: &TSTypeName<'a>,
@@ -551,8 +551,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
                     let mut left =
                         self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx)?;
-                    let binding =
-                        self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
+                    let binding = VarDeclarationsStore::create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
                     let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
@@ -765,6 +764,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     }
 
     // `_metadata(key, value)
+    #[expect(clippy::unused_self)]
     fn create_metadata(
         &self,
         key: &'a str,
@@ -775,7 +775,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
             Argument::from(value),
         ]);
-        self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
+        helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
     }
 
     // `_metadata(key, value)

@@ -574,7 +574,7 @@ mod test {
         );
         assert_rule_runs_on_node_types(
             &eslint::max_params::MaxParams::default(),
-            &[Function, ArrowFunctionExpression],
+            &[Function, ArrowFunctionExpression, TSFunctionType],
         );
         assert_rule_runs_on_node_types(
             &import::no_dynamic_require::NoDynamicRequire::default(),

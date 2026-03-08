@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push(3, 4);
    ·             ────────────────
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             array = [1, 2];
  3 │             array.push(3, 4);
    ·             ────────────────
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [3, 4];
  2 │             array.unshift(1, 2);
    ·             ───────────────────
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [];
  2 │             array.push(3, 4,);
    ·             ─────────────────
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [];
  2 │             array.unshift(1, 2,);
    ·             ────────────────────
@@ -43,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2,];
  2 │             array.push(3, 4);
    ·             ────────────────
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [3, 4,];
  2 │             array.unshift(1, 2);
    ·             ───────────────────
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │                 array = [1, 2,];
  3 │             array.push(3, 4);
    ·             ────────────────
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push( (( 0, 3 )), (( 0, 4 )) );
    ·             ────────────────────────────────────
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push(3, 4); // comment
    ·             ────────────────
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push(3, 4);
    ·             ────────────────
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push(...bar);
    ·             ──────────────────
@@ -114,7 +114,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.unshift(...bar);
    ·             ─────────────────────
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.unshift(foo());
    ·             ────────────────────
@@ -130,7 +130,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.unshift(...foo());
    ·             ───────────────────────
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `unshift()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.unshift([foo()]);
    ·             ──────────────────────
@@ -146,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `unshift()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │     const array = [1, 2];
  2 │ ╭─▶             array.push(
  3 │ │                   3,
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1, 2];
  2 │             array.push(((array) => foo(array.length))());
    ·             ────────────────────────────────────────────
@@ -164,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ let array= [1, 2];
  2 │             array.push(3, 4);
    ·             ────────────────
@@ -172,7 +172,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ var array = [1, 2];
  2 │             array.push(3, 4);
    ·             ────────────────
@@ -180,7 +180,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1]
  2 │             array.push(2);
    ·             ─────────────
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:8]
+   ╭─[no_immediate_mutation.tsx:2:17]
  1 │ const array = [1]
  2 │             ;(( array.push(2) ))
    ·                 ─────────────
@@ -198,7 +198,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1]
  2 │             array.push(2);
    ·             ─────────────
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1]
  2 │             array.push(2);
    ·             ─────────────
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const array = [1]
  2 │             array.push(2);
    ·             ─────────────
@@ -225,7 +225,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:3:5]
+   ╭─[no_immediate_mutation.tsx:3:17]
  2 │                 const array = [1]
  3 │                 array.push(2);
    ·                 ─────────────
@@ -234,7 +234,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             array = [1, 2]
  3 │             array.push(3, 4)
    ·             ────────────────
@@ -243,7 +243,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the elements from `push()` into the array initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.bar = 2;
    ·             ──────────────
@@ -251,7 +251,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             object = {foo: 1};
  3 │             object.bar = 2;
    ·             ──────────────
@@ -259,7 +259,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object[bar] = 2;
    ·             ───────────────
@@ -267,7 +267,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object[(( 0, bar ))] = (( baz ));
    ·             ────────────────────────────────
@@ -275,7 +275,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {};
  2 │             object.bar = 2;
    ·             ──────────────
@@ -283,7 +283,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1,};
  2 │             object.bar = 2;
    ·             ──────────────
@@ -291,7 +291,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │                 object = {foo: 1};
  3 │             object.bar = 2;
    ·             ──────────────
@@ -313,7 +313,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.bar = 2; // comment
    ·             ──────────────
@@ -321,7 +321,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.bar = 2;
    ·             ──────────────
@@ -330,7 +330,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.bar = anotherObject.baz = 2;
    ·             ──────────────────────────────────
@@ -338,7 +338,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.bar = (object) => object.foo;
    ·             ───────────────────────────────────
@@ -346,7 +346,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             object.object = 2;
    ·             ─────────────────
@@ -354,7 +354,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1}
  2 │             object.bar = 2
    ·             ──────────────
@@ -363,7 +363,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1}
  2 │             object.bar = 2
    ·             ──────────────
@@ -372,7 +372,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             object = {foo: 1}
  3 │             object.bar = 2
    ·             ──────────────
@@ -381,7 +381,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar);
    ·             ──────────────────────────
@@ -389,7 +389,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             object = {foo: 1};
  3 │             Object.assign(object, bar);
    ·             ──────────────────────────
@@ -397,7 +397,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, {bar: 2});
    ·             ───────────────────────────────
@@ -405,7 +405,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, {bar, baz,});
    ·             ──────────────────────────────────
@@ -413,7 +413,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1,};
  2 │             Object.assign(object, {bar, baz,});
    ·             ──────────────────────────────────
@@ -421,7 +421,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {};
  2 │             Object.assign(object, {bar, baz,});
    ·             ──────────────────────────────────
@@ -429,7 +429,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {};
  2 │             Object.assign(object, {});
    ·             ─────────────────────────
@@ -437,7 +437,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {};
  2 │             Object.assign((( object )), (( 0, bar)));
    ·             ────────────────────────────────────────
@@ -445,7 +445,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {};
  2 │             Object.assign((( object )), (( {bar: 2} )));
    ·             ───────────────────────────────────────────
@@ -453,7 +453,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │                 object = {foo: 1};
  3 │             Object.assign(object, bar);
    ·             ──────────────────────────
@@ -475,7 +475,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the property into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar) // comment
    ·             ──────────────────────────
@@ -483,7 +483,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar)
    ·             ──────────────────────────
@@ -492,7 +492,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, {baz(object){return object}})
    ·             ───────────────────────────────────────────────────
@@ -500,7 +500,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar());
    ·             ────────────────────────────
@@ -508,7 +508,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ let object = {foo: 1};
  2 │             Object.assign(object, bar);
    ·             ──────────────────────────
@@ -516,7 +516,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ var object = {foo: 1};
  2 │             Object.assign(object, bar);
    ·             ──────────────────────────
@@ -524,7 +524,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar, baz);
    ·             ───────────────────────────────
@@ -532,7 +532,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, {}, baz);
    ·             ──────────────────────────────
@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};
  2 │             Object.assign(object, bar, ...baz, {bar: 2});
    ·             ────────────────────────────────────────────
@@ -548,7 +548,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1}
  2 │             Object.assign(object, bar)
    ·             ──────────────────────────
@@ -557,7 +557,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1}
  2 │             Object.assign(object, bar)
    ·             ──────────────────────────
@@ -566,7 +566,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             object = {foo: 1}
  3 │             Object.assign(object, bar)
    ·             ──────────────────────────
@@ -575,7 +575,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the properties from `Object.assign()` into the object initializer.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2]);
  2 │             set.add(3);
    ·             ──────────
@@ -583,7 +583,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             set = new Set([1, 2]);
  3 │             set.add(3);
    ·             ──────────
@@ -591,7 +591,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const weakSet = new WeakSet([a, b]);
  2 │             weakSet.add(c);
    ·             ──────────────
@@ -599,7 +599,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([]);
  2 │             set.add(3);
    ·             ──────────
@@ -607,7 +607,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set();
  2 │             set.add(3);
    ·             ──────────
@@ -615,7 +615,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set;
  2 │             set.add(3);
    ·             ──────────
@@ -623,7 +623,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = (( new Set ));
  2 │             set.add(3);
    ·             ──────────
@@ -631,7 +631,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new (( Set ));
  2 │             set.add(3);
    ·             ──────────
@@ -639,7 +639,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │                 set = new Set;
  3 │             set.add(3);
    ·             ──────────
@@ -647,7 +647,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2]);
  2 │             set.add( ((0, 3)), );
    ·             ────────────────────
@@ -669,7 +669,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2]);
  2 │             set.add(3); // comment
    ·             ──────────
@@ -677,7 +677,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2]);
  2 │             set.add(foo());
    ·             ──────────────
@@ -685,7 +685,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │     const set = new Set([1, 2]);
  2 │ ╭─▶             set
  3 │ │                   .add(
@@ -695,7 +695,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ let set = new Set([1, 2]);
  2 │             set.add(3);
    ·             ──────────
@@ -703,7 +703,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ var set = new Set([1, 2]);
  2 │             set.add(3);
    ·             ──────────
@@ -711,7 +711,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2])
  2 │             set.add(3);
    ·             ──────────
@@ -720,7 +720,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set([1, 2])
  2 │             set.add(3);
    ·             ──────────
@@ -729,7 +729,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set
  2 │             set.add(3);
    ·             ──────────
@@ -738,7 +738,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const set = new Set
  2 │             set.add(3);
    ·             ──────────
@@ -747,7 +747,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.add()` immediately after initializing a Set.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             set = new Set([1, 2])
  3 │             set.add(3)
    ·             ──────────
@@ -756,7 +756,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the element to the Set initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]]);
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -764,7 +764,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             map = new Map([["foo", 1]]);
  3 │             map.set("bar", 2);
    ·             ─────────────────
@@ -772,7 +772,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const weakMap = new WeakMap([[foo, 1]]);
  2 │             weakMap.set(bar, 2);
    ·             ───────────────────
@@ -780,7 +780,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([]);
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -788,7 +788,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map();
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -796,7 +796,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map;
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -804,7 +804,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = (( new Map ));
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -812,7 +812,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new (( Map ));
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -820,7 +820,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │                 map = new Map;
  3 │             map.set("bar", 2);
    ·             ─────────────────
@@ -828,7 +828,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo",1]]);
  2 │             map.set( ((0, "bar")), ((0, 2)), );
    ·             ──────────────────────────────────
@@ -850,7 +850,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]]);
  2 │             map.set("bar", 2); // comment
    ·             ─────────────────
@@ -858,7 +858,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]]);
  2 │             map.set("bar", foo());
    ·             ─────────────────────
@@ -866,7 +866,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]]);
  2 │             map.set(bar(), 2);
    ·             ─────────────────
@@ -874,7 +874,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │     const map = new Map([["foo", 1]]);
  2 │ ╭─▶             map
  3 │ │                   .set(
@@ -885,7 +885,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ let map = new Map([["foo", 1]]);
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -893,7 +893,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ var map = new Map([["foo", 1]]);
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -901,7 +901,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]])
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -910,7 +910,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map([["foo", 1]])
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -919,7 +919,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -928,7 +928,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const map = new Map
  2 │             map.set("bar", 2);
    ·             ─────────────────
@@ -937,7 +937,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:3:4]
+   ╭─[no_immediate_mutation.tsx:3:13]
  2 │             map = new Map([["foo", 1]])
  3 │             map.set("bar", 2)
    ·             ─────────────────
@@ -946,7 +946,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>();
  2 │             cellOutputMappers.set('display_data', translateDisplayDataOutput);
    ·             ─────────────────────────────────────────────────────────────────
@@ -954,7 +954,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>([]);
  2 │             cellOutputMappers.set('display_data', translateDisplayDataOutput);
    ·             ─────────────────────────────────────────────────────────────────
@@ -962,7 +962,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add the entry to the Map initializer array.
 
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `.set()` immediately after initializing a Map.
-   ╭─[no_immediate_mutation.tsx:2:4]
+   ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>;
  2 │             cellOutputMappers.set('display_data', translateDisplayDataOutput);
    ·             ─────────────────────────────────────────────────────────────────

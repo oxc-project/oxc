@@ -3,27 +3,6 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:5]
- 1 │ var undefined = 5;
-   ·     ─────────
-   ╰────
-  help: Rename 'undefined' to avoid shadowing the global property.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:10]
- 1 │ function NaN(){}
-   ·          ───
-   ╰────
-  help: Rename 'NaN' to avoid shadowing the global property.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:14]
- 1 │ try {} catch(eval){}
-   ·              ────
-   ╰────
-  help: Rename 'eval' to avoid shadowing the global property.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:10]
  1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
    ·          ───

@@ -1632,6 +1632,7 @@ impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("attributes", &self.with_entries);
+        state.serialize_span(self.span);
         state.end();
     }
 }

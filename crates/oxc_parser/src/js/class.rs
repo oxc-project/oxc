@@ -4,7 +4,7 @@ use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
@@ -14,7 +14,7 @@ use super::FunctionKind;
 type ImplementsWithKeywordSpan<'a> = (Span, Vec<'a, TSClassImplements<'a>>);
 
 /// Section 15.7 Class Definitions
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     // `start_span` points at the start of all decoractors and `class` keyword.
     pub(crate) fn parse_class_statement(
         &mut self,
@@ -146,6 +146,9 @@ impl<'a> ParserImpl<'a> {
                         ));
                     }
                     let implements_kw_span = self.cur_token().span();
+                    if !self.is_ts {
+                        self.error(diagnostics::implements_clause_in_ts(implements_kw_span));
+                    }
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
                     } else {
@@ -660,6 +663,14 @@ impl<'a> ParserImpl<'a> {
                 (&self.source_text[span], span)
             });
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
+        }
+        if self.ctx.has_ambient()
+            && let Some(initializer) = &initializer
+            && !(modifiers.contains(ModifierKind::Readonly) && type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
+                initializer.span(),
+            ));
         }
         self.ast.class_element_property_definition(
             self.end_span(span),

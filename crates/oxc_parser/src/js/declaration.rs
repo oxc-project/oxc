@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
-use crate::{ParserImpl, StatementContext, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
 
@@ -135,6 +135,13 @@ impl<'a> ParserImpl<'a> {
             init,
             definite.is_some(),
         );
+        if self.ctx.has_ambient()
+            && let Some(init) = &decl.init
+            && !decl.kind.is_using()
+            && !(decl.kind.is_const() && decl.type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
+        }
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }
@@ -155,6 +162,8 @@ impl<'a> ParserImpl<'a> {
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
+            } else if decl.kind.is_using() {
+                self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
             }
         }
     }
@@ -176,22 +185,27 @@ impl<'a> ParserImpl<'a> {
         };
 
         self.expect(Kind::Using);
+        if self.ctx.has_ambient() {
+            let using_span = self.cur_token().span();
+            self.error(if kind.is_await() {
+                diagnostics::await_using_declarations_not_allowed_in_ambient_contexts(using_span)
+            } else {
+                diagnostics::using_declarations_not_allowed_in_ambient_contexts(using_span)
+            });
+        }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations = self.ast.vec();
         loop {
-            let declaration =
-                self.parse_variable_declarator(VariableDeclarationParent::Statement, kind);
+            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+                VariableDeclarationParent::For
+            } else {
+                VariableDeclarationParent::Statement
+            };
+            let declaration = self.parse_variable_declarator(decl_parent, kind);
 
             if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            // Excluding `for` loops, an initializer is required in a UsingDeclaration.
-            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
-                self.error(diagnostics::using_declarations_must_be_initialized(
                     declaration.id.span(),
                 ));
             }

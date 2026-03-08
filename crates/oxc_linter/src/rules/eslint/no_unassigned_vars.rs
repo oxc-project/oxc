@@ -117,20 +117,20 @@ fn test() {
         "let z: number | undefined = undefined; log(z);",
         "declare let c: string | undefined; log(c);",
         "
-        				const foo = (two: string): void => {
-        					let one: string | undefined;
-        					if (one !== two) {
-        						one = two;
-        					}
-        				}
-        			",
+                        const foo = (two: string): void => {
+                            let one: string | undefined;
+                            if (one !== two) {
+                                one = two;
+                            }
+                        }
+                    ",
         "
-        				declare module 'module' {
-        					import type { T } from 'module';
-        					let x: T;
-        					export = x;
-        				}
-        			",
+                        declare module 'module' {
+                            import type { T } from 'module';
+                            let x: T;
+                            export = x;
+                        }
+                    ",
         "for (let p of pathToRemove) { p.remove() }",
     ];
 
@@ -146,12 +146,12 @@ fn test() {
         "let x: number | undefined; log(x);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
         "
-							declare module 'module' {
-								let x: string;
-							}
-							let y: string;
-							console.log(y);
-						",
+                            declare module 'module' {
+                                let x: string;
+                            }
+                            let y: string;
+                            console.log(y);
+                        ",
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();

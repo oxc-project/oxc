@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       (onMounted)(() => { /* ... */ }) // error
    ·                       ────────────────────────────────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       onMounted(() => { /* ... */ }) // error
    ·                       ──────────────────────────────
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onBeforeMount` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       onBeforeMount(() => { /* ... */ })
    ·                       ──────────────────────────────────
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onBeforeUnmount` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:9:14]
+    ╭─[no_lifecycle_after_await.tsx:9:23]
   8 │                       onBeforeMount(() => { /* ... */ })
   9 │                       onBeforeUnmount(() => { /* ... */ })
     ·                       ────────────────────────────────────
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onBeforeUpdate` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:10:14]
+    ╭─[no_lifecycle_after_await.tsx:10:23]
   9 │                       onBeforeUnmount(() => { /* ... */ })
  10 │                       onBeforeUpdate(() => { /* ... */ })
     ·                       ───────────────────────────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onErrorCaptured` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:11:14]
+    ╭─[no_lifecycle_after_await.tsx:11:23]
  10 │                       onBeforeUpdate(() => { /* ... */ })
  11 │                       onErrorCaptured(() => { /* ... */ })
     ·                       ────────────────────────────────────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:12:14]
+    ╭─[no_lifecycle_after_await.tsx:12:23]
  11 │                       onErrorCaptured(() => { /* ... */ })
  12 │                       onMounted(() => { /* ... */ })
     ·                       ──────────────────────────────
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onRenderTracked` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:13:14]
+    ╭─[no_lifecycle_after_await.tsx:13:23]
  12 │                       onMounted(() => { /* ... */ })
  13 │                       onRenderTracked(() => { /* ... */ })
     ·                       ────────────────────────────────────
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onRenderTriggered` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:14:14]
+    ╭─[no_lifecycle_after_await.tsx:14:23]
  13 │                       onRenderTracked(() => { /* ... */ })
  14 │                       onRenderTriggered(() => { /* ... */ })
     ·                       ──────────────────────────────────────
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onUnmounted` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:15:14]
+    ╭─[no_lifecycle_after_await.tsx:15:23]
  14 │                       onRenderTriggered(() => { /* ... */ })
  15 │                       onUnmounted(() => { /* ... */ })
     ·                       ────────────────────────────────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onUpdated` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:16:14]
+    ╭─[no_lifecycle_after_await.tsx:16:23]
  15 │                       onUnmounted(() => { /* ... */ })
  16 │                       onUpdated(() => { /* ... */ })
     ·                       ──────────────────────────────
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onActivated` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:17:14]
+    ╭─[no_lifecycle_after_await.tsx:17:23]
  16 │                       onUpdated(() => { /* ... */ })
  17 │                       onActivated(() => { /* ... */ })
     ·                       ────────────────────────────────
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onDeactivated` is called after `await` in `setup()`.
-    ╭─[no_lifecycle_after_await.tsx:18:14]
+    ╭─[no_lifecycle_after_await.tsx:18:23]
  17 │                       onActivated(() => { /* ... */ })
  18 │                       onDeactivated(() => { /* ... */ })
     ·                       ──────────────────────────────────
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       onMounted?.(() => { /* ... */ }) // error
    ·                       ────────────────────────────────
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       A?.(() => { /* ... */ }) // error
    ·                       ────────────────────────
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Lifecycle hooks should be called synchronously in `setup()`. Move the hook call before the first `await`.
 
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
-   ╭─[no_lifecycle_after_await.tsx:8:14]
+   ╭─[no_lifecycle_after_await.tsx:8:23]
  7 │ 
  8 │                       A() // error
    ·                       ───

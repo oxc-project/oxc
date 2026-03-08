@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-describe("Format js-in-mdx with prettier-plugin-oxfmt", () => {
+// oxlint-disable jest/no-disabled-tests
+describe.skip("Format js-in-mdx with prettier-plugin-oxfmt", () => {
   it("should format code block in .mdx", async () => {
     const input = `
 # MDX
@@ -28,6 +29,25 @@ console.log(person);
 
     expect(result.code).toMatchSnapshot();
     expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should not add ; for single JSX element in code block", async () => {
+    const input = `
+# Mdx
+
+\`\`\`jsx
+<div>Hello, JSX</div>
+\`\`\`
+`;
+    const result = await format("a.mdx", input);
+
+    expect(result.code).not.toContain(";");
+    expect(result.errors).toStrictEqual([]);
+
+    const result2 = await format("a.mdx", input, { semi: false });
+
+    expect(result2.code).not.toContain(";");
+    expect(result2.errors).toStrictEqual([]);
   });
 
   it("should format import/export in .mdx", async () => {

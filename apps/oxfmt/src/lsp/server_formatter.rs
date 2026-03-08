@@ -5,12 +5,13 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
     resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
+use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
 
 pub struct ServerFormatterBuilder {
@@ -74,7 +75,12 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
-        ServerFormatter::new(source_formatter, config_resolver, gitignore_glob)
+        ServerFormatter::new(
+            root_path.to_path_buf(),
+            source_formatter,
+            config_resolver,
+            gitignore_glob,
+        )
     }
 }
 
@@ -152,6 +158,7 @@ impl ServerFormatterBuilder {
 // ---
 
 pub struct ServerFormatter {
+    root_path: PathBuf,
     source_formatter: SourceFormatter,
     config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
@@ -243,33 +250,38 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<TextEdit>, String> {
-        let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
+    fn run_format(
+        &self,
+        uri: &Uri,
+        language_id: &LanguageId,
+        content: Option<&str>,
+    ) -> Result<Vec<TextEdit>, String> {
+        let file_content;
+        let (result, source_text) = if uri.scheme().as_str() == "file" {
+            let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
-        if self.is_ignored(&path) {
-            debug!("File is ignored: {}", path.display());
-            return Ok(Vec::new());
-        }
+            let source_text = if let Some(c) = content {
+                c
+            } else {
+                file_content = utils::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file: {e}"))?;
+                &file_content
+            };
 
-        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
-            debug!("Unsupported file type for formatting: {}", path.display());
-            return Ok(Vec::new());
+            let Some(result) = self.format_file(&path, source_text, language_id) else {
+                return Ok(vec![]); // No formatting for this file (unsupported or ignored)
+            };
+
+            (result, source_text)
+        } else {
+            let source_text =
+                content.ok_or_else(|| "In-memory formatting requires content".to_string())?;
+
+            let Some(result) = self.format_in_memory(uri, source_text, language_id) else {
+                return Ok(vec![]); // currently not supported
+            };
+            (result, source_text)
         };
-        let source_text = match content {
-            Some(c) => c,
-            None => {
-                &utils::read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
-            }
-        };
-
-        // Resolve options for this file
-        let resolved_options = self.config_resolver.resolve(&strategy);
-        debug!("resolved_options = {resolved_options:?}");
-
-        let result = tokio::task::block_in_place(|| {
-            self.source_formatter.format(&strategy, source_text, resolved_options)
-        });
 
         // Handle result
         match result {
@@ -302,11 +314,12 @@ impl Tool for ServerFormatter {
 
 impl ServerFormatter {
     pub fn new(
+        root_path: PathBuf,
         source_formatter: SourceFormatter,
         config_resolver: ConfigResolver,
         gitignore_glob: Option<Gitignore>,
     ) -> Self {
-        Self { source_formatter, config_resolver, gitignore_glob }
+        Self { root_path, source_formatter, config_resolver, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -319,6 +332,62 @@ impl ServerFormatter {
         } else {
             false
         }
+    }
+
+    fn format_file(
+        &self,
+        path: &Path,
+        source_text: &str,
+        language_id: &LanguageId,
+    ) -> Option<FormatResult> {
+        if self.is_ignored(path) {
+            debug!("File is ignored: {}", path.display());
+            return None;
+        }
+
+        // Prefer language_id over file extension to determine the format strategy.
+        // This allows e.g. a `.txt` file opened as `typescript` to be formatted.
+        let strategy_opt = super::apply_language_id_extension(language_id, path)
+            .and_then(|p| FormatFileStrategy::try_from(p).ok())
+            .or_else(|| FormatFileStrategy::try_from(path.to_path_buf()).ok());
+
+        let Some(strategy) = strategy_opt else {
+            debug!("Unsupported file type for formatting: {}", path.display());
+            return None;
+        };
+        // Resolve options for this file
+        let resolved_options = self.config_resolver.resolve(&strategy);
+        debug!("resolved_options = {resolved_options:?}");
+
+        Some(tokio::task::block_in_place(|| {
+            self.source_formatter.format(&strategy, source_text, resolved_options)
+        }))
+    }
+
+    fn format_in_memory(
+        &self,
+        uri: &Uri,
+        source_text: &str,
+        language_id: &LanguageId,
+    ) -> Option<FormatResult> {
+        let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
+        else {
+            debug!("Unsupported language id for in-memory formatting: {language_id:?}");
+            return None;
+        };
+
+        let Ok(strategy) = FormatFileStrategy::try_from(path.clone()) else {
+            debug!("Unsupported file type for formatting: {}", path.display());
+            return None;
+        };
+
+        // Resolve options for this file
+        let resolved_options = self.config_resolver.resolve(&strategy);
+        debug!("resolved_options = {resolved_options:?}");
+
+        Some(tokio::task::block_in_place(|| {
+            self.source_formatter.format(&strategy, source_text, resolved_options)
+        }))
     }
 }
 
@@ -365,15 +434,15 @@ fn compute_minimal_text_edit<'a>(
     (start, end, replacement)
 }
 
-// Almost the same as `oxfmt::walk::load_ignore_paths`, but does not handle custom ignore files.
+// Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
+//
+// NOTE: `.gitignore` is intentionally NOT included here.
+// In LSP, every file is explicitly opened by the user (like directly specifying a file in CLI),
+// so `.gitignore` should not prevent formatting.
+// Only formatter-specific ignore files apply.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
-    [".gitignore", ".prettierignore"]
-        .iter()
-        .filter_map(|file_name| {
-            let path = cwd.join(file_name);
-            if path.exists() { Some(path) } else { None }
-        })
-        .collect::<Vec<_>>()
+    let path = cwd.join(".prettierignore");
+    if path.exists() { vec![path] } else { vec![] }
 }
 
 // ---

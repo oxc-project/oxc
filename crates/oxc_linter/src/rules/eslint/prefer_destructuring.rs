@@ -629,13 +629,13 @@ fn test() {
         ("var foo /* comment */ = object.foo, a;", None),
         (
             "var foo // comment
-			 = object.foo;",
+             = object.foo;",
             None,
         ),
         ("var foo = /* comment */ object.foo;", None),
         (
             "var foo = // comment
-			 object.foo;",
+             object.foo;",
             None,
         ),
         ("var foo = (/* comment */ object).foo;", None),
@@ -644,18 +644,18 @@ fn test() {
         ("var foo = bar/* comment */.baz.foo;", None),
         (
             "var foo = bar[// comment
-			baz].foo;",
+            baz].foo;",
             None,
         ),
         (
             "var foo // comment
-			 = bar(/* comment */).foo;",
+             = bar(/* comment */).foo;",
             None,
         ),
         ("var foo = bar/* comment */.baz/* comment */.foo;", None),
         (
             "var foo = object// comment
-			.foo;",
+            .foo;",
             None,
         ),
         ("var foo = object./* comment */foo;", None),
@@ -666,7 +666,7 @@ fn test() {
         ("var foo = object.foo/* comment */, a;", None),
         (
             "var foo = object.foo// comment
-			, a;",
+            , a;",
             None,
         ),
         ("var foo = object.foo, /* comment */ a;", None),
@@ -691,9 +691,9 @@ fn test() {
         ("var foo = bar/* comment */.baz.foo;", "var {foo} = bar/* comment */.baz;", None),
         (
             "var foo = bar[// comment
-        		baz].foo;",
+                baz].foo;",
             "var {foo} = bar[// comment
-        		baz];",
+                baz];",
             None,
         ),
         ("var foo = (bar[baz]).foo;", "var {foo} = bar[baz];", None),
@@ -702,9 +702,9 @@ fn test() {
         ("var foo = object.foo/* comment */, a;", "var {foo} = object/* comment */, a;", None),
         (
             "var foo = object.foo// comment
-        		, a;",
+                , a;",
             "var {foo} = object// comment
-        		, a;",
+                , a;",
             None,
         ),
         ("var foo = object.foo, /* comment */ a;", "var {foo} = object, /* comment */ a;", None),

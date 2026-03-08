@@ -94,6 +94,7 @@ declare_oxc_lint!(
     RequireReturns,
     jsdoc,
     pedantic,
+    pending,
     config = RequireReturnsConfig,
 );
 
@@ -313,6 +314,21 @@ fn test() {
 
 			            return foo;
 			          }
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @param md
+			           */
+			          const component = (md) => {
+			            md.renderer.rules.fence = (...args) => {
+			              const [tokens, index] = args;
+			              return tokens[index];
+			            };
+			          };
 			      ",
             None,
             None,

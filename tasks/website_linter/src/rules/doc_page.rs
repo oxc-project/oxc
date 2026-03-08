@@ -58,10 +58,11 @@ impl Context {
         let default = if *turned_on_by_default { "true" } else { "false" };
         let type_aware = if *is_tsgolint_rule { "true" } else { "false" };
         let fix = autofix.to_string();
-        #[cfg(windows)]
-        let file = file!().replace('\\', "/");
-        #[cfg(not(windows))]
+
         let file = file!();
+        #[cfg(windows)]
+        #[expect(clippy::disallowed_methods, reason = "file path always contains slashes")]
+        let file = &*file.replace('\\', "/");
 
         writeln!(
             self.page,
@@ -187,7 +188,21 @@ const source = `{}`;{}
         }
         let mut rendered = section.to_md(&self.renderer);
         if rendered.trim().is_empty() {
-            return rendered;
+            // For primitive types (e.g. a single string argument) with no child
+            // sections, render the section's own type and default info directly.
+            let mut parts = String::new();
+            if let Some(ref instance_type) = section.instance_type
+                && !instance_type.is_empty()
+            {
+                write!(parts, "\ntype: `{instance_type}`\n").unwrap();
+            }
+            if let Some(ref default) = section.default {
+                write!(parts, "\ndefault: `{default}`\n").unwrap();
+            }
+            if parts.trim().is_empty() {
+                return rendered;
+            }
+            rendered = parts;
         }
 
         // Check if this is an enum-based config (oneOf with single-value enums)

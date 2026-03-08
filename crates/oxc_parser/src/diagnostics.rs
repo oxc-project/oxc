@@ -64,6 +64,12 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn private_identifier_in_property_name(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Private identifier '#{name}' is not allowed in property names"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
 }
@@ -747,6 +753,17 @@ pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagn
 }
 
 #[cold]
+pub fn using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1545", "'using' declarations are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1546", "'await using' declarations are not allowed in ambient contexts.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
         .with_labels([
@@ -1080,13 +1097,13 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn as_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+    ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
 #[cold]
 pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+    ts_error("8037", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 
@@ -1116,8 +1133,18 @@ pub fn parameter_modifiers_in_ts(
 }
 
 #[cold]
+pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
 pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
     ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn initializers_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(span)
 }
 
 #[cold]

@@ -14,7 +14,9 @@ use crate::{
 };
 
 fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eval can be harmful.").with_label(span)
+    OxcDiagnostic::warn("eval can be harmful.")
+        .with_help("Avoid eval(). For JSON parsing use JSON.parse(); for dynamic property access use bracket notation (obj[key]); for other cases refactor to avoid evaluating strings as code.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]

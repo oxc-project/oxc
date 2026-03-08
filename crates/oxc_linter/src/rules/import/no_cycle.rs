@@ -433,3 +433,26 @@ fn test() {
         .with_import_plugin(true)
         .test_and_snapshot();
 }
+
+#[test]
+fn test_issue_19245_type_only_branch_does_not_hide_cycle() {
+    use crate::tester::Tester;
+
+    let pass: Vec<&str> = vec![];
+    let fail = vec![
+        r"import { installmentLoanManager } from './installmentLoanManager';
+import { aaaInternal } from './aaaInternal';
+
+export const balanceSweepDetailsManager = {
+  call(): string {
+    return installmentLoanManager.call() + aaaInternal.call();
+  },
+};",
+    ];
+
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
+        .change_rule_path("cycles/typescript/issue_19245/balanceSweepDetailsManager.ts")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("issue_19245")
+        .test_and_snapshot();
+}

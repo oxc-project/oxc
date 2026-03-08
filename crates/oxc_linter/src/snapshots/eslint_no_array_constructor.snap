@@ -18,13 +18,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ Array();
-   · ───────
-   ╰────
-  help: Use array literal notation [] instead.
-
-  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
-   ╭─[no_array_constructor.tsx:1:1]
  1 │ new Array(x, y)
    · ───────────────
    ╰────
@@ -38,36 +31,212 @@ source: crates/oxc_linter/src/tester.rs
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:15]
+ 1 │ const array = Array(...args);
+   ·               ──────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:15]
+ 1 │ const array = Array(...foo, ...bar);
+   ·               ─────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:15]
+ 1 │ const array = new Array(...args);
+   ·               ──────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:15]
+ 1 │ const array = Array(5, ...args);
+   ·               ─────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:15]
+ 1 │ const array = Array(5, 6, ...args);
+   ·               ────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:6]
+ 1 │ /*a*/Array()
+   ·      ───────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:6]
+ 1 │ /*a*/Array()/*b*/
+   ·      ───────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ new Array(...args);
+ 1 │ Array/*a*/()
+   · ────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:11]
+ 1 │ /*a*//*b*/Array/*c*//*d*/()/*e*//*f*/;/*g*//*h*/
+   ·           ─────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(/*a*/ /*b*/)
    · ──────────────────
    ╰────
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ Array(x, y)
+ 1 │ Array(/*a*/ x /*b*/, /*c*/ y /*d*/)
+   · ───────────────────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:6]
+ 1 │ /*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/
+   ·      ───────────────────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:6]
+ 1 │ /*a*/new Array
+   ·      ─────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:6]
+ 1 │ /*a*/new Array/*b*/
+   ·      ─────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new/*a*/Array
+   · ─────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new/*a*//*b*/Array/*c*//*d*/()/*e*//*f*/;/*g*//*h*/
+   · ──────────────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(/*a*/ /*b*/)
+   · ──────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(/*a*/ x /*b*/, /*c*/ y /*d*/)
+   · ───────────────────────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new/*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/
+   · ───────────────────────────────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array();
    · ───────────
    ╰────
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ Array(0, 1, 2)
-   · ──────────────
+ 1 │ Array();
+   · ───────
    ╰────
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ Array(...args);
-   · ──────────────
+ 1 │ new Array(x, y);
+   · ───────────────
    ╰────
   help: Use array literal notation [] instead.
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
- 1 │ Array(1, 2, ...args);
-   · ────────────────────
+ 1 │ Array(x, y);
+   · ───────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(0, 1, 2);
+   · ──────────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(0, 1, 2);
+   · ──────────────
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:4:29]
+ 3 │                             Fn
+ 4 │                             Array() // ";" required
+   ·                             ───────
+ 5 │                         }) as Fn
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:6:25]
+ 5 │                         }) as Fn
+ 6 │                         Array() // ";" not required
+   ·                         ───────
+ 7 │                         
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:5:33]
+ 4 │                                 Object
+ 5 │                                 Array() // ";" required
+   ·                                 ───────
+ 6 │                             }
+   ╰────
+  help: Use array literal notation [] instead.
+
+  ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
+   ╭─[no_array_constructor.tsx:8:25]
+ 7 │                         }) as Object
+ 8 │                         Array() // ";" not required
+   ·                         ───────
+ 9 │                         
    ╰────
   help: Use array literal notation [] instead.

@@ -7,192 +7,224 @@ source: crates/oxc_linter/src/tester.rs
  1 │ a = a
    ·     ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:8]
  1 │ [a] = [a]
    ·        ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:11]
  1 │ [a, b] = [a, b]
    ·           ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:14]
  1 │ [a, b] = [a, b]
    ·              ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:11]
  1 │ [a, b] = [a, c]
    ·           ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:13]
  1 │ [a, b] = [, b]
    ·             ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:14]
  1 │ [a, ...b] = [a, ...b]
    ·              ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:16]
  1 │ [[a], {b}] = [[a], {b}]
    ·                ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:21]
  1 │ [[a], {b}] = [[a], {b}]
    ·                     ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:9]
  1 │ ({a} = {a})
    ·         ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:15]
  1 │ ({a: b} = {a: b})
    ·               ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:19]
  1 │ ({'a': b} = {'a': b})
    ·                   ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:17]
  1 │ ({a: b} = {'a': b})
    ·                 ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:17]
  1 │ ({'a': b} = {a: b})
    ·                 ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:15]
  1 │ ({1: b} = {1: b})
    ·               ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:17]
  1 │ ({1: b} = {'1': b})
    ·                 ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:17]
  1 │ ({'1': b} = {1: b})
    ·                 ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:19]
  1 │ ({['a']: b} = {a: b})
    ·                   ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:21]
  1 │ ({'a': b} = {[`a`]: b})
    ·                     ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:17]
  1 │ ({1: b} = {[1]: b})
    ·                 ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:12]
  1 │ ({a, b} = {a, b})
    ·            ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:15]
  1 │ ({a, b} = {a, b})
    ·               ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:15]
  1 │ ({a, b} = {b, a})
    ·               ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:12]
  1 │ ({a, b} = {b, a})
    ·            ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:15]
  1 │ ({a, b} = {c, a})
    ·               ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:26]
  1 │ ({a: {b}, c: [d]} = {a: {b}, c: [d]})
    ·                          ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:34]
  1 │ ({a: {b}, c: [d]} = {a: {b}, c: [d]})
    ·                                  ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:21]
  1 │ ({a, b} = {a, ...x, b})
    ·                     ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a.b = a.b
    ·       ───
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:9]
  1 │ a.b.c = a.b.c
    ·         ─────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:8]
  1 │ a[b] = a[b]
    ·        ────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:10]
  1 │ a['b'] = a['b']
    ·          ──────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:3:5]
@@ -201,30 +233,35 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │       'b'
  5 │ ╰─▶ ]
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a.b = a.b
    ·       ───
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:9]
  1 │ a.b.c = a.b.c
    ·         ─────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:8]
  1 │ a[b] = a[b]
    ·        ────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:10]
  1 │ a['b'] = a['b']
    ·          ──────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:3:5]
@@ -233,57 +270,67 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │       'b'
  5 │ ╰─▶ ]
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:10]
  1 │ this.x = this.x
    ·          ──────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:21]
  1 │ a['/(?<zero>0)/'] = a[/(?<zero>0)/]
    ·                     ───────────────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:12]
  1 │ (a?.b).c = (a?.b).c
    ·            ────────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a.b = a?.b
    ·       ────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:41]
  1 │ class C { #field; foo() { this.#field = this.#field; } }
    ·                                         ───────────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:44]
  1 │ class C { #field; foo() { [this.#field] = [this.#field]; } }
    ·                                            ───────────
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a &&= a
    ·       ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a ||= a
    ·       ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:7]
  1 │ a ??= a
    ·       ─
    ╰────
+  help: Remove the self-assignment or assign to a different variable.

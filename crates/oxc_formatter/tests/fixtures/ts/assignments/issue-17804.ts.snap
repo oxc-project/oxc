@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 229
 ---
 ==================== Input ====================
 const fooRef =

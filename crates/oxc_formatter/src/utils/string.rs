@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use oxc_span::SourceType;
-use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
+use oxc_syntax::identifier::is_identifier_name_patched;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -570,16 +570,6 @@ fn normalize_jsx_string(
     }
 
     (Cow::Owned(result), chosen_quote)
-}
-
-/// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
-/// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
-/// 15.
-/// <https://github.com/oxc-project/unicode-id-start/pull/3>
-pub fn is_identifier_name_patched(content: &str) -> bool {
-    let mut chars = content.chars();
-    chars.next().is_some_and(is_identifier_start)
-        && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
 }
 
 #[cfg(test)]

@@ -1,4 +1,3 @@
-#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]

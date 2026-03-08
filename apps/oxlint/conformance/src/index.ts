@@ -77,7 +77,7 @@ export interface TestGroup {
    * @param require - Require function, which requires modules relative to the test files directory
    * @param mock - Mock function, which mocks modules relative to the test files directory
    */
-  prepare?: (require: NodeJS.Require, mock: (path: string, value: unknown) => void) => void;
+  prepare?: (require: NodeJS.Require, mock: MockFn) => void;
 
   /**
    * Function that will be called for every failing test case.
@@ -116,17 +116,34 @@ export interface TestGroup {
    *
    * `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
    * `lang` is the language to parse the test case code with when this parser is used.
+   * `propName` (optional) is the name of the property of the module which is the parser.
    *
    * e.g. `{ specifier: "@typescript-eslint/parser", lang: "ts" }`
+   * e.g. `{ specifier: "typescript-eslint", propName: "parser", lang: "ts" }`
    */
   parsers: ParserDetails[];
 }
+
+/**
+ * Mock function.
+ *
+ * Takes specifier of module to mock, and value to mock it with.
+ * Specifier is resolved relative to the test files directory.
+ *
+ * If need to mock a module which is imported by another package, pass the specifiers of
+ * "breadcrumb" packages on way to the module as `via`.
+ *
+ * e.g. If test file imports `foo`, `foo` imports `bar`, and `bar` imports `qux`, and `qux` is the module to mock:
+ * `mock("qux", value, ["foo", "bar"])`
+ */
+export type MockFn = (specifier: string, value: unknown, via?: string[]) => void;
 
 /**
  * Custom parser details.
  */
 export interface ParserDetails {
   specifier: string;
+  propName?: string;
   lang: Language;
 }
 
@@ -235,7 +252,13 @@ function runGroup(group: TestGroup, mocks: Mocks) {
       mocks.set(resolveFromTestsDir(specifier), RuleTester);
     } else {
       const mod = requireFromTestsDir(specifier);
-      mod[propName] = RuleTester;
+      // Use `Object.defineProperty` to handle if `mod[propName]` is a getter (transpiled ESM module)
+      Object.defineProperty(mod, propName, {
+        value: RuleTester,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
     }
   }
 
@@ -244,10 +267,7 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   if (prepare) {
     console.log(`Running prepare hook for ${groupName}...`);
 
-    const mock = (path: string, value: unknown) => {
-      mocks.set(resolveFromTestsDir(path), value);
-    };
-
+    const mock = createMockFn(testFilesDirPath, mocks);
     prepare(requireFromTestsDir, mock);
   }
 
@@ -259,10 +279,13 @@ function runGroup(group: TestGroup, mocks: Mocks) {
 
   for (const parserDetails of group.parsers) {
     const path = resolveFromTestsDir(parserDetails.specifier);
-    const parser = require(path);
-
-    // Set `default` export on parser module to work around apparent bug in `tsx`
-    if (parser && parser.default === undefined) parser.default = parser;
+    let parser = require(path);
+    if (parserDetails.propName != null) {
+      parser = parser[parserDetails.propName];
+    } else if (parser && parser.default === undefined) {
+      // Set `default` export on parser module to work around apparent bug in `tsx`
+      parser.default = parser;
+    }
 
     if (typeof parser.parseForESLint === "function") {
       parseForESLintFns.set(parser.parseForESLint, parserDetails);
@@ -307,6 +330,27 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   console.log(`  Fully passing: ${fullyPassingCount}`);
   console.log(`  Load errors: ${loadErrorCount}`);
   console.log(`  With failures: ${totalRuleCount - fullyPassingCount - loadErrorCount}`);
+}
+
+/**
+ * Create a mock function which mocks a module relative to the test files directory.
+ * @param testFilesDirPath - Path to the test files directory
+ * @param mocks - Mocks
+ * @returns Mock function
+ */
+function createMockFn(testFilesDirPath: string, mocks: Mocks): MockFn {
+  const startPath = pathJoin(testFilesDirPath, "dummy.js");
+
+  return (specifier: string, value: unknown, via?: string[]) => {
+    let fromPath = startPath;
+    if (via != null) {
+      for (const specifier of via) {
+        fromPath = createRequire(fromPath).resolve(specifier);
+      }
+    }
+
+    mocks.set(createRequire(fromPath).resolve(specifier), value);
+  };
 }
 
 /**

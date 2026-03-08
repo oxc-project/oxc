@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.9.1 -y
   # Node.js related init
   pnpm install
 
@@ -117,6 +117,9 @@ conformance *args='':
 # Test ESTree
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
+
+test-estree-tokens *args='':
+  cargo run -p oxc_coverage --profile coverage -- estree_tokens {{args}}
 
 # Get code coverage
 codecov:
@@ -277,6 +280,10 @@ linter-config-ts:
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
+
+# Generate formatter config TypeScript types for `apps/oxfmt/src-js/config.generated.ts`
+formatter-config-ts:
+  pnpm --filter oxfmt-app generate-config-types
 
 # Automatically DRY up Cargo.toml manifests in a workspace
 autoinherit:

@@ -33,9 +33,10 @@ mod checker;
 mod class;
 mod diagnostics;
 mod is_global_reference;
-#[cfg(feature = "linter")]
+#[cfg(feature = "jsdoc")]
 mod jsdoc;
 mod label;
+mod multi_index_vec;
 mod node;
 mod scoping;
 mod stats;
@@ -45,9 +46,11 @@ mod unresolved_stack;
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
-#[cfg(feature = "linter")]
-pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+#[cfg(feature = "jsdoc")]
+pub use jsdoc::JSDocFinder;
 pub use node::{AstNode, AstNodes};
+#[cfg(feature = "jsdoc")]
+pub use oxc_jsdoc::{JSDoc, JSDocTag};
 pub use scoping::Scoping;
 pub use stats::Stats;
 
@@ -83,7 +86,7 @@ pub struct Semantic<'a> {
     irregular_whitespaces: Box<[Span]>,
 
     /// Parsed JSDoc comments.
-    #[cfg(feature = "linter")]
+    #[cfg(feature = "jsdoc")]
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: Vec<NodeId>,
@@ -123,22 +126,27 @@ impl<'a> Semantic<'a> {
         &self.nodes
     }
 
+    /// Scoping data collected for this program.
     pub fn scoping(&self) -> &Scoping {
         &self.scoping
     }
 
+    /// Mutable access to scoping data.
     pub fn scoping_mut(&mut self) -> &mut Scoping {
         &mut self.scoping
     }
 
+    /// Mutable access to scoping data together with read-only AST nodes.
     pub fn scoping_mut_and_nodes(&mut self) -> (&mut Scoping, &AstNodes<'a>) {
         (&mut self.scoping, &self.nodes)
     }
 
+    /// Class metadata collected during semantic analysis.
     pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
     }
 
+    /// Set recorded spans for irregular unicode whitespace in source text.
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
         self.irregular_whitespaces = irregular_whitespaces;
     }
@@ -148,6 +156,7 @@ impl<'a> Semantic<'a> {
         self.comments
     }
 
+    /// Iterate comments within a byte range.
     pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>
     where
         R: RangeBounds<u32>,
@@ -155,10 +164,12 @@ impl<'a> Semantic<'a> {
         comments_range(self.comments, range)
     }
 
+    /// Returns `true` if any comment lies between `span.start` and `span.end`.
     pub fn has_comments_between(&self, span: Span) -> bool {
         has_comments_between(self.comments, span)
     }
 
+    /// Returns `true` if `pos` is inside a parsed comment.
     pub fn is_inside_comment(&self, pos: u32) -> bool {
         is_inside_comment(self.comments, pos)
     }
@@ -168,6 +179,7 @@ impl<'a> Semantic<'a> {
         get_comment_at(self.comments, pos)
     }
 
+    /// Spans of irregular whitespace discovered by the parser.
     pub fn irregular_whitespaces(&self) -> &[Span] {
         &self.irregular_whitespaces
     }
@@ -175,11 +187,12 @@ impl<'a> Semantic<'a> {
     /// Parsed [`JSDoc`] comments.
     ///
     /// Will be empty if JSDoc parsing is disabled.
-    #[cfg(feature = "linter")]
+    #[cfg(feature = "jsdoc")]
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }
 
+    /// Labels that were declared but never used.
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
@@ -193,6 +206,9 @@ impl<'a> Semantic<'a> {
         self.cfg.as_ref()
     }
 
+    /// Control flow graph.
+    ///
+    /// Always returns `None` when the `cfg` feature is disabled.
     #[cfg(not(feature = "cfg"))]
     #[expect(clippy::unused_self)]
     pub fn cfg(&self) -> Option<&()> {
@@ -210,6 +226,7 @@ impl<'a> Semantic<'a> {
         )
     }
 
+    /// Returns `true` if `node_id` points to an unresolved identifier reference.
     pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {
         let reference_node = self.nodes.get_node(node_id);
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
@@ -231,14 +248,17 @@ impl<'a> Semantic<'a> {
         self.scoping.get_resolved_references(symbol_id)
     }
 
+    /// Get the AST node that declares `symbol_id`.
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
         self.nodes.get_node(self.scoping.symbol_declaration(symbol_id))
     }
 
+    /// Returns `true` if `ident` resolves to a global (unbound) reference.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scoping.root_unresolved_references().contains_key(&ident.name)
     }
 
+    /// Get the textual name for a semantic reference.
     pub fn reference_name(&self, reference: &Reference) -> &str {
         let node = self.nodes.get_node(reference.node_id());
         match node.kind() {
@@ -247,6 +267,7 @@ impl<'a> Semantic<'a> {
         }
     }
 
+    /// Get the source span for a semantic reference.
     pub fn reference_span(&self, reference: &Reference) -> Span {
         let node = self.nodes.get_node(reference.node_id());
         node.kind().span()

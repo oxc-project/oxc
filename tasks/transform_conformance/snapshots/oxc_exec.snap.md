@@ -1,4 +1,4 @@
-commit: 92c052dc
+commit: de54b9b2
 
 node: v24.12.0
 

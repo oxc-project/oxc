@@ -257,10 +257,10 @@ fn test() {
         ("interface A {}", Some(serde_json::json!(["interface"]))),
         (
             "
-			interface A extends B {
-			  x: number;
-			}
-			      ",
+            interface A extends B {
+              x: number;
+            }
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("type U = string;", Some(serde_json::json!(["interface"]))),
@@ -268,10 +268,10 @@ fn test() {
         ("interface T { x: \"interface\" | \"type\"; }", Some(serde_json::json!(["interface"]))),
         (
             "
-			type Record<T, U> = {
-			  [K in T]: U;
-			};
-			      ",
+            type Record<T, U> = {
+              [K in T]: U;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("type T = { x: number };", Some(serde_json::json!(["type"]))),
@@ -279,10 +279,10 @@ fn test() {
         ("type A = { x: number } & B<T1> & C<T2>;", Some(serde_json::json!(["type"]))),
         (
             "
-			export type W<T> = {
-			  x: T;
-			};
-			      ",
+            export type W<T> = {
+              x: T;
+            };
+                  ",
             Some(serde_json::json!(["type"])),
         ),
     ];
@@ -293,10 +293,10 @@ fn test() {
         ("type T=                         { x: number; };", Some(serde_json::json!(["interface"]))),
         (
             "
-			export type W<T> = {
-			  x: T;
-			};
-			      ",
+            export type W<T> = {
+              x: T;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         ("interface T { x: number; }", Some(serde_json::json!(["type"]))),
@@ -307,77 +307,77 @@ fn test() {
         ("interface A extends B<T1>, C<T2> { x: number; };", Some(serde_json::json!(["type"]))),
         (
             "
-			export interface W<T> {
-			  x: T;
-			}
-			      ",
+            export interface W<T> {
+              x: T;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			namespace JSX {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            namespace JSX {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			global {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            global {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			declare global {
-			  interface Array<T> {
-			    foo(x: (x: number) => T): T[];
-			  }
-			}
-			      ",
+            declare global {
+              interface Array<T> {
+                foo(x: (x: number) => T): T[];
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			declare global {
-			  namespace Foo {
-			    interface Bar {}
-			  }
-			}
-			      ",
+            declare global {
+              namespace Foo {
+                interface Bar {}
+              }
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			export default interface Test {
-			  bar(): string;
-			  foo(): number;
-			}
-			      ",
+            export default interface Test {
+              bar(): string;
+              foo(): number;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         (
             "
-			export declare type Test = {
-			  foo: string;
-			  bar: string;
-			};
-			      ",
+            export declare type Test = {
+              foo: string;
+              bar: string;
+            };
+                  ",
             Some(serde_json::json!(["interface"])),
         ),
         (
             "
-			export declare interface Test {
-			  foo: string;
-			  bar: string;
-			}
-			      ",
+            export declare interface Test {
+              foo: string;
+              bar: string;
+            }
+                  ",
             Some(serde_json::json!(["type"])),
         ),
         // Issue: <https://github.com/oxc-project/oxc/issues/7552>

@@ -32,7 +32,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -68,7 +68,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {

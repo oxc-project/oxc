@@ -1,12 +1,12 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
-        CodeActionKind, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
+        CodeActionContext, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
         TextEdit, Uri, WorkspaceEdit,
     },
 };
 
-use crate::capabilities::Capabilities;
+use crate::{LanguageId, capabilities::Capabilities};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -79,12 +79,14 @@ pub trait Tool: Send + Sync {
     }
 
     /// Get code actions or commands provided by this tool for the given URI and range.
-    /// The `only_code_action_kinds` parameter can be used to filter the results based on specific code action kinds.
+    /// The tool should filter the code actions based on the provided range.
+    /// The context can be used to further filter the code actions,
+    /// for example by the `only` field which indicates that only code actions of certain kinds are requested.
     fn get_code_actions_or_commands(
         &self,
         _uri: &Uri,
         _range: &Range,
-        _only_code_action_kinds: Option<&Vec<CodeActionKind>>,
+        _context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
@@ -97,7 +99,12 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
-    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+    fn run_format(
+        &self,
+        _uri: &Uri,
+        _language_id: &LanguageId,
+        _content: Option<&str>,
+    ) -> Result<Vec<TextEdit>, String> {
         Ok(Vec::new())
     }
 

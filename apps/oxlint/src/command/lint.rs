@@ -114,11 +114,12 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file
-    ///  * only `.json` extension is supported
+    ///  * `.json` and `.jsonc` config files are supported in all runtimes
+    ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
@@ -244,8 +245,21 @@ pub struct WarningOptions {
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
-    #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
+    #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+}
+
+#[expect(clippy::unnecessary_wraps)]
+fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+    if cfg!(debug_assertions) {
+        Ok(OutputFormat::Default)
+    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Github)
+    } else if std::env::var("GITLAB_CI").ok().is_some_and(|value| value == "true") {
+        Ok(OutputFormat::Gitlab)
+    } else {
+        Ok(OutputFormat::Default)
+    }
 }
 
 /// Enable/Disable Plugins

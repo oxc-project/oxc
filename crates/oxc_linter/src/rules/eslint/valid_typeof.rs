@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -10,7 +10,6 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::best_match,
 };
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {

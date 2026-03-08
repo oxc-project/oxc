@@ -262,17 +262,22 @@ impl SortImportsTransform {
                         // Insert newline when:
                         // 1. Group changes
                         // 2. Previous import was not ignored (don't insert after ignored)
-                        if options.newlines_between {
-                            let current_group_idx = sorted_import.group_idx;
-                            if let Some(prev_idx) = prev_group_idx
-                                && prev_idx != current_group_idx
-                                && !prev_was_ignored
-                            {
-                                next_elements.push(FormatElement::Line(LineMode::Empty));
-                            }
-                            prev_group_idx = Some(current_group_idx);
-                            prev_was_ignored = sorted_import.is_ignored;
+                        // 3. The boundary override (or global `newlines_between`) says to insert
+                        let current_group_idx = sorted_import.group_idx;
+                        if let Some(prev_idx) = prev_group_idx
+                            && prev_idx != current_group_idx
+                            && !prev_was_ignored
+                            && should_insert_newline_between(
+                                options.newlines_between,
+                                &options.newline_boundary_overrides,
+                                prev_idx,
+                                current_group_idx,
+                            )
+                        {
+                            next_elements.push(FormatElement::Line(LineMode::Empty));
                         }
+                        prev_group_idx = Some(current_group_idx);
+                        prev_was_ignored = sorted_import.is_ignored;
 
                         // Output leading lines and import line
                         for line in &sorted_import.leading_lines {
@@ -331,4 +336,31 @@ impl SortImportsTransform {
 
         Some(next_elements)
     }
+}
+
+/// Resolve whether a blank line should be inserted between two group indices.
+/// Checks each boundary between `prev_group_idx` and `current_group_idx`,
+/// using per-boundary overrides if available, otherwise the global `newlines_between`.
+///
+/// When groups are skipped (i.e. no imports match an intermediate group),
+/// multiple boundaries are evaluated with OR semantics.
+/// If any single boundary in the range resolves to `true`, a blank line is inserted.
+fn should_insert_newline_between(
+    global_newlines_between: bool,
+    newline_boundary_overrides: &[Option<bool>],
+    prev_group_idx: usize,
+    current_group_idx: usize,
+) -> bool {
+    if newline_boundary_overrides.is_empty() {
+        return global_newlines_between;
+    }
+
+    for idx in prev_group_idx..current_group_idx {
+        if newline_boundary_overrides.get(idx).copied().flatten().unwrap_or(global_newlines_between)
+        {
+            return true;
+        }
+    }
+
+    false
 }

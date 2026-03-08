@@ -152,6 +152,7 @@ pub(crate) mod eslint {
     pub mod no_self_compare;
     pub mod no_sequences;
     pub mod no_setter_return;
+    pub mod no_shadow;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
     pub mod no_template_curly_in_string;
@@ -162,6 +163,7 @@ pub(crate) mod eslint {
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
+    pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
@@ -171,6 +173,7 @@ pub(crate) mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_use_before_define;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
@@ -217,11 +220,15 @@ pub(crate) mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod class_literal_property_style;
     pub mod consistent_generic_constructors;
     pub mod consistent_indexed_object_style;
+    pub mod consistent_return;
     pub mod consistent_type_assertions;
     pub mod consistent_type_definitions;
+    pub mod consistent_type_exports;
     pub mod consistent_type_imports;
+    pub mod dot_notation;
     pub mod explicit_function_return_type;
     pub mod explicit_module_boundary_types;
     pub mod no_array_delete;
@@ -242,6 +249,7 @@ pub(crate) mod typescript {
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
+    pub mod no_invalid_void_type;
     pub mod no_meaningless_void_operator;
     pub mod no_misused_new;
     pub mod no_misused_promises;
@@ -256,11 +264,15 @@ pub(crate) mod typescript {
     pub mod no_restricted_types;
     pub mod no_this_alias;
     pub mod no_unnecessary_boolean_literal_compare;
+    pub mod no_unnecessary_condition;
     pub mod no_unnecessary_parameter_property_assignment;
+    pub mod no_unnecessary_qualifier;
     pub mod no_unnecessary_template_expression;
     pub mod no_unnecessary_type_arguments;
     pub mod no_unnecessary_type_assertion;
     pub mod no_unnecessary_type_constraint;
+    pub mod no_unnecessary_type_conversion;
+    pub mod no_unnecessary_type_parameters;
     pub mod no_unsafe_argument;
     pub mod no_unsafe_assignment;
     pub mod no_unsafe_call;
@@ -271,13 +283,16 @@ pub(crate) mod typescript {
     pub mod no_unsafe_return;
     pub mod no_unsafe_type_assertion;
     pub mod no_unsafe_unary_minus;
+    pub mod no_useless_default_assignment;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
     pub mod non_nullable_type_assertion_style;
     pub mod only_throw_error;
+    pub mod parameter_properties;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
+    pub mod prefer_find;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_includes;
@@ -286,8 +301,12 @@ pub(crate) mod typescript {
     pub mod prefer_nullish_coalescing;
     pub mod prefer_optional_chain;
     pub mod prefer_promise_reject_errors;
+    pub mod prefer_readonly;
+    pub mod prefer_readonly_parameter_types;
     pub mod prefer_reduce_type_parameter;
+    pub mod prefer_regexp_exec;
     pub mod prefer_return_this_type;
+    pub mod prefer_string_starts_ends_with;
     pub mod prefer_ts_expect_error;
     pub mod promise_function_async;
     pub mod related_getter_setter_pairs;
@@ -297,9 +316,11 @@ pub(crate) mod typescript {
     pub mod restrict_template_expressions;
     pub mod return_await;
     pub mod strict_boolean_expressions;
+    pub mod strict_void_return;
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
     pub mod unbound_method;
+    pub mod unified_signatures;
     pub mod use_unknown_in_catch_callback_variable;
 }
 
@@ -343,6 +364,7 @@ pub(crate) mod jest {
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
+    pub mod prefer_mock_return_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -376,6 +398,7 @@ pub(crate) mod react {
     pub mod jsx_key;
     pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
+    pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
@@ -513,6 +536,7 @@ pub(crate) mod unicorn {
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
+    pub mod prefer_module;
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
@@ -533,6 +557,7 @@ pub(crate) mod unicorn {
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_structured_clone;
+    pub mod prefer_ternary;
     pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod relative_url_style;
@@ -681,10 +706,12 @@ pub(crate) mod vitest {
     pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod no_importing_vitest_globals;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
+    pub mod prefer_import_in_mock;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -696,6 +723,7 @@ pub(crate) mod node {
     pub mod global_require;
     pub mod no_exports_assign;
     pub mod no_new_require;
+    pub mod no_path_concat;
     pub mod no_process_env;
 }
 

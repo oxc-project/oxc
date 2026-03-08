@@ -9,6 +9,8 @@ use crate::{
     rule::Rule,
 };
 
+const REACT: Ident<'static> = Ident::new_const("React");
+
 fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React` must be in scope when using JSX.")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
@@ -64,7 +66,7 @@ impl Rule for ReactInJsxScope {
             _ => return,
         };
         let scope = ctx.scoping();
-        let react_name = Ident::new_const("React");
+        let react_name = REACT;
         if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
             return;
         }

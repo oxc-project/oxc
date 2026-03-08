@@ -58,6 +58,14 @@ source: crates/oxc_linter/src/tester.rs
  3 │             Hook._useState();
    ╰────
 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use42" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:4:13]
+ 3 │             Hook._useState();
+ 4 │             Hook.use42();
+   ·             ────────────
+ 5 │             Hook.useHook();
+   ╰────
+
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:13]
  4 │             Hook.use42();
@@ -702,6 +710,14 @@ source: crates/oxc_linter/src/tester.rs
  4 │             Hook.useState();
    ·             ───────────────
  5 │             Hook._useState();
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use42" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:6:13]
+ 5 │             Hook._useState();
+ 6 │             Hook.use42();
+   ·             ────────────
+ 7 │             Hook.useHook();
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.

@@ -110,16 +110,33 @@ fn test() {
         r#"import type fs = require("node:fs");"#,
         r#"const fs = require("node:fs");"#,
         r#"const fs = require("node:fs/promises");"#,
-        r"const fs = require(fs);",
+        "const fs = require(fs);",
         r#"const fs = notRequire("fs");"#,
         r#"const fs = foo.require("fs");"#,
         r#"const fs = require.resolve("fs");"#,
-        r"const fs = require(`fs`);",
+        "const fs = require(`fs`);",
         r#"const fs = require?.("fs");"#,
         r#"const fs = require("fs", extra);"#,
-        r"const fs = require();",
+        "const fs = require();",
         r#"const fs = require(...["fs"]);"#,
         r#"const fs = require("unicorn");"#,
+        r#"const fs = process.getBuiltinModule("node:fs")"#,
+        r#"const fs = process.getBuiltinModule?.("fs")"#,
+        r#"const fs = process?.getBuiltinModule("fs")"#,
+        r#"const fs = process.notGetBuiltinModule("fs")"#,
+        r#"const fs = notProcess.getBuiltinModule("fs")"#,
+        r#"const fs = process.getBuiltinModule("fs", extra)"#,
+        r#"const fs = process.getBuiltinModule(...["fs"])"#,
+        "const fs = process.getBuiltinModule()",
+        r#"const fs = process.getBuiltinModule("unicorn")"#,
+        r#"import {getBuiltinModule} from 'node:process';
+            const fs = getBuiltinModule("fs");"#,
+        // This is a syntax error, can be ignored.
+        // r#"export fs from "node:fs";"#,
+        r#"const fs = require("node:fs") as "fs";"#,
+        r#"type fs = typeof import("node:fs");"#,
+        r#"type fs = typeof SomeType<"fs">;"#,
+        "type fs = typeof fs;",
     ];
 
     let fail = vec![
@@ -127,26 +144,40 @@ fn test() {
         r#"import * as fs from "fs";"#,
         r#"import fs = require("fs");"#,
         r#"export {promises} from "fs";"#,
+        "async function foo() {
+                const fs = await import('fs');
+            }",
         r#"import fs from "fs/promises";"#,
         r#"export {default} from "fs/promises";"#,
+        "async function foo() {
+                const fs = await import('fs/promises');
+            }",
         r#"import {promises} from "fs";"#,
         r#"export {default as promises} from "fs";"#,
-        r"import {promises} from 'fs';",
+        "import {promises} from 'fs';",
+        r#"async function foo() {
+                const fs = await import("fs/promises");
+            }"#,
+        // Don't bother fixing this
+        // r#"async function foo() {
+        //         const fs = await import(/* escaped */"\\\\u{66}s/promises");
+        //     }"#,
         r#"import "buffer";"#,
         r#"import "child_process";"#,
         r#"import "timers/promises";"#,
         r#"const {promises} = require("fs")"#,
-        r"const fs = require('fs/promises')",
+        "const fs = require('fs/promises')",
+        // r#"const fs = process.getBuiltinModule("fs")"#,
         r#"export fs from "fs";"#,
-        r"await import('assert/strict')",
+        "await import('assert/strict')",
     ];
 
     let fix = vec![
         (r#"import fs from "fs";"#, r#"import fs from "node:fs";"#),
         (r#"import * as fs from "fs";"#, r#"import * as fs from "node:fs";"#),
-        (r"import fs from 'fs';", r"import fs from 'node:fs';"),
-        (r"const fs = require('fs');", r"const fs = require('node:fs');"),
-        (r"import fs = require('fs');", r"import fs = require('node:fs');"),
+        ("import fs from 'fs';", "import fs from 'node:fs';"),
+        ("const fs = require('fs');", "const fs = require('node:fs');"),
+        ("import fs = require('fs');", "import fs = require('node:fs');"),
         (r#"import "child_process";"#, r#"import "node:child_process";"#),
         (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#),
     ];

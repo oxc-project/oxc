@@ -52,6 +52,11 @@ impl<'ast> FormatState<'ast> {
         self.group_id_builder.group_id(debug_name)
     }
 
+    /// Returns a reference to the unique group id builder.
+    pub fn group_id_builder(&self) -> &UniqueGroupIdBuilder {
+        &self.group_id_builder
+    }
+
     #[expect(clippy::mutable_key_type)]
     pub fn printed_interned_elements(&mut self) -> &mut FxHashMap<Interned<'ast>, usize> {
         &mut self.printed_interned_elements

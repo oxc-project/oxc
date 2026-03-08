@@ -1425,7 +1425,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const [ a, _b ] = items;
    ·            ─┬
    ·             ╰── '_b' is declared here
- 2 │             console.log(a+_b);
+ 2 │              console.log(a+_b);
    ╰────
   help: Consider renaming this variable.
 

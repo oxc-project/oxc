@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigestsToSemver"],
   "ignorePaths": ["apps/oxfmt/test/**/fixtures/**", "crates/oxc_linter/fixtures/**", "tasks/e2e"],
-  "ignoreDeps": ["@types/vscode", "allocator-api2"],
+  "ignoreDeps": ["@types/vscode", "allocator-api2", "ajv", "prettier-plugin-tailwindcss"],
   "packageRules": [
     {
       "groupName": "oxlint",

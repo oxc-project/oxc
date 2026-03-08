@@ -17,6 +17,18 @@ const cssProp = <div css={`display: flex; align-items: center;`}>Hello</div>;
 
 const styledJsx = <style jsx>{`display: flex; align-items: center;`}</style>;
 
+// Template literals with ${} substitutions
+const dynamic = css`color:${color};background:${bg};`;
+
+const styledWithExpr = styled.button`font-size:${size}px;color:${theme.primary};`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div`transition:width ${duration},height ${duration},top ${duration},left ${duration};`;
+
+const multiProp = css`
+  .card {padding:${spacing}px;margin:${margin};border:1px solid ${borderColor};box-shadow:0 2px 4px ${shadowColor};}
+`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div`
   /**

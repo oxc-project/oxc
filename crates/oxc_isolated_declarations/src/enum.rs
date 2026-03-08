@@ -18,6 +18,7 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
+    /// Transform a TypeScript enum declaration into its declaration output form.
     pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
         let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));

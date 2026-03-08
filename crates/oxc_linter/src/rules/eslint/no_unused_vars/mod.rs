@@ -11,8 +11,9 @@ mod usage;
 
 use std::ops::Deref;
 
-use options::{IgnorePattern, NoUnusedVarsOptions};
+use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::{GetSpan, Span};
@@ -189,7 +190,7 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
-    dangerous_suggestion,
+    fix = conditional_dangerous_fix_or_suggestion,
     config = NoUnusedVarsOptions
 );
 
@@ -273,7 +274,7 @@ impl NoUnusedVars {
                     });
 
                 if let Some(declaration) = declaration {
-                    ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    Self::report_with_fix_mode(self.fix.imports, ctx, diagnostic, |fixer| {
                         self.remove_unused_import_declaration(fixer, symbol, declaration)
                     });
                 } else {
@@ -296,7 +297,7 @@ impl NoUnusedVars {
                     ),
                 };
 
-                ctx.diagnostic_with_suggestion(report, |fixer| {
+                Self::report_with_fix_mode(self.fix.variables, ctx, report, |fixer| {
                     // NOTE: suggestions produced by this fixer are all flagged
                     // as dangerous
                     self.rename_or_remove_var_declaration(fixer, symbol, decl, declaration.id())
@@ -343,7 +344,9 @@ impl NoUnusedVars {
             AstKind::CatchParameter(catch) => {
                 // NOTE: these are safe suggestions as deleting unused catch
                 // bindings wont have any side effects.
-                ctx.diagnostic_with_suggestion(
+                Self::report_with_fix_mode(
+                    self.fix.variables,
+                    ctx,
                     diagnostic::declared(symbol, &self.caught_errors_ignore_pattern, false),
                     |fixer| {
                         let Span { start, end, .. } = catch.span();
@@ -363,6 +366,26 @@ impl NoUnusedVars {
             }
             _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
         }
+    }
+
+    fn report_with_fix_mode<'a, F>(
+        mode: NoUnusedVarsFixMode,
+        ctx: &LintContext<'a>,
+        diagnostic: OxcDiagnostic,
+        fix: F,
+    ) where
+        F: FnOnce(crate::fixer::RuleFixer<'_, 'a>) -> crate::fixer::RuleFix,
+    {
+        let kind = match mode {
+            NoUnusedVarsFixMode::Off => {
+                ctx.diagnostic(diagnostic);
+                return;
+            }
+            NoUnusedVarsFixMode::Suggestion => FixKind::Suggestion,
+            NoUnusedVarsFixMode::Fix => FixKind::Fix,
+        };
+
+        ctx.diagnostic_with_fix_of_kind(diagnostic, kind, fix);
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {

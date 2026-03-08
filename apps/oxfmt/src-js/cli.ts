@@ -1,10 +1,11 @@
 import { runCli } from "./bindings";
 import {
   initExternalFormatter,
-  formatEmbeddedCode,
-  formatFile,
-  sortTailwindClasses,
   disposeExternalFormatter,
+  formatFile,
+  formatEmbeddedCode,
+  formatEmbeddedDoc,
+  sortTailwindClasses,
 } from "./cli/worker-proxy";
 
 // napi-JS `oxfmt` CLI entry point
@@ -27,8 +28,9 @@ void (async () => {
   const [mode, exitCode] = await runCli(
     args,
     initExternalFormatter,
-    formatEmbeddedCode,
     formatFile,
+    formatEmbeddedCode,
+    formatEmbeddedDoc,
     sortTailwindClasses,
   );
 

@@ -8,6 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───┬──
    ·    ╰── Read-only global 'String' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'String'.
 
   ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
@@ -15,6 +16,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───┬──
    ·    ╰── Read-only global 'String' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'String'.
 
   ⚠ eslint(no-global-assign): Read-only global 'Object' should not be modified.
    ╭─[no_global_assign.tsx:1:3]
@@ -22,6 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───┬──
    ·      ╰── Read-only global 'Object' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'Object'.
 
   ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
    ╭─[no_global_assign.tsx:1:15]
@@ -29,6 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───┬──
    ·                  ╰── Read-only global 'String' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'String'.
 
   ⚠ eslint(no-global-assign): Read-only global 'top' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
@@ -36,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─┬─
    ·  ╰── Read-only global 'top' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'top'.
 
   ⚠ eslint(no-global-assign): Read-only global 'require' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
@@ -43,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───┬───
    ·    ╰── Read-only global 'require' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'require'.
 
   ⚠ eslint(no-global-assign): Read-only global 'Object' should not be modified.
    ╭─[no_global_assign.tsx:1:16]
@@ -50,6 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───┬──
    ·                   ╰── Read-only global 'Object' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'Object'.
 
   ⚠ eslint(no-global-assign): Read-only global 'a' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
@@ -57,6 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    · ┬
    · ╰── Read-only global 'a' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'a'.
 
   ⚠ eslint(no-global-assign): Read-only global 'Array' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
@@ -64,3 +72,4 @@ source: crates/oxc_linter/src/tester.rs
    · ──┬──
    ·   ╰── Read-only global 'Array' should not be modified.
    ╰────
+  help: Use a local variable instead of modifying the global 'Array'.

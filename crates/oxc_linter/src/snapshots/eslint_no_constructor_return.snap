@@ -7,9 +7,11 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class C { constructor() { return '' } }
    ·                           ─────────
    ╰────
+  help: Remove the return statement from the constructor. If you need early exit, use a bare `return;` with no value.
 
   ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
    ╭─[no_constructor_return.tsx:1:38]
  1 │ class C { constructor(a) { if (!a) { return '' } else { a() } } }
    ·                                      ─────────
    ╰────
+  help: Remove the return statement from the constructor. If you need early exit, use a bare `return;` with no value.

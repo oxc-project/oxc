@@ -5,6 +5,7 @@ use oxc_span::SPAN;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
+    common::computed_key::{create_computed_key_temp_var, key_needs_temp_var},
     context::TraverseCtx,
     utils::ast_builder::{
         create_class_constructor, create_this_property_access, create_this_property_assignment,
@@ -13,7 +14,7 @@ use crate::{
 
 use super::TypeScript;
 
-impl<'a> TypeScript<'a, '_> {
+impl<'a> TypeScript<'a> {
     /// Transform class fields, and constructor parameters that includes modifiers into `this` assignments.
     ///
     /// This transformation is doing 2 things:
@@ -117,7 +118,7 @@ impl<'a> TypeScript<'a, '_> {
                         // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
                         // `IdentifierReference` without symbol is not kept.
                         // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
-                        if self.ctx.key_needs_temp_var(key, ctx) {
+                        if key_needs_temp_var(key, ctx) {
                             // When `remove_class_fields_without_initializer` is true, the property without initializer
                             // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
                             // keeps and is evaluated in the same order as the original class field in static block.
@@ -269,6 +270,7 @@ impl<'a> TypeScript<'a, '_> {
     ///   `class C { x = 1; }` -> `class C { constructor() { this.x = 1; } }`
     ///
     /// Returns an assignment statement which would be inserted in the constructor body.
+    #[expect(clippy::unused_self)]
     fn convert_property_definition(
         &self,
         key: &mut PropertyKey<'a>,
@@ -278,7 +280,7 @@ impl<'a> TypeScript<'a, '_> {
     ) -> Statement<'a> {
         let member = match key {
             PropertyKey::StaticIdentifier(ident) => {
-                create_this_property_access(SPAN, ident.name.into(), ctx)
+                create_this_property_access(SPAN, ident.name, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 unreachable!("PrivateIdentifier is skipped in transform_class_fields");
@@ -288,9 +290,9 @@ impl<'a> TypeScript<'a, '_> {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
-                let new_key = if self.ctx.key_needs_temp_var(key, ctx) {
-                    let (assignment, ident) =
-                        self.ctx.create_computed_key_temp_var(key.take_in(ctx.ast), ctx);
+                let new_key = if key_needs_temp_var(key, ctx) {
+                    let taken_key = key.take_in(ctx.ast);
+                    let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
                     computed_key_assignments.push(assignment);
                     ident
                 } else {
@@ -384,7 +386,7 @@ impl<'a> TypeScript<'a, '_> {
             .filter(|param| param.has_modifier())
             .filter_map(|param| param.pattern.get_binding_identifier())
             .map(|id| {
-                let target = create_this_property_assignment(id.span, id.name.into(), ctx);
+                let target = create_this_property_assignment(id.span, id.name, ctx);
                 let value = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                 Self::create_assignment(target, value, ctx)
             })

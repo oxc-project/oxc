@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:24]
+   ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @typoo {string} (fail: invalid name) */
    ·                                 ──────
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@typoo` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @Param (fail: invalid name)
    ·                                  ──────
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@Param` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @foo (fail: invalid name)
    ·                                  ────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@foo` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @arg foo (fail: invalid name, default aliased)
    ·                                  ────
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@arg` with `@param`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @param foo (fail: valid name but user preferred)
    ·                                  ──────
@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@param` with `@arg`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @constructor foo (fail: invalid name and user preferred)
    ·                                  ────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@arg` with `@somethingDifferent`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @param foo (fail: valid name but user preferred)
    ·                                  ──────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@param` with `@parameter`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @bar foo (fail: invalid name)
    ·                                  ────
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@bar` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @baz @bar foo (fail: invalid name)
    ·                                  ────
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@baz` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:4:27]
+   ╭─[check_tag_names.tsx:4:36]
  3 │                                  * @bar
  4 │                                  * @baz (fail: invalid name)
    ·                                    ────
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@baz` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Unexpected tag `@todo`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Please resolve to-dos or add to the tracker
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Please use x-todo instead of todo
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:4:25]
+   ╭─[check_tag_names.tsx:4:34]
  3 │                                * @property {object} a
  4 │                                * @prop {boolean} b (fail: invalid name, default aliased)
    ·                                  ─────
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@prop` with `@property`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @abc foo (fail: invalid name and user preferred)
    ·                                  ────
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@abc` with `@abcd`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:24]
+   ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @jsx h */
    ·                                 ────
@@ -165,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@jsx` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:24]
+   ╭─[check_tag_names.tsx:3:33]
  2 │                             /** @jsx h */
  3 │                             /** @jsxFrag Fragment */
    ·                                 ────────
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@jsxFrag` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:4:24]
+   ╭─[check_tag_names.tsx:4:33]
  3 │                             /** @jsxFrag Fragment */
  4 │                             /** @jsxImportSource preact */
    ·                                 ────────────────
@@ -183,7 +183,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@jsxImportSource` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:5:24]
+   ╭─[check_tag_names.tsx:5:33]
  4 │                             /** @jsxImportSource preact */
  5 │                             /** @jsxRuntime automatic */
    ·                                 ───────────
@@ -192,7 +192,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@jsxRuntime` is invalid tag name.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:21]
+   ╭─[check_tag_names.tsx:3:30]
  2 │                           /**
  3 │                            * @constructor (fail: invalid name)
    ·                              ────────────
@@ -201,7 +201,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace tag `@constructor` with `@class`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:25]
+   ╭─[check_tag_names.tsx:3:34]
  2 │                               /**
  3 │                                * @todo (fail: valid name but blocked)
    ·                                  ─────
@@ -210,7 +210,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Please don't use todo
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:15]
+   ╭─[check_tag_names.tsx:3:24]
  2 │                     /**
  3 │                      * @module
    ·                        ───────
@@ -227,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@type` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:4:24]
+   ╭─[check_tag_names.tsx:4:33]
  3 │                              * Existing comment.
  4 │                              *  @type {string}
    ·                                 ─────
@@ -236,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@type` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:22]
+   ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject
    ·                               ────────
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@typedef` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:21]
+   ╭─[check_tag_names.tsx:3:30]
  2 │                           /** @typedef {Object} MyObject
  3 │                            * @property {string} id - my id
    ·                              ─────────
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@property` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:21]
+   ╭─[check_tag_names.tsx:3:30]
  2 │                           /**
  3 │                            * @property {string} id - my id
    ·                              ─────────
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@property` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:22]
+   ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject */
    ·                               ────────
@@ -272,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@typedef` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:22]
+   ╭─[check_tag_names.tsx:2:31]
  1 │ 
  2 │                           /** @typedef {Object} MyObject
    ·                               ────────
@@ -281,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@typedef` is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:24]
+   ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @abstract */
    ·                                 ─────────
@@ -290,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:3:26]
+   ╭─[check_tag_names.tsx:3:35]
  2 │                             const a = {
  3 │                               /** @abstract */
    ·                                   ─────────
@@ -299,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:2:24]
+   ╭─[check_tag_names.tsx:2:33]
  1 │ 
  2 │                             /** @template */
    ·                                 ─────────
@@ -308,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
   help: `@template` without a name is redundant when using a type system.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
-   ╭─[check_tag_names.tsx:5:23]
+   ╭─[check_tag_names.tsx:5:32]
  4 │                              *
  5 │                              * @template
    ·                                ─────────

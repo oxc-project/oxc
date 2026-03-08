@@ -12,9 +12,9 @@ See https://stackblitz.com/edit/oxc-parser for usage example.
 
 When parsing JS or JSX files, the AST returned is fully conformant with the
 [ESTree standard](https://github.com/estree/estree), the same as produced by
-[Acorn](https://www.npmjs.com/package/acorn).
+[Acorn](https://npmx.dev/package/acorn).
 
-When parsing TypeScript, the AST conforms to [@typescript-eslint/typescript-estree](https://www.npmjs.com/package/@typescript-eslint/typescript-estree)'s TS-ESTree format.
+When parsing TypeScript, the AST conforms to [@typescript-eslint/typescript-estree](https://npmx.dev/package/@typescript-eslint/typescript-estree)'s TS-ESTree format.
 
 If you need all ASTs in the same with-TS-properties format, use the `astType: 'ts'` option.
 
@@ -33,7 +33,7 @@ Any deviation would be considered a bug.
 
 ### AST Types
 
-[@oxc-project/types](https://www.npmjs.com/package/@oxc-project/types) can be used. For example:
+[@oxc-project/types](https://npmx.dev/package/@oxc-project/types) can be used. For example:
 
 ```typescript
 import { Statement } from "@oxc-project/types";
@@ -74,7 +74,7 @@ It is likely that you are writing a parser plugin that requires ESM information.
 
 To avoid walking the AST again, Oxc Parser returns ESM information directly.
 
-This information can be used to rewrite import and exports with the help of [`magic-string`](https://www.npmjs.com/package/magic-string),
+This information can be used to rewrite import and exports with the help of [`magic-string`](https://npmx.dev/package/magic-string),
 without any AST manipulations.
 
 ```ts

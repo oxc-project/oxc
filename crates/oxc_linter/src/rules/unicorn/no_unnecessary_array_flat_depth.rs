@@ -19,7 +19,7 @@ pub struct NoUnnecessaryArrayFlatDepth;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows passing `1` to `Array.prototype.flat`
+    /// Disallows passing `1` to `Array.prototype.flat`.
     ///
     /// ### Why is this bad?
     ///
@@ -45,7 +45,8 @@ declare_oxc_lint!(
 impl Rule for NoUnnecessaryArrayFlatDepth {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        if !is_method_call(call_expr, None, Some(&["flat"]), Some(1), Some(1)) {
+        if call_expr.optional || !is_method_call(call_expr, None, Some(&["flat"]), Some(1), Some(1))
+        {
             return;
         }
 
@@ -74,8 +75,7 @@ fn test() {
 
     let pass = vec![
         "foo.flat()",
-        // TODO: Fix this rule so this test passes.
-        // "foo.flat?.(1)",
+        "foo.flat?.(1)",
         "foo?.flat()",
         "foo.flat(1, extra)",
         "flat(1)",

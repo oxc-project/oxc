@@ -15,10 +15,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use console::Style;
 use oxc::{span::SourceType, transformer::BabelOptions};
 use oxc_tasks_common::{Snapshot, normalize_path, project_root};
-use similar::{ChangeTag, TextDiff};
+use similar::TextDiff;
 
 pub use driver::Driver;
 use test262::MetaData as Test262Meta;
@@ -70,11 +69,18 @@ pub struct MiscFile {
     pub should_fail: bool,
 }
 
+pub struct AcornJsxFile {
+    pub path: PathBuf,
+    pub code: String,
+    pub should_fail: bool,
+}
+
 pub struct TestData {
     pub test262: Vec<Test262File>,
     pub babel: Vec<BabelFile>,
     pub typescript: Vec<TypeScriptFile>,
     pub misc: Vec<MiscFile>,
+    pub acorn_jsx: Vec<AcornJsxFile>,
 }
 
 // ================================
@@ -218,14 +224,7 @@ fn print_result(r: &CoverageResult) {
 
 fn print_diff(actual: &str, expected: &str) {
     let diff = TextDiff::from_lines(expected, actual);
-    for change in diff.iter_all_changes() {
-        let (sign, style) = match change.tag() {
-            ChangeTag::Delete => ("-", Style::new().red()),
-            ChangeTag::Insert => ("+", Style::new().green()),
-            ChangeTag::Equal => continue,
-        };
-        print!("{}{}", style.apply_to(sign).bold(), style.apply_to(change));
-    }
+    oxc_tasks_common::print_text_diff(&diff);
 }
 
 pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]) {
@@ -306,6 +305,7 @@ const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
 const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
 const MISC_PATH: &str = "misc";
+const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
 impl AppArgs {
     pub fn run_all(&self) {
@@ -318,6 +318,7 @@ impl AppArgs {
         self.run_transformer(&data);
         self.run_minifier(&data);
         self.run_estree(&data);
+        self.run_estree_tokens(&data);
     }
 
     fn run_tool<T>(
@@ -416,10 +417,37 @@ impl AppArgs {
     pub fn run_estree(&self, data: &TestData) {
         self.run_tool("estree_test262", TEST262_PATH, &data.test262, tools::run_estree_test262);
         self.run_tool(
+            "estree_acorn_jsx",
+            ESTREE_ACORN_JSX_PATH,
+            &data.acorn_jsx,
+            tools::run_estree_acorn_jsx,
+        );
+        self.run_tool(
             "estree_typescript",
             TYPESCRIPT_PATH,
             &data.typescript,
             tools::run_estree_typescript,
+        );
+    }
+
+    pub fn run_estree_tokens(&self, data: &TestData) {
+        self.run_tool(
+            "estree_test262_tokens",
+            TEST262_PATH,
+            &data.test262,
+            tools::run_estree_test262_tokens,
+        );
+        self.run_tool(
+            "estree_acorn_jsx_tokens",
+            ESTREE_ACORN_JSX_PATH,
+            &data.acorn_jsx,
+            tools::run_estree_acorn_jsx_tokens,
+        );
+        self.run_tool(
+            "estree_typescript_tokens",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            tools::run_estree_typescript_tokens,
         );
     }
 

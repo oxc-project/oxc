@@ -1,4 +1,4 @@
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase } from "../rule_tester.ts";
 
 const group: TestGroup = {
@@ -20,10 +20,21 @@ const group: TestGroup = {
     }
   },
 
-  prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, mock: MockFn) {
     // Add `default` export to `eslint-plugin-react-hooks` module
     const plugin = require("eslint-plugin-react-hooks") as any;
     plugin.default = plugin;
+
+    // @overlookmotel says: @camc314 added the next block to this script, but it doesn't seem to work on my machine.
+    // Presumably it's because we're using different versions of `yarn` (see `init.sh`),
+    // but I can't track down the problem exactly. So I'm commenting it out again for now.
+
+    /*
+    // Use published plugin build to avoid requiring React compiler workspace artifacts.
+    const plugin = require("eslint-plugin-react-hooks-published") as any;
+    plugin.default = plugin;
+    mock("eslint-plugin-react-hooks", plugin);
+    */
 
     // Mock `react/packages/eslint-plugin-react-hooks/src/shared/ReactCompiler.ts`
     // to use actual `eslint-plugin-react-hooks` package.

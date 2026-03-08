@@ -1,38 +1,28 @@
-commit: 92c052dc
+commit: de54b9b2
 
 parser_babel Summary:
-AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2211/2224 (99.42%)
-Negative Passed: 1668/1689 (98.76%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
-
+AST Parsed     : 2227/2227 (100.00%)
+Positive Passed: 2213/2227 (99.37%)
+Negative Passed: 1688/1704 (99.06%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-field-initializer/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-initializer/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-ambiguity/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-like/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-param/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-class/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-initializer/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
@@ -305,6 +295,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·      ╰── It can not be redeclared here
  32 │ }
     ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts:1:15]
+ 1 │ let x: `foo-${infer bar}`;
+   ·               ─────────
+   ╰────
 
 
   × Invalid function declaration
@@ -1096,6 +1094,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ───────
  2 │ function decrypt() {}
    ╰────
+  help: Did you mean 'decrypt'?
 
   × Export 'encrypt' is not defined
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/undecl-export-as-default/input.js:1:10]
@@ -2422,6 +2421,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-binary-argument/input.js:1:9]
+ 1 │ true || () => {}
+   ·         ──
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-class-heritage/input.js:1:17]
+ 1 │ class C extends () => {} {}
+   ·                 ──
+   ╰────
+
+  × Empty parenthesized expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-unary-argument/input.js:1:20]
+ 1 │ console.log(typeof () => {});
+   ·                    ──
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
@@ -2429,6 +2446,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ───
  4 │     third
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-binary-argument/input.js:1:10]
+ 1 │ true || x => {}
+   ·          ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-class-heritage/input.js:1:19]
+ 1 │ class C extends x => {} {}
+   ·                   ─┬
+   ·                    ╰── `{` expected
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-unary-argument/input.js:1:9]
+ 1 │ typeof x => {}
+   ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/no-binary-left/input.js:1:9]
@@ -4493,12 +4531,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ╰── `{` expected
    ╰────
 
-  × Empty parenthesized expression
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/38/input.js:1:20]
- 1 │ console.log(typeof () => {});
-   ·                    ──
-   ╰────
-
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/386/input.js:1:8]
  1 │ export typeof foo;
@@ -4948,6 +4980,49 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Wrap this function with an IIFE with a 'use strict' directive that returns this function
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-binary-argument/input.js:1:17]
+ 1 │ true || async () => {}
+   ·                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-class-heritage/input.js:1:26]
+ 1 │ class C extends async () => {} {}
+   ·                          ─┬
+   ·                           ╰── `{` expected
+   ╰────
+
+  × Expected `,` or `)` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-parens-unary-argument/input.js:1:29]
+ 1 │ console.log(typeof async () => {});
+   ·            ┬                ─┬
+   ·            │                 ╰── `,` or `)` expected
+   ·            ╰── Opened here
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-binary-argument/input.js:1:14]
+ 1 │ true || async x => {}
+   ·              ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected `{` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-class-heritage/input.js:1:23]
+ 1 │ class C extends async x => {} {}
+   ·                       ┬
+   ·                       ╰── `{` expected
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/invalid-single-binding-unary-argument/input.js:1:13]
+ 1 │ typeof async x => {}
+   ·             ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:28]
@@ -7926,7 +8001,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-method/input.js:2:11]
  1 │ class C {
  2 │   #p = ({ #x() {} });
@@ -7934,7 +8009,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-property/input.js:2:11]
  1 │ class C {
  2 │   #p = ({ #x: 42 });
@@ -7942,7 +8017,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-property-with-assignment/input.js:4:5]
  3 │   m = {
  4 │     #x: x,
@@ -7950,7 +8025,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     y: y = m
    ╰────
 
-  × Unexpected token
+  × Private identifier '#p' is not allowed in property names
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-ts-type-literal/input.js:2:3]
+ 1 │ interface I {
+ 2 │   #p: string
+   ·   ──
+ 3 │ }
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-ts-type-literal/input.js:2:3]
  1 │ interface I {
  2 │   #p: string
@@ -8947,6 +9030,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ for (using of == {};;);
    ·               ──
    ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js:1:12]
+ 1 │ for (using of;of.isValid;);
+   ·            ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:2:13]
@@ -12178,6 +12268,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ 
    ╰────
 
+  × Expected `{` but found `=>`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/invalid-class-implements/input.ts:1:22]
+ 1 │ class Q implements x => void {}
+   ·                      ─┬
+   ·                       ╰── `{` expected
+   ╰────
+
   × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/invalid-escaped-asserts-keyword/input.ts:1:50]
  1 │ declare function assertIsString(value: unknown): \u{61}sserts value;
@@ -12390,6 +12487,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override
 
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:14:8]
+ 13 │   accessor x = 1;
+ 14 │   #y = 1;
+    ·        ─
+ 15 │ }
+    ╰────
+
   × TS(1029): 'override' modifier must precede 'readonly' modifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-1/input.ts:2:24]
  1 │ class D extends B {
@@ -12463,6 +12568,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-field-initializer/input.ts:2:25]
+ 1 │ class A {
+ 2 │   declare bar: string = "test";
+   ·                         ──────
+ 3 │ }
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-initializer/input.ts:2:11]
+ 1 │ declare class C {
+ 2 │   field = "field";
+   ·           ───────
+ 3 │ }
+   ╰────
+
   × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts:2:3]
  1 │ class A {
@@ -12487,6 +12608,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ class A {}
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts:2:34]
+ 1 │ class A {
+ 2 │   declare readonly bar: string = "test";
+   ·                                  ──────
+ 3 │   declare baz: string = "test";
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts:3:25]
+ 2 │   declare readonly bar: string = "test";
+ 3 │   declare baz: string = "test";
+   ·                         ──────
+ 4 │ }
+   ╰────
 
   × TS(1030): 'declare' modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicate-modifier-1/input.ts:2:18]
@@ -13134,59 +13271,109 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Using declarations must have an initializer.
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:2:15]
  1 │ declare namespace invalid_namespace_var {
  2 │   await using A;
    ·               ─
  3 │   await using A1 = 0;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:3:15]
+ 2 │   await using A;
+ 3 │   await using A1 = 0;
+   ·               ──
+ 4 │   await using A2: number = 0;
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:4:15]
+ 3 │   await using A1 = 0;
+ 4 │   await using A2: number = 0;
+   ·               ──
+ 5 │   await using B, C;
+   ╰────
+
+  × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:15]
  4 │   await using A2: number = 0;
  5 │   await using B, C;
    ·               ─
  6 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:18]
- 4 │   await using A2: number = 0;
- 5 │   await using B, C;
-   ·                  ─
- 6 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:2:9]
  1 │ declare namespace invalid_namespace_var {
  2 │   using A;
    ·         ─
  3 │   using A1 = 0;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:3:9]
+ 2 │   using A;
+ 3 │   using A1 = 0;
+   ·         ──
+ 4 │   using A2: number = 0;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:4:9]
+ 3 │   using A1 = 0;
+ 4 │   using A2: number = 0;
+   ·         ──
+ 5 │   using B, C;
+   ╰────
+
+  × TS(1545): 'using' declarations are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:9]
  4 │   using A2: number = 0;
  5 │   using B, C;
    ·         ─
  6 │ }
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:12]
- 4 │   using A2: number = 0;
- 5 │   using B, C;
-   ·            ─
- 6 │ }
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:2:11]
+ 1 │ declare namespace invalid_namespace_var {
+ 2 │   var A = 0;
+   ·           ─
+ 3 │   var A1: number = 0;
    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:3:20]
+ 2 │   var A = 0;
+ 3 │   var A1: number = 0;
+   ·                    ─
+ 4 │   let B = 0;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:4:11]
+ 3 │   var A1: number = 0;
+ 4 │   let B = 0;
+   ·           ─
+ 5 │   let B1: number = 0;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:5:20]
+ 4 │   let B = 0;
+ 5 │   let B1: number = 0;
+   ·                    ─
+ 6 │   const C: number = 0;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:6:21]
+ 5 │   let B1: number = 0;
+ 6 │   const C: number = 0;
+   ·                     ─
+ 7 │ }
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-using-declaration/input.ts:1:8]
@@ -13201,6 +13388,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts:3:13]
+ 2 │   class C {
+ 3 │     field = "field";
+   ·             ───────
+ 4 │   }
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-class/input.ts:3:13]
+ 2 │   class C {
+ 3 │     field = "field";
+   ·             ───────
+ 4 │   }
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-initializer/input.ts:2:9]
+ 1 │ class Foo {
+ 2 │   foo = 3;
+   ·         ─
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-interface/input.js:1:8]

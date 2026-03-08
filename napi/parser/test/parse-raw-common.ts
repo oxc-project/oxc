@@ -10,8 +10,9 @@ export const TEST_TYPE_INLINE_FIXTURE = 4;
 
 export const TEST_TYPE_MAIN_MASK = 7;
 export const TEST_TYPE_RANGE_PARENT = 8;
-export const TEST_TYPE_LAZY = 16;
-export const TEST_TYPE_PRETTY = 32;
+export const TEST_TYPE_TOKENS = 16;
+export const TEST_TYPE_LAZY = 32;
+export const TEST_TYPE_PRETTY = 64;
 
 export const ROOT_DIR_PATH = pathJoin(import.meta.dirname, "../../..");
 export const TARGET_DIR_PATH = pathJoin(ROOT_DIR_PATH, "target");
@@ -22,6 +23,10 @@ export const TS_DIR_PATH = pathJoin(ROOT_DIR_PATH, TS_SHORT_DIR_PATH);
 export const ACORN_TEST262_DIR_PATH = pathJoin(
   ROOT_DIR_PATH,
   "tasks/coverage/estree-conformance/tests/test262/test",
+);
+export const ACORN_TEST262_TOKENS_DIR_PATH = pathJoin(
+  ROOT_DIR_PATH,
+  "tasks/coverage/estree-conformance/tests/test262-tokens/test",
 );
 export const JSX_SHORT_DIR_PATH = "tasks/coverage/estree-conformance/tests/acorn-jsx/pass";
 export const JSX_DIR_PATH = pathJoin(ROOT_DIR_PATH, JSX_SHORT_DIR_PATH);

@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span};
+use oxc_span::{GetSpan, ModuleKind, Span, best_match};
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
@@ -15,6 +15,9 @@ use oxc_syntax::{
 
 use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
 
+/// Threshold for edit distance when suggesting similar names
+const SUGGESTION_THRESHOLD: usize = 2;
+
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
 pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
@@ -22,15 +25,28 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
         return;
     }
 
+    let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
                 {
-                    ctx.errors
-                        .borrow_mut()
-                        .push(diagnostics::undefined_export(&ident.name, ident.span));
+                    let names = available_names.get_or_insert_with(|| {
+                        let root_scope_id = ctx.scoping.root_scope_id();
+                        ctx.scoping
+                            .get_bindings(root_scope_id)
+                            .keys()
+                            .map(oxc_span::Ident::as_str)
+                            .collect()
+                    });
+                    let suggestion =
+                        best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);
+                    ctx.errors.borrow_mut().push(diagnostics::undefined_export(
+                        &ident.name,
+                        suggestion,
+                        ident.span,
+                    ));
                 }
             }
         }
@@ -212,14 +228,16 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             };
 
             let parent = ctx.nodes.parent_node(ctx.current_node_id);
+            let parent_id = parent.id();
             let is_ok = match parent.kind() {
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ctx.nodes.parent_kind(parent.id()))
+                    is_declare_function(&ctx.nodes.parent_kind(parent_id))
                 }
                 AstKind::BindingRestElement(_) => {
-                    let grand_parent = ctx.nodes.parent_node(parent.id());
-                    is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+                    let grand_parent = ctx.nodes.parent_node(parent_id);
+                    let grand_parent_id = grand_parent.id();
+                    is_declare_function(&ctx.nodes.parent_kind(grand_parent_id))
                 }
                 _ => false,
             };
@@ -336,11 +354,30 @@ pub fn check_private_identifier_outside_class(
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
+        let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
-                ctx.error(diagnostics::private_field_undeclared(&reference.name, reference.span));
+                let names = available_names.get_or_insert_with(|| {
+                    let mut names = Vec::new();
+                    for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
+                        for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
+                        {
+                            if element.is_private {
+                                names.push(element.name.as_ref());
+                            }
+                        }
+                    }
+                    names
+                });
+                let suggestion =
+                    best_match(&reference.name, names.iter().copied(), SUGGESTION_THRESHOLD);
+                ctx.error(diagnostics::private_field_undeclared(
+                    &reference.name,
+                    suggestion,
+                    reference.span,
+                ));
             }
         }
     }
@@ -782,12 +819,20 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
+
+    let mut available_labels: Option<Vec<&str>> = None;
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
+                        let suggestion =
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -818,12 +863,20 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
+
+    let mut available_labels: Option<Vec<&str>> = None;
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
+                        let suggestion =
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -857,6 +910,18 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             _ => {}
         }
     }
+}
+
+fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
+    let mut labels = Vec::new();
+    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+        if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+            labels.push(labeled_statement.label.name.as_str());
+        } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
+            break;
+        }
+    }
+    labels
 }
 
 pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
@@ -907,6 +972,14 @@ pub fn check_for_statement_left(
                 decl.span,
             ));
         }
+    }
+}
+
+pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
+    // ClassStaticBlockBody : ClassStaticBlockStatementList
+    //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
+    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+        ctx.error(diagnostics::class_static_block_await(stmt.span));
     }
 }
 

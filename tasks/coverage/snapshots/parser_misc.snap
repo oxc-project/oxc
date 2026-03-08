@@ -3646,7 +3646,7 @@ Negative Passed: 134/134 (100.00%)
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
    · ─────────────────────────────────

@@ -8,13 +8,13 @@
     "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --deny-warnings --type-aware --type-check --report-unused-disable-directives"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
-    "oxfmt": "^0.28.0",
-    "oxlint": "^1.39.0",
-    "oxlint-tsgolint": "0.11.4"
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
+    "oxlint-tsgolint": "0.16.0"
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.30.2"
 }

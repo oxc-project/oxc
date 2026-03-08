@@ -40,16 +40,19 @@ impl<'alloc> BitSet<'alloc> {
     }
 
     /// Returns `true` if the bit at the given position is set.
+    #[inline]
     pub fn has_bit(&self, bit: usize) -> bool {
         (self.entries[bit / USIZE_BITS] & (1 << (bit % USIZE_BITS))) != 0
     }
 
     /// Set the bit at the given position.
+    #[inline]
     pub fn set_bit(&mut self, bit: usize) {
         self.entries[bit / USIZE_BITS] |= 1 << (bit % USIZE_BITS);
     }
 
     /// Remove the bit at the given position.
+    #[inline]
     pub fn unset_bit(&mut self, bit: usize) {
         self.entries[bit / USIZE_BITS] &= !(1 << (bit % USIZE_BITS));
     }
@@ -66,6 +69,7 @@ impl<'alloc> BitSet<'alloc> {
     }
 
     /// Clear all bits in the bitset, setting them to 0.
+    #[inline]
     pub fn clear(&mut self) {
         self.entries.fill(0);
     }

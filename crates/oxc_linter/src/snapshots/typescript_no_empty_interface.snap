@@ -7,6 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ interface Foo {}
    · ────────────────
    ╰────
+  help: Add members to this interface, or use a type alias if it is intentionally empty.
 
   × Expected `{` but found `EOF`
    ╭─[no_empty_interface.tsx:1:25]
@@ -14,85 +15,96 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
  7 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:1:1]
  1 │ interface Foo extends Array<number> {}
    · ──────────────────────────────────────
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:1:1]
  1 │ interface Foo extends Array<number | {}> {}
    · ───────────────────────────────────────────
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:5:4]
+   ╭─[no_empty_interface.tsx:5:13]
  4 │             }
  5 │             interface Foo extends Array<Bar> {}
    ·             ───────────────────────────────────
  6 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:3:4]
+   ╭─[no_empty_interface.tsx:3:13]
  2 │             type R = Record<string, unknown>;
  3 │             interface Foo extends R {}
    ·             ──────────────────────────
  4 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:2:4]
+   ╭─[no_empty_interface.tsx:2:13]
  1 │ 
  2 │             interface Foo<T> extends Bar<T> {}
    ·             ──────────────────────────────────
  3 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:4:13]
+   ╭─[no_empty_interface.tsx:4:22]
  3 │               type Baz = typeof baz;
  4 │               export interface Bar extends Baz {}
    ·                      ────────────────────────────
  5 │             }
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.

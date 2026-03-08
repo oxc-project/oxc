@@ -40,13 +40,15 @@ pub struct RawTransferMetadata {
     pub is_jsx: bool,
     /// This field always contains `false` in parser. It's only used in linter.
     pub has_bom: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx: false, has_bom: false, _padding: 0 }
+    pub fn new(data_offset: u32, is_ts: bool, tokens_offset: u32, tokens_len: u32) -> Self {
+        Self { data_offset, is_ts, is_jsx: false, has_bom: false, tokens_offset, tokens_len }
     }
 }
 

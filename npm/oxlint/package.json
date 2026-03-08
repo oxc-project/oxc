@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "1.43.0",
+  "version": "1.51.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [
     "eslint",
@@ -45,7 +45,7 @@
     }
   },
   "peerDependencies": {
-    "oxlint-tsgolint": ">=0.11.2"
+    "oxlint-tsgolint": ">=0.15.0"
   },
   "peerDependenciesMeta": {
     "oxlint-tsgolint": {
@@ -67,6 +67,9 @@
       "armv7-unknown-linux-musleabihf",
       "i686-pc-windows-msvc",
       "powerpc64le-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
+      "s390x-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "x86_64-pc-windows-msvc",
       "x86_64-unknown-freebsd",
@@ -76,5 +79,6 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
-  }
+  },
+  "preferUnplugged": true
 }

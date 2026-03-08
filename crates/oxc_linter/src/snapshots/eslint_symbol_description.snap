@@ -7,9 +7,11 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Symbol();
    · ────────
    ╰────
+  help: Pass a description argument to the Symbol()
 
   ⚠ eslint(symbol-description): Expected Symbol to have a description.
    ╭─[symbol_description.tsx:1:1]
  1 │ Symbol(); Symbol = function () {};
    · ────────
    ╰────
+  help: Pass a description argument to the Symbol()

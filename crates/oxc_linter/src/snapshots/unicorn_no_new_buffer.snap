@@ -17,9 +17,49 @@ source: crates/oxc_linter/src/tester.rs
   help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
 
   ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const array = [0x62];
+ 2 │             const buffer = new Buffer(array);
+   ·                                ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const arrayBuffer = new ArrayBuffer(10);
+ 2 │             const buffer = new Buffer(arrayBuffer);
+   ·                                ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const arrayBuffer = new ArrayBuffer(10);
+ 2 │             const buffer = new Buffer(arrayBuffer, 0, );
+   ·                                ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const arrayBuffer = new ArrayBuffer(10);
+ 2 │             const buffer = new Buffer(arrayBuffer, 0, 2);
+   ·                                ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
    ╭─[no_new_buffer.tsx:1:20]
  1 │ const buffer = new Buffer(10);
    ·                    ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const size = 10;
+ 2 │             const buffer = new Buffer(size);
+   ·                                ──────
    ╰────
   help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
 
@@ -52,6 +92,14 @@ source: crates/oxc_linter/src/tester.rs
   help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
 
   ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:2:32]
+ 1 │ const string = "string";
+ 2 │             const buffer = new Buffer(string);
+   ·                                ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
    ╭─[no_new_buffer.tsx:1:20]
  1 │ const buffer = new Buffer(`${unknown}`)
    ·                    ──────
@@ -76,6 +124,60 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_new_buffer.tsx:1:20]
  1 │ const buffer = new Buffer(...unknown)
    ·                    ──────
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:3:21]
+ 2 │                 return new // 1
+ 3 │                     Buffer();
+   ·                     ──────
+ 4 │             }
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:4:25]
+ 3 │                     new // 2
+ 4 │                         Buffer()
+   ·                         ──────
+ 5 │                 );
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:3:22]
+ 2 │                 return new // 3
+ 3 │                     (Buffer);
+   ·                      ──────
+ 4 │             }
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:3:21]
+ 2 │                 return new // 4
+ 3 │                     Buffer;
+   ·                     ──────
+ 4 │             }
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:4:25]
+ 3 │                     new // 5
+ 4 │                         Buffer
+   ·                         ──────
+ 5 │                 );
+   ╰────
+  help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
+
+  ⚠ eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.
+   ╭─[no_new_buffer.tsx:4:26]
+ 3 │                     new // 6
+ 4 │                         (Buffer)
+   ·                          ──────
+ 5 │                 );
    ╰────
   help: `new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.
 

@@ -42,19 +42,20 @@ RuleTester.it = itHook;
  * @returns Array containing errors for each test case
  */
 function runCases(): (Error | null)[] {
-  const errors = [];
+  const errors: (Error | null)[] = [];
   for (const testCase of cases) {
     let error = null;
     try {
       testCase.fn();
     } catch (err) {
-      error = err;
+      error = err as Error;
     }
     errors.push(error);
   }
   return errors;
 }
 
+// Simple rule which flags identifiers named "foo"
 const simpleRule: Rule = {
   create(context) {
     return {
@@ -65,6 +66,7 @@ const simpleRule: Rule = {
   },
 };
 
+// Rule which flags all identifiers, and uses message IDs to report messages
 const messageIdsRule: Rule = {
   meta: {
     messages: {
@@ -205,6 +207,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -222,6 +225,7 @@ describe("RuleTester", () => {
             column: 0,
             endLine: 1,
             endColumn: 3,
+            fixes: null,
             suggestions: null
           },
           {
@@ -234,6 +238,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -446,6 +451,7 @@ describe("RuleTester", () => {
               column: 4,
               endLine: 1,
               endColumn: 7,
+              fixes: null,
               suggestions: null
             }
           ]
@@ -631,7 +637,7 @@ describe("RuleTester", () => {
           - 'No identifiers! {{name}}'
                              ^
           ],
-            [AssertionError: The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the \`data\` property on the error object.],
+            [AssertionError: The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the \`data\` property.],
             [AssertionError: Hydrated message "No bar! bar" does not match "No bar! {{name}}"
           + actual - expected
 
@@ -776,6 +782,770 @@ describe("RuleTester", () => {
             [AssertionError: Detected duplicate test case],
           ]
         `);
+      });
+    });
+
+    describe("fixes", () => {
+      // Rule which flags identifiers named "foo", and provides a fix to rename them to "bar"
+      const fixRule: Rule = {
+        meta: {
+          fixable: "code",
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                message: "No foo!",
+                node,
+                fix(fixer) {
+                  return fixer.replaceText(node, "bar");
+                },
+              });
+            },
+          };
+        },
+      };
+
+      describe("which are correct", () => {
+        it("with `output: null` when no fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: null,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("without `output` when no fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `output` matching fixed code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let bar;",
+                errors: 1,
+              },
+              {
+                code: "let foo = foo;",
+                output: "let bar = bar;",
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null, null]);
+        });
+      });
+
+      describe("which are incorrect", () => {
+        it("with `output` not matching fixed code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let qux;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Output is incorrect
+          + actual - expected
+
+          + 'let bar;'
+          - 'let qux;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output: null` when there are fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: null,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Expected no autofixes to be suggested
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("without `output` when there are fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: The rule fixed the code. Please add \`output\` property.
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output` same as `code` (fixable rule)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Output is incorrect
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output` same as `code` (non-fixable rule)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Test property \`output\` matches \`code\`. If no autofix is expected, set output to \`null\`.],
+          ]
+        `);
+        });
+      });
+
+      describe("recursive", () => {
+        // Rule which requires multiple fix passes. It removes trailing `_` from identifiers one at a time.
+        // e.g. `foo__` -> `foo_` -> `foo`
+        const multiPassFixRule: Rule = {
+          meta: {
+            fixable: "code",
+          },
+          create(context) {
+            return {
+              Identifier(node) {
+                if (!node.name.endsWith("_")) return;
+
+                context.report({
+                  message: "No trailing underscore!",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceText(node, node.name.slice(0, -1));
+                  },
+                });
+              },
+            };
+          },
+        };
+
+        it("without `recursive` applies only one fix pass", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: false`", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: false,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 0`", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: 0,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 1` applies two fix passes total", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo_;",
+                recursive: 1,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 2` applies three fix passes total", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                recursive: 2,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: true` applies all fix passes", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                recursive: true,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({ recursive: true });
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({ recursive: true });
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("test case overrides `RuleTester` options", () => {
+          const tester = new RuleTester({ recursive: true });
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: false,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
+
+      describe("adjacent fixes", () => {
+        // Rule which produces two diagnostics with adjacent fix ranges for identifier `ab`.
+        // Fix 1 replaces `a` (first char), fix 2 replaces `b` (second char).
+        // End of fix 1's range === start of fix 2's range.
+        //
+        // In standard mode, adjacent fixes are not considered overlapping, so both apply.
+        // In ESLint compat mode, adjacent fixes are considered overlapping (matching ESLint),
+        // so only the first fix applies.
+        const adjacentFixesRule: Rule = {
+          meta: {
+            fixable: "code",
+          },
+          create(context) {
+            return {
+              Identifier(node) {
+                if (node.name !== "ab") return;
+
+                const start = node.range[0];
+                const mid = start + 1;
+                const end = node.range[1];
+                context.report({
+                  message: "Fix a",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceTextRange([start, mid], "x");
+                  },
+                });
+                context.report({
+                  message: "Fix b",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceTextRange([mid, end], "y");
+                  },
+                });
+              },
+            };
+          },
+        };
+
+        it("adjacent fixes applied in standard mode", () => {
+          const tester = new RuleTester();
+          tester.run("adjacent-fixes", adjacentFixesRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let ab;",
+                output: "let xy;",
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("only first adjacent fix applied in ESLint compat mode", () => {
+          const tester = new RuleTester();
+          tester.run("adjacent-fixes", adjacentFixesRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let ab;",
+                output: "let xb;",
+                eslintCompat: true,
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
+    });
+
+    describe("suggestions", () => {
+      // Rule which suggests renaming `foo` to `bar` or `qux`
+      const suggestRule: Rule = {
+        meta: {
+          hasSuggestions: true,
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                message: "No foo!",
+                node,
+                suggest: [
+                  {
+                    desc: "Rename to bar",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "bar");
+                    },
+                  },
+                  {
+                    desc: "Rename to qux",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "qux");
+                    },
+                  },
+                ],
+              });
+            },
+          };
+        },
+      };
+
+      // Same as above rule, but using `messageId`s
+      const suggestMessageIdRule: Rule = {
+        meta: {
+          hasSuggestions: true,
+          messages: {
+            noFoo: "No foo!",
+            renameToBar: "Rename to bar",
+            renameTo: "Rename to {{name}}",
+          },
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                messageId: "noFoo",
+                node,
+                suggest: [
+                  {
+                    messageId: "renameToBar",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "bar");
+                    },
+                  },
+                  {
+                    messageId: "renameTo",
+                    data: { name: "qux" },
+                    fix(fixer) {
+                      return fixer.replaceText(node, "qux");
+                    },
+                  },
+                ],
+              });
+            },
+          };
+        },
+      };
+
+      describe("which are correct", () => {
+        it("with `desc`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let bar;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `messageId`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestMessageIdRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    messageId: "noFoo",
+                    suggestions: [
+                      { messageId: "renameToBar", output: "let bar;" },
+                      { messageId: "renameTo", data: { name: "qux" }, output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `suggestions: null` when no suggestions", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: null,
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("without `suggestions` (not checked)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [{ message: "No foo!" }],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
+
+      describe("which are incorrect", () => {
+        it("wrong suggestion count", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [{ desc: "Rename to bar", output: "let bar;" }],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Error should have 1 suggestion. Instead found 2 suggestions.
+
+              2 !== 1
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `desc`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Wrong description", output: "let bar;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: \`desc\` should be "Wrong description" but got "Rename to bar" instead
+              + actual - expected
+
+              + 'Rename to bar'
+              - 'Wrong description'
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `output`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let qux;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: Expected the applied suggestion fix to match the test suggestion output
+              + actual - expected
+
+              + 'let bar;'
+              - 'let qux;'
+                     ^
+              ],
+              ]
+            `);
+        });
+
+        it("`output` same as original source code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let foo;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: Expected the applied suggestion fix to match the test suggestion output
+              + actual - expected
+
+              + 'let bar;'
+              - 'let foo;'
+                     ^
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `messageId`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestMessageIdRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    messageId: "noFoo",
+                    suggestions: [
+                      { messageId: "renameTo", output: "let bar;" },
+                      { messageId: "renameTo", data: { name: "qux" }, output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: messageId 'renameToBar' does not match expected messageId 'renameTo'
+              + actual - expected
+
+              + 'renameToBar'
+              - 'renameTo'
+                         ^
+              ],
+              ]
+            `);
+        });
+
+        it("`suggestions: null` when rule has suggestions", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: null,
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Rule produced suggestions],
+              ]
+            `);
+        });
       });
     });
   });

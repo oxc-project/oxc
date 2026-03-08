@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:2:18]
+   ╭─[no_new_array.tsx:2:27]
  1 │ const zero = 0;
  2 │             const array = new Array(zero);
    ·                           ───────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:2:18]
+   ╭─[no_new_array.tsx:2:27]
  1 │ const length = 1;
  2 │             const array = new Array(length);
    ·                           ─────────────────
@@ -68,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:2:4]
+   ╭─[no_new_array.tsx:2:13]
  1 │ const foo = []
  2 │             new Array("bar").forEach(baz)
    ·             ────────────────
@@ -419,7 +419,7 @@ source: crates/oxc_linter/src/tester.rs
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:2:4]
+   ╭─[no_new_array.tsx:2:13]
  1 │ const foo = []
  2 │             new Array(bar).forEach(baz)
    ·             ──────────────
@@ -427,7 +427,7 @@ source: crates/oxc_linter/src/tester.rs
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:2:4]
+   ╭─[no_new_array.tsx:2:13]
  1 │ const foo = []
  2 │             new Array(...bar).forEach(baz)
    ·             ─────────────────

@@ -429,6 +429,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:21]
+ 1 │ export type Example<T> = T extends Array<infer U> ? U : never;
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:48]
+ 1 │ export type Example<T> = T extends Array<infer U> ? U : never;
+   ·                                                ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var 𠮟 = 2
    ·     ──

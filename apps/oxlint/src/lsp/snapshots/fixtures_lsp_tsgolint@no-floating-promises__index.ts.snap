@@ -76,7 +76,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-unused-expressions for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -111,7 +111,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -129,7 +129,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -183,7 +183,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -201,7 +201,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -255,7 +255,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -273,7 +273,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -327,7 +327,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -345,7 +345,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -400,7 +400,7 @@ TextEdit: TextEdit {
 
 CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
@@ -436,7 +436,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: quick fix
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {

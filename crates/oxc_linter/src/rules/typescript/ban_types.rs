@@ -14,6 +14,8 @@ fn type_diagnostic(banned_type: &str, suggested_type: &str, span: Span) -> OxcDi
     OxcDiagnostic::warn(format!(
         "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
     ))
+    .with_help(format!("Replace {banned_type:?} with the lowercase primitive type \"{suggested_type}\"."))
+    .with_note(format!("{banned_type} is a wrapper object type, while {suggested_type} is the primitive type. Using the primitive type is more idiomatic and avoids confusion between the object wrapper and the primitive value."))
     .with_label(span)
 }
 
@@ -31,6 +33,8 @@ fn function(span: Span) -> OxcDiagnostic {
 
 fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'The `Object` type actually means \"any non-nullish value\"")
+        .with_help("Replace `Object` with a more specific type. If you need a generic object, use `Record<string, unknown>` or define an interface/type with explicit properties. If you need any value, use `unknown` instead.")
+        .with_note("The `Object` type is confusing because it doesn't mean 'any object' - it means 'any non-nullish value', which includes primitives. This makes code harder to understand and can lead to unexpected behavior.")
         .with_label(span)
 }
 
@@ -41,6 +45,16 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule bans specific types and can suggest alternatives. Note that it does not ban the corresponding runtime objects from being used.
+    ///
+    /// ::: warning
+    /// This rule is deprecated and will be removed in a future release.
+    ///
+    /// Prefer these replacement rules:
+    /// - `typescript/no-empty-object-type`
+    /// - `typescript/no-unsafe-function-type`
+    /// - `typescript/no-wrapper-object-types`
+    /// - `typescript/no-restricted-types` (for custom type bans)
+    /// :::
     ///
     /// ### Why is this bad?
     ///
@@ -64,7 +78,7 @@ declare_oxc_lint!(
     BanTypes,
     typescript,
     pedantic,
-    pending
+    none
 );
 
 impl Rule for BanTypes {

@@ -7,183 +7,214 @@ source: crates/oxc_linter/src/tester.rs
  1 │ a = 1;
    · ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'b' is not defined.
    ╭─[no_undef.tsx:1:9]
  1 │ var a = b;
    ·         ─
    ╰────
+  help: Either define 'b' or remove the reference to it. If 'b' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'b' is not defined.
    ╭─[no_undef.tsx:1:16]
  1 │ function f() { b; }
    ·                ─
    ╰────
+  help: Either define 'b' or remove the reference to it. If 'b' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'window' is not defined.
    ╭─[no_undef.tsx:1:1]
  1 │ window;
    · ──────
    ╰────
+  help: Either define 'window' or remove the reference to it. If 'window' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'require' is not defined.
    ╭─[no_undef.tsx:1:1]
  1 │ require("a");
    · ───────
    ╰────
+  help: Either define 'require' or remove the reference to it. If 'require' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:36]
  1 │ var React; React.render(<img attr={a} />);
    ·                                    ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:41]
  1 │ var React, App; React.render(<App attr={a} />);
    ·                                         ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:2]
  1 │ [a] = [0];
    ·  ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:3]
  1 │ ({a} = {});
    ·   ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:6]
  1 │ ({b: a} = {});
    ·      ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'obj' is not defined.
    ╭─[no_undef.tsx:1:2]
  1 │ [obj.a, obj.b] = [0, 1];
    ·  ───
    ╰────
+  help: Either define 'obj' or remove the reference to it. If 'obj' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'obj' is not defined.
    ╭─[no_undef.tsx:1:9]
  1 │ [obj.a, obj.b] = [0, 1];
    ·         ───
    ╰────
+  help: Either define 'obj' or remove the reference to it. If 'obj' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'b' is not defined.
    ╭─[no_undef.tsx:1:28]
  1 │ const c = 0; const a = {...b, c};
    ·                            ─
    ╰────
+  help: Either define 'b' or remove the reference to it. If 'b' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:20]
  1 │ class C { static { a; } }
    ·                    ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:31]
  1 │ class C { static { { let a; } a; } }
    ·                               ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:40]
  1 │ class C { static { { function a() {} } a; } }
    ·                                        ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:47]
  1 │ class C { static { function foo() { var a; }  a; } }
    ·                                               ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:38]
  1 │ class C { static { var a; } static { a; } }
    ·                                      ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:38]
  1 │ class C { static { let a; } static { a; } }
    ·                                      ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:46]
  1 │ class C { static { function a(){} } static { a; } }
    ·                                              ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:37]
  1 │ class C { static { var a; } foo() { a; } }
    ·                                     ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:37]
  1 │ class C { static { let a; } foo() { a; } }
    ·                                     ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:30]
  1 │ class C { static { var a; } [a]; }
    ·                              ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:30]
  1 │ class C { static { let a; } [a]; }
    ·                              ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:39]
  1 │ class C { static { function a() {} } [a]; }
    ·                                       ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:31]
  1 │ class C { static { var a; } } a;
    ·                               ─
    ╰────
+  help: Either define 'a' or remove the reference to it. If 'a' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'toString' is not defined.
    ╭─[no_undef.tsx:1:1]
  1 │ toString()
    · ────────
    ╰────
+  help: Either define 'toString' or remove the reference to it. If 'toString' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'hasOwnProperty' is not defined.
    ╭─[no_undef.tsx:1:1]
  1 │ hasOwnProperty()
    · ──────────────
    ╰────
+  help: Either define 'hasOwnProperty' or remove the reference to it. If 'hasOwnProperty' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'r' is not defined.
    ╭─[no_undef.tsx:1:49]
  1 │ export class Foo{ bar: notDefined; }; const t = r + 1;
    ·                                                 ─
    ╰────
+  help: Either define 'r' or remove the reference to it. If 'r' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'arguments' is not defined.
    ╭─[no_undef.tsx:1:21]
  1 │ const arrow = () => arguments;
    ·                     ─────────
    ╰────
+  help: Either define 'arguments' or remove the reference to it. If 'arguments' is a global variable, add it to the 'globals' configuration.
 
   ⚠ eslint(no-undef): 'arguments' is not defined.
    ╭─[no_undef.tsx:1:9]
  1 │ var a = arguments;
    ·         ─────────
    ╰────
+  help: Either define 'arguments' or remove the reference to it. If 'arguments' is a global variable, add it to the 'globals' configuration.

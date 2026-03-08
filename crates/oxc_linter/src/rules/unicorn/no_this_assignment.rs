@@ -32,9 +32,9 @@ declare_oxc_lint!(
     /// ```javascript
     /// const foo = this;
     /// class Bar {
-    /// 	method() {
-    /// 		foo.baz();
-    /// 	}
+    ///     method() {
+    ///         foo.baz();
+    ///     }
     /// }
     ///
     /// new Bar().method();
@@ -43,12 +43,12 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// class Bar {
-    /// 	constructor(fooInstance) {
-    /// 		this.fooInstance = fooInstance;
-    /// 	}
-    /// 	method() {
-    /// 		this.fooInstance.baz();
-    /// 	}
+    ///     constructor(fooInstance) {
+    ///         this.fooInstance = fooInstance;
+    ///     }
+    ///     method() {
+    ///         this.fooInstance.baz();
+    ///     }
     /// }
     ///
     /// new Bar(this).method();
@@ -107,31 +107,37 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const {property} = this;",
-        r"const property = this.property;",
-        r"const [element] = this;",
-        r"const element = this[0];",
-        r"([element] = this);",
-        r"element = this[0];",
-        r"property = this.property;",
-        r"const [element] = [this];",
-        r"([element] = [this]);",
-        r"const {property} = {property: this};",
-        r"({property} = {property: this});",
-        r"const self = true && this;",
-        r"const self = false || this;",
-        r"const self = false ?? this;",
-        r"foo.bar = this;",
-        r"function foo(a = this) {}",
-        r"function foo({a = this}) {}",
-        r"function foo([a = this]) {}",
+        "const {property} = this;",
+        "const property = this.property;",
+        "const [element] = this;",
+        "const element = this[0];",
+        "([element] = this);",
+        "element = this[0];",
+        "property = this.property;",
+        "const [element] = [this];",
+        "([element] = [this]);",
+        "const {property} = {property: this};",
+        "({property} = {property: this});",
+        "const self = true && this;",
+        "const self = false || this;",
+        "const self = false ?? this;",
+        "foo.bar = this;",
+        "function foo(a = this) {}",
+        "function foo({a = this}) {}",
+        "function foo([a = this]) {}",
+        "class A {
+                foo = this;
+            }",
+        "class A {
+                static foo = this;
+            }",
     ];
 
     let fail = vec![
-        r"const foo = this;",
-        r"let foo;foo = this;",
-        r"var foo = bar, baz = this;",
-        r"var foo = (bar), baz = (this);",
+        "const foo = this;",
+        "let foo;foo = this;",
+        "var foo = bar, baz = this;",
+        "var foo = (bar), baz = (this);",
     ];
 
     Tester::new(NoThisAssignment::NAME, NoThisAssignment::PLUGIN, pass, fail).test_and_snapshot();

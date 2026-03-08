@@ -14,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         name: string
    ·                         ────────────
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         name: string | number
    ·                         ─────────────────────
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "na::me" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         'na::me': string
    ·                         ────────────────
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:5:19]
+   ╭─[no_required_prop_with_default.tsx:5:25]
  4 │                       interface TestPropType {
  5 │                         name: nameType
    ·                         ──────────────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         name
    ·                         ────
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         name
    ·                         ────
@@ -68,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "na\"me2" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         'na\\"me2'
    ·                         ──────────
@@ -77,7 +77,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "foo" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         foo(): void
    ·                         ───────────
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         readonly name
    ·                         ─────────────
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         readonly 'name'
    ·                         ───────────────
@@ -104,7 +104,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "a" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         readonly 'a'
    ·                         ────────────
@@ -113,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "a" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         readonly '\u0061'
    ·                         ─────────────────
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:5:19]
+   ╭─[no_required_prop_with_default.tsx:5:25]
  4 │                           props: {
  5 │ ╭─▶                         name: {
  6 │ │                             required: true,
@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:5:19]
+   ╭─[no_required_prop_with_default.tsx:5:25]
  4 │                           props: {
  5 │ ╭─▶                         'name': {
  6 │ │                             required: true,
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-    ╭─[no_required_prop_with_default.tsx:6:19]
+    ╭─[no_required_prop_with_default.tsx:6:25]
   5 │                           props: {
   6 │ ╭─▶                         'name': {
   7 │ │                             required: true,
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-    ╭─[no_required_prop_with_default.tsx:6:19]
+    ╭─[no_required_prop_with_default.tsx:6:25]
   5 │                           props: {
   6 │ ╭─▶                         name: {
   7 │ │                             required: true,
@@ -166,7 +166,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-    ╭─[no_required_prop_with_default.tsx:6:19]
+    ╭─[no_required_prop_with_default.tsx:6:25]
   5 │                           props: {
   6 │ ╭─▶                         name: {
   7 │ │                             required: true,
@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                           const props = defineProps({
  4 │ ╭─▶                         name: {
  5 │ │                             required: true,
@@ -188,7 +188,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       interface TestPropType {
  4 │                         name: string
    ·                         ────────────
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                       const {name="World"} = defineProps<{
  4 │                         name: string
    ·                         ────────────
@@ -206,7 +206,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
-   ╭─[no_required_prop_with_default.tsx:4:19]
+   ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                           const {name="World"} = defineProps({
  4 │ ╭─▶                         name: {
  5 │ │                             required: true,

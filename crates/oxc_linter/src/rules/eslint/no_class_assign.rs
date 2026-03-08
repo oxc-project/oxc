@@ -7,10 +7,12 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_class_assign_diagnostic(name: &str, decl_span: Span, assign_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected re-assignment of class {name}")).with_labels([
-        decl_span.label(format!("{name} is declared as class here")),
-        assign_span.label(format!("{name} is re-assigned here")),
-    ])
+    OxcDiagnostic::warn(format!("Unexpected re-assignment of class {name}"))
+        .with_help("Use a different variable name instead of re-assigning the class declaration.")
+        .with_labels([
+            decl_span.label(format!("{name} is declared as class here")),
+            assign_span.label(format!("{name} is re-assigned here")),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]

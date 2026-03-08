@@ -252,10 +252,10 @@ impl CliRunner {
                                         )
                                     )
                                 }
-                                ConfigLoadError::TypeScriptConfigFileFoundButJsRuntimeNotAvailable => {
-                                    "Error: TypeScript config files (oxlint.config.ts) found but JS runtime not available.\n\
+                                ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
+                                    "Error: JavaScript/TypeScript config files found but JS runtime not available.\n\
                                      This is an experimental feature that requires running oxlint via Node.js.\n\
-                                     Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n".to_string()
+                                     Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {
                                     let report = render_report(&handler, error);
@@ -338,15 +338,37 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
+        let type_check = self.options.type_check || config_store.type_check_enabled();
+        if type_check && !type_aware {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check` option requires type-aware linting.\nUse `--type-aware --type-check` or enable `options.typeAware` in your config.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckWithoutTypeAware;
+        }
+        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
+        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+
+        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
-            _ => None,
+            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                Some(severity)
+            }
+            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+            _ => match config_store.report_unused_disable_directives() {
+                Some(severity) if severity.is_warn_deny() => Some(severity),
+                _ => None,
+            },
         };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
+            &output_formatter,
+            &warning_options,
+            &misc_options,
+            max_warnings,
+        );
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -393,13 +415,13 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(self.options.type_aware);
+        let number_of_rules = linter.number_of_rules(type_aware);
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
-            .with_type_aware(self.options.type_aware)
-            .with_type_check(self.options.type_check)
+            .with_type_aware(type_aware)
+            .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .build()
@@ -436,7 +458,7 @@ impl CliRunner {
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
-        } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
+        } else if deny_warnings && diagnostic_result.warnings_count() > 0 {
             CliRunResult::LintNoWarningsAllowed
         } else if diagnostic_result.max_warnings_exceeded() {
             CliRunResult::LintMaxWarningsExceeded
@@ -464,13 +486,14 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        max_warnings: Option<usize>,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(max_warnings),
             sender,
         )
     }
@@ -553,25 +576,25 @@ mod test {
 
     #[test]
     fn dir() {
-        let args = &["fixtures/linter"];
+        let args = &["fixtures/cli/linter"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
-        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn file() {
-        let args = &["fixtures/linter/debugger.js"];
+        let args = &["fixtures/cli/linter/debugger.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn multi_files() {
-        let args = &["fixtures/linter/debugger.js", "fixtures/linter/nan.js"];
+        let args = &["fixtures/cli/linter/debugger.js", "fixtures/cli/linter/nan.js"];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -584,7 +607,7 @@ mod test {
     #[test]
     fn ignore_pattern() {
         let args =
-            &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
+            &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/cli/linter"];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -593,7 +616,8 @@ mod test {
     /// See https://github.com/oxc-project/oxc/issues/1124
     #[test]
     fn ignore_file_overrides_explicit_args() {
-        let args = &["--ignore-path", "fixtures/linter/.customignore", "fixtures/linter/nan.js"];
+        let args =
+            &["--ignore-path", "fixtures/cli/linter/.customignore", "fixtures/cli/linter/nan.js"];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -601,23 +625,23 @@ mod test {
     fn ignore_file_no_ignore() {
         let args = &[
             "--ignore-path",
-            "fixtures/linter/.customignore",
+            "fixtures/cli/linter/.customignore",
             "--no-ignore",
-            "fixtures/linter/nan.js",
+            "fixtures/cli/linter/nan.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn ignore_flow() {
-        let args = &["--import-plugin", "fixtures/flow/index.mjs"];
+        let args = &["--import-plugin", "fixtures/cli/flow/index.mjs"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     // https://github.com/oxc-project/oxc/issues/7406
     fn ignore_flow_import_plugin_directory() {
-        let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
+        let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/cli/flow/"];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -627,7 +651,7 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_file_current_dir".into())
+            .with_cwd("fixtures/cli/ignore_file_current_dir".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
@@ -637,7 +661,7 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_pattern_non_glob_syntax".into())
+            .with_cwd("fixtures/cli/ignore_pattern_non_glob_syntax".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
@@ -646,7 +670,7 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_patterns_empty_nested".into())
+            .with_cwd("fixtures/cli/ignore_patterns_empty_nested".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
@@ -655,7 +679,7 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_patterns_relative".into())
+            .with_cwd("fixtures/cli/ignore_patterns_relative".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
@@ -664,7 +688,7 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_patterns_symlink".into())
+            .with_cwd("fixtures/cli/ignore_patterns_symlink".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
@@ -673,51 +697,62 @@ mod test {
         let args1 = &[];
         let args2 = &["."];
         Tester::new()
-            .with_cwd("fixtures/ignore_patterns_whitelist".into())
+            .with_cwd("fixtures/cli/ignore_patterns_whitelist".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
     #[test]
     fn filter_allow_all() {
-        let args = &["-A", "all", "fixtures/linter"];
+        let args = &["-A", "all", "fixtures/cli/linter"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn filter_allow_one() {
-        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
+        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/cli/linter/debugger.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn filter_error() {
-        let args = &["-D", "correctness", "fixtures/linter/debugger.js"];
+        let args = &["-D", "correctness", "fixtures/cli/linter/debugger.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn eslintrc_error() {
-        let args = &["-c", "fixtures/linter/eslintrc.json", "fixtures/linter/debugger.js"];
+        let args = &["-c", "fixtures/cli/linter/eslintrc.json", "fixtures/cli/linter/debugger.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn eslintrc_off() {
-        let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
+        let args =
+            &["-c", "fixtures/cli/eslintrc_off/eslintrc.json", "fixtures/cli/eslintrc_off/test.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
-        Tester::new().with_cwd("fixtures/auto_config_detection".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/auto_config_detection".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn oxlint_config_auto_detection_jsonc() {
+        let args = &["debugger.js"];
+        Tester::new()
+            .with_cwd("fixtures/cli/auto_config_detection_jsonc".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
     #[cfg(not(target_os = "windows"))] // Skipped on Windows due to snapshot diffs from path separators (`/` vs `\`)
     fn oxlint_config_auto_detection_parse_error() {
         let args = &["debugger.js"];
-        Tester::new().with_cwd("fixtures/auto_config_parse_error".into()).test_and_snapshot(args);
+        Tester::new()
+            .with_cwd("fixtures/cli/auto_config_parse_error".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
@@ -726,8 +761,8 @@ mod test {
             "-W",
             "no-undef",
             "-c",
-            "fixtures/no_undef/eslintrc.json",
-            "fixtures/no_undef/test.js",
+            "fixtures/cli/no_undef/eslintrc.json",
+            "fixtures/cli/no_undef/test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -738,8 +773,8 @@ mod test {
             "-W",
             "no-undef",
             "-c",
-            "fixtures/eslintrc_env/eslintrc_no_env.json",
-            "fixtures/eslintrc_env/test.js",
+            "fixtures/cli/eslintrc_env/eslintrc_no_env.json",
+            "fixtures/cli/eslintrc_env/test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -748,8 +783,8 @@ mod test {
     fn eslintrc_with_env() {
         let args = &[
             "-c",
-            "fixtures/eslintrc_env/eslintrc_env_browser.json",
-            "fixtures/eslintrc_env/test.js",
+            "fixtures/cli/eslintrc_env/eslintrc_env_browser.json",
+            "fixtures/cli/eslintrc_env/test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -758,10 +793,10 @@ mod test {
     fn no_empty_allow_empty_catch() {
         let args = &[
             "-c",
-            "fixtures/no_empty_allow_empty_catch/eslintrc.json",
+            "fixtures/cli/no_empty_allow_empty_catch/eslintrc.json",
             "-W",
             "no-empty",
-            "fixtures/no_empty_allow_empty_catch/test.js",
+            "fixtures/cli/no_empty_allow_empty_catch/test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -770,18 +805,21 @@ mod test {
     fn no_empty_disallow_empty_catch() {
         let args = &[
             "-c",
-            "fixtures/no_empty_disallow_empty_catch/eslintrc.json",
+            "fixtures/cli/no_empty_disallow_empty_catch/eslintrc.json",
             "-W",
             "no-empty",
-            "fixtures/no_empty_disallow_empty_catch/test.js",
+            "fixtures/cli/no_empty_disallow_empty_catch/test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn no_console_off() {
-        let args =
-            &["-c", "fixtures/no_console_off/eslintrc.json", "fixtures/no_console_off/test.js"];
+        let args = &[
+            "-c",
+            "fixtures/cli/no_console_off/eslintrc.json",
+            "fixtures/cli/no_console_off/test.js",
+        ];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -789,8 +827,8 @@ mod test {
     fn typescript_eslint() {
         let args = &[
             "-c",
-            "fixtures/typescript_eslint/eslintrc.json",
-            "fixtures/typescript_eslint/test.ts",
+            "fixtures/cli/typescript_eslint/eslintrc.json",
+            "fixtures/cli/typescript_eslint/test.ts",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -799,57 +837,59 @@ mod test {
     fn typescript_eslint_off() {
         let args = &[
             "-c",
-            "fixtures/typescript_eslint/eslintrc.json",
+            "fixtures/cli/typescript_eslint/eslintrc.json",
             "--disable-typescript-plugin",
-            "fixtures/typescript_eslint/test.ts",
+            "fixtures/cli/typescript_eslint/test.ts",
         ];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn js_and_jsx() {
-        let args = &["fixtures/linter/js_as_jsx.js"];
+        let args = &["fixtures/cli/linter/js_as_jsx.js"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_vue_file() {
-        let args = &["fixtures/vue/debugger.vue"];
+        let args = &["fixtures/cli/vue/debugger.vue"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_empty_vue_file() {
-        let args = &["fixtures/vue/empty.vue"];
+        let args = &["fixtures/cli/vue/empty.vue"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_invalid_vue_file() {
-        let args = &["fixtures/vue/invalid.vue"];
+        let args = &["fixtures/cli/vue/invalid.vue"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_astro_file() {
-        let args = &["fixtures/astro/debugger.astro"];
+        let args = &["fixtures/cli/astro/debugger.astro"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_svelte_file() {
-        let args = &["fixtures/svelte/debugger.svelte"];
+        let args = &["fixtures/cli/svelte/debugger.svelte"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_tsconfig_option() {
         // passed
-        Tester::new().with_cwd("fixtures/tsconfig".into()).test(&["--tsconfig", "tsconfig.json"]);
+        Tester::new()
+            .with_cwd("fixtures/cli/tsconfig".into())
+            .test(&["--tsconfig", "tsconfig.json"]);
 
         // failed
         Tester::new()
-            .with_cwd("fixtures/tsconfig".into())
+            .with_cwd("fixtures/cli/tsconfig".into())
             .test_and_snapshot(&["--tsconfig", "non-exists.json"]);
     }
 
@@ -857,8 +897,8 @@ mod test {
     fn test_enable_vitest_rule_without_plugin() {
         let args = &[
             "-c",
-            "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.test.js",
+            "fixtures/cli/eslintrc_vitest_replace/eslintrc.json",
+            "fixtures/cli/eslintrc_vitest_replace/foo.test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -868,8 +908,8 @@ mod test {
         let args = &[
             "--vitest-plugin",
             "-c",
-            "fixtures/eslintrc_vitest_replace/eslintrc.json",
-            "fixtures/eslintrc_vitest_replace/foo.test.js",
+            "fixtures/cli/eslintrc_vitest_replace/eslintrc.json",
+            "fixtures/cli/eslintrc_vitest_replace/foo.test.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -880,15 +920,15 @@ mod test {
         // support import-x namespace see #8779
         let args_2 = &["-c", ".oxlintrc-import-x.json", "test.js"];
         Tester::new()
-            .with_cwd("fixtures/import".into())
+            .with_cwd("fixtures/cli/import".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]
     fn test_fix() {
-        Tester::test_fix("fixtures/fix_argument/fix.js", "debugger\n", "\n");
+        Tester::test_fix("fixtures/cli/fix_argument/fix.js", "debugger\n", "\n");
         Tester::test_fix(
-            "fixtures/fix_argument/fix.vue",
+            "fixtures/cli/fix_argument/fix.vue",
             "<script>debugger;</script>\n<script>debugger;</script>\n",
             "<script></script>\n<script></script>\n",
         );
@@ -904,7 +944,7 @@ mod test {
     fn test_print_config_ban_rules() {
         let args = &[
             "-c",
-            "fixtures/print_config/ban_rules/eslintrc.json",
+            "fixtures/cli/print_config/ban_rules/eslintrc.json",
             "-A",
             "all",
             "-D",
@@ -928,22 +968,26 @@ mod test {
 
     #[test]
     fn test_overrides() {
-        let args_1 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"];
-        let args_2 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"];
-        let args_3 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"];
+        let args_1 =
+            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.js"];
+        let args_2 =
+            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.ts"];
+        let args_3 =
+            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/other.jsx"];
         Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
     }
 
     #[test]
     fn test_overrides_directories() {
-        let args = &["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"];
+        let args =
+            &["-c", "fixtures/cli/overrides/directories-config.json", "fixtures/cli/overrides"];
         Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_overrides_envs_and_global() {
         let args = &["-c", ".oxlintrc.json", "."];
-        Tester::new().with_cwd("fixtures/overrides_env_globals".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/overrides_env_globals".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -951,7 +995,7 @@ mod test {
         let args = &["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."];
 
         Tester::new()
-            .with_cwd("fixtures/config_ignore_patterns/with_oxlintrc".into())
+            .with_cwd("fixtures/cli/config_ignore_patterns/with_oxlintrc".into())
             .test_and_snapshot(args);
     }
 
@@ -959,8 +1003,8 @@ mod test {
     fn test_config_ignore_patterns_extension() {
         let args = &[
             "-c",
-            "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
-            "fixtures/config_ignore_patterns/ignore_extension",
+            "fixtures/cli/config_ignore_patterns/ignore_extension/eslintrc.json",
+            "fixtures/cli/config_ignore_patterns/ignore_extension",
         ];
 
         Tester::new().test_and_snapshot(args);
@@ -970,8 +1014,8 @@ mod test {
     fn test_config_ignore_patterns_special_extension() {
         let args = &[
             "-c",
-            "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
-            "fixtures/config_ignore_patterns/ignore_extension/main.js",
+            "fixtures/cli/config_ignore_patterns/ignore_extension/eslintrc.json",
+            "fixtures/cli/config_ignore_patterns/ignore_extension/main.js",
         ];
 
         Tester::new().test_and_snapshot(args);
@@ -981,7 +1025,7 @@ mod test {
     fn test_config_ignore_patterns_directory() {
         let args = &["-c", "eslintrc.json"];
         Tester::new()
-            .with_cwd("fixtures/config_ignore_patterns/ignore_directory".into())
+            .with_cwd("fixtures/cli/config_ignore_patterns/ignore_directory".into())
             .test_and_snapshot(args);
     }
 
@@ -990,9 +1034,9 @@ mod test {
     fn ignore_path_with_relative_files() {
         let args = &[
             "--ignore-path",
-            "fixtures/issue_7566/.oxlintignore",
-            "fixtures/issue_7566/tests/main.js",
-            "fixtures/issue_7566/tests/function/main.js",
+            "fixtures/cli/issue_7566/.oxlintignore",
+            "fixtures/cli/issue_7566/tests/main.js",
+            "fixtures/cli/issue_7566/tests/function/main.js",
         ];
         Tester::new().test_and_snapshot(args);
     }
@@ -1002,7 +1046,7 @@ mod test {
         let args_1 = &["-c", "oxlint-jest.json", "test.js"];
         let args_2 = &["-c", "oxlint-vitest.json", "test.js"];
         Tester::new()
-            .with_cwd("fixtures/jest_and_vitest_alias_rules".into())
+            .with_cwd("fixtures/cli/jest_and_vitest_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
@@ -1011,7 +1055,7 @@ mod test {
         let args_1 = &["-c", "oxlint-eslint.json", "test.js"];
         let args_2 = &["-c", "oxlint-typescript.json", "test.js"];
         Tester::new()
-            .with_cwd("fixtures/eslint_and_typescript_alias_rules".into())
+            .with_cwd("fixtures/cli/eslint_and_typescript_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
@@ -1020,7 +1064,7 @@ mod test {
         let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
         let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
         Tester::new()
-            .with_cwd("fixtures/disable_eslint_and_unicorn_alias_rules".into())
+            .with_cwd("fixtures/cli/disable_eslint_and_unicorn_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
@@ -1031,7 +1075,7 @@ mod test {
     fn test_disable_vitest_rules() {
         let args =
             &["-c", ".oxlintrc-vitest.json", "--report-unused-disable-directives", "test.js"];
-        Tester::new().with_cwd("fixtures/disable_vitest_rules".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/disable_vitest_rules".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1039,7 +1083,7 @@ mod test {
         // Issue: <https://github.com/oxc-project/oxc/issues/8485>
         let args = &["-c", ".oxlintrc.json", "test.js"];
         Tester::new()
-            .with_cwd("fixtures/two_rules_with_same_rule_name".into())
+            .with_cwd("fixtures/cli/two_rules_with_same_rule_name".into())
             .test_and_snapshot(args);
     }
 
@@ -1047,16 +1091,42 @@ mod test {
     fn test_report_unused_directives() {
         let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
 
-        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_from_config() {
+        // Verify that `reportUnusedDisableDirectives` in the config file enables reporting
+        // without needing a CLI flag.
+        let args = &["-c", ".oxlintrc-with-rudd.json"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_cli_overrides_config() {
+        // Verify that the CLI flag takes precedence over the config file value.
+        // Config has `reportUnusedDisableDirectives: "warn"`, but CLI passes `off`,
+        // so no unused-directive diagnostics should be reported.
+        let args =
+            &["-c", ".oxlintrc-with-rudd.json", "--report-unused-disable-directives-severity=off"];
+
+        Tester::new()
+            .with_cwd("fixtures/cli/report_unused_directives".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
     fn test_nested_config() {
         let args = &[];
-        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
 
         let args = &["--disable-nested-config"];
-        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/extends_config".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1064,7 +1134,7 @@ mod test {
         // This tests the specific scenario from issue #10156
         // where a file is located in a subdirectory of a directory with a config file
         let args = &["package3-deep-config"];
-        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1072,7 +1142,7 @@ mod test {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
         let args = &["--config", "oxlint-no-console.json"];
-        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1080,7 +1150,7 @@ mod test {
         // CLI arguments take precedence over nested configs, but apply over top of the nested
         // config files, rather than replacing them.
         let args = &["-A", "no-console"];
-        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1088,45 +1158,45 @@ mod test {
         // Combining `--config` and CLI filters should make the passed config file be
         // used for all files, but still override any rules specified in the config file.
         let args = &["-A", "no-console", "--config", "oxlint-no-console.json"];
-        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/nested_config".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_extends_explicit_config() {
         // Check that referencing a config file that extends other config files works as expected
         let args = &["--config", "extends_rules_config.json", "console.js"];
-        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/extends_config".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_extends_extends_config() {
         // Check that using a config that extends a config which extends a config works
         let args = &["--config", "relative_paths/extends_extends_config.json", "console.js"];
-        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/extends_config".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_extends_overrides() {
         // Check that using a config with overrides works as expected
         let args = &["overrides"];
-        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/extends_config".into()).test_and_snapshot(args);
 
         // Check that using a config which extends a config with overrides works as expected
         let args = &["overrides_same_directory"];
-        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/extends_config".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_nested_config_multi_file_analysis_imports() {
         let args = &["issue_10054"];
-        Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_cross_modules_with_nested_config() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/cross_module_nested_config".into())
+            .with_cwd("fixtures/cli/cross_module_nested_config".into())
             .test_and_snapshot(args);
     }
 
@@ -1134,7 +1204,7 @@ mod test {
     fn test_cross_modules_with_extended_config() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/cross_module_extended_config".into())
+            .with_cwd("fixtures/cli/cross_module_extended_config".into())
             .test_and_snapshot(args);
     }
 
@@ -1142,36 +1212,36 @@ mod test {
     fn test_import_plugin_being_enabled_correctly() {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
-        Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/import-cycle".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_rule_config_being_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
-        Tester::new().with_cwd("fixtures/issue_11054".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/issue_11054".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_plugins_in_overrides_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
-        Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/overrides_with_plugin".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_plugins_inside_overrides_categories_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
-        Tester::new().with_cwd("fixtures/issue_10394".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/issue_10394".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
-        Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/issue_11644".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_dot_folder() {
-        Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+        Tester::new().with_cwd("fixtures/cli/dot_folder".into()).test_and_snapshot(&[]);
     }
 
     #[test]
@@ -1217,7 +1287,7 @@ mod test {
         // Issue: https://github.com/oxc-project/oxc/issues/13311
         let args = &["test.jsx", "test2.d.ts"];
         Tester::new()
-            .with_cwd("fixtures/disable_directive_issue_13311".into())
+            .with_cwd("fixtures/cli/disable_directive_issue_13311".into())
             .test_and_snapshot(args);
     }
 
@@ -1226,14 +1296,14 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint() {
         let args = &["--type-aware"];
-        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_silent() {
         let args = &["--type-aware", "--silent"];
-        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1241,14 +1311,103 @@ mod test {
     fn test_tsgolint_config() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "-c", "config-test.json"];
-        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_via_config_file() {
+        let args = &["-c", "config-type-aware.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_applies_to_overrides() {
+        let args = &["-c", "config-type-aware-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false() {
+        let args = &["-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_overridden_by_cli_flag() {
+        let args =
+            &["--type-aware", "-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_disables_overrides() {
+        let args =
+            &["-c", "config-type-aware-false-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_error() {
         let args = &["--type-aware", "--type-check"];
-        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_requires_type_aware() {
+        let args = &["--type-check"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_via_config_file() {
+        let args = &["-c", "config-type-check.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_false_via_config_file() {
+        let args = &["-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
+        let args = &["--type-check", "-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_via_config_file() {
+        let args = &["-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_overridden_by_cli_flag() {
+        let args = &["--max-warnings", "1", "-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_via_config_file() {
+        let args = &["-c", "config-deny-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_overridden_by_cli_flag() {
+        let args = &["--deny-warnings", "-c", "config-deny-warnings-false.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/cli/linter".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1256,7 +1415,7 @@ mod test {
     fn test_tsgolint_no_typescript_files() {
         // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
-        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
     }
 
     #[cfg(not(target_endian = "big"))]
@@ -1265,7 +1424,7 @@ mod test {
         // Test that unused disable directives are reported with type-aware rules
         let args = &["--type-aware", "--report-unused-disable-directives", "unused.ts"];
         Tester::new()
-            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
             .test_and_snapshot(args);
     }
 
@@ -1275,7 +1434,7 @@ mod test {
         // Test that disable directives work with type-aware rules
         let args = &["--type-aware", "test.ts"];
         Tester::new()
-            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
             .test_and_snapshot(args);
     }
 
@@ -1283,7 +1442,7 @@ mod test {
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_config_error() {
         let args = &["--type-aware"];
-        Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint_config_error".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -1291,7 +1450,7 @@ mod test {
     fn test_tsgolint_tsconfig_extends_config_err() {
         let args = &["--type-aware", "-D", "no-floating-promises"];
         Tester::new()
-            .with_cwd("fixtures/tsgolint_tsconfig_extends_config_err".into())
+            .with_cwd("fixtures/cli/tsgolint_tsconfig_extends_config_err".into())
             .test_and_snapshot(args);
     }
 
@@ -1301,14 +1460,14 @@ mod test {
         // Test that rule options are correctly passed to tsgolint
         // See: https://github.com/oxc-project/oxc/issues/16182
         let args = &["--type-aware"];
-        Tester::new().with_cwd("fixtures/tsgolint_rule_options".into()).test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures/cli/tsgolint_rule_options".into()).test_and_snapshot(args);
     }
 
     #[test]
     #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
     fn test_tsgolint_fix() {
         Tester::test_fix_with_args(
-            "fixtures/tsgolint_fix/fix.ts",
+            "fixtures/cli/tsgolint_fix/fix.ts",
             "// This file has a fixable tsgolint error: no-unnecessary-type-assertion
 // The type assertion `as string` is unnecessary because str is already a string
 const str: string = 'hello';
@@ -1329,20 +1488,20 @@ export { redundant };
 
     #[test]
     fn test_invalid_config_invalid_config_enum() {
-        Tester::new().with_cwd("fixtures/invalid_config_enum".into()).test_and_snapshot(&[]);
+        Tester::new().with_cwd("fixtures/cli/invalid_config_enum".into()).test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_extra_options() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_extra_options".into())
+            .with_cwd("fixtures/cli/invalid_config_extra_options".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_rule_without_config_but_options() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_rules_without_config".into())
+            .with_cwd("fixtures/cli/invalid_config_rules_without_config".into())
             .test_and_snapshot(&[]);
     }
 
@@ -1351,49 +1510,51 @@ export { redundant };
     // is an alias of jest/no-hooks.
     fn test_invalid_config_invalid_config_with_rule_alias() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_with_rule_alias".into())
+            .with_cwd("fixtures/cli/invalid_config_with_rule_alias".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_in_override() {
-        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_in_override".into())
+            .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_multiple_rules() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_multiple_rules".into())
+            .with_cwd("fixtures/cli/invalid_config_multiple_rules".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_nested() {
-        Tester::new().with_cwd("fixtures/invalid_config_nested".into()).test_and_snapshot(&[]);
+        Tester::new().with_cwd("fixtures/cli/invalid_config_nested".into()).test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_type_difference() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_type_difference".into())
+            .with_cwd("fixtures/cli/invalid_config_type_difference".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_extends() {
-        Tester::new().with_cwd("fixtures/extends_invalid_config".into()).test_and_snapshot(&[]);
+        Tester::new().with_cwd("fixtures/cli/extends_invalid_config".into()).test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_sort_imports() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_sort_imports".into())
+            .with_cwd("fixtures/cli/invalid_config_sort_imports".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_valid_complex_config() {
-        Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
+        Tester::new().with_cwd("fixtures/cli/valid_complex_config".into()).test_and_snapshot(&[]);
     }
 
     /// Test that rules with dummy `config = Value` declarations can accept
@@ -1403,19 +1564,21 @@ export { redundant };
     #[test]
     fn test_valid_config_rules_with_dummy_config() {
         Tester::new()
-            .with_cwd("fixtures/valid_config_rules_with_dummy_config".into())
+            .with_cwd("fixtures/cli/valid_config_rules_with_dummy_config".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_complex_enum() {
         Tester::new()
-            .with_cwd("fixtures/invalid_config_complex_enum".into())
+            .with_cwd("fixtures/cli/invalid_config_complex_enum".into())
             .test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_tuple_rules() {
-        Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
+            .test_and_snapshot(&[]);
     }
 }

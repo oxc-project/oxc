@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, TailwindcssOptions,
+    Buffer, SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatElement, Formatter, TailwindContextEntry, prelude::*},
     write,
@@ -51,7 +51,7 @@ pub fn tailwind_context_for_string_literal<'a>(
 /// - Custom attributes specified in `attributes` option
 pub fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
-    options: &TailwindcssOptions,
+    options: &SortTailwindcssOptions,
 ) -> bool {
     let JSXAttributeName::Identifier(ident) = attr_name else {
         return false;
@@ -79,7 +79,10 @@ pub fn is_tailwind_jsx_attribute(
 /// - `foo().clsx(...)` - chained calls
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
-pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
+pub fn is_tailwind_function_call(
+    callee: &Expression<'_>,
+    options: &SortTailwindcssOptions,
+) -> bool {
     if options.functions.is_empty() {
         return false;
     }

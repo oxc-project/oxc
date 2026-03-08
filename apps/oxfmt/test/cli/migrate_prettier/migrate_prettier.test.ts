@@ -116,7 +116,7 @@ node_modules
     }
   });
 
-  it("should migrate prettier-plugin-tailwindcss options to experimentalTailwindcss", async () => {
+  it("should migrate prettier-plugin-tailwindcss options to sortTailwindcss", async () => {
     const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
 
     try {
@@ -138,8 +138,8 @@ node_modules
       const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
       const oxfmtrc = JSON.parse(content);
 
-      // Tailwind options should be migrated to experimentalTailwindcss
-      expect(oxfmtrc.experimentalTailwindcss).toEqual({
+      // Tailwind options should be migrated to sortTailwindcss
+      expect(oxfmtrc.sortTailwindcss).toEqual({
         config: "./tailwind.config.js",
         functions: ["clsx", "cn"],
         attributes: ["myClass"],
@@ -155,7 +155,7 @@ node_modules
     }
   });
 
-  it("should enable experimentalTailwindcss when plugin is listed without options", async () => {
+  it("should enable sortTailwindcss when plugin is listed without options", async () => {
     const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
 
     try {
@@ -173,8 +173,8 @@ node_modules
       const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
       const oxfmtrc = JSON.parse(content);
 
-      // experimentalTailwindcss should be enabled (empty object)
-      expect(oxfmtrc.experimentalTailwindcss).toEqual({});
+      // sortTailwindcss should be enabled (empty object)
+      expect(oxfmtrc.sortTailwindcss).toEqual({});
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
@@ -207,14 +207,14 @@ node_modules
       const oxfmtrc = JSON.parse(content);
 
       // Non-regex values should still be migrated
-      expect(oxfmtrc.experimentalTailwindcss.functions).toEqual(["clsx", "/^tw-/"]);
-      expect(oxfmtrc.experimentalTailwindcss.attributes).toEqual(["className", "/^data-tw-/"]);
+      expect(oxfmtrc.sortTailwindcss.functions).toEqual(["clsx", "/^tw-/"]);
+      expect(oxfmtrc.sortTailwindcss.attributes).toEqual(["className", "/^data-tw-/"]);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it("should disable experimentalSortPackageJson by default", async () => {
+  it("should disable sortPackageJson by default", async () => {
     const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
 
     try {
@@ -233,13 +233,13 @@ node_modules
       const oxfmtrc = JSON.parse(content);
 
       // Prettier does not have package.json sorting by default
-      expect(oxfmtrc.experimentalSortPackageJson).toBe(false);
+      expect(oxfmtrc.sortPackageJson).toBe(false);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it("should enable experimentalSortPackageJson when prettier-plugin-packagejson is used", async () => {
+  it("should enable sortPackageJson when prettier-plugin-packagejson is used", async () => {
     const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
 
     try {
@@ -257,7 +257,7 @@ node_modules
       const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
       const oxfmtrc = JSON.parse(content);
 
-      expect(oxfmtrc.experimentalSortPackageJson).toBeTruthy();
+      expect(oxfmtrc.sortPackageJson).toBeTruthy();
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }

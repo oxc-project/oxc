@@ -729,7 +729,7 @@ fn test_fold_number_constructor() {
 fn test_fold_big_int_constructor() {
     test("var x = BigInt(1n)", "var x = 1n");
     test_same("BigInt()");
-    test_same("BigInt(1)");
+    test("BigInt(1)", "");
 }
 
 #[test]

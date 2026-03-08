@@ -14,12 +14,14 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn};
 use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_parser::Token;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -73,7 +75,7 @@ pub use crate::{
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -89,7 +91,7 @@ use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
     external_linter::GlobalsAndEnvs,
-    fixer::{CompositeFix, Fixer},
+    fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
@@ -473,7 +475,16 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        self.convert_and_call_external_linter(external_rules, path, ctx_host, program, allocator);
+        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            allocator,
+        );
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -523,11 +534,15 @@ impl Linter {
             js_allocator.alloc(program)
         };
 
+        // Clone tokens into fixed-size allocator
+        let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
+
         self.convert_and_call_external_linter(
             external_rules,
             path,
             ctx_host,
             program,
+            tokens,
             &js_allocator,
         );
 
@@ -545,6 +560,7 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost<'_>,
         program: &mut Program<'_>,
+        tokens: &mut [Token],
         allocator: &Allocator,
     ) {
         // If has BOM, remove it
@@ -568,6 +584,15 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
+        // Convert tokens for raw transfer
+        #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
+        let (tokens_offset, tokens_len) = if !tokens.is_empty() {
+            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            (tokens.as_ptr() as u32, tokens.len() as u32)
+        } else {
+            (0, 0)
+        };
+
         span_converter.convert_program(program);
         span_converter.convert_comments(&mut program.comments);
 
@@ -577,7 +602,14 @@ impl Linter {
         // Write offset of `Program` in metadata at end of buffer
         let is_ts = program.source_type.is_typescript();
         let is_jsx = program.source_type.is_jsx();
-        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx, has_bom);
+        let metadata = RawTransferMetadata::new(
+            program_offset,
+            is_ts,
+            is_jsx,
+            has_bom,
+            tokens_offset,
+            tokens_len,
+        );
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -646,6 +678,7 @@ impl Linter {
                         fixes,
                         original_source_text,
                         &span_converter,
+                        has_bom,
                     ) {
                         Ok(fix) => Some(fix.with_kind(fix_kind)),
                         Err(err) => {
@@ -725,14 +758,24 @@ pub struct RawTransferMetadata2 {
     pub is_jsx: bool,
     /// `true` if source text has a BOM.
     pub has_bom: bool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    /// Offset of lexer `Token`s within buffer.
+    pub tokens_offset: u32,
+    /// Number of lexer `Token`s.
+    pub tokens_len: u32,
 }
 
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool, has_bom: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx, has_bom, _padding: 0 }
+    pub fn new(
+        data_offset: u32,
+        is_ts: bool,
+        is_jsx: bool,
+        has_bom: bool,
+        tokens_offset: u32,
+        tokens_len: u32,
+    ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
+        Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 5141bc2 formatter: Support trailing ignore comments (#19304) (Andreas Lubbe)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+- 9e11dc6 parser,estree,coverage: Collect tokens in parser and convert to ESTree format (#19497) (camc314)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+- b85f97b formatter: Drop blank line between terminal call and first chain member (#19659) (Dunqing)
+
+### ⚡ Performance
+
+- b3b2d30 parser: Introduce `ParserConfig` (#19637) (overlookmotel)
+
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 00135b5 formatter/sort_imports: [**BREAKING**] Change default `groups` order (#19427) (leaysgur)
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2bc7a14 formatter: Arrow function body incorrectly broken when return type has comment (#19368) (Dunqing)
+- e9c5b1e formatter: Treat `PrivateFieldExpression` as simple call argument (#19348) (Dunqing)
+- 80643d5 formatter: Match Prettier union indentation with leading comments (#19271) (Dunqing)
+
+### ⚡ Performance
+
+- c169c77 syntax: Optimize `is_identifier_name_patched` (#19386) (sapphi-red)
+
+## [0.32.0] - 2026-02-12
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 1957908 formatter: Avoid unnecessary parentheses for string literal in labeled statement (#19272) (Dunqing)
+
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 5243307 formatter: Preserve numeric separators in number literals (#19015) (Dunqing)
+- b79c065 formatter: Preserve comment between callee and optional chaining operator (#19020) (Dunqing)
+- 01d1be1 formatter: Remove unnecessary parentheses for single-member union types (#19018) (Dunqing)
+- f5c7e75 formatter: Preserve parentheses around await with private field access (#19014) (Dunqing)
+- 5a75785 formatter: Preserve parentheses around nested sequence expressions (#19013) (Dunqing)
+- 0ef11bb formatter: Add space before type annotation with leading comment (#19012) (Dunqing)
+- cc232e1 formatter: Keep spread with callback on same line (#18999) (Dunqing)
+- d53f5c4 formatter: Require string first arg in test calls (#18935) (Dunqing)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+- 2db8c05 formatter: Avoid breaking generic call assignments (#18933) (Dunqing)
+- 1e023e1 formatter: Preserve trailing comma in mts/cts arrow generics (#18928) (Dunqing)
+- 7c4e558 formatter/detect_code_removal: Do not count `TemplateLiteral` content (#18848) (leaysgur)
+
 ## [0.28.0] - 2026-02-02
 
 ### 🐛 Bug Fixes

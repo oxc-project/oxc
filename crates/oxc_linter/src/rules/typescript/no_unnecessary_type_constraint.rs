@@ -75,7 +75,8 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryTypeConstraint,
     typescript,
-    suspicious
+    suspicious,
+    pending
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {

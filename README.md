@@ -50,14 +50,14 @@ Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser
 
 ## 📦 Tools & Packages
 
-| Tool        | npm                                                          | crates.io                                                   |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| Linter      | [oxlint](https://www.npmjs.com/package/oxlint)               | -                                                           |
-| Formatter   | [oxfmt](https://www.npmjs.com/package/oxfmt)                 | -                                                           |
-| Parser      | [oxc-parser](https://www.npmjs.com/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           |
-| Transformer | [oxc-transform](https://www.npmjs.com/package/oxc-transform) | [oxc_transformer](https://crates.io/crates/oxc_transformer) |
-| Minifier    | [oxc-minify](https://www.npmjs.com/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
-| Resolver    | [oxc-resolver](https://www.npmjs.com/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
+| Tool        | npm                                                     | crates.io                                                   |
+| ----------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| Linter      | [oxlint](https://npmx.dev/package/oxlint)               | -                                                           |
+| Formatter   | [oxfmt](https://npmx.dev/package/oxfmt)                 | -                                                           |
+| Parser      | [oxc-parser](https://npmx.dev/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           |
+| Transformer | [oxc-transform](https://npmx.dev/package/oxc-transform) | [oxc_transformer](https://crates.io/crates/oxc_transformer) |
+| Minifier    | [oxc-minify](https://npmx.dev/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
+| Resolver    | [oxc-resolver](https://npmx.dev/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
 
 See [documentation](https://oxc.rs/) for detailed usage guides for each tool.
 
@@ -78,6 +78,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
 </p>
 
 → [oxlint documentation](https://oxc.rs/docs/guide/usage/linter/cli.html)
+→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxlint`
 
 ### Formatter
 
@@ -88,6 +89,7 @@ npx oxfmt@latest
 ```
 
 → [Formatter documentation](https://oxc.rs/docs/guide/usage/formatter)
+→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxfmt`
 
 ### Parser (Node.js)
 

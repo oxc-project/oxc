@@ -7,21 +7,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ new Date()
    · ────────
    ╰────
+  help: Assign the result of 'new' to a variable or compare it to a reference.
 
   ⚠ eslint(no-new): Do not use 'new' for side effects.
    ╭─[no_new.tsx:1:10]
  1 │ (() => { new Date() })
    ·          ────────
    ╰────
+  help: Assign the result of 'new' to a variable or compare it to a reference.
 
   ⚠ eslint(no-new): Do not use 'new' for side effects.
    ╭─[no_new.tsx:1:2]
  1 │ (new Date())
    ·  ────────
    ╰────
+  help: Assign the result of 'new' to a variable or compare it to a reference.
 
   ⚠ eslint(no-new): Do not use 'new' for side effects.
    ╭─[no_new.tsx:1:3]
  1 │ ((new Date()))
    ·   ────────
    ╰────
+  help: Assign the result of 'new' to a variable or compare it to a reference.

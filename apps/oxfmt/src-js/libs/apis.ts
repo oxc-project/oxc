@@ -44,28 +44,48 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
-export type FormatEmbeddedCodeParam = {
+export type FormatFileParam = {
   code: string;
-  parserName: string;
   options: Options;
 };
 
 /**
- * Format xxx-in-js code snippets
+ * Format non-js file
+ *
+ * @returns Formatted code
+ */
+export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
+  const prettier = await loadPrettier();
+
+  // Enable Tailwind CSS plugin for non-JS files if needed
+  await setupTailwindPlugin(options);
+  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
+  // NOTE: This must be last since Prettier plugins are applied in order
+  await setupOxfmtPlugin(options);
+
+  return prettier.format(code, options);
+}
+
+// ---
+
+export type FormatEmbeddedCodeParam = {
+  code: string;
+  options: Options;
+};
+
+/**
+ * Format xxx-in-js code snippets into formatted string.
+ *
+ * This will be gradually replaced by `formatEmbeddedDoc` which returns `Doc`.
+ * For now, html|css|md-in-js are using this.
  *
  * @returns Formatted code snippet
- * TODO: In the future, this should return `Doc` instead of string,
- * otherwise, we cannot calculate `printWidth` correctly.
  */
 export async function formatEmbeddedCode({
   code,
-  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
   const prettier = await loadPrettier();
-
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   await setupTailwindPlugin(options);
@@ -79,39 +99,56 @@ export async function formatEmbeddedCode({
 
 // ---
 
-export type FormatFileParam = {
-  code: string;
-  parserName: string;
-  fileName: string;
+export type FormatEmbeddedDocParam = {
+  texts: string[];
   options: Options;
 };
 
 /**
- * Format non-js file
+ * Format xxx-in-js code snippets into Prettier `Doc` JSON strings.
  *
- * @returns Formatted code
+ * This makes `oxc_formatter` correctly handle `printWidth` even for embedded code.
+ * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
+ * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
+ * However, this function does not need to be aware of that,
+ * as it simply formats each text part independently and returns an array of formatted parts.
+ *
+ * @returns Doc JSON strings (one per input text)
  */
-export async function formatFile({
-  code,
-  parserName,
-  fileName,
+export async function formatEmbeddedDoc({
+  texts,
   options,
-}: FormatFileParam): Promise<string> {
+}: FormatEmbeddedDocParam): Promise<string[]> {
   const prettier = await loadPrettier();
 
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
-  // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
-
-  // Enable Tailwind CSS plugin for non-JS files if needed
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   await setupTailwindPlugin(options);
-  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
-  // NOTE: This must be last since Prettier plugins are applied in order
-  await setupOxfmtPlugin(options);
 
-  return prettier.format(code, options);
+  // NOTE: This will throw if:
+  // - Specified parser is not available
+  // - Or, code has syntax errors
+  // In such cases, Rust side will fallback to original code
+  return Promise.all(
+    texts.map(async (text) => {
+      // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
+      const doc = await prettier.__debug.printToDoc(text, options);
+
+      // Serialize Doc to JSON, handling special values in a single pass:
+      // - Symbol group IDs (used by `group`, `if-break`, `indent-if-break`) → numeric counters
+      // - -Infinity (used by `dedentToRoot` via `align`) → marker string
+      const symbolToNumber = new Map<symbol, number>();
+      let nextId = 1;
+
+      return JSON.stringify(doc, (_key, value) => {
+        if (typeof value === "symbol") {
+          if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
+          return symbolToNumber.get(value);
+        }
+        if (value === -Infinity) return "__NEGATIVE_INFINITY__";
+        return value;
+      });
+    }),
+  );
 }
 
 // ---
@@ -119,7 +156,6 @@ export async function formatFile({
 // ---
 
 // Import types only to avoid runtime error if plugin is not installed
-import type { TransformerEnv } from "prettier-plugin-tailwindcss";
 
 // Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
@@ -137,7 +173,7 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
  * Load Tailwind CSS plugin lazily when `options._useTailwindPlugin` flag is set.
  * The flag is added by Rust side only for relevant parsers.
  *
- * Option mapping (experimentalTailwindcss.xxx → tailwindXxx) is also done in Rust side.
+ * Option mapping (sortTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
   if ("_useTailwindPlugin" in options === false) return;
@@ -151,42 +187,36 @@ async function setupTailwindPlugin(options: Options): Promise<void> {
 // ---
 
 export interface SortTailwindClassesArgs {
-  filepath: string;
   classes: string[];
-  options?: Record<string, unknown>;
+  options: {
+    filepath?: string;
+    tailwindStylesheet?: string;
+    tailwindConfig?: string;
+    tailwindPreserveWhitespace?: boolean;
+    tailwindPreserveDuplicates?: boolean;
+  };
 }
 
 /**
  * Process Tailwind CSS classes found in JS/TS files in batch.
- * @param args - Object containing filepath, classes, and options
+ * @param args - Object containing classes and options (filepath is in options.filepath)
  * @returns Array of sorted class strings (same order/length as input)
  */
 export async function sortTailwindClasses({
-  filepath,
   classes,
-  options = {},
+  options,
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const tailwindPlugin = await loadTailwindPlugin();
+  const { createSorter } = await import("prettier-plugin-tailwindcss/sorter");
 
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.filepath = filepath;
-
-  // Load Tailwind context
-  const context = await tailwindPlugin.getTailwindConfig(options);
-  if (!context) return classes;
-
-  // Create transformer env with options
-  const env: TransformerEnv = { context, options };
-
-  // Sort all classes
-  return classes.map((classStr) => {
-    try {
-      return tailwindPlugin.sortClasses(classStr, { env });
-    } catch {
-      // Failed to sort, return original
-      return classStr;
-    }
+  const sorter = await createSorter({
+    filepath: options.filepath,
+    stylesheetPath: options.tailwindStylesheet,
+    configPath: options.tailwindConfig,
+    preserveWhitespace: options.tailwindPreserveWhitespace,
+    preserveDuplicates: options.tailwindPreserveDuplicates,
   });
+
+  return sorter.sortClassAttributes(classes);
 }
 
 // ---

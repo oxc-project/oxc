@@ -645,185 +645,185 @@ fn test() {
         ),
         (
             "
-        	                var obj = {
-        	                    e: 1,
-        	                    f: 2,
-        	                    g: 3,
+                            var obj = {
+                                e: 1,
+                                f: 2,
+                                g: 3,
 
-        	                    a: 4,
-        	                    b: 5,
-        	                    c: 6
-        	                }
-        	            ",
+                                a: 4,
+                                b: 5,
+                                c: 6
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1,
+                            var obj = {
+                                b: 1,
 
-        	                    // comment
-        	                    a: 2,
-        	                    c: 3
-        	                }
-        	            ",
+                                // comment
+                                a: 2,
+                                c: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1
+                            var obj = {
+                                b: 1
 
-        	                    ,
+                                ,
 
-        	                    // comment
-        	                    a: 2,
-        	                    c: 3
-        	                }
-        	            ",
+                                // comment
+                                a: 2,
+                                c: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-        	                    b() {
-        	                    },
-        	                    e: 4
-        	                }
-        	            ",
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
-        	                    // comment
+                            var obj = {
+                                c: 1,
+                                d: 2,
+                                // comment
 
-        	                    // comment
-        	                    b() {
-        	                    },
-        	                    e: 4
-        	                }
-        	            ",
+                                // comment
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  [a+b]: 1,
-        	                  a
-        	                }
-        	            ",
+                              [a+b]: 1,
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    c: 1,
-        	                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-        	                    a() {
+                                a() {
 
-        	                    },
+                                },
 
-        	                    // abce
-        	                    f: 3,
+                                // abce
+                                f: 3,
 
-        	                    /*
+                                /*
 
-        	                    */
-        	                    [a+b]: 1,
-        	                    cc: 1,
-        	                    e: 2
-        	                }
-        	            ",
+                                */
+                                [a+b]: 1,
+                                cc: 1,
+                                e: 2
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             r#"
-        	                var obj = {
-        	                    b: "/*",
+                            var obj = {
+                                b: "/*",
 
-        	                    a: "*/",
-        	                }
-        	            "#,
+                                a: "*/",
+                            }
+                        "#,
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-        	                var obj = {
-        	                    b,
-        	                    /*
-        	                    */ //
+                            var obj = {
+                                b,
+                                /*
+                                */ //
 
-        	                    a
-        	                }
-        	            ",
+                                a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b,
+                            var obj = {
+                                b,
 
-        	                    /*
-        	                    */ //
-        	                    a
-        	                }
-        	            ",
+                                /*
+                                */ //
+                                a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b: 1
+                            var obj = {
+                                b: 1
 
-        	                    ,a: 2
-        	                };
-        	            ",
+                                ,a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                    b: 1
-        	                // comment before comma
+                            var obj = {
+                                b: 1
+                            // comment before comma
 
-        	                ,
-        	                a: 2
-        	                };
-        	            ",
+                            ,
+                            a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  a,
-        	                  ...z,
-        	                  c
-        	                }
-        	            ",
+                              a,
+                              ...z,
+                              c
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 },
         (
             "
-        	                var obj = {
-        	                  b,
+                            var obj = {
+                              b,
 
-        	                  [foo()]: [
+                              [foo()]: [
 
-        	                  ],
-        	                  a
-        	                }
-        	            ",
+                              ],
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
     ];
@@ -1033,137 +1033,137 @@ fn test() {
         ),
         (
             "
-        	                var obj = {
-        	                    b: 1,
-        	                    c: 2,
-        	                    a: 3
-        	                }
-        	            ",
+                            var obj = {
+                                b: 1,
+                                c: 2,
+                                a: 3
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": false }])),
         ),
         (
             "
-        	                let obj = {
-        	                    b
+                            let obj = {
+                                b
 
-        	                    ,a
-        	                }
-        	            ",
+                                ,a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": false }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                 var obj = {
-        	                    b: 1,
-        	                    c () {
+                             var obj = {
+                                b: 1,
+                                c () {
 
-        	                    },
-        	                    a: 3
-        	                  }
-        	             ",
+                                },
+                                a: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-        	                 var obj = {
-        	                    a: 1,
-        	                    b: 2,
+                             var obj = {
+                                a: 1,
+                                b: 2,
 
-        	                    z () {
+                                z () {
 
-        	                    },
-        	                    y: 3
-        	                  }
-        	             ",
+                                },
+                                y: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                 var obj = {
-			                    b: 1,
-			                    c () {
-			                    },
-			                    // comment
-			                    a: 3
-			                  }
-			             ",
+                             var obj = {
+                                b: 1,
+                                c () {
+                                },
+                                // comment
+                                a: 3
+                              }
+                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                  b,
-			                  [a+b]: 1,
-			                  a // sort-keys: 'a' should be before 'b'
-			                }
-			            ",
+                            var obj = {
+                              b,
+                              [a+b]: 1,
+                              a // sort-keys: 'a' should be before 'b'
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                    c: 1,
-			                    d: 2,
-			                    // comment
-			                    // comment
-			                    b() {
-			                    },
-			                    e: 4
-			                }
-			            ",
+                            var obj = {
+                                c: 1,
+                                d: 2,
+                                // comment
+                                // comment
+                                b() {
+                                },
+                                e: 4
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                var obj = {
-			                    c: 1,
-			                    d: 2,
+                            var obj = {
+                                c: 1,
+                                d: 2,
 
-			                    z() {
+                                z() {
 
-			                    },
-			                    f: 3,
-			                    /*
+                                },
+                                f: 3,
+                                /*
 
 
-			                    */
-			                    [a+b]: 1,
-			                    b: 1,
-			                    e: 2
-			                }
-			            ",
+                                */
+                                [a+b]: 1,
+                                b: 1,
+                                e: 2
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             r#"
-			                var obj = {
-			                    b: "/*",
-			                    a: "*/",
-			                }
-			            "#,
+                            var obj = {
+                                b: "/*",
+                                a: "*/",
+                            }
+                        "#,
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ),
         (
             "
-			                var obj = {
-			                    b: 1
-			                    // comment before comma
-			                    , a: 2
-			                };
-			            ",
+                            var obj = {
+                                b: 1
+                                // comment before comma
+                                , a: 2
+                            };
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 6 },
         (
             "
-			                let obj = {
-			                  b,
-			                  [foo()]: [
-			                  // ↓ this blank is inside a property and therefore should not count
+                            let obj = {
+                              b,
+                              [foo()]: [
+                              // ↓ this blank is inside a property and therefore should not count
 
-			                  ],
-			                  a
-			                }
-			            ",
+                              ],
+                              a
+                            }
+                        ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
     ];

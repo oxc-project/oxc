@@ -65,23 +65,22 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
     state::TransformState,
 };
 
-pub struct AsyncToGenerator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-    executor: AsyncGeneratorExecutor<'a, 'ctx>,
+pub struct AsyncToGenerator<'a> {
+    executor: AsyncGeneratorExecutor<'a>,
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
+impl AsyncToGenerator<'_> {
+    pub fn new() -> Self {
+        Self { executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -137,7 +136,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
             && !function.is_typescript_syntax()
         {
             let new_statement = self.executor.transform_function_declaration(function, ctx);
-            self.ctx.statement_injector.insert_after(stmt, new_statement);
+            ctx.state.statement_injector.insert_after(stmt, new_statement);
         }
     }
 
@@ -151,7 +150,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
     }
 }
 
-impl<'a> AsyncToGenerator<'a, '_> {
+impl<'a> AsyncToGenerator<'a> {
     /// Check whether the current node is inside an async function.
     fn is_inside_async_function(ctx: &TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
@@ -179,21 +178,21 @@ impl<'a> AsyncToGenerator<'a, '_> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(ctx.ast))))
+            Some(ctx.ast.expression_yield(expr.span, false, Some(expr.argument.take_in(ctx.ast))))
         } else {
             None
         }
     }
 }
 
-pub struct AsyncGeneratorExecutor<'a, 'ctx> {
+pub struct AsyncGeneratorExecutor<'a> {
     helper: Helper,
-    ctx: &'ctx TransformCtx<'a>,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
-    pub fn new(helper: Helper, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { helper, ctx }
+impl<'a> AsyncGeneratorExecutor<'a> {
+    pub fn new(helper: Helper) -> Self {
+        Self { helper, _marker: std::marker::PhantomData }
     }
 
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
@@ -303,6 +302,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         wrapper_function: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let span = wrapper_function.span;
         let body = wrapper_function.body.take().unwrap();
         let params = wrapper_function.params.take_in_box(ctx.ast);
         let id = wrapper_function.id.take();
@@ -392,7 +392,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         // Construct the IIFE
         let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
-        ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
+        ctx.ast.expression_call_with_pure(span, callee, NONE, ctx.ast.vec(), false, true)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.
@@ -466,6 +466,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let arrow_span = arrow.span;
         let mut body = arrow.body.take_in_box(ctx.ast);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
@@ -529,7 +530,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
             // Construct the IIFE
             let callee = Expression::FunctionExpression(wrapper_function);
-            ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
+            ctx.ast.expression_call(arrow_span, callee, NONE, ctx.ast.vec(), false)
         }
     }
 
@@ -691,7 +692,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        self.ctx.helper_call_expr(self.helper, SPAN, arguments, ctx)
+        helper_call_expr(self.helper, SPAN, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

@@ -38,6 +38,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
 
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
+   ╭─[img_redundant_alt.tsx:1:18]
+ 1 │ <PicVersionThree alt='this is a photo.' />;
+   ·                  ───
+   ╰────
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don't need to use the words `image`, `photo`, or `picture` (or any specified custom words) in the `alt` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='PhOtO of friend.' />;
    ·      ───

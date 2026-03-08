@@ -191,114 +191,114 @@ fn test() {
     let pass = vec![
         (
             "
-			      <script setup>
-			        /* ✓ GOOD */
-			        defineEmits({ notify: null })
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineEmits({ notify: null })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        /* ✓ GOOD */
-			        defineEmits(['notify'])
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineEmits(['notify'])
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			        /* ✓ GOOD */
-			        defineEmits<(e: 'notify')=>void>()
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                    /* ✓ GOOD */
+                    defineEmits<(e: 'notify')=>void>()
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") }      },
         (
             "
-        	      <script>
-        	        const def = { notify: null }
-        	      </script>
-        	      <script setup>
-        	        /* ✓ GOOD */
-        	        defineEmits(def)
-        	      </script>
-        	      ",
+                  <script>
+                    const def = { notify: null }
+                  </script>
+                  <script setup>
+                    /* ✓ GOOD */
+                    defineEmits(def)
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script setup>
-			        defineEmits({
-			          notify (payload) {
-			            return typeof payload === 'string'
-			          }
-			        })
-			      </script>
-			      ",
+                  <script setup>
+                    defineEmits({
+                      notify (payload) {
+                        return typeof payload === 'string'
+                      }
+                    })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			      import type { PropType } from 'vue';
+                  <script setup lang="ts">
+                  import type { PropType } from 'vue';
 
-			      type X = string;
+                  type X = string;
 
-			      const props = defineProps({
-			        myProp: Array as PropType<string[]>,
-			      });
+                  const props = defineProps({
+                    myProp: Array as PropType<string[]>,
+                  });
 
-			      const emit = defineEmits({
-			        myProp: (x: X) => true,
-			      });
-			      </script>
-			      "#,
+                  const emit = defineEmits({
+                    myProp: (x: X) => true,
+                  });
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             r#"
-			      <script setup lang="ts">
-			      import type { PropType } from 'vue';
+                  <script setup lang="ts">
+                  import type { PropType } from 'vue';
 
-			      const strList = ['a', 'b', 'c']
-			      const str = 'abc'
+                  const strList = ['a', 'b', 'c']
+                  const str = 'abc'
 
-			      const props = defineProps({
-			        myProp: Array as PropType<typeof strList>,
-			      });
+                  const props = defineProps({
+                    myProp: Array as PropType<typeof strList>,
+                  });
 
-			      const emit = defineEmits({
-			        myProp: (x: typeof str) => true,
-			      });
-			      </script>
-			      "#,
+                  const emit = defineEmits({
+                    myProp: (x: typeof str) => true,
+                  });
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             "
-			      <script setup>
-			      import { propsDef, emitsDef } from './defs';
+                  <script setup>
+                  import { propsDef, emitsDef } from './defs';
 
-			      defineProps(propsDef);
-			      defineEmits(emitsDef);
-			      </script>",
+                  defineProps(propsDef);
+                  defineEmits(emitsDef);
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -317,9 +317,9 @@ fn test() {
         ),
         (
             "
-			      <script setup>
-			      defineEmits(unResolvedVariable);
-			      </script>",
+                  <script setup>
+                  defineEmits(unResolvedVariable);
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -329,51 +329,51 @@ fn test() {
     let fail = vec![
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        const def = { notify: null }
-			        defineEmits(def)
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    const def = { notify: null }
+                    defineEmits(def)
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             r#"
-			      <script setup lang="ts">
-			        /* ✗ BAD */
-			        defineEmits<(e: 'notify')=>void>({ submit: null })
-			      </script>
-			      "#,
+                  <script setup lang="ts">
+                    /* ✗ BAD */
+                    defineEmits<(e: 'notify')=>void>({ submit: null })
+                  </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") }      },
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        defineEmits({ notify: null })
-			        defineEmits({ submit: null })
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    defineEmits({ notify: null })
+                    defineEmits({ submit: null })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-        	      <script>
-        	      export default {
-        	        emits: ['notify']
-        	      }
-        	      </script>
-        	      <script setup>
-        	        /* ✗ BAD */
-        	        defineEmits({ submit: null })
-        	      </script>
-        	      ",
+                  <script>
+                  export default {
+                    emits: ['notify']
+                  }
+                  </script>
+                  <script setup>
+                    /* ✗ BAD */
+                    defineEmits({ submit: null })
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -394,11 +394,11 @@ fn test() {
         ),
         (
             "
-			      <script setup>
-			        /* ✗ BAD */
-			        defineEmits()
-			      </script>
-			      ",
+                  <script setup>
+                    /* ✗ BAD */
+                    defineEmits()
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),

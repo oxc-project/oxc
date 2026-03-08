@@ -10,7 +10,10 @@ use crate::{
 };
 
 fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("extra non-null assertion").with_label(span)
+    OxcDiagnostic::warn("extra non-null assertion")
+        .with_help("Remove the redundant non-null assertion operator (`!`).")
+        .with_note("The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -66,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoExtraNonNullAssertion,
     typescript,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for NoExtraNonNullAssertion {
@@ -137,6 +141,103 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.n; }",
         "function foo(bar?: { n: number }) { return (bar)!?.n; }",
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
+    ];
+
+    // TODO: Implement fixer.
+    #[expect(clippy::useless_vec)]
+    let _fix = vec![
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!.bar;
+                  ",
+        ),
+        (
+            "
+            function foo(bar: number | undefined) {
+              const bar: number = bar!!;
+            }
+                  ",
+            "
+            function foo(bar: number | undefined) {
+              const bar: number = bar!;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return bar!?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return bar?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return bar!?.();
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return bar?.();
+            }
+                  ",
+        ),
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = (foo!)!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = (foo)!.bar;
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar!)?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)!?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar!)?.();
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.();
+            }
+                  ",
+        ),
     ];
 
     Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::PLUGIN, pass, fail)

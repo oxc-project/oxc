@@ -10,17 +10,17 @@
    : ^
    `----
 
-  x eslint-compat-plugin(create-once): before hook:
-  | createOnce call count: 1
-  | this === rule: true
+  x eslint-compat-plugin(create-once): after hook:
+  | identNum: 2
   | filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let a, b;
    : ^
    `----
 
-  x eslint-compat-plugin(create-once): after hook:
-  | identNum: 2
+  x eslint-compat-plugin(create-once): before hook:
+  | createOnce call count: 1
+  | this === rule: true
   | filename: <fixture>/files/1.js
    ,-[files/1.js:1:1]
  1 | let a, b;
@@ -162,17 +162,17 @@
    : ^
    `----
 
-  x eslint-compat-plugin(create-once): before hook:
-  | createOnce call count: 1
-  | this === rule: true
+  x eslint-compat-plugin(create-once): after hook:
+  | identNum: 2
   | filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let c, d;
    : ^
    `----
 
-  x eslint-compat-plugin(create-once): after hook:
-  | identNum: 2
+  x eslint-compat-plugin(create-once): before hook:
+  | createOnce call count: 1
+  | this === rule: true
   | filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let c, d;
@@ -186,14 +186,14 @@
    : ^
    `----
 
-  x eslint-compat-plugin(create-once-before-false): before hook:
+  x eslint-compat-plugin(create-once-before-false): after hook:
   | filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let c, d;
    : ^
    `----
 
-  x eslint-compat-plugin(create-once-before-false): after hook:
+  x eslint-compat-plugin(create-once-before-false): before hook:
   | filename: <fixture>/files/2.js
    ,-[files/2.js:1:1]
  1 | let c, d;

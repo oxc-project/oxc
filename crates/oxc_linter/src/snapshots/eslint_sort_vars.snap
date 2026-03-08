@@ -7,12 +7,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var b, a
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:9]
  1 │ var b , a
    ·         ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:2:8]
@@ -20,135 +22,158 @@ source: crates/oxc_linter/src/tester.rs
  2 │                 a;
    ·                 ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var b=10, a=20;
    ·           ────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var b=10, a=20, c=30;
    ·           ────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:13]
  1 │ var all=10, a = 1
    ·             ─────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var b, c, a, d
    ·           ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var c, d, a, b
    ·           ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var a, A;
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var a, B;
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var a, B, c;
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var B, a;
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var B, A, c;
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var d, a, [b, c] = {};
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var d, a, [b, {x: {c, e}}] = {};
    ·        ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:16]
  1 │ var {} = 1, b, a
    ·                ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var b=10, a=f();
    ·           ─────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:11]
  1 │ var b=10, a=b;
    ·           ───
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:12]
  1 │ var b = 0, a = `${b}`;
    ·            ──────────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:12]
  1 │ var b = 0, a = `${f()}`
    ·            ────────────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:19]
  1 │ var b = 0, c = b, a;
    ·                   ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:19]
  1 │ var b = 0, c = 0, a = b + c;
    ·                   ─────────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:20]
  1 │ var b = f(), c, d, a;
    ·                    ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:25]
  1 │ var b = `${f()}`, c, d, a;
    ·                         ─
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).
 
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var c, a = b = 0
    ·        ─────────
    ╰────
+  help: Sort variable declarations in ascending order (case-sensitive by default).

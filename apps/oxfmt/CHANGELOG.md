@@ -4,6 +4,87 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 4888a99 oxfmt/lsp: Support other schemes beside `file://` and `untitled://` (#19872) (Sysix)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 8e3842d oxfmt: Avoid embedded TSFN crash by returning errors as data (take2) (#19806) (Yuji Sugiura)
+- e540585 oxfmt: Support tailwind sort for CSS/LESS/SCSS (#19803) (leaysgur)
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
+## [0.35.0] - 2026-02-23
+
+### 🚀 Features
+
+- 984dc07 oxfmt: Strip `"experimental"SortXxx` prefix (#19567) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d7b63a4 oxfmt: Update API types for `sortPackageJsonOptions` (#19569) (leaysgur)
+
+## [0.34.0] - 2026-02-19
+
+### 🚀 Features
+
+- 652c346 oxfmt/lsp: Support `untitled://` schema (#19287) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 6c61b70 oxfmt: Fix outdated `sortImports.groups` doc comments (#19513) (leaysgur)
+
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f084ea6 oxfmt: Explicitly pass `process.env` for the forked process (#19380) (Long Ho)
+- 90ec3d2 oxfmt: Update tailwind plugin which fixes crash on non-js file (#19353) (leaysgur)
+
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🚀 Features
+
+- 91e67f3 oxfmt/lsp: Do not refer `.gitignore` (#19206) (leaysgur)
+- 23c0753 oxfmt: Better Tailwind CSS intergration (#19000) (Dunqing)
+- 87a920d ci: Add riscv64 and s390x napi targets for oxlint and oxfmt (#19039) (Boshen)
+- 8536dce oxfmt: Support glob for CLI paths (#18976) (leaysgur)
+- 6ee2d59 oxfmt: Use `oxc_formatter` in js-in-xxx part (#18373) (leaysgur)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 119348b oxfmt: Resolve relative -> absolute path for other usages (#19207) (leaysgur)
+- 5f4cf30 oxfmt: Fix relative -> absolute path resolution with refactoring (#19202) (leaysgur)
+- dc335d1 oxfmt: Temporarily disable the override for js-in-xxx (not ready yet) (#19043) (leaysgur)
+- 5ea5bda oxfmt: Handle `isSingleJsxExpressionStatementInMarkdown()` check for js-in-md (#19042) (leaysgur)
+- 9b205b3 formatter: Fallback to formatting when package.json sorting fails (#19097) (Boshen)
+- f39c96c oxfmt: Do not override `babel-ts` for now (#19030) (leaysgur)
+- ef5bfab oxfmt: Workaround Node.js ThreadsafeFunction cleanup race condition (#18980) (Boshen)
+
+### ⚡ Performance
+
+- 467724f oxfmt: Collect glob paths in parallel (#19209) (leaysgur)
+- 61e0efa oxfmt: Use RwLock instead of Mutex for TSFN handles (#18888) (Boshen)
+
 ## [0.28.0] - 2026-02-02
 
 ### 🚀 Features

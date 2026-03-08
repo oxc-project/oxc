@@ -45,12 +45,14 @@
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
 mod compressor;
-mod ctx;
+pub(crate) mod generated;
 mod keep_var;
+mod minifier_traverse;
 mod options;
 mod peephole;
 mod state;
 mod symbol_value;
+mod traverse_context;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
@@ -63,6 +65,10 @@ use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
+pub(crate) use crate::generated::traverse::Traverse;
+#[doc(hidden)]
+pub(crate) use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+pub(crate) use crate::traverse_context::ReusableMinifierTraverseCtx as ReusableTraverseCtx;
 pub use crate::{compressor::Compressor, options::*};
 
 #[derive(Debug, Clone)]

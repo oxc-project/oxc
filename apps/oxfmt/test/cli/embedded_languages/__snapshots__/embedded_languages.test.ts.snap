@@ -336,6 +336,18 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Template literals with \${} substitutions
+const dynamic = css\`color:\${color};background:\${bg};\`;
+
+const styledWithExpr = styled.button\`font-size:\${size}px;color:\${theme.primary};\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`transition:width \${duration},height \${duration},top \${duration},left \${duration};\`;
+
+const multiProp = css\`
+  .card {padding:\${spacing}px;margin:\${margin};border:1px solid \${borderColor};box-shadow:0 2px 4px \${shadowColor};}
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -403,6 +415,35 @@ const styledJsx = (
   \`}</style>
 );
 
+// Template literals with \${} substitutions
+const dynamic = css\`
+  color: \${color};
+  background: \${bg};
+\`;
+
+const styledWithExpr = styled.button\`
+  font-size: \${size}px;
+  color: \${theme.primary};
+\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`
+  transition:
+    width \${duration},
+    height \${duration},
+    top \${duration},
+    left \${duration};
+\`;
+
+const multiProp = css\`
+  .card {
+    padding: \${spacing}px;
+    margin: \${margin};
+    border: 1px solid \${borderColor};
+    box-shadow: 0 2px 4px \${shadowColor};
+  }
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -424,6 +465,21 @@ const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
 const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
 
+// graphql() function call - single argument (hugging layout)
+const schema = graphql(\`query{users{name email}}\`);
+
+// graphql() function call - multiple arguments
+graphql(schema, \`mutation MarkReadNotificationMutation($input:MarkReadNotificationData!){markReadNotification(data:$input){notification{seenState}}}\`)
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
+
 --- AFTER ----------
 // Tagged template literals with gql and graphql tags
 const query = gql\`
@@ -443,6 +499,40 @@ const mutation = graphql\`
     }
   }
 \`;
+
+// graphql() function call - single argument (hugging layout)
+const schema =
+  graphql(\`
+    query {
+      users {
+        name
+        email
+      }
+    }
+  \`);
+
+// graphql() function call - multiple arguments
+graphql(
+  schema,
+  \`
+    mutation MarkReadNotificationMutation($input: MarkReadNotificationData!) {
+      markReadNotification(data: $input) {
+        notification {
+          seenState
+        }
+      }
+    }
+  \`,
+);
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
 
 --------------------"
 `;
@@ -529,6 +619,18 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Template literals with \${} substitutions
+const dynamic = css\`color:\${color};background:\${bg};\`;
+
+const styledWithExpr = styled.button\`font-size:\${size}px;color:\${theme.primary};\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`transition:width \${duration},height \${duration},top \${duration},left \${duration};\`;
+
+const multiProp = css\`
+  .card {padding:\${spacing}px;margin:\${margin};border:1px solid \${borderColor};box-shadow:0 2px 4px \${shadowColor};}
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -596,6 +698,35 @@ const styledJsx = (
   \`}</style>
 );
 
+// Template literals with \${} substitutions
+const dynamic = css\`
+  color: \${color};
+  background: \${bg};
+\`;
+
+const styledWithExpr = styled.button\`
+  font-size: \${size}px;
+  color: \${theme.primary};
+\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`
+  transition:
+    width \${duration},
+    height \${duration},
+    top \${duration},
+    left \${duration};
+\`;
+
+const multiProp = css\`
+  .card {
+    padding: \${spacing}px;
+    margin: \${margin};
+    border: 1px solid \${borderColor};
+    box-shadow: 0 2px 4px \${shadowColor};
+  }
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -614,6 +745,21 @@ graphql.js
 const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
 const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
+
+// graphql() function call - single argument (hugging layout)
+const schema = graphql(\`query{users{name email}}\`);
+
+// graphql() function call - multiple arguments
+graphql(schema, \`mutation MarkReadNotificationMutation($input:MarkReadNotificationData!){markReadNotification(data:$input){notification{seenState}}}\`)
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
 
 --- AFTER ----------
 // Tagged template literals with gql and graphql tags
@@ -634,6 +780,40 @@ const mutation = graphql\`
     }
   }
 \`;
+
+// graphql() function call - single argument (hugging layout)
+const schema =
+  graphql(\`
+    query {
+      users {
+        name
+        email
+      }
+    }
+  \`);
+
+// graphql() function call - multiple arguments
+graphql(
+  schema,
+  \`
+    mutation MarkReadNotificationMutation($input: MarkReadNotificationData!) {
+      markReadNotification(data: $input) {
+        notification {
+          seenState
+        }
+      }
+    }
+  \`,
+);
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
 
 --------------------
 
@@ -820,6 +1000,18 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Template literals with \${} substitutions
+const dynamic = css\`color:\${color};background:\${bg};\`;
+
+const styledWithExpr = styled.button\`font-size:\${size}px;color:\${theme.primary};\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`transition:width \${duration},height \${duration},top \${duration},left \${duration};\`;
+
+const multiProp = css\`
+  .card {padding:\${spacing}px;margin:\${margin};border:1px solid \${borderColor};box-shadow:0 2px 4px \${shadowColor};}
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -850,6 +1042,18 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Template literals with \${} substitutions
+const dynamic = css\`color:\${color};background:\${bg};\`;
+
+const styledWithExpr = styled.button\`font-size:\${size}px;color:\${theme.primary};\`;
+
+// printWidth-aware: long transition values should break across lines
+const animated = styled.div\`transition:width \${duration},height \${duration},top \${duration},left \${duration};\`;
+
+const multiProp = css\`
+  .card {padding:\${spacing}px;margin:\${margin};border:1px solid \${borderColor};box-shadow:0 2px 4px \${shadowColor};}
+\`;
+
 // Multi-line templates with inherited indentation (dedent before formatting)
 const documented = styled.div\`
   /**
@@ -869,11 +1073,44 @@ const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
 const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
 
+// graphql() function call - single argument (hugging layout)
+const schema = graphql(\`query{users{name email}}\`);
+
+// graphql() function call - multiple arguments
+graphql(schema, \`mutation MarkReadNotificationMutation($input:MarkReadNotificationData!){markReadNotification(data:$input){notification{seenState}}}\`)
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
+
 --- AFTER ----------
 // Tagged template literals with gql and graphql tags
 const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
 const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
+
+// graphql() function call - single argument (hugging layout)
+const schema = graphql(\`query{users{name email}}\`);
+
+// graphql() function call - multiple arguments
+graphql(
+  schema,
+  \`mutation MarkReadNotificationMutation($input:MarkReadNotificationData!){markReadNotification(data:$input){notification{seenState}}}\`,
+);
+
+// graphql() function call - empty
+graphql(\`\`);
+
+// Non-target: gql() is NOT recognized as a function call pattern
+gql(\`query{users{name}}\`);
+
+// Non-target: other function names
+someFunction(\`query{users{name}}\`);
 
 --------------------
 

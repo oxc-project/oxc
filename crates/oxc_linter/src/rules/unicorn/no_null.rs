@@ -270,6 +270,7 @@ fn test() {
         ("Object.create(null as any)", None),
         ("Object.create(null, {foo: {value:1}})", None),
         ("let insertedNode = parentNode.insertBefore(newNode, null)", None),
+        ("let insertedNode = parentNode?.insertBefore(newNode, null)", None),
         ("const foo = \"null\";", None),
         ("Object.create()", None),
         ("Object.create(bar)", None),
@@ -390,23 +391,23 @@ fn test() {
         ("() => { return null as any as typeof Array }", "() => { return  }", None),
         (
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return null;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return null;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return ;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return ;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             None,
         ),
     ];

@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add assertion(s) in this Test
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:4:10]
+   ╭─[expect_expect.tsx:4:13]
  3 │ 
  4 │             checkThat('this passes', () => {
    ·             ─────────
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add assertion(s) in this Test
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:4:10]
+   ╭─[expect_expect.tsx:4:13]
  3 │ 
  4 │             checkThat.skip('this passes', () => {
    ·             ──────────────

@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'oxc-project/oxc'
     name: Check version
     runs-on: ubuntu-slim
     outputs:
@@ -132,7 +133,7 @@ jobs:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Install cross
-        uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2.67.18
+        uses: taiki-e/install-action@68675c5a5f1a6950c3975d33f3ae0ef155e5bf3d # v2.68.15
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -168,7 +169,7 @@ jobs:
           cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxlint-bindings-${{ matrix.target }}
@@ -188,7 +189,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxlint-${{ matrix.target }}
@@ -242,7 +243,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxlint-bindings-x86_64-unknown-freebsd
@@ -256,7 +257,7 @@ jobs:
           archive_name: rust-oxlint-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxlint-x86_64-unknown-freebsd
@@ -272,12 +273,13 @@ jobs:
       id-token: write # for `pnpm publish --provenance`
     env:
       package_path: npm/oxlint
+      plugins_package_path: npm/oxlint-plugins
       npm_dir: npm/oxlint-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: artifacts
           pattern: oxlint-bindings-*
@@ -299,19 +301,24 @@ jobs:
 
       - name: Copy dist files to @oxlint/plugins npm package
         run: |
-          cp apps/oxlint/dist-pkg-plugins/* npm/oxlint-plugins/
+          cp apps/oxlint/dist-pkg-plugins/* ${plugins_package_path}/
 
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
-        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+        run: |
+          node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+          node .github/scripts/check-npm-packages.js "${plugins_package_path}"
 
       - name: Trusted Publish
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # Publish `oxlint` package
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          # Publish `@oxlint/plugins` package
+          pnpm publish ${plugins_package_path}/ ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
@@ -408,7 +415,7 @@ jobs:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Install cross
-        uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # v2.67.18
+        uses: taiki-e/install-action@68675c5a5f1a6950c3975d33f3ae0ef155e5bf3d # v2.68.15
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -444,7 +451,7 @@ jobs:
           cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxfmt-bindings-${{ matrix.target }}
@@ -464,7 +471,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxfmt-${{ matrix.target }}
@@ -518,7 +525,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxfmt-bindings-x86_64-unknown-freebsd
@@ -532,7 +539,7 @@ jobs:
           archive_name: rust-oxfmt-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxfmt-x86_64-unknown-freebsd
@@ -553,7 +560,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: artifacts
           pattern: oxfmt-bindings-*
@@ -607,7 +614,7 @@ jobs:
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
         with:
           restore-cache: false
           tools: cargo-release-oxc
@@ -643,7 +650,7 @@ jobs:
           git tag oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} ${{ github.sha }}
           git push origin oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} oxfmt_v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: ./release-artifacts
           pattern: rust-*
@@ -720,7 +727,7 @@ jobs:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Bump oxc-project/eslint-plugin-oxlint
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
@@ -729,7 +736,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/oxlint-migrate
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
@@ -738,7 +745,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/mirrors-oxlint
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml

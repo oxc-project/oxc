@@ -4,295 +4,296 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = 10n
+ 1 │ const a: bigint = 10n;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = -10n
+ 1 │ const a: bigint = -10n;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = BigInt(10)
+ 1 │ const a: bigint = BigInt(10);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = -BigInt(10)
+ 1 │ const a: bigint = -BigInt(10);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = BigInt?.(10)
+ 1 │ const a: bigint = BigInt?.(10);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: bigint = -BigInt?.(10)
+ 1 │ const a: bigint = -BigInt?.(10);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: boolean = false
+ 1 │ const a: boolean = false;
    ·        ─────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: boolean = true
+ 1 │ const a: boolean = true;
    ·        ─────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: boolean = Boolean(null)
+ 1 │ const a: boolean = Boolean(null);
    ·        ─────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: boolean = Boolean?.(null)
+ 1 │ const a: boolean = Boolean?.(null);
    ·        ─────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: boolean = !0
+ 1 │ const a: boolean = !0;
    ·        ─────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = 10
+ 1 │ const a: number = 10;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = +10
+ 1 │ const a: number = +10;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = -10
+ 1 │ const a: number = -10;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = Number("1")
+ 1 │ const a: number = Number('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = +Number("1")
+ 1 │ const a: number = +Number('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = -Number("1")
+ 1 │ const a: number = -Number('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = Number?.("1")
+ 1 │ const a: number = Number?.('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = +Number?.("1")
+ 1 │ const a: number = +Number?.('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = -Number?.("1")
+ 1 │ const a: number = -Number?.('1');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = Infinity
+ 1 │ const a: number = Infinity;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = +Infinity
+ 1 │ const a: number = +Infinity;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = -Infinity
+ 1 │ const a: number = -Infinity;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = NaN
+ 1 │ const a: number = NaN;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = +NaN
+ 1 │ const a: number = +NaN;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: number = -NaN
+ 1 │ const a: number = -NaN;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: null = null
+ 1 │ const a: null = null;
    ·        ──────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: RegExp = /a/
+ 1 │ const a: RegExp = /a/;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: RegExp = RegExp("a")
+ 1 │ const a: RegExp = RegExp('a');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: RegExp = RegExp?.("a")
+ 1 │ const a: RegExp = RegExp?.('a');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: RegExp = new RegExp("a")
+ 1 │ const a: RegExp = new RegExp('a');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: string = "str"
+ 1 │ const a: string = "str";
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: string = 'str'
+ 1 │ const a: string = 'str';
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: string = `str`
+ 1 │ const a: string = `str`;
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: string = String(1)
+ 1 │ const a: string = String(1);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: string = String?.(1)
+ 1 │ const a: string = String?.(1);
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: symbol = Symbol("a")
+ 1 │ const a: symbol = Symbol('a');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: symbol = Symbol?.("a")
+ 1 │ const a: symbol = Symbol?.('a');
    ·        ────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: undefined = undefined
+ 1 │ const a: undefined = undefined;
    ·        ───────────
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
- 1 │ const a: undefined = void someValue
+ 1 │ const a: undefined = void someValue;
    ·        ───────────
    ╰────
   help: Remove the type annotation
 
-  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
-   ╭─[no_inferrable_types.tsx:1:14]
- 1 │ const fn = (a: number = 5) => {};
-   ·              ────────
-   ╰────
-  help: Remove the type annotation
-
-  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
+  × TS(1015): A parameter cannot have a question mark and an initializer.
    ╭─[no_inferrable_types.tsx:1:13]
- 1 │ class A { a!: number = 1; }
-   ·             ────────
+ 1 │ const fn = (a?: number = 5) => {};
+   ·             ─
+   ╰────
+
+  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
+   ╭─[no_inferrable_types.tsx:3:17]
+ 2 │             class A {
+ 3 │               a!: number = 1;
+   ·                 ────────
+ 4 │             }
    ╰────
   help: Remove the type annotation
 
@@ -318,35 +319,46 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
-   ╭─[no_inferrable_types.tsx:2:16]
- 1 │ class Foo {
- 2 │               a: number = 5;
-   ·                ────────
- 3 │               b: boolean = true;
-   ╰────
-  help: Remove the type annotation
-
-  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:3:16]
- 2 │               a: number = 5;
- 3 │               b: boolean = true;
-   ·                ─────────
- 4 │               c: string = 'foo';
+ 2 │             class Foo {
+ 3 │               a: number = 5;
+   ·                ────────
+ 4 │               b: boolean = true;
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:4:16]
- 3 │               b: boolean = true;
- 4 │               c: string = 'foo';
-   ·                ────────
- 5 │             }
+ 3 │               a: number = 5;
+ 4 │               b: boolean = true;
+   ·                ─────────
+ 5 │               c: string = 'foo';
    ╰────
   help: Remove the type annotation
 
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
-   ╭─[no_inferrable_types.tsx:1:33]
- 1 │ class Foo { constructor(public a: boolean = true) {} }
-   ·                                 ─────────
+   ╭─[no_inferrable_types.tsx:5:16]
+ 4 │               b: boolean = true;
+ 5 │               c: string = 'foo';
+   ·                ────────
+ 6 │             }
+   ╰────
+  help: Remove the type annotation
+
+  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
+   ╭─[no_inferrable_types.tsx:3:35]
+ 2 │             class Foo {
+ 3 │               constructor(public a: boolean = true) {}
+   ·                                   ─────────
+ 4 │             }
+   ╰────
+  help: Remove the type annotation
+
+  ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
+   ╭─[no_inferrable_types.tsx:3:25]
+ 2 │             class Foo {
+ 3 │               accessor a: number = 5;
+   ·                         ────────
+ 4 │             }
    ╰────
   help: Remove the type annotation

@@ -7,48 +7,56 @@ source: crates/oxc_linter/src/tester.rs
  1 │ switch (a) { case 1: let x = 1; break; }
    ·                      ───
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: let x = 2; break; }
    ·                       ───
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:22]
  1 │ switch (a) { case 1: const x = 1; break; }
    ·                      ─────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: const x = 2; break; }
    ·                       ─────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:22]
  1 │ switch (a) { case 1: function f() {} break; }
    ·                      ────────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: function f() {} break; }
    ·                       ────────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:22]
  1 │ switch (a) { case 1: class C {} break; }
    ·                      ─────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:23]
  1 │ switch (a) { default: class C {} break; }
    ·                       ─────
    ╰────
+  help: Wrap the case body in braces `{}` to create an explicit block scope for the lexical declaration.
 
   × Using declaration cannot appear in the bare case statement.
    ╭─[no_case_declarations.tsx:1:23]

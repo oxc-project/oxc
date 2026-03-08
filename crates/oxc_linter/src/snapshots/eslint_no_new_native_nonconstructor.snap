@@ -7,21 +7,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var foo = new Symbol('foo');
    ·           ───
    ╰────
+  help: Remove the `new` operator to call `Symbol` as a function.
 
   ⚠ eslint(no-new-native-nonconstructor): `Symbol` cannot be called as a constructor.
    ╭─[no_new_native_nonconstructor.tsx:1:59]
  1 │ function bar() { return function Symbol() {}; } var baz = new Symbol('baz');
    ·                                                           ───
    ╰────
+  help: Remove the `new` operator to call `Symbol` as a function.
 
   ⚠ eslint(no-new-native-nonconstructor): `BigInt` cannot be called as a constructor.
    ╭─[no_new_native_nonconstructor.tsx:1:11]
  1 │ var foo = new BigInt(9007199254740991);
    ·           ───
    ╰────
+  help: Remove the `new` operator to call `BigInt` as a function.
 
   ⚠ eslint(no-new-native-nonconstructor): `BigInt` cannot be called as a constructor.
    ╭─[no_new_native_nonconstructor.tsx:1:59]
  1 │ function bar() { return function BigInt() {}; } var baz = new BigInt(9007199254740991);
    ·                                                           ───
    ╰────
+  help: Remove the `new` operator to call `BigInt` as a function.

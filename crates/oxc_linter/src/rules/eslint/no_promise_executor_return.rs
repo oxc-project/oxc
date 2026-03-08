@@ -116,6 +116,7 @@ declare_oxc_lint!(
     NoPromiseExecutorReturn,
     eslint,
     pedantic,
+    pending,
     config = NoPromiseExecutorReturnConfig,
 );
 

@@ -26,6 +26,70 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────────
    ╰────
 
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:2:24]
+ 1 │     () => {
+ 2 │ ╭─▶                 return new // 1
+ 3 │ ╰─▶                     Symbol();
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:3:21]
+ 2 │                     return (
+ 3 │ ╭─▶                     new // 2
+ 4 │ ╰─▶                         Symbol()
+ 5 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:2:24]
+ 1 │     () => {
+ 2 │ ╭─▶                 return new // 3
+ 3 │ ╰─▶                     (Symbol);
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:2:24]
+ 1 │     () => {
+ 2 │ ╭─▶                 return new // 4
+ 3 │ ╰─▶                     Symbol;
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:3:21]
+ 2 │                     return (
+ 3 │ ╭─▶                     new // 5
+ 4 │ ╰─▶                         Symbol
+ 5 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:3:21]
+ 2 │                     return (
+ 3 │ ╭─▶                     new // 6
+ 4 │ ╰─▶                         (Symbol)
+ 5 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:2:23]
+ 1 │     () => {
+ 2 │ ╭─▶                 throw new // 1
+ 3 │ ╰─▶                     Symbol();
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `Symbol()` instead of `new Symbol()`
+   ╭─[new_for_builtins.tsx:2:24]
+ 1 │ () => {
+ 2 │                 return new /**/ Symbol;
+   ·                        ───────────────
+ 3 │             }
+   ╰────
+
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `String()` instead of `new String()`
    ╭─[new_for_builtins.tsx:1:1]
  1 │ new globalThis.String()
@@ -74,12 +138,6 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
 
-  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Array()` instead of `Array()`
-   ╭─[new_for_builtins.tsx:1:1]
- 1 │ globalThis.Array()
-   · ──────────────────
-   ╰────
-
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Object()` instead of `Object()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Object()
@@ -114,12 +172,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = DataView()
    ·             ──────────
-   ╰────
-
-  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
-   ╭─[new_for_builtins.tsx:1:13]
- 1 │ const foo = Date()
-   ·             ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Error()` instead of `Error()`
@@ -273,17 +325,47 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Array()` instead of `Array()`
-    ╭─[new_for_builtins.tsx:13:12]
- 12 │                 }
- 13 │                 return Array()
+    ╭─[new_for_builtins.tsx:12:24]
+ 11 │                 }
+ 12 │                 return Array()
     ·                        ───────
- 14 │             }
+ 13 │             }
     ╰────
 
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Map()` instead of `Map()`
-    ╭─[new_for_builtins.tsx:19:12]
- 18 │                 }
- 19 │                 return Map()
+    ╭─[new_for_builtins.tsx:18:24]
+ 17 │                 }
+ 18 │                 return Map()
     ·                        ─────
- 20 │             }
+ 19 │             }
     ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = Date();
+   ·             ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = globalThis.Date();
+   ·             ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = Date(/*comment*/);
+   ·             ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = globalThis/*comment*/.Date();
+   ·             ────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Date()` instead of `Date()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = Date(bar);
+   ·             ─────────
+   ╰────

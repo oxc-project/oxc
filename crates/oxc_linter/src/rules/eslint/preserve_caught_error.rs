@@ -7,7 +7,10 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{
+    GetSpan, Span,
+    ident::{AGGREGATE_ERROR, ERROR, TYPE_ERROR},
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -198,13 +201,13 @@ fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
         return false;
     };
 
-    ident.is_global_reference_name(Ident::new_const("Error"), ctx.scoping())
-        || ident.is_global_reference_name(Ident::new_const("TypeError"), ctx.scoping())
+    ident.is_global_reference_name(ERROR, ctx.scoping())
+        || ident.is_global_reference_name(TYPE_ERROR, ctx.scoping())
         || is_aggregate_error(ident, ctx)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference_name(Ident::new_const("AggregateError"), ctx.scoping())
+    ident.is_global_reference_name(AGGREGATE_ERROR, ctx.scoping())
 }
 
 fn has_cause_property(
@@ -241,11 +244,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
         return false;
     };
 
-    let Some(reference_id) = ident.reference_id.get() else {
-        return false;
-    };
-
-    let reference = ctx.scoping().get_reference(reference_id);
+    let reference = ctx.scoping().get_reference(ident.reference_id());
     let Some(symbol_id) = reference.symbol_id() else {
         return false;
     };

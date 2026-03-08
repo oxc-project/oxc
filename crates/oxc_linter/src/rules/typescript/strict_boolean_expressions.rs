@@ -26,9 +26,6 @@ pub struct StrictBooleanExpressionsConfig {
     pub allow_string: bool,
     /// Whether to allow number types in boolean contexts (checks for non-zero numbers).
     pub allow_number: bool,
-    /// Whether to allow this rule to run without `strictNullChecks` enabled.
-    /// This is not recommended as the rule may produce incorrect results.
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
 }
 
 impl Default for StrictBooleanExpressionsConfig {
@@ -42,7 +39,6 @@ impl Default for StrictBooleanExpressionsConfig {
             allow_nullable_object: true,
             allow_string: true,
             allow_number: true,
-            allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: false,
         }
     }
 }
@@ -122,6 +118,7 @@ declare_oxc_lint!(
     StrictBooleanExpressions(tsgolint),
     typescript,
     pedantic,
+    pending,
     config = StrictBooleanExpressionsConfig,
 );
 

@@ -157,45 +157,137 @@ fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx:
 #[test]
 fn test() {
     use crate::tester::Tester;
-    // see: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-obj-calls.js
 
     let pass = vec![
-        "const m = Math;",
-        "let m = foo.Math();",
-        "JSON.parse(\"{}\")",
-        "Math.PI * 2 * (r * r)",
-        "bar.Atomics(foo)",
-        // reference test cases
-        "let j = JSON;
-        function foo() {
-            let j = x => x;
-            return x();
-        }",
+        "var x = Math;",
+        "var x = Math.random();",
+        "var x = Math.PI;",
+        "var x = foo.Math();",
+        "var x = new foo.Math();",
+        "var x = new Math.foo;",
+        "var x = new Math.foo();",
+        "JSON.parse(foo)",
+        "new JSON.parse",
+        "Reflect.get(foo, 'x')", // { "ecmaVersion": 6 },
+        "new Reflect.foo(a, b)", // { "ecmaVersion": 6 },
+        "Atomics.load(foo, 0)",  // { "ecmaVersion": 2017 },
+        "new Atomics.foo()",     // { "ecmaVersion": 2017 },
+        "new Intl.Segmenter()",  // { "ecmaVersion": 2015 },
+        "Intl.foo()",            // { "ecmaVersion": 2015 },
+        // These only pass in ESLint because they're relying on older versions of ES, which we do not support.
+        // "globalThis.Math();",         // { "ecmaVersion": 6 },
+        // "var x = globalThis.Math();", // { "ecmaVersion": 6 },
+        // "f(globalThis.Math());",                 // { "ecmaVersion": 6 },
+        // "globalThis.Math().foo;",                // { "ecmaVersion": 6 },
+        // "var x = globalThis.JSON();",            // { "ecmaVersion": 6 },
+        // "x = globalThis.JSON(str);",             // { "ecmaVersion": 6 },
+        // "globalThis.Math( globalThis.JSON() );", // { "ecmaVersion": 6 },
+        // "var x = globalThis.Reflect();",         // { "ecmaVersion": 6 },
+        // "var x = globalThis.Reflect();",         // { "ecmaVersion": 2017 },
+        // "/*globals Reflect: true*/ globalThis.Reflect();", // { "ecmaVersion": 2017 }, // We do not support inline globals.
+        // "var x = globalThis.Atomics();", // { "ecmaVersion": 2017 },
+        // "var x = globalThis.Atomics();", // { "ecmaVersion": 2017, "globals": { "Atomics": false } },
+        // "var x = globalThis.Intl();",    // { "ecmaVersion": 2015 },
+        // non-existing variables
+        // "/*globals Math: off*/ Math();", // We do not support inline globals.
+        // "/*globals Math: off*/ new Math();", // We do not support inline globals.
+        // We don't support these cases because they depend on configuring globals or defaulting to a very old version of the ES spec, so they won't pass in Oxlint:
+        // "JSON();",     // { "globals": { "JSON": "off" }, },
+        // "new JSON();", // { "globals": { "JSON": "off" }, },
+        // "Reflect();",
+        // "Atomics();",
+        // "new Reflect();",
+        // "new Atomics();",
+        // "Atomics();", // { "ecmaVersion": 6 },
+        // "Intl()",
+        // "new Intl()",
+
+        // Shadowing
+        "var Math; Math();",
+        "var Math; new Math();",
+        "let JSON; JSON();",                          // { "ecmaVersion": 2015 },
+        "let JSON; new JSON();",                      // { "ecmaVersion": 2015 },
+        "if (foo) { const Reflect = 1; Reflect(); }", // { "ecmaVersion": 6 },
+        "if (foo) { const Reflect = 1; new Reflect(); }", // { "ecmaVersion": 6 },
+        "function foo(Math) { Math(); }",
+        "function foo(JSON) { new JSON(); }",
+        "function foo(Atomics) { Atomics(); }", // { "ecmaVersion": 2017 },
+        "function foo() { if (bar) { let Atomics; if (baz) { new Atomics(); } } }", // { "ecmaVersion": 2017 },
+        "function foo() { var JSON; JSON(); }",
+        "function foo() { var Atomics = bar(); var baz = Atomics(5); }", // { "globals": { "Atomics": false } },
+        r#"var construct = typeof Reflect !== "undefined" ? Reflect.construct : undefined; construct();"#, // { "globals": { "Reflect": false } },
+        "function foo(Intl) { Intl(); }", // { "ecmaVersion": 2015 },
+        "if (foo) { const Intl = 1; Intl(); }", // { "ecmaVersion": 2015 },
+        "if (foo) { const Intl = 1; new Intl(); }", // { "ecmaVersion": 2015 }
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         "{const Math = () => {}; {let obj = new Math();}}",
         "{const {parse} = JSON;parse('{}')}",
         // https://github.com/oxc-project/oxc/issues/4389
         r"export const getConfig = getConfig;
         getConfig();",
+        // reference test cases
+        "let j = JSON;
+        function foo() {
+            let j = x => x;
+            return x();
+        }",
     ];
 
     let fail = vec![
-        "let newObj = new JSON();",
-        "let obj = JSON();",
-        "let obj = globalThis.JSON()",
-        "new JSON",
-        "const foo = x => new JSON()",
-        "let newObj = new Math();",
-        "let obj = Math();",
-        "let obj = new Math().foo;",
-        "let obj = new globalThis.Math()",
-        "let newObj = new Atomics();",
-        "let obj = Atomics();",
-        "let newObj = new Intl();",
-        "let obj = Intl();",
-        "let newObj = new Reflect();",
-        "let obj = Reflect();",
-        "function d() { JSON.parse(Atomics()) }",
+        "Math();",
+        "var x = Math();",
+        "f(Math());",
+        "Math().foo;",
+        "new Math;",
+        "new Math();",
+        "new Math(foo);",
+        "new Math().foo;",
+        "(new Math).foo();",
+        "var x = JSON();",
+        "x = JSON(str);",
+        "var x = new JSON();",
+        "Math( JSON() );",
+        "var x = Reflect();",     // { "ecmaVersion": 6 },
+        "var x = new Reflect();", // { "ecmaVersion": 6 },
+        "var x = Reflect();",     // { "ecmaVersion": 2017 },
+        // "/*globals Reflect: true*/ Reflect();", // We do not support inline globals.
+        // "/*globals Reflect: true*/ new Reflect();", // We do not support inline globals.
+        "var x = Atomics();",     // { "ecmaVersion": 2017 },
+        "var x = new Atomics();", // { "ecmaVersion": 2017 },
+        "var x = Atomics();",     // { "ecmaVersion": 2020 },
+        "var x = Atomics();",     // { "globals": { "Atomics": false } },
+        "var x = new Atomics();", // { "globals": { "Atomics": "writable" } },
+        "var x = Intl();",        // { "ecmaVersion": 2015 },
+        "var x = new Intl();",    // { "ecmaVersion": 2015 },
+        // "/*globals Intl: true*/ Intl();", // We do not support inline globals.
+        // "/*globals Intl: true*/ new Intl();", // We do not support inline globals.
+        "var x = globalThis.Math();",     // { "ecmaVersion": 2020 },
+        "var x = new globalThis.Math();", // { "ecmaVersion": 2020 },
+        "f(globalThis.Math());",          // { "ecmaVersion": 2020 },
+        "globalThis.Math().foo;",         // { "ecmaVersion": 2020 },
+        "new globalThis.Math().foo;",     // { "ecmaVersion": 2020 },
+        "var x = globalThis.JSON();",     // { "ecmaVersion": 2020 },
+        "x = globalThis.JSON(str);",      // { "ecmaVersion": 2020 },
+        "globalThis.Math( globalThis.JSON() );", // { "ecmaVersion": 2020 },
+        "var x = globalThis.Reflect();",  // { "ecmaVersion": 2020 },
+        "var x = new globalThis.Reflect;", // { "ecmaVersion": 2020 },
+        // "/*globals Reflect: true*/ Reflect();", // { "ecmaVersion": 2020 }, // We do not support inline globals.
+        "var x = globalThis.Atomics();", // { "ecmaVersion": 2020 },
+        "var x = globalThis.Intl();",    // { "ecmaVersion": 2020 },
+        "var x = new globalThis.Intl;",  // { "ecmaVersion": 2020 },
+        // "/*globals Intl: true*/ Intl();", // { "ecmaVersion": 2020 }, // We do not support inline globals.
+        // TODO: Fix these.
+        // "var foo = bar ? baz: JSON; foo();",
+        // "var foo = bar ? baz: JSON; new foo();",
+        // "var foo = bar ? baz: globalThis.JSON; foo();", // { "ecmaVersion": 2020 },
+        // "var foo = bar ? baz: globalThis.JSON; new foo();", // { "ecmaVersion": 2020 },
+        // "var foo = window.Atomics; foo();", // { "ecmaVersion": 2020, "globals": globals.browser },
+        // "var foo = window.Atomics; new foo;", // { "ecmaVersion": 2020, "globals": globals.browser },
+        // "var foo = window.Intl; foo();", // { "ecmaVersion": 2020, "globals": globals.browser },
+        // "var foo = window.Intl; new foo;", // { "ecmaVersion": 2020, "globals": globals.browser },
+        "var x = globalThis?.Reflect();", // { "ecmaVersion": 2020 },
+        // TODO: Fix.
+        // "var x = (globalThis?.Reflect)();", // { "ecmaVersion": 2020 }
         // reference test cases
         "let j = JSON; j();",
         "let a = JSON; let b = a; let c = b; b();",

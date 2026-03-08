@@ -1,6 +1,6 @@
 import { getErrorMessage } from "./utils/utils.ts";
 import { isDefineConfig } from "./package/config.ts";
-import { JSONStringify } from "./utils/globals.ts";
+import { DateNow, JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
   path: string;
@@ -84,14 +84,16 @@ function validateConfigExtends(root: object): void {
  * Uses native Node.js TypeScript support to import the config files.
  * Each config file should have a default export containing the oxlint configuration.
  *
- * @param paths - Array of absolute paths to oxlint.config.ts files
+ * @param paths - Array of absolute paths to JavaScript/TypeScript config files
  * @returns JSON-stringified result with all configs or error
  */
 export async function loadJsConfigs(paths: string[]): Promise<string> {
   try {
+    const cacheKey = DateNow();
     const results = await Promise.allSettled(
       paths.map(async (path): Promise<JsConfigResult> => {
-        const fileUrl = new URL(`file://${path}`);
+        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
+        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
         const module = await import(fileUrl.href);
         const config = module.default;
 

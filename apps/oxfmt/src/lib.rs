@@ -1,5 +1,9 @@
+#[cfg(feature = "napi")]
+mod api;
 pub mod cli;
 mod core;
+#[cfg(feature = "napi")]
+mod prettier_compat;
 
 pub use core::oxfmtrc;
 #[cfg(feature = "napi")]

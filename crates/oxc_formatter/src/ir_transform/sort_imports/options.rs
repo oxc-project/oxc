@@ -1,6 +1,8 @@
 use std::fmt;
 use std::str::FromStr;
 
+pub use super::group_config::{GroupEntry, GroupName, ImportModifier, ImportSelector};
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
     /// Partition imports by newlines.
@@ -28,12 +30,36 @@ pub struct SortImportsOptions {
     /// Defaults to `["~/", "@/"]`.
     pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
-    /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
+    /// Each inner `Vec` represents a group, and multiple entries in the same `Vec` are treated as one.
     /// Default is defined by [`default_groups()`] function.
-    pub groups: Vec<Vec<String>>,
+    pub groups: Vec<Vec<GroupEntry>>,
     /// Define your own groups for matching very specific imports.
     /// Default is `[]`.
     pub custom_groups: Vec<CustomGroupDefinition>,
+    /// Per-boundary newline overrides.
+    /// `newline_boundary_overrides[i]` = override for boundary between `groups[i]` and `groups[i+1]`.
+    /// `None` means "use global `newlines_between`".
+    pub newline_boundary_overrides: Vec<Option<bool>>,
+}
+
+impl SortImportsOptions {
+    /// Validate option combinations.
+    ///
+    /// # Errors
+    /// Returns an error message if incompatible options are set.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.partition_by_newline && self.newline_boundary_overrides.iter().any(Option::is_some)
+        {
+            return Err("`partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
+        }
+        if self.partition_by_newline && self.newlines_between {
+            return Err(
+                "`partitionByNewline: true` and `newlinesBetween: true` cannot be used together"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
 }
 
 impl Default for SortImportsOptions {
@@ -48,6 +74,7 @@ impl Default for SortImportsOptions {
             internal_pattern: default_internal_patterns(),
             groups: default_groups(),
             custom_groups: vec![],
+            newline_boundary_overrides: vec![],
         }
     }
 }
@@ -97,8 +124,14 @@ impl fmt::Display for SortOrder {
 
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct CustomGroupDefinition {
+    /// The identifier used in `groups` representing this group.
     pub group_name: String,
+    /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
+    /// When specified, the import's selectors must contain this selector.
+    pub selector: Option<ImportSelector>,
+    /// When specified, **all** modifiers must be present in the import's modifiers (AND logic).
+    pub modifiers: Vec<ImportModifier>,
 }
 
 /// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.
@@ -107,14 +140,17 @@ pub fn default_internal_patterns() -> Vec<String> {
 }
 
 /// Returns default groups configuration for organizing imports.
-pub fn default_groups() -> Vec<Vec<String>> {
+pub fn default_groups() -> Vec<Vec<GroupEntry>> {
+    // Helper to parse a predefined group name
+    let p = |s: &str| GroupEntry::Predefined(GroupName::parse(s).unwrap());
+    // Our policy: far to near, built-in to local.
+    // Do not include side effects by default, it may break some code if moved around.
     vec![
-        vec!["type-import".to_string()],
-        vec!["value-builtin".to_string(), "value-external".to_string()],
-        vec!["type-internal".to_string()],
-        vec!["value-internal".to_string()],
-        vec!["type-parent".to_string(), "type-sibling".to_string(), "type-index".to_string()],
-        vec!["value-parent".to_string(), "value-sibling".to_string(), "value-index".to_string()],
-        vec!["unknown".to_string()],
+        vec![p("builtin")],
+        vec![p("external")],
+        vec![p("internal"), p("subpath")],
+        vec![p("parent"), p("sibling"), p("index")],
+        vec![p("style")],
+        vec![GroupEntry::Unknown],
     ]
 }

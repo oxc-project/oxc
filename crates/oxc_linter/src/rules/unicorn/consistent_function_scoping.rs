@@ -121,13 +121,13 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// function doFoo(foo) {
-    /// 	{
-    /// 		function doBar(bar) {
-    /// 			return bar;
-    /// 		}
-    /// 	}
+    ///   {
+    ///     function doBar(bar) {
+    ///       return bar;
+    ///     }
+    ///   }
     ///
-    /// 	return foo;
+    ///   return foo;
     /// }
     /// ```
     ///
@@ -135,11 +135,11 @@ declare_oxc_lint!(
     ///
     /// ```jsx
     /// function doFoo(FooComponent) {
-    /// 	function Bar() {
-    /// 		return <FooComponent/>;
-    /// 	}
+    ///   function Bar() {
+    ///     return <FooComponent/>;
+    ///   }
     ///
-    /// 	return Bar;
+    ///   return Bar;
     /// };
     /// ```
     ///
@@ -147,9 +147,9 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// (function () {
-    /// 	function doFoo(bar) {
-    /// 		return bar;
-    /// 	}
+    ///   function doFoo(bar) {
+    ///       return bar;
+    ///   }
     /// })();
     /// ```
     ConsistentFunctionScoping,

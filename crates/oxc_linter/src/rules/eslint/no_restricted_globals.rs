@@ -15,7 +15,9 @@ fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiag
         format!("Unexpected use of '{global_name}'. {suffix}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_label(span)
+    OxcDiagnostic::warn(warn_text)
+        .with_help("Use a local variable or function parameter instead of the restricted global.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]

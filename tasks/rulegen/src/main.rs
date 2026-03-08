@@ -182,11 +182,25 @@ impl TestCase {
 }
 
 fn format_code_snippet(code: &str) -> String {
+    // Replace tabs at the start of lines with spaces (4 spaces per tab)
+    let code = if code.contains('\t') {
+        code.lines()
+            .map(|line| {
+                let trimmed_start = line.trim_start_matches('\t');
+                let tab_count = line.len() - trimmed_start.len();
+                format!("{}{}", "    ".repeat(tab_count), trimmed_start)
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        code.to_string()
+    };
+
     let code = if code.contains('\n') {
         // Use 12 space characters after the newline.
         code.replace('\n', "\n            ").replace('\\', "\\\\").replace('\"', "\\\"")
     } else {
-        code.to_string()
+        code
     };
 
     // Do not quote strings that are already raw strings

@@ -18,28 +18,39 @@ use oxc_compat::{ESFeature, EngineTargets};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
+/// Feature toggles selected from target runtime support.
 pub struct EnvOptions {
     /// Specify what module code is generated.
     pub module: Module,
 
+    /// RegExp transform options.
     pub regexp: RegExpOptions,
 
+    /// ES2015 transform options.
     pub es2015: ES2015Options,
 
+    /// ES2016 transform options.
     pub es2016: ES2016Options,
 
+    /// ES2017 transform options.
     pub es2017: ES2017Options,
 
+    /// ES2018 transform options.
     pub es2018: ES2018Options,
 
+    /// ES2019 transform options.
     pub es2019: ES2019Options,
 
+    /// ES2020 transform options.
     pub es2020: ES2020Options,
 
+    /// ES2021 transform options.
     pub es2021: ES2021Options,
 
+    /// ES2022 transform options.
     pub es2022: ES2022Options,
 
+    /// ES2026 transform options.
     pub es2026: ES2026Options,
 }
 

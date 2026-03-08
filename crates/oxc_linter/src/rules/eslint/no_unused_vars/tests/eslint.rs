@@ -17,7 +17,7 @@ fn fixme() {
         ("function foo(cb) { cb = (0, function(a) { cb(1 + a); }); } foo();", None),
         (
             "let x = [];
-        	x = x.concat(x);",
+             x = x.concat(x);",
             None,
         ), // { "ecmaVersion": 2015 },
     ];
@@ -913,7 +913,7 @@ fn test() {
         // TODO
         (
             "const [ a, _b ] = items;
-        	console.log(a+_b);",
+             console.log(a+_b);",
             Some(
                 serde_json::json!([{ "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
             ),

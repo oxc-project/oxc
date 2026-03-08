@@ -363,46 +363,46 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"const a = 10n", None),
-        (r"const a = -10n", None),
-        (r"const a = BigInt(10)", None),
-        (r"const a = -BigInt(10)", None),
-        (r"const a = BigInt?.(10)", None),
-        (r"const a = -BigInt?.(10)", None),
-        (r"const a = false", None),
-        (r"const a = true", None),
-        (r"const a = Boolean(null)", None),
-        (r"const a = Boolean?.(null)", None),
-        (r"const a = !0", None),
-        (r"const a = 10", None),
-        (r"const a = +10", None),
-        (r"const a = -10", None),
-        (r#"const a = Number("1")"#, None),
-        (r#"const a = +Number("1")"#, None),
-        (r#"const a = -Number("1")"#, None),
-        (r#"const a = Number?.("1")"#, None),
-        (r#"const a = +Number?.("1")"#, None),
-        (r#"const a = -Number?.("1")"#, None),
-        (r"const a = Infinity", None),
-        (r"const a = +Infinity", None),
-        (r"const a = -Infinity", None),
-        (r"const a = NaN", None),
-        (r"const a = +NaN", None),
-        (r"const a = -NaN", None),
-        (r"const a = null", None),
-        (r"const a = /a/", None),
-        (r#"const a = RegExp("a")"#, None),
-        (r#"const a = RegExp?.("a")"#, None),
-        (r#"const a = new RegExp("a")"#, None),
-        (r#"const a = "str""#, None),
-        (r"const a = 'str'", None),
-        (r"const a = `str`", None),
-        (r"const a = String(1)", None),
-        (r"const a = String?.(1)", None),
-        (r#"const a = Symbol("a")"#, None),
-        (r#"const a = Symbol?.("a")"#, None),
-        (r"const a = undefined", None),
-        (r"const a = void someValue", None),
+        ("const a = 10n;", None),
+        ("const a = -10n;", None),
+        ("const a = BigInt(10);", None),
+        ("const a = -BigInt(10);", None),
+        ("const a = BigInt?.(10);", None),
+        ("const a = -BigInt?.(10);", None),
+        ("const a = false;", None),
+        ("const a = true;", None),
+        ("const a = Boolean(null);", None),
+        ("const a = Boolean?.(null);", None),
+        ("const a = !0;", None),
+        ("const a = 10;", None),
+        ("const a = +10;", None),
+        ("const a = -10;", None),
+        ("const a = Number('1');", None),
+        ("const a = +Number('1');", None),
+        ("const a = -Number('1');", None),
+        ("const a = Number?.('1');", None),
+        ("const a = +Number?.('1');", None),
+        ("const a = -Number?.('1');", None),
+        ("const a = Infinity;", None),
+        ("const a = +Infinity;", None),
+        ("const a = -Infinity;", None),
+        ("const a = NaN;", None),
+        ("const a = +NaN;", None),
+        ("const a = -NaN;", None),
+        ("const a = null;", None),
+        ("const a = /a/;", None),
+        ("const a = RegExp('a');", None),
+        ("const a = RegExp?.('a');", None),
+        ("const a = new RegExp('a');", None),
+        (r#"const a = "str";"#, None), // Single and double-quotes both work.
+        ("const a = 'str';", None),
+        ("const a = `str`;", None),
+        ("const a = String(1);", None),
+        ("const a = String?.(1);", None),
+        ("const a = Symbol('a');", None),
+        ("const a = Symbol?.('a');", None),
+        ("const a = undefined;", None),
+        ("const a = void someValue;", None),
         ("const fn = (a = 5, b = true, c = 'foo') => {};", None),
         ("const fn = function (a = 5, b = true, c = 'foo') {};", None),
         ("function fn(a = 5, b = true, c = 'foo') {}", None),
@@ -413,10 +413,19 @@ fn test() {
               a = 5;
               b = true;
               c = 'foo';
-            }",
+            }
+                ",
             None,
         ),
         ("class Foo { readonly a: number = 5; }", None),
+        (
+            "
+            class Foo {
+              accessor a = 5;
+            }
+                ",
+            None,
+        ),
         ("const a: any = 5;", None),
         ("const fn = function (a: any = 5, b: any = true, c: any = 'foo') {};", None),
         (
@@ -437,7 +446,16 @@ fn test() {
               a: number = 5;
               b: boolean = true;
               c: string = 'foo';
-            }",
+            }
+                  ",
+            Some(serde_json::json!([{ "ignoreProperties": true }])),
+        ),
+        (
+            "
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
             Some(serde_json::json!([{ "ignoreProperties": true }])),
         ),
         (
@@ -446,73 +464,94 @@ fn test() {
               a?: number = 5;
               b?: boolean = true;
               c?: string = 'foo';
-            }",
+            }
+                  ",
             None,
         ),
         ("class Foo { constructor(public a = true) {} }", None),
     ];
 
     let fail = vec![
-        (r"const a: bigint = 10n", None),
-        (r"const a: bigint = -10n", None),
-        (r"const a: bigint = BigInt(10)", None),
-        (r"const a: bigint = -BigInt(10)", None),
-        (r"const a: bigint = BigInt?.(10)", None),
-        (r"const a: bigint = -BigInt?.(10)", None),
-        (r"const a: boolean = false", None),
-        (r"const a: boolean = true", None),
-        (r"const a: boolean = Boolean(null)", None),
-        (r"const a: boolean = Boolean?.(null)", None),
-        (r"const a: boolean = !0", None),
-        (r"const a: number = 10", None),
-        (r"const a: number = +10", None),
-        (r"const a: number = -10", None),
-        (r#"const a: number = Number("1")"#, None),
-        (r#"const a: number = +Number("1")"#, None),
-        (r#"const a: number = -Number("1")"#, None),
-        (r#"const a: number = Number?.("1")"#, None),
-        (r#"const a: number = +Number?.("1")"#, None),
-        (r#"const a: number = -Number?.("1")"#, None),
-        (r"const a: number = Infinity", None),
-        (r"const a: number = +Infinity", None),
-        (r"const a: number = -Infinity", None),
-        (r"const a: number = NaN", None),
-        (r"const a: number = +NaN", None),
-        (r"const a: number = -NaN", None),
-        (r"const a: null = null", None),
-        (r"const a: RegExp = /a/", None),
-        (r#"const a: RegExp = RegExp("a")"#, None),
-        (r#"const a: RegExp = RegExp?.("a")"#, None),
-        (r#"const a: RegExp = new RegExp("a")"#, None),
-        (r#"const a: string = "str""#, None),
-        (r"const a: string = 'str'", None),
-        (r"const a: string = `str`", None),
-        (r"const a: string = String(1)", None),
-        (r"const a: string = String?.(1)", None),
-        (r#"const a: symbol = Symbol("a")"#, None),
-        (r#"const a: symbol = Symbol?.("a")"#, None),
-        (r"const a: undefined = undefined", None),
-        (r"const a: undefined = void someValue", None),
+        ("const a: bigint = 10n;", None),
+        ("const a: bigint = -10n;", None),
+        ("const a: bigint = BigInt(10);", None),
+        ("const a: bigint = -BigInt(10);", None),
+        ("const a: bigint = BigInt?.(10);", None),
+        ("const a: bigint = -BigInt?.(10);", None),
+        ("const a: boolean = false;", None),
+        ("const a: boolean = true;", None),
+        ("const a: boolean = Boolean(null);", None),
+        ("const a: boolean = Boolean?.(null);", None),
+        ("const a: boolean = !0;", None),
+        ("const a: number = 10;", None),
+        ("const a: number = +10;", None),
+        ("const a: number = -10;", None),
+        ("const a: number = Number('1');", None),
+        ("const a: number = +Number('1');", None),
+        ("const a: number = -Number('1');", None),
+        ("const a: number = Number?.('1');", None),
+        ("const a: number = +Number?.('1');", None),
+        ("const a: number = -Number?.('1');", None),
+        ("const a: number = Infinity;", None),
+        ("const a: number = +Infinity;", None),
+        ("const a: number = -Infinity;", None),
+        ("const a: number = NaN;", None),
+        ("const a: number = +NaN;", None),
+        ("const a: number = -NaN;", None),
+        ("const a: null = null;", None),
+        ("const a: RegExp = /a/;", None),
+        ("const a: RegExp = RegExp('a');", None),
+        ("const a: RegExp = RegExp?.('a');", None),
+        ("const a: RegExp = new RegExp('a');", None),
+        (r#"const a: string = "str";"#, None), // This one exists to ensure single and double quotes both work.
+        ("const a: string = 'str';", None),
+        ("const a: string = `str`;", None),
+        ("const a: string = String(1);", None),
+        ("const a: string = String?.(1);", None),
+        ("const a: symbol = Symbol('a');", None),
+        ("const a: symbol = Symbol?.('a');", None),
+        ("const a: undefined = undefined;", None),
+        ("const a: undefined = void someValue;", None),
         (
-            "const fn = (a: number = 5) => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false }])),
+            "const fn = (a?: number = 5) => {};",
+            Some(serde_json::json!([ { "ignoreParameters": false, }, ])),
         ),
-        ("class A { a!: number = 1; }", Some(serde_json::json!([{ "ignoreProperties": false }]))),
+        (
+            "
+            class A {
+              a!: number = 1;
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
+        ),
         (
             "const fn = (a: number = 5, b: boolean = true, c: string = 'foo') => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
-            "class Foo {
+            "
+            class Foo {
               a: number = 5;
               b: boolean = true;
               c: string = 'foo';
             }",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
-            "class Foo { constructor(public a: boolean = true) {} }",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            "
+            class Foo {
+              constructor(public a: boolean = true) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
+        ),
+        (
+            "
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
+            None,
         ),
     ];
 
@@ -556,65 +595,70 @@ fn test() {
         ("const a: symbol = Symbol?.('a');", "const a = Symbol?.('a');", None),
         ("const a: undefined = undefined;", "const a = undefined;", None),
         ("const a: undefined = void someValue;", "const a = void someValue;", None),
+        // (
+        //     "const fn = (a?: number = 5) => {};",
+        //     "const fn = (a = 5) => {};",
+        //     Some(serde_json::json!([ { "ignoreParameters": false, }, ])),
+        // ),
         (
             "
-			class A {
-			  a!: number = 1;
-			}
-			      ",
+            class A {
+              a!: number = 1;
+            }
+                  ",
             "
-			class A {
-			  a = 1;
-			}
-			      ",
-            Some(serde_json::json!([{ "ignoreProperties": false }])),
+            class A {
+              a = 1;
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreProperties": false, }, ])),
         ),
         (
             "const fn = (a: number = 5, b: boolean = true, c: string = 'foo') => {};",
             "const fn = (a = 5, b = true, c = 'foo') => {};",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
             "
-			class Foo {
-			  a: number = 5;
-			  b: boolean = true;
-			  c: string = 'foo';
-			}
-			      ",
+            class Foo {
+              a: number = 5;
+              b: boolean = true;
+              c: string = 'foo';
+            }
+                  ",
             "
-			class Foo {
-			  a = 5;
-			  b = true;
-			  c = 'foo';
-			}
-			      ",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            class Foo {
+              a = 5;
+              b = true;
+              c = 'foo';
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
             "
-			class Foo {
-			  constructor(public a: boolean = true) {}
-			}
-			      ",
+            class Foo {
+              constructor(public a: boolean = true) {}
+            }
+                  ",
             "
-			class Foo {
-			  constructor(public a = true) {}
-			}
-			      ",
-            Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false }])),
+            class Foo {
+              constructor(public a = true) {}
+            }
+                  ",
+            Some(serde_json::json!([ { "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
         (
             "
-			class Foo {
-			  accessor a: number = 5;
-			}
-			      ",
+            class Foo {
+              accessor a: number = 5;
+            }
+                  ",
             "
-			class Foo {
-			  accessor a = 5;
-			}
-			      ",
+            class Foo {
+              accessor a = 5;
+            }
+                  ",
             None,
         ),
     ];

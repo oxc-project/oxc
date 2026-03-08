@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_static_only_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use an object instead of a class with only static members.")
+    OxcDiagnostic::warn("Use an object instead of a `class` with only `static` members.")
         .with_label(span)
 }
 
@@ -16,39 +16,39 @@ pub struct NoStaticOnlyClass;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow classes that only have static members.
+    /// Disallow `class` declarations that exclusively contain `static` members.
     ///
     /// ### Why is this bad?
     ///
-    /// A class with only static members could just be an object instead.
+    /// A `class` with only `static` members should just be defined as an object instead.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class A {
-    ///     static a() {}
+    ///   static a() {}
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// class A {
-    ///     static a() {}
+    ///   static a() {}
     ///
-    ///     constructor() {}
+    ///   constructor() {}
     /// }
     /// ```
     /// ```javascript
     /// const X = {
-    ///     foo: false,
-    ///     bar() {}
+    ///   foo: false,
+    ///   bar() {}
     /// };
     /// ```
     /// ```javascript
     /// class X {
-    ///     static #foo = false; // private field
-    ///     static bar() {}
+    ///   static #foo = false; // private field
+    ///   static bar() {}
     /// }
     /// ```
     NoStaticOnlyClass,
@@ -225,49 +225,99 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"class A {}",
-        r"const A = class {}",
-        r"class A extends B { static a() {}; }",
-        r"const A = class extends B { static a() {}; }",
-        r"class A { a() {} }",
-        r"class A { constructor() {} }",
-        r"class A { get a() {} }",
-        r"class A { set a(value) {} }",
-        r"class A3 { static #a() {}; }",
-        r"class A3 { static #a = 1; }",
-        r"const A3 = class { static #a() {}; }",
-        r"const A3 = class { static #a = 1; }",
-        r"class A2 { static {}; }",
-        r"class A { static #a() {}; }",
-        r"class A { static #a = 1; }",
-        r"const A = class { static #a() {}; }",
-        r"const A = class { static #a = 1; }",
-        r"@decorator class A { static  a = 1; }",
-        r"class A { public static a = 1; }",
-        r"class A { private static a = 1; }",
-        r"class A { static readonly a = 1; }",
-        r"class A { static declare a = 1; }",
-        r"class A { static {}; }",
-        r"class A2 { static #a() {}; }",
-        r"class A2 { static #a = 1; }",
-        r"const A2 = class { static #a() {}; }",
-        r"const A2 = class { static #a = 1; }",
-        r"class A2 { static {}; }",
-        r"class X { static foo = 2; accessor y: string = 'hello'; }",
-        r"class X { static foo = 2; static { } }",
+        "class A {}",
+        "const A = class {}",
+        "class A extends B { static a() {}; }",
+        "const A = class extends B { static a() {}; }",
+        "class A { a() {} }",
+        "class A { constructor() {} }",
+        "class A { get a() {} }",
+        "class A { set a(value) {} }",
+        "class A3 { static #a() {}; }",
+        "class A3 { static #a = 1; }",
+        "const A3 = class { static #a() {}; }",
+        "const A3 = class { static #a = 1; }",
+        "class A2 { static {}; }",
+        "class A { static #a() {}; }",
+        "class A { static #a = 1; }",
+        "const A = class { static #a() {}; }",
+        "const A = class { static #a = 1; }",
+        "@decorator class A { static  a = 1; }",
+        "class A { public static a = 1; }",
+        "class A { private static a = 1; }",
+        "class A { static readonly a = 1; }",
+        // "class A { static declare a = 1; }",
+        "class A { static {}; }",
+        "class A2 { static #a() {}; }",
+        "class A2 { static #a = 1; }",
+        "const A2 = class { static #a() {}; }",
+        "const A2 = class { static #a = 1; }",
+        "class A2 { static {}; }",
+        "class X { static foo = 2; accessor y: string = 'hello'; }",
+        "class X { static foo = 2; static { } }",
     ];
 
     let fail = vec![
-        r"class A { static a() {}; }",
-        r"class A { static a() {} }",
-        r"const A = class A { static a() {}; }",
-        r"const A = class { static a() {}; }",
-        r"class A { static constructor() {}; }",
-        r"export default class A { static a() {}; }",
-        r"export default class { static a() {}; }",
-        r"export class A { static a() {}; }",
-        r"class A {static [this.a] = 1}",
-        r"class A { static a() {} }",
+        "class A { static a() {}; }",
+        "class A { static a() {} }",
+        "const A = class A { static a() {}; }",
+        "const A = class { static a() {}; }",
+        "class A { static constructor() {}; }",
+        "export default class A { static a() {}; }",
+        "export default class { static a() {}; }",
+        "export class A { static a() {}; }",
+        "function a() {
+                return class
+                {
+                    static a() {}
+                }
+            }",
+        "function a() {
+                return class /* comment */
+                {
+                    static a() {}
+                }
+            }",
+        "function a() {
+                return class // comment
+                {
+                    static a() {}
+                }
+            }",
+        "class A {static a(){}}
+            class B extends A {}",
+        "class A {static a(){}}
+            console.log(typeof A)",
+        "class A {static a(){}}
+            const a = new A;",
+        "class A {
+                static a
+                static b = 1
+                static [c] = 2
+                static [d]
+                static e() {}
+                static [f]() {}
+            }",
+        "class A {
+                static a;
+                static b = 1;
+                static [((c))] = ((2));
+                static [d];
+                static e() {};
+                static [f]() {};
+            }",
+        "/* */
+            class /* */ A /* */ {
+                /* */ static /* */ a /* */; /* */
+                /* */ static /* */ b /* */ = /* */ 1 /* */; /* */
+                /* */ static /* */ [ /* */ c /* */ ] /* */ = /* */ 2 /* */;  /* */
+                /* */ static /* */ [/* */ d /* */] /* */;  /* */
+                /* */ static /* */ /* */ e /* */ ( /* */ ) {/* */}/* */;  /* */
+                /* */ static /* */ [/* */ f /* */ ] /* */ ( /* */ ) {/* */ }/* */ ;  /* */
+            }
+            /* */",
+        "class A {static [this.a] = 1}",
+        "class A { static a() {} }",
     ];
 
     let fix = vec![

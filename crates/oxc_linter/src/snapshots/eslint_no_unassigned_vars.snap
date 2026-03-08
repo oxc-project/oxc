@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable declared without assignment. Either assign a value or remove the declaration.
 
   ⚠ eslint(no-unassigned-vars): 'y' is always 'undefined' because it's never assigned.
-   ╭─[no_unassigned_vars.tsx:5:12]
+   ╭─[no_unassigned_vars.tsx:5:33]
  4 │                             }
  5 │                             let y: string;
    ·                                 ─

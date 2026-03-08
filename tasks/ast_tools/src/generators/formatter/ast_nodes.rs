@@ -117,6 +117,7 @@ impl Generator for FormatterAstNodesGenerator {
             use oxc_allocator::Vec;
             use oxc_ast::ast::*;
             use oxc_span::{GetSpan, Ident};
+            use oxc_syntax::node::NodeId;
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{
@@ -236,7 +237,18 @@ fn generate_struct_impls(
             TypeDef::Vec(vec) => {
                 (vec.inner_type(schema).as_struct().is_some_and(|s| !s.visit.has_visitor()), false)
             }
-            TypeDef::Cell(_) => return None,
+            TypeDef::Cell(_) => {
+                if field.name == "node_id" {
+                    return Some(quote! {
+                        ///@@line_break
+                        #[inline]
+                        pub fn node_id(&self) -> NodeId {
+                            self.inner.node_id()
+                        }
+                    });
+                }
+                return None;
+            }
             TypeDef::Option(_) | TypeDef::Box(_) | TypeDef::Pointer(_) => {
                 unreachable!("Option/Box/pointer should have been unwrapped");
             }
