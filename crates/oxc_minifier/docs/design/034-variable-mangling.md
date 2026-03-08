@@ -13,6 +13,15 @@ JavaScript identifiers are often long and descriptive (`getUserProfile`, `handle
 
 Frequency-based assignment — giving the shortest names to the most-referenced variables — maximizes the savings. Gzip-aware scope reuse further improves compressed size by creating repetitive byte patterns.
 
+## Conceptual Dependencies
+
+This design depends on two broader concepts:
+
+- **Dataflow-style liveness reasoning** — explains when bindings can safely share short names
+  because their live ranges do not overlap
+- **Profitability reasoning** — explains why name assignment is not just "shortest wins", but
+  also a compression problem involving frequency, reuse, and emitted byte patterns
+
 ## Transformations
 
 ### Basic variable renaming

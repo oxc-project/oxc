@@ -15,6 +15,17 @@ This pass inlines variables, functions, and properties — replacing references 
 
 Inlining eliminates indirection. Each inlined variable removes a `var` declaration and a name reference. Each inlined function call removes a function definition and call overhead. This often enables further optimizations: constant folding on inlined literal values, dead code elimination of the now-unreferenced declaration, and scope reduction.
 
+## Conceptual Dependencies
+
+This design depends on three missing compiler concepts:
+
+- **Effect and alias reasoning** — determines whether moving or duplicating an expression
+  changes what it observes or mutates
+- **Light interprocedural analysis** — determines whether a function has known callers,
+  whether its address escapes, and whether its body is simple enough to reason about
+- **Profitability reasoning** — distinguishes inlining that shortens output from inlining
+  that merely exposes more syntax
+
 ## Transformations
 
 ### Inline single-use variables

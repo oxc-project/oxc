@@ -1,6 +1,14 @@
 # Data Structures
 
-These are the shared infrastructure data structures consumed by the minifier. Most are built by `oxc_semantic` and `oxc_cfg` during a single AST traversal, then queried (read-only or with targeted mutations) throughout the optimization pipeline.
+These are the shared infrastructure concepts consumed by the minifier. Some already exist in
+adjacent crates such as `oxc_semantic` and `oxc_cfg`; others are documented here because
+they represent reasoning the minifier will need even before their final implementation shape
+is settled.
+
+The important point is not the exact storage layout. It is the class of questions the
+optimizer must be able to answer: what reaches what, what may have side effects, what
+aliases what, which functions influence each other, and whether a legal rewrite is actually
+worth applying.
 
 ## Symbol Table
 
@@ -101,17 +109,22 @@ The CFG is required for any analysis that reasons about execution order beyond s
 - esbuild: no formal CFG — uses syntactic analysis only
 - Terser: no formal CFG — uses syntactic analysis with `reduce_vars` for limited flow sensitivity
 
-## Call Graph
+## Call Graph / Light Interprocedural Analysis
 
 ### What
 
-A bidirectional map of function ↔ call-site relationships. Each edge connects a call expression to the function it invokes. Dynamic dispatch (computed property calls, `eval`) is marked as having unknown targets.
+A lightweight view of function ↔ call-site relationships within a single file. Each edge
+connects a call expression to the function it invokes when that callee is statically
+identifiable. Dynamic dispatch (computed property calls, `eval`) is marked as having
+unknown targets.
 
 ### Why
 
 - **Function inlining** (015) — determines whether a function is called exactly once (safe to inline without code size increase) or is small enough to inline at multiple sites
 - **Dead function elimination** (013) — functions with zero incoming call edges and no escaping references can be removed
 - **Cross-function constant propagation** — if all call sites pass the same constant for a parameter, that parameter can be replaced with the constant inside the function body
+- **Call-site optimization** (033) — return-value and parameter optimizations need simple
+  caller/callee summaries even when full inlining is not possible
 
 ### How It Works
 
@@ -123,6 +136,10 @@ Per function, the call graph tracks:
 - **Address taken** — whether the function has any non-call reference (assigned to a variable, passed as an argument, stored in a property). If the address is taken, the function may be called from unknown sites, disabling optimizations that assume a known set of callers
 - **IIFE status** — whether the function is immediately invoked at its declaration site
 
+For minifier purposes, this analysis is intentionally light. The goal is not a whole-program
+optimizer, but enough cross-function reasoning to support parameter trimming, return-value
+optimization, small-function inlining, and purity propagation in single-file mode.
+
 ### References
 
 - Closure Compiler: `CallGraph.java`, `DefinitionUseSiteFinder.java`
@@ -133,13 +150,16 @@ Per function, the call graph tracks:
 
 ### What
 
-A generic framework for computing properties at each program point by propagating information along CFG edges. Instances include liveness analysis, reaching definitions, and constant propagation.
+A way to compute properties at each program point by propagating information along CFG edges.
+Instances include liveness analysis, reaching definitions, and constant propagation.
 
 ### Why
 
 - **Dead assignment elimination** (012) — liveness analysis identifies assignments to variables that are never subsequently read
 - **Flow-sensitive inlining** (015) — reaching definitions determine which value a variable holds at a given use site
 - **Loop-invariant code motion** — constant propagation identifies expressions whose value does not change across loop iterations
+- **Variable mangling** (034) — liveness-like reasoning explains when two bindings can safely
+  share the same short name
 
 ### How It Works
 
@@ -162,6 +182,10 @@ Key instances:
 - **Liveness** (backward, union): `IN[b] = USE[b] ∪ (OUT[b] - DEF[b])`
 - **Reaching definitions** (forward, union): `OUT[b] = GEN[b] ∪ (IN[b] - KILL[b])`
 - **Constant propagation** (forward, lattice join): values flow through a lattice of ⊤ → constant → ⊥
+
+For this minifier, the conceptual role of dataflow matters more than the final solver shape.
+The important shift is from local syntax-only heuristics to reasoning across branches, loops,
+and dominance boundaries.
 
 ### References
 
@@ -213,6 +237,47 @@ Chains through AST: sequences → type of last element; assignments → type of 
 - SWC: `compress/optimize/evaluate.rs`
 - `oxc_ecmascript` crate
 
+## Effect and Alias Reasoning
+
+### What
+
+A conservative model of what expressions may observe or mutate. The effect side answers
+questions such as "can this be removed if unused?" or "can this be moved past another
+expression?" The alias side answers questions such as "could these two references observe
+the same underlying object or state?"
+
+### Why
+
+- **Dead code elimination** depends on knowing when an expression is side-effect-free
+- **Inlining and collapse variables** depend on knowing when moving a value changes what it
+  observes
+- **Property hoisting** depends on knowing when object identity or shared mutation escapes
+- **Purity marking** depends on distinguishing local computation from externally observable
+  behavior
+
+### How It Works
+
+Conceptually, the model classifies expressions and operations into categories such as:
+
+- reads local state
+- reads global state
+- reads properties
+- writes local state
+- writes global or aliased state
+- may throw
+- may call unknown code
+
+JavaScript makes this conservative by default. Getters, setters, proxies, direct `eval`,
+`with`, unknown function calls, and computed property access all limit how much the optimizer
+can safely assume. This model is therefore less about proving purity everywhere and more
+about drawing reliable semantic boundaries for transforms.
+
+### References
+
+- Closure Compiler: `PureFunctionIdentifier.java`, `NodeUtil`, and alias-sensitive inlining passes
+- Terser: side-effect checks throughout `compress/*`
+- esbuild: conservative side-effect reasoning in `js_parser.go`
+
 ## Escape Analysis
 
 ### What
@@ -227,6 +292,10 @@ Tracks whether values escape their declaring function — i.e., whether a variab
 ### How It Works
 
 For each variable, the analysis walks all references and checks whether any reference causes the value to leave its declaring scope. A reference escapes if it appears as: a function call argument (unless the callee is known and analyzed), a return value, an assignment to a variable in an outer scope, or a property write on an escaping object. The analysis is conservative — if any reference is ambiguous, the value is marked as escaping.
+
+Conceptually, escape analysis is the bridge between local and alias reasoning. A value that
+does not escape can often be treated much more aggressively than one that may be observed
+through another reference.
 
 ### References
 
@@ -256,3 +325,42 @@ During scope analysis (or as a post-pass over the reference list), each referenc
 - Closure Compiler: `ReferenceCollector` stores `BasicBlock` context with each collected reference, used by `FlowSensitiveInlineVariables`
 - esbuild: no formal reference-to-block mapping
 - Terser: no formal reference-to-block mapping — uses syntactic heuristics in `reduce-vars.js`
+
+## Profitability Reasoning
+
+### What
+
+A model for deciding whether a legal optimization is worth applying. This is separate from
+semantic safety: many rewrites are correct but fail to reduce output size, hurt later
+optimizations, or cost too much compile time for too little benefit.
+
+### Why
+
+- **Inlining** is only valuable when the duplicated expression or body does not outweigh the
+  removed binding or call overhead
+- **String deduplication** only helps when the shared declaration is cheaper than repeating
+  literals
+- **Fixed-point iteration** needs a notion of diminishing returns
+- **Mangling** benefits from byte-oriented and compression-oriented heuristics, not only from
+  legality
+
+### How It Works
+
+At a conceptual level, profitability asks a different question from the other sections in
+this document:
+
+- Dataflow asks what values can reach where
+- Effect and alias reasoning asks what transformations are semantically safe
+- Interprocedural reasoning asks how functions influence one another
+- Profitability asks which of those legal opportunities should actually fire
+
+For a minifier, this is usually byte-oriented rather than runtime-oriented. It includes
+questions such as whether a substitution shortens emitted code, whether another fixed-point
+iteration is likely to help, and whether an expensive analysis should run at all on a given
+function.
+
+### References
+
+- Closure Compiler: optimization-loop heuristics and pass scheduling
+- Terser: pass counts, size-sensitive inlining, and repeated compression passes
+- esbuild: aggressive preference for cheap, high-payoff transforms

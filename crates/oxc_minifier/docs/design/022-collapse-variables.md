@@ -11,6 +11,17 @@ Flow-sensitive variable collapsing — inline non-constant single-use variables 
 
 Many variables exist only to name an intermediate result that is used once. Collapsing these eliminates `var` declarations, reduces scope pressure, and shortens code. This is among the most impactful optimization passes — Terser's `collapse_vars` and Closure's `FlowSensitiveInlineVariables` together account for significant size reductions on real-world code.
 
+## Conceptual Dependencies
+
+This design depends on three shared compiler concepts:
+
+- **Dataflow reasoning** — determines which definitions can reach which uses and whether a
+  candidate value is still the right one at the substitution site
+- **Effect and alias reasoning** — determines whether moving the value changes evaluation
+  order or what mutable state the value can observe
+- **Profitability reasoning** — determines whether collapsing the variable actually shortens
+  output once the declaration, the value, and later mangling are taken into account
+
 ## Transformations
 
 ### Collapse single-use non-constant variables

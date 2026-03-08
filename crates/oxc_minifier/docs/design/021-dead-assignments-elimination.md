@@ -11,6 +11,16 @@ This pass removes assignments to variables whose values are never subsequently r
 
 Dead assignments waste bytes and obscure program intent. They arise naturally from code patterns (initializing a variable then overwriting it conditionally), from inlining (where the inlined code introduces redundant stores), and from other optimization passes that eliminate reads but leave assignments behind.
 
+## Conceptual Dependencies
+
+This design depends on two pieces of shared compiler reasoning:
+
+- **Dataflow reasoning** — liveness is what tells us whether the assigned value can still be
+  observed later
+- **Effect reasoning** — once an assignment is known to be dead, the RHS still has to be
+  classified as removable, preservable as a side-effect-only expression, or too risky to
+  rewrite
+
 ## How It Works
 
 1. **Build control flow graph** — represent the function as basic blocks connected by control flow edges

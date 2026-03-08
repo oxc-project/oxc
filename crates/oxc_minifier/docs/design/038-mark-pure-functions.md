@@ -25,6 +25,15 @@ createPoint(1, 2); // unused result — can be removed if createPoint is known p
 
 Without auto-detection, these calls are retained because the minifier conservatively assumes they might have side effects.
 
+## Conceptual Dependencies
+
+This design depends on two shared concepts:
+
+- **Effect reasoning** — purity is a specialized form of effect classification, not a
+  standalone syntax check
+- **Light interprocedural analysis** — once a function calls another function, purity becomes
+  a dependency problem across local callees instead of a property of one body in isolation
+
 ## How It Works
 
 1. For each function, analyze its body for side effects:

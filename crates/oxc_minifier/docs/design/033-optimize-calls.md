@@ -11,6 +11,13 @@ Call-site and return-value optimizations that go beyond basic function inlining.
 
 Functions often contain code that is unnecessary in context: return expressions whose values are never used, constructors that do nothing, simple property accessors that could be inlined, and dead property assignments. These patterns are common in class hierarchies and prototype-based code.
 
+## Conceptual Dependencies
+
+This design depends on **light interprocedural analysis**. Even without whole-program
+optimization, the minifier still needs file-local reasoning about which call sites target
+which functions, whether return values are observed, whether parameters are used, and whether
+the callee escapes through unknown references.
+
 ## Transformations
 
 ### Optimize returns

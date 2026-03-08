@@ -69,6 +69,11 @@ The 4-step pipeline above is a simplification. Internally, compression has disti
 with specific ordering requirements. Understanding this structure is essential for knowing
 where each optimization pass belongs and why.
 
+This document describes the intended optimization architecture, not just the currently
+implemented passes. A large part of the remaining work is not adding more local rewrites,
+but defining the middle-end concepts that let advanced optimizations be both correct and
+fast on real-world code.
+
 ### Phase Pipeline
 
 ```
@@ -89,21 +94,29 @@ where each optimization pass belongs and why.
 **Phase 2: Semantic** — Build symbols, scopes, and CFG from the AST. This data is consumed
 by all subsequent phases.
 
-**Phase 3: Normalize + Analyze** — Rewrite AST into canonical forms and build data structures
-that optimization passes depend on. Runs once before the loop. Produces:
+**Phase 3: Normalize + Analyze** — Rewrite AST into canonical forms and establish the
+compiler reasoning that later optimizations depend on. Runs once before the loop.
+Conceptually, this phase should provide:
 
 - **Normalized AST** — canonical forms (split declarations, while→for, const→let, etc.)
   for simpler pattern matching
 - **Define plugin replacements** — compile-time constants (`process.env.NODE_ENV`, `__DEV__`)
   replaced with literal values
+- **Dataflow-oriented control-flow facts** — the ability to reason across basic blocks
+  instead of only within local AST neighborhoods
+- **Effect and alias reasoning** — the ability to tell when an expression can be removed,
+  duplicated, reordered, or inlined without changing semantics
 - **Pure function annotations** — `@__PURE__` / `@__NO_SIDE_EFFECTS__` annotations recognized
   and marked
 - **Auto-detected pure functions** — functions analyzed for side effects and annotated
-- **Call graph** — function ↔ call-site relationships, call counts, address-taken flags,
-  IIFE status
-- **Escape analysis** — per-variable tracking of whether values escape their declaring function
+- **Light interprocedural analysis** — function ↔ call-site relationships, call counts,
+  address-taken flags, and simple caller/callee summaries within a single file
+- **Escape analysis** — per-variable tracking of whether values escape their declaring
+  function
 - **Reference-to-BasicBlock associations** — each variable reference tagged with its CFG
   basic block for dominance queries
+- **Profitability signals** — enough size-oriented reasoning to distinguish transforms
+  that are merely legal from transforms that are worth applying
 
 **Phase 4: Optimization Loop** — Peephole passes run in a single traversal, repeated until
 no changes. This is the core of the minifier.
@@ -112,6 +125,39 @@ no changes. This is the core of the minifier.
 semantic data.
 
 **Phase 6: Codegen** — Emit minified output with codegen-level optimizations.
+
+### Missing Middle-End Concepts
+
+Many of the planned passes depend on four shared compiler concepts that are still only
+partially expressed in the current docs.
+
+**Dataflow framework**
+
+This is the ability to reason through control flow instead of only through syntax. In a
+minifier, the important questions are usually: where can a value reach, where is a symbol
+live, and does a definition dominate a use. Without that, optimizations such as dead
+assignment elimination and flow-sensitive inlining remain heuristic.
+
+**Effect and alias model**
+
+Minification is constrained more by semantic safety than by pattern matching. The optimizer
+needs a way to reason about whether an expression may throw, read mutable state, write
+mutable state, or observe aliasing through objects, closures, getters, setters, or unknown
+calls. This is what separates "can rewrite" from "must preserve as written."
+
+**Light interprocedural analysis**
+
+Even in single-file mode, many important opportunities span function boundaries. The
+minifier needs lightweight reasoning about direct callees, argument usage, return usage,
+escape of function values, and small purity summaries. This is not whole-program analysis;
+it is a constrained, file-local form of function reasoning.
+
+**Profitability model**
+
+Not every legal rewrite helps compression, and some rewrites help size but hurt compile
+time too much. The optimizer therefore needs a concept of profitability: byte-oriented
+reasoning about whether a transform is worthwhile, when fixed-point iteration should stop,
+and which more expensive analyses should even run.
 
 ### Pass Classification
 
@@ -162,12 +208,12 @@ design document number in [progress.md](progress.md).
 
 These run inside the loop but require infrastructure not yet built:
 
-| #   | Pass                         | Dependency                 |
-| --- | ---------------------------- | -------------------------- |
-| 021 | Dead Assignments Elimination | CFG + liveness dataflow    |
-| 022 | Collapse Variables           | CFG + reaching definitions |
-| 032 | Hoist Properties             | Escape analysis            |
-| 035 | Flow-Sensitive Inline        | CFG + reaching definitions |
+| #   | Pass                         | Dependency                                              |
+| --- | ---------------------------- | ------------------------------------------------------- |
+| 021 | Dead Assignments Elimination | CFG + liveness dataflow + effect reasoning              |
+| 022 | Collapse Variables           | CFG + reaching definitions + alias/effect + profitability |
+| 032 | Hoist Properties             | Escape analysis + alias reasoning                       |
+| 035 | Flow-Sensitive Inline        | CFG + reaching definitions + effect reasoning           |
 
 **Phase 5 — Mangle (separate from compression)**
 
@@ -228,6 +274,12 @@ apply all passes, and repeat until an iteration produces no changes (convergence
 uses the same approach, with a convergence heuristic that stops when consecutive iterations yield
 less than 0.05% size reduction, plus a safety cap of 100 maximum iterations to guarantee termination
 even if the convergence threshold is never met.
+
+Conceptually, this loop also depends on a profitability model. "Changed the AST" is not the
+same thing as "improved the output." Some transforms expose future wins, but others merely
+shuffle syntax or even increase emitted size. The mature version of this loop therefore needs
+to distinguish legality from profitability and use size-oriented heuristics to decide when
+another iteration is justified.
 
 ### Selective subtree traversal
 

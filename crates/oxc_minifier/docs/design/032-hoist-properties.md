@@ -11,6 +11,13 @@ Extract constant properties from object literals into standalone variables. When
 
 Developers frequently group related constants or configuration values into objects. If these objects are only accessed by known property names, the object wrapper is overhead — property access (`o.x`) is longer than a direct variable reference (`a`), and the object literal syntax (`{x:1,y:2}`) is longer than separate declarations (`var a=1,b=2`). This pass converts structured access patterns into flat variable references that mangle and compress more effectively.
 
+## Conceptual Dependencies
+
+This design depends primarily on **alias and escape reasoning**. Property hoisting is only
+correct when the object can still be treated as a local container instead of as shared
+identity. The optimizer therefore needs a way to distinguish "property reads on a local
+record-like object" from "observable object state that may be inspected elsewhere."
+
 ## Transformations
 
 ### Basic property hoisting
