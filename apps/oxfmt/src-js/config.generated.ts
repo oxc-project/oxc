@@ -3,6 +3,8 @@
  * Run `just formatter-config-ts` to regenerate.
  */
 
+export type ArrayWrapConfig = ArrayWrapMode | ArrayWrapThreshold;
+export type ArrayWrapMode = "preserve" | "collapse";
 export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
@@ -22,6 +24,16 @@ export type TrailingCommaConfig = "all" | "es5" | "none";
  * In addition, some options are our own extensions.
  */
 export interface Oxfmtrc {
+  /**
+   * How to wrap array literals.
+   *
+   * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
+   * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
+   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+   *
+   * - Default: `"preserve"`
+   */
+  arrayWrap?: ArrayWrapConfig | null;
   /**
    * Include parentheses around a sole arrow function parameter.
    *
@@ -204,6 +216,10 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean | null;
   [k: string]: unknown;
 }
+export interface ArrayWrapThreshold {
+  minElementsToWrap: number;
+  [k: string]: unknown;
+}
 export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
@@ -221,6 +237,16 @@ export interface OxfmtOverrideConfig {
   [k: string]: unknown;
 }
 export interface FormatConfig {
+  /**
+   * How to wrap array literals.
+   *
+   * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
+   * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
+   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+   *
+   * - Default: `"preserve"`
+   */
+  arrayWrap?: ArrayWrapConfig | null;
   /**
    * Include parentheses around a sole arrow function parameter.
    *

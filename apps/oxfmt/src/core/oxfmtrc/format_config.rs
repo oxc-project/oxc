@@ -192,6 +192,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
+    /// How to wrap array literals.
+    ///
+    /// - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
+    /// - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
+    /// - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+    ///
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array_wrap: Option<ArrayWrapConfig>,
+
     /// Sort import statements.
     ///
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
@@ -299,6 +309,26 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ArrayWrapConfig {
+    Mode(ArrayWrapMode),
+    Threshold(ArrayWrapThreshold),
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ArrayWrapMode {
+    Preserve,
+    Collapse,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ArrayWrapThreshold {
+    pub min_elements_to_wrap: u32,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]

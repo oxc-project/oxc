@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::AstNode,
     formatter::{Buffer, Formatter, prelude::*},
+    options::ArrayExpand,
     write,
 };
 
@@ -32,9 +33,21 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
             write!(f, format_dangling_comments(self.array.span).with_block_indent());
         } else {
             let group_id = f.group_id("array");
-            let should_expand = !self.options.is_force_flat_mode && should_break(self.array);
+            let array_expand = f.options().array_expand;
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let should_expand = !self.options.is_force_flat_mode
+                && match array_expand {
+                    ArrayExpand::Auto => should_break(self.array),
+                    ArrayExpand::Never => false,
+                    ArrayExpand::ForceAboveThreshold(threshold) => {
+                        self.array.elements().len() >= threshold as usize
+                    }
+                };
+
+            let force_one_per_line =
+                matches!(array_expand, ArrayExpand::ForceAboveThreshold(_)) && should_expand;
+            let elements = ArrayElementList::new(self.array.elements(), group_id)
+                .with_force_one_per_line(force_one_per_line);
 
             write!(
                 f,
