@@ -32,7 +32,8 @@ export interface Oxfmtrc {
    *
    * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
    * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
-   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+   * arrays below the threshold use `"preserve"` behavior.
    *
    * - Default: `"preserve"`
    */
@@ -338,7 +339,8 @@ export interface FormatConfig {
    *
    * - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
    * - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
-   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+   * - `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+   * arrays below the threshold use `"preserve"` behavior.
    *
    * - Default: `"preserve"`
    */
