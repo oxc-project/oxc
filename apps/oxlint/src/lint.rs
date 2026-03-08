@@ -395,7 +395,8 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let (mut suppression_manager, suppression_sender) = SuppressionManager::load(
-            options.cwd().join("oxlint-suppressions.json").as_path(),
+            options.cwd(),
+            "oxlint-suppressions.json",
             suppression_options.suppress_all,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );
@@ -1697,6 +1698,7 @@ mod suppression {
         let args = &["--suppress-all"];
         let suppression = SuppressionTester::new()
             .with_cwd("suppression_with_suppress_all_arg_and_no_file")
+            .with_setup_file(false)
             .with_expected_file(true);
 
         suppression.test(args);

@@ -2,6 +2,7 @@ use std::{env, fs, path::PathBuf};
 
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use serde_json::Value;
 
 use crate::cli::{CliRunner, lint_command};
 
@@ -234,16 +235,23 @@ impl SuppressionTester {
         );
 
         if self.have_expected_file {
-            let new_content = fs::read_to_string(
+            let new_content_string = fs::read_to_string(
                 self.cwd.join::<&str>(self.oxlint_suppression_file_name.as_ref()),
             )
             .unwrap_or_else(|_| {
                 panic!("Unable to read the new {}", self.oxlint_suppression_file_name)
             });
-            let expected_content = fs::read_to_string(
+            let new_content: Value =
+                serde_json::from_str(&new_content_string).unwrap_or_else(|_| {
+                    panic!("Unable to deserialize the new {}", self.oxlint_suppression_file_name)
+                });
+
+            let expected_content_string = fs::read_to_string(
                 self.cwd.join("oxlint-suppressions-expected.json"),
             )
             .expect("Unable to read the expected content oxlint-suppressions-expected.json");
+
+            let expected_content: Value = serde_json::from_str(&expected_content_string).unwrap();
 
             assert_eq!(
                 new_content, expected_content,
