@@ -1,0 +1,48 @@
+name: Check changes
+
+description: Detect whether a CI job should run based on changed files and crate dependencies.
+
+inputs:
+  packages:
+    required: false
+    description: Comma-separated crate names whose transitive deps (via cargo tree) to check (include mode)
+  exclude:
+    required: false
+    description: Comma-separated crate names to exclude (exclude mode); job runs unless ALL changes are in these dirs
+  paths:
+    required: false
+    description: Comma-separated additional paths that always trigger the job
+  token:
+    required: false
+    description: GitHub token for API access
+  pr-number:
+    required: false
+    description: Pull request number
+
+outputs:
+  changed:
+    description: Whether the job should run ("true" or "false")
+    value: ${{ steps.check.outputs.changed }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check changes
+      id: check
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        GITHUB_PR_NUMBER: ${{ inputs.pr-number }}
+      run: |
+        ARGS=""
+        if [ -n "${{ inputs.packages }}" ]; then
+          ARGS="$ARGS --packages ${{ inputs.packages }}"
+        fi
+        if [ -n "${{ inputs.exclude }}" ]; then
+          ARGS="$ARGS --exclude ${{ inputs.exclude }}"
+        fi
+        if [ -n "${{ inputs.paths }}" ]; then
+          ARGS="$ARGS --paths ${{ inputs.paths }}"
+        fi
+        SHOULD_RUN=$(node .github/scripts/check-changes.js $ARGS)
+        echo "changed=$SHOULD_RUN" >> $GITHUB_OUTPUT
