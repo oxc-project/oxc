@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "46a96fe8d0f3",
+  "strategy": "manual-commit",
+  "branch": "refactor/ci-unified-change-detection",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/actions/check-changes/action.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/46/a96fe8d0f3/0/metadata.json",
+      "transcript": "/46/a96fe8d0f3/0/full.jsonl",
+      "context": "/46/a96fe8d0f3/0/context.md",
+      "content_hash": "/46/a96fe8d0f3/0/content_hash.txt",
+      "prompt": "/46/a96fe8d0f3/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 9,
+    "cache_creation_tokens": 4151,
+    "cache_read_tokens": 626310,
+    "output_tokens": 1141,
+    "api_call_count": 7
+  }
+}

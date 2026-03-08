@@ -1,0 +1,166 @@
+Implement the following plan:
+
+# Unified CI Change Detection
+
+## Context
+
+The CI uses three fragmented change detection mechanisms: native GitHub `paths:` filters, `dorny/paths-filter` action, and custom JS scripts with `cargo tree`. The `dorny/paths-filter` jobs have **hardcoded path lists that miss transitive dependencies** — e.g., the `minification` job only checks `oxc_minifier` and `oxc_codegen`, but `oxc_minifier` depends on `oxc_semantic`, `oxc_parser`, `oxc_ast`, etc. Changes to those crates silently skip the minification check.
+
+The conformance and benchmark scripts already solve this correctly using `cargo tree`. This plan extends that pattern to all remaining jobs.
+
+## Approach
+
+Create a single generic `check-changes.js` script that accepts crate names and paths as CLI arguments. The script has no knowledge of job names — all configuration lives in the workflow YAML where it belongs.
+
+## Files to Create
+
+### `.github/scripts/check-changes.js`
+
+Generic change detection script. Two modes:
+
+**Include mode** (default): checks if changes affect specified crates or their transitive dependencies.
+```
+node check-changes.js --packages oxc_minifier --paths tasks/minsize/
+```
+
+**Exclude mode**: skips only if ALL changed files belong to excluded crate directories.
+```
+node check-changes.js --exclude oxc_linter,oxc_language_server --paths napi/,npm/
+```
+
+CLI interface:
+- `--packages <crate1,crate2,...>` — root crates whose transitive deps (via `cargo tree`) to check
+- `--exclude <crate1,crate2,...>` — crates to exclude (exclude mode); job runs unless ALL changes are in these dirs
+- `--paths <path1,path2,...>` — additional paths that always trigger the job
+
+Resolves transitive dependencies via `getCrateDependencies()` from existing `utils.js`.
+
+**Fallbacks** (matching existing pattern): manual trigger → run all; `cargo tree` failure → run all; API error → run all.
+
+## Files to Modify
+
+### `.github/workflows/ci.yml`
+
+Replace `dorny/paths-filter` in 6 jobs. Example usage per job:
+
+**minification:**
+```yaml
+- name: Check changes
+  id: filter
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+  run: |
+    SHOULD_RUN=$(node .github/scripts/check-changes.js --packages oxc_minifier --paths tasks/minsize/)
+    echo "src=$SHOULD_RUN" >> $GITHUB_OUTPUT
+```
+
+**allocs:**
+```
+node .github/scripts/check-changes.js --packages oxc_parser,oxc_minifier --paths tasks/track_memory_allocations/
+```
+
+**lintgen:**
+```
+node .github/scripts/check-changes.js --packages oxc_linter --paths tasks/linter_codegen/
+```
+
+**test-wasm32:**
+```
+node .github/scripts/check-changes.js --exclude oxc_linter --paths napi/,npm/,apps/,pnpm-lock.yaml,package.json
+```
+
+**test-napi / test-napi-windows:**
+```
+node .github/scripts/check-changes.js --exclude oxc_linter,oxc_language_server --paths napi/,npm/,apps/,tasks/e2e/,pnpm-lock.yaml,package.json,editors/
+```
+
+**Note on exclude mode**: exclusion is intentionally shallow (no `cargo tree`). If `oxc_parser` changes, wasm/napi tests should still run since `oxc_parser` is used by non-linter crates. The `--paths` act as always-trigger paths for JS/TS changes to NAPI bindings, npm packages, app JS sources, and lockfiles.
+
+### `.github/workflows/miri.yml`
+
+Keep coarse `paths: crates/**` at workflow level (avoids spinning up a runner for non-code changes). Add change detection inside the job before the expensive Miri steps:
+```
+node .github/scripts/check-changes.js --packages oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_transformer
+```
+
+## What NOT to Change
+
+- **`conformance`** — already uses `check-conformance-changes.js` with `cargo tree` correctly
+- **`benchmark.yml`** — already uses `generate-benchmark-matrix.js` with `cargo tree` correctly
+- **`ast_changes`** — uses auto-generated watch list from `tasks/ast_tools` (keeps `dorny/paths-filter`)
+- **`test-ubuntu`** — primary CI gate, intentionally runs everything
+- **`typos` / `lint`** — always run, fast
+- **`codecov.yml`** — main-only, simple `**.rs` filter is fine
+
+## Verification
+
+1. Run the script locally with mock env vars to verify `true`/`false` output for each job configuration
+2. Run `cargo tree -p oxc_minifier -f '{lib}' -e normal --prefix none` to verify dependency resolution matches expectations
+3. Open PR and verify: jobs that should skip show "will skip" in their filter step; jobs that should run show the triggering file/crate
+4. Test manual `workflow_dispatch` triggers all jobs
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+# Simplify: Code Review and Cleanup
+
+Review all changed files for reuse, quality, and efficiency. Fix any issues found.
+
+## Phase 1: Identify Changes
+
+Run `git diff` (or `git diff HEAD` if there are staged changes) to see what changed. If there are no git changes, review the most recently modified files that the user mentioned or that you edited earlier in this conversation.
+
+## Phase 2: Launch Three Review Agents in Parallel
+
+Use the Agent tool to launch all three agents concurrently in a single message. Pass each agent the full diff so it has the complete context.
+
+### Agent 1: Code Reuse Review
+
+For each change:
+
+1. **Search for existing utilities and helpers** that could replace newly written code. Look for similar patterns elsewhere in the codebase — common locations are utility directories, shared modules, and files adjacent to the changed ones.
+2. **Flag any new function that duplicates existing functionality.** Suggest the existing function to use instead.
+3. **Flag any inline logic that could use an existing utility** — hand-rolled string manipulation, manual path handling, custom environment checks, ad-hoc type guards, and similar patterns are common candidates.
+
+### Agent 2: Code Quality Review
+
+Review the same changes for hacky patterns:
+
+1. **Redundant state**: state that duplicates existing state, cached values that could be derived, observers/effects that could be direct calls
+2. **Parameter sprawl**: adding new parameters to a function instead of generalizing or restructuring existing ones
+3. **Copy-paste with slight variation**: near-duplicate code blocks that should be unified with a shared abstraction
+4. **Leaky abstractions**: exposing internal details that should be encapsulated, or breaking existing abstraction boundaries
+5. **Stringly-typed code**: using raw strings where constants, enums (string unions), or branded types already exist in the codebase
+6. **Unnecessary JSX nesting**: wrapper Boxes/elements that add no layout value — check if inner component props (flexShrink, alignItems, etc.) already provide the needed behavior
+
+### Agent 3: Efficiency Review
+
+Review the same changes for efficiency:
+
+1. **Unnecessary work**: redundant computations, repeated file reads, duplicate network/API calls, N+1 patterns
+2. **Missed concurrency**: independent operations run sequentially when they could run in parallel
+3. **Hot-path bloat**: new blocking work added to startup or per-request/per-render hot paths
+4. **Unnecessary existence checks**: pre-checking file/resource existence before operating (TOCTOU anti-pattern) — operate directly and handle the error
+5. **Memory**: unbounded data structures, missing cleanup, event listener leaks
+6. **Overly broad operations**: reading entire files when only a portion is needed, loading all items when filtering for one
+
+## Phase 3: Fix Issues
+
+Wait for all three agents to complete. Aggregate their findings and fix each issue directly. If a finding is a false positive or not worth addressing, note it and move on — do not argue with the finding, just skip it.
+
+When done, briefly summarize what was fixed (or confirm the code was already clean).
+
+---
+
+can we use a reusable action for check-changes
+
+---
+
+create pr
+
+---
+
+fix zizmor .github

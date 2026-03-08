@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "46a96fe8d0f3",
+  "session_id": "0b521fea-8edb-4784-8805-f6dc9fbf1d06",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-08T08:59:18.37465Z",
+  "branch": "refactor/ci-unified-change-detection",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/actions/check-changes/action.yml"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "30e49471-51e5-4854-8f44-f7f686736b41",
+  "checkpoint_transcript_start": 248,
+  "transcript_lines_at_start": 248,
+  "token_usage": {
+    "input_tokens": 9,
+    "cache_creation_tokens": 4151,
+    "cache_read_tokens": 626310,
+    "output_tokens": 1141,
+    "api_call_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-08T08:59:18.324031Z",
+    "agent_lines": 9,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2444,
+    "agent_percentage": 0.36824877250409166
+  }
+}
