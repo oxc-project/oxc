@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "arrayWrap": {
-      "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold.\n\n- Default: `\"preserve\"`",
+      "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
       "anyOf": [
         {
           "$ref": "#/definitions/ArrayWrapConfig"
@@ -14,7 +14,7 @@
           "type": "null"
         }
       ],
-      "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold.\n\n- Default: `\"preserve\"`"
+      "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
     },
     "arrowParens": {
       "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
@@ -269,22 +269,10 @@
     "ArrayWrapConfig": {
       "anyOf": [
         {
-          "description": "A string mode: \"preserve\" or \"collapse\".",
-          "allOf": [
-            {
-              "$ref": "#/definitions/ArrayWrapMode"
-            }
-          ],
-          "markdownDescription": "A string mode: \"preserve\" or \"collapse\"."
+          "$ref": "#/definitions/ArrayWrapMode"
         },
         {
-          "description": "An object with a threshold: { \"minElementsToWrap\": N }.",
-          "allOf": [
-            {
-              "$ref": "#/definitions/ArrayWrapThreshold"
-            }
-          ],
-          "markdownDescription": "An object with a threshold: { \"minElementsToWrap\": N }."
+          "$ref": "#/definitions/ArrayWrapThreshold"
         }
       ]
     },
@@ -373,7 +361,7 @@
       "type": "object",
       "properties": {
         "arrayWrap": {
-          "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold.\n\n- Default: `\"preserve\"`",
+          "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
           "anyOf": [
             {
               "$ref": "#/definitions/ArrayWrapConfig"
@@ -382,7 +370,7 @@
               "type": "null"
             }
           ],
-          "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold.\n\n- Default: `\"preserve\"`"
+          "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
         },
         "arrowParens": {
           "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",

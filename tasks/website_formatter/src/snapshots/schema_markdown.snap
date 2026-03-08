@@ -14,15 +14,25 @@ In addition, some options are our own extensions.
 
 ## arrayWrap
 
+type: `object | "preserve" | "collapse"`
 
 
 How to wrap array literals.
 
 - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
 - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
-- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+arrays below the threshold use `"preserve"` behavior.
 
 - Default: `"preserve"`
+
+
+### arrayWrap.minElementsToWrap
+
+type: `integer`
+
+
+
 
 
 ## arrowParens
@@ -182,15 +192,25 @@ type: `object`
 
 ##### overrides[n].options.arrayWrap
 
+type: `object | "preserve" | "collapse"`
 
 
 How to wrap array literals.
 
 - `"preserve"` (default): Keep arrays as-is; only reformat when they exceed printWidth.
 - `"collapse"`: Collapse arrays to a single line when they fit within printWidth.
-- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold.
+- `{ "minElementsToWrap": N }`: Force one-element-per-line when element count >= threshold;
+arrays below the threshold use `"preserve"` behavior.
 
 - Default: `"preserve"`
+
+
+###### overrides[n].options.arrayWrap.minElementsToWrap
+
+type: `integer`
+
+
+
 
 
 ##### overrides[n].options.arrowParens

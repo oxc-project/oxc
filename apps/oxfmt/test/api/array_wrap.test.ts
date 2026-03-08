@@ -124,15 +124,46 @@ describe("arrayWrap", () => {
       expect(result.errors).toStrictEqual([]);
     });
 
-    it("single element that was multiline collapses to inline", async () => {
+    it("below threshold preserves multiline formatting", async () => {
       const input = `const x = [
-  1,
+  z.string(),
+  z.array(ContentPartSchema),
 ];
 `;
       const result = await format("a.ts", input, {
-        arrayWrap: { minElementsToWrap: 2 },
+        arrayWrap: { minElementsToWrap: 3 },
       });
-      expect(result.code).toBe("const x = [1];\n");
+      expect(result.code).toBe(`const x = [
+  z.string(),
+  z.array(ContentPartSchema),
+];
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("below threshold preserves multiline numeric arrays", async () => {
+      const input = `const RETRYABLE_STATUS_CODES = new Set([
+  429,
+  503,
+]);
+`;
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 3 },
+      });
+      expect(result.code).toBe(`const RETRYABLE_STATUS_CODES = new Set([
+  429,
+  503,
+]);
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("below threshold collapses single-line formatting", async () => {
+      const input = "const x = [1, 2];\n";
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 3 },
+      });
+      expect(result.code).toBe("const x = [1, 2];\n");
       expect(result.errors).toStrictEqual([]);
     });
 
@@ -182,6 +213,32 @@ describe("arrayWrap", () => {
 ] = values;
 `);
       expect(result.errors).toStrictEqual([]);
+    });
+
+    it("below threshold preserves multiline destructuring", async () => {
+      const input = `const [
+  first,
+  second,
+] = values;
+`;
+      const result = await format("a.ts", input, {
+        arrayWrap: { minElementsToWrap: 3 },
+      });
+      expect(result.code).toBe(`const [
+  first,
+  second,
+] = values;
+`);
+      expect(result.errors).toStrictEqual([]);
+    });
+
+    it("formatting is idempotent", async () => {
+      const input = "const x = [1, 2, 3];\n";
+      const opts = { arrayWrap: { minElementsToWrap: 2 } } as const;
+      const first = await format("a.ts", input, opts);
+      const second = await format("a.ts", first.code, opts);
+      expect(second.code).toBe(first.code);
+      expect(second.errors).toStrictEqual([]);
     });
 
     it("spread elements count as elements", async () => {
