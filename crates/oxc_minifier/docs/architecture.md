@@ -120,67 +120,67 @@ design document number in [progress.md](progress.md).
 
 **Phase 3 — Normalize + Analyze (pre-loop, run once)**
 
-| #   | Pass | Rationale |
-|-----|------|-----------|
-| 002 | Normalize | Canonical AST forms for downstream pattern matching |
-| 005 | Module-Aware Optimizations | Apply ES module semantics (strict mode, this=undefined) |
-| 023 | Drop Statements | Remove debugger/console before optimization begins |
-| 024 | Define Plugin | Replace compile-time constants before fold constants can use them |
-| 025 | Pure Annotations and Side Effects | Annotate pure calls for DCE to consume |
-| 038 | Mark Pure Functions | Auto-detect pure functions by analyzing bodies |
+| #   | Pass                              | Rationale                                                         |
+| --- | --------------------------------- | ----------------------------------------------------------------- |
+| 002 | Normalize                         | Canonical AST forms for downstream pattern matching               |
+| 005 | Module-Aware Optimizations        | Apply ES module semantics (strict mode, this=undefined)           |
+| 023 | Drop Statements                   | Remove debugger/console before optimization begins                |
+| 024 | Define Plugin                     | Replace compile-time constants before fold constants can use them |
+| 025 | Pure Annotations and Side Effects | Annotate pure calls for DCE to consume                            |
+| 038 | Mark Pure Functions               | Auto-detect pure functions by analyzing bodies                    |
 
 **Phase 4 — Optimization Loop (peephole, iterated to fixed point)**
 
-| #   | Pass | Rationale |
-|-----|------|-----------|
-| 003 | Substitute Alternate Syntax | Local rewrites: shorter syntax forms |
-| 004 | Convert to Dotted Properties | `a["b"]` → `a.b` |
-| 006 | Fold Constants | Evaluate constant expressions |
-| 007 | Replace Known Methods | Evaluate known built-in methods |
-| 008 | Minimize Conditions | Simplify conditional expressions |
-| 009 | Remove Dead Code | Eliminate unreachable branches |
-| 010 | Collect Property Assignments | Merge property assignments into initializers |
-| 011 | Statement Fusion | Fuse consecutive expression statements |
-| 012 | Minimize Exit Points | Remove redundant return/break/continue |
-| 013 | Exploit Assigns | Combine assignments into expressions |
-| 014 | Function to Arrow | Convert eligible functions to arrow syntax |
-| 015 | Replace Arguments Access | Replace `arguments[i]` with named parameters |
-| 016 | Optimize Loops | Loop-specific simplifications |
-| 017 | Optimize Switch | Switch statement optimizations |
-| 018 | Remove Unused Code | Mark-and-sweep unused declaration removal |
-| 019 | Inline | Variable, function, and property inlining |
-| 026 | Optimize Parameters | Remove unused trailing parameters |
-| 027 | String Deduplication | Extract repeated string literals into shared variables |
-| 029 | Collapse Declarations | Join consecutive var/let/const; collapse function expressions to declarations |
-| 030 | Modern Syntax Optimizations | Use modern JS features for shorter output |
-| 031 | TypeScript Optimizations | TS-specific size reductions |
-| 033 | Optimize Calls | Call-site and return-value optimizations |
-| 036 | Inline Simple Methods | Inline trivial method bodies at call sites |
-| 037 | Extract Prototype Members | Merge prototype property assignments into compound form |
+| #   | Pass                         | Rationale                                                                     |
+| --- | ---------------------------- | ----------------------------------------------------------------------------- |
+| 003 | Substitute Alternate Syntax  | Local rewrites: shorter syntax forms                                          |
+| 004 | Convert to Dotted Properties | `a["b"]` → `a.b`                                                              |
+| 006 | Fold Constants               | Evaluate constant expressions                                                 |
+| 007 | Replace Known Methods        | Evaluate known built-in methods                                               |
+| 008 | Minimize Conditions          | Simplify conditional expressions                                              |
+| 009 | Remove Dead Code             | Eliminate unreachable branches                                                |
+| 010 | Collect Property Assignments | Merge property assignments into initializers                                  |
+| 011 | Statement Fusion             | Fuse consecutive expression statements                                        |
+| 012 | Minimize Exit Points         | Remove redundant return/break/continue                                        |
+| 013 | Exploit Assigns              | Combine assignments into expressions                                          |
+| 014 | Function to Arrow            | Convert eligible functions to arrow syntax                                    |
+| 015 | Replace Arguments Access     | Replace `arguments[i]` with named parameters                                  |
+| 016 | Optimize Loops               | Loop-specific simplifications                                                 |
+| 017 | Optimize Switch              | Switch statement optimizations                                                |
+| 018 | Remove Unused Code           | Mark-and-sweep unused declaration removal                                     |
+| 019 | Inline                       | Variable, function, and property inlining                                     |
+| 026 | Optimize Parameters          | Remove unused trailing parameters                                             |
+| 027 | String Deduplication         | Extract repeated string literals into shared variables                        |
+| 029 | Collapse Declarations        | Join consecutive var/let/const; collapse function expressions to declarations |
+| 030 | Modern Syntax Optimizations  | Use modern JS features for shorter output                                     |
+| 031 | TypeScript Optimizations     | TS-specific size reductions                                                   |
+| 033 | Optimize Calls               | Call-site and return-value optimizations                                      |
+| 036 | Inline Simple Methods        | Inline trivial method bodies at call sites                                    |
+| 037 | Extract Prototype Members    | Merge prototype property assignments into compound form                       |
 
 **Phase 4b — Optimization Loop, advanced passes (need CFG/dataflow)**
 
 These run inside the loop but require infrastructure not yet built:
 
-| #   | Pass | Dependency |
-|-----|------|------------|
-| 021 | Dead Assignments Elimination | CFG + liveness dataflow |
-| 022 | Collapse Variables | CFG + reaching definitions |
-| 032 | Hoist Properties | Escape analysis |
-| 035 | Flow-Sensitive Inline | CFG + reaching definitions |
+| #   | Pass                         | Dependency                 |
+| --- | ---------------------------- | -------------------------- |
+| 021 | Dead Assignments Elimination | CFG + liveness dataflow    |
+| 022 | Collapse Variables           | CFG + reaching definitions |
+| 032 | Hoist Properties             | Escape analysis            |
+| 035 | Flow-Sensitive Inline        | CFG + reaching definitions |
 
 **Phase 5 — Mangle (separate from compression)**
 
-| #   | Pass | Rationale |
-|-----|------|-----------|
-| 020 | Mangle Properties | Property renaming |
-| 034 | Variable Mangling | Variable renaming via scope analysis |
-| 039 | Ambiguate Properties | Cross-type property name reuse |
+| #   | Pass                 | Rationale                            |
+| --- | -------------------- | ------------------------------------ |
+| 020 | Mangle Properties    | Property renaming                    |
+| 034 | Variable Mangling    | Variable renaming via scope analysis |
+| 039 | Ambiguate Properties | Cross-type property name reuse       |
 
 **Phase 6 — Codegen**
 
-| #   | Pass | Rationale |
-|-----|------|-----------|
+| #   | Pass                  | Rationale                                          |
+| --- | --------------------- | -------------------------------------------------- |
 | 028 | Codegen Optimizations | Emit-time decisions (number formats, quote styles) |
 
 ### Visitor Ordering Within a Peephole Traversal
@@ -189,6 +189,7 @@ All Phase 4 passes execute within a single AST traversal. Their ordering matters
 one pass's output feeds into another.
 
 **Enter visitors (top-down):**
+
 - Collect symbol metadata (pure function annotations, symbol values)
 - Push class scopes for private member tracking
 
@@ -196,6 +197,7 @@ one pass's output feeds into another.
 Most optimization fires on exit, because children are optimized before parents.
 
 **Ordering constraints (exit phase):**
+
 1. **Fold constants** before **remove dead code** — folded constants reveal dead branches
 2. **Define plugin** before **fold constants** — replaced constants enable folding
 3. **Pure annotations** before **remove dead code** — marked pure calls can be removed
