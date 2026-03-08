@@ -28,8 +28,8 @@ catalogs:
       specifier: ^15.0.4
       version: 15.0.4
     publint:
-      specifier: 0.3.17
-      version: 0.3.17
+      specifier: 0.3.18
+      version: 0.3.18
     rolldown:
       specifier: 1.0.0-rc.7
       version: 1.0.0-rc.7
@@ -89,7 +89,7 @@ importers:
         version: 15.0.4
       tsdown:
         specifier: 'catalog:'
-        version: 0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
+        version: 0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
@@ -170,7 +170,7 @@ importers:
         version: 1.0.0-rc.7
       tsdown:
         specifier: 'catalog:'
-        version: 0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
+        version: 0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -197,7 +197,7 @@ importers:
         version: 24.1.0
       publint:
         specifier: 'catalog:'
-        version: 0.3.17
+        version: 0.3.18
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
@@ -237,7 +237,7 @@ importers:
         version: 1.58.2
       publint:
         specifier: 'catalog:'
-        version: 0.3.17
+        version: 0.3.18
       tinypool:
         specifier: ^2.0.0
         version: 2.1.0
@@ -256,7 +256,7 @@ importers:
         version: 3.5.1(@emnapi/runtime@1.8.1)(@types/node@25.0.2)
       publint:
         specifier: 'catalog:'
-        version: 0.3.17
+        version: 0.3.18
 
   napi/transform:
     devDependencies:
@@ -268,7 +268,7 @@ importers:
         version: 24.1.0
       publint:
         specifier: 'catalog:'
-        version: 0.3.17
+        version: 0.3.18
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
@@ -2069,8 +2069,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@publint/pack@0.1.3':
-    resolution: {integrity: sha512-dHDWeutAerz+Z2wFYAce7Y51vd4rbLBfUh0BNnyul4xKoVsPUVJBrOAFsJvtvYBwGFJSqKsxyyHf/7evZ8+Q5Q==}
+  '@publint/pack@0.1.4':
+    resolution: {integrity: sha512-HDVTWq3H0uTXiU0eeSQntcVUTPP3GamzeXI41+x7uU9J65JgWQh3qWZHblR1i0npXfFtF+mxBiU2nJH8znxWnQ==}
     engines: {node: '>=18'}
 
   '@quansync/fs@1.0.0':
@@ -4044,8 +4044,8 @@ packages:
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
-  publint@0.3.17:
-    resolution: {integrity: sha512-Q3NLegA9XM6usW+dYQRG1g9uEHiYUzcCVBJDJ7yMcWRqVU9LYZUWdqbwMZfmTCFC5PZLQpLAmhvRcQRl3exqkw==}
+  publint@0.3.18:
+    resolution: {integrity: sha512-JRJFeBTrfx4qLwEuGFPk+haJOJN97KnPuK01yj+4k/Wj5BgoOK5uNsivporiqBjk2JDaslg7qJOhGRnpltGeog==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -6089,7 +6089,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@publint/pack@0.1.3': {}
+  '@publint/pack@0.1.4': {}
 
   '@quansync/fs@1.0.0':
     dependencies:
@@ -8150,9 +8150,9 @@ snapshots:
 
   proxy-from-env@1.1.0: {}
 
-  publint@0.3.17:
+  publint@0.3.18:
     dependencies:
-      '@publint/pack': 0.1.3
+      '@publint/pack': 0.1.4
       package-manager-detector: 1.6.0
       picocolors: 1.1.1
       sade: 1.8.1
@@ -8502,7 +8502,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tsdown@0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3):
+  tsdown@0.21.0(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
@@ -8522,7 +8522,7 @@ snapshots:
       unrun: 0.2.30
     optionalDependencies:
       '@arethetypeswrong/core': 0.18.2
-      publint: 0.3.17
+      publint: 0.3.18
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@ts-macro/tsc'

@@ -25,7 +25,7 @@ jobs:
       oxfmt_version: ${{ steps.oxfmt.outputs.version }}
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -130,10 +130,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - if: ${{ contains(matrix.os, 'windows') }}
+        run: git config --system core.longpaths true
+
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@68675c5a5f1a6950c3975d33f3ae0ef155e5bf3d # v2.68.15
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -203,7 +206,7 @@ jobs:
     name: Build Oxlint FreeBSD
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - name: Build
         id: build
         uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
@@ -277,7 +280,7 @@ jobs:
       npm_dir: npm/oxlint-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
@@ -412,10 +415,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@68675c5a5f1a6950c3975d33f3ae0ef155e5bf3d # v2.68.15
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -485,7 +488,7 @@ jobs:
     name: Build Oxfmt FreeBSD
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - name: Build
         id: build
         uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
@@ -558,7 +561,7 @@ jobs:
       npm_dir: npm/oxfmt-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
@@ -614,7 +617,7 @@ jobs:
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
         with:
           restore-cache: false
           tools: cargo-release-oxc
@@ -724,7 +727,7 @@ jobs:
     name: Bump oxlint dependents
     runs-on: ubuntu-slim
     steps:
-      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Bump oxc-project/eslint-plugin-oxlint
         uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
