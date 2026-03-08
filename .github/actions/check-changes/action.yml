@@ -37,15 +37,15 @@ runs:
         INPUT_EXCLUDE: ${{ inputs.exclude }}
         INPUT_PATHS: ${{ inputs.paths }}
       run: |
-        ARGS=""
+        ARGS=()
         if [ -n "$INPUT_PACKAGES" ]; then
-          ARGS="$ARGS --packages $INPUT_PACKAGES"
+          ARGS+=("--packages" "$INPUT_PACKAGES")
         fi
         if [ -n "$INPUT_EXCLUDE" ]; then
-          ARGS="$ARGS --exclude $INPUT_EXCLUDE"
+          ARGS+=("--exclude" "$INPUT_EXCLUDE")
         fi
         if [ -n "$INPUT_PATHS" ]; then
-          ARGS="$ARGS --paths $INPUT_PATHS"
+          ARGS+=("--paths" "$INPUT_PATHS")
         fi
-        SHOULD_RUN=$(node .github/scripts/check-changes.js $ARGS)
+        SHOULD_RUN=$(node .github/scripts/check-changes.js "${ARGS[@]}")
         echo "changed=$SHOULD_RUN" >> $GITHUB_OUTPUT

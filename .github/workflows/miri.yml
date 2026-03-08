@@ -46,6 +46,7 @@ jobs:
         id: filter
         with:
           packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_transformer
+          paths: .github/workflows/miri.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 

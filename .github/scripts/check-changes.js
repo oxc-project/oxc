@@ -75,8 +75,8 @@ function shouldRunInclude(changedFiles, packages, paths) {
 }
 
 /**
- * Exclude mode: skip only if ALL changed files belong to excluded crate directories or paths.
- * No cargo tree — exclusion is intentionally shallow.
+ * Exclude mode: skip only if ALL changed files belong to excluded crate directories.
+ * Files matching `paths` always trigger the job. No cargo tree — exclusion is intentionally shallow.
  * @param {string[] | null} changedFiles
  * @param {string[]} excludeCrates - Crate names to exclude
  * @param {string[]} paths - Additional paths that always trigger the job
