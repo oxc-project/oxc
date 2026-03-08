@@ -337,7 +337,7 @@ When inlining a function body at a call site, or hoisting properties out of an o
   scope to the new scope
 - References within the moved subtree may need re-resolution if they now resolve to different
   symbols (e.g., a parameter that becomes a local variable at the call site)
-- References from *outside* the moved subtree to symbols *inside* it: these still point to the
+- References from _outside_ the moved subtree to symbols _inside_ it: these still point to the
   same `SymbolId` (stable), so no reference update is needed — only the symbol's owning scope
   changes
 
