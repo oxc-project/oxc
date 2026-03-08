@@ -300,6 +300,123 @@ that encode scope chains directly on identifier nodes. Transforms run next witho
 query or update a separate scope tree. A `hygiene` pass runs last to rename identifiers whose
 marks conflict, restoring valid JavaScript output.
 
+### Oxc's Approach: Incremental Cleanup
+
+Oxc uses incremental cleanup per mutation (Closure Compiler style), not batch rebuild (Terser
+style). Each pass that mutates the AST calls cleanup helpers immediately after the mutation.
+No deferred reconciliation pass is needed — scope and symbol data stays accurate throughout
+the traversal, so subsequent passes within the same iteration see correct reference counts
+and scope structure.
+
+### Mutation Categories and Required Cleanup
+
+Five categories of AST mutations require scope/symbol bookkeeping:
+
+**DELETE — Remove an AST subtree**
+
+When removing dead code, unused declarations, or unreachable branches.
+
+- Walk the removed subtree, delete every reference
+- Remove bindings for any declarations
+- Reparent orphaned child scopes to the removed node's parent scope
+
+**REPLACE — Swap one expression for another**
+
+When inlining a variable (replacing identifier with its value) or folding a constant.
+
+- Delete references in the old expression
+- The new expression (a literal, `void 0`, etc.) typically has no references
+- If the replacement introduces new identifiers, create references for them
+
+**MOVE — Relocate an AST subtree between scopes**
+
+When inlining a function body at a call site, or hoisting properties out of an object.
+
+- Reparent all scopes within the moved subtree to the new parent scope
+- Move bindings: for each declaration in the moved subtree, transfer the binding from the old
+  scope to the new scope
+- References within the moved subtree may need re-resolution if they now resolve to different
+  symbols (e.g., a parameter that becomes a local variable at the call site)
+- References from *outside* the moved subtree to symbols *inside* it: these still point to the
+  same `SymbolId` (stable), so no reference update is needed — only the symbol's owning scope
+  changes
+
+**CREATE — Introduce new declarations**
+
+When string deduplication creates shared variables, or when a pass introduces temporaries.
+
+- Generate fresh symbols and add bindings to the target scope
+- Create references at each use site
+- No cleanup of existing data needed
+
+**MERGE — Collapse a scope into its parent**
+
+When unwrapping a block scope or removing an IIFE wrapper.
+
+- Move all bindings from inner scope to parent scope
+- Reparent inner scope's child scopes to parent scope
+- The inner scope becomes empty and orphaned (harmless in arena allocation)
+
+### Cleanup Helpers
+
+Rather than requiring every pass to manually call low-level scoping methods (error-prone, easy
+to miss steps), provide mid-level helpers that bundle the required operations:
+
+**`delete_references_in_expression(expr)`** — Walk an expression subtree and delete all
+references found. Call this before removing any expression from the AST. Implemented as a small
+visitor over identifier references.
+
+**`delete_references_in_statement(stmt)`** — Same for statement subtrees.
+
+**`remove_declaration(symbol_id)`** — Remove a symbol's binding from its scope and delete all
+its resolved references. Single call replaces multi-step manual cleanup.
+
+**`move_declaration(symbol_id, new_scope_id)`** — Move a declaration's binding from its current
+scope to a new scope. Updates the symbol's owning scope and transfers the binding entry.
+
+**`reparent_child_scopes(subtree, new_parent_scope)`** — Walk a subtree, find all immediate
+child scopes, reparent them to the new parent. Used when removing a scope boundary or moving
+code.
+
+These compose naturally for common operations:
+
+```
+// Removing dead code:
+delete_references_in_statement(dead_branch)
+
+// Inlining a variable reference:
+delete_reference(ident)  // the replaced reference
+// then replace identifier with value in AST
+
+// Removing an unused function:
+remove_declaration(symbol_id)
+delete_references_in_statement(function_body)
+
+// Inlining a function body at a call site:
+for each parameter symbol:
+    move_declaration(param_symbol, caller_scope)
+reparent_child_scopes(body, caller_scope)
+// then splice body into caller
+```
+
+### Reference Count Queries
+
+Optimization passes need reference counts (how many reads/writes a symbol has) for inlining
+and removal decisions. Two design options:
+
+**Cache counts at iteration start** — Compute read/write counts once when entering the
+traversal. Fast lookups but counts go stale as passes delete references within the same
+traversal, causing missed optimizations.
+
+**Query counts live** — Call `get_resolved_reference_ids(symbol_id).len()` each time. Always
+accurate. O(1) cost (vector length). No staleness. Enables cascade removal within a single
+traversal: removing one declaration makes another symbol unreferenced, which can be removed
+immediately without waiting for the next iteration.
+
+Live queries are preferred. Cached metadata should be limited to properties that don't change
+during optimization: the symbol's constant value (if any), whether it's exported, and its
+owning scope.
+
 ## Design Plans
 
 See [progress.md](progress.md) for a full list of design documents.
