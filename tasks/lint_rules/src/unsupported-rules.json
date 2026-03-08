@@ -121,6 +121,7 @@
     "react/sort-default-props": "`defaultProps` is removed entirely in React 19, this rule is no longer relevant. Also stylistic.",
     "react/sort-prop-types": "PropTypes are ignored in React 19, and this rule is only relevant if you use the PropTypes package. Also stylistic.",
     "react/static-property-placement": "This rule only applies to legacy class components, which are not widely used in modern React.",
+    "react/require-optimization": "This rule only applies to legacy class components, which are not widely used in modern React.",
     "react/prefer-read-only-props": "This rule is niche and primarily applies to legacy class components, which are not widely used in modern React.",
 
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
