@@ -143,27 +143,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
+          exclude: oxc_linter
+          paths: napi/,npm/,apps/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
       - name: Build
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build-wasm-dev
           git diff --exit-code # Must commit everything
       - name: Test wasi in browser
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         working-directory: napi/parser
         run: |
           rm -rf *.wasm
@@ -179,28 +180,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          predicate-quantifier: "every"
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-              - '!crates/oxc_language_server/**'
-              - '!editors/**'
+          exclude: oxc_linter,oxc_language_server
+          paths: napi/,npm/,apps/,tasks/e2e/,pnpm-lock.yaml,package.json,editors/
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
       - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
           prettier: false
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         name: Run tests in workspace
         env:
           RUN_RAW_RANGE_TESTS: "true"
@@ -209,11 +208,11 @@ jobs:
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
           pnpm run test
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: tasks/e2e
         run: pnpm run test
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
 
@@ -225,28 +224,26 @@ jobs:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          predicate-quantifier: "every"
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-              - '!crates/oxc_language_server/**'
-              - '!editors/**'
+          exclude: oxc_linter,oxc_language_server
+          paths: napi/,npm/,apps/,tasks/e2e/,pnpm-lock.yaml,package.json,editors/
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
       - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
           prettier: false
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         name: Run tests in workspace
         env:
           RUN_RAW_RANGE_TESTS: "true"
@@ -254,13 +251,13 @@ jobs:
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
           pnpm run test
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         run: |
           pnpm install --frozen-lockfile
           pnpm run test
         working-directory: tasks/e2e
-      - if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.changed == 'true'
         run: |
           git diff --exit-code # Must commit everything
 
@@ -332,24 +329,22 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          filters: |
-            src:
-              - '.github/workflows/ci.yml'
-              - 'crates/oxc_minifier/**'
-              - 'crates/oxc_codegen/**'
-              - 'tasks/minsize/**'
+          packages: oxc_minsize
+          paths: .github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: minsize
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check minification size
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         run: |
           cargo minsize
           git diff --exit-code
@@ -359,29 +354,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          filters: |
-            src:
-              - '.github/workflows/ci.yml'
-              - 'crates/oxc_ast/**'
-              - 'crates/oxc_data_structures/**'
-              - 'crates/oxc_parser/**'
-              - 'crates/oxc_minifier/**'
-              - 'crates/oxc_mangler/**'
-              - 'crates/oxc_allocator/**'
-              - 'crates/oxc_semantic/**'
-              - 'tasks/track_memory_allocations/**'
+          packages: oxc_track_memory_allocations
+          paths: .github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: allocs
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check allocations
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         run: |
           cargo allocs
           git diff --exit-code ||
@@ -420,24 +408,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: ./.github/actions/check-changes
         id: filter
         with:
-          filters: |
-            src:
-              - '.github/workflows/ci.yml'
-              - 'crates/oxc_linter/**'
-              - 'tasks/linter_codegen/**'
+          packages: oxc_linter
+          paths: tasks/linter_codegen/,.github/workflows/ci.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 
       - uses: oxc-project/setup-rust@704e1648ce532a12b4d6fb98db0ba10afa3ae879 # v1.0.13
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         with:
           components: rustfmt
           cache-key: lintgen
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check linter changes
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.changed == 'true'
         run: |
           cargo lintgen
           git diff --exit-code ||
