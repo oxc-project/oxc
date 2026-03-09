@@ -9,6 +9,8 @@ the intended compressor architecture.
 
 ## Source Layout
 
+The planned source layout for the new compressor is:
+
 ```
 src/
 ├── lib.rs                  # Public API entry point
@@ -280,11 +282,12 @@ Optimization passes interact — one pass's output often enables another pass to
 may produce a dead branch that dead code elimination can remove, which may leave a variable unused
 for unused code removal to clean up. A single traversal cannot catch all these cascading opportunities.
 
-The compressor therefore runs all optimization passes inside a **fixed-point loop**: traverse the AST,
-apply all passes, and repeat until an iteration produces no changes (convergence). Closure Compiler
-uses the same approach, with a convergence heuristic that stops when consecutive iterations yield
-less than 0.05% size reduction, plus a safety cap of 100 maximum iterations to guarantee termination
-even if the convergence threshold is never met.
+The compressor is intended to run all optimization passes inside a **fixed-point loop**:
+traverse the AST, apply all passes, and repeat until an iteration produces no changes
+(convergence). Closure Compiler uses the same approach, with a convergence heuristic that
+stops when consecutive iterations yield less than 0.05% size reduction, plus a safety cap
+of 100 maximum iterations to guarantee termination even if the convergence threshold is
+never met.
 
 Conceptually, this loop also depends on a profitability model. "Changed the AST" is not the
 same thing as "improved the output." Some transforms expose future wins, but others merely
@@ -329,17 +332,18 @@ global boolean.
 
 ## Symbol and Scope Synchronization
 
-Optimization passes mutate the AST: they remove declarations, inline variables, eliminate dead
-branches, and unwrap block scopes. Each mutation can make the symbol table and scope tree stale,
-because those structures are built once upfront and not automatically kept in sync with AST
-changes. Passes depend on this data for correctness — `symbol_is_unused()` gates whether a
-declaration can be removed, reference counts determine inlining eligibility, and scope parent
-pointers are used for name resolution.
+In the intended architecture, optimization passes mutate the AST: they remove declarations,
+inline variables, eliminate dead branches, and unwrap block scopes. Each mutation can make
+the symbol table and scope tree stale, because those structures are built once upfront and
+not automatically kept in sync with AST changes. Passes depend on this data for correctness
+— `symbol_is_unused()` gates whether a declaration can be removed, reference counts
+determine inlining eligibility, and scope parent pointers are used for name resolution.
 
-The single-pass model (all peephole passes in one traversal) makes this harder: there is no
-opportunity to rebuild scope/symbol data between individual passes the way Terser does with
-`figure_out_scope()`. Updates must happen in-traversal — each pass must incrementally fix up
-reference counts, scope bindings, and symbol flags as it mutates the AST.
+The single-pass model (all peephole passes in one traversal) would make this harder: there
+is no opportunity to rebuild scope/symbol data between individual passes the way Terser
+does with `figure_out_scope()`. Updates would need to happen in-traversal, with each pass
+incrementally fixing up reference counts, scope bindings, and symbol flags as it mutates
+the AST.
 
 ### How other minifiers handle this
 
@@ -363,17 +367,17 @@ that encode scope chains directly on identifier nodes. Transforms run next witho
 query or update a separate scope tree. A `hygiene` pass runs last to rename identifiers whose
 marks conflict, restoring valid JavaScript output.
 
-### Oxc's Approach: Incremental Cleanup
+### Proposed Oxc Approach: Incremental Cleanup
 
-Oxc uses incremental cleanup per mutation (Closure Compiler style), not batch rebuild (Terser
-style). Each pass that mutates the AST calls cleanup helpers immediately after the mutation.
-No deferred reconciliation pass is needed — scope and symbol data stays accurate throughout
-the traversal, so subsequent passes within the same iteration see correct reference counts
-and scope structure.
+The proposed Oxc direction is incremental cleanup per mutation (Closure Compiler style),
+not batch rebuild (Terser style). In this model, each pass that mutates the AST would call
+cleanup helpers immediately after the mutation. No deferred reconciliation pass would be
+needed: scope and symbol data would stay accurate throughout the traversal, so subsequent
+passes within the same iteration would see correct reference counts and scope structure.
 
 ### Mutation Categories and Required Cleanup
 
-Five categories of AST mutations require scope/symbol bookkeeping:
+Five categories of AST mutations would require scope/symbol bookkeeping:
 
 **DELETE — Remove an AST subtree**
 
@@ -422,8 +426,9 @@ When unwrapping a block scope or removing an IIFE wrapper.
 
 ### Cleanup Helpers
 
-Rather than requiring every pass to manually call low-level scoping methods (error-prone, easy
-to miss steps), provide mid-level helpers that bundle the required operations:
+Rather than requiring every pass to manually call low-level scoping methods (error-prone,
+easy to miss steps), the design should provide mid-level helpers that bundle the required
+operations:
 
 **`delete_references_in_expression(expr)`** — Walk an expression subtree and delete all
 references found. Call this before removing any expression from the AST. Implemented as a small
@@ -441,7 +446,7 @@ scope to a new scope. Updates the symbol's owning scope and transfers the bindin
 child scopes, reparent them to the new parent. Used when removing a scope boundary or moving
 code.
 
-These compose naturally for common operations:
+These helpers would compose naturally for common operations:
 
 ```
 // Removing dead code:
@@ -464,17 +469,17 @@ reparent_child_scopes(body, caller_scope)
 
 ### Reference Count Queries
 
-Optimization passes need reference counts (how many reads/writes a symbol has) for inlining
-and removal decisions. Two design options:
+Optimization passes would need reference counts (how many reads/writes a symbol has) for
+inlining and removal decisions. Two design options:
 
 **Cache counts at iteration start** — Compute read/write counts once when entering the
 traversal. Fast lookups but counts go stale as passes delete references within the same
 traversal, causing missed optimizations.
 
 **Query counts live** — Call `get_resolved_reference_ids(symbol_id).len()` each time. Always
-accurate. O(1) cost (vector length). No staleness. Enables cascade removal within a single
-traversal: removing one declaration makes another symbol unreferenced, which can be removed
-immediately without waiting for the next iteration.
+accurate. O(1) cost (vector length). No staleness. This would enable cascade removal within
+a single traversal: removing one declaration makes another symbol unreferenced, which can
+be removed immediately without waiting for the next iteration.
 
 Live queries are preferred. Cached metadata should be limited to properties that don't change
 during optimization: the symbol's constant value (if any), whether it's exported, and its

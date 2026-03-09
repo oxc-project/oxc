@@ -1,6 +1,6 @@
 # Oxc Minifier
 
-Next-generation JavaScript/TypeScript minifier achieving best-in-class compression.
+Design and reference workspace for Oxc's next-generation JavaScript/TypeScript minifier.
 
 ## Context Overview
 
@@ -12,6 +12,10 @@ Next-generation JavaScript/TypeScript minifier achieving best-in-class compressi
 - Refer to [Assumptions](./docs/assumptions.md) for code assumptions used in optimization.
 - Refer to [Data Structures](./docs/data-structures.md) for core types and configuration.
 - Refer to [Lessons](./docs/lessons.md) for patterns and lessons learned.
+
+The new minifier described in these docs is still an intended architecture. The current
+`oxc_minifier` crate contains legacy/reference code and experiments while the new design
+is being specified and implemented.
 
 ## Best Practices That Must Be Followed
 
@@ -45,14 +49,16 @@ Next-generation JavaScript/TypeScript minifier achieving best-in-class compressi
    - Every implementation plan should include the following:
    - During plan generation: ask clarifying questions when necessary, especially around developer-experience defining design decisions.
 
-## Current Performance
+## Current Status
 
-See [`tasks/minsize`](../../tasks/minsize) for compression benchmarks.
+See [Progress Doc](./docs/progress.md) for implementation status.
 
-- Matching/beating esbuild on many libraries
-- Full test262, Babel, TypeScript conformance
+- [`tasks/minsize`](../../tasks/minsize) tracks compression benchmarks
+- `cargo coverage` tracks test262, Babel, and TypeScript conformance work
+- The architecture and pass pipeline in `docs/` describe the intended end state, not a
+  fully implemented new compressor
 
-## Usage
+## Current Crate API
 
 ```rust
 use oxc_minifier::{Minifier, MinifierOptions};
@@ -61,6 +67,9 @@ let options = MinifierOptions::default();
 let minifier = Minifier::new(options);
 let result = minifier.minify(&mut program);
 ```
+
+This example reflects the current crate API. It should not be read as evidence that the
+full intended architecture in `docs/architecture.md` is already implemented.
 
 ## Testing Infrastructure
 
