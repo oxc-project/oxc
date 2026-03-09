@@ -579,9 +579,7 @@ fn serialize_paragraph(
             raw.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
 
         if original_lines.len() > 1
-            && original_lines.iter().all(|l| {
-                super::wrap::str_width(l) <= effective_width
-            })
+            && original_lines.iter().all(|l| super::wrap::str_width(l) <= effective_width)
         {
             // Preserve original line breaks
             let total = original_lines.len();
