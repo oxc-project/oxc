@@ -2,7 +2,7 @@
 source: tasks/website_linter/src/cli.rs
 expression: snapshot
 ---
-Usage: [-c=<./.oxlintrc.json>] [PATH]...
+Usage: [-c=<./.oxlintrc.json>] [--config-field=KEY] [PATH]...
 
 Basic Configuration
     -c, --config=<./.oxlintrc.json>  Oxlint configuration file
@@ -11,6 +11,7 @@ Basic Configuration
                               running via Node.js
                               * you can use comments in configuration files.
                               * tries to be compatible with ESLint v8's format
+        --config-field=KEY    Top-level key to extract from the config object (requires --config)
         --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
                               project references for import plugin. If not provided, will look for
                               `tsconfig.json` in the current working directory.

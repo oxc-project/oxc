@@ -7,14 +7,19 @@ use oxc_linter::Oxlintrc;
 use crate::run::JsLoadJsConfigsCb;
 
 /// Callback type for loading JavaScript/TypeScript config files.
+///
+/// Returns raw `serde_json::Value` per config file. The caller is responsible
+/// for any field extraction (`--config-field`) and deserialization into `Oxlintrc`.
 pub type JsConfigLoaderCb =
-    Box<dyn Fn(Vec<String>) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> + Send + Sync>;
+    Box<dyn Fn(Vec<String>) -> Result<Vec<JsRawConfigResult>, Vec<OxcDiagnostic>> + Send + Sync>;
 
 /// Result of loading a single JavaScript/TypeScript config file.
+///
+/// Contains the raw JSON value before deserialization into `Oxlintrc`.
 #[derive(Debug, Clone)]
-pub struct JsConfigResult {
+pub struct JsRawConfigResult {
     pub path: PathBuf,
-    pub config: Oxlintrc,
+    pub value: serde_json::Value,
 }
 
 /// Response from JS side when loading JS configs.
@@ -68,7 +73,14 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigsCb) -> JsConfigLoaderCb {
     })
 }
 
-fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagnostic> {
+/// Deserialize a raw JS config `serde_json::Value` into `Oxlintrc`.
+///
+/// Handles the JS-config-specific `extends` field (which contains inline config
+/// objects rather than file paths).
+pub(crate) fn deserialize_js_config(
+    mut value: serde_json::Value,
+    path: &Path,
+) -> Result<Oxlintrc, OxcDiagnostic> {
     let Some(map) = value.as_object_mut() else {
         return Err(OxcDiagnostic::error(
             "Configuration file must have a default export that is an object.",
@@ -92,7 +104,7 @@ fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagno
                         "`extends[{idx}]` must be a config object (strings/paths are not supported).",
                     )));
                 }
-                parse_js_oxlintrc(item)
+                deserialize_js_config(item, path)
             })
             .collect::<Result<Vec<_>, _>>()?
     } else {
@@ -102,53 +114,32 @@ fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagno
     let mut oxlintrc: Oxlintrc =
         serde_json::from_value(value).map_err(|err| OxcDiagnostic::error(err.to_string()))?;
     oxlintrc.extends_configs = extends_configs;
+
+    oxlintrc.path = path.to_path_buf();
+    if let Some(config_dir) = path.parent() {
+        oxlintrc.set_config_dir(&config_dir.to_path_buf());
+    }
+
     Ok(oxlintrc)
 }
 
-/// Parse the JSON response from JS side into `JsConfigResult` structs.
-fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> {
+use std::path::Path;
+
+/// Parse the JSON response from JS side into raw config results.
+fn parse_js_config_response(json: &str) -> Result<Vec<JsRawConfigResult>, Vec<OxcDiagnostic>> {
     let response: LoadJsConfigsResponse = serde_json::from_str(json).map_err(|e| {
         vec![OxcDiagnostic::error(format!("Failed to parse JS config response: {e}"))]
     })?;
 
     match response {
         LoadJsConfigsResponse::Success { success } => {
-            let count = success.len();
-            let (configs, errors) = success.into_iter().fold(
-                (Vec::with_capacity(count), Vec::new()),
-                |(mut configs, mut errors), entry| {
-                    let path = PathBuf::from(&entry.path);
-                    let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
-                        Ok(config) => config,
-                        Err(err) => {
-                            errors.push(
-                                OxcDiagnostic::error(format!(
-                                    "Failed to parse config from {}",
-                                    entry.path
-                                ))
-                                .with_note(err.to_string()),
-                            );
-                            return (configs, errors);
-                        }
-                    };
-                    oxlintrc.path.clone_from(&path);
-
-                    let Some(config_dir_parent) = oxlintrc.path.parent() else {
-                        errors.push(OxcDiagnostic::error(format!(
-                            "Config path has no parent directory: {}",
-                            entry.path
-                        )));
-                        return (configs, errors);
-                    };
-                    let config_dir = config_dir_parent.to_path_buf();
-                    oxlintrc.set_config_dir(&config_dir);
-                    configs.push(JsConfigResult { path, config: oxlintrc });
-
-                    (configs, errors)
-                },
-            );
-
-            if errors.is_empty() { Ok(configs) } else { Err(errors) }
+            Ok(success
+                .into_iter()
+                .map(|entry| JsRawConfigResult {
+                    path: PathBuf::from(entry.path),
+                    value: entry.config,
+                })
+                .collect())
         }
         LoadJsConfigsResponse::Failure { failures } => Err(failures
             .into_iter()

@@ -31,6 +31,7 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 | Option Key                | Value(s)                          | Default    | Description                                                                                                                                            |
 | ------------------------- | --------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `configPath`              | `<string>` \| `null`              | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
+| `configField`             | `<string>` \| `null`              | `null`     | Top-level key to extract from the config object (requires `configPath`)                                                                                |
 | `tsConfigPath`            | `<string>` \| `null`              | `null`     | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
 | `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"`    | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
 | `typeAware`               | `<boolean>` \| `null`             | `null`     | Enables type-aware linting. When unset (`null`), uses the root config's `options.typeAware` value.                                                     |
@@ -72,6 +73,7 @@ The client can pass the workspace options like following:
       "options": {
         "run": "onType",
         "configPath": null,
+        "configField": null,
         "tsConfigPath": null,
         "unusedDisableDirectives": "allow",
         "typeAware": false,
@@ -112,6 +114,7 @@ The client can pass the workspace options like following:
       "options": {
         "run": "onType",
         "configPath": null,
+        "configField": null,
         "tsConfigPath": null,
         "unusedDisableDirectives": "allow",
         "typeAware": false,
@@ -225,6 +228,7 @@ The client can return a response like:
   {
     "run": "onType",
     "configPath": null,
+    "configField": null,
     "tsConfigPath": null,
     "unusedDisableDirectives": "allow",
     "typeAware": false,

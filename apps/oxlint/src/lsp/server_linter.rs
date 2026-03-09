@@ -105,6 +105,7 @@ impl ServerLinterBuilder {
         };
 
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
+        let config_field = options.config_field.as_deref().filter(|s| !s.is_empty());
         let loader = ConfigLoader::new(
             external_linter,
             &mut external_plugin_store,
@@ -115,7 +116,7 @@ impl ServerLinterBuilder {
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
         let oxlintrc =
-            match loader.load_root_config_with_ancestor_search(&root_path, config_path.as_ref()) {
+            match loader.load_root_config_with_ancestor_search(&root_path, config_path.as_ref(), config_field) {
                 Ok(config) => config,
                 Err(e) => {
                     warn!("Failed to load config: {e}");
@@ -845,6 +846,7 @@ impl ServerLinter {
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
         old_options.config_path != new_options.config_path
+            || old_options.config_field != new_options.config_field
             || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind != new_options.fix_kind

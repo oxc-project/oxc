@@ -110,8 +110,15 @@ impl LintCommand {
     }
 }
 
+const CONFIG_FIELD_ERROR_MESSAGE: &str = "--config-field requires --config to be specified";
+
+fn validate_basic_options(opts: &BasicOptions) -> bool {
+    opts.config_field.is_none() || opts.config.is_some()
+}
+
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
+#[bpaf(guard(validate_basic_options, CONFIG_FIELD_ERROR_MESSAGE))]
 pub struct BasicOptions {
     /// Oxlint configuration file
     ///  * `.json` and `.jsonc` config files are supported in all runtimes
@@ -122,6 +129,10 @@ pub struct BasicOptions {
     /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
+
+    /// Top-level key to extract from the config object (requires --config)
+    #[bpaf(long, argument("KEY"))]
+    pub config_field: Option<String>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
     /// If not provided, will look for `tsconfig.json` in the current working directory.

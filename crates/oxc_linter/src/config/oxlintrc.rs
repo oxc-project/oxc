@@ -272,6 +272,22 @@ impl Oxlintrc {
     ///
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
+        let json = Self::read_to_json_value(path)?;
+        Self::from_value(json, path)
+    }
+
+    /// Read a JSON/JSONC config file and return the parsed `serde_json::Value`.
+    ///
+    /// This handles reading the file, stripping JSONC comments, and parsing to JSON.
+    /// Useful when you need to pre-process the JSON value before deserializing
+    /// (e.g., extracting a specific field via `--config-field`).
+    ///
+    /// # Errors
+    ///
+    /// * File read failure
+    /// * JSONC comment stripping failure
+    /// * JSON parse failure
+    pub fn read_to_json_value(path: &Path) -> Result<serde_json::Value, OxcDiagnostic> {
         let mut string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!(
                 "Failed to parse config {} with error {e:?}",
@@ -284,7 +300,7 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
         })?;
 
-        let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
+        serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let ext = path.extension().and_then(OsStr::to_str);
             let err = match ext {
                 // syntax error
@@ -300,8 +316,18 @@ impl Oxlintrc {
                 "Failed to parse oxlint config {}.\n{err}",
                 path.display()
             ))
-        })?;
+        })
+    }
 
+    /// Create an `Oxlintrc` from a pre-parsed JSON value and a file path.
+    ///
+    /// This is useful when the JSON value has been pre-processed (e.g., extracting
+    /// a specific field via `--config-field`).
+    ///
+    /// # Errors
+    ///
+    /// * Parse Failure
+    pub fn from_value(json: serde_json::Value, path: &Path) -> Result<Self, OxcDiagnostic> {
         let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;

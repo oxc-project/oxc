@@ -8,7 +8,7 @@ search: false
 
 
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[**`--config-field`**=_`KEY`_\] \[_`PATH`_\]...
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./.oxlintrc.json>`_ &mdash; 
@@ -19,6 +19,8 @@ search: false
 * tries to be compatible with ESLint v8's format
 
   If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
+- **`    --config-field`**=_`KEY`_ &mdash; 
+  Top-level key to extract from the config object (requires --config)
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin. If not provided, will look for `tsconfig.json` in the current working directory.
 - **`    --init`** &mdash; 

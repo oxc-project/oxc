@@ -214,6 +214,7 @@ impl CliRunner {
             config_loader.load_root_and_nested(
                 &self.cwd,
                 basic_options.config.as_ref(),
+                basic_options.config_field.as_deref(),
                 &paths,
                 search_for_nested_configs,
             )
