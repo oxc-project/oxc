@@ -2296,10 +2296,8 @@ impl GenExpr for TSSatisfiesExpression<'_> {
 }
 
 impl GenExpr for TSNonNullExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(matches!(self.expression, Expression::ParenthesizedExpression(_)), |p| {
-            self.expression.print_expr(p, precedence, ctx);
-        });
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        self.expression.print_expr(p, Precedence::Postfix, ctx);
         p.print_ascii_byte(b'!');
         if p.options.minify {
             p.print_hard_space();

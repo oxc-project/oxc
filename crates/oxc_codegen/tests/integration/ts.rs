@@ -209,6 +209,7 @@ fn type_codegen_with_preserve_parens_off() {
         "type T = [(Anno | undefined)?];\n",
         parse_options,
     );
+    test_with_parse_options("const foo = (a ?? b)!;", "const foo = (a ?? b)!;\n", parse_options);
     test_with_parse_options(
         "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);",
         "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);\n",
