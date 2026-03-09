@@ -3,6 +3,14 @@
 //! The cache ensures the full React Compiler pipeline runs at most once per file,
 //! even when multiple per-category rules are enabled. Results are cached as
 //! `CachedDiagnostic` values keyed by the source text pointer.
+//!
+//! **Design notes:**
+//! - Single-slot cache: stores results for exactly one file. This works because
+//!   oxlint runs all rules sequentially on each file before moving to the next.
+//! - The first rule to call `ensure_compiled` populates the cache; all subsequent
+//!   rules on the same file read from it. Per-category rules use
+//!   `ReactCompilerConfig::default()`, matching the upstream ESLint plugin where
+//!   per-category rules don't accept individual configuration.
 
 use std::cell::RefCell;
 
