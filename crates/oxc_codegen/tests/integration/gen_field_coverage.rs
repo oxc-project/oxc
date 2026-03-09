@@ -323,6 +323,12 @@ fn test_gen_field_coverage() {
 
     let mut missing: Vec<String> = Vec::new();
 
+    // NOTE: We iterate over types found in codegen (`all_accesses`), not all AST types.
+    // Types whose fields are only accessed through chained expressions (e.g.,
+    // `self.opening_element.name` for JSXOpeningElement) won't appear in `all_accesses`
+    // and are silently skipped. This is a known limitation — the test only covers types
+    // that have a direct Gen/GenExpr impl or are accessed via helper function parameters
+    // or enum match arm bindings.
     for (type_name, accessed) in &all_accesses {
         let Some(struct_fields) = ast_structs.get(type_name) else {
             continue;
