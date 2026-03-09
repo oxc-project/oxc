@@ -17,5 +17,7 @@ import("./react.tsx");
 import("a-package/file.ts");
 // Bare dynamic import should not be rewritten.
 import("soundcloud.ts");
+// No-substitution template literal should also be rewritten.
+import(`./a.ts`);
 // Non-string-literal dynamic import should not be rewritten.
 import(dynamicPath);
