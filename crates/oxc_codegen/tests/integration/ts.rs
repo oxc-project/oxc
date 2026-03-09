@@ -25,6 +25,7 @@ fn cases() {
     test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
+    test_same("declare interface A {}\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");

@@ -3816,6 +3816,9 @@ impl Gen for TSTypeAliasDeclaration<'_> {
 
 impl Gen for TSInterfaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.declare {
+            p.print_str("declare ");
+        }
         p.print_str("interface");
         p.print_hard_space();
         self.id.print(p, ctx);
