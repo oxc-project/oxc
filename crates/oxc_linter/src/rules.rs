@@ -442,6 +442,32 @@ pub(crate) mod react_compiler {
     pub mod react_compiler_rule;
     pub(crate) mod cache;
     pub(crate) mod shared;
+    pub mod hooks;
+    pub mod capitalized_calls;
+    pub mod static_components;
+    pub mod use_memo;
+    pub mod void_use_memo;
+    pub mod preserve_manual_memoization;
+    pub mod memo_dependencies;
+    pub mod incompatible_library;
+    pub mod immutability;
+    pub mod globals;
+    pub mod refs;
+    pub mod memoized_effect_dependencies;
+    pub mod exhaustive_effect_dependencies;
+    pub mod set_state_in_effect;
+    pub mod no_deriving_state_in_effects;
+    pub mod error_boundaries;
+    pub mod purity;
+    pub mod set_state_in_render;
+    pub mod invariant;
+    pub mod todo_rule;
+    pub mod syntax;
+    pub mod unsupported_syntax;
+    pub mod compiler_config;
+    pub mod gating;
+    pub mod rule_suppression;
+    pub mod fbt;
 }
 
 pub(crate) mod react_perf {
