@@ -16,7 +16,10 @@ declare_oxc_lint!(
 
 impl Rule for Purity {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        super::cache::ensure_compiled(ctx, &super::react_compiler_rule::ReactCompilerConfig::default());
+        super::cache::ensure_compiled(
+            ctx,
+            &super::react_compiler_rule::ReactCompilerConfig::default(),
+        );
         super::cache::report_for_category(ctx, ErrorCategory::Purity);
     }
 }

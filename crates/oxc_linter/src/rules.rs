@@ -439,35 +439,35 @@ pub(crate) mod react {
 }
 
 pub(crate) mod react_compiler {
-    pub mod react_compiler_rule;
     pub(crate) mod cache;
-    pub(crate) mod shared;
-    pub mod hooks;
     pub mod capitalized_calls;
+    pub mod compiler_config;
+    pub mod error_boundaries;
+    pub mod exhaustive_effect_dependencies;
+    pub mod fbt;
+    pub mod gating;
+    pub mod globals;
+    pub mod hooks;
+    pub mod immutability;
+    pub mod incompatible_library;
+    pub mod invariant;
+    pub mod memo_dependencies;
+    pub mod memoized_effect_dependencies;
+    pub mod no_deriving_state_in_effects;
+    pub mod preserve_manual_memoization;
+    pub mod purity;
+    pub mod react_compiler_rule;
+    pub mod refs;
+    pub mod rule_suppression;
+    pub mod set_state_in_effect;
+    pub mod set_state_in_render;
+    pub(crate) mod shared;
     pub mod static_components;
+    pub mod syntax;
+    pub mod todo_rule;
+    pub mod unsupported_syntax;
     pub mod use_memo;
     pub mod void_use_memo;
-    pub mod preserve_manual_memoization;
-    pub mod memo_dependencies;
-    pub mod incompatible_library;
-    pub mod immutability;
-    pub mod globals;
-    pub mod refs;
-    pub mod memoized_effect_dependencies;
-    pub mod exhaustive_effect_dependencies;
-    pub mod set_state_in_effect;
-    pub mod no_deriving_state_in_effects;
-    pub mod error_boundaries;
-    pub mod purity;
-    pub mod set_state_in_render;
-    pub mod invariant;
-    pub mod todo_rule;
-    pub mod syntax;
-    pub mod unsupported_syntax;
-    pub mod compiler_config;
-    pub mod gating;
-    pub mod rule_suppression;
-    pub mod fbt;
 }
 
 pub(crate) mod react_perf {
