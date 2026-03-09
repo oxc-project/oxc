@@ -816,6 +816,7 @@ impl Gen for FormalParameter<'_> {
 impl Gen for FormalParameterRest<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
+        p.print_decorators(&self.decorators, ctx);
         self.rest.print(p, ctx);
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();

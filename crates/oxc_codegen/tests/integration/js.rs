@@ -12,6 +12,7 @@ use crate::tester::{
 fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
+    test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
 }
 
 #[test]
