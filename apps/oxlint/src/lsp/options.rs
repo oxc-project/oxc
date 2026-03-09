@@ -111,9 +111,9 @@ impl TryFrom<Value> for LintOptions {
             config_path: object
                 .get("configPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
-            config_field: object
-                .get("configField")
-                .and_then(|config_field| serde_json::from_value::<String>(config_field.clone()).ok()),
+            config_field: object.get("configField").and_then(|config_field| {
+                serde_json::from_value::<String>(config_field.clone()).ok()
+            }),
             ts_config_path: object
                 .get("tsConfigPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),

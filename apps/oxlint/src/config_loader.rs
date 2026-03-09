@@ -294,11 +294,7 @@ impl<'a> ConfigLoader<'a> {
             },
         );
 
-        if errors.is_empty() {
-            Ok(configs)
-        } else {
-            Err(errors)
-        }
+        if errors.is_empty() { Ok(configs) } else { Err(errors) }
     }
 
     /// Load raw JS/TS config values without deserializing into `Oxlintrc`.
@@ -544,17 +540,13 @@ impl<'a> ConfigLoader<'a> {
 
     /// Load a JSON/JSONC config file, optionally extracting a top-level field
     /// before deserializing into `Oxlintrc`.
-    fn load_with_field(
-        path: &Path,
-        config_field: Option<&str>,
-    ) -> Result<Oxlintrc, OxcDiagnostic> {
+    fn load_with_field(path: &Path, config_field: Option<&str>) -> Result<Oxlintrc, OxcDiagnostic> {
         let Some(field) = config_field else {
             return Oxlintrc::from_file(path);
         };
 
         let json = Oxlintrc::read_to_json_value(path)?;
-        let extracted =
-            extract_config_field(json, field, &path.display().to_string())?;
+        let extracted = extract_config_field(json, field, &path.display().to_string())?;
         Oxlintrc::from_value(extracted, path)
     }
 
@@ -632,9 +624,7 @@ impl<'a> ConfigLoader<'a> {
                         ConfigLoadError::Build { error, .. } => Err(OxcDiagnostic::error(error)),
                     }
                 } else {
-                    Err(OxcDiagnostic::error(
-                        "Failed to load JavaScript/TypeScript config.",
-                    ))
+                    Err(OxcDiagnostic::error("Failed to load JavaScript/TypeScript config."))
                 }
             }
         }
@@ -785,9 +775,7 @@ pub(crate) fn extract_config_field(
     value
         .as_object_mut()
         .and_then(|map| map.remove(field))
-        .ok_or_else(|| {
-            OxcDiagnostic::error(format!("Field `{field}` not found in config {path}"))
-        })
+        .ok_or_else(|| OxcDiagnostic::error(format!("Field `{field}` not found in config {path}")))
 }
 
 fn is_js_config_path(path: &Path) -> bool {

@@ -115,14 +115,17 @@ impl ServerLinterBuilder {
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
-        let oxlintrc =
-            match loader.load_root_config_with_ancestor_search(&root_path, config_path.as_ref(), config_field) {
-                Ok(config) => config,
-                Err(e) => {
-                    warn!("Failed to load config: {e}");
-                    Oxlintrc::default()
-                }
-            };
+        let oxlintrc = match loader.load_root_config_with_ancestor_search(
+            &root_path,
+            config_path.as_ref(),
+            config_field,
+        ) {
+            Ok(config) => config,
+            Err(e) => {
+                warn!("Failed to load config: {e}");
+                Oxlintrc::default()
+            }
+        };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 

@@ -132,15 +132,10 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsRawConfigResult>, Vec<Ox
     })?;
 
     match response {
-        LoadJsConfigsResponse::Success { success } => {
-            Ok(success
-                .into_iter()
-                .map(|entry| JsRawConfigResult {
-                    path: PathBuf::from(entry.path),
-                    value: entry.config,
-                })
-                .collect())
-        }
+        LoadJsConfigsResponse::Success { success } => Ok(success
+            .into_iter()
+            .map(|entry| JsRawConfigResult { path: PathBuf::from(entry.path), value: entry.config })
+            .collect()),
         LoadJsConfigsResponse::Failure { failures } => Err(failures
             .into_iter()
             .map(|failure| {
