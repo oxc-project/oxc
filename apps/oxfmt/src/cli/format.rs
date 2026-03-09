@@ -87,6 +87,7 @@ impl FormatRunner {
             &cwd,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            config_options.config_field.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
         ) {

@@ -5,6 +5,7 @@ use serde_json::Value;
 #[serde(rename_all = "camelCase")]
 pub struct FormatOptions {
     pub config_path: Option<String>,
+    pub config_field: Option<String>,
 }
 
 impl<'de> Deserialize<'de> for FormatOptions {
@@ -29,6 +30,9 @@ impl TryFrom<Value> for FormatOptions {
             config_path: object
                 .get("fmt.configPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            config_field: object.get("fmt.configField").and_then(|config_field| {
+                serde_json::from_value::<String>(config_field.clone()).ok()
+            }),
         })
     }
 }

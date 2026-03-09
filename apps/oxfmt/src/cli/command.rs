@@ -140,12 +140,22 @@ pub enum MigrateSource {
 
 // ---
 
+const CONFIG_FIELD_ERROR_MESSAGE: &str = "--config-field requires --config to be specified";
+
+fn validate_config_options(opts: &ConfigOptions) -> bool {
+    opts.config_field.is_none() || opts.config.is_some()
+}
+
 /// Config Options
 #[derive(Debug, Clone, Bpaf)]
+#[bpaf(guard(validate_config_options, CONFIG_FIELD_ERROR_MESSAGE))]
 pub struct ConfigOptions {
     /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+    /// Top-level key to extract from the config object (requires --config)
+    #[bpaf(long, argument("KEY"), hide)]
+    pub config_field: Option<String>,
 }
 
 /// Ignore Options

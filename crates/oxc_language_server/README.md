@@ -37,6 +37,7 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 | `disableNestedConfig`     | `false` \| `true`                 | `false`    | Disabled nested configuration and searches only for `configPath`.                                                                                      |
 | `fixKind`                 | [fixKind values](#fixkind-values) | `safe_fix` | The level of a possible fix for a diagnostic, will be applied for the complete workspace (diagnostic, code action, commands and more).                 |
 | `fmt.configPath`          | `<string>` \| `null`              | `null`     | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
+| `fmt.configField`         | `<string>` \| `null`              | `null`     | Top-level key to extract from the config object (requires `fmt.configPath`)                                                                            |
 | Diagnostic Pull Mode      |                                   |            |                                                                                                                                                        |
 | `run`                     | `"onSave" \| "onType"`            | `"onType"` | Should the server lint the files when the user is typing or saving. In Pull Mode, the editor requests the diagnostic.                                  |
 | Deprecated                |                                   |            |                                                                                                                                                        |
@@ -77,7 +78,8 @@ The client can pass the workspace options like following:
         "typeAware": false,
         "disableNestedConfig": false,
         "fixKind": "safe_fix",
-        "fmt.configPath": null
+        "fmt.configPath": null,
+        "fmt.configField": null
       }
     }
   ]
@@ -117,7 +119,8 @@ The client can pass the workspace options like following:
         "typeAware": false,
         "disableNestedConfig": false,
         "fixKind": "safe_fix",
-        "fmt.configPath": null
+        "fmt.configPath": null,
+        "fmt.configField": null
       }
     }
   ]
@@ -230,7 +233,8 @@ The client can return a response like:
     "typeAware": false,
     "disableNestedConfig": false,
     "fixKind": "safe_fix",
-    "fmt.configPath": null
+    "fmt.configPath": null,
+    "fmt.configField": null
   }
 ]
 ```

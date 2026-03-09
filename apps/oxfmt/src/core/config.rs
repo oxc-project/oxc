@@ -220,12 +220,17 @@ impl ConfigResolver {
     /// - With `napi` feature: evaluates it via the provided `js_config_loader` callback.
     /// - Without `napi` feature: returns an error (requires the Node.js CLI).
     ///
+    /// If `config_field` is provided,
+    /// the specified top-level key is extracted from the config object.
+    /// This requires `--config` to be explicitly specified.
+    ///
     /// # Errors
     /// Returns error if config file loading or parsing fails.
     pub fn from_config(
         cwd: &Path,
         oxfmtrc_path: Option<&Path>,
         editorconfig_path: Option<&Path>,
+        config_field: Option<&str>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
         // Uses extension-based matching so that both auto-discovered files (e.g. `oxfmt.config.ts`)
@@ -237,7 +242,7 @@ impl ConfigResolver {
             JS_CONFIG_FILES.iter().any(|f| f.ends_with(ext))
         };
 
-        if let Some(path) = oxfmtrc_path
+        let mut raw_config = if let Some(path) = oxfmtrc_path
             && is_js_config_path(path)
         {
             #[cfg(not(feature = "napi"))]
@@ -247,59 +252,32 @@ impl ConfigResolver {
 
             // Call `import(oxfmtrc_path)` via NAPI
             #[cfg(feature = "napi")]
-            {
-                let raw_config = js_config_loader
-                    .expect("JS config loader must be set when `napi` feature is enabled")(
-                    path.to_string_lossy().into_owned(),
+            js_config_loader
+                .expect("JS config loader must be set when `napi` feature is enabled")(
+                path.to_string_lossy().into_owned(),
+            )
+            .map_err(|_| {
+                format!(
+                    "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
+                    path.display()
                 )
-                .map_err(|_| {
-                    format!(
-                        "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
-                        path.display()
-                    )
-                })?;
-                let config_dir = path.parent().map(Path::to_path_buf);
-                let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-
-                return Ok(Self::new(raw_config, config_dir, editorconfig));
-            }
-        }
-
-        Self::from_json_config(cwd, oxfmtrc_path, editorconfig_path)
-    }
-
-    /// Create a resolver by loading JSON/JSONC config from a file path.
-    ///
-    /// Also used as the default (empty config) fallback when no config file is found.
-    #[instrument(level = "debug", name = "oxfmt::config::from_json_config", skip_all)]
-    pub(crate) fn from_json_config(
-        cwd: &Path,
-        oxfmtrc_path: Option<&Path>,
-        editorconfig_path: Option<&Path>,
-    ) -> Result<Self, String> {
-        // Read and parse config file, or use empty JSON if not found
-        let json_string = match oxfmtrc_path {
-            Some(path) => {
-                let mut json_string = utils::read_to_string(path)
-                    // Do not include OS error, it differs between platforms
-                    .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
-                // Strip comments (JSONC support)
-                json_strip_comments::strip(&mut json_string).map_err(|err| {
-                    format!("Failed to strip comments from {}: {err}", path.display())
-                })?;
-                json_string
-            }
-            None => "{}".to_string(),
+            })?
+        } else {
+            load_json_config(oxfmtrc_path)?
         };
 
-        // Parse as raw JSON value
-        let raw_config: Value =
-            serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
-        // Store the config directory for override path resolution
-        let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
-        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+        if let Some(field) = config_field {
+            raw_config = raw_config
+                .as_object_mut()
+                .and_then(|map| map.remove(field))
+                .ok_or_else(|| format!("Field `{field}` not found in config object"))?;
+        }
 
-        Ok(Self::new(raw_config, config_dir, editorconfig))
+        Ok(Self::new(
+            raw_config,
+            oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf)),
+            load_editorconfig(cwd, editorconfig_path)?,
+        ))
     }
 
     /// Validate config and return ignore patterns (= non-formatting option) for file walking.
@@ -495,6 +473,24 @@ struct OxfmtrcOverrideEntry {
 }
 
 // ---
+
+/// Load JSON/JSONC config from a file path.
+#[instrument(level = "debug", name = "oxfmt::config::load_json_config", skip_all)]
+fn load_json_config(oxfmtrc_path: Option<&Path>) -> Result<Value, String> {
+    let json_string = match oxfmtrc_path {
+        Some(path) => {
+            let mut json_string = utils::read_to_string(path)
+                .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
+            json_strip_comments::strip(&mut json_string).map_err(|err| {
+                format!("Failed to strip comments from {}: {err}", path.display())
+            })?;
+            json_string
+        }
+        None => "{}".to_string(),
+    };
+
+    serde_json::from_str(&json_string).map_err(|err| err.to_string())
+}
 
 /// Load `.editorconfig` from a path if provided.
 fn load_editorconfig(
