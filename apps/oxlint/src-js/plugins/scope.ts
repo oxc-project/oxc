@@ -415,6 +415,6 @@ export function getScope(node: ESTree.Node): Scope {
 /* oxlint-disable no-unused-vars */
 export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean {
   // TODO: Implement
-  throw new Error("`context.markVariableAsUsed` not implemented yet");
+  throw new Error("`sourceCode.markVariableAsUsed` not implemented yet");
 }
 /* oxlint-enable no-unused-vars */
