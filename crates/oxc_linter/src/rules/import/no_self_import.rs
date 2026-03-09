@@ -92,7 +92,7 @@ fn test() {
         Tester::new(NoSelfImport::NAME, NoSelfImport::PLUGIN, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("no-self-import.js")
-            .test();
+            .test_and_snapshot();
     }
 
     // {
