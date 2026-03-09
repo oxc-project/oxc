@@ -170,12 +170,7 @@ fn lint_statement<'a>(
                         );
                     }
                     Declaration::VariableDeclaration(declaration) => {
-                        lint_variable_declaration(
-                            declaration,
-                            outer_bindings,
-                            config,
-                            diagnostics,
-                        );
+                        lint_variable_declaration(declaration, outer_bindings, config, diagnostics);
                     }
                     _ => {}
                 }
@@ -285,7 +280,13 @@ fn lint_variable_declaration<'a>(
                 );
             }
             Expression::CallExpression(call) => {
-                lint_memo_or_forwardref_call(call, binding_name, outer_bindings, config, diagnostics);
+                lint_memo_or_forwardref_call(
+                    call,
+                    binding_name,
+                    outer_bindings,
+                    config,
+                    diagnostics,
+                );
             }
             _ => {}
         }
@@ -363,8 +364,8 @@ fn lint_memo_or_forwardref_call<'a>(
     }
 }
 
-fn lint_function<'a>(
-    function: &LowerableFunction<'a>,
+fn lint_function(
+    function: &LowerableFunction<'_>,
     name: Option<&str>,
     directives: &[String],
     fallback_span: Span,
@@ -443,13 +444,13 @@ fn collect_compiler_error(
     }
 }
 
-pub fn function_directives(function: &Function<'_>) -> Vec<String> {
+pub(super) fn function_directives(function: &Function<'_>) -> Vec<String> {
     function.body.as_ref().map_or_else(Vec::new, |body| {
         body.directives.iter().map(|directive| directive.directive.to_string()).collect()
     })
 }
 
-pub fn arrow_directives(function: &ArrowFunctionExpression<'_>) -> Vec<String> {
+pub(super) fn arrow_directives(function: &ArrowFunctionExpression<'_>) -> Vec<String> {
     function.body.directives.iter().map(|directive| directive.directive.to_string()).collect()
 }
 

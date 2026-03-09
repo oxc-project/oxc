@@ -32,16 +32,6 @@ source: crates/oxc_linter/src/tester.rs
  10 │                 
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
-   ╭─[react_compiler_rule.tsx:3:13]
- 2 │                 let count = 0;
- 3 │ ╭─▶             function Component() {
- 4 │ │                 'use no forget';
- 5 │ │                 return cond ?? useConditionalHook();
- 6 │ ╰─▶             }
- 7 │                 
-   ╰────
-
   ⚠ react_compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
     ╭─[react_compiler_rule.tsx:8:23]
   7 │     
