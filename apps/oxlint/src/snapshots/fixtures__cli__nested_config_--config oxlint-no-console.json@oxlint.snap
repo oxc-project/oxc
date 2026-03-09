@@ -37,6 +37,13 @@ working directory: fixtures/cli/nested_config
   help: Delete this console statement.
 
 Found 0 warnings and 4 errors.
+
+Errors  Files
+     1  console.ts:1
+     1  package1-empty-config/console.ts:1
+     1  package2-no-config/console.ts:1
+     1  package3-deep-config/src/components/component.js:2
+
 Finished in <variable>ms on 7 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

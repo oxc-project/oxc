@@ -107,6 +107,10 @@
    `----
 
 Found 1 warning and 16 errors.
+
+Errors  Files
+    16  files/index.js:1
+
 Finished in Xms on 1 file with 17 rules using X threads.
 ```
 

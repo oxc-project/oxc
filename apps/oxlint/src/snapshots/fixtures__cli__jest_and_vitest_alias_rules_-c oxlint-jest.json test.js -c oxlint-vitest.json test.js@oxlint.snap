@@ -16,6 +16,10 @@ working directory: fixtures/cli/jest_and_vitest_alias_rules
   help: Change the title of test.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  test.js:3
+
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -36,6 +40,10 @@ working directory: fixtures/cli/jest_and_vitest_alias_rules
   help: Change the title of test.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  test.js:3
+
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

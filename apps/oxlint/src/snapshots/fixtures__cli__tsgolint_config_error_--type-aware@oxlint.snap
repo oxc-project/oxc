@@ -17,6 +17,10 @@ working directory: fixtures/cli/tsgolint_config_error
         See https://github.com/oxc-project/tsgolint/issues/351 for more information.
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  tsconfig.json:3
+
 Finished in <variable>ms on 1 file with 107 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

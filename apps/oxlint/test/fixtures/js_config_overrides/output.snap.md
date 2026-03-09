@@ -12,6 +12,10 @@
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  files/test.ts:2
+
 Finished in Xms on 2 files with 92 rules using X threads.
 ```
 

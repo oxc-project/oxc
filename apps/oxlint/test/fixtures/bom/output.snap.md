@@ -134,6 +134,13 @@
    `----
 
 Found 0 warnings and 16 errors.
+
+Errors  Files
+     4  files/bom.js:1
+     4  files/bom_unicode.js:1
+     4  files/no_bom.js:1
+     4  files/no_bom_unicode.js:1
+
 Finished in Xms on 4 files with 1 rules using X threads.
 ```
 

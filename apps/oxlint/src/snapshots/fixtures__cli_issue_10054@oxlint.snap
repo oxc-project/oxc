@@ -33,6 +33,11 @@ working directory: fixtures/cli
            ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     1  issue_10054/a.ts:1
+     1  issue_10054/b.ts:1
+
 Finished in <variable>ms on 2 files with 93 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -15,6 +15,10 @@ working directory:
   help: Replace var with let or const
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  fixtures/cli/overrides/test.js:1
+
 Finished in <variable>ms on 1 file with 95 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -42,6 +46,10 @@ working directory:
   help: Delete this console statement.
 
 Found 1 warning and 1 error.
+
+Errors  Files
+     1  fixtures/cli/overrides/test.ts:1
+
 Finished in <variable>ms on 1 file with 95 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -61,6 +69,10 @@ working directory:
   help: Replace var with let or const
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  fixtures/cli/overrides/other.jsx:1
+
 Finished in <variable>ms on 1 file with 95 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

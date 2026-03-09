@@ -662,6 +662,65 @@ working directory: fixtures/cli/tsgolint
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
 Found 0 warnings and 81 errors.
+
+Errors  Files
+     5  no-unnecessary-type-conversion.ts:3
+     3  no-unnecessary-type-parameters.ts:3
+     3  prefer-includes.ts:2
+     3  prefer-regexp-exec.ts:4
+     3  promise-function-async.ts:2
+     2  no-confusing-void-expression.ts:2
+     2  no-floating-promises.ts:1
+     2  no-meaningless-void-operator.ts:4
+     2  no-unnecessary-condition.ts:3
+     2  no-unsafe-enum-comparison.ts:9
+     2  no-unsafe-type-assertion.ts:2
+     2  non-nullable-type-assertion-style.ts:2
+     2  prefer-nullish-coalescing.ts:2
+     2  prefer-promise-reject-errors.ts:1
+     2  prefer-string-starts-ends-with.ts:4
+     2  restrict-plus-operands.ts:1
+     2  restrict-template-expressions.ts:2
+     2  switch-exhaustiveness-check.ts:2
+     1  await-thenable.ts:1
+     1  consistent-return.ts:5
+     1  consistent-type-exports.ts:7
+     1  dot-notation.ts:4
+     1  no-array-delete.ts:2
+     1  no-base-to-string.ts:1
+     1  no-deprecated.ts:8
+     1  no-duplicate-type-constituents.ts:1
+     1  no-for-in-array.ts:2
+     1  no-implied-eval.ts:1
+     1  no-misused-spread.ts:2
+     1  no-mixed-enums.ts:3
+     1  no-redundant-type-constituents.ts:1
+     1  no-unnecessary-boolean-literal-compare.ts:2
+     1  no-unnecessary-qualifier.ts:5
+     1  no-unnecessary-template-expression.ts:2
+     1  no-unnecessary-type-arguments.ts:4
+     1  no-unnecessary-type-assertion.ts:2
+     1  no-unsafe-argument.ts:3
+     1  no-unsafe-assignment.ts:2
+     1  no-unsafe-call.ts:2
+     1  no-unsafe-member-access.ts:2
+     1  no-unsafe-return.ts:3
+     1  no-useless-default-assignment.ts:1
+     1  non-tsgolint.ts:1
+     1  only-throw-error.ts:1
+     1  prefer-find.ts:1
+     1  prefer-optional-chain.ts:3
+     1  prefer-readonly-parameter-types.ts:5
+     1  prefer-readonly.ts:2
+     1  prefer-reduce-type-parameter.ts:2
+     1  prefer-return-this-type.ts:3
+     1  related-getter-setter-pairs.ts:3
+     1  require-array-sort-compare.ts:2
+     1  strict-boolean-expressions.ts:2
+     1  strict-void-return.ts:2
+     1  test.svelte:2
+     1  unbound-method.ts:9
+
 Finished in <variable>ms on 60 files with 59 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

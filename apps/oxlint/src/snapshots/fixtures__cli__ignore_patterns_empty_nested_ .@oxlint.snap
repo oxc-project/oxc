@@ -15,6 +15,10 @@ working directory: fixtures/cli/ignore_patterns_empty_nested
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  another_config/not-ignored-file.ts:1
+
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors
@@ -34,6 +38,10 @@ working directory: fixtures/cli/ignore_patterns_empty_nested
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
+
+Errors  Files
+     1  another_config/not-ignored-file.ts:1
+
 Finished in <variable>ms on 1 file using 1 threads.
 ----------
 CLI result: LintFoundErrors

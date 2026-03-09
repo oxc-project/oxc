@@ -329,6 +329,11 @@
    `----
 
 Found 0 warnings and 45 errors.
+
+Errors  Files
+    24  files/2.js:1
+    21  files/1.js:1
+
 Finished in Xms on 2 files with 8 rules using X threads.
 ```
 

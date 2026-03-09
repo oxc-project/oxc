@@ -33,6 +33,10 @@
    `----
 
 Found 1 warning and 3 errors.
+
+Errors  Files
+     3  files/index.js:1
+
 Finished in Xms on 1 file with 4 rules using X threads.
 ```
 

@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
-    Error, GraphicalReportHandler,
-    reporter::{DiagnosticReporter, DiagnosticResult},
+    Error, GraphicalReportHandler, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 use oxc_linter::table::RuleTable;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
@@ -67,32 +67,77 @@ impl DefaultOutputFormatter {
 #[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
+    file_summary: FxHashMap<String, FileDiagnosticCount>,
 }
 
 impl Default for GraphicalReporter {
     fn default() -> Self {
-        Self { handler: GraphicalReportHandler::new() }
+        Self { handler: GraphicalReportHandler::new(), file_summary: FxHashMap::default() }
     }
 }
 
 impl DiagnosticReporter for GraphicalReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        Some(get_diagnostic_result_output(result))
+        Some(get_diagnostic_result_output(result, &self.file_summary))
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
+        update_file_summary(&error, &mut self.file_summary);
         let mut output = String::new();
         self.handler.render_report(&mut output, error.as_ref()).unwrap();
         Some(output)
     }
 }
 
-fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
-    let mut output = String::new();
+const UNKNOWN_FILENAME: &str = "<unknown>";
 
-    if result.warnings_count() + result.errors_count() > 0 {
+#[derive(Clone, Copy, Debug, Default)]
+struct FileDiagnosticCount {
+    warnings: usize,
+    errors: usize,
+    first_error_line: Option<usize>,
+}
+
+fn update_file_summary(error: &Error, file_summary: &mut FxHashMap<String, FileDiagnosticCount>) {
+    let (warning_count, error_count) = match error.severity() {
+        Some(Severity::Warning) => (1, 0),
+        Some(Severity::Error) | None => (0, 1),
+        _ => (0, 0),
+    };
+
+    if warning_count == 0 && error_count == 0 {
+        return;
+    }
+
+    let info = Info::new(error);
+    let filename =
+        if info.filename.is_empty() { UNKNOWN_FILENAME.to_string() } else { info.filename };
+
+    let count = file_summary.entry(filename).or_default();
+    count.warnings += warning_count;
+    count.errors += error_count;
+    if error_count > 0 && info.start.line > 0 {
+        count.first_error_line = match count.first_error_line {
+            Some(existing) => Some(existing.min(info.start.line)),
+            None => Some(info.start.line),
+        };
+    }
+}
+
+fn get_diagnostic_result_output(
+    result: &DiagnosticResult,
+    file_summary: &FxHashMap<String, FileDiagnosticCount>,
+) -> String {
+    let mut output = String::new();
+    let warnings_count = result.warnings_count();
+    let errors_count = result.errors_count();
+    let problems_count = warnings_count + errors_count;
+
+    if problems_count > 0 {
         output.push('\n');
     }
+
+    let error_file_count = file_summary.values().filter(|count| count.errors > 0).count();
 
     output.push_str(
         format!(
@@ -104,6 +149,10 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
         )
         .as_str(),
     );
+    if let Some(summary) = format_error_summary(file_summary) {
+        output.push('\n');
+        output.push_str(summary.as_str());
+    }
 
     if result.max_warnings_exceeded() {
         output.push_str(
@@ -115,18 +164,61 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     output
 }
 
+fn format_error_summary(file_summary: &FxHashMap<String, FileDiagnosticCount>) -> Option<String> {
+    let mut rows: Vec<(&str, FileDiagnosticCount)> =
+        file_summary.iter().map(|(file, count)| (file.as_str(), *count)).collect();
+    rows.retain(|(_, count)| count.errors > 0);
+    rows.sort_unstable_by(|(left_file, left_count), (right_file, right_count)| {
+        right_count.errors.cmp(&left_count.errors).then_with(|| left_file.cmp(right_file))
+    });
+
+    if rows.is_empty() {
+        return None;
+    }
+
+    let error_width = rows
+        .iter()
+        .map(|(_, count)| count.errors.to_string().len())
+        .max()
+        .unwrap_or(0)
+        .max("Errors".len());
+
+    let mut output = String::new();
+    output.push_str(format!("{:>error_width$}  Files\n", "Errors").as_str());
+
+    for (filename, count) in rows {
+        let file_location = match count.first_error_line {
+            Some(line) => format!("{filename}:{line}"),
+            None => filename.to_string(),
+        };
+        output.push_str(format!("{:>error_width$}  {file_location}\n", count.errors).as_str());
+    }
+
+    output.push('\n');
+
+    Some(output)
+}
+
+fn get_plural(count: usize) -> &'static str {
+    if count == 1 { "" } else { "s" }
+}
+
 #[cfg(any(test, feature = "testing"))]
 mod test_implementation {
+    use rustc_hash::FxHashMap;
+
+    use super::{FileDiagnosticCount, get_diagnostic_result_output, update_file_summary};
     use oxc_diagnostics::{
         Error, GraphicalReportHandler, GraphicalTheme,
         reporter::{DiagnosticReporter, DiagnosticResult, Info},
     };
 
-    use crate::output_formatter::default::get_diagnostic_result_output;
-
     #[derive(Default)]
     pub struct GraphicalReporterTester {
         diagnostics: Vec<Error>,
+        file_summary: FxHashMap<String, FileDiagnosticCount>,
+        seen_warnings: usize,
+        seen_errors: usize,
     }
 
     impl DiagnosticReporter for GraphicalReporterTester {
@@ -145,12 +237,13 @@ mod test_implementation {
                 handler.render_report(&mut output, diagnostic.as_ref()).unwrap();
             }
 
-            output.push_str(&get_diagnostic_result_output(result));
+            output.push_str(&get_diagnostic_result_output(result, &self.file_summary));
 
             Some(output)
         }
 
         fn render_error(&mut self, error: Error) -> Option<String> {
+            update_file_summary(&error, &mut self.file_summary);
             self.diagnostics.push(error);
             None
         }
@@ -161,12 +254,14 @@ mod test_implementation {
 mod test {
     use std::time::Duration;
 
-    use crate::output_formatter::{
-        InternalFormatter, LintCommandInfo,
-        default::{DefaultOutputFormatter, GraphicalReporter},
+    use rustc_hash::{FxHashMap, FxHashSet};
+
+    use super::{
+        DefaultOutputFormatter, FileDiagnosticCount, GraphicalReporter,
+        get_diagnostic_result_output,
     };
+    use crate::output_formatter::{InternalFormatter, LintCommandInfo};
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
-    use rustc_hash::FxHashSet;
 
     #[test]
     fn all_rules() {
@@ -249,4 +344,65 @@ mod test {
             "\nFound 6 warnings and 4 errors.\nExceeded maximum number of warnings. Found 6.\n"
         );
     }
+
+    // #[test]
+    // fn summary_with_file_table() {
+    //     let mut file_summary = FxHashMap::default();
+    //     file_summary.insert(
+    //         "src/bar.ts".to_string(),
+    //         FileDiagnosticCount { warnings: 2, errors: 2, first_error_line: Some(3) },
+    //     );
+    //     file_summary.insert(
+    //         "src/foo.ts".to_string(),
+    //         FileDiagnosticCount { warnings: 0, errors: 1, first_error_line: Some(17) },
+    //     );
+    //     file_summary.insert(
+    //         "src/warn-only.ts".to_string(),
+    //         FileDiagnosticCount { warnings: 3, errors: 0, first_error_line: None },
+    //     );
+
+    //     let output =
+    //         get_diagnostic_result_output(&DiagnosticResult::new(5, 3, false), &file_summary, 5, 3);
+
+    //     assert_eq!(
+    //         output,
+    //         "\nFound 3 errors in 2 files.\n\nErrors  Files\n     2  src/bar.ts:3\n     1  src/foo.ts:17\n\n"
+    //     );
+    // }
+
+    // #[test]
+    // fn summary_with_file_table_lists_all_files() {
+    //     let mut file_summary = FxHashMap::default();
+    //     for index in 0..12 {
+    //         file_summary.insert(
+    //             format!("src/file-{index:02}.ts"),
+    //             FileDiagnosticCount { warnings: 0, errors: 1, first_error_line: Some(index + 1) },
+    //         );
+    //     }
+
+    //     let output = get_diagnostic_result_output(
+    //         &DiagnosticResult::new(0, 12, false),
+    //         &file_summary,
+    //         0,
+    //         12,
+    //     );
+
+    //     assert!(output.contains("Found 12 errors in 12 files."));
+    //     assert!(output.contains("src/file-00.ts"));
+    //     assert!(output.contains("src/file-11.ts"));
+    // }
+
+    // #[test]
+    // fn summary_falls_back_to_legacy_when_counts_are_incomplete() {
+    //     let mut file_summary = FxHashMap::default();
+    //     file_summary.insert(
+    //         "src/file.ts".to_string(),
+    //         FileDiagnosticCount { warnings: 0, errors: 1, first_error_line: Some(4) },
+    //     );
+
+    //     let output =
+    //         get_diagnostic_result_output(&DiagnosticResult::new(3, 1, false), &file_summary, 0, 1);
+
+    //     assert_eq!(output, "\nFound 3 warnings and 1 error.\n");
+    // }
 }

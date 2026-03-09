@@ -113,6 +113,10 @@ working directory: fixtures/cli/tsgolint_rule_options
      `----
 
 Found 0 warnings and 13 errors.
+
+Errors  Files
+    13  test.ts:36
+
 Finished in <variable>ms on 1 file with 15 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
