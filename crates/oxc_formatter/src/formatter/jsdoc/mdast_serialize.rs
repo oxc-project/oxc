@@ -209,7 +209,6 @@ pub fn format_description_mdast(
         description_with_dot,
         prefer_code_fences,
         line_wrapping_style,
-        placeholders: &placeholders,
         source: &protected,
         format_options,
         external_callbacks,
@@ -217,7 +216,8 @@ pub fn format_description_mdast(
     };
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
-    lines.into_string()
+    let output = lines.into_string();
+    restore_in_string(&output, &placeholders).into_owned()
 }
 
 struct SerializeOptions<'a> {
@@ -227,7 +227,6 @@ struct SerializeOptions<'a> {
     description_with_dot: bool,
     prefer_code_fences: bool,
     line_wrapping_style: crate::LineWrappingStyle,
-    placeholders: &'a [&'a str],
     source: &'a str,
     format_options: Option<&'a FormatOptions>,
     external_callbacks: Option<&'a ExternalCallbacks>,
@@ -446,8 +445,6 @@ fn serialize_node(
         }
         Node::Heading(heading) => {
             let text = collect_inline_text(node);
-            // Restore placeholders in heading text before emitting
-            let text = restore_in_string(&text, opts.placeholders);
             let prefix = "#".repeat(heading.depth as usize);
             if !lines.is_empty() && !lines.last_is_empty() {
                 lines.push_empty();
@@ -524,16 +521,16 @@ fn serialize_paragraph(
         for child in &para.children {
             if matches!(child, Node::Break(_)) {
                 // Emit current segment with trailing backslash
-                let text = restore_in_string(current_segment.trim(), opts.placeholders);
+                let text = current_segment.trim();
                 if indent > 0 {
                     {
                         let s = lines.begin_line();
                         s.push_str(&indent_str);
-                        s.push_str(&text);
+                        s.push_str(text);
                         s.push('\\');
                     }
                 } else if opts.capitalize && lines.is_empty() {
-                    let text = super::normalize::capitalize_first(&text);
+                    let text = super::normalize::capitalize_first(text);
                     {
                         let s = lines.begin_line();
                         s.push_str(&text);
@@ -542,7 +539,7 @@ fn serialize_paragraph(
                 } else {
                     {
                         let s = lines.begin_line();
-                        s.push_str(&text);
+                        s.push_str(text);
                         s.push('\\');
                     }
                 }
@@ -554,12 +551,12 @@ fn serialize_paragraph(
 
         // Emit final segment (no trailing backslash)
         if !current_segment.trim().is_empty() {
-            let text = restore_in_string(current_segment.trim(), opts.placeholders);
+            let text = current_segment.trim();
             if indent > 0 {
                 {
                     let s = lines.begin_line();
                     s.push_str(&indent_str);
-                    s.push_str(&text);
+                    s.push_str(text);
                 }
             } else {
                 lines.push(text);
@@ -568,9 +565,8 @@ fn serialize_paragraph(
         return;
     }
 
-    // Normal paragraph: collect all inline text, restore placeholders, then wrap
+    // Normal paragraph: collect all inline text, then wrap (placeholders restored at the end)
     let inline_text = collect_inline_text_from_children(&para.children);
-    let inline_text = restore_in_string(&inline_text, opts.placeholders);
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::wrap::indent_str(indent);
 
@@ -584,19 +580,17 @@ fn serialize_paragraph(
 
         if original_lines.len() > 1
             && original_lines.iter().all(|l| {
-                let restored = restore_in_string(l, opts.placeholders);
-                super::wrap::str_width(&restored) <= effective_width
+                super::wrap::str_width(l) <= effective_width
             })
         {
             // Preserve original line breaks
             let total = original_lines.len();
             for (i, orig_line) in original_lines.iter().enumerate() {
-                let restored = restore_in_string(orig_line, opts.placeholders);
                 let is_first = i == 0;
                 let is_last = i == total - 1;
 
                 let line: String = {
-                    let mut s = restored.into_owned();
+                    let mut s = (*orig_line).to_owned();
                     if is_first && opts.capitalize {
                         s = super::normalize::capitalize_first(&s).into_owned();
                     }
@@ -721,10 +715,9 @@ fn serialize_pipe_prefixed_paragraph(
             }
 
             let joined = text_parts.join(" ");
-            let text = restore_in_string(&joined, opts.placeholders);
             let effective_width = opts.max_width.saturating_sub(indent);
             let mut para_buf = LineBuffer::new();
-            wrap_paragraph(&text, effective_width, 0, 0, &mut para_buf);
+            wrap_paragraph(&joined, effective_width, 0, 0, &mut para_buf);
             let para_str = para_buf.into_string();
 
             for (i, line) in para_str.split('\n').enumerate() {
@@ -871,7 +864,6 @@ fn serialize_node_for_list_item(
 ) -> String {
     if let Node::Paragraph(para) = node {
         let inline_text = collect_inline_text_from_children(&para.children);
-        let inline_text = restore_in_string(&inline_text, opts.placeholders);
         let mut buf = LineBuffer::new();
         if is_first_child {
             wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
@@ -947,43 +939,31 @@ fn format_code_value<'a>(
         return Cow::Borrowed(code);
     };
 
-    if let Some(lang) = lang {
-        // Case-insensitive matching (matches upstream's `mdAst.lang.toLowerCase()`)
-        let lang_lower = lang.cow_to_ascii_lowercase();
-        let lang = lang_lower.as_ref();
+    let Some(lang) = lang else {
+        return Cow::Borrowed(code);
+    };
 
-        // JS/TS: native formatter
-        if super::embedded::is_js_ts_lang(lang)
-            && let Some(formatted) =
-                super::embedded::format_embedded_js(code, width, format_options, allocator)
-        {
-            return Cow::Owned(formatted);
-        }
-        // CSS/HTML/GraphQL/MD/YAML: external formatter
-        if let Some(ext_lang) = super::embedded::fenced_lang_to_external_language(lang)
-            && let Some(cbs) = opts.external_callbacks
-            && let Some(formatted) =
-                super::embedded::format_external_language(code, ext_lang, width, cbs)
-        {
-            return Cow::Owned(formatted);
-        }
-        // Unknown language: fall back to JS (matches upstream default "babel" parser)
-        if let Some(formatted) =
+    // Case-insensitive matching (matches upstream's `mdAst.lang.toLowerCase()`)
+    let lang_lower = lang.cow_to_ascii_lowercase();
+    let lang = lang_lower.as_ref();
+
+    // JS/TS: native formatter
+    if super::embedded::is_js_ts_lang(lang)
+        && let Some(formatted) =
             super::embedded::format_embedded_js(code, width, format_options, allocator)
-        {
-            return Cow::Owned(formatted);
-        }
-        Cow::Borrowed(code)
-    } else {
-        // No language: try as JS (matches upstream default "babel" parser)
-        if let Some(formatted) =
-            super::embedded::format_embedded_js(code, width, format_options, allocator)
-        {
-            Cow::Owned(formatted)
-        } else {
-            Cow::Borrowed(code)
-        }
+    {
+        return Cow::Owned(formatted);
     }
+    // CSS/HTML/GraphQL/MD/YAML: external formatter
+    if let Some(ext_lang) = super::embedded::fenced_lang_to_external_language(lang)
+        && let Some(cbs) = opts.external_callbacks
+        && let Some(formatted) =
+            super::embedded::format_external_language(code, ext_lang, width, cbs)
+    {
+        return Cow::Owned(formatted);
+    }
+    // Unknown language: return as-is (don't try to format as JS)
+    Cow::Borrowed(code)
 }
 
 // ──────────────────────────────────────────────────
