@@ -62,6 +62,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
+    if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -219,6 +220,7 @@ jobs:
   test-napi-oxlint:
     name: Test NAPI Oxlint
     runs-on: namespace-profile-linux-x64-default
+    if: ${{ github.ref_name == 'main' }}
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: ./.github/actions/check-changes
