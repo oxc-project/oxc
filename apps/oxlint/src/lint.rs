@@ -1787,7 +1787,7 @@ mod suppression {
     #[test]
     fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
         SuppressionTester::new()
-            .with_cwd("suppression_with_arg_and_pruned_errors")
+            .with_cwd("suppression_with_suppress_all_arg_and_pruned_errors")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)
