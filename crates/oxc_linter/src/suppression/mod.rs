@@ -76,7 +76,7 @@ impl SuppressionManager {
                     suppressions_by_file,
                     manager_status,
                     file_exists: false,
-                    suppression_path: path.into(),
+                    suppression_path: path,
                     prune_suppression,
                     suppress_all,
                     receiver,
@@ -90,7 +90,7 @@ impl SuppressionManager {
                 Self {
                     suppressions_by_file: Some(suppression_file),
                     manager_status: OxlintSuppressionFileAction::Exists,
-                    suppression_path: path.into(),
+                    suppression_path: path,
                     file_exists: true,
                     prune_suppression,
                     suppress_all,
@@ -102,7 +102,7 @@ impl SuppressionManager {
                 Self {
                     suppressions_by_file: None,
                     manager_status: OxlintSuppressionFileAction::Malformed(err),
-                    suppression_path: path.into(),
+                    suppression_path: path,
                     file_exists: true,
                     prune_suppression,
                     suppress_all,
