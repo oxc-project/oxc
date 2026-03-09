@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 134
+---
+########## 
+arguments: --type-aware
+working directory: fixtures/cli/tsgolint_rule_options
+----------
+Failed to find tsgolint executable. You may need to add the `oxlint-tsgolint` package to your project?----------
+CLI result: TsGoLintError
+----------
