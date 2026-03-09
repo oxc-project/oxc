@@ -27,7 +27,7 @@ describe("JSDoc", () => {
  */
 `.trim();
 
-    const result = await format("a.ts", source, { jsdoc: true });
+    const result = await format("a.ts", source, { jsdoc: {} });
     expect(result.errors).toStrictEqual([]);
     expect(result.code).toBe(
       `
