@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 36b2e56 codegen: Print type for TSImportEqualsDeclaration (#20128) (camc314)
+- 5a246ec codegen: Print type arguments for JSXOpeningElement (#20127) (camc314)
+- a40870e codegen: Preserve parens for TSNonNullExpression (#20125) (camc314)
+- ae830b2 codegen: Print `declare` for `TSInterfaceDeclaration` (#20124) (camc314)
+- 588009e codegen: Print `static` keyword for TSIndexSignature (#19755) (Dunqing)
+- 5a8799c codegen: Print `with_clause` for `ExportNamedDeclaration` (#20002) (Dunqing)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🐛 Bug Fixes

@@ -25,6 +25,7 @@ fn cases() {
     test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
+    test_same("declare interface A {}\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");
@@ -41,7 +42,9 @@ fn cases() {
     test_same("class F {\n\taccessor value!: string;\n}\n");
     test_same("class E {\n\tstatic [key: string]: string;\n}\n");
     test_same("export { type as as };\n");
+    test_same("import type from = require(\"./a\");\n");
     test_same("try {} catch (e: unknown) {} finally {}\n");
+    test_same("const Bar = class<T,> {};\n");
 }
 
 #[test]
@@ -54,6 +57,7 @@ fn decorators() {
 fn tsx() {
     test_tsx("<T,>() => {}", "<T,>() => {};\n");
     test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+    test_tsx("<Foo<T> />", "<Foo<T> />;\n");
 }
 
 #[test]
@@ -208,6 +212,7 @@ fn type_codegen_with_preserve_parens_off() {
         "type T = [(Anno | undefined)?];\n",
         parse_options,
     );
+    test_with_parse_options("const foo = (a ?? b)!;", "const foo = (a ?? b)!;\n", parse_options);
     test_with_parse_options(
         "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);",
         "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);\n",
