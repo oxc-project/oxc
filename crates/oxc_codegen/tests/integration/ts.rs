@@ -44,6 +44,7 @@ fn cases() {
     test_same("export { type as as };\n");
     test_same("import type from = require(\"./a\");\n");
     test_same("try {} catch (e: unknown) {} finally {}\n");
+    test_same("const Bar = class<T,> {};\n");
 }
 
 #[test]
