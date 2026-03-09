@@ -1,0 +1,16 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["../../../dist-pkg-plugin-eslint/index.js"],
+  "rules": {
+    "eslint-js/array-bracket-newline": ["error", "consistent"],
+    "eslint-js/no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ThrowStatement > CallExpression[callee.name=/Error$/]",
+        "message": "Use `new` keyword when throwing an `Error`."
+      }
+    ]
+  }
+}
