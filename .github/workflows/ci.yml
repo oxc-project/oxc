@@ -219,7 +219,6 @@ jobs:
   test-napi-windows:
     name: Test NAPI (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
     steps:
       - name: Enable long paths on Windows
         run: git config --system core.longpaths true
