@@ -66,6 +66,8 @@ pub(super) enum IgnoreReason {
     /// Symbol is ignored because it's bound name matches a `<foo>IgnorePattern`
     /// setting.
     NamePattern,
+    /// Symbol is ignored because `caughtErrors` is set to `"none"`.
+    CaughtErrorsNone,
     /// Symbol is ignored because it is a class declaration with a `static`
     /// initializer block.
     ClassStaticInitBlock,
@@ -164,9 +166,11 @@ impl NoUnusedVars {
                 self.is_ignored_var(declared_binding)
             }
             AstKind::Class(class) => {
-                if class.declare
-                    || self.ignore_class_with_static_init_block
-                        && class.body.body.iter().any(ClassElement::is_static_block)
+                if class.declare {
+                    return Ignored::from_reason(IgnoreReason::AmbientDeclaration);
+                }
+                if self.ignore_class_with_static_init_block
+                    && class.body.body.iter().any(ClassElement::is_static_block)
                 {
                     return Ignored::from_reason(IgnoreReason::ClassStaticInitBlock);
                 }
@@ -432,11 +436,14 @@ impl NoUnusedVars {
 
     #[inline]
     pub(super) fn is_ignored_catch_err(&self, name: &str) -> Ignored {
-        Ignored::new(
-            *!self.caught_errors
-                || Self::is_none_or_match(self.caught_errors_ignore_pattern.as_ref(), name),
-            IgnoreReason::NamePattern,
-        )
+        if *!self.caught_errors {
+            Ignored::from_reason(IgnoreReason::CaughtErrorsNone)
+        } else {
+            Ignored::new(
+                Self::is_none_or_match(self.caught_errors_ignore_pattern.as_ref(), name),
+                IgnoreReason::NamePattern,
+            )
+        }
     }
 
     #[inline]
@@ -540,14 +547,17 @@ mod test {
             }
         ]))
         .unwrap();
-        assert_eq!(rule.is_ignored_catch_err("_"), Ignored::from_reason(IgnoreReason::NamePattern));
+        assert_eq!(
+            rule.is_ignored_catch_err("_"),
+            Ignored::from_reason(IgnoreReason::CaughtErrorsNone)
+        );
         assert_eq!(
             rule.is_ignored_catch_err("_err"),
-            Ignored::from_reason(IgnoreReason::NamePattern)
+            Ignored::from_reason(IgnoreReason::CaughtErrorsNone)
         );
         assert_eq!(
             rule.is_ignored_catch_err("err"),
-            Ignored::from_reason(IgnoreReason::NamePattern)
+            Ignored::from_reason(IgnoreReason::CaughtErrorsNone)
         );
     }
 }

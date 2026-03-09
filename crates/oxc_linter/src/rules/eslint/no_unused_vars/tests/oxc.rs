@@ -493,6 +493,10 @@ fn test_vars_catch() {
     let pass = vec![
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
+        (
+            "try {} catch (err) { console.error(err) }",
+            Some(json!([{ "caughtErrors": "none", "reportUsedIgnorePattern": true }])),
+        ),
         ("try {} catch { }", None),
         ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
         (
@@ -515,6 +519,12 @@ fn test_vars_catch() {
         (
             "try {} catch(foo) { }",
             Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
+        ),
+        (
+            "try {} catch(_err) { console.error(_err) }",
+            Some(
+                json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
+            ),
         ),
     ];
 
