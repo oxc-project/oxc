@@ -1,6 +1,6 @@
 import type { ExpectExtends, ExpectTrue, ExpectFalse } from "@type-challenges/utils";
-import type { VisitorObject } from "./generated/visitor.d.ts";
-import type { Node, CallExpression } from "./generated/types.d.ts";
+import type { VisitorObject } from "../src-js/generated/visitor.d.ts";
+import type { Node, CallExpression } from "../src-js/generated/types.d.ts";
 
 // Empty visitor object is allowed
 const emptyVisitor = {};
