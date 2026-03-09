@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.37.0] - 2026-03-09
+
+### 🚀 Features
+
+- ee26215 oxfmt: Support css-in-js substitution (#20019) (leaysgur)
+- 0f0ff51 oxfmt: Display default settings was used message in cli stats (#19939) (leaysgur)
+- 88815b8 oxfmt: Reintroduce stats line for write mode (#19938) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 92f4490 oxfmt: Apply `is_ignored_dir` for glob paths too (#20056) (leaysgur)
+- 114f974 oxfmt/lsp: Prefer language_id over file extension when formatting (#19977) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
 ## [0.36.0] - 2026-03-02
 
 ### 🚀 Features

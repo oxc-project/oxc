@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- e6b604f oxlint: Auto-enable gitlab formatter on GitLab (#20076) (camc314)
+- 2488a68 linter: Add .oxlintrc.jsonc config file support (#19870) (Scott S.)
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- c92422b oxlint: Auto-enable github formatter on GitHub Actions (#19944) (Boshen)
+- 0337c6d linter: Implement typescript/no-unecessary-type-conversion (#19955) (camc314)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0861d9a linter/plugins: Remove getters from `Context` (#20115) (overlookmotel)
+- 92cfb14 linter/plugins: Fix types for `walkProgram` and `walkProgramWithCfg` (#20081) (overlookmotel)
+- 10e211f oxlint/lsp: Send other code actions besides `source.fixAll` if requested (#20042) (Sysix)
+- 602daaa linter/plugins: Fix type definition for `VisitorObject` (#20065) (overlookmotel)
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 7f3d735 linter: Error when --type-check is used without --type-aware (#20025) (camc314)
+- 50359dc oxlint/lsp: Detect `reportUnusedDisableDirectives` from oxlint config, change lsp `unusedDisableDirectives` default value to `None` (#20011) (Sysix)
+- 4bc84b1 linter/plugins: Allow `null` and `undefined` for `rule.meta.fixable` (#20008) (overlookmotel)
+- f57b2c9 linter/plugins: Fix return types of tokens methods (#19985) (overlookmotel)
+- 87318e7 oxlint/lsp: Load js config with reforcing fs read (#19551) (Sysix)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+- 77f1c71 linter/plugins: Make tokens class instances (#19980) (overlookmotel)
+- 758b424 linter/plugins: Reduce memory copies for tokens (#19979) (overlookmotel)
+- 236847f linter/plugins: Cache token objects (#19978) (overlookmotel)
+
+### 📚 Documentation
+
+- 2c0010a linter/plugins: Move comment about "bivariance hack" into generated code (#20082) (overlookmotel)
+- 12ae35c oxlint/lsp: Remove outdated ToDo for `LintOptions.run` (#20012) (Sysix)
+- 3be73e6 linter/plugins: Fix JSDoc comments for tokens methods (#20004) (overlookmotel)
+- 48ef285 linter: Update `--config` docs (#19965) (camc314)
+- 6ea49a0 linter: Fix some identation issues for the generated types used in `oxlint.config.ts`. (#19942) (connorshea)
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+
 ## [1.51.0] - 2026-03-02
 
 ### 🚀 Features
