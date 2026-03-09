@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "9a601237cdad",
+  "strategy": "manual-commit",
+  "branch": "boshen/ci-refs-dev-drive",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".github/workflows/ci.yml",
+    "apps/oxfmt/src-js/libs/apis.ts",
+    "apps/oxfmt/src/cli/walk.rs",
+    "apps/oxfmt/src/core/oxfmtrc.rs",
+    "apps/oxfmt/src/core/support.rs",
+    "apps/oxfmt/tsdown.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9a/601237cdad/0/metadata.json",
+      "transcript": "/9a/601237cdad/0/full.jsonl",
+      "context": "/9a/601237cdad/0/context.md",
+      "content_hash": "/9a/601237cdad/0/content_hash.txt",
+      "prompt": "/9a/601237cdad/0/prompt.txt"
+    },
+    {
+      "metadata": "/9a/601237cdad/1/metadata.json",
+      "transcript": "/9a/601237cdad/1/full.jsonl",
+      "context": "/9a/601237cdad/1/context.md",
+      "content_hash": "/9a/601237cdad/1/content_hash.txt",
+      "prompt": "/9a/601237cdad/1/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 97,
+    "cache_creation_tokens": 242519,
+    "cache_read_tokens": 3810158,
+    "output_tokens": 16335,
+    "api_call_count": 80
+  }
+}

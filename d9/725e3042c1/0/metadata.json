@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "d9725e3042c1",
+  "session_id": "8115daa6-706d-42eb-be7d-6f93fcdf9397",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-07T11:38:05.100116Z",
+  "branch": "ci/windows-dev-drive",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "crates/oxc_codegen/src/comment.rs",
+    "crates/oxc_codegen/src/lib.rs",
+    "crates/oxc_codegen/tests/integration/comments.rs",
+    "crates/oxc_parser/src/lexer/trivia_builder.rs"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "44fb4b51-fb39-4de5-b5fa-24c2a1953ae1",
+  "token_usage": {
+    "input_tokens": 57,
+    "cache_creation_tokens": 90772,
+    "cache_read_tokens": 3311155,
+    "output_tokens": 24195,
+    "api_call_count": 53
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-07T11:38:05.048809Z",
+    "agent_lines": 0,
+    "human_added": 34824,
+    "human_modified": 42,
+    "human_removed": 0,
+    "total_committed": 34866,
+    "agent_percentage": 0
+  }
+}

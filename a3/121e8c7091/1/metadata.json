@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "a3121e8c7091",
+  "session_id": "765292f8-3d62-40a0-a26d-7d2678ed1855",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-25T11:41:24.673484Z",
+  "branch": "fix/parser-private-identifier-error-recovery",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_parser/src/diagnostics.rs",
+    "crates/oxc_parser/src/js/object.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 61,
+    "cache_creation_tokens": 35917,
+    "cache_read_tokens": 2008323,
+    "output_tokens": 1822,
+    "api_call_count": 55
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-25T11:41:24.648884Z",
+    "agent_lines": 16,
+    "human_added": 439,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 455,
+    "agent_percentage": 3.5164835164835164
+  }
+}

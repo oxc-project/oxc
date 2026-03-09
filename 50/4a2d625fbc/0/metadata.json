@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "504a2d625fbc",
+  "session_id": "0b521fea-8edb-4784-8805-f6dc9fbf1d06",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-08T09:07:46.264116Z",
+  "branch": "refactor/ci-unified-change-detection",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/actions/check-changes/action.yml",
+    ".github/scripts/check-changes.js",
+    ".github/workflows/ci.yml",
+    ".github/workflows/miri.yml"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "7c4fe965-f165-4e21-8162-361c5b8a19e6",
+  "checkpoint_transcript_start": 301,
+  "transcript_lines_at_start": 301,
+  "token_usage": {
+    "input_tokens": 19,
+    "cache_creation_tokens": 19758,
+    "cache_read_tokens": 1692216,
+    "output_tokens": 4198,
+    "api_call_count": 16
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-08T09:07:46.198487Z",
+    "agent_lines": 0,
+    "human_added": 2436,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 2436,
+    "agent_percentage": 0
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "99c2895538d0",
+  "strategy": "manual-commit",
+  "branch": "refactor/ci-unified-change-detection",
+  "checkpoints_count": 3,
+  "files_touched": [
+    ".github/actions/check-changes/action.yml",
+    ".github/scripts/check-changes.js",
+    ".github/workflows/ci.yml",
+    ".github/workflows/miri.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/99/c2895538d0/0/metadata.json",
+      "transcript": "/99/c2895538d0/0/full.jsonl",
+      "context": "/99/c2895538d0/0/context.md",
+      "content_hash": "/99/c2895538d0/0/content_hash.txt",
+      "prompt": "/99/c2895538d0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1029,
+    "cache_creation_tokens": 79230,
+    "cache_read_tokens": 2690277,
+    "output_tokens": 21326,
+    "api_call_count": 46
+  }
+}
