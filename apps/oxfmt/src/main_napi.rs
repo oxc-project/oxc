@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::sync::Arc;
 
 use napi_derive::napi;
 
@@ -10,7 +11,8 @@ use crate::{
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsInitExternalFormatterCb, JsSortTailwindClassesCb, utils,
+        JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
+        create_js_config_loader, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -34,6 +36,8 @@ use crate::{
 #[napi]
 pub async fn run_cli(
     args: Vec<String>,
+    #[napi(ts_arg_type = "(path: string) => Promise<object>")]
+    load_js_config_cb: JsLoadJsConfigCb,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
@@ -87,18 +91,21 @@ pub async fn run_cli(
         format_embedded_doc_cb,
         sort_tailwindcss_classes_cb,
     );
+    let js_config_loader = create_js_config_loader(load_js_config_cb);
 
     utils::init_tracing();
     let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(external_formatter.clone()).await;
+            run_lsp(external_formatter.clone(), js_config_loader).await;
 
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
             init_miette();
 
-            let result = StdinRunner::new(command, external_formatter.clone()).run();
+            let result =
+                StdinRunner::new(command, external_formatter.clone(), Arc::clone(&js_config_loader))
+                    .run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
@@ -108,6 +115,7 @@ pub async fn run_cli(
 
             let result = FormatRunner::new(command)
                 .with_external_formatter(Some(external_formatter.clone()))
+                .with_js_config_loader(Arc::clone(&js_config_loader))
                 .run();
 
             ("cli".to_string(), Some(result.exit_code()))

@@ -12,13 +12,16 @@ use super::{
 use crate::core::{
     ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
+#[cfg(feature = "napi")]
+use crate::core::JsConfigLoaderCb;
 
-#[derive(Debug)]
 pub struct FormatRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
     external_formatter: Option<crate::core::ExternalFormatter>,
+    #[cfg(feature = "napi")]
+    js_config_loader: Option<JsConfigLoaderCb>,
 }
 
 impl FormatRunner {
@@ -32,6 +35,8 @@ impl FormatRunner {
             cwd: env::current_dir().expect("Failed to get current working directory"),
             #[cfg(feature = "napi")]
             external_formatter: None,
+            #[cfg(feature = "napi")]
+            js_config_loader: None,
         }
     }
 
@@ -42,6 +47,13 @@ impl FormatRunner {
         external_formatter: Option<crate::core::ExternalFormatter>,
     ) -> Self {
         self.external_formatter = external_formatter;
+        self
+    }
+
+    #[cfg(feature = "napi")]
+    #[must_use]
+    pub fn with_js_config_loader(mut self, js_config_loader: JsConfigLoaderCb) -> Self {
+        self.js_config_loader = Some(js_config_loader);
         self
     }
 
@@ -68,13 +80,15 @@ impl FormatRunner {
         // Find and load config file
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
-        // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
+        // - else, search nearest config file from cwd upwards
         let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config_paths(
+        let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            #[cfg(feature = "napi")]
+            self.js_config_loader.as_ref(),
         ) {
             Ok(r) => r,
             Err(err) => {
@@ -265,4 +279,5 @@ impl FormatRunner {
             }
         }
     }
+
 }

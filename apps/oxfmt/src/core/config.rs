@@ -19,6 +19,27 @@ use super::{
     },
     utils,
 };
+#[cfg(feature = "napi")]
+use super::js_config::JsConfigLoaderCb;
+
+/// JSON/JSONC config file names, in order of preference.
+pub const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
+/// JS/TS config file names, in order of preference.
+pub const JS_CONFIG_FILES: &[&str] =
+    &["oxfmt.config.ts", "oxfmt.config.mts", "oxfmt.config.cts", "oxfmt.config.js", "oxfmt.config.mjs", "oxfmt.config.cjs"];
+
+/// Extensions recognized as JavaScript/TypeScript config files.
+const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
+
+/// Check if a config file path is a JavaScript/TypeScript config.
+///
+/// Uses extension-based matching so that both auto-discovered files (e.g. `oxfmt.config.ts`)
+/// and explicitly specified files (e.g. `--config ./my-config.ts`) are handled.
+fn is_js_config_path(path: &Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
+}
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
@@ -28,9 +49,10 @@ pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<Pa
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards
-    // Support both `.json` and `.jsonc`, but prefer `.json` if both exist
+    // Support JSON, JSONC, and JS/TS config files
+    // Prefer JSON/JSONC over JS/TS if both exist in the same directory
     cwd.ancestors().find_map(|dir| {
-        for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
+        for filename in JSON_CONFIG_FILES.iter().chain(JS_CONFIG_FILES.iter()) {
             let config_path = dir.join(filename);
             if config_path.exists() {
                 return Some(config_path);
@@ -189,7 +211,37 @@ pub struct ConfigResolver {
 }
 
 impl ConfigResolver {
-    /// Create a resolver by loading config from a file path.
+    /// Create a resolver from a pre-parsed raw JSON config value.
+    ///
+    /// This is the shared internal constructor used by both `from_config_paths()` (JSON/JSONC)
+    /// and `from_raw_config()` (JS/TS config evaluated externally).
+    fn new(
+        raw_config: Value,
+        config_dir: Option<PathBuf>,
+        editorconfig: Option<EditorConfig>,
+    ) -> Self {
+        Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
+    }
+
+    /// Load `.editorconfig` from a path if provided.
+    fn load_editorconfig(
+        cwd: &Path,
+        editorconfig_path: Option<&Path>,
+    ) -> Result<Option<EditorConfig>, String> {
+        match editorconfig_path {
+            Some(path) => {
+                let str = utils::read_to_string(path)
+                    .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
+
+                // Use the directory containing `.editorconfig` as the base, not the CLI's cwd.
+                // This ensures patterns like `[src/*.ts]` are resolved relative to where `.editorconfig` is located.
+                Ok(Some(EditorConfig::parse(&str).with_cwd(path.parent().unwrap_or(cwd))))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Create a resolver by loading JSON/JSONC config from a file path.
     ///
     /// # Errors
     /// Returns error if:
@@ -221,26 +273,66 @@ impl ConfigResolver {
             serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
         // Store the config directory for override path resolution
         let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
+        let editorconfig = Self::load_editorconfig(cwd, editorconfig_path)?;
 
-        let editorconfig = match editorconfig_path {
-            Some(path) => {
-                let str = utils::read_to_string(path)
-                    .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
+        Ok(Self::new(raw_config, config_dir, editorconfig))
+    }
 
-                // Use the directory containing `.editorconfig` as the base, not the CLI's cwd.
-                // This ensures patterns like `[src/*.ts]` are resolved relative to where `.editorconfig` is located.
-                Some(EditorConfig::parse(&str).with_cwd(path.parent().unwrap_or(cwd)))
-            }
-            None => None,
-        };
+    /// Create a resolver from a pre-parsed raw config value (from JS/TS config evaluation).
+    ///
+    /// # Errors
+    /// Returns error if `.editorconfig` loading fails.
+    #[cfg(feature = "napi")]
+    #[instrument(level = "debug", name = "oxfmt::config::from_raw_config", skip_all)]
+    pub fn from_raw_config(
+        raw_config: Value,
+        config_path: &Path,
+        cwd: &Path,
+        editorconfig_path: Option<&Path>,
+    ) -> Result<Self, String> {
+        let config_dir = config_path.parent().map(Path::to_path_buf);
+        let editorconfig = Self::load_editorconfig(cwd, editorconfig_path)?;
+        Ok(Self::new(raw_config, config_dir, editorconfig))
+    }
 
-        Ok(Self {
-            raw_config,
-            config_dir,
-            cached_options: None,
-            oxfmtrc_overrides: None,
-            editorconfig,
-        })
+    /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
+    ///
+    /// If the resolved config path is a JS/TS file:
+    /// - With `napi` feature: evaluates it via the provided `js_config_loader` callback.
+    /// - Without `napi` feature: returns an error (requires the Node.js CLI).
+    ///
+    /// # Errors
+    /// Returns error if config file loading or parsing fails.
+    #[instrument(level = "debug", name = "oxfmt::config::from_config", skip_all)]
+    pub fn from_config(
+        cwd: &Path,
+        oxfmtrc_path: Option<&Path>,
+        editorconfig_path: Option<&Path>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
+    ) -> Result<Self, String> {
+        #[cfg(feature = "napi")]
+        if let Some(path) = oxfmtrc_path
+            && is_js_config_path(path)
+        {
+            let loader = js_config_loader
+                .expect("JS config loader must be set when `napi` feature is enabled");
+            let raw_config = loader(path.to_string_lossy().into_owned())?;
+            return Self::from_raw_config(raw_config, path, cwd, editorconfig_path);
+        }
+
+        #[cfg(not(feature = "napi"))]
+        if let Some(path) = oxfmtrc_path
+            && is_js_config_path(path)
+        {
+            return Err(format!(
+                "JavaScript/TypeScript config files are not supported in pure Rust CLI.\n\
+                 Found: {}\n\
+                 Use `.oxfmtrc.json` or `.oxfmtrc.jsonc` instead, or use the Node.js CLI (`npx oxfmt`).",
+                path.display()
+            ));
+        }
+
+        Self::from_config_paths(cwd, oxfmtrc_path, editorconfig_path)
     }
 
     /// Validate config and return ignore patterns (= non-formatting option) for file walking.

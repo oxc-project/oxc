@@ -6,15 +6,15 @@ use std::{
 
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
+    SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 
-#[derive(Debug)]
 pub struct StdinRunner {
     options: FormatCommand,
     cwd: PathBuf,
     external_formatter: ExternalFormatter,
+    js_config_loader: JsConfigLoaderCb,
 }
 
 impl StdinRunner {
@@ -22,11 +22,16 @@ impl StdinRunner {
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined.
-    pub fn new(options: FormatCommand, external_formatter: ExternalFormatter) -> Self {
+    pub fn new(
+        options: FormatCommand,
+        external_formatter: ExternalFormatter,
+        js_config_loader: JsConfigLoaderCb,
+    ) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             external_formatter,
+            js_config_loader,
         }
     }
 
@@ -53,10 +58,11 @@ impl StdinRunner {
         // Load config
         let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config_paths(
+        let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
         ) {
             Ok(r) => r,
             Err(err) => {
@@ -119,4 +125,5 @@ impl StdinRunner {
             }
         }
     }
+
 }

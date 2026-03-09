@@ -16,8 +16,8 @@ describe("LSP initialization", () => {
   });
 
   it.each([
-    [undefined, [".oxfmtrc.json", ".oxfmtrc.jsonc", ".editorconfig"]],
-    [{ "fmt.configPath": "" }, [".oxfmtrc.json", ".oxfmtrc.jsonc", ".editorconfig"]],
+    [undefined, [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "oxfmt.config.mts", "oxfmt.config.cts", "oxfmt.config.js", "oxfmt.config.mjs", "oxfmt.config.cjs", ".editorconfig"]],
+    [{ "fmt.configPath": "" }, [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "oxfmt.config.mts", "oxfmt.config.cts", "oxfmt.config.js", "oxfmt.config.mjs", "oxfmt.config.cjs", ".editorconfig"]],
     [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",

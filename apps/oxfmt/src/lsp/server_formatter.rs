@@ -8,25 +8,30 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
+    SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
-use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
+use crate::core::{JSON_CONFIG_FILES, JS_CONFIG_FILES};
+use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
     external_formatter: ExternalFormatter,
+    js_config_loader: JsConfigLoaderCb,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(external_formatter: ExternalFormatter) -> Self {
-        Self { external_formatter }
+    pub fn new(external_formatter: ExternalFormatter, js_config_loader: JsConfigLoaderCb) -> Self {
+        Self { external_formatter, js_config_loader }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
     #[cfg(test)]
     pub fn dummy() -> Self {
-        Self { external_formatter: ExternalFormatter::dummy() }
+        Self {
+            external_formatter: ExternalFormatter::dummy(),
+            js_config_loader: std::sync::Arc::new(|_| Err("JS config not supported in tests".to_string())),
+        }
     }
 
     /// # Panics
@@ -47,7 +52,7 @@ impl ServerFormatterBuilder {
 
         // Build `ConfigResolver` from config paths
         let (config_resolver, ignore_patterns) =
-            match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
+            match self.build_config_resolver(&root_path, options.config_path.as_ref()) {
                 Ok((resolver, patterns)) => (resolver, patterns),
                 Err(err) => {
                     warn!("Failed to build config resolver: {err}, falling back to default config");
@@ -106,6 +111,7 @@ impl ServerFormatterBuilder {
     /// # Errors
     /// Returns error if config file parsing fails.
     fn build_config_resolver(
+        &self,
         root_path: &Path,
         config_path: Option<&String>,
     ) -> Result<(ConfigResolver, Vec<String>), String> {
@@ -113,10 +119,11 @@ impl ServerFormatterBuilder {
             resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
         let editorconfig_path = resolve_editorconfig_path(root_path);
 
-        let mut resolver = ConfigResolver::from_config_paths(
+        let mut resolver = ConfigResolver::from_config(
             root_path,
             oxfmtrc_path.as_deref(),
             editorconfig_path.as_deref(),
+            Some(&self.js_config_loader),
         )?;
 
         // Validate config and cache options, returns ignore patterns
@@ -225,7 +232,11 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+                JSON_CONFIG_FILES
+                    .iter()
+                    .chain(JS_CONFIG_FILES.iter())
+                    .map(|file| (*file).to_string())
+                    .collect()
             };
 
         patterns.push(".editorconfig".to_string());

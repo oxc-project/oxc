@@ -14,6 +14,7 @@ import {
 // See `config.generated.ts` for the full list of generated types.
 import type {
   FormatConfig,
+  Oxfmtrc,
   SortImportsConfig,
   SortPackageJsonConfig,
   SortTailwindcssConfig,
@@ -40,6 +41,13 @@ export type SortPackageJsonOptions = SortPackageJsonConfig;
 export type SortTailwindcssOptions = SortTailwindcssConfig;
 /** @deprecated Use `SortTailwindcssOptions` instead. */
 export type TailwindcssOptions = SortTailwindcssConfig;
+
+/**
+ * Define an oxfmt configuration with type inference.
+ */
+export function defineConfig<T extends Oxfmtrc>(config: T): T {
+  return config;
+}
 
 /**
  * Format the given source text according to the specified options.

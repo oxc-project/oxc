@@ -7,6 +7,7 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./cli/worker-proxy";
+import { loadJsConfig } from "./js_config";
 
 // napi-JS `oxfmt` CLI entry point
 // See also `run_cli()` function in `./src/main_napi.rs`
@@ -27,6 +28,7 @@ void (async () => {
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
   const [mode, exitCode] = await runCli(
     args,
+    loadJsConfig,
     initExternalFormatter,
     formatFile,
     formatEmbeddedCode,
