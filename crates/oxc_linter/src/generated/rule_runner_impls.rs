@@ -2549,6 +2549,12 @@ impl RuleRunner for crate::rules::react::no_namespace::NoNamespace {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::react::no_react_children::NoReactChildren {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::react::no_redundant_should_component_update::NoRedundantShouldComponentUpdate
 {
