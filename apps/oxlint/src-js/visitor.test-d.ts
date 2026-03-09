@@ -4,25 +4,23 @@ import type { Node, CallExpression } from "./generated/types.d.ts";
 
 // Empty visitor object is allowed
 const emptyVisitor = {};
-export type _Empty = ExpectTrue<ExpectExtends<VisitorObject, typeof emptyVisitor>>;
+type _Empty = ExpectTrue<ExpectExtends<VisitorObject, typeof emptyVisitor>>;
 
 // Specific node visitors have a stricter type for the parameter
 const callExpressionVisitor = {
   CallExpression: (_node: CallExpression) => {},
 };
-export type _CallExpr = ExpectTrue<ExpectExtends<VisitorObject, typeof callExpressionVisitor>>;
+type _CallExpr = ExpectTrue<ExpectExtends<VisitorObject, typeof callExpressionVisitor>>;
 
 const callExpressionExitVisitor = {
   "CallExpression:exit": (_node: CallExpression) => {},
 };
-export type _CallExprExit = ExpectTrue<
-  ExpectExtends<VisitorObject, typeof callExpressionExitVisitor>
->;
+type _CallExprExit = ExpectTrue<ExpectExtends<VisitorObject, typeof callExpressionExitVisitor>>;
 
 const debuggerStatementWrongTypeVisitor = {
   DebuggerStatement: (_node: CallExpression) => {},
 };
-export type _DebuggerStmtWrongType = ExpectFalse<
+type _DebuggerStmtWrongType = ExpectFalse<
   ExpectExtends<VisitorObject, typeof debuggerStatementWrongTypeVisitor>
 >;
 
@@ -31,13 +29,13 @@ const selectorsVisitor = {
   "FunctionExpression > Identifier": (_node: Node) => {},
   ":matches(FunctionExpression, FunctionDeclaration)": (_node: Node) => {},
 };
-export type _Selectors = ExpectTrue<ExpectExtends<VisitorObject, typeof selectorsVisitor>>;
+type _Selectors = ExpectTrue<ExpectExtends<VisitorObject, typeof selectorsVisitor>>;
 
 // Visitor functions can omit the node parameter
 const callExpressionNoParamVisitor = {
   CallExpression: () => {},
 };
-export type _CallExprNoParam = ExpectTrue<
+type _CallExprNoParam = ExpectTrue<
   ExpectExtends<VisitorObject, typeof callExpressionNoParamVisitor>
 >;
 
@@ -47,7 +45,7 @@ export type _CallExprNoParam = ExpectTrue<
 const callExpressionUndefinedVisitor = {
   CallExpression: undefined,
 };
-export type _CallExprUndefined = ExpectTrue<
+type _CallExprUndefined = ExpectTrue<
   ExpectExtends<VisitorObject, typeof callExpressionUndefinedVisitor>
 >;
 
@@ -55,14 +53,14 @@ export type _CallExprUndefined = ExpectTrue<
 const invalidNullVisitor = {
   CallExpression: null,
 };
-export type _InvalidNull = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidNullVisitor>>;
+type _InvalidNull = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidNullVisitor>>;
 
 const invalidObjectVisitor = {
   CallExpression: {},
 };
-export type _InvalidObject = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidObjectVisitor>>;
+type _InvalidObject = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidObjectVisitor>>;
 
 const invalidStringVisitor = {
   CallExpression: "oh dear",
 };
-export type _InvalidString = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidStringVisitor>>;
+type _InvalidString = ExpectFalse<ExpectExtends<VisitorObject, typeof invalidStringVisitor>>;
