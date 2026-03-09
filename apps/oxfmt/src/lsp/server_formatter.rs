@@ -8,29 +8,31 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JS_CONFIG_FILES,
+    JSON_CONFIG_FILES, JsConfigLoaderCb, SourceFormatter, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
-use crate::core::{JSON_CONFIG_FILES, JS_CONFIG_FILES};
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
-    external_formatter: ExternalFormatter,
     js_config_loader: JsConfigLoaderCb,
+    external_formatter: ExternalFormatter,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(external_formatter: ExternalFormatter, js_config_loader: JsConfigLoaderCb) -> Self {
-        Self { external_formatter, js_config_loader }
+    pub fn new(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) -> Self {
+        Self { js_config_loader, external_formatter }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
     #[cfg(test)]
     pub fn dummy() -> Self {
         Self {
+            js_config_loader: std::sync::Arc::new(|_| {
+                Err("JS config not supported in tests".to_string())
+            }),
             external_formatter: ExternalFormatter::dummy(),
-            js_config_loader: std::sync::Arc::new(|_| Err("JS config not supported in tests".to_string())),
         }
     }
 
@@ -134,7 +136,7 @@ impl ServerFormatterBuilder {
 
     /// Create a default `ConfigResolver` when config loading fails.
     fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
-        let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None)
+        let mut resolver = ConfigResolver::from_json_config(Path::new("."), None, None)
             .expect("Default ConfigResolver should never fail");
         let ignore_patterns = resolver
             .build_and_validate()

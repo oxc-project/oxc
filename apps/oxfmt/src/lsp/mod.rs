@@ -59,16 +59,13 @@ pub fn create_fake_file_path_from_language_id(
 }
 
 /// Run the language server
-pub async fn run_lsp(
-    external_formatter: ExternalFormatter,
-    js_config_loader: JsConfigLoaderCb,
-) {
+pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) {
     run_server(
         "oxfmt".to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
         vec![Box::new(server_formatter::ServerFormatterBuilder::new(
-            external_formatter,
             js_config_loader,
+            external_formatter,
         ))],
     )
     .await;

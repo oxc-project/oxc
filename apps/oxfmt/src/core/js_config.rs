@@ -1,10 +1,6 @@
 use std::sync::Arc;
 
-use napi::{
-    Status,
-    bindgen_prelude::Promise,
-    threadsafe_function::ThreadsafeFunction,
-};
+use napi::{Status, bindgen_prelude::Promise, threadsafe_function::ThreadsafeFunction};
 use serde_json::Value;
 
 /// JS callback to load a single JavaScript/TypeScript config file.
@@ -32,7 +28,12 @@ pub type JsConfigLoaderCb = Arc<dyn Fn(String) -> Result<Value, String> + Send +
 /// Create a JS config loader callback from the NAPI JS callback.
 ///
 /// The returned function blocks the current thread until the JS callback resolves.
-/// It will panic if called outside of a Tokio runtime.
+///
+/// NOTE: Unlike `ExternalFormatter` which uses `napi::bindgen_prelude::block_on`
+/// and relies on call sites to wrap with `block_in_place()`,
+/// this uses `block_in_place` + `Handle::block_on` internally because
+/// it is called from both rayon worker threads (CLI) and async contexts (stdin, LSP)
+/// via `ConfigResolver::from_config()`, where adding per-call-site wrapping is impractical.
 pub fn create_js_config_loader(cb: JsLoadJsConfigCb) -> JsConfigLoaderCb {
     Arc::new(move |path: String| {
         let cb = &cb;
@@ -41,17 +42,6 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigCb) -> JsConfigLoaderCb {
                 .block_on(async move { cb.call_async(path).await?.into_future().await })
         });
 
-        match res {
-            Ok(value) => {
-                if !value.is_object() {
-                    return Err(
-                        "Configuration file must have a default export that is an object."
-                            .to_string(),
-                    );
-                }
-                Ok(value)
-            }
-            Err(err) => Err(format!("`loadJsConfig` threw an error: {err}")),
-        }
+        res.map_err(|_| "failed to load".to_string())
     })
 }

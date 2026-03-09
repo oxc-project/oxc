@@ -9,11 +9,11 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
+#[cfg(feature = "napi")]
+use crate::core::JsConfigLoaderCb;
 use crate::core::{
     ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
-#[cfg(feature = "napi")]
-use crate::core::JsConfigLoaderCb;
 
 pub struct FormatRunner {
     options: FormatCommand,
@@ -217,7 +217,7 @@ impl FormatRunner {
             );
             // Config stats: only show when no config is found
             if oxfmtrc_path.is_none() && editorconfig_path.is_none() {
-                let hint = "No config found, using defaults. Please add `.oxfmtrc.json` or try `oxfmt --init` if needed.\n";
+                let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
                 #[cfg(not(feature = "napi"))]
                 let hint =
                     "No config found, using defaults. Please add `.oxfmtrc.json` if needed.\n";
@@ -279,5 +279,4 @@ impl FormatRunner {
             }
         }
     }
-
 }

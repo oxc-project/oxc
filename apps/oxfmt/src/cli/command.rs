@@ -143,7 +143,7 @@ pub enum MigrateSource {
 /// Config Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct ConfigOptions {
-    /// Path to the configuration file
+    /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
 }

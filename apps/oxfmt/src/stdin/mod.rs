@@ -13,8 +13,8 @@ use crate::core::{
 pub struct StdinRunner {
     options: FormatCommand,
     cwd: PathBuf,
-    external_formatter: ExternalFormatter,
     js_config_loader: JsConfigLoaderCb,
+    external_formatter: ExternalFormatter,
 }
 
 impl StdinRunner {
@@ -24,14 +24,14 @@ impl StdinRunner {
     /// Panics if the current working directory cannot be determined.
     pub fn new(
         options: FormatCommand,
-        external_formatter: ExternalFormatter,
         js_config_loader: JsConfigLoaderCb,
+        external_formatter: ExternalFormatter,
     ) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
-            external_formatter,
             js_config_loader,
+            external_formatter,
         }
     }
 
@@ -125,5 +125,4 @@ impl StdinRunner {
             }
         }
     }
-
 }
