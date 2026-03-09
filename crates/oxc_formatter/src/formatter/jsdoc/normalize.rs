@@ -283,6 +283,32 @@ pub fn append_trailing_dot(s: &str) -> Cow<'_, str> {
     Cow::Borrowed(s)
 }
 
+/// Strip JSDoc `*` continuation prefixes from multi-line type content.
+///
+/// When a type expression spans multiple lines inside a JSDoc block, the raw
+/// content extracted by the parser includes `\n   *   ` prefixes from the
+/// continuation lines. This function joins lines by replacing each
+/// `\n<whitespace>*<optional space>` with a single space.
+fn strip_jsdoc_continuation_prefixes(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for (i, line) in s.lines().enumerate() {
+        if i == 0 {
+            result.push_str(line);
+            continue;
+        }
+        result.push(' ');
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix('*') {
+            // Strip the `*` and optional single space after it
+            let rest = rest.strip_prefix(' ').unwrap_or(rest);
+            result.push_str(rest);
+        } else {
+            result.push_str(trimmed);
+        }
+    }
+    result
+}
+
 /// Normalize JSDoc type expression syntax:
 /// - `?Type` → `Type | null`
 /// - `Type?` → `Type | null` (except inside quotes)
@@ -307,6 +333,16 @@ pub fn normalize_type_preserve_quotes(type_str: &str) -> Cow<'_, str> {
 }
 
 fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
+    // Strip JSDoc `*` continuation prefixes from multi-line type strings.
+    // When a type spans multiple lines in a JSDoc block, the raw content
+    // may include `\n * ` or `\n *` prefixes from continuation lines.
+    // These `*` chars must be removed before normalization, otherwise
+    // the `*` → `any` replacement will corrupt the type.
+    if type_str.contains('\n') {
+        let stripped = strip_jsdoc_continuation_prefixes(type_str);
+        return Cow::Owned(normalize_type_impl(&stripped, convert_quotes).into_owned());
+    }
+
     // Fast path: common simple types need no transformation at all.
     let trimmed = type_str.trim();
     if matches!(
