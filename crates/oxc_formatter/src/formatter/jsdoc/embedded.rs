@@ -79,15 +79,11 @@ pub(super) fn format_embedded_js(
     let width = u16::try_from(print_width).unwrap_or(80).clamp(1, 320);
     let line_width = LineWidth::try_from(width).unwrap();
 
-    // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
-    // to embedded code, and their Vec fields make cloning expensive.
-    let base_options = FormatOptions {
-        line_width,
-        jsdoc: None,
-        sort_imports: None,
-        sort_tailwindcss: None,
-        ..format_options.clone()
-    };
+    // Copy only scalar fields, setting Vec-containing options to None
+    // (sort_imports, sort_tailwindcss, jsdoc are irrelevant for embedded code).
+    let mut base_options =
+        FormatOptions { sort_imports: None, sort_tailwindcss: None, jsdoc: None, ..*format_options };
+    base_options.line_width = line_width;
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| -> Option<String> {

@@ -61,6 +61,8 @@ const LINE_PREFIX_LEN: usize = 3;
 pub(super) struct JsdocFormatter<'a, 'o> {
     pub(super) options: &'o JsdocOptions,
     pub(super) format_options: &'o FormatOptions,
+    /// FormatOptions for type formatting — copies only scalar fields, setting
+    /// Vec-containing options (sort_imports, sort_tailwindcss, jsdoc) to None.
     pub(super) type_format_options: FormatOptions,
     pub(super) external_callbacks: &'o ExternalCallbacks,
     pub(super) allocator: &'a Allocator,
@@ -77,17 +79,15 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         available_width: usize,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
-        // Null out Vec-containing fields to make clone cheap (they're irrelevant for JSDoc)
-        let type_format_options = FormatOptions {
-            jsdoc: None,
-            sort_imports: None,
-            sort_tailwindcss: None,
-            ..format_options.clone()
-        };
         Self {
             options,
             format_options,
-            type_format_options,
+            type_format_options: FormatOptions {
+                sort_imports: None,
+                sort_tailwindcss: None,
+                jsdoc: None,
+                ..*format_options
+            },
             external_callbacks,
             allocator,
             wrap_width,
@@ -123,14 +123,14 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Merge all description sources: header description + @description tags
         // (upstream always merges these, regardless of the description_tag option)
-        let mut merged_desc = String::new();
         let desc_trimmed = description.trim();
-        if !desc_trimmed.is_empty() {
-            merged_desc.push_str(desc_trimmed);
-        }
-        // Collect effective tags, absorbing @description tag content
+        let mut merged_desc: Option<String> =
+            if desc_trimmed.is_empty() { None } else { Some(desc_trimmed.to_string()) };
+        // Collect effective tags, absorbing @description tag content.
+        // Track whether any @import tags exist to skip import processing.
         let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> =
             Vec::with_capacity(sorted_tags.len());
+        let mut has_import_tags = false;
         for (tag, normalized_kind) in &sorted_tags {
             if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
                 continue;
@@ -139,20 +139,24 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 let desc_content = tag.comment().parsed();
                 let desc_content = desc_content.trim();
                 if !desc_content.is_empty() {
-                    if !merged_desc.is_empty() {
-                        merged_desc.push_str("\n\n");
+                    let desc = merged_desc.get_or_insert_with(String::new);
+                    if !desc.is_empty() {
+                        desc.push_str("\n\n");
                     }
-                    merged_desc.push_str(desc_content);
+                    desc.push_str(desc_content);
                 }
                 continue;
+            }
+            if *normalized_kind == "import" {
+                has_import_tags = true;
             }
             effective_tags.push((tag, normalized_kind));
         }
 
         // Format and emit the merged description
-        if !merged_desc.is_empty() {
+        if let Some(merged_desc) = &merged_desc {
             let desc = format_description_mdast(
-                &merged_desc,
+                merged_desc,
                 self.wrap_width,
                 0,
                 self.options.capitalize_descriptions,
@@ -172,9 +176,15 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // Reorder @param tags to match the function signature order
         reorder_param_tags(&mut effective_tags, comment, source_text);
 
-        // Pre-process @import tags: merge by module, sort, format
-        let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
-        let has_imports = !import_lines.is_empty();
+        // Pre-process @import tags: merge by module, sort, format.
+        // Skip entirely when no @import tags exist (common case) to avoid allocation.
+        let (mut import_lines, parsed_import_indices) = if has_import_tags {
+            let (lines, indices) = process_import_tags(&effective_tags);
+            (Some(lines), indices)
+        } else {
+            (None, smallvec::SmallVec::new())
+        };
+        let has_imports = import_lines.as_ref().is_some_and(|l| !l.is_empty());
         let mut imports_emitted = false;
 
         // Format tags
@@ -189,8 +199,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     if !self.content_lines.is_empty() && !self.content_lines.last_is_empty() {
                         self.content_lines.push_empty();
                     }
-                    let import_str =
-                        std::mem::replace(&mut import_lines, LineBuffer::new()).into_string();
+                    let import_str = import_lines.take().unwrap().into_string();
                     self.content_lines.push(import_str);
                     imports_emitted = true;
                     prev_normalized_kind = Some("import");
