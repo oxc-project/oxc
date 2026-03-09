@@ -353,9 +353,39 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Not `boolean`
         "const bar = foo.find(fn)",
         "const bar = foo.find(fn) || baz",
         "if (foo.find(fn) ?? bar) {}",
+        // Not matched `CallExpression` — find
+        "if (new foo.find(fn)) {}",
+        "if (find(fn)) {}",
+        // TODO: Get these passing.
+        // r#"if (foo["find"](fn)) {}"#,
+        r#"if (foo["fi" + "nd"](fn) /* find */) {}"#, // spellchecker:disable-line
+        // TODO: Get these passing.
+        // "if (foo[`find`](fn)) {}",
+        "if (foo[find](fn)) {}",
+        "if (foo.notFind(fn) /* find */) {}",
+        "if (foo.find()) {}",
+        "if (foo.find(fn, thisArgument, extraArgument)) {}",
+        // TODO: Get these passing.
+        // "if (foo.find(...argumentsArray)) {}",
+        // Not matched `CallExpression` — findLast
+        "if (new foo.findLast(fn)) {}",
+        "if (findLast(fn)) {}",
+        // TODO: Get these passing.
+        // r#"if (foo["findLast"](fn)) {}"#,
+        r#"if (foo["fi" + "nd"](fn) /* findLast */) {}"#, // spellchecker:disable-line
+        // TODO: Get these passing.
+        // "if (foo[`findLast`](fn)) {}",
+        "if (foo[findLast](fn)) {}",
+        "if (foo.notFind(fn) /* findLast */) {}",
+        "if (foo.findLast()) {}",
+        "if (foo.findLast(fn, thisArgument, extraArgument)) {}",
+        // TODO: Get these passing.
+        // "if (foo.findLast(...argumentsArray)) {}",
+        // .filter(…).length > 0
         "array.filter(fn).length > 0.",
         "array.filter(fn).length > .0",
         "array.filter(fn).length > 0.0",
@@ -363,6 +393,7 @@ fn test() {
         "array.filter(fn).length < 0",
         "array.filter(fn).length >= 0",
         "0 > array.filter(fn).length",
+        // .filter(…).length !== 0
         "array.filter(fn).length !== 0.",
         "array.filter(fn).length !== .0",
         "array.filter(fn).length !== 0.0",
@@ -372,6 +403,7 @@ fn test() {
         "array.filter(fn).length == 0",
         "array.filter(fn).length = 0",
         "0 !== array.filter(fn).length",
+        // .filter(…).length >= 1
         "array.filter(fn).length >= 1",
         "array.filter(fn).length >= 1.",
         "array.filter(fn).length >= 1.0",
@@ -381,16 +413,20 @@ fn test() {
         "array.filter(fn).length = 1",
         "array.filter(fn).length += 1",
         "1 >= array.filter(fn).length",
+        // .length
         "array.filter(fn)?.length > 0",
         "array.filter(fn)[length] > 0",
         "array.filter(fn).notLength > 0",
         "array.filter(fn).length() > 0",
         "+array.filter(fn).length >= 1",
+        // .filter
         "array.filter?.(fn).length > 0",
         "array?.filter(fn).length > 0",
         "array.notFilter(fn).length > 0",
         "array.filter.length > 0",
+        // jQuery#filter
         r#"$element.filter(":visible").length > 0"#,
+        // Compare with `undefined`
         "foo.find(fn) == 0",
         r#"foo.find(fn) != """#,
         "foo.find(fn) === null",
@@ -409,15 +445,73 @@ fn test() {
         "foo.findLastIndex(bar, extraArgument) !== -1",
         "foo.findLastIndex(bar) instanceof -1",
         "foo.findLastIndex(...bar) !== -1",
+        // lodash/underscore findIndex
+        "_.findIndex(bar)",
+        "_.findIndex(foo, bar)",
     ];
 
     let fail = vec![
+        // find — boolean contexts
+        "const bar = !foo.find(fn)",
+        // TODO: Get this working. Boolean() is not recognized as a boolean context by Oxlint
+        // "const bar = Boolean(foo.find(fn))",
         "if (foo.find(fn)) {}",
+        "const bar = foo.find(fn) ? 1 : 2",
+        "while (foo.find(fn)) foo.shift();",
+        "do {foo.shift();} while (foo.find(fn));",
+        "for (; foo.find(fn); ) foo.shift();",
+        // findLast — boolean contexts
+        "const bar = !foo.findLast(fn)",
+        // TODO: Get this working. Boolean() is not recognized as a boolean context by Oxlint
+        // "const bar = Boolean(foo.findLast(fn))",
         "if (foo.findLast(fn)) {}",
+        "const bar = foo.findLast(fn) ? 1 : 2",
+        "while (foo.findLast(fn)) foo.shift();",
+        "do {foo.shift();} while (foo.findLast(fn));",
+        "for (; foo.findLast(fn); ) foo.shift();",
+        // Comments
+        "console.log(foo /* comment 1 */ . /* comment 2 */ find /* comment 3 */ (fn) ? a : b)",
+        // jQuery.find — always truthy, should not be used as boolean
+        r#"if (jQuery.find(".outer > div")) {}"#,
+        // Actual messages
+        "if (bar.find(fn)) {}",
+        "if (bar.findLast(fn)) {}",
+        // Snapshot cases
         r#"if (array.find(element => element === "🦄")) {}"#,
         r#"const foo = array.find(element => element === "🦄") ? bar : baz;"#,
+        // Chained find — only the outer .find should report
+        "
+        if (
+            array
+                .find(element => Array.isArray(element))
+            // ^^^^ This should NOT report
+                .find(x => x === 0)
+            // ^^^^ This should report
+        ) {
+        }
+        ",
+        // .filter(…).length
         "array.filter(fn).length > 0",
         "array.filter(fn).length !== 0",
+        // TODO: Get this working.
+        // "
+        // if (
+        //     ((
+        //         ((
+        //             ((
+        //                 ((
+        //                     array
+        //                 ))
+        //                     .filter(what_ever_here)
+        //             ))
+        //                 .length
+        //         ))
+        //         >
+        //         (( 0 ))
+        //     ))
+        // );
+        // ",
+        // Compare with `undefined`
         "foo.find(fn) == null",
         "foo.find(fn) == undefined",
         "foo.find(fn) === undefined",
@@ -433,8 +527,6 @@ fn test() {
         "foo.findIndex(bar) == - 1",
         "foo.findIndex(bar) >= 0",
         "foo.findIndex(bar) < 0",
-        "foo.findIndex(bar) !== (( - 1 ))",
-        "foo.findIndex(element => element.bar === 1) !== (( - 1 ))",
         // findLastIndex: negative one || ( >= || < ) 0
         "foo.findLastIndex(bar) !== -1",
         "foo.findLastIndex(bar) != -1",
@@ -443,13 +535,38 @@ fn test() {
         "foo.findLastIndex(bar) == - 1",
         "foo.findLastIndex(bar) >= 0",
         "foo.findLastIndex(bar) < 0",
+        "foo.findIndex(bar) !== (( - 1 ))",
+        "foo.findIndex(element => element.bar === 1) !== (( - 1 ))",
         "foo.findLastIndex(bar) !== (( - 1 ))",
         "foo.findLastIndex(element => element.bar === 1) !== (( - 1 ))",
     ];
 
     let fix = vec![
+        // find — boolean contexts
+        ("const bar = !foo.find(fn)", "const bar = !foo.some(fn)"),
         ("if (foo.find(fn)) {}", "if (foo.some(fn)) {}"),
+        ("const bar = foo.find(fn) ? 1 : 2", "const bar = foo.some(fn) ? 1 : 2"),
+        ("while (foo.find(fn)) foo.shift();", "while (foo.some(fn)) foo.shift();"),
+        ("do {foo.shift();} while (foo.find(fn));", "do {foo.shift();} while (foo.some(fn));"),
+        ("for (; foo.find(fn); ) foo.shift();", "for (; foo.some(fn); ) foo.shift();"),
+        // findLast — boolean contexts
+        ("const bar = !foo.findLast(fn)", "const bar = !foo.some(fn)"),
         ("if (foo.findLast(fn)) {}", "if (foo.some(fn)) {}"),
+        ("const bar = foo.findLast(fn) ? 1 : 2", "const bar = foo.some(fn) ? 1 : 2"),
+        ("while (foo.findLast(fn)) foo.shift();", "while (foo.some(fn)) foo.shift();"),
+        ("do {foo.shift();} while (foo.findLast(fn));", "do {foo.shift();} while (foo.some(fn));"),
+        ("for (; foo.findLast(fn); ) foo.shift();", "for (; foo.some(fn); ) foo.shift();"),
+        // Comments
+        (
+            "console.log(foo /* comment 1 */ . /* comment 2 */ find /* comment 3 */ (fn) ? a : b)",
+            "console.log(foo /* comment 1 */ . /* comment 2 */ some /* comment 3 */ (fn) ? a : b)",
+        ),
+        // jQuery
+        (r#"if (jQuery.find(".outer > div")) {}"#, r#"if (jQuery.some(".outer > div")) {}"#),
+        // Actual messages
+        ("if (bar.find(fn)) {}", "if (bar.some(fn)) {}"),
+        ("if (bar.findLast(fn)) {}", "if (bar.some(fn)) {}"),
+        // Snapshot cases
         (
             r#"if (array.find(element => element === "🦄")) {}"#,
             r#"if (array.some(element => element === "🦄")) {}"#,
@@ -458,8 +575,10 @@ fn test() {
             r#"const foo = array.find(element => element === "🦄") ? bar : baz;"#,
             r#"const foo = array.some(element => element === "🦄") ? bar : baz;"#,
         ),
+        // .filter(…).length
         ("array.filter(fn).length > 0", "array.some(fn)"),
         ("array.filter(fn).length !== 0", "array.some(fn)"),
+        // Compare with `undefined`
         ("foo.find(fn) == null", "foo.some(fn) == null"),
         ("foo.find(fn) == undefined", "foo.some(fn) == undefined"),
         ("foo.find(fn) === undefined", "foo.some(fn) === undefined"),
