@@ -65,7 +65,6 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
