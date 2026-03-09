@@ -356,7 +356,10 @@ fn replace_placeholders(s: &str, placeholders: &[&str]) -> String {
     let mut i = 0;
 
     while i < len {
-        if i + prefix_len <= len && &s[i..i + prefix_len] == prefix {
+        if i + prefix_len <= len
+            && s.is_char_boundary(i + prefix_len)
+            && &s[i..i + prefix_len] == prefix
+        {
             // Found prefix, parse the index digits that follow
             let digit_start = i + prefix_len;
             let mut digit_end = digit_start;
