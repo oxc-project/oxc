@@ -1,22 +1,11 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::ast::*;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{
-    compiler_error::{CompilerError, CompilerErrorEntry, ErrorSeverity, SourceLocation},
-    entrypoint::{
-        options::CompilationMode, pipeline::run_pipeline, program::should_compile_function,
-    },
-    hir::{
-        NonLocalBinding,
-        build_hir::{LowerableFunction, collect_import_bindings, lower},
-        environment::{CompilerOutputMode, Environment, EnvironmentConfig},
-    },
+    entrypoint::options::{CompilationMode, CompilerReactTarget, PanicThreshold},
+    hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode},
 };
-use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -52,6 +41,11 @@ impl std::ops::Deref for ReactCompilerRule {
 pub struct ReactCompilerConfig {
     pub compilation_mode: CompilationModeConfig,
     pub environment: EnvironmentConfigOverrides,
+    pub target: TargetConfig,
+    pub panic_threshold: PanicThresholdConfig,
+    pub ignore_use_no_forget: bool,
+    pub custom_opt_out_directives: Option<Vec<String>>,
+    pub enable_reanimated_check: EnableReanimatedCheck,
 }
 
 /// Which functions the compiler should compile/validate.
@@ -76,6 +70,117 @@ impl From<CompilationModeConfig> for CompilationMode {
     }
 }
 
+/// The minimum React version the compiler targets.
+#[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
+pub enum TargetConfig {
+    #[serde(rename = "17")]
+    React17,
+    #[serde(rename = "18")]
+    React18,
+    #[default]
+    #[serde(rename = "19")]
+    React19,
+}
+
+impl From<TargetConfig> for CompilerReactTarget {
+    fn from(config: TargetConfig) -> Self {
+        match config {
+            TargetConfig::React17 => CompilerReactTarget::React17,
+            TargetConfig::React18 => CompilerReactTarget::React18,
+            TargetConfig::React19 => CompilerReactTarget::React19,
+        }
+    }
+}
+
+/// Controls when compilation errors cause the compiler to panic.
+#[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PanicThresholdConfig {
+    AllErrors,
+    CriticalErrors,
+    #[default]
+    None,
+}
+
+impl From<PanicThresholdConfig> for PanicThreshold {
+    fn from(config: PanicThresholdConfig) -> Self {
+        match config {
+            PanicThresholdConfig::AllErrors => PanicThreshold::AllErrors,
+            PanicThresholdConfig::CriticalErrors => PanicThreshold::CriticalErrors,
+            PanicThresholdConfig::None => PanicThreshold::None,
+        }
+    }
+}
+
+/// Mode for exhaustive effect dependency validation.
+#[derive(Debug, Clone, Copy, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum ExhaustiveEffectDepsConfig {
+    #[default]
+    Off,
+    All,
+    MissingOnly,
+    ExtraOnly,
+}
+
+impl From<ExhaustiveEffectDepsConfig> for ExhaustiveEffectDepsMode {
+    fn from(config: ExhaustiveEffectDepsConfig) -> Self {
+        match config {
+            ExhaustiveEffectDepsConfig::Off => ExhaustiveEffectDepsMode::Off,
+            ExhaustiveEffectDepsConfig::All => ExhaustiveEffectDepsMode::All,
+            ExhaustiveEffectDepsConfig::MissingOnly => ExhaustiveEffectDepsMode::MissingOnly,
+            ExhaustiveEffectDepsConfig::ExtraOnly => ExhaustiveEffectDepsMode::ExtraOnly,
+        }
+    }
+}
+
+/// Wrapper for `enableReanimatedCheck` that defaults to `true`.
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(transparent)]
+pub struct EnableReanimatedCheck(pub bool);
+
+impl Default for EnableReanimatedCheck {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+macro_rules! default_true_bool {
+    ($name:ident, $doc:expr) => {
+        #[doc = $doc]
+        #[derive(Debug, Clone, Copy, Deserialize, JsonSchema)]
+        #[serde(transparent)]
+        pub struct $name(pub bool);
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(true)
+            }
+        }
+    };
+}
+
+default_true_bool!(
+    EnableTreatRefLikeIdentifiersAsRefs,
+    "Wrapper for `enableTreatRefLikeIdentifiersAsRefs` (default `true`)."
+);
+default_true_bool!(
+    EnableAssumeHooksFollowRulesOfReact,
+    "Wrapper for `enableAssumeHooksFollowRulesOfReact` (default `true`)."
+);
+default_true_bool!(
+    EnableOptionalDependencies,
+    "Wrapper for `enableOptionalDependencies` (default `true`)."
+);
+default_true_bool!(
+    EnableTransitivelyFreezeFunctionExpressions,
+    "Wrapper for `enableTransitivelyFreezeFunctionExpressions` (default `true`)."
+);
+default_true_bool!(
+    EnablePreserveExistingMemoizationGuarantees,
+    "Wrapper for `enablePreserveExistingMemoizationGuarantees` (default `true`)."
+);
+
 /// Overrides for `EnvironmentConfig` validation flags.
 ///
 /// Defaults match the ESLint plugin's `COMPILER_OPTIONS` in lint mode,
@@ -96,6 +201,20 @@ pub struct EnvironmentConfigOverrides {
     pub validate_blocklisted_imports: Option<Vec<String>>,
     pub validate_preserve_existing_memoization_guarantees: bool,
     pub validate_exhaustive_memoization_dependencies: bool,
+    pub validate_no_void_use_memo: bool,
+    pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsConfig,
+    pub validate_no_freezing_known_mutable_functions: bool,
+    pub validate_no_derived_computations_in_effects_exp: bool,
+    pub enable_verbose_no_set_state_in_effect: bool,
+    pub enable_use_keyed_state: bool,
+    pub enable_treat_ref_like_identifiers_as_refs: EnableTreatRefLikeIdentifiersAsRefs,
+    pub enable_treat_set_identifiers_as_state_setters: bool,
+    pub enable_assume_hooks_follow_rules_of_react: EnableAssumeHooksFollowRulesOfReact,
+    pub enable_optional_dependencies: EnableOptionalDependencies,
+    pub enable_transitively_freeze_function_expressions:
+        EnableTransitivelyFreezeFunctionExpressions,
+    pub enable_preserve_existing_memoization_guarantees:
+        EnablePreserveExistingMemoizationGuarantees,
 }
 
 /// Lint-mode defaults — stricter than `EnvironmentConfig::default()`.
@@ -114,12 +233,26 @@ impl Default for EnvironmentConfigOverrides {
             validate_blocklisted_imports: None,
             validate_preserve_existing_memoization_guarantees: true,
             validate_exhaustive_memoization_dependencies: true,
+            validate_no_void_use_memo: true,
+            validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsConfig::Off,
+            validate_no_freezing_known_mutable_functions: true,
+            validate_no_derived_computations_in_effects_exp: false,
+            enable_verbose_no_set_state_in_effect: false,
+            enable_use_keyed_state: false,
+            enable_treat_ref_like_identifiers_as_refs: EnableTreatRefLikeIdentifiersAsRefs(true),
+            enable_treat_set_identifiers_as_state_setters: false,
+            enable_assume_hooks_follow_rules_of_react: EnableAssumeHooksFollowRulesOfReact(true),
+            enable_optional_dependencies: EnableOptionalDependencies(true),
+            enable_transitively_freeze_function_expressions:
+                EnableTransitivelyFreezeFunctionExpressions(true),
+            enable_preserve_existing_memoization_guarantees:
+                EnablePreserveExistingMemoizationGuarantees(true),
         }
     }
 }
 
 impl EnvironmentConfigOverrides {
-    fn to_environment_config(&self) -> EnvironmentConfig {
+    pub(crate) fn to_environment_config(&self) -> EnvironmentConfig {
         EnvironmentConfig {
             validate_hooks_usage: self.validate_hooks_usage,
             validate_ref_access_during_render: self.validate_ref_access_during_render,
@@ -136,6 +269,31 @@ impl EnvironmentConfigOverrides {
                 .validate_preserve_existing_memoization_guarantees,
             validate_exhaustive_memoization_dependencies: self
                 .validate_exhaustive_memoization_dependencies,
+            validate_no_void_use_memo: self.validate_no_void_use_memo,
+            validate_exhaustive_effect_dependencies: self
+                .validate_exhaustive_effect_dependencies
+                .into(),
+            validate_no_freezing_known_mutable_functions: self
+                .validate_no_freezing_known_mutable_functions,
+            validate_no_derived_computations_in_effects_exp: self
+                .validate_no_derived_computations_in_effects_exp,
+            enable_verbose_no_set_state_in_effect: self.enable_verbose_no_set_state_in_effect,
+            enable_use_keyed_state: self.enable_use_keyed_state,
+            enable_treat_ref_like_identifiers_as_refs: self
+                .enable_treat_ref_like_identifiers_as_refs
+                .0,
+            enable_treat_set_identifiers_as_state_setters: self
+                .enable_treat_set_identifiers_as_state_setters,
+            enable_assume_hooks_follow_rules_of_react: self
+                .enable_assume_hooks_follow_rules_of_react
+                .0,
+            enable_optional_dependencies: self.enable_optional_dependencies.0,
+            enable_transitively_freeze_function_expressions: self
+                .enable_transitively_freeze_function_expressions
+                .0,
+            enable_preserve_existing_memoization_guarantees: self
+                .enable_preserve_existing_memoization_guarantees
+                .0,
             ..EnvironmentConfig::default()
         }
     }
@@ -183,433 +341,8 @@ impl Rule for ReactCompilerRule {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let program = ctx.nodes().program();
-        let outer_bindings = collect_import_bindings(&program.body);
-        walk_statements(&program.body, &outer_bindings, &self.0, ctx);
-    }
-}
-
-fn walk_statements<'a>(
-    statements: &'a oxc_allocator::Vec<'a, Statement<'a>>,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    ctx: &LintContext<'a>,
-) {
-    for statement in statements {
-        lint_statement(statement, outer_bindings, config, ctx);
-        walk_nested_statement(statement, outer_bindings, config, ctx);
-    }
-}
-
-fn walk_nested_statement<'a>(
-    statement: &'a Statement<'a>,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    ctx: &LintContext<'a>,
-) {
-    match statement {
-        Statement::BlockStatement(block) => {
-            walk_statements(&block.body, outer_bindings, config, ctx);
-        }
-        Statement::IfStatement(s) => {
-            walk_nested_statement(&s.consequent, outer_bindings, config, ctx);
-            if let Some(alt) = &s.alternate {
-                walk_nested_statement(alt, outer_bindings, config, ctx);
-            }
-        }
-        Statement::ForStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        Statement::ForInStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        Statement::ForOfStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        Statement::WhileStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        Statement::DoWhileStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        Statement::TryStatement(s) => {
-            walk_statements(&s.block.body, outer_bindings, config, ctx);
-            if let Some(handler) = &s.handler {
-                walk_statements(&handler.body.body, outer_bindings, config, ctx);
-            }
-            if let Some(finalizer) = &s.finalizer {
-                walk_statements(&finalizer.body, outer_bindings, config, ctx);
-            }
-        }
-        Statement::SwitchStatement(s) => {
-            for case in &s.cases {
-                walk_statements(&case.consequent, outer_bindings, config, ctx);
-            }
-        }
-        Statement::LabeledStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, ctx);
-            walk_nested_statement(&s.body, outer_bindings, config, ctx);
-        }
-        _ => {}
-    }
-}
-
-fn lint_statement<'a>(
-    statement: &'a Statement<'a>,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    ctx: &LintContext<'a>,
-) {
-    match statement {
-        Statement::FunctionDeclaration(function) => {
-            let directives = function_directives(function);
-            let lowerable_function = LowerableFunction::Function(function);
-            lint_function(
-                &lowerable_function,
-                function.id.as_ref().map(|id| id.name.as_str()),
-                &directives,
-                function.span,
-                outer_bindings,
-                config,
-                false,
-                ctx,
-            );
-        }
-        Statement::VariableDeclaration(declaration) => {
-            lint_variable_declaration(declaration, outer_bindings, config, ctx);
-        }
-        Statement::ExportDefaultDeclaration(export_default) => match &export_default.declaration {
-            ExportDefaultDeclarationKind::FunctionDeclaration(function)
-            | ExportDefaultDeclarationKind::FunctionExpression(function) => {
-                let directives = function_directives(function);
-                let lowerable_function = LowerableFunction::Function(function);
-                lint_function(
-                    &lowerable_function,
-                    function.id.as_ref().map(|id| id.name.as_str()),
-                    &directives,
-                    function.span,
-                    outer_bindings,
-                    config,
-                    false,
-                    ctx,
-                );
-            }
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(arrow) => {
-                let directives = arrow_directives(arrow);
-                let lowerable_function = LowerableFunction::ArrowFunction(arrow);
-                lint_function(
-                    &lowerable_function,
-                    None,
-                    &directives,
-                    arrow.span,
-                    outer_bindings,
-                    config,
-                    false,
-                    ctx,
-                );
-            }
-            ExportDefaultDeclarationKind::CallExpression(call) => {
-                lint_memo_or_forwardref_call(call, None, outer_bindings, config, ctx);
-            }
-            _ => {}
-        },
-        Statement::ExportNamedDeclaration(export_named) => {
-            if let Some(declaration) = &export_named.declaration {
-                match declaration {
-                    Declaration::FunctionDeclaration(function) => {
-                        let directives = function_directives(function);
-                        let lowerable_function = LowerableFunction::Function(function);
-                        lint_function(
-                            &lowerable_function,
-                            function.id.as_ref().map(|id| id.name.as_str()),
-                            &directives,
-                            function.span,
-                            outer_bindings,
-                            config,
-                            false,
-                            ctx,
-                        );
-                    }
-                    Declaration::VariableDeclaration(declaration) => {
-                        lint_variable_declaration(declaration, outer_bindings, config, ctx);
-                    }
-                    _ => {}
-                }
-            }
-        }
-        // Port of getFunctionName context 2 (Program.ts:1189-1195):
-        // AssignmentExpression — infer name from LHS identifier.
-        Statement::ExpressionStatement(expr_stmt) => {
-            if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
-                let assign_name = match &assign.left {
-                    AssignmentTarget::AssignmentTargetIdentifier(id) => Some(id.name.as_str()),
-                    _ => None,
-                };
-                match &assign.right {
-                    Expression::FunctionExpression(function) => {
-                        let directives = function_directives(function);
-                        let function_name =
-                            function.id.as_ref().map(|id| id.name.as_str()).or(assign_name);
-                        let lowerable_function = LowerableFunction::Function(function);
-                        lint_function(
-                            &lowerable_function,
-                            function_name,
-                            &directives,
-                            function.span,
-                            outer_bindings,
-                            config,
-                            false,
-                            ctx,
-                        );
-                    }
-                    Expression::ArrowFunctionExpression(arrow) => {
-                        let directives = arrow_directives(arrow);
-                        let lowerable_function = LowerableFunction::ArrowFunction(arrow);
-                        lint_function(
-                            &lowerable_function,
-                            assign_name,
-                            &directives,
-                            arrow.span,
-                            outer_bindings,
-                            config,
-                            false,
-                            ctx,
-                        );
-                    }
-                    Expression::CallExpression(call) => {
-                        lint_memo_or_forwardref_call(
-                            call,
-                            assign_name,
-                            outer_bindings,
-                            config,
-                            ctx,
-                        );
-                    }
-                    _ => {}
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
-fn lint_variable_declaration<'a>(
-    declaration: &'a VariableDeclaration<'a>,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    ctx: &LintContext<'a>,
-) {
-    for declarator in &declaration.declarations {
-        let binding_name = match &declarator.id {
-            BindingPattern::BindingIdentifier(identifier) => Some(identifier.name.as_str()),
-            _ => None,
-        };
-
-        let Some(initializer) = &declarator.init else {
-            continue;
-        };
-
-        match initializer {
-            Expression::FunctionExpression(function) => {
-                let directives = function_directives(function);
-                let function_name =
-                    function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
-                let lowerable_function = LowerableFunction::Function(function);
-                lint_function(
-                    &lowerable_function,
-                    function_name,
-                    &directives,
-                    function.span,
-                    outer_bindings,
-                    config,
-                    false,
-                    ctx,
-                );
-            }
-            Expression::ArrowFunctionExpression(arrow) => {
-                let directives = arrow_directives(arrow);
-                let lowerable_function = LowerableFunction::ArrowFunction(arrow);
-                lint_function(
-                    &lowerable_function,
-                    binding_name,
-                    &directives,
-                    arrow.span,
-                    outer_bindings,
-                    config,
-                    false,
-                    ctx,
-                );
-            }
-            Expression::CallExpression(call) => {
-                lint_memo_or_forwardref_call(call, binding_name, outer_bindings, config, ctx);
-            }
-            _ => {}
-        }
-    }
-}
-
-/// Returns `true` if the callee expression is `memo`, `React.memo`,
-/// `forwardRef`, or `React.forwardRef`.
-fn is_memo_or_forwardref_callee(callee: &Expression<'_>) -> bool {
-    match callee {
-        Expression::Identifier(ident) => {
-            matches!(ident.name.as_str(), "memo" | "forwardRef")
-        }
-        Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(obj) = &member.object {
-                obj.name.as_str() == "React"
-                    && matches!(member.property.name.as_str(), "memo" | "forwardRef")
-            } else {
-                false
-            }
-        }
-        _ => false,
-    }
-}
-
-/// Handles a `CallExpression` that might be `memo(fn)` or `forwardRef(fn)`.
-/// Extracts the first argument and lints it with `is_memo_or_forwardref_arg = true`.
-fn lint_memo_or_forwardref_call<'a>(
-    call: &'a CallExpression<'a>,
-    binding_name: Option<&str>,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    ctx: &LintContext<'a>,
-) {
-    if !is_memo_or_forwardref_callee(&call.callee) {
-        return;
-    }
-    let Some(first_arg) = call.arguments.first() else {
-        return;
-    };
-    let Some(first_arg_expr) = first_arg.as_expression() else {
-        return;
-    };
-    match first_arg_expr {
-        Expression::FunctionExpression(function) => {
-            let directives = function_directives(function);
-            let function_name = function.id.as_ref().map(|id| id.name.as_str()).or(binding_name);
-            let lowerable_function = LowerableFunction::Function(function);
-            lint_function(
-                &lowerable_function,
-                function_name,
-                &directives,
-                function.span,
-                outer_bindings,
-                config,
-                true,
-                ctx,
-            );
-        }
-        Expression::ArrowFunctionExpression(arrow) => {
-            let directives = arrow_directives(arrow);
-            let lowerable_function = LowerableFunction::ArrowFunction(arrow);
-            lint_function(
-                &lowerable_function,
-                binding_name,
-                &directives,
-                arrow.span,
-                outer_bindings,
-                config,
-                true,
-                ctx,
-            );
-        }
-        _ => {}
-    }
-}
-
-fn lint_function<'a>(
-    function: &LowerableFunction<'a>,
-    name: Option<&str>,
-    directives: &[String],
-    fallback_span: Span,
-    outer_bindings: &FxHashMap<String, NonLocalBinding>,
-    config: &ReactCompilerConfig,
-    is_memo_or_forwardref_arg: bool,
-    ctx: &LintContext<'a>,
-) {
-    // should_compile_function (port of getReactFunctionType) does NOT check
-    // opt-out directives. In lint mode, validation always runs regardless of
-    // opt-out directives, matching the ESLint plugin's behavior.
-    let Some(fn_type) = should_compile_function(
-        function,
-        name,
-        directives,
-        config.compilation_mode.into(),
-        is_memo_or_forwardref_arg,
-        false, // linter does not support dynamic gating
-    ) else {
-        return;
-    };
-
-    let env_config = config.environment.to_environment_config();
-    let environment = Environment::new(fn_type, CompilerOutputMode::Lint, env_config);
-
-    let mut hir_function = match lower(&environment, fn_type, function, outer_bindings.clone()) {
-        Ok(hir_function) => hir_function,
-        Err(error) => {
-            report_compiler_error(&error, fallback_span, ctx);
-            return;
-        }
-    };
-
-    match run_pipeline(&mut hir_function, &environment) {
-        Ok(output) => {
-            if let Some(recorded) = output.recorded_errors {
-                report_compiler_error(&recorded, fallback_span, ctx);
-            }
-        }
-        Err(error) => {
-            report_compiler_error(&error, fallback_span, ctx);
-        }
-    }
-
-    for diagnostic in hir_function.env.take_diagnostics() {
-        report_compiler_error(&diagnostic, fallback_span, ctx);
-    }
-}
-
-fn report_compiler_error(error: &CompilerError, fallback_span: Span, ctx: &LintContext<'_>) {
-    for entry in &error.details {
-        let severity = entry.severity();
-        if matches!(severity, ErrorSeverity::Hint | ErrorSeverity::Off) {
-            continue;
-        }
-        let span = compiler_error_entry_span(entry).unwrap_or(fallback_span);
-        let message = entry.to_string();
-        let diagnostic = match severity {
-            ErrorSeverity::Error => OxcDiagnostic::error(message).with_label(span),
-            _ => OxcDiagnostic::warn(message).with_label(span),
-        };
-        ctx.diagnostic(diagnostic);
-    }
-}
-
-fn function_directives(function: &Function<'_>) -> Vec<String> {
-    function.body.as_ref().map_or_else(Vec::new, |body| {
-        body.directives.iter().map(|directive| directive.directive.to_string()).collect()
-    })
-}
-
-fn arrow_directives(function: &ArrowFunctionExpression<'_>) -> Vec<String> {
-    function.body.directives.iter().map(|directive| directive.directive.to_string()).collect()
-}
-
-fn compiler_error_entry_span(entry: &CompilerErrorEntry) -> Option<Span> {
-    let location = match entry {
-        CompilerErrorEntry::Diagnostic(diagnostic) => diagnostic.primary_location(),
-        CompilerErrorEntry::Detail(detail) => detail.primary_location(),
-    };
-
-    match location {
-        Some(SourceLocation::Source(span)) => Some(span),
-        _ => None,
+        super::cache::ensure_compiled(ctx, &self.0);
+        super::cache::report_all(ctx);
     }
 }
 
@@ -626,6 +359,17 @@ fn test() {
         // Named exports
         (r"export function Component(props) { return <div>{props.value}</div>; }", None),
         (r"export const Component = (props) => { return <div>{props.value}</div>; };", None),
+        // 'use no forget' opts out of compilation (matching ESLint plugin behavior)
+        (
+            r#"
+            let count = 0;
+            function Component() {
+              'use no forget';
+              return cond ?? useConditionalHook();
+            }
+            "#,
+            None,
+        ),
         // === Ported from eslint-plugin-react-compiler PluginTest ===
         // Invariants are only for the compiler team — not surfaced as lint errors
         (
@@ -693,17 +437,6 @@ fn test() {
             function useConditional2(props) {
               'use memo';
               return props.cond && useConditionalHook();
-            }
-            "#,
-            None,
-        ),
-        // 'use no forget' does not disable eslint rule
-        (
-            r#"
-            let count = 0;
-            function Component() {
-              'use no forget';
-              return cond ?? useConditionalHook();
             }
             "#,
             None,
@@ -852,4 +585,59 @@ fn test_config_deserialization() {
     // Other fields keep lint-mode defaults
     assert!(config.environment.validate_no_set_state_in_effects);
     assert!(config.environment.validate_no_jsx_in_try_statements);
+}
+
+#[test]
+fn test_new_config_fields_deserialization() {
+    let config: ReactCompilerConfig = serde_json::from_value(serde_json::json!({
+        "target": "17",
+        "panicThreshold": "all_errors",
+        "ignoreUseNoForget": true,
+        "customOptOutDirectives": ["use skip"],
+        "enableReanimatedCheck": false,
+        "environment": {
+            "validateNoVoidUseMemo": false,
+            "validateExhaustiveEffectDependencies": "all",
+            "validateNoFreezingKnownMutableFunctions": false,
+            "enableAssumeHooksFollowRulesOfReact": false,
+            "enableTreatRefLikeIdentifiersAsRefs": false,
+            "enableOptionalDependencies": false,
+            "enableTransitivelyFreezeFunctionExpressions": false,
+            "enablePreserveExistingMemoizationGuarantees": false
+        }
+    }))
+    .unwrap();
+
+    assert!(matches!(config.target, TargetConfig::React17));
+    assert!(matches!(config.panic_threshold, PanicThresholdConfig::AllErrors));
+    assert!(config.ignore_use_no_forget);
+    assert_eq!(config.custom_opt_out_directives, Some(vec!["use skip".to_string()]));
+    assert!(!config.enable_reanimated_check.0);
+    assert!(!config.environment.validate_no_void_use_memo);
+    assert!(matches!(
+        config.environment.validate_exhaustive_effect_dependencies,
+        ExhaustiveEffectDepsConfig::All
+    ));
+    assert!(!config.environment.validate_no_freezing_known_mutable_functions);
+    assert!(!config.environment.enable_assume_hooks_follow_rules_of_react.0);
+    assert!(!config.environment.enable_treat_ref_like_identifiers_as_refs.0);
+    assert!(!config.environment.enable_optional_dependencies.0);
+    assert!(!config.environment.enable_transitively_freeze_function_expressions.0);
+    assert!(!config.environment.enable_preserve_existing_memoization_guarantees.0);
+
+    // Verify defaults for new fields when not specified
+    let default_config: ReactCompilerConfig =
+        serde_json::from_value(serde_json::json!({})).unwrap();
+    assert!(matches!(default_config.target, TargetConfig::React19));
+    assert!(matches!(default_config.panic_threshold, PanicThresholdConfig::None));
+    assert!(!default_config.ignore_use_no_forget);
+    assert!(default_config.custom_opt_out_directives.is_none());
+    assert!(default_config.enable_reanimated_check.0);
+    assert!(default_config.environment.validate_no_void_use_memo);
+    assert!(default_config.environment.validate_no_freezing_known_mutable_functions);
+    assert!(default_config.environment.enable_assume_hooks_follow_rules_of_react.0);
+    assert!(default_config.environment.enable_treat_ref_like_identifiers_as_refs.0);
+    assert!(default_config.environment.enable_optional_dependencies.0);
+    assert!(default_config.environment.enable_transitively_freeze_function_expressions.0);
+    assert!(default_config.environment.enable_preserve_existing_memoization_guarantees.0);
 }
