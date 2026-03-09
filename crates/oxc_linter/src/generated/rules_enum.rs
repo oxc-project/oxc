@@ -436,7 +436,33 @@ pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClos
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
+pub use crate::rules::react_compiler::capitalized_calls::CapitalizedCalls as ReactCompilerCapitalizedCalls;
+pub use crate::rules::react_compiler::compiler_config::CompilerConfig as ReactCompilerCompilerConfig;
+pub use crate::rules::react_compiler::error_boundaries::ErrorBoundaries as ReactCompilerErrorBoundaries;
+pub use crate::rules::react_compiler::exhaustive_effect_dependencies::ExhaustiveEffectDependencies as ReactCompilerExhaustiveEffectDependencies;
+pub use crate::rules::react_compiler::fbt::Fbt as ReactCompilerFbt;
+pub use crate::rules::react_compiler::gating::Gating as ReactCompilerGating;
+pub use crate::rules::react_compiler::globals::Globals as ReactCompilerGlobals;
+pub use crate::rules::react_compiler::hooks::Hooks as ReactCompilerHooks;
+pub use crate::rules::react_compiler::immutability::Immutability as ReactCompilerImmutability;
+pub use crate::rules::react_compiler::incompatible_library::IncompatibleLibrary as ReactCompilerIncompatibleLibrary;
+pub use crate::rules::react_compiler::invariant::Invariant as ReactCompilerInvariant;
+pub use crate::rules::react_compiler::memo_dependencies::MemoDependencies as ReactCompilerMemoDependencies;
+pub use crate::rules::react_compiler::memoized_effect_dependencies::MemoizedEffectDependencies as ReactCompilerMemoizedEffectDependencies;
+pub use crate::rules::react_compiler::no_deriving_state_in_effects::NoDerivingStateInEffects as ReactCompilerNoDerivingStateInEffects;
+pub use crate::rules::react_compiler::preserve_manual_memoization::PreserveManualMemoization as ReactCompilerPreserveManualMemoization;
+pub use crate::rules::react_compiler::purity::Purity as ReactCompilerPurity;
 pub use crate::rules::react_compiler::react_compiler_rule::ReactCompilerRule as ReactCompilerReactCompilerRule;
+pub use crate::rules::react_compiler::refs::Refs as ReactCompilerRefs;
+pub use crate::rules::react_compiler::rule_suppression::RuleSuppression as ReactCompilerRuleSuppression;
+pub use crate::rules::react_compiler::set_state_in_effect::SetStateInEffect as ReactCompilerSetStateInEffect;
+pub use crate::rules::react_compiler::set_state_in_render::SetStateInRender as ReactCompilerSetStateInRender;
+pub use crate::rules::react_compiler::static_components::StaticComponents as ReactCompilerStaticComponents;
+pub use crate::rules::react_compiler::syntax::Syntax as ReactCompilerSyntax;
+pub use crate::rules::react_compiler::todo_rule::TodoRule as ReactCompilerTodoRule;
+pub use crate::rules::react_compiler::unsupported_syntax::UnsupportedSyntax as ReactCompilerUnsupportedSyntax;
+pub use crate::rules::react_compiler::use_memo::UseMemo as ReactCompilerUseMemo;
+pub use crate::rules::react_compiler::void_use_memo::VoidUseMemo as ReactCompilerVoidUseMemo;
 pub use crate::rules::react_perf::jsx_no_jsx_as_prop::JsxNoJsxAsProp as ReactPerfJsxNoJsxAsProp;
 pub use crate::rules::react_perf::jsx_no_new_array_as_prop::JsxNoNewArrayAsProp as ReactPerfJsxNoNewArrayAsProp;
 pub use crate::rules::react_perf::jsx_no_new_function_as_prop::JsxNoNewFunctionAsProp as ReactPerfJsxNoNewFunctionAsProp;
@@ -1138,6 +1164,32 @@ pub enum RuleEnum {
     ReactStylePropObject(ReactStylePropObject),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
     ReactCompilerReactCompilerRule(ReactCompilerReactCompilerRule),
+    ReactCompilerHooks(ReactCompilerHooks),
+    ReactCompilerCapitalizedCalls(ReactCompilerCapitalizedCalls),
+    ReactCompilerStaticComponents(ReactCompilerStaticComponents),
+    ReactCompilerUseMemo(ReactCompilerUseMemo),
+    ReactCompilerVoidUseMemo(ReactCompilerVoidUseMemo),
+    ReactCompilerPreserveManualMemoization(ReactCompilerPreserveManualMemoization),
+    ReactCompilerMemoDependencies(ReactCompilerMemoDependencies),
+    ReactCompilerIncompatibleLibrary(ReactCompilerIncompatibleLibrary),
+    ReactCompilerImmutability(ReactCompilerImmutability),
+    ReactCompilerGlobals(ReactCompilerGlobals),
+    ReactCompilerRefs(ReactCompilerRefs),
+    ReactCompilerMemoizedEffectDependencies(ReactCompilerMemoizedEffectDependencies),
+    ReactCompilerExhaustiveEffectDependencies(ReactCompilerExhaustiveEffectDependencies),
+    ReactCompilerSetStateInEffect(ReactCompilerSetStateInEffect),
+    ReactCompilerNoDerivingStateInEffects(ReactCompilerNoDerivingStateInEffects),
+    ReactCompilerErrorBoundaries(ReactCompilerErrorBoundaries),
+    ReactCompilerPurity(ReactCompilerPurity),
+    ReactCompilerSetStateInRender(ReactCompilerSetStateInRender),
+    ReactCompilerInvariant(ReactCompilerInvariant),
+    ReactCompilerTodoRule(ReactCompilerTodoRule),
+    ReactCompilerSyntax(ReactCompilerSyntax),
+    ReactCompilerUnsupportedSyntax(ReactCompilerUnsupportedSyntax),
+    ReactCompilerCompilerConfig(ReactCompilerCompilerConfig),
+    ReactCompilerGating(ReactCompilerGating),
+    ReactCompilerRuleSuppression(ReactCompilerRuleSuppression),
+    ReactCompilerFbt(ReactCompilerFbt),
     ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp),
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
@@ -1888,7 +1940,39 @@ const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize
 const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
 const REACT_COMPILER_REACT_COMPILER_RULE_ID: usize =
     REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
-const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_COMPILER_REACT_COMPILER_RULE_ID + 1usize;
+const REACT_COMPILER_HOOKS_ID: usize = REACT_COMPILER_REACT_COMPILER_RULE_ID + 1usize;
+const REACT_COMPILER_CAPITALIZED_CALLS_ID: usize = REACT_COMPILER_HOOKS_ID + 1usize;
+const REACT_COMPILER_STATIC_COMPONENTS_ID: usize = REACT_COMPILER_CAPITALIZED_CALLS_ID + 1usize;
+const REACT_COMPILER_USE_MEMO_ID: usize = REACT_COMPILER_STATIC_COMPONENTS_ID + 1usize;
+const REACT_COMPILER_VOID_USE_MEMO_ID: usize = REACT_COMPILER_USE_MEMO_ID + 1usize;
+const REACT_COMPILER_PRESERVE_MANUAL_MEMOIZATION_ID: usize =
+    REACT_COMPILER_VOID_USE_MEMO_ID + 1usize;
+const REACT_COMPILER_MEMO_DEPENDENCIES_ID: usize =
+    REACT_COMPILER_PRESERVE_MANUAL_MEMOIZATION_ID + 1usize;
+const REACT_COMPILER_INCOMPATIBLE_LIBRARY_ID: usize = REACT_COMPILER_MEMO_DEPENDENCIES_ID + 1usize;
+const REACT_COMPILER_IMMUTABILITY_ID: usize = REACT_COMPILER_INCOMPATIBLE_LIBRARY_ID + 1usize;
+const REACT_COMPILER_GLOBALS_ID: usize = REACT_COMPILER_IMMUTABILITY_ID + 1usize;
+const REACT_COMPILER_REFS_ID: usize = REACT_COMPILER_GLOBALS_ID + 1usize;
+const REACT_COMPILER_MEMOIZED_EFFECT_DEPENDENCIES_ID: usize = REACT_COMPILER_REFS_ID + 1usize;
+const REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize =
+    REACT_COMPILER_MEMOIZED_EFFECT_DEPENDENCIES_ID + 1usize;
+const REACT_COMPILER_SET_STATE_IN_EFFECT_ID: usize =
+    REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID + 1usize;
+const REACT_COMPILER_NO_DERIVING_STATE_IN_EFFECTS_ID: usize =
+    REACT_COMPILER_SET_STATE_IN_EFFECT_ID + 1usize;
+const REACT_COMPILER_ERROR_BOUNDARIES_ID: usize =
+    REACT_COMPILER_NO_DERIVING_STATE_IN_EFFECTS_ID + 1usize;
+const REACT_COMPILER_PURITY_ID: usize = REACT_COMPILER_ERROR_BOUNDARIES_ID + 1usize;
+const REACT_COMPILER_SET_STATE_IN_RENDER_ID: usize = REACT_COMPILER_PURITY_ID + 1usize;
+const REACT_COMPILER_INVARIANT_ID: usize = REACT_COMPILER_SET_STATE_IN_RENDER_ID + 1usize;
+const REACT_COMPILER_TODO_RULE_ID: usize = REACT_COMPILER_INVARIANT_ID + 1usize;
+const REACT_COMPILER_SYNTAX_ID: usize = REACT_COMPILER_TODO_RULE_ID + 1usize;
+const REACT_COMPILER_UNSUPPORTED_SYNTAX_ID: usize = REACT_COMPILER_SYNTAX_ID + 1usize;
+const REACT_COMPILER_COMPILER_CONFIG_ID: usize = REACT_COMPILER_UNSUPPORTED_SYNTAX_ID + 1usize;
+const REACT_COMPILER_GATING_ID: usize = REACT_COMPILER_COMPILER_CONFIG_ID + 1usize;
+const REACT_COMPILER_RULE_SUPPRESSION_ID: usize = REACT_COMPILER_GATING_ID + 1usize;
+const REACT_COMPILER_FBT_ID: usize = REACT_COMPILER_RULE_SUPPRESSION_ID + 1usize;
+const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_COMPILER_FBT_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = REACT_PERF_JSX_NO_JSX_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
@@ -2700,6 +2784,40 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
             Self::ReactCompilerReactCompilerRule(_) => REACT_COMPILER_REACT_COMPILER_RULE_ID,
+            Self::ReactCompilerHooks(_) => REACT_COMPILER_HOOKS_ID,
+            Self::ReactCompilerCapitalizedCalls(_) => REACT_COMPILER_CAPITALIZED_CALLS_ID,
+            Self::ReactCompilerStaticComponents(_) => REACT_COMPILER_STATIC_COMPONENTS_ID,
+            Self::ReactCompilerUseMemo(_) => REACT_COMPILER_USE_MEMO_ID,
+            Self::ReactCompilerVoidUseMemo(_) => REACT_COMPILER_VOID_USE_MEMO_ID,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                REACT_COMPILER_PRESERVE_MANUAL_MEMOIZATION_ID
+            }
+            Self::ReactCompilerMemoDependencies(_) => REACT_COMPILER_MEMO_DEPENDENCIES_ID,
+            Self::ReactCompilerIncompatibleLibrary(_) => REACT_COMPILER_INCOMPATIBLE_LIBRARY_ID,
+            Self::ReactCompilerImmutability(_) => REACT_COMPILER_IMMUTABILITY_ID,
+            Self::ReactCompilerGlobals(_) => REACT_COMPILER_GLOBALS_ID,
+            Self::ReactCompilerRefs(_) => REACT_COMPILER_REFS_ID,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                REACT_COMPILER_MEMOIZED_EFFECT_DEPENDENCIES_ID
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                REACT_COMPILER_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID
+            }
+            Self::ReactCompilerSetStateInEffect(_) => REACT_COMPILER_SET_STATE_IN_EFFECT_ID,
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                REACT_COMPILER_NO_DERIVING_STATE_IN_EFFECTS_ID
+            }
+            Self::ReactCompilerErrorBoundaries(_) => REACT_COMPILER_ERROR_BOUNDARIES_ID,
+            Self::ReactCompilerPurity(_) => REACT_COMPILER_PURITY_ID,
+            Self::ReactCompilerSetStateInRender(_) => REACT_COMPILER_SET_STATE_IN_RENDER_ID,
+            Self::ReactCompilerInvariant(_) => REACT_COMPILER_INVARIANT_ID,
+            Self::ReactCompilerTodoRule(_) => REACT_COMPILER_TODO_RULE_ID,
+            Self::ReactCompilerSyntax(_) => REACT_COMPILER_SYNTAX_ID,
+            Self::ReactCompilerUnsupportedSyntax(_) => REACT_COMPILER_UNSUPPORTED_SYNTAX_ID,
+            Self::ReactCompilerCompilerConfig(_) => REACT_COMPILER_COMPILER_CONFIG_ID,
+            Self::ReactCompilerGating(_) => REACT_COMPILER_GATING_ID,
+            Self::ReactCompilerRuleSuppression(_) => REACT_COMPILER_RULE_SUPPRESSION_ID,
+            Self::ReactCompilerFbt(_) => REACT_COMPILER_FBT_ID,
             Self::ReactPerfJsxNoJsxAsProp(_) => REACT_PERF_JSX_NO_JSX_AS_PROP_ID,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
@@ -3505,6 +3623,40 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::NAME,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::NAME,
             Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::NAME,
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::NAME,
+            Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::NAME,
+            Self::ReactCompilerStaticComponents(_) => ReactCompilerStaticComponents::NAME,
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::NAME,
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::NAME,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::NAME
+            }
+            Self::ReactCompilerMemoDependencies(_) => ReactCompilerMemoDependencies::NAME,
+            Self::ReactCompilerIncompatibleLibrary(_) => ReactCompilerIncompatibleLibrary::NAME,
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::NAME,
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::NAME,
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::NAME,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::NAME
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::NAME
+            }
+            Self::ReactCompilerSetStateInEffect(_) => ReactCompilerSetStateInEffect::NAME,
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::NAME
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::NAME,
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::NAME,
+            Self::ReactCompilerSetStateInRender(_) => ReactCompilerSetStateInRender::NAME,
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::NAME,
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::NAME,
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::NAME,
+            Self::ReactCompilerUnsupportedSyntax(_) => ReactCompilerUnsupportedSyntax::NAME,
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::NAME,
+            Self::ReactCompilerGating(_) => ReactCompilerGating::NAME,
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::NAME,
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::NAME,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::NAME,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::NAME,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::NAME,
@@ -4330,6 +4482,40 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
             Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::CATEGORY,
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::CATEGORY,
+            Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::CATEGORY,
+            Self::ReactCompilerStaticComponents(_) => ReactCompilerStaticComponents::CATEGORY,
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::CATEGORY,
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::CATEGORY,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::CATEGORY
+            }
+            Self::ReactCompilerMemoDependencies(_) => ReactCompilerMemoDependencies::CATEGORY,
+            Self::ReactCompilerIncompatibleLibrary(_) => ReactCompilerIncompatibleLibrary::CATEGORY,
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::CATEGORY,
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::CATEGORY,
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::CATEGORY,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::CATEGORY
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::CATEGORY
+            }
+            Self::ReactCompilerSetStateInEffect(_) => ReactCompilerSetStateInEffect::CATEGORY,
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::CATEGORY
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::CATEGORY,
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::CATEGORY,
+            Self::ReactCompilerSetStateInRender(_) => ReactCompilerSetStateInRender::CATEGORY,
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::CATEGORY,
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::CATEGORY,
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::CATEGORY,
+            Self::ReactCompilerUnsupportedSyntax(_) => ReactCompilerUnsupportedSyntax::CATEGORY,
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::CATEGORY,
+            Self::ReactCompilerGating(_) => ReactCompilerGating::CATEGORY,
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::CATEGORY,
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::CATEGORY,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
@@ -5150,6 +5336,40 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
             Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::FIX,
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::FIX,
+            Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::FIX,
+            Self::ReactCompilerStaticComponents(_) => ReactCompilerStaticComponents::FIX,
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::FIX,
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::FIX,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::FIX
+            }
+            Self::ReactCompilerMemoDependencies(_) => ReactCompilerMemoDependencies::FIX,
+            Self::ReactCompilerIncompatibleLibrary(_) => ReactCompilerIncompatibleLibrary::FIX,
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::FIX,
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::FIX,
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::FIX,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::FIX
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::FIX
+            }
+            Self::ReactCompilerSetStateInEffect(_) => ReactCompilerSetStateInEffect::FIX,
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::FIX
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::FIX,
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::FIX,
+            Self::ReactCompilerSetStateInRender(_) => ReactCompilerSetStateInRender::FIX,
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::FIX,
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::FIX,
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::FIX,
+            Self::ReactCompilerUnsupportedSyntax(_) => ReactCompilerUnsupportedSyntax::FIX,
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::FIX,
+            Self::ReactCompilerGating(_) => ReactCompilerGating::FIX,
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::FIX,
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::FIX,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FIX,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
@@ -6052,6 +6272,54 @@ impl RuleEnum {
             Self::ReactCompilerReactCompilerRule(_) => {
                 ReactCompilerReactCompilerRule::documentation()
             }
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::documentation(),
+            Self::ReactCompilerCapitalizedCalls(_) => {
+                ReactCompilerCapitalizedCalls::documentation()
+            }
+            Self::ReactCompilerStaticComponents(_) => {
+                ReactCompilerStaticComponents::documentation()
+            }
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::documentation(),
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::documentation(),
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::documentation()
+            }
+            Self::ReactCompilerMemoDependencies(_) => {
+                ReactCompilerMemoDependencies::documentation()
+            }
+            Self::ReactCompilerIncompatibleLibrary(_) => {
+                ReactCompilerIncompatibleLibrary::documentation()
+            }
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::documentation(),
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::documentation(),
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::documentation(),
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::documentation()
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::documentation()
+            }
+            Self::ReactCompilerSetStateInEffect(_) => {
+                ReactCompilerSetStateInEffect::documentation()
+            }
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::documentation()
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::documentation(),
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::documentation(),
+            Self::ReactCompilerSetStateInRender(_) => {
+                ReactCompilerSetStateInRender::documentation()
+            }
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::documentation(),
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::documentation(),
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::documentation(),
+            Self::ReactCompilerUnsupportedSyntax(_) => {
+                ReactCompilerUnsupportedSyntax::documentation()
+            }
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::documentation(),
+            Self::ReactCompilerGating(_) => ReactCompilerGating::documentation(),
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::documentation(),
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::documentation(),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::documentation(),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::documentation(),
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -7638,6 +7906,88 @@ impl RuleEnum {
                 ReactCompilerReactCompilerRule::config_schema(generator)
                     .or_else(|| ReactCompilerReactCompilerRule::schema(generator))
             }
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::config_schema(generator)
+                .or_else(|| ReactCompilerHooks::schema(generator)),
+            Self::ReactCompilerCapitalizedCalls(_) => {
+                ReactCompilerCapitalizedCalls::config_schema(generator)
+                    .or_else(|| ReactCompilerCapitalizedCalls::schema(generator))
+            }
+            Self::ReactCompilerStaticComponents(_) => {
+                ReactCompilerStaticComponents::config_schema(generator)
+                    .or_else(|| ReactCompilerStaticComponents::schema(generator))
+            }
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::config_schema(generator)
+                .or_else(|| ReactCompilerUseMemo::schema(generator)),
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::config_schema(generator)
+                .or_else(|| ReactCompilerVoidUseMemo::schema(generator)),
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::config_schema(generator)
+                    .or_else(|| ReactCompilerPreserveManualMemoization::schema(generator))
+            }
+            Self::ReactCompilerMemoDependencies(_) => {
+                ReactCompilerMemoDependencies::config_schema(generator)
+                    .or_else(|| ReactCompilerMemoDependencies::schema(generator))
+            }
+            Self::ReactCompilerIncompatibleLibrary(_) => {
+                ReactCompilerIncompatibleLibrary::config_schema(generator)
+                    .or_else(|| ReactCompilerIncompatibleLibrary::schema(generator))
+            }
+            Self::ReactCompilerImmutability(_) => {
+                ReactCompilerImmutability::config_schema(generator)
+                    .or_else(|| ReactCompilerImmutability::schema(generator))
+            }
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::config_schema(generator)
+                .or_else(|| ReactCompilerGlobals::schema(generator)),
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::config_schema(generator)
+                .or_else(|| ReactCompilerRefs::schema(generator)),
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::config_schema(generator)
+                    .or_else(|| ReactCompilerMemoizedEffectDependencies::schema(generator))
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::config_schema(generator)
+                    .or_else(|| ReactCompilerExhaustiveEffectDependencies::schema(generator))
+            }
+            Self::ReactCompilerSetStateInEffect(_) => {
+                ReactCompilerSetStateInEffect::config_schema(generator)
+                    .or_else(|| ReactCompilerSetStateInEffect::schema(generator))
+            }
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::config_schema(generator)
+                    .or_else(|| ReactCompilerNoDerivingStateInEffects::schema(generator))
+            }
+            Self::ReactCompilerErrorBoundaries(_) => {
+                ReactCompilerErrorBoundaries::config_schema(generator)
+                    .or_else(|| ReactCompilerErrorBoundaries::schema(generator))
+            }
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::config_schema(generator)
+                .or_else(|| ReactCompilerPurity::schema(generator)),
+            Self::ReactCompilerSetStateInRender(_) => {
+                ReactCompilerSetStateInRender::config_schema(generator)
+                    .or_else(|| ReactCompilerSetStateInRender::schema(generator))
+            }
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::config_schema(generator)
+                .or_else(|| ReactCompilerInvariant::schema(generator)),
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::config_schema(generator)
+                .or_else(|| ReactCompilerTodoRule::schema(generator)),
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::config_schema(generator)
+                .or_else(|| ReactCompilerSyntax::schema(generator)),
+            Self::ReactCompilerUnsupportedSyntax(_) => {
+                ReactCompilerUnsupportedSyntax::config_schema(generator)
+                    .or_else(|| ReactCompilerUnsupportedSyntax::schema(generator))
+            }
+            Self::ReactCompilerCompilerConfig(_) => {
+                ReactCompilerCompilerConfig::config_schema(generator)
+                    .or_else(|| ReactCompilerCompilerConfig::schema(generator))
+            }
+            Self::ReactCompilerGating(_) => ReactCompilerGating::config_schema(generator)
+                .or_else(|| ReactCompilerGating::schema(generator)),
+            Self::ReactCompilerRuleSuppression(_) => {
+                ReactCompilerRuleSuppression::config_schema(generator)
+                    .or_else(|| ReactCompilerRuleSuppression::schema(generator))
+            }
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::config_schema(generator)
+                .or_else(|| ReactCompilerFbt::schema(generator)),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::config_schema(generator)
                 .or_else(|| ReactPerfJsxNoJsxAsProp::schema(generator)),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => {
@@ -8870,6 +9220,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
             Self::ReactCompilerReactCompilerRule(_) => "react_compiler",
+            Self::ReactCompilerHooks(_) => "react_compiler",
+            Self::ReactCompilerCapitalizedCalls(_) => "react_compiler",
+            Self::ReactCompilerStaticComponents(_) => "react_compiler",
+            Self::ReactCompilerUseMemo(_) => "react_compiler",
+            Self::ReactCompilerVoidUseMemo(_) => "react_compiler",
+            Self::ReactCompilerPreserveManualMemoization(_) => "react_compiler",
+            Self::ReactCompilerMemoDependencies(_) => "react_compiler",
+            Self::ReactCompilerIncompatibleLibrary(_) => "react_compiler",
+            Self::ReactCompilerImmutability(_) => "react_compiler",
+            Self::ReactCompilerGlobals(_) => "react_compiler",
+            Self::ReactCompilerRefs(_) => "react_compiler",
+            Self::ReactCompilerMemoizedEffectDependencies(_) => "react_compiler",
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => "react_compiler",
+            Self::ReactCompilerSetStateInEffect(_) => "react_compiler",
+            Self::ReactCompilerNoDerivingStateInEffects(_) => "react_compiler",
+            Self::ReactCompilerErrorBoundaries(_) => "react_compiler",
+            Self::ReactCompilerPurity(_) => "react_compiler",
+            Self::ReactCompilerSetStateInRender(_) => "react_compiler",
+            Self::ReactCompilerInvariant(_) => "react_compiler",
+            Self::ReactCompilerTodoRule(_) => "react_compiler",
+            Self::ReactCompilerSyntax(_) => "react_compiler",
+            Self::ReactCompilerUnsupportedSyntax(_) => "react_compiler",
+            Self::ReactCompilerCompilerConfig(_) => "react_compiler",
+            Self::ReactCompilerGating(_) => "react_compiler",
+            Self::ReactCompilerRuleSuppression(_) => "react_compiler",
+            Self::ReactCompilerFbt(_) => "react_compiler",
             Self::ReactPerfJsxNoJsxAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
@@ -10504,6 +10880,94 @@ impl RuleEnum {
             Self::ReactCompilerReactCompilerRule(_) => Ok(Self::ReactCompilerReactCompilerRule(
                 ReactCompilerReactCompilerRule::from_configuration(value)?,
             )),
+            Self::ReactCompilerHooks(_) => {
+                Ok(Self::ReactCompilerHooks(ReactCompilerHooks::from_configuration(value)?))
+            }
+            Self::ReactCompilerCapitalizedCalls(_) => Ok(Self::ReactCompilerCapitalizedCalls(
+                ReactCompilerCapitalizedCalls::from_configuration(value)?,
+            )),
+            Self::ReactCompilerStaticComponents(_) => Ok(Self::ReactCompilerStaticComponents(
+                ReactCompilerStaticComponents::from_configuration(value)?,
+            )),
+            Self::ReactCompilerUseMemo(_) => {
+                Ok(Self::ReactCompilerUseMemo(ReactCompilerUseMemo::from_configuration(value)?))
+            }
+            Self::ReactCompilerVoidUseMemo(_) => Ok(Self::ReactCompilerVoidUseMemo(
+                ReactCompilerVoidUseMemo::from_configuration(value)?,
+            )),
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                Ok(Self::ReactCompilerPreserveManualMemoization(
+                    ReactCompilerPreserveManualMemoization::from_configuration(value)?,
+                ))
+            }
+            Self::ReactCompilerMemoDependencies(_) => Ok(Self::ReactCompilerMemoDependencies(
+                ReactCompilerMemoDependencies::from_configuration(value)?,
+            )),
+            Self::ReactCompilerIncompatibleLibrary(_) => {
+                Ok(Self::ReactCompilerIncompatibleLibrary(
+                    ReactCompilerIncompatibleLibrary::from_configuration(value)?,
+                ))
+            }
+            Self::ReactCompilerImmutability(_) => Ok(Self::ReactCompilerImmutability(
+                ReactCompilerImmutability::from_configuration(value)?,
+            )),
+            Self::ReactCompilerGlobals(_) => {
+                Ok(Self::ReactCompilerGlobals(ReactCompilerGlobals::from_configuration(value)?))
+            }
+            Self::ReactCompilerRefs(_) => {
+                Ok(Self::ReactCompilerRefs(ReactCompilerRefs::from_configuration(value)?))
+            }
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                Ok(Self::ReactCompilerMemoizedEffectDependencies(
+                    ReactCompilerMemoizedEffectDependencies::from_configuration(value)?,
+                ))
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                Ok(Self::ReactCompilerExhaustiveEffectDependencies(
+                    ReactCompilerExhaustiveEffectDependencies::from_configuration(value)?,
+                ))
+            }
+            Self::ReactCompilerSetStateInEffect(_) => Ok(Self::ReactCompilerSetStateInEffect(
+                ReactCompilerSetStateInEffect::from_configuration(value)?,
+            )),
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                Ok(Self::ReactCompilerNoDerivingStateInEffects(
+                    ReactCompilerNoDerivingStateInEffects::from_configuration(value)?,
+                ))
+            }
+            Self::ReactCompilerErrorBoundaries(_) => Ok(Self::ReactCompilerErrorBoundaries(
+                ReactCompilerErrorBoundaries::from_configuration(value)?,
+            )),
+            Self::ReactCompilerPurity(_) => {
+                Ok(Self::ReactCompilerPurity(ReactCompilerPurity::from_configuration(value)?))
+            }
+            Self::ReactCompilerSetStateInRender(_) => Ok(Self::ReactCompilerSetStateInRender(
+                ReactCompilerSetStateInRender::from_configuration(value)?,
+            )),
+            Self::ReactCompilerInvariant(_) => {
+                Ok(Self::ReactCompilerInvariant(ReactCompilerInvariant::from_configuration(value)?))
+            }
+            Self::ReactCompilerTodoRule(_) => {
+                Ok(Self::ReactCompilerTodoRule(ReactCompilerTodoRule::from_configuration(value)?))
+            }
+            Self::ReactCompilerSyntax(_) => {
+                Ok(Self::ReactCompilerSyntax(ReactCompilerSyntax::from_configuration(value)?))
+            }
+            Self::ReactCompilerUnsupportedSyntax(_) => Ok(Self::ReactCompilerUnsupportedSyntax(
+                ReactCompilerUnsupportedSyntax::from_configuration(value)?,
+            )),
+            Self::ReactCompilerCompilerConfig(_) => Ok(Self::ReactCompilerCompilerConfig(
+                ReactCompilerCompilerConfig::from_configuration(value)?,
+            )),
+            Self::ReactCompilerGating(_) => {
+                Ok(Self::ReactCompilerGating(ReactCompilerGating::from_configuration(value)?))
+            }
+            Self::ReactCompilerRuleSuppression(_) => Ok(Self::ReactCompilerRuleSuppression(
+                ReactCompilerRuleSuppression::from_configuration(value)?,
+            )),
+            Self::ReactCompilerFbt(_) => {
+                Ok(Self::ReactCompilerFbt(ReactCompilerFbt::from_configuration(value)?))
+            }
             Self::ReactPerfJsxNoJsxAsProp(_) => Ok(Self::ReactPerfJsxNoJsxAsProp(
                 ReactPerfJsxNoJsxAsProp::from_configuration(value)?,
             )),
@@ -11823,6 +12287,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.to_configuration(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
             Self::ReactCompilerReactCompilerRule(rule) => rule.to_configuration(),
+            Self::ReactCompilerHooks(rule) => rule.to_configuration(),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.to_configuration(),
+            Self::ReactCompilerStaticComponents(rule) => rule.to_configuration(),
+            Self::ReactCompilerUseMemo(rule) => rule.to_configuration(),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.to_configuration(),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.to_configuration(),
+            Self::ReactCompilerMemoDependencies(rule) => rule.to_configuration(),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.to_configuration(),
+            Self::ReactCompilerImmutability(rule) => rule.to_configuration(),
+            Self::ReactCompilerGlobals(rule) => rule.to_configuration(),
+            Self::ReactCompilerRefs(rule) => rule.to_configuration(),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.to_configuration(),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.to_configuration(),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.to_configuration(),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.to_configuration(),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.to_configuration(),
+            Self::ReactCompilerPurity(rule) => rule.to_configuration(),
+            Self::ReactCompilerSetStateInRender(rule) => rule.to_configuration(),
+            Self::ReactCompilerInvariant(rule) => rule.to_configuration(),
+            Self::ReactCompilerTodoRule(rule) => rule.to_configuration(),
+            Self::ReactCompilerSyntax(rule) => rule.to_configuration(),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.to_configuration(),
+            Self::ReactCompilerCompilerConfig(rule) => rule.to_configuration(),
+            Self::ReactCompilerGating(rule) => rule.to_configuration(),
+            Self::ReactCompilerRuleSuppression(rule) => rule.to_configuration(),
+            Self::ReactCompilerFbt(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
@@ -12528,6 +13018,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.run(node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
             Self::ReactCompilerReactCompilerRule(rule) => rule.run(node, ctx),
+            Self::ReactCompilerHooks(rule) => rule.run(node, ctx),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.run(node, ctx),
+            Self::ReactCompilerStaticComponents(rule) => rule.run(node, ctx),
+            Self::ReactCompilerUseMemo(rule) => rule.run(node, ctx),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.run(node, ctx),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.run(node, ctx),
+            Self::ReactCompilerMemoDependencies(rule) => rule.run(node, ctx),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.run(node, ctx),
+            Self::ReactCompilerImmutability(rule) => rule.run(node, ctx),
+            Self::ReactCompilerGlobals(rule) => rule.run(node, ctx),
+            Self::ReactCompilerRefs(rule) => rule.run(node, ctx),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.run(node, ctx),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run(node, ctx),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.run(node, ctx),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.run(node, ctx),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.run(node, ctx),
+            Self::ReactCompilerPurity(rule) => rule.run(node, ctx),
+            Self::ReactCompilerSetStateInRender(rule) => rule.run(node, ctx),
+            Self::ReactCompilerInvariant(rule) => rule.run(node, ctx),
+            Self::ReactCompilerTodoRule(rule) => rule.run(node, ctx),
+            Self::ReactCompilerSyntax(rule) => rule.run(node, ctx),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.run(node, ctx),
+            Self::ReactCompilerCompilerConfig(rule) => rule.run(node, ctx),
+            Self::ReactCompilerGating(rule) => rule.run(node, ctx),
+            Self::ReactCompilerRuleSuppression(rule) => rule.run(node, ctx),
+            Self::ReactCompilerFbt(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
@@ -13231,6 +13747,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.run_once(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
             Self::ReactCompilerReactCompilerRule(rule) => rule.run_once(ctx),
+            Self::ReactCompilerHooks(rule) => rule.run_once(ctx),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.run_once(ctx),
+            Self::ReactCompilerStaticComponents(rule) => rule.run_once(ctx),
+            Self::ReactCompilerUseMemo(rule) => rule.run_once(ctx),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.run_once(ctx),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.run_once(ctx),
+            Self::ReactCompilerMemoDependencies(rule) => rule.run_once(ctx),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.run_once(ctx),
+            Self::ReactCompilerImmutability(rule) => rule.run_once(ctx),
+            Self::ReactCompilerGlobals(rule) => rule.run_once(ctx),
+            Self::ReactCompilerRefs(rule) => rule.run_once(ctx),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.run_once(ctx),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run_once(ctx),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.run_once(ctx),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.run_once(ctx),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.run_once(ctx),
+            Self::ReactCompilerPurity(rule) => rule.run_once(ctx),
+            Self::ReactCompilerSetStateInRender(rule) => rule.run_once(ctx),
+            Self::ReactCompilerInvariant(rule) => rule.run_once(ctx),
+            Self::ReactCompilerTodoRule(rule) => rule.run_once(ctx),
+            Self::ReactCompilerSyntax(rule) => rule.run_once(ctx),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.run_once(ctx),
+            Self::ReactCompilerCompilerConfig(rule) => rule.run_once(ctx),
+            Self::ReactCompilerGating(rule) => rule.run_once(ctx),
+            Self::ReactCompilerRuleSuppression(rule) => rule.run_once(ctx),
+            Self::ReactCompilerFbt(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
@@ -14006,6 +14548,40 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCompilerReactCompilerRule(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerStaticComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerPreserveManualMemoization(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::ReactCompilerMemoDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerImmutability(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::ReactCompilerSetStateInEffect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::ReactCompilerErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerPurity(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerSetStateInRender(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerInvariant(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerTodoRule(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerCompilerConfig(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerGating(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerRuleSuppression(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCompilerFbt(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14737,6 +15313,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
             Self::ReactCompilerReactCompilerRule(rule) => rule.should_run(ctx),
+            Self::ReactCompilerHooks(rule) => rule.should_run(ctx),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.should_run(ctx),
+            Self::ReactCompilerStaticComponents(rule) => rule.should_run(ctx),
+            Self::ReactCompilerUseMemo(rule) => rule.should_run(ctx),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.should_run(ctx),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.should_run(ctx),
+            Self::ReactCompilerMemoDependencies(rule) => rule.should_run(ctx),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.should_run(ctx),
+            Self::ReactCompilerImmutability(rule) => rule.should_run(ctx),
+            Self::ReactCompilerGlobals(rule) => rule.should_run(ctx),
+            Self::ReactCompilerRefs(rule) => rule.should_run(ctx),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.should_run(ctx),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.should_run(ctx),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.should_run(ctx),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.should_run(ctx),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.should_run(ctx),
+            Self::ReactCompilerPurity(rule) => rule.should_run(ctx),
+            Self::ReactCompilerSetStateInRender(rule) => rule.should_run(ctx),
+            Self::ReactCompilerInvariant(rule) => rule.should_run(ctx),
+            Self::ReactCompilerTodoRule(rule) => rule.should_run(ctx),
+            Self::ReactCompilerSyntax(rule) => rule.should_run(ctx),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.should_run(ctx),
+            Self::ReactCompilerCompilerConfig(rule) => rule.should_run(ctx),
+            Self::ReactCompilerGating(rule) => rule.should_run(ctx),
+            Self::ReactCompilerRuleSuppression(rule) => rule.should_run(ctx),
+            Self::ReactCompilerFbt(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
@@ -15610,6 +16212,54 @@ impl RuleEnum {
             Self::ReactCompilerReactCompilerRule(_) => {
                 ReactCompilerReactCompilerRule::IS_TSGOLINT_RULE
             }
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::IS_TSGOLINT_RULE,
+            Self::ReactCompilerCapitalizedCalls(_) => {
+                ReactCompilerCapitalizedCalls::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerStaticComponents(_) => {
+                ReactCompilerStaticComponents::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::IS_TSGOLINT_RULE,
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::IS_TSGOLINT_RULE,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerMemoDependencies(_) => {
+                ReactCompilerMemoDependencies::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerIncompatibleLibrary(_) => {
+                ReactCompilerIncompatibleLibrary::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::IS_TSGOLINT_RULE,
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::IS_TSGOLINT_RULE,
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::IS_TSGOLINT_RULE,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerSetStateInEffect(_) => {
+                ReactCompilerSetStateInEffect::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::IS_TSGOLINT_RULE,
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::IS_TSGOLINT_RULE,
+            Self::ReactCompilerSetStateInRender(_) => {
+                ReactCompilerSetStateInRender::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::IS_TSGOLINT_RULE,
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::IS_TSGOLINT_RULE,
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::IS_TSGOLINT_RULE,
+            Self::ReactCompilerUnsupportedSyntax(_) => {
+                ReactCompilerUnsupportedSyntax::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::IS_TSGOLINT_RULE,
+            Self::ReactCompilerGating(_) => ReactCompilerGating::IS_TSGOLINT_RULE,
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::IS_TSGOLINT_RULE,
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -16548,6 +17198,42 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
             Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::HAS_CONFIG,
+            Self::ReactCompilerHooks(_) => ReactCompilerHooks::HAS_CONFIG,
+            Self::ReactCompilerCapitalizedCalls(_) => ReactCompilerCapitalizedCalls::HAS_CONFIG,
+            Self::ReactCompilerStaticComponents(_) => ReactCompilerStaticComponents::HAS_CONFIG,
+            Self::ReactCompilerUseMemo(_) => ReactCompilerUseMemo::HAS_CONFIG,
+            Self::ReactCompilerVoidUseMemo(_) => ReactCompilerVoidUseMemo::HAS_CONFIG,
+            Self::ReactCompilerPreserveManualMemoization(_) => {
+                ReactCompilerPreserveManualMemoization::HAS_CONFIG
+            }
+            Self::ReactCompilerMemoDependencies(_) => ReactCompilerMemoDependencies::HAS_CONFIG,
+            Self::ReactCompilerIncompatibleLibrary(_) => {
+                ReactCompilerIncompatibleLibrary::HAS_CONFIG
+            }
+            Self::ReactCompilerImmutability(_) => ReactCompilerImmutability::HAS_CONFIG,
+            Self::ReactCompilerGlobals(_) => ReactCompilerGlobals::HAS_CONFIG,
+            Self::ReactCompilerRefs(_) => ReactCompilerRefs::HAS_CONFIG,
+            Self::ReactCompilerMemoizedEffectDependencies(_) => {
+                ReactCompilerMemoizedEffectDependencies::HAS_CONFIG
+            }
+            Self::ReactCompilerExhaustiveEffectDependencies(_) => {
+                ReactCompilerExhaustiveEffectDependencies::HAS_CONFIG
+            }
+            Self::ReactCompilerSetStateInEffect(_) => ReactCompilerSetStateInEffect::HAS_CONFIG,
+            Self::ReactCompilerNoDerivingStateInEffects(_) => {
+                ReactCompilerNoDerivingStateInEffects::HAS_CONFIG
+            }
+            Self::ReactCompilerErrorBoundaries(_) => ReactCompilerErrorBoundaries::HAS_CONFIG,
+            Self::ReactCompilerPurity(_) => ReactCompilerPurity::HAS_CONFIG,
+            Self::ReactCompilerSetStateInRender(_) => ReactCompilerSetStateInRender::HAS_CONFIG,
+            Self::ReactCompilerInvariant(_) => ReactCompilerInvariant::HAS_CONFIG,
+            Self::ReactCompilerTodoRule(_) => ReactCompilerTodoRule::HAS_CONFIG,
+            Self::ReactCompilerSyntax(_) => ReactCompilerSyntax::HAS_CONFIG,
+            Self::ReactCompilerUnsupportedSyntax(_) => ReactCompilerUnsupportedSyntax::HAS_CONFIG,
+            Self::ReactCompilerCompilerConfig(_) => ReactCompilerCompilerConfig::HAS_CONFIG,
+            Self::ReactCompilerGating(_) => ReactCompilerGating::HAS_CONFIG,
+            Self::ReactCompilerRuleSuppression(_) => ReactCompilerRuleSuppression::HAS_CONFIG,
+            Self::ReactCompilerFbt(_) => ReactCompilerFbt::HAS_CONFIG,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
@@ -17311,6 +17997,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
             Self::ReactCompilerReactCompilerRule(rule) => rule.types_info(),
+            Self::ReactCompilerHooks(rule) => rule.types_info(),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.types_info(),
+            Self::ReactCompilerStaticComponents(rule) => rule.types_info(),
+            Self::ReactCompilerUseMemo(rule) => rule.types_info(),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.types_info(),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.types_info(),
+            Self::ReactCompilerMemoDependencies(rule) => rule.types_info(),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.types_info(),
+            Self::ReactCompilerImmutability(rule) => rule.types_info(),
+            Self::ReactCompilerGlobals(rule) => rule.types_info(),
+            Self::ReactCompilerRefs(rule) => rule.types_info(),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.types_info(),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.types_info(),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.types_info(),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.types_info(),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.types_info(),
+            Self::ReactCompilerPurity(rule) => rule.types_info(),
+            Self::ReactCompilerSetStateInRender(rule) => rule.types_info(),
+            Self::ReactCompilerInvariant(rule) => rule.types_info(),
+            Self::ReactCompilerTodoRule(rule) => rule.types_info(),
+            Self::ReactCompilerSyntax(rule) => rule.types_info(),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.types_info(),
+            Self::ReactCompilerCompilerConfig(rule) => rule.types_info(),
+            Self::ReactCompilerGating(rule) => rule.types_info(),
+            Self::ReactCompilerRuleSuppression(rule) => rule.types_info(),
+            Self::ReactCompilerFbt(rule) => rule.types_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
@@ -18014,6 +18726,32 @@ impl RuleEnum {
             Self::ReactStylePropObject(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
             Self::ReactCompilerReactCompilerRule(rule) => rule.run_info(),
+            Self::ReactCompilerHooks(rule) => rule.run_info(),
+            Self::ReactCompilerCapitalizedCalls(rule) => rule.run_info(),
+            Self::ReactCompilerStaticComponents(rule) => rule.run_info(),
+            Self::ReactCompilerUseMemo(rule) => rule.run_info(),
+            Self::ReactCompilerVoidUseMemo(rule) => rule.run_info(),
+            Self::ReactCompilerPreserveManualMemoization(rule) => rule.run_info(),
+            Self::ReactCompilerMemoDependencies(rule) => rule.run_info(),
+            Self::ReactCompilerIncompatibleLibrary(rule) => rule.run_info(),
+            Self::ReactCompilerImmutability(rule) => rule.run_info(),
+            Self::ReactCompilerGlobals(rule) => rule.run_info(),
+            Self::ReactCompilerRefs(rule) => rule.run_info(),
+            Self::ReactCompilerMemoizedEffectDependencies(rule) => rule.run_info(),
+            Self::ReactCompilerExhaustiveEffectDependencies(rule) => rule.run_info(),
+            Self::ReactCompilerSetStateInEffect(rule) => rule.run_info(),
+            Self::ReactCompilerNoDerivingStateInEffects(rule) => rule.run_info(),
+            Self::ReactCompilerErrorBoundaries(rule) => rule.run_info(),
+            Self::ReactCompilerPurity(rule) => rule.run_info(),
+            Self::ReactCompilerSetStateInRender(rule) => rule.run_info(),
+            Self::ReactCompilerInvariant(rule) => rule.run_info(),
+            Self::ReactCompilerTodoRule(rule) => rule.run_info(),
+            Self::ReactCompilerSyntax(rule) => rule.run_info(),
+            Self::ReactCompilerUnsupportedSyntax(rule) => rule.run_info(),
+            Self::ReactCompilerCompilerConfig(rule) => rule.run_info(),
+            Self::ReactCompilerGating(rule) => rule.run_info(),
+            Self::ReactCompilerRuleSuppression(rule) => rule.run_info(),
+            Self::ReactCompilerFbt(rule) => rule.run_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
@@ -18807,6 +19545,40 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
         RuleEnum::ReactCompilerReactCompilerRule(ReactCompilerReactCompilerRule::default()),
+        RuleEnum::ReactCompilerHooks(ReactCompilerHooks::default()),
+        RuleEnum::ReactCompilerCapitalizedCalls(ReactCompilerCapitalizedCalls::default()),
+        RuleEnum::ReactCompilerStaticComponents(ReactCompilerStaticComponents::default()),
+        RuleEnum::ReactCompilerUseMemo(ReactCompilerUseMemo::default()),
+        RuleEnum::ReactCompilerVoidUseMemo(ReactCompilerVoidUseMemo::default()),
+        RuleEnum::ReactCompilerPreserveManualMemoization(
+            ReactCompilerPreserveManualMemoization::default(),
+        ),
+        RuleEnum::ReactCompilerMemoDependencies(ReactCompilerMemoDependencies::default()),
+        RuleEnum::ReactCompilerIncompatibleLibrary(ReactCompilerIncompatibleLibrary::default()),
+        RuleEnum::ReactCompilerImmutability(ReactCompilerImmutability::default()),
+        RuleEnum::ReactCompilerGlobals(ReactCompilerGlobals::default()),
+        RuleEnum::ReactCompilerRefs(ReactCompilerRefs::default()),
+        RuleEnum::ReactCompilerMemoizedEffectDependencies(
+            ReactCompilerMemoizedEffectDependencies::default(),
+        ),
+        RuleEnum::ReactCompilerExhaustiveEffectDependencies(
+            ReactCompilerExhaustiveEffectDependencies::default(),
+        ),
+        RuleEnum::ReactCompilerSetStateInEffect(ReactCompilerSetStateInEffect::default()),
+        RuleEnum::ReactCompilerNoDerivingStateInEffects(
+            ReactCompilerNoDerivingStateInEffects::default(),
+        ),
+        RuleEnum::ReactCompilerErrorBoundaries(ReactCompilerErrorBoundaries::default()),
+        RuleEnum::ReactCompilerPurity(ReactCompilerPurity::default()),
+        RuleEnum::ReactCompilerSetStateInRender(ReactCompilerSetStateInRender::default()),
+        RuleEnum::ReactCompilerInvariant(ReactCompilerInvariant::default()),
+        RuleEnum::ReactCompilerTodoRule(ReactCompilerTodoRule::default()),
+        RuleEnum::ReactCompilerSyntax(ReactCompilerSyntax::default()),
+        RuleEnum::ReactCompilerUnsupportedSyntax(ReactCompilerUnsupportedSyntax::default()),
+        RuleEnum::ReactCompilerCompilerConfig(ReactCompilerCompilerConfig::default()),
+        RuleEnum::ReactCompilerGating(ReactCompilerGating::default()),
+        RuleEnum::ReactCompilerRuleSuppression(ReactCompilerRuleSuppression::default()),
+        RuleEnum::ReactCompilerFbt(ReactCompilerFbt::default()),
         RuleEnum::ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
