@@ -11020,5 +11020,80 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
 }
 
 // ===========================================================================
+// Targeted regression tests for validate_no_capitalized_calls
+// ===========================================================================
+
+/// Regression test: built-in globals like String, Number, Boolean, Array, etc.
+/// must NOT be flagged by validateNoCapitalizedCalls.
+/// See: https://github.com/oxc-project/oxc/issues/XXXX
+#[test]
+fn test_capitalized_calls_allows_builtin_globals() {
+    let source = "// @validateNoCapitalizedCalls
+function Component({value}) {
+  const s = String(value);
+  const n = Number(value);
+  const b = Boolean(value);
+  const a = Array(3);
+  const o = Object(value);
+  return [s, n, b, a, o];
+}
+";
+    let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
+    if let Err(e) = &result {
+        panic!(
+            "Built-in globals (String, Number, Boolean, Array, Object) should not be flagged \
+             by validateNoCapitalizedCalls, but got error: {e}"
+        );
+    }
+}
+
+/// Regression test: user-defined capitalized functions SHOULD still be flagged.
+#[test]
+fn test_capitalized_calls_rejects_user_defined() {
+    let source = "// @validateNoCapitalizedCalls
+function Component() {
+  const x = SomeFunc();
+  return x;
+}
+";
+    let result = run_pipeline_for_codegen_error_mode(source, oxc_span::SourceType::jsx());
+    assert!(
+        result.is_err(),
+        "User-defined capitalized function SomeFunc() should be flagged by validateNoCapitalizedCalls"
+    );
+}
+
+/// Regression test: user-configured allowlist should suppress errors for listed names.
+#[test]
+fn test_capitalized_calls_custom_allowlist() {
+    let source = "// @validateNoCapitalizedCalls:[\"MyHelper\"]
+function Component({value}) {
+  const x = MyHelper(value);
+  return x;
+}
+";
+    let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
+    if let Err(e) = &result {
+        panic!("MyHelper should be allowed via custom allowlist, but got error: {e}");
+    }
+}
+
+/// Regression test: custom allowlist should not suppress names NOT in the list.
+#[test]
+fn test_capitalized_calls_custom_allowlist_does_not_suppress_others() {
+    let source = "// @validateNoCapitalizedCalls:[\"MyHelper\"]
+function Component() {
+  const x = OtherFunc();
+  return x;
+}
+";
+    let result = run_pipeline_for_codegen_error_mode(source, oxc_span::SourceType::jsx());
+    assert!(
+        result.is_err(),
+        "OtherFunc should still be flagged even when MyHelper is allowlisted"
+    );
+}
+
+// ===========================================================================
 // End of fixtures tests
 // ===========================================================================

@@ -208,10 +208,15 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 });
             }
             "validateNoCapitalizedCalls" => {
-                // When the pragma is present (with or without value), enable the
-                // validation with an empty allow list. The TS config uses an array
-                // of allowed function names; here we just use an empty vec.
-                env_config.validate_no_capitalized_calls = Some(Vec::new());
+                // When the pragma is present, enable the validation.
+                // The value is an optional JSON array of allowed function names,
+                // e.g. @validateNoCapitalizedCalls:["MyHelper","OtherFunc"]
+                let allowlist = entry
+                    .value
+                    .as_ref()
+                    .map(|v| parse_string_array(v))
+                    .unwrap_or_default();
+                env_config.validate_no_capitalized_calls = Some(allowlist);
             }
             "validateExhaustiveMemoizationDependencies" => {
                 env_config.validate_exhaustive_memoization_dependencies =
@@ -398,6 +403,25 @@ fn parse_bool_value(value: Option<&String>, default: bool) -> bool {
             _ => default,
         },
     }
+}
+
+/// Parse a simple JSON string array like `["Foo","Bar"]` into a `Vec<String>`.
+fn parse_string_array(value: &str) -> Vec<String> {
+    let trimmed = value.trim();
+    if !trimmed.starts_with('[') || !trimmed.ends_with(']') {
+        return Vec::new();
+    }
+    let inner = &trimmed[1..trimmed.len() - 1];
+    if inner.trim().is_empty() {
+        return Vec::new();
+    }
+    inner
+        .split(',')
+        .filter_map(|s| {
+            let s = s.trim().trim_matches('"');
+            if s.is_empty() { None } else { Some(s.to_string()) }
+        })
+        .collect()
 }
 
 #[cfg(test)]
