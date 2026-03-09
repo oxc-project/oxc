@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1348/1348 passed (100.0%)
+Codegen conformance: 1350/1350 passed (100.0%)
 Flow files skipped: 39
 FBT lowering skipped: 33
 

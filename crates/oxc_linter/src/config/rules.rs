@@ -346,6 +346,7 @@ pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String
         "import-x" => ("import", rule_name),
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
+        "react-compiler" => ("react_compiler", rule_name),
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
         "@next" | "@next/next" => ("nextjs", rule_name),
         // For backwards compatibility, react hook rules reside in the react plugin.

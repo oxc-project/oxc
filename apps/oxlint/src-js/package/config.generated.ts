@@ -53,6 +53,7 @@ export type LintPluginOptionsSchema =
   | "jsx-a11y"
   | "nextjs"
   | "react-perf"
+  | "react-compiler"
   | "promise"
   | "node"
   | "vue";
@@ -140,42 +141,6 @@ export type CustomComponent =
  *     }
  *   ]
  * }
- * ```
- *
- * `oxlint.config.ts`
- *
- * ```ts
- * import { defineConfig } from "oxlint";
- *
- * export default defineConfig({
- * plugins: ["import", "typescript", "unicorn"],
- * env: {
- * "browser": true
- * },
- * globals: {
- * "foo": "readonly"
- * },
- * settings: {
- * react: {
- * version: "18.2.0"
- * },
- * custom: { option: true }
- * },
- * rules: {
- * "eqeqeq": "warn",
- * "import/no-cycle": "error",
- * "react/self-closing-comp": ["error", { "html": false }]
- * },
- * overrides: [
- * {
- * files: ["*.test.ts", "*.spec.ts"],
- * rules: {
- * "@typescript-eslint/no-explicit-any": "off"
- * }
- * }
- * ]
- * }
- * });
  * ```
  *
  * `oxlint.config.ts`
@@ -403,14 +368,6 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
-   * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
-   *
-   * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
-   * CLI flags take precedence over this value when both are set.
-   * Only supported in the root configuration file.
-   */
-  reportUnusedDisableDirectives?: AllowWarnDeny | null;
-  /**
    * Ensure warnings produce a non-zero exit code.
    *
    * Equivalent to passing `--deny-warnings` on the CLI.
@@ -422,6 +379,14 @@ export interface OxlintOptions {
    * Equivalent to passing `--max-warnings` on the CLI.
    */
   maxWarnings?: number | null;
+  /**
+   * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+   *
+   * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+   * CLI flags take precedence over this value when both are set.
+   * Only supported in the root configuration file.
+   */
+  reportUnusedDisableDirectives?: AllowWarnDeny | null;
   /**
    * Enable rules that require type information.
    *
