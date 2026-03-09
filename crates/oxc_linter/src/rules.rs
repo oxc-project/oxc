@@ -408,6 +408,7 @@ pub(crate) mod react {
     pub mod jsx_props_no_spreading;
     pub mod no_array_index_key;
     pub mod no_children_prop;
+    pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
     pub mod no_did_mount_set_state;

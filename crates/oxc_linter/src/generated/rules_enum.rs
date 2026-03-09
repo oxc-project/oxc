@@ -408,6 +408,7 @@ pub use crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti as
 pub use crate::rules::react::jsx_props_no_spreading::JsxPropsNoSpreading as ReactJsxPropsNoSpreading;
 pub use crate::rules::react::no_array_index_key::NoArrayIndexKey as ReactNoArrayIndexKey;
 pub use crate::rules::react::no_children_prop::NoChildrenProp as ReactNoChildrenProp;
+pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneElement;
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
@@ -1107,6 +1108,7 @@ pub enum RuleEnum {
     ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading),
     ReactNoArrayIndexKey(ReactNoArrayIndexKey),
     ReactNoChildrenProp(ReactNoChildrenProp),
+    ReactNoCloneElement(ReactNoCloneElement),
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
@@ -1853,7 +1855,8 @@ const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = REACT_JSX_PASCAL_CASE_ID + 1us
 const REACT_JSX_PROPS_NO_SPREADING_ID: usize = REACT_JSX_PROPS_NO_SPREAD_MULTI_ID + 1usize;
 const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
 const REACT_NO_CHILDREN_PROP_ID: usize = REACT_NO_ARRAY_INDEX_KEY_ID + 1usize;
-const REACT_NO_DANGER_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
+const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
+const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
 const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
 const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
 const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
@@ -2662,6 +2665,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => REACT_JSX_PROPS_NO_SPREADING_ID,
             Self::ReactNoArrayIndexKey(_) => REACT_NO_ARRAY_INDEX_KEY_ID,
             Self::ReactNoChildrenProp(_) => REACT_NO_CHILDREN_PROP_ID,
+            Self::ReactNoCloneElement(_) => REACT_NO_CLONE_ELEMENT_ID,
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
@@ -3465,6 +3469,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::NAME,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::NAME,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::NAME,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::NAME,
             Self::ReactNoDanger(_) => ReactNoDanger::NAME,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::NAME,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::NAME,
@@ -4288,6 +4293,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::CATEGORY,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::CATEGORY,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::CATEGORY,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::CATEGORY,
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
@@ -5106,6 +5112,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::FIX,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::FIX,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::FIX,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::FIX,
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
@@ -6002,6 +6009,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::documentation(),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::documentation(),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::documentation(),
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::documentation(),
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
@@ -7545,6 +7553,8 @@ impl RuleEnum {
                 .or_else(|| ReactNoArrayIndexKey::schema(generator)),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::config_schema(generator)
                 .or_else(|| ReactNoChildrenProp::schema(generator)),
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::config_schema(generator)
+                .or_else(|| ReactNoCloneElement::schema(generator)),
             Self::ReactNoDanger(_) => {
                 ReactNoDanger::config_schema(generator).or_else(|| ReactNoDanger::schema(generator))
             }
@@ -8816,6 +8826,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => "react",
             Self::ReactNoArrayIndexKey(_) => "react",
             Self::ReactNoChildrenProp(_) => "react",
+            Self::ReactNoCloneElement(_) => "react",
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
@@ -10388,6 +10399,9 @@ impl RuleEnum {
             Self::ReactNoChildrenProp(_) => {
                 Ok(Self::ReactNoChildrenProp(ReactNoChildrenProp::from_configuration(value)?))
             }
+            Self::ReactNoCloneElement(_) => {
+                Ok(Self::ReactNoCloneElement(ReactNoCloneElement::from_configuration(value)?))
+            }
             Self::ReactNoDanger(_) => {
                 Ok(Self::ReactNoDanger(ReactNoDanger::from_configuration(value)?))
             }
@@ -11761,6 +11775,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.to_configuration(),
             Self::ReactNoArrayIndexKey(rule) => rule.to_configuration(),
             Self::ReactNoChildrenProp(rule) => rule.to_configuration(),
+            Self::ReactNoCloneElement(rule) => rule.to_configuration(),
             Self::ReactNoDanger(rule) => rule.to_configuration(),
             Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
@@ -12464,6 +12479,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.run(node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run(node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run(node, ctx),
+            Self::ReactNoCloneElement(rule) => rule.run(node, ctx),
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
@@ -13165,6 +13181,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_once(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_once(ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_once(ctx),
+            Self::ReactNoCloneElement(rule) => rule.run_once(ctx),
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
@@ -13936,6 +13953,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14667,6 +14685,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.should_run(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.should_run(ctx),
             Self::ReactNoChildrenProp(rule) => rule.should_run(ctx),
+            Self::ReactNoCloneElement(rule) => rule.should_run(ctx),
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
@@ -15532,6 +15551,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::IS_TSGOLINT_RULE,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::IS_TSGOLINT_RULE,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::IS_TSGOLINT_RULE,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
@@ -16470,6 +16490,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::HAS_CONFIG,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::HAS_CONFIG,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::HAS_CONFIG,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
@@ -17233,6 +17254,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.types_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.types_info(),
             Self::ReactNoChildrenProp(rule) => rule.types_info(),
+            Self::ReactNoCloneElement(rule) => rule.types_info(),
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
@@ -17934,6 +17956,7 @@ impl RuleEnum {
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.run_info(),
             Self::ReactNoChildrenProp(rule) => rule.run_info(),
+            Self::ReactNoCloneElement(rule) => rule.run_info(),
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
@@ -18723,6 +18746,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading::default()),
         RuleEnum::ReactNoArrayIndexKey(ReactNoArrayIndexKey::default()),
         RuleEnum::ReactNoChildrenProp(ReactNoChildrenProp::default()),
+        RuleEnum::ReactNoCloneElement(ReactNoCloneElement::default()),
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
