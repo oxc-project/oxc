@@ -3935,6 +3935,9 @@ impl Gen for TSConstructorType<'_> {
 impl Gen for TSImportEqualsDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import ");
+        if self.import_kind.is_type() {
+            p.print_str("type ");
+        }
         self.id.print(p, ctx);
         p.print_soft_space();
         p.print_ascii_byte(b'=');
