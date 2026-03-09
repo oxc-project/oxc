@@ -81,8 +81,12 @@ pub(super) fn format_embedded_js(
 
     // Copy only scalar fields, setting Vec-containing options to None
     // (sort_imports, sort_tailwindcss, jsdoc are irrelevant for embedded code).
-    let mut base_options =
-        FormatOptions { sort_imports: None, sort_tailwindcss: None, jsdoc: None, ..*format_options };
+    let mut base_options = FormatOptions {
+        sort_imports: None,
+        sort_tailwindcss: None,
+        jsdoc: None,
+        ..*format_options
+    };
     base_options.line_width = line_width;
 
     // Try to parse and format with the given source type
