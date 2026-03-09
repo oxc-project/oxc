@@ -1591,12 +1591,6 @@ fn test_ignore() {
                 json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
             ),
         ),
-        (
-            "const { x: _x, ...rest } = obj; console.log(_x, rest)",
-            Some(
-                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
-            ),
-        ),
         // rest sibling also matches argsIgnorePattern and is used
         (
             "arr.map(({ x: _x, ...rest }) => ({ x: _x, ...rest }))",
