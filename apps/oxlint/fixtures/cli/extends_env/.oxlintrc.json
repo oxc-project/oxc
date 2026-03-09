@@ -1,0 +1,9 @@
+{
+  "categories": { "correctness": "off"},
+  "env": {
+    "node": true
+  },
+  "rules": {
+    "no-undef": "error"
+  }
+}
