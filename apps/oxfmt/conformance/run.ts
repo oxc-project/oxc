@@ -32,6 +32,7 @@ const categories: Category[] = [
     name: "js-in-vue",
     sources: [
       { dir: PRETTIER_FIXTURES_DIR, ext: ".vue" },
+      { dir: join(FIXTURES_DIR, "vue-vben-admin"), ext: ".vue" },
       { dir: join(EDGE_CASES_DIR, "js-in-vue") },
     ],
     optionSets: [
@@ -40,6 +41,8 @@ const categories: Category[] = [
     ],
     notes: {
       "vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
+      "effects/common-ui/src/components/api-component/api-component.vue":
+        "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
     },
   },
   {

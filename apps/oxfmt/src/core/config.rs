@@ -151,16 +151,6 @@ impl ResolvedOptions {
             }
         }
     }
-
-    /// Set the filepath override for js-in-xxx flows.
-    /// See [`ResolvedOptions::OxcFormatter::filepath_override`] for details.
-    #[cfg(feature = "napi")]
-    pub fn set_filepath_override(&mut self, filepath: PathBuf) {
-        let ResolvedOptions::OxcFormatter { filepath_override, .. } = self else {
-            unreachable!("`filepath_override` is only applicable for `OxcFormatter` options");
-        };
-        *filepath_override = Some(filepath);
-    }
 }
 
 // ---
