@@ -1811,6 +1811,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "syn",
 ]
 
 [[package]]

@@ -6,6 +6,8 @@ pub mod js;
 pub mod sourcemap;
 pub mod ts;
 
+mod gen_field_coverage;
+
 mod tester;
 
 pub use tester::*;

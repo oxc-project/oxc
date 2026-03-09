@@ -39,6 +39,7 @@ rustc-hash = { workspace = true }
 insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
+syn = { workspace = true, features = ["full", "parsing", "visit"] }
 
 [features]
 default = ["sourcemap"]
