@@ -55,6 +55,7 @@ fn decorators() {
 fn tsx() {
     test_tsx("<T,>() => {}", "<T,>() => {};\n");
     test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+    test_tsx("<Foo<T> />", "<Foo<T> />;\n");
 }
 
 #[test]

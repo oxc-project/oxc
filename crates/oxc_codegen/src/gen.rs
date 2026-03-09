@@ -2563,6 +2563,9 @@ impl Gen for JSXElement<'_> {
         p.add_source_mapping(self.opening_element.span);
         p.print_ascii_byte(b'<');
         self.opening_element.name.print(p, ctx);
+        if let Some(type_arguments) = &self.opening_element.type_arguments {
+            type_arguments.print(p, ctx);
+        }
         for attr in &self.opening_element.attributes {
             match attr {
                 JSXAttributeItem::Attribute(_) => {
