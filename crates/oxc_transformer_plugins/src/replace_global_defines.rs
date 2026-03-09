@@ -1,8 +1,8 @@
-use std::{cmp::Ordering, mem, sync::Arc};
+use std::{cmp::Ordering, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Address, Allocator, Dummy, GetAddress, UnstableAddress};
+use oxc_allocator::{Address, Allocator, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::OxcDiagnostic;
@@ -259,16 +259,13 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         if self.ast_node_lock == Some(expr.address()) {
             self.ast_node_lock = None;
         }
-        // After walking children, a `ChainExpression` may have lost all `optional`
-        // markers due to define replacements. For example, `process?.env[0]` with
-        // define `process.env -> {}`: the inner `StaticMemberExpression` that carried
-        // `optional: true` gets replaced by `{}`, leaving a `ChainExpression` with no
-        // optional elements. If the optional chaining transformer later tries to lower
-        // this, it panics at `transform_chain_expression_impl` in
-        // `crates/oxc_transformer/src/es2020/optional_chaining.rs` because it expects
-        // at least one optional element in the chain.
-        // Unwrap the `ChainExpression` in this case to produce a valid AST.
-        Self::unwrap_chain_expression_if_no_optional(self.allocator, expr);
+        // A define replacement inside a `ChainExpression` may remove the node that
+        // carried `optional: true` (e.g. `process?.env[0]` with define `process.env -> {}`),
+        // leaving an invalid `ChainExpression` with no optional elements.
+        // Unwrap it to a plain expression to produce a valid AST.
+        if matches!(expr, Expression::ChainExpression(_)) {
+            Self::unwrap_chain_expression_if_no_optional(self.allocator, expr);
+        }
     }
 
     fn visit_assignment_expression(&mut self, node: &mut AssignmentExpression<'a>) {
@@ -697,56 +694,60 @@ impl<'a> ReplaceGlobalDefines<'a> {
         if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
     }
 
-    /// If `expr` is a `ChainExpression` with no remaining `optional` markers,
-    /// unwrap it to a plain expression. This can happen when a define replacement
-    /// removes the member expression that carried `optional: true`.
+    /// If `expr` is a `ChainExpression` whose chain no longer contains any
+    /// `optional: true` markers (because a define replacement removed them),
+    /// unwrap it to a plain expression.
     fn unwrap_chain_expression_if_no_optional(allocator: &'a Allocator, expr: &mut Expression<'a>) {
         let Expression::ChainExpression(chain) = &*expr else { return };
-        if Self::chain_element_has_optional(&chain.expression) {
+
+        // Check the chain element's optional flag and get the first object/callee to walk.
+        let (optional, mut current) = match &chain.expression {
+            ChainElement::CallExpression(c) => (c.optional, Some(&c.callee)),
+            ChainElement::TSNonNullExpression(ts) => (false, Some(&ts.expression)),
+            _ => match chain.expression.as_member_expression() {
+                Some(m) => (m.optional(), Some(m.object())),
+                None => return,
+            },
+        };
+        if optional {
             return;
         }
-        let chain_expr = mem::replace(expr, Dummy::dummy(allocator));
+
+        // Walk down the object/callee chain. If any node has `optional: true`, keep the chain.
+        while let Some(e) = current {
+            match e {
+                Expression::StaticMemberExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::ComputedMemberExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::PrivateFieldExpression(m) => {
+                    if m.optional {
+                        return;
+                    }
+                    current = Some(&m.object);
+                }
+                Expression::CallExpression(c) => {
+                    if c.optional {
+                        return;
+                    }
+                    current = Some(&c.callee);
+                }
+                _ => break,
+            }
+        }
+
+        // No optional markers remain — unwrap the chain to a plain expression.
+        let chain_expr = expr.take_in(allocator);
         let Expression::ChainExpression(chain) = chain_expr else { unreachable!() };
         *expr = Expression::from(chain.unbox().expression);
-    }
-
-    /// Check whether a `ChainElement` or any of its nested objects/callees has `optional: true`.
-    fn chain_element_has_optional(element: &ChainElement<'a>) -> bool {
-        match element {
-            ChainElement::CallExpression(call) => {
-                call.optional || Self::expr_has_optional(&call.callee)
-            }
-            ChainElement::TSNonNullExpression(ts) => Self::expr_has_optional(&ts.expression),
-            _ => {
-                if let Some(member) = element.as_member_expression() {
-                    member.optional() || Self::expr_has_optional(member.object())
-                } else {
-                    false
-                }
-            }
-        }
-    }
-
-    /// Check whether an expression (as part of a chain) has any `optional: true` markers.
-    fn expr_has_optional(expr: &Expression<'a>) -> bool {
-        // Unwrap parenthesized expressions and TS type assertions first.
-        let expr = expr.get_inner_expression();
-        match expr {
-            Expression::ChainExpression(chain) => {
-                Self::chain_element_has_optional(&chain.expression)
-            }
-            Expression::ComputedMemberExpression(m) => {
-                m.optional || Self::expr_has_optional(&m.object)
-            }
-            Expression::StaticMemberExpression(m) => {
-                m.optional || Self::expr_has_optional(&m.object)
-            }
-            Expression::PrivateFieldExpression(m) => {
-                m.optional || Self::expr_has_optional(&m.object)
-            }
-            Expression::CallExpression(c) => c.optional || Self::expr_has_optional(&c.callee),
-            _ => false,
-        }
     }
 
     pub fn is_dot_define<'b>(
