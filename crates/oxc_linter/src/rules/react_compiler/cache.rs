@@ -13,14 +13,13 @@ use oxc_react_compiler::{
 };
 use oxc_span::Span;
 
-use crate::context::LintContext;
 use super::react_compiler_rule::ReactCompilerConfig;
 use super::shared;
+use crate::context::LintContext;
 
 /// A single diagnostic produced by the React Compiler pipeline,
 /// stored in the cache for later reporting.
 pub struct CachedDiagnostic {
-    #[allow(dead_code, reason = "will be used by per-category rules")]
     pub category: ErrorCategory,
     pub severity: ErrorSeverity,
     pub message: String,
@@ -48,10 +47,7 @@ pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
 
     let needs_compile = CACHE.with(|cache| {
         let cache = cache.borrow();
-        match cache.as_ref() {
-            Some(c) if c.file_id == file_id => false,
-            _ => true,
-        }
+        !matches!(cache.as_ref(), Some(c) if c.file_id == file_id)
     });
 
     if !needs_compile {
@@ -80,7 +76,6 @@ pub fn report_all(ctx: &LintContext<'_>) {
 }
 
 /// Report cached diagnostics matching a specific `ErrorCategory`.
-#[allow(dead_code, reason = "will be used by per-category rules")]
 pub fn report_for_category(ctx: &LintContext<'_>, category: ErrorCategory) {
     CACHE.with(|cache| {
         let cache = cache.borrow();
