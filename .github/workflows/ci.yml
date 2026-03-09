@@ -273,7 +273,6 @@ jobs:
   test-napi-compiler-windows:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
