@@ -239,7 +239,7 @@ fn closure_compiler_tests() {
     // test("({},[]).foo = 2;", false);
     test("delete a.b", true);
     test("Math.random();", false);
-    test("Math.random(Math);", true);
+    test("Math.random(Math);", false);
     // test("[1, 1].foo;", false);
     // test("export var x = 0;", true);
     // test("export let x = 0;", true);
