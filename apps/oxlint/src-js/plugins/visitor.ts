@@ -247,6 +247,15 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
 
   hasActiveVisitors = true;
 
+  // Populate cache of `VisitProp` objects with enough for all properties of `visitor`.
+  // After warming up over first few files, the cache will be large enough to service all files,
+  // and this loop will be skipped. This avoids the main loop below from having to branch repeatedly
+  // on whether there are enough `VisitProp` objects in cache, and to create one if not.
+  const visitPropsCacheRequiredLen = visitPropsCacheNextIndex + keysLen;
+  while (visitPropsCache.length < visitPropsCacheRequiredLen) {
+    visitPropsCache.push({ fn: null, specificity: 0, selectorStr: null });
+  }
+
   // Populate visitors array from provided object
   for (let i = 0; i < keysLen; i++) {
     let name = keys[i];
@@ -268,19 +277,12 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
       specificity = EXIT_FLAG;
     }
 
-    // Create `VisitProp` object.
-    // Use an existing object from cache if available, otherwise create a new one.
-    let visitProp: VisitProp;
-    if (visitPropsCacheNextIndex < visitPropsCache.length) {
-      visitProp = visitPropsCache[visitPropsCacheNextIndex];
-      visitProp.fn = visitFn;
-      visitProp.specificity = specificity;
-      visitProp.selectorStr = name;
-    } else {
-      visitProp = { fn: visitFn, specificity, selectorStr: name };
-      visitPropsCache.push(visitProp);
-    }
-    visitPropsCacheNextIndex++;
+    // Set up `VisitProp` object.
+    // Reuse `VisitProp` object from cache. Loop above ensures cache is filled with enough objects.
+    const visitProp = visitPropsCache[visitPropsCacheNextIndex++];
+    visitProp.fn = visitFn;
+    visitProp.specificity = specificity;
+    visitProp.selectorStr = name;
 
     // TODO: Combine the two hashmaps `NODE_TYPE_IDS_MAP` and selectors cache into one `Map`
     // to avoid 2 hashmap lookups for selectors?
