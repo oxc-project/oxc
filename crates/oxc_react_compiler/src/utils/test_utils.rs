@@ -211,11 +211,8 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 // When the pragma is present, enable the validation.
                 // The value is an optional JSON array of allowed function names,
                 // e.g. @validateNoCapitalizedCalls:["MyHelper","OtherFunc"]
-                let allowlist = entry
-                    .value
-                    .as_ref()
-                    .map(|v| parse_string_array(v))
-                    .unwrap_or_default();
+                let allowlist =
+                    entry.value.as_ref().map(|v| parse_string_array(v)).unwrap_or_default();
                 env_config.validate_no_capitalized_calls = Some(allowlist);
             }
             "validateExhaustiveMemoizationDependencies" => {

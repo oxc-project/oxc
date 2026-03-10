@@ -163,7 +163,9 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             if kind.is_some() && kind != Some(InstructionKind::Reassign) {
                                 return Err(CompilerError::invariant(
                                     "Expected consistent kind for destructuring",
-                                    Some("other places were not `Reassign` but this operand is reassigned"),
+                                    Some(
+                                        "other places were not `Reassign` but this operand is reassigned",
+                                    ),
                                     GENERATED_SOURCE,
                                 ));
                             }

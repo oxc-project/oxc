@@ -169,17 +169,13 @@ fn match_optional_test_block(
 
         // Invariant: PropertyLoad object matches the branch test
         if property_load.object.identifier.id != terminal.test.identifier.id {
-            unreachable!(
-                "Expected PropertyLoad object to match terminal test identifier"
-            );
+            unreachable!("Expected PropertyLoad object to match terminal test identifier");
         }
 
         // Invariant: StoreLocal value matches PropertyLoad lvalue
         if store_local.value.identifier.id != consequent_block.instructions[0].lvalue.identifier.id
         {
-            unreachable!(
-                "Expected StoreLocal value to match PropertyLoad lvalue"
-            );
+            unreachable!("Expected StoreLocal value to match PropertyLoad lvalue");
         }
 
         // Check terminal is goto with Break variant

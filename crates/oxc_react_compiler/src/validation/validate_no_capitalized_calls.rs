@@ -23,8 +23,7 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
     // (matches TS: `new Set([...DEFAULT_GLOBALS.keys(), ...(envConfig.validateNoCapitalizedCalls ?? [])])`)
     let user_allowlist = func.env.config.validate_no_capitalized_calls.as_deref().unwrap_or(&[]);
     let is_allowed = |name: &str| -> bool {
-        func.env.globals.contains_key(name)
-            || user_allowlist.iter().any(|allowed| allowed == name)
+        func.env.globals.contains_key(name) || user_allowlist.iter().any(|allowed| allowed == name)
     };
 
     let reason =
@@ -37,7 +36,7 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
                     let name = v.binding.name().to_string();
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
-                        && !name.chars().all(|c| c.is_ascii_uppercase() || !c.is_alphabetic())
+                        && !name.chars().all(|c| c.is_uppercase() || !c.is_alphabetic())
                         && !is_allowed(&name)
                     {
                         capital_load_globals.insert(instr.lvalue.identifier.id, name);

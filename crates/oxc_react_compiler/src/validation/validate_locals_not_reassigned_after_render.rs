@@ -241,6 +241,10 @@ fn get_context_reassignment(
                         _ => all_operands,
                     };
                     for operand in &operands {
+                        debug_assert!(
+                            operand.effect != Effect::Unknown,
+                            "Expected effects to be inferred prior to ValidateLocalsNotReassignedAfterRender"
+                        );
                         if let Some(r) = reassigning_functions.get(&operand.identifier.id) {
                             // Functions that reassign local variables are inherently mutable
                             // and are unsafe to pass to a place that expects a frozen value

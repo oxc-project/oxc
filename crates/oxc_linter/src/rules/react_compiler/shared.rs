@@ -399,7 +399,13 @@ fn lint_function(
     if config.enable_reanimated_check.0 {
         env_config.enable_custom_type_definition_for_reanimated = true;
     }
-    let environment = Environment::new(fn_type, CompilerOutputMode::Lint, env_config);
+    let environment = match Environment::new(fn_type, CompilerOutputMode::Lint, env_config) {
+        Ok(env) => env,
+        Err(error) => {
+            collect_compiler_error(&error, fallback_span, diagnostics);
+            return;
+        }
+    };
 
     let mut hir_function = match lower(&environment, fn_type, function, outer_bindings.clone()) {
         Ok(hir_function) => hir_function,

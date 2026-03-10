@@ -8,6 +8,8 @@
 use cow_utils::CowUtils;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::compiler_error::{CompilerError, GENERATED_SOURCE};
+
 use super::{
     default_module_type_provider::{DefaultModuleTypeProvider, ModuleTypeProvider},
     globals::{Global, GlobalRegistry, install_type_config},
@@ -244,6 +246,15 @@ pub struct EnvironmentConfig {
     ///
     /// Corresponds to `validateNoVoidUseMemo` in the TS version.
     pub validate_no_void_use_memo: bool,
+
+    /// Validate that known mutable functions are not frozen.
+    ///
+    /// When true, the compiler checks that functions known to be mutable
+    /// (e.g., setState) are not inadvertently frozen by being passed to hooks
+    /// or included in memoized values.
+    ///
+    /// Corresponds to `validateNoFreezingKnownMutableFunctions` in the TS version.
+    pub validate_no_freezing_known_mutable_functions: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -287,6 +298,7 @@ impl Default for EnvironmentConfig {
             enable_transitively_freeze_function_expressions: true,
             enable_treat_ref_like_identifiers_as_refs: true,
             validate_no_void_use_memo: true,
+            validate_no_freezing_known_mutable_functions: true,
         }
     }
 }
@@ -403,19 +415,24 @@ pub struct OutlinedFunctionEntry {
 
 impl Environment {
     /// Create a new environment with the given configuration.
+    ///
+    /// # Errors
+    /// Returns a `CompilerError` if the configuration is invalid (e.g., a custom hook
+    /// name conflicts with a built-in global definition).
     pub fn new(
         fn_type: ReactFunctionType,
         output_mode: CompilerOutputMode,
         config: EnvironmentConfig,
-    ) -> Self {
+    ) -> Result<Self, CompilerError> {
         let enable_memoization =
-            !matches!(output_mode, CompilerOutputMode::Lint | CompilerOutputMode::ClientNoMemo);
+            !matches!(output_mode, CompilerOutputMode::Ssr | CompilerOutputMode::ClientNoMemo);
         let enable_validations = true;
-        let enable_drop_manual_memoization = enable_memoization;
+        let enable_drop_manual_memoization =
+            !matches!(output_mode, CompilerOutputMode::ClientNoMemo);
 
         // Initialize shapes and globals from the built-in definitions
         let mut shapes = super::globals::default_shapes();
-        let globals = super::globals::default_globals(&mut shapes);
+        let mut globals = super::globals::default_globals(&mut shapes);
 
         // Register module types for configured type providers.
         let mut module_types = FxHashMap::default();
@@ -442,7 +459,48 @@ impl Environment {
                 .insert("useDefaultExportNotTypedAsHook".to_string(), use_default_not_hook_type);
         }
 
-        Self {
+        // Register custom hooks from config into the globals registry.
+        // Port of Environment.ts constructor lines 582-601.
+        for (hook_name, hook) in &config.custom_hooks {
+            CompilerError::invariant_result(
+                !globals.contains_key(hook_name),
+                &format!(
+                    "[Globals] Found existing definition in global registry for custom hook {hook_name}"
+                ),
+                None,
+                GENERATED_SOURCE,
+            )?;
+            let return_type = if hook.transitive_mixed_data {
+                Type::Object(ObjectType {
+                    shape_id: Some(super::object_shape::BUILT_IN_MIXED_READONLY_ID.to_string()),
+                })
+            } else {
+                Type::Poly
+            };
+            let shape_id = super::object_shape::add_hook(
+                &mut shapes,
+                None,
+                FunctionSignature {
+                    rest_param: Some(hook.effect_kind),
+                    return_type: return_type.clone(),
+                    return_value_kind: hook.value_kind,
+                    callee_effect: Effect::Read,
+                    hook_kind: Some(HookKind::Custom),
+                    no_alias: hook.no_alias,
+                    ..FunctionSignature::default()
+                },
+            );
+            globals.insert(
+                hook_name.clone(),
+                Global::Typed(Type::Function(FunctionType {
+                    shape_id: Some(shape_id),
+                    return_type: Box::new(return_type),
+                    is_constructor: false,
+                })),
+            );
+        }
+
+        Ok(Self {
             fn_type,
             output_mode,
             config,
@@ -462,7 +520,7 @@ impl Environment {
             next_block_id: 0,
             next_scope_id: 0,
             next_identifier_id: 0,
-        }
+        })
     }
 
     /// Get the next block ID value without incrementing.

@@ -22,7 +22,9 @@ use super::{
         HookKind, ShapeRegistry, add_function, add_hook, add_object,
         parse_aliasing_signature_config,
     },
-    type_schema::{AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName, ModuleTypeConfig},
+    type_schema::{
+        AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeName, ModuleTypeConfig,
+    },
     types::{FunctionType, ObjectType, Type},
 };
 
@@ -2669,9 +2671,8 @@ pub fn install_type_config(
             known_incompatible,
         } => {
             let return_type = install_type_config(shapes, *return_type, module_name);
-            let aliasing = aliasing.and_then(|config| {
-                parse_aliasing_signature_config(&config).ok()
-            });
+            let aliasing =
+                aliasing.and_then(|config| parse_aliasing_signature_config(&config).ok());
             let signature = FunctionSignature {
                 positional_params,
                 rest_param,
@@ -2704,9 +2705,8 @@ pub fn install_type_config(
             known_incompatible,
         } => {
             let return_type = install_type_config(shapes, *return_type, module_name);
-            let aliasing = aliasing.and_then(|config| {
-                parse_aliasing_signature_config(&config).ok()
-            });
+            let aliasing =
+                aliasing.and_then(|config| parse_aliasing_signature_config(&config).ok());
             let signature = FunctionSignature {
                 positional_params: positional_params.unwrap_or_default(),
                 rest_param: Some(rest_param.unwrap_or(Effect::Freeze)),

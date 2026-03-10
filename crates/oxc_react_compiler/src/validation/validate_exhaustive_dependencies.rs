@@ -34,7 +34,7 @@ use crate::{
 ///
 /// # Errors
 /// Returns a `CompilerError` if dependency arrays are incomplete or contain extraneous values.
-pub fn validate_exhaustive_dependencies(func: &HIRFunction) -> Result<(), CompilerError> {
+pub fn validate_exhaustive_dependencies(func: &mut HIRFunction) -> Result<(), CompilerError> {
     let reactive = collect_reactive_identifiers(func);
     let mut temporaries: FxHashMap<IdentifierId, Temporary> = FxHashMap::default();
 
@@ -53,9 +53,29 @@ pub fn validate_exhaustive_dependencies(func: &HIRFunction) -> Result<(), Compil
     }
 
     let mut error = CompilerError::new();
+    let mut invalid_memo_ids: FxHashSet<u32> = FxHashSet::default();
 
     // Run the collection pass with memoization callbacks
-    collect_dependencies_with_memos(func, &mut temporaries, &reactive, &mut error, &func.env);
+    collect_dependencies_with_memos(
+        func,
+        &mut temporaries,
+        &reactive,
+        &mut error,
+        &func.env,
+        &mut invalid_memo_ids,
+    );
+
+    // Mark StartMemoize instructions that had invalid deps
+    if !invalid_memo_ids.is_empty() {
+        for block in func.body.blocks.values_mut() {
+            for instr in &mut block.instructions {
+                if let InstructionValue::StartMemoize(ref mut v) = instr.value
+                    && invalid_memo_ids.contains(&v.manual_memo_id) {
+                        v.has_invalid_deps = true;
+                    }
+            }
+        }
+    }
 
     error.into_result()
 }
@@ -248,6 +268,7 @@ fn collect_dependencies_with_memos(
     reactive: &FxHashSet<IdentifierId>,
     errors: &mut CompilerError,
     env: &crate::hir::environment::Environment,
+    invalid_memo_ids: &mut FxHashSet<u32>,
 ) {
     let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
@@ -300,6 +321,7 @@ fn collect_dependencies_with_memos(
                         ExhaustiveEffectDepsMode::All,
                     ) {
                         errors.push_diagnostic(diagnostic);
+                        invalid_memo_ids.insert(start.manual_memo_id);
                     }
                 }
                 dependencies.clear();
@@ -707,13 +729,39 @@ fn validate_dependencies(
     category: ErrorCategory,
     report_mode: ExhaustiveEffectDepsMode,
 ) -> Option<CompilerDiagnostic> {
-    // Sort
-    inferred.sort_by_key(dep_name);
+    // Sort with full tie-breaking: name, path length, optionals, property names
+    inferred.sort_by(|a, b| {
+        let name_cmp = dep_name(a).cmp(&dep_name(b));
+        if name_cmp != std::cmp::Ordering::Equal {
+            return name_cmp;
+        }
+        let a_path = dep_path(a);
+        let b_path = dep_path(b);
+        // Shorter path first
+        let len_cmp = a_path.len().cmp(&b_path.len());
+        if len_cmp != std::cmp::Ordering::Equal {
+            return len_cmp;
+        }
+        // Compare path elements: non-optionals before optionals, then property name
+        for (ae, be) in a_path.iter().zip(b_path.iter()) {
+            // Non-optional (false) before optional (true)
+            let opt_cmp = ae.optional.cmp(&be.optional);
+            if opt_cmp != std::cmp::Ordering::Equal {
+                return opt_cmp;
+            }
+            let prop_cmp = ae.property.to_string().cmp(&be.property.to_string());
+            if prop_cmp != std::cmp::Ordering::Equal {
+                return prop_cmp;
+            }
+        }
+        std::cmp::Ordering::Equal
+    });
 
     // Deduplicate
     inferred.dedup_by(|a, b| is_equal_temporary(a, b));
 
     let mut matched: FxHashSet<usize> = FxHashSet::default();
+    let mut global_matched: FxHashSet<usize> = FxHashSet::default();
     let mut missing: Vec<Temporary> = Vec::new();
 
     for inferred_dep in &inferred {
@@ -724,6 +772,7 @@ fn validate_dependencies(
                         && identifier_name == binding_name
                     {
                         matched.insert(idx);
+                        global_matched.insert(idx);
                     }
                 }
             }
@@ -756,7 +805,9 @@ fn validate_dependencies(
 
     let mut extra: Vec<&ManualMemoDependency> = Vec::new();
     for (idx, dep) in manual_dependencies.iter().enumerate() {
-        if matched.contains(&idx) {
+        // Global deps that were matched are still "extra" (unnecessary) —
+        // values declared outside a component don't need to be dependencies
+        if matched.contains(&idx) && !global_matched.contains(&idx) {
             continue;
         }
         if let ManualMemoDependencyRoot::NamedLocal { constant: true, value } = &dep.root
@@ -878,6 +929,13 @@ fn dep_name(dep: &Temporary) -> String {
             }
         }
         Temporary::Aggregate { .. } => String::new(),
+    }
+}
+
+fn dep_path(dep: &Temporary) -> &[DependencyPathEntry] {
+    match dep {
+        Temporary::Local(local) => &local.path,
+        _ => &[],
     }
 }
 
