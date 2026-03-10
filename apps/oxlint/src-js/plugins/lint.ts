@@ -247,16 +247,52 @@ export function lintFileImpl(
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
   }
 
-  // Run `after` hooks
+  // Run any `after` hooks
+  runAfterHooks(true);
+}
+
+/**
+ * Run any `after` hooks.
+ *
+ * Rules using `before` and `after` hooks likely maintain some internal state in their `createOnce` method.
+ * To keep that state in sync, it's critical that `after` hooks always run, even if an error is thrown during any of:
+ *
+ * 1. A later rule's `before` hook.
+ * 2. AST walk.
+ * 3. An earlier rule's `after` hook.
+ *
+ * So if any `after` hook throws an error, this function continues running remaining hooks, and re-throws the error
+ * only at the very end. This ensures an error in one rule does not affect any other rules.
+ *
+ * This function is called by `resetStateAfterError` to ensure `after` hooks are run no matter where an error occurs.
+ *
+ * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
+ */
+function runAfterHooks(shouldThrowIfError: boolean) {
   const afterHooksLen = afterHooks.length;
-  if (afterHooksLen !== 0) {
-    for (let i = 0; i < afterHooksLen; i++) {
+  if (afterHooksLen === 0) return;
+
+  // Run `after` hooks
+  let error: unknown;
+  let didError = false;
+
+  for (let i = 0; i < afterHooksLen; i++) {
+    try {
       // Don't call hook with `afterHooks` array as `this`, or user could mess with it
       (0, afterHooks[i])();
+    } catch (err) {
+      if (didError === false) {
+        error = err;
+        didError = true;
+      }
     }
-    // Reset array, ready for next file
-    afterHooks.length = 0;
   }
+
+  // Reset array, ready for next file
+  afterHooks.length = 0;
+
+  // If error was thrown in any `after` hooks, re-throw it
+  if (didError && shouldThrowIfError) throw error;
 }
 
 /**
@@ -274,6 +310,9 @@ export function resetFile() {
  * in the correct initial state for linting the next file.
  */
 export function resetStateAfterError() {
+  // This function must never throw, so call `runAfterHooks` with `false` to swallow any errors
+  runAfterHooks(false);
+
   // In case error occurred during visitor compilation, clear internal state of visitor compilation,
   // so no leftovers bleed into next file.
   // We could have a separate function to reset state which could be simpler and faster, but `resetStateAfterError`
