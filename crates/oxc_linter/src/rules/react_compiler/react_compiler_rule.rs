@@ -185,7 +185,6 @@ default_true_bool!(
 ///
 /// Defaults match the ESLint plugin's `COMPILER_OPTIONS` in lint mode,
 /// which enables stricter validation than the compiler's own defaults.
-#[expect(clippy::struct_field_names)]
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct EnvironmentConfigOverrides {
@@ -413,9 +412,55 @@ fn test() {
             "#,
             None,
         ),
+        // === Validation alignment fix regression tests ===
+        // Fix 10: TS type wrappers — hook calls through type casts should be detected
+        (
+            r"function Component() { const [s, setS] = (useState(0) as any); return <div>{s}</div>; }",
+            None,
+        ),
+        // Fix 12: Context variable assignment via IIFE should not panic
+        (
+            r#"
+            function Component(props) {
+              let x = {};
+              (function () {
+                x = { a: props.a };
+              })();
+              return <div>{x}</div>;
+            }
+            "#,
+            None,
+        ),
+        // Fix 14: useMemo with valid deps should not panic in preserved memoization validation
+        (
+            r#"
+            import { useMemo } from 'react';
+            function Component(props) {
+              const x = useMemo(() => props.a + props.b, [props.a, props.b]);
+              return <div>{x}</div>;
+            }
+            "#,
+            None,
+        ),
     ];
 
     let fail = vec![
+        // Fix 17: useLayoutEffect with derived setState does not produce "derived
+        // computations in effects" error (that was the fix), but lint mode has
+        // validate_no_set_state_in_effects=true which catches setState in any effect.
+        (
+            r#"
+            import { useState, useLayoutEffect } from 'react';
+            function Component(props) {
+              const [state, setState] = useState(props.initial);
+              useLayoutEffect(() => {
+                setState(derive(props.value));
+              }, [props.value]);
+              return <div>{state}</div>;
+            }
+            "#,
+            None,
+        ),
         // === Ported from eslint-plugin-react-compiler PluginTest ===
         // Conditional hook call
         (
@@ -561,6 +606,18 @@ fn test() {
               const [state, setState] = useState({a: 0});
               state.a = 1;
               return <div>{props.foo}</div>;
+            }
+            "#,
+            None,
+        ),
+        // === Validation alignment fix regression tests ===
+        // Fix 15: Local reassignment in callback produces Immutability diagnostic (not a panic)
+        (
+            r#"
+            function Component(props) {
+              let x = props.value;
+              const handler = () => { x = 1; };
+              return <div onClick={handler}>{x}</div>;
             }
             "#,
             None,

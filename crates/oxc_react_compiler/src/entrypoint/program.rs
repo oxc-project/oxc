@@ -212,6 +212,12 @@ pub fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
             }
             Expression::AwaitExpression(aw) => check_expr(&aw.argument),
             Expression::YieldExpression(y) => y.argument.as_ref().is_some_and(|a| check_expr(a)),
+            // TS type expression wrappers: recurse into inner expression.
+            Expression::TSNonNullExpression(e) => check_expr(&e.expression),
+            Expression::TSAsExpression(e) => check_expr(&e.expression),
+            Expression::TSSatisfiesExpression(e) => check_expr(&e.expression),
+            Expression::TSTypeAssertion(e) => check_expr(&e.expression),
+            Expression::TSInstantiationExpression(e) => check_expr(&e.expression),
             _ => false,
         }
     }
@@ -368,9 +374,7 @@ fn is_non_node(expr: &Expression) -> bool {
 pub fn returns_non_node(func: &LowerableFunction) -> bool {
     fn check_stmt_for_non_node_return(stmt: &Statement) -> bool {
         match stmt {
-            Statement::ReturnStatement(ret) => {
-                ret.argument.as_ref().is_none_or(|e| is_non_node(e))
-            }
+            Statement::ReturnStatement(ret) => ret.argument.as_ref().is_none_or(|e| is_non_node(e)),
             Statement::BlockStatement(block) => {
                 block.body.iter().any(|s| check_stmt_for_non_node_return(s))
             }

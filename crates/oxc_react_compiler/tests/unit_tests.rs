@@ -261,6 +261,125 @@ mod env_config_tests {
         assert_eq!(hook.effect_kind, Effect::Freeze);
         assert_eq!(hook.value_kind, ValueKind::Frozen);
     }
+
+    /// Fix 8: Verify enableMemoization and enableDropManualMemoization flags
+    /// are correctly derived from each CompilerOutputMode.
+    #[test]
+    fn memoization_flags_match_ts_reference() {
+        use oxc_react_compiler::hir::ReactFunctionType;
+        use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment};
+
+        // Client: memoization=true, drop_manual_memo=true
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::Client,
+            EnvironmentConfig::default(),
+        ).unwrap();
+        assert!(env.enable_memoization, "Client: enable_memoization should be true");
+        assert!(
+            env.enable_drop_manual_memoization,
+            "Client: enable_drop_manual_memoization should be true"
+        );
+
+        // Lint: memoization=true, drop_manual_memo=true
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::Lint,
+            EnvironmentConfig::default(),
+        ).unwrap();
+        assert!(env.enable_memoization, "Lint: enable_memoization should be true");
+        assert!(
+            env.enable_drop_manual_memoization,
+            "Lint: enable_drop_manual_memoization should be true"
+        );
+
+        // Ssr: memoization=false, drop_manual_memo=true
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::Ssr,
+            EnvironmentConfig::default(),
+        ).unwrap();
+        assert!(!env.enable_memoization, "Ssr: enable_memoization should be false");
+        assert!(
+            env.enable_drop_manual_memoization,
+            "Ssr: enable_drop_manual_memoization should be true"
+        );
+
+        // ClientNoMemo: memoization=false, drop_manual_memo=false
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::ClientNoMemo,
+            EnvironmentConfig::default(),
+        ).unwrap();
+        assert!(!env.enable_memoization, "ClientNoMemo: enable_memoization should be false");
+        assert!(
+            !env.enable_drop_manual_memoization,
+            "ClientNoMemo: enable_drop_manual_memoization should be false"
+        );
+    }
+
+    /// Fix 9: Verify that custom hooks from config are actually registered
+    /// in the globals registry and can be looked up via get_global_declaration.
+    #[test]
+    fn custom_hooks_registered_in_globals() {
+        use oxc_react_compiler::compiler_error::SourceLocation;
+        use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment};
+        use oxc_react_compiler::hir::{NonLocalBinding, ReactFunctionType};
+
+        let mut config = EnvironmentConfig::default();
+        config.custom_hooks.insert(
+            "useCustom".to_string(),
+            HookConfig {
+                effect_kind: Effect::Freeze,
+                value_kind: ValueKind::Frozen,
+                no_alias: false,
+                transitive_mixed_data: false,
+            },
+        );
+
+        let mut env =
+            Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config).unwrap();
+
+        // Look up "useCustom" via get_global_declaration as a Global binding
+        let result = env
+            .get_global_declaration(
+                &NonLocalBinding::Global { name: "useCustom".to_string() },
+                SourceLocation::Generated,
+            )
+            .expect("should not error");
+        assert!(result.is_some(), "useCustom should be registered as a global declaration");
+    }
+
+    /// Verify that registering a custom hook whose name collides with an existing
+    /// built-in global returns an error instead of panicking.
+    #[test]
+    fn custom_hook_collision_with_builtin_global_returns_error() {
+        use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment};
+        use oxc_react_compiler::hir::ReactFunctionType;
+
+        // "console" is a built-in global — registering a custom hook with that name
+        // should fail gracefully.
+        let mut config = EnvironmentConfig::default();
+        config.custom_hooks.insert(
+            "console".to_string(),
+            HookConfig {
+                effect_kind: Effect::Freeze,
+                value_kind: ValueKind::Frozen,
+                no_alias: false,
+                transitive_mixed_data: false,
+            },
+        );
+
+        let result =
+            Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config);
+        assert!(result.is_err(), "Should return error for custom hook colliding with built-in global");
+        let err = result.unwrap_err();
+        let msg = format!("{err:?}");
+        assert!(
+            msg.contains("console"),
+            "Error message should mention the conflicting name 'console', got: {msg}"
+        );
+    }
 }
 
 // =====================================================================================
@@ -447,6 +566,89 @@ mod logger_tests {
         assert_eq!(format!("{}", ErrorSeverity::Warning), "Warning");
         assert_eq!(format!("{}", ErrorSeverity::Hint), "Hint");
     }
+
+    /// Fix 10: TS type wrappers (TSAsExpression, TSNonNullExpression, etc.)
+    /// should be seen through when detecting hook calls / JSX in function bodies.
+    /// `useState(0) as any` should still be detected as a hook call.
+    #[test]
+    fn ts_type_wrapper_detects_hooks() {
+        // Use TSX source type to support both TS syntax and JSX
+        fn with_parsed_tsx_function<R>(
+            source: &str,
+            f: impl FnOnce(&LowerableFunction<'_>, Option<&str>) -> R,
+        ) -> R {
+            let allocator = oxc_allocator::Allocator::default();
+            let source_type = oxc_span::SourceType::tsx();
+            let result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+            assert!(result.errors.is_empty(), "Parse errors: {:?}", result.errors);
+            for stmt in &result.program.body {
+                if let oxc_ast::ast::Statement::FunctionDeclaration(func) = stmt {
+                    let name = func.id.as_ref().map(|id| id.name.as_str());
+                    let lowerable = LowerableFunction::Function(func);
+                    return f(&lowerable, name);
+                }
+            }
+            panic!("No function declaration found in source");
+        }
+
+        // TSAsExpression wrapping a hook call
+        let result = with_parsed_tsx_function(
+            "function Component() { const x = useState(0) as any; return <div>{x}</div>; }",
+            |func, name| {
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
+            },
+        );
+        assert_eq!(
+            result,
+            Some(ReactFunctionType::Component),
+            "useState() as any should still be detected as a hook call"
+        );
+
+        // TSNonNullExpression wrapping a hook call
+        let result = with_parsed_tsx_function(
+            "function Component() { const x = useState(0)!; return <div>{x}</div>; }",
+            |func, name| {
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
+            },
+        );
+        assert_eq!(
+            result,
+            Some(ReactFunctionType::Component),
+            "useState()! should still be detected as a hook call"
+        );
+    }
+
+    /// Fix 11: Verify that a function with a hook name is correctly identified
+    /// as a Hook by should_compile_function. This tests the name inference path:
+    /// when the transformer infers a name like "useHook" from an AssignmentPattern,
+    /// passing that name to should_compile_function correctly classifies it.
+    #[test]
+    fn hook_name_inference_compiles_as_hook() {
+        // When the transformer sees `const {useHook = () => {}} = {}`,
+        // it infers the name "useHook" from the binding. Here we verify
+        // that should_compile_function with name "useHook" classifies
+        // a function containing a hook call as a Hook.
+        let result =
+            with_parsed_function("function useHook() { return useState(0); }", |func, name| {
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
+            });
+        assert_eq!(
+            result,
+            Some(ReactFunctionType::Hook),
+            "A function named useHook calling useState should be classified as Hook"
+        );
+
+        // Also verify that without the hook name, the same body is NOT compiled
+        // (since it doesn't have JSX and the name isn't PascalCase or use* prefix)
+        let result =
+            with_parsed_function("function helper() { return useState(0); }", |func, name| {
+                should_compile_function(func, name, &[], CompilationMode::Infer, false, false)
+            });
+        assert_eq!(
+            result, None,
+            "A function named helper (not hook/component name) should not compile in Infer mode"
+        );
+    }
 }
 
 /// Test that console.log(x) doesn't extend x's mutable range.
@@ -492,7 +694,7 @@ fn test_console_readonly_output() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    );
+    ).unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
@@ -580,7 +782,7 @@ fn test_context_variable_reactive_scopes() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    );
+    ).unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
@@ -609,45 +811,44 @@ fn test_console_method_type_resolution() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    );
+    ).unwrap();
 
     // Helper to verify a console-like object has a "log" method with Read effects.
-    let verify_console_log =
-        |env: &Environment,
-         console_type: &oxc_react_compiler::hir::types::Type,
-         label: &str| match console_type {
-            oxc_react_compiler::hir::types::Type::Object(obj) => {
-                assert!(obj.shape_id.is_some(), "{label} should have a shape_id");
+    let verify_console_log = |env: &Environment,
+                              console_type: &oxc_react_compiler::hir::types::Type,
+                              label: &str| match console_type {
+        oxc_react_compiler::hir::types::Type::Object(obj) => {
+            assert!(obj.shape_id.is_some(), "{label} should have a shape_id");
 
-                let log_type = env.get_property_type(console_type, "log");
-                assert!(log_type.is_some(), "{label}.log should have a property type");
+            let log_type = env.get_property_type(console_type, "log");
+            assert!(log_type.is_some(), "{label}.log should have a property type");
 
-                let log_type = log_type.unwrap();
-                match &log_type {
-                    oxc_react_compiler::hir::types::Type::Function(func_type) => {
-                        assert!(
-                            func_type.shape_id.is_some(),
-                            "{label}.log should have a function shape_id"
-                        );
-                        let sig = env.get_function_signature(&log_type);
-                        assert!(sig.is_some(), "{label}.log should have a function signature");
-                        let sig = sig.unwrap();
-                        assert_eq!(
-                            sig.callee_effect,
-                            oxc_react_compiler::hir::Effect::Read,
-                            "{label}.log callee_effect should be Read"
-                        );
-                        assert_eq!(
-                            sig.rest_param,
-                            Some(oxc_react_compiler::hir::Effect::Read),
-                            "{label}.log rest_param should be Read"
-                        );
-                    }
-                    _ => panic!("{label}.log should be a Function type, got: {log_type:?}"),
+            let log_type = log_type.unwrap();
+            match &log_type {
+                oxc_react_compiler::hir::types::Type::Function(func_type) => {
+                    assert!(
+                        func_type.shape_id.is_some(),
+                        "{label}.log should have a function shape_id"
+                    );
+                    let sig = env.get_function_signature(&log_type);
+                    assert!(sig.is_some(), "{label}.log should have a function signature");
+                    let sig = sig.unwrap();
+                    assert_eq!(
+                        sig.callee_effect,
+                        oxc_react_compiler::hir::Effect::Read,
+                        "{label}.log callee_effect should be Read"
+                    );
+                    assert_eq!(
+                        sig.rest_param,
+                        Some(oxc_react_compiler::hir::Effect::Read),
+                        "{label}.log rest_param should be Read"
+                    );
                 }
+                _ => panic!("{label}.log should be a Function type, got: {log_type:?}"),
             }
-            _ => panic!("{label} should be an Object type, got: {console_type:?}"),
-        };
+        }
+        _ => panic!("{label} should be an Object type, got: {console_type:?}"),
+    };
 
     let generated_loc = oxc_react_compiler::compiler_error::SourceLocation::Generated;
 
@@ -715,7 +916,7 @@ fn test_context_variable_debug() {
 
     let env_config = EnvironmentConfig::default();
     let env =
-        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config);
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config).unwrap();
 
     let func_decl = parser_result
         .program
@@ -890,5 +1091,246 @@ fn test_context_variable_debug() {
         Err(e) => {
             panic!("Pipeline error: {e:?}");
         }
+    }
+}
+
+// =====================================================================================
+// Alignment fix regression tests
+// =====================================================================================
+
+mod alignment_fix_tests {
+    use oxc_codegen::Gen;
+    use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
+    use oxc_react_compiler::hir::environment::{
+        CompilerOutputMode, Environment, EnvironmentConfig,
+    };
+
+    /// Compile a component source string through the full pipeline and return codegen output.
+    /// Returns Err(String) on any failure (parse, lower, pipeline, codegen).
+    fn compile_component(source: &str) -> Result<String, String> {
+        let allocator = oxc_allocator::Allocator::default();
+        let source_type = oxc_span::SourceType::jsx();
+        let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        if !parser_result.errors.is_empty() {
+            return Err(format!("Parse errors: {:?}", parser_result.errors));
+        }
+
+        let func = parser_result
+            .program
+            .body
+            .iter()
+            .find_map(|stmt| match stmt {
+                oxc_ast::ast::Statement::FunctionDeclaration(f) => {
+                    Some(LowerableFunction::Function(f))
+                }
+                _ => None,
+            })
+            .ok_or_else(|| "No function declaration found in source".to_string())?;
+
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::Client,
+            EnvironmentConfig::default(),
+        ).unwrap();
+
+        let outer_bindings = collect_import_bindings(&parser_result.program.body);
+        let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
+            .map_err(|e| format!("Lower failed: {e:?}"))?;
+
+        let pipeline_output =
+            run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline failed: {e:?}"))?;
+
+        let ast = oxc_ast::AstBuilder::new(&allocator);
+        let result = run_codegen(pipeline_output, &env, ast, "_c", None)
+            .map_err(|e| format!("Codegen failed: {e:?}"))?;
+
+        let mut codegen = oxc_codegen::Codegen::new();
+        for stmt in result.body.iter() {
+            stmt.print(&mut codegen, oxc_codegen::Context::default());
+        }
+        Ok(codegen.into_source_text())
+    }
+
+    /// Fix 1: Return terminal freeze — components/hooks freeze return values.
+    /// A component returning a mutable array should have that array memoized.
+    #[test]
+    fn test_return_terminal_freeze() {
+        let source = r#"function Component(props) {
+  const arr = [props.a, props.b];
+  return arr;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+        let output = result.unwrap();
+        // The returned array should be memoized (cache slot assigned)
+        assert!(output.contains("$["), "Expected memoization in output but got:\n{output}");
+    }
+
+    /// Fix 2: Try/catch aliasing — call results in try blocks are aliased to catch handler.
+    #[test]
+    fn test_try_catch_aliasing() {
+        let source = r#"function Component(props) {
+  let result;
+  try {
+    result = fetchData(props.id);
+  } catch (e) {
+    result = defaultValue;
+  }
+  return <div>{result}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+    }
+
+    /// Fix 3: MethodCall local MutateTransitiveConditionally — locally-defined method calls
+    /// should not cause pipeline failures.
+    #[test]
+    fn test_method_call_local_mutate_transitive() {
+        let source = r#"function Component(props) {
+  const obj = { method() { return props.x; } };
+  const result = obj.method();
+  return <div>{result}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+    }
+
+    /// Fix 4: Freeze effect filtering — freeze effects on already-frozen values are dropped.
+    /// Nested JSX (JSX inside JSX) should compile without issue since inner JSX is
+    /// already frozen when captured by the outer JSX.
+    #[test]
+    fn test_freeze_effect_filtering_nested_jsx() {
+        let source = r#"function Component(props) {
+  const inner = <span>{props.a}</span>;
+  return <div>{inner}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+        let output = result.unwrap();
+        assert!(output.contains("$["), "Expected memoization in output but got:\n{output}");
+    }
+
+    /// Fix 5: ImmutableCapture drop for Global/Primitive — capturing global/primitive values
+    /// should not produce spurious effects.
+    #[test]
+    fn test_immutable_capture_global_primitive() {
+        let source = r#"function Component() {
+  const x = Math.random();
+  return <div>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+    }
+
+    /// Fix 6: CreateFrom for Primitive/Global — loading a property from a primitive
+    /// should compile without panics.
+    #[test]
+    fn test_create_from_primitive_global() {
+        let source = r#"function Component(props) {
+  const len = props.name.length;
+  return <div>{len}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+    }
+
+    /// Fix 7: mutableSpreads in compute_effects_for_signature — spread args to hooks
+    /// that freeze is an edge case; basic spread usage should compile.
+    #[test]
+    fn test_mutable_spreads_compute_effects() {
+        let source = r#"function Component(props) {
+  const items = [props.a, props.b];
+  const copy = [...items];
+  return <div>{copy}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
+    }
+
+    /// Fix 12: PostfixUpdate/PrefixUpdate/Destructure in validate_context_variable_lvalues.
+    /// Context variables modified via assignment inside IIFEs should not cause panics
+    /// in the validation pass. The IIFE inlining creates StoreContext instructions
+    /// that go through validate_context_variable_lvalues.
+    #[test]
+    fn test_context_variable_store_context_lvalue() {
+        let source = r#"function Component(props) {
+  let x = {};
+  (function () {
+    x = { a: props.a };
+  })();
+  return <div>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Pipeline should succeed for IIFE context variable store: {}",
+            result.unwrap_err()
+        );
+    }
+
+    /// Fix 14: hasInvalidDeps in validate_preserved_manual_memoization.
+    /// useMemo with valid deps should compile without panics (the fix prevents
+    /// duplicate errors when deps are invalid).
+    #[test]
+    fn test_preserved_manual_memoization_valid_deps() {
+        let source = r#"import { useMemo } from 'react';
+function Component(props) {
+  const x = useMemo(() => props.a + props.b, [props.a, props.b]);
+  return <div>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Pipeline should succeed for useMemo with valid deps: {}",
+            result.unwrap_err()
+        );
+    }
+
+    /// Fix 15: Effect.Unknown invariant in validate_locals_not_reassigned_after_render.
+    /// Code that reassigns locals inside callbacks should produce an Immutability
+    /// diagnostic (not panic with an Effect.Unknown invariant failure). The fix
+    /// ensures Effect.Unknown is handled gracefully instead of causing an invariant.
+    #[test]
+    fn test_locals_not_reassigned_after_render_no_panic() {
+        let source = r#"function Component(props) {
+  let x = props.value;
+  const handler = () => { x = 1; };
+  return <div onClick={handler}>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        // This should produce a controlled diagnostic (Immutability error), not a panic.
+        // The key test is that compile_component returns at all (doesn't panic).
+        match &result {
+            Ok(_) => {} // If it succeeds, that's also fine
+            Err(e) => {
+                assert!(
+                    e.contains("Immutability") || e.contains("reassign"),
+                    "Expected Immutability diagnostic, got: {e}"
+                );
+            }
+        }
+    }
+
+    /// Fix 17: Remove useLayoutEffect from derived computations check.
+    /// useLayoutEffect calling setState with derived values should not produce
+    /// a "derived computations in effects" error.
+    #[test]
+    fn test_use_layout_effect_no_derived_computation_error() {
+        let source = r#"import { useState, useLayoutEffect } from 'react';
+function Component(props) {
+  const [state, setState] = useState(props.initial);
+  useLayoutEffect(() => {
+    setState(derive(props.value));
+  }, [props.value]);
+  return <div>{state}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Pipeline should succeed for useLayoutEffect with derived setState: {}",
+            result.unwrap_err()
+        );
     }
 }

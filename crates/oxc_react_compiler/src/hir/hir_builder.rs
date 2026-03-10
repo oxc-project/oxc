@@ -656,6 +656,7 @@ impl HirBuilder {
                     continuation: continuation.id,
                     handler: Some(handler),
                     id: InstructionId(0),
+                    effects: None,
                     loc,
                 }),
                 continuation,
@@ -704,10 +705,8 @@ impl HirBuilder {
     ///
     /// Returns the ID of the terminated block.
     pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
-        let WipBlock { id, kind, instructions } = std::mem::replace(
-            &mut self.current,
-            new_block(BlockId::PLACEHOLDER, BlockKind::Block),
-        );
+        let WipBlock { id, kind, instructions } =
+            std::mem::replace(&mut self.current, new_block(BlockId::PLACEHOLDER, BlockKind::Block));
         let block_id = id;
         self.completed.insert(
             block_id,

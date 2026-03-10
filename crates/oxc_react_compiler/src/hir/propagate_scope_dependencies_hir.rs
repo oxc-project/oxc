@@ -260,7 +260,7 @@ impl ReactiveScopeDependencyTree {
                 )
             });
 
-            let mut curr_node = root_node as *mut HoistableNode;
+            let mut curr_node = std::ptr::from_mut::<HoistableNode>(root_node);
             for (i, entry) in dep.path.iter().enumerate() {
                 let access_type = if i + 1 < dep.path.len() && dep.path[i + 1].optional {
                     HoistableAccessType::Optional
@@ -303,7 +303,7 @@ impl ReactiveScopeDependencyTree {
 
         let hoistable_root = self.hoistable_objects.get(&identifier_id).map(|(n, _)| n);
 
-        let mut dep_cursor = dep_root as *mut DependencyNode;
+        let mut dep_cursor = std::ptr::from_mut::<DependencyNode>(dep_root);
         let mut hoistable_cursor: Option<*const HoistableNode> =
             hoistable_root.map(std::ptr::from_ref::<HoistableNode>);
 
