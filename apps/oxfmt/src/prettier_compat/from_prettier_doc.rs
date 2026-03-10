@@ -64,14 +64,11 @@ pub fn to_format_elements_for_template<'a>(
             let obj = wrapper
                 .as_object()
                 .ok_or_else(|| "Expected HTML Doc JSON to be an object".to_string())?;
-            let doc_json = obj
-                .get("doc")
-                .ok_or_else(|| "Missing 'doc' field in HTML Doc JSON".to_string())?;
+            let doc_json =
+                obj.get("doc").ok_or_else(|| "Missing 'doc' field in HTML Doc JSON".to_string())?;
             #[expect(clippy::cast_possible_truncation)]
-            let top_level_count = obj
-                .get("topLevelCount")
-                .and_then(Value::as_u64)
-                .map(|v| v as usize);
+            let top_level_count =
+                obj.get("topLevelCount").and_then(Value::as_u64).map(|v| v as usize);
 
             let (ir, _) = convert(doc_json)?;
             let count = count_html_placeholders(&ir);

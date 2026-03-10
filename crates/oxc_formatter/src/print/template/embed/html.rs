@@ -54,7 +54,14 @@ pub(super) fn format_html_doc<'a>(
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-        write_html_template(f, &content, has_leading_ws, has_trailing_ws, top_level_count, ws_ignore);
+        write_html_template(
+            f,
+            &content,
+            has_leading_ws,
+            has_trailing_ws,
+            top_level_count,
+            ws_ignore,
+        );
         return true;
     }
 
@@ -85,14 +92,13 @@ pub(super) fn format_html_doc<'a>(
     // Phase 2: Format via the Doc->IR path
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-        ir,
-        placeholder_count,
-        top_level_count,
-    })) = f
-        .context()
-        .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "tagged-html", &[joined])
+    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, placeholder_count, top_level_count })) =
+        f.context().external_callbacks().format_embedded_doc(
+            allocator,
+            group_id_builder,
+            "tagged-html",
+            &[joined],
+        )
     else {
         return false;
     };
@@ -112,7 +118,12 @@ pub(super) fn format_html_doc<'a>(
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(f, part, allocator, indent_width);
+                                super::write_text_with_line_breaks(
+                                    f,
+                                    part,
+                                    allocator,
+                                    indent_width,
+                                );
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
@@ -132,7 +143,14 @@ pub(super) fn format_html_doc<'a>(
     });
 
     let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-    write_html_template(f, &format_content, has_leading_ws, has_trailing_ws, top_level_count, ws_ignore);
+    write_html_template(
+        f,
+        &format_content,
+        has_leading_ws,
+        has_trailing_ws,
+        top_level_count,
+        ws_ignore,
+    );
     true
 }
 
@@ -157,42 +175,36 @@ fn write_html_template<'a>(
 ) {
     if ws_ignore {
         // group(["`", indent([hardline, group(content)]), hardline, "`"])
-        write!(f, [group(&format_args!(
-            "`",
-            indent(&format_args!(hard_line_break(), group(content))),
-            hard_line_break(),
-            "`"
-        ))]);
+        write!(
+            f,
+            [group(&format_args!(
+                "`",
+                indent(&format_args!(hard_line_break(), group(content))),
+                hard_line_break(),
+                "`"
+            ))]
+        );
     } else if has_leading_ws && has_trailing_ws {
         // group(["`", indent([line, group(content)]), line, "`"])
         // `soft_line_break_or_space` = Prettier's `line`: space in flat mode, newline when expanded
-        write!(f, [group(&format_args!(
-            "`",
-            indent(&format_args!(soft_line_break_or_space(), group(content))),
-            soft_line_break_or_space(),
-            "`"
-        ))]);
+        write!(
+            f,
+            [group(&format_args!(
+                "`",
+                indent(&format_args!(soft_line_break_or_space(), group(content))),
+                soft_line_break_or_space(),
+                "`"
+            ))]
+        );
     } else {
         // group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])
         let leading = if has_leading_ws { " " } else { "" };
         let trailing = if has_trailing_ws { " " } else { "" };
         let use_indent = top_level_count.is_none_or(|c| c > 1);
         if use_indent {
-            write!(f, [group(&format_args!(
-                "`",
-                leading,
-                indent(&group(content)),
-                trailing,
-                "`"
-            ))]);
+            write!(f, [group(&format_args!("`", leading, indent(&group(content)), trailing, "`"))]);
         } else {
-            write!(f, [group(&format_args!(
-                "`",
-                leading,
-                group(content),
-                trailing,
-                "`"
-            ))]);
+            write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
         }
     }
 }

@@ -98,7 +98,12 @@ pub(super) fn format_css_doc<'a>(
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(f, part, allocator, indent_width);
+                                super::write_text_with_line_breaks(
+                                    f,
+                                    part,
+                                    allocator,
+                                    indent_width,
+                                );
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
