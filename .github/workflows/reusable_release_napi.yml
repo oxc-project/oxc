@@ -256,4 +256,4 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
