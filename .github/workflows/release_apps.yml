@@ -7,9 +7,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - npm/oxfmt/package.json
-      - npm/oxlint/package.json
+      - release-apps
+    # paths:
+    # - npm/oxfmt/package.json
+    # - npm/oxlint/package.json
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,22 +22,22 @@ jobs:
     name: Check version
     runs-on: ubuntu-slim
     outputs:
-      version_changed: ${{ steps.oxfmt.outputs.version_changed && steps.oxlint.outputs.version_changed }}
-      oxfmt_version: ${{ steps.oxfmt.outputs.version }}
-      oxlint_version: ${{ steps.oxlint.outputs.version }}
+      version_changed: true # ${{ steps.oxfmt.outputs.version_changed && steps.oxlint.outputs.version_changed }}
+      oxfmt_version: 0.37.0 # ${{ steps.oxfmt.outputs.version }}
+      oxlint_version: 1.52.0 # ${{ steps.oxlint.outputs.version }}
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
-      - uses: ./.github/actions/check-version
-        id: oxfmt
-        with:
-          file-name: npm/oxfmt/package.json
-          file-url: https://unpkg.com/oxfmt@latest/package.json
+      # - uses: ./.github/actions/check-version
+      # id: oxfmt
+      # with:
+      # file-name: npm/oxfmt/package.json
+      # file-url: https://unpkg.com/oxfmt@latest/package.json
 
-      - uses: ./.github/actions/check-version
-        id: oxlint
-        with:
-          file-name: npm/oxlint/package.json
-          file-url: https://unpkg.com/oxlint@latest/package.json
+      # - uses: ./.github/actions/check-version
+      # id: oxlint
+      # with:
+      # file-name: npm/oxlint/package.json
+      # file-url: https://unpkg.com/oxlint@latest/package.json
 
   build-oxlint:
     needs: check
