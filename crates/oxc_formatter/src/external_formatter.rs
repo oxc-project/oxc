@@ -16,13 +16,13 @@ pub type EmbeddedFormatterCallback =
 /// - CSS/HTML: single IR with placeholder survival count
 pub enum EmbeddedDocResult<'a> {
     MultipleDocs(Vec<Vec<FormatElement<'a>>>),
-    /// The count indicates how many placeholder patterns survived formatting.
-    /// The optional `top_level_count` is HTML-specific: the number of root children
-    /// in the parsed HTML, used to decide whether to indent the template content.
     DocWithPlaceholders {
         ir: Vec<FormatElement<'a>>,
+        /// This indicates how many placeholder patterns survived formatting.
         placeholder_count: usize,
-        top_level_count: Option<usize>,
+        /// HTML-specific: whether the parsed HTML has more than one root element.
+        /// Used to decide whether to `indent` the template content, `None` for non-HTML languages.
+        html_has_multiple_root_elements: Option<bool>,
     },
 }
 

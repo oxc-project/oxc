@@ -86,10 +86,21 @@ const categories: Category[] = [
         ext: ".js",
         excludes: ["format.test.js"],
       },
+      {
+        dir: join(FIXTURES_DIR, "webawesome"),
+        ext: ".ts",
+      },
       { dir: join(EDGE_CASES_DIR, "html-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
-    notes: {},
+    notes: {
+      "issue-10691.js":
+        "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
+      "relative-time/relative-time.test.ts":
+        "html-in-js: Need to solve `label({ embed, hug }))` + `shouldExpandLastArg`",
+      "slider/slider.ts":
+        "`@decorator` + union type: https://github.com/oxc-project/oxc/issues/20519",
+    },
   },
   {
     name: "xxx-in-js-comment",

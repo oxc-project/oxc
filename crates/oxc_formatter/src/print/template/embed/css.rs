@@ -95,11 +95,17 @@ pub(super) fn format_css_doc<'a>(
         for element in ir {
             match &element {
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts = split_on_placeholders(text);
+                    let parts =
+                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(f, part, allocator, indent_width);
+                                super::write_text_with_line_breaks(
+                                    f,
+                                    part,
+                                    allocator,
+                                    indent_width,
+                                );
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(&expr) = expressions.get(idx)
@@ -148,62 +154,4 @@ pub(super) fn format_css_doc<'a>(
 
     write!(f, ["`", block_indent(&format_content), "`"]);
     true
-}
-
-// ---
-
-/// Split text on `@prettier-placeholder-N-id` patterns.
-///
-/// Returns alternating parts: `[literal, index_str, literal, index_str, ...]`
-/// Similar to JavaScript `String.split(/(@prettier-placeholder-(\d+)-id)/)`
-/// but only captures the digit group (index).
-fn split_on_placeholders(text: &str) -> Vec<&str> {
-    let mut result = Vec::new();
-    let mut remaining = text;
-
-    loop {
-        let Some(start) = remaining.find(PLACEHOLDER_PREFIX) else {
-            result.push(remaining);
-            break;
-        };
-
-        // Push the literal before the placeholder
-        result.push(&remaining[..start]);
-
-        // Skip past the prefix
-        let after_prefix = &remaining[start + PLACEHOLDER_PREFIX.len()..];
-
-        // Find the digits
-        let digit_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-
-        if digit_end == 0 {
-            // No digits found after prefix — not a valid placeholder, treat as literal
-            if let Some(last) = result.last_mut() {
-                let end = start + PLACEHOLDER_PREFIX.len();
-                *last = &remaining[..end];
-            }
-            remaining = &remaining[start + PLACEHOLDER_PREFIX.len()..];
-            continue;
-        }
-
-        let digits = &after_prefix[..digit_end];
-        let after_digits = &after_prefix[digit_end..];
-
-        // Check for the `-id` suffix
-        if let Some(after_suffix) = after_digits.strip_prefix(PLACEHOLDER_SUFFIX) {
-            // Valid placeholder - push the digit index
-            result.push(digits);
-            remaining = after_suffix;
-        } else {
-            // Not a valid placeholder, include in the literal
-            let end = start + PLACEHOLDER_PREFIX.len() + digit_end;
-            if let Some(last) = result.last_mut() {
-                *last = &remaining[..end];
-            }
-            remaining = &remaining[end..];
-        }
-    }
-
-    result
 }

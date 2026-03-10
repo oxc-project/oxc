@@ -22,7 +22,7 @@ pub(super) fn try_format_embedded_template<'a>(
     match get_tag_name(&tagged.tag) {
         Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some("html") => try_embed_html(tagged, f),
+        Some("html") => html::format_html_doc(tagged.quasi(), f),
         Some("md" | "markdown") => try_embed_markdown(tagged, f),
         _ => false,
     }
@@ -71,7 +71,7 @@ pub(super) fn try_format_comment_embedded<'a>(
         return false;
     };
     match language {
-        "html" => try_embed_html_from_template(template, f),
+        "html" => html::format_html_doc(template, f),
         "graphql" => graphql::format_graphql_doc(template, f),
         _ => false,
     }
@@ -216,25 +216,6 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
 
 // ---
 
-fn try_embed_html_from_template<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    // TODO: Remove this check and use placeholder approach for expressions
-    if !template.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = template.quasis()[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-html", template_content)
-}
-
-fn try_embed_html<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    html::format_html_doc(tagged.quasi(), f)
-}
-
 fn try_embed_markdown<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
@@ -313,6 +294,77 @@ fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
     }
 
     result.into_str()
+}
+
+/// Split text on placeholder patterns, returning alternating parts:
+/// `[literal, index_str, literal, index_str, ...]`
+///
+/// Handles both:
+/// - CSS: `@prettier-placeholder-{N}-id`
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS`
+///
+/// The optional `_{digits}` counter group between index and suffix is skipped when present,
+/// so the same function works for both formats.
+fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&'a str> {
+    let mut result = vec![];
+    let mut remaining = text;
+
+    loop {
+        let Some(start) = remaining.find(prefix) else {
+            result.push(remaining);
+            break;
+        };
+
+        // Push the literal before the placeholder
+        result.push(&remaining[..start]);
+
+        // Skip past the prefix
+        let after_prefix = &remaining[start + prefix.len()..];
+
+        // Find the index digits
+        let digit_end =
+            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
+
+        if digit_end == 0 {
+            // No digits found after prefix — not a valid placeholder, treat as literal
+            if let Some(last) = result.last_mut() {
+                let end = start + prefix.len();
+                *last = &remaining[..end];
+            }
+            remaining = &remaining[start + prefix.len()..];
+            continue;
+        }
+
+        let digits = &after_prefix[..digit_end];
+        let mut after_digits = &after_prefix[digit_end..];
+
+        // Skip optional `_{digits}` (e.g., HTML counter `_0`)
+        if let Some(after_underscore) = after_digits.strip_prefix('_') {
+            let counter_end = after_underscore
+                .bytes()
+                .position(|b| !b.is_ascii_digit())
+                .unwrap_or(after_underscore.len());
+            if counter_end > 0 {
+                after_digits = &after_underscore[counter_end..];
+            }
+        }
+
+        // Check for the suffix
+        if let Some(after_suffix) = after_digits.strip_prefix(suffix) {
+            // Valid placeholder — push the digit index
+            result.push(digits);
+            remaining = after_suffix;
+        } else {
+            // Not a valid placeholder, include in the literal
+            let end = start + prefix.len() + digit_end;
+            if let Some(last) = result.last_mut() {
+                *last = &remaining[..end];
+            }
+            remaining = &remaining[end..];
+        }
+    }
+
+    result
 }
 
 /// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).

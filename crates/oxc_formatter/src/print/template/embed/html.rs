@@ -1,11 +1,19 @@
+use cow_utils::CowUtils;
+
 use oxc_allocator::StringBuilder;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
     external_formatter::EmbeddedDocResult,
     format_args,
-    formatter::{FormatElement, Formatter, prelude::*},
+    formatter::{
+        FormatElement, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*,
+        trivia::FormatTrailingComments,
+    },
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -44,17 +52,30 @@ pub(super) fn format_html_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, top_level_count, .. })) = f
-            .context()
-            .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "tagged-html", &[cooked])
+        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
+            ir,
+            html_has_multiple_root_elements,
+            ..
+        })) = f.context().external_callbacks().format_embedded_doc(
+            allocator,
+            group_id_builder,
+            "tagged-html",
+            &[cooked],
+        )
         else {
             return false;
         };
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-        write_html_template(f, &content, has_leading_ws, has_trailing_ws, top_level_count, ws_ignore);
+        write_html_template(
+            f,
+            &content,
+            has_leading_ws,
+            has_trailing_ws,
+            html_has_multiple_root_elements.unwrap_or(true),
+            ws_ignore,
+        );
         return true;
     }
 
@@ -88,13 +109,26 @@ pub(super) fn format_html_doc<'a>(
     let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
         ir,
         placeholder_count,
-        top_level_count,
-    })) = f
-        .context()
-        .external_callbacks()
-        .format_embedded_doc(allocator, group_id_builder, "tagged-html", &[joined])
+        html_has_multiple_root_elements,
+    })) = f.context().external_callbacks().format_embedded_doc(
+        allocator,
+        group_id_builder,
+        "tagged-html",
+        &[joined],
+    )
     else {
-        return false;
+        // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
+        // returned Prettier's `Doc` output may contain `conditionalGroup`.
+        // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
+        // So `format_embedded_doc()` will return `Err`.
+        //
+        // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
+        // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
+        // so for now, fall back to string-based rather than give up entirely.
+        // Of course, there will be formatting differences.
+        // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
+        // but it also requires placeholder replacement, which is non-trivial.
+        return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 
     // Verify all placeholders survived HTML formatting.
@@ -108,33 +142,127 @@ pub(super) fn format_html_doc<'a>(
         for element in ir {
             match &element {
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts = split_on_placeholders(text);
+                    let parts =
+                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(f, part, allocator, indent_width);
+                                super::write_text_with_line_breaks(
+                                    f,
+                                    part,
+                                    allocator,
+                                    indent_width,
+                                );
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
                         {
-                            write!(
-                                f,
-                                [group(&format_args!("${", expr, line_suffix_boundary(), "}"))]
-                            );
+                            // Format `${expr}` directly (like css-in-js, see `css.rs`)
+                            // instead of using `FormatTemplateExpression` which adds
+                            // `soft_block_indent` that causes double-indentation
+                            // for e.g. `ConditionalExpression`.
+                            //
+                            // Detect comments between expr and `}` for wrapping.
+                            // Use `expr.span().end` (not `.start`) to only find
+                            // comments BETWEEN the expr and `}`, not INSIDE the expression.
+                            let has_comment = {
+                                let comments = f.context().comments();
+                                !comments.comments_before(expr.span().start).is_empty()
+                                    || !comments
+                                        .comments_before_character(expr.span().end, b'}')
+                                        .is_empty()
+                            };
+
+                            if has_comment {
+                                // Intern with explicit comment handling
+                                // (same pattern as `FormatTemplateExpression`):
+                                // 1. `FormatNodeWithoutTrailingComments` sets
+                                //    `view_limit` to hide trailing comments
+                                // 2. After `view_limit` is restored,
+                                //    format trailing comments explicitly via `FormatTrailingComments`
+                                //
+                                // This ensures trailing comments between expr and `}`
+                                // stay with this expression and don't shift to the next.
+                                let trailing_comments = f
+                                    .context()
+                                    .comments()
+                                    .comments_before_character(expr.span().end, b'}');
+                                let has_trailing = !trailing_comments.is_empty();
+
+                                let interned = f.intern(&format_once(|f| {
+                                    FormatNodeWithoutTrailingComments(expr).fmt(f);
+                                    // After `view_limit` is restored by `FormatNodeWithoutTrailingComments`,
+                                    // trailing comments are visible again for `FormatTrailingComments` to consume.
+                                    let trailing = f
+                                        .context()
+                                        .comments()
+                                        .comments_before_character(expr.span().end, b'}');
+                                    FormatTrailingComments::Comments(trailing).fmt(f);
+                                }));
+
+                                // When source has newlines around the expression,
+                                // use `RemoveSoftLinesBuffer` to keep it flat while
+                                // preserving hard line breaks (from comments).
+                                // Otherwise let it break naturally based on line width.
+                                let has_newline = has_trailing
+                                    && (f.source_text().has_newline_before(expr.span().start)
+                                        || f.source_text().has_newline_after(expr.span().end));
+
+                                let format_expr = format_with(|f| {
+                                    let Some(element) = &interned else { return };
+                                    write!(
+                                        f,
+                                        [
+                                            indent(&format_args!(
+                                                soft_line_break(),
+                                                format_with(|f| {
+                                                    if has_newline {
+                                                        let mut buffer =
+                                                            RemoveSoftLinesBuffer::new(f);
+                                                        buffer.write_element(element.clone());
+                                                    } else {
+                                                        f.write_element(element.clone());
+                                                    }
+                                                }),
+                                                line_suffix_boundary()
+                                            )),
+                                            soft_line_break()
+                                        ]
+                                    );
+                                });
+                                write!(f, [group(&format_args!("${", format_expr, "}"))]);
+                            } else {
+                                write!(
+                                    f,
+                                    [group(&format_args!(
+                                        "${",
+                                        *expr,
+                                        line_suffix_boundary(),
+                                        "}"
+                                    ))]
+                                );
+                            }
                         }
                     }
                 }
-                _ => {
-                    f.write_element(element);
-                }
+                _ => f.write_element(element),
             }
         }
     });
 
     let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-    write_html_template(f, &format_content, has_leading_ws, has_trailing_ws, top_level_count, ws_ignore);
+    write_html_template(
+        f,
+        &format_content,
+        has_leading_ws,
+        has_trailing_ws,
+        html_has_multiple_root_elements.unwrap_or(true),
+        ws_ignore,
+    );
     true
 }
+
+// ---
 
 /// Write the HTML template with appropriate wrapping based on whitespace and top-level count.
 ///
@@ -146,119 +274,86 @@ pub(super) fn format_html_doc<'a>(
 ///     → `line` becomes a space in flat mode, newline when expanded
 ///   - Otherwise: `group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])`
 ///     → content hugs the backtick directly
-///     → `topLevelCount > 1` wraps with `indent`, `topLevelCount <= 1` does not
+///     → multiple root elements wraps with `indent`, single does not
 fn write_html_template<'a>(
     f: &mut Formatter<'_, 'a>,
     content: &impl Format<'a>,
     has_leading_ws: bool,
     has_trailing_ws: bool,
-    top_level_count: Option<usize>,
+    has_multiple_root_elements: bool,
     ws_ignore: bool,
 ) {
     if ws_ignore {
         // group(["`", indent([hardline, group(content)]), hardline, "`"])
-        write!(f, [group(&format_args!(
-            "`",
-            indent(&format_args!(hard_line_break(), group(content))),
-            hard_line_break(),
-            "`"
-        ))]);
+        write!(
+            f,
+            [group(&format_args!(
+                "`",
+                indent(&format_args!(hard_line_break(), group(content))),
+                hard_line_break(),
+                "`"
+            ))]
+        );
     } else if has_leading_ws && has_trailing_ws {
         // group(["`", indent([line, group(content)]), line, "`"])
         // `soft_line_break_or_space` = Prettier's `line`: space in flat mode, newline when expanded
-        write!(f, [group(&format_args!(
-            "`",
-            indent(&format_args!(soft_line_break_or_space(), group(content))),
-            soft_line_break_or_space(),
-            "`"
-        ))]);
+        write!(
+            f,
+            [group(&format_args!(
+                "`",
+                indent(&format_args!(soft_line_break_or_space(), group(content))),
+                soft_line_break_or_space(),
+                "`"
+            ))]
+        );
     } else {
         // group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])
         let leading = if has_leading_ws { " " } else { "" };
         let trailing = if has_trailing_ws { " " } else { "" };
-        let use_indent = top_level_count.is_none_or(|c| c > 1);
-        if use_indent {
-            write!(f, [group(&format_args!(
-                "`",
-                leading,
-                indent(&group(content)),
-                trailing,
-                "`"
-            ))]);
+        if has_multiple_root_elements {
+            write!(f, [group(&format_args!("`", leading, indent(&group(content)), trailing, "`"))]);
         } else {
-            write!(f, [group(&format_args!(
-                "`",
-                leading,
-                group(content),
-                trailing,
-                "`"
-            ))]);
+            write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
         }
     }
 }
 
-// ---
+/// Fallback formatting for JS-in-HTML-in-JS cases where
+/// Prettier's HTML formatting returns unsupported IR (e.g. with `conditionalGroup`).
+fn format_js_in_html_as_fallback<'a>(
+    joined: &str,
+    expressions: &[&AstNode<'a, Expression<'a>>],
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let Some(Ok(formatted)) =
+        f.context().external_callbacks().format_embedded("tagged-html", joined)
+    else {
+        return false;
+    };
 
-/// Split text on `PRETTIER_HTML_PLACEHOLDER_N_C_IN_JS` patterns.
-///
-/// Returns alternating parts: `[literal, index_str, literal, index_str, ...]`
-fn split_on_placeholders(text: &str) -> Vec<&str> {
-    let mut result = Vec::new();
-    let mut remaining = text;
-
-    loop {
-        let Some(start) = remaining.find(PLACEHOLDER_PREFIX) else {
-            result.push(remaining);
-            break;
-        };
-
-        // Push the literal before the placeholder
-        result.push(&remaining[..start]);
-
-        // Skip past the prefix
-        let after_prefix = &remaining[start + PLACEHOLDER_PREFIX.len()..];
-
-        // Find the index digits
-        let digit_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-
-        if digit_end == 0 {
-            // No digits found after prefix - not a valid placeholder, treat as literal
-            if let Some(last) = result.last_mut() {
-                let end = start + PLACEHOLDER_PREFIX.len();
-                *last = &remaining[..end];
-            }
-            remaining = &remaining[start + PLACEHOLDER_PREFIX.len()..];
-            continue;
+    // Replace placeholders with `${source_text}` from the original expressions
+    let mut result = formatted;
+    for (idx, expr) in expressions.iter().enumerate() {
+        let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}_{COUNTER}{PLACEHOLDER_SUFFIX}");
+        if !result.contains(&placeholder) {
+            return false;
         }
-
-        let digits = &after_prefix[..digit_end];
-        let after_digits = &after_prefix[digit_end..];
-
-        // Check for `_{counter}_IN_JS` suffix
-        if let Some(after_underscore) = after_digits.strip_prefix('_') {
-            let counter_end = after_underscore
-                .bytes()
-                .position(|b| !b.is_ascii_digit())
-                .unwrap_or(after_underscore.len());
-            if counter_end > 0 {
-                let after_counter = &after_underscore[counter_end..];
-                if let Some(after_suffix) = after_counter.strip_prefix(PLACEHOLDER_SUFFIX) {
-                    // Valid placeholder - push the digit index
-                    result.push(digits);
-                    remaining = after_suffix;
-                    continue;
-                }
-            }
-        }
-
-        // Not a valid placeholder, include in the literal
-        let end = start + PLACEHOLDER_PREFIX.len() + digit_end;
-        if let Some(last) = result.last_mut() {
-            *last = &remaining[..end];
-        }
-        remaining = &remaining[end..];
+        let source = f.source_text().text_for(expr);
+        result = result.cow_replace(&placeholder, &format!("${{{source}}}")).into_owned();
     }
 
-    result
+    // Write line by line, same as `format_embedded_template()`
+    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
+        let content = f.context().allocator().alloc_str(&result);
+        for line in LineTerminatorSplitter::new(content) {
+            if line.is_empty() {
+                write!(f, [empty_line()]);
+            } else {
+                write!(f, [text(line), hard_line_break()]);
+            }
+        }
+    });
+
+    write!(f, ["`", block_indent(&format_content), "`"]);
+    true
 }
