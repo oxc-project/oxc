@@ -762,7 +762,17 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
                     !integer_index_property_access_may_have_side_effects(&self.object, b, ctx)
                 })
             }
-            _ => true,
+            _ => {
+                // Non-literal keys (e.g. `obj[expr]`) may trigger toString/valueOf on the key,
+                // which is a side effect. But if property read side effects are disabled,
+                // only check the key expression and object for their own side effects.
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    self.expression.may_have_side_effects(ctx)
+                        || self.object.may_have_side_effects(ctx)
+                } else {
+                    true
+                }
+            }
         }
     }
 }
