@@ -1,3 +1,27 @@
+## json
+
+### Option 1: 47/49 (95.92%)
+
+```json
+{"printWidth":80}
+```
+
+| File | Note |
+| :--- | :--- |
+| [json/json/json6.json](diffs/json/json__json__json6.json.md) |  |
+| [json/json/pass1.json](diffs/json/json__json__pass1.json.md) |  |
+
+### Option 2: 47/49 (95.92%)
+
+```json
+{"printWidth":100}
+```
+
+| File | Note |
+| :--- | :--- |
+| [json/json/json6.json](diffs/json/json__json__json6.json.md) |  |
+| [json/json/pass1.json](diffs/json/json__json__pass1.json.md) |  |
+
 ## js-in-vue
 
 ### Option 1: 423/425 (99.53%)

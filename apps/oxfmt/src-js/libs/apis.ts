@@ -57,11 +57,32 @@ export type FormatFileParam = {
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = await loadPrettier();
 
+  // Check if Rust side wants Doc JSON instead of formatted code
+  const returnDoc = "_returnDoc" in options;
+  if (returnDoc) delete (options as Record<string, unknown>)._returnDoc;
+
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
   // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
   // NOTE: This must be last since Prettier plugins are applied in order
   await setupOxfmtPlugin(options);
+
+  if (returnDoc) {
+    // @ts-expect-error: Use internal API to get `Doc`
+    const doc = await prettier.__debug.printToDoc(code, options);
+
+    const symbolToNumber = new Map<symbol, number>();
+    let nextId = 1;
+
+    return JSON.stringify(doc, (_key, value) => {
+      if (typeof value === "symbol") {
+        if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
+        return symbolToNumber.get(value);
+      }
+      if (value === -Infinity) return "__NEGATIVE_INFINITY__";
+      return value;
+    });
+  }
 
   return prettier.format(code, options);
 }

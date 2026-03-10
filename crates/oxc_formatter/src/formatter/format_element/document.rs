@@ -53,23 +53,39 @@ impl Document<'_> {
     ///
     /// [`BestFitting`]: FormatElement::BestFitting
     pub(crate) fn propagate_expand(&self) {
-        #[derive(Debug)]
-        enum Enclosing<'a> {
-            Group(&'a tag::Group),
-            BestFitting,
-        }
+        propagate_expand_elements(self);
+    }
+}
 
-        fn expand_parent(enclosing: &[Enclosing]) {
-            if let Some(Enclosing::Group(group)) = enclosing.last() {
-                group.propagate_expand();
-            }
-        }
+/// Propagates expand from child elements to parent groups.
+///
+/// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
+/// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
+/// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard], [LineMode::Empty], or [LineMode::Literal].
+/// * a [FormatElement::ExpandParent]
+///
+/// [`BestFitting`] elements act as expand boundaries, meaning that the fact that a
+/// [`BestFitting`]'s content expands is not propagated past the [`BestFitting`] element.
+///
+/// [`BestFitting`]: FormatElement::BestFitting
+pub fn propagate_expand_elements(elements: &[FormatElement]) {
+    #[derive(Debug)]
+    enum Enclosing<'a> {
+        Group(&'a tag::Group),
+        BestFitting,
+    }
 
-        fn propagate_expands<'a>(
-            elements: &'a [FormatElement<'a>],
-            enclosing: &mut Vec<Enclosing<'a>>,
-            checked_interned: &mut FxHashMap<&'a Interned<'a>, bool>,
-        ) -> bool {
+    fn expand_parent(enclosing: &[Enclosing]) {
+        if let Some(Enclosing::Group(group)) = enclosing.last() {
+            group.propagate_expand();
+        }
+    }
+
+    fn propagate_expands<'a>(
+        elements: &'a [FormatElement<'a>],
+        enclosing: &mut Vec<Enclosing<'a>>,
+        checked_interned: &mut FxHashMap<&'a Interned<'a>, bool>,
+    ) -> bool {
             let mut expands = false;
             for element in elements {
                 let element_expands = match element {
@@ -152,10 +168,9 @@ impl Document<'_> {
             expands
         }
 
-        let mut enclosing: Vec<Enclosing> = Vec::new();
-        let mut interned = FxHashMap::default();
-        propagate_expands(self, &mut enclosing, &mut interned);
-    }
+    let mut enclosing: Vec<Enclosing> = Vec::new();
+    let mut interned = FxHashMap::default();
+    propagate_expands(elements, &mut enclosing, &mut interned);
 }
 
 impl<'a> Deref for Document<'a> {

@@ -5,11 +5,49 @@ use tracing::instrument;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter::{
+    FormatOptions, Formatter, PrinterOptions, UniqueGroupIdBuilder, enable_jsx_source_type,
+    get_parse_options, propagate_expand_elements,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+use oxc_formatter::{IndentStyle, IndentWidth, LineEnding};
+
 use super::{FormatFileStrategy, ResolvedOptions};
+
+/// Extract `PrinterOptions` from Prettier-compatible external options JSON.
+#[cfg(feature = "napi")]
+fn external_options_to_printer_options(options: &Value) -> PrinterOptions {
+    let mut printer = PrinterOptions::default();
+
+    if let Some(obj) = options.as_object() {
+        if let Some(w) = obj.get("printWidth").and_then(|v| v.as_u64()) {
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                printer.print_width = oxc_formatter::PrintWidth::new(w as u32);
+            }
+        }
+        if let Some(use_tabs) = obj.get("useTabs").and_then(|v| v.as_bool()) {
+            printer.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+        }
+        if let Some(tw) = obj.get("tabWidth").and_then(|v| v.as_u64()) {
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                printer.indent_width = IndentWidth::try_from(tw as u8).unwrap_or_default();
+            }
+        }
+        if let Some(eol) = obj.get("endOfLine").and_then(|v| v.as_str()) {
+            printer.line_ending = match eol {
+                "crlf" => LineEnding::Crlf,
+                "cr" => LineEnding::Cr,
+                _ => LineEnding::Lf,
+            };
+        }
+    }
+
+    printer
+}
 
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
@@ -236,22 +274,25 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
+        // Experimental: Use Doc path for JSON files
+        let use_doc_path = matches!(parser_name, "json" | "json-stringify" | "json5");
+
         // Set `parser` and `filepath` on options for Prettier.
         // We specify `parser` to skip parser inference for perf,
         // and `filepath` because some plugins depend on it.
         if let Value::Object(ref mut map) = external_options {
             map.insert("parser".to_string(), Value::String(parser_name.to_string()));
             map.insert("filepath".to_string(), Value::String(path.to_string_lossy().to_string()));
+            if use_doc_path {
+                map.insert("_returnDoc".to_string(), Value::Bool(true));
+            }
         }
 
-        external_formatter.format_file(external_options, source_text).map_err(|err| {
-            // NOTE: We are trying to make the error from oxc_formatter and external_formatter (Prettier) look similar.
-            // Ideally, we would unify them into `OxcDiagnostic`,
-            // which would eliminate the need for relative path conversion.
-            // However, doing so would require:
-            // - Parsing Prettier's error messages
-            // - Converting span information from UTF-16 to UTF-8
-            // This is a non-trivial amount of work, so for now, just leave this as a best effort.
+        // Extract printer options before moving external_options
+        let printer_options =
+            if use_doc_path { Some(external_options_to_printer_options(&external_options)) } else { None };
+
+        let result = external_formatter.format_file(external_options, source_text).map_err(|err| {
             let relative = std::env::current_dir()
                 .ok()
                 .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
@@ -262,7 +303,44 @@ impl SourceFormatter {
                 format!("{err}\n[{display_path}]")
             };
             OxcDiagnostic::error(message)
-        })
+        })?;
+
+        if let Some(printer_options) = printer_options {
+            self.print_doc_json(&result, &printer_options)
+                .map_err(|err| OxcDiagnostic::error(format!("Doc path failed for {}: {err}", path.display())))
+        } else {
+            Ok(result)
+        }
+    }
+
+    /// Convert Doc JSON string to formatted code via IR.
+    fn print_doc_json(
+        &self,
+        doc_json_str: &str,
+        printer_options: &PrinterOptions,
+    ) -> Result<String, String> {
+        use crate::prettier_compat::from_prettier_doc;
+        use oxc_formatter::Printer;
+
+        let allocator = self.allocator_pool.get();
+        let group_id_builder = UniqueGroupIdBuilder::default();
+
+        let doc_json: serde_json::Value =
+            serde_json::from_str(doc_json_str).map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
+
+        let elements = from_prettier_doc::to_format_elements_for_file(
+            &doc_json,
+            &allocator,
+            &group_id_builder,
+        )?;
+
+        propagate_expand_elements(&elements);
+
+        let printed = Printer::new(printer_options.clone(), &[])
+            .print(&elements)
+            .map_err(|e| format!("Failed to print: {e}"))?;
+
+        Ok(printed.into_code())
     }
 
     /// Format `package.json`: optionally sort then format by external formatter.

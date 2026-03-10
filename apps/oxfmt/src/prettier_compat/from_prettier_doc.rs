@@ -14,6 +14,51 @@ use oxc_formatter::{
 /// See `src-js/lib/apis.ts` for details.
 const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 
+/// Converts a Prettier Doc JSON value into [`FormatElement`]s for an entire file.
+///
+/// Unlike [`to_format_elements_for_template`], this does not apply template-specific
+/// postprocessing (escape template characters, count placeholders, strip trailing hardlines).
+pub fn to_format_elements_for_file<'a>(
+    doc_json: &Value,
+    allocator: &'a Allocator,
+    group_id_builder: &UniqueGroupIdBuilder,
+) -> Result<Vec<FormatElement<'a>>, String> {
+    let mut ctx = FmtCtx::new(allocator, group_id_builder);
+    let mut out = vec![];
+    convert_doc(doc_json, &mut out, &mut ctx)?;
+    collapse_double_hardlines(&mut out);
+    Ok(out)
+}
+
+/// Collapse double-hardline sequences `[Hard, ExpandParent, Hard, ExpandParent]`
+/// into `[Empty, ExpandParent]` (empty line).
+///
+/// This is the subset of [`postprocess`] that applies to file-level formatting.
+fn collapse_double_hardlines(ir: &mut Vec<FormatElement>) {
+    let mut write = 0;
+    let mut read = 0;
+    while read < ir.len() {
+        if read + 3 < ir.len()
+            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 1], FormatElement::ExpandParent)
+            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 3], FormatElement::ExpandParent)
+        {
+            ir[write] = FormatElement::Line(LineMode::Empty);
+            ir[write + 1] = FormatElement::ExpandParent;
+            write += 2;
+            read += 4;
+        } else {
+            if write != read {
+                ir[write] = ir[read].clone();
+            }
+            write += 1;
+            read += 1;
+        }
+    }
+    ir.truncate(write);
+}
+
 /// Converts parsed Prettier Doc JSON values into an [`EmbeddedDocResult`].
 ///
 /// Handles language-specific processing:
