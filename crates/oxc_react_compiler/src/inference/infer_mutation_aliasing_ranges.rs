@@ -408,7 +408,7 @@ fn is_jsx_type(identifier: &Identifier) -> bool {
 // Direction / QueueEntry for mutate() BFS
 // =====================================================================================
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Direction {
     Backwards,
     Forwards,
@@ -559,7 +559,6 @@ pub fn infer_mutation_aliasing_ranges(
         }
         seen_blocks.insert(block_id);
 
-        // Process instruction effects
         // Helper: remap SSA-renamed context variable ids back to original ids
         let remap = |place: &Place| -> Place {
             if let Some(&original_id) = ctx_ssa_remap.get(&place.identifier.id) {

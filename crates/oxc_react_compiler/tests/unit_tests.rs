@@ -1729,6 +1729,76 @@ function Component(props) {
         );
     }
 
+    /// Date.now() should produce a Purity error when validateNoImpureFunctionsInRender is enabled.
+    #[test]
+    fn test_date_now_impure_detection() {
+        let config = EnvironmentConfig {
+            validate_no_impure_functions_in_render: true,
+            ..EnvironmentConfig::default()
+        };
+        let source = r#"function Component() {
+  const t = Date.now();
+  return <div>{t}</div>;
+}"#;
+        let result = compile_component_with_env(source, config);
+        assert!(result.is_err(), "Should produce an error for Date.now(), got success");
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("impure") || err.contains("Impure") || err.contains("Purity"),
+            "Expected an impure function error for Date.now(): {err}"
+        );
+    }
+
+    /// Date.now() should NOT produce an error when validateNoImpureFunctionsInRender is disabled.
+    #[test]
+    fn test_date_now_no_error_when_disabled() {
+        let source = r#"function Component() {
+  const t = Date.now();
+  return <div>{t}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Should succeed when impure validation is disabled, got: {}",
+            result.unwrap_err()
+        );
+    }
+
+    /// performance.now() should produce a Purity error when validateNoImpureFunctionsInRender is enabled.
+    #[test]
+    fn test_performance_now_impure_detection() {
+        let config = EnvironmentConfig {
+            validate_no_impure_functions_in_render: true,
+            ..EnvironmentConfig::default()
+        };
+        let source = r#"function Component() {
+  const t = performance.now();
+  return <div>{t}</div>;
+}"#;
+        let result = compile_component_with_env(source, config);
+        assert!(result.is_err(), "Should produce an error for performance.now(), got success");
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("impure") || err.contains("Impure") || err.contains("Purity"),
+            "Expected an impure function error for performance.now(): {err}"
+        );
+    }
+
+    /// performance.now() should NOT produce an error when validateNoImpureFunctionsInRender is disabled.
+    #[test]
+    fn test_performance_now_no_error_when_disabled() {
+        let source = r#"function Component() {
+  const t = performance.now();
+  return <div>{t}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Should succeed when impure validation is disabled, got: {}",
+            result.unwrap_err()
+        );
+    }
+
     // =========================================================================
     // Test 5: Refs false negative fix (Job 1 regression test)
     // =========================================================================
@@ -1828,5 +1898,173 @@ function Component(props) {
         let result = compile_component(source);
         // Constructor calls should not cause type inference issues
         let _ = result;
+    }
+
+    /// Destructuring default with non-reorderable expression (arrow function)
+    /// should produce a Todo error, matching TS lowerReorderableExpression.
+    #[test]
+    fn test_destructuring_default_non_reorderable_arrow() {
+        let source = r#"function Component({ onComplete = () => void 0 }) {
+  return <div onClick={onComplete} />;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Non-reorderable destructuring default should cause an error, got:\n{}",
+            result.unwrap()
+        );
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("cannot be safely reordered"),
+            "Error should mention reorderability, got:\n{err}"
+        );
+    }
+
+    /// Destructuring default with a literal (reorderable) should compile fine.
+    #[test]
+    fn test_destructuring_default_reorderable_literal() {
+        let source = r#"function Component({ value = 0 }) {
+  return <div>{value}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Literal destructuring default should be reorderable: {}",
+            result.unwrap_err()
+        );
+    }
+
+    /// Destructuring default with unary `!` (reorderable) should compile fine.
+    #[test]
+    fn test_destructuring_default_reorderable_unary_not() {
+        let source = r#"function Component({ flag = !false }) {
+  return <div>{String(flag)}</div>;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_ok(),
+            "Unary ! destructuring default should be reorderable: {}",
+            result.unwrap_err()
+        );
+    }
+
+    /// Known limitation: useMemo with destructured hook parameter values may produce
+    /// a false-positive PreserveManualMemo error when the destructured values are
+    /// primitive types (like numbers). The TS compiler has access to TypeScript type
+    /// annotations and infers these as TPrimitive, giving them trivial mutable ranges
+    /// and no reactive scopes. The Rust compiler lacks TS type info, so these values
+    /// get wide mutable ranges and reactive scopes that span the whole function,
+    /// causing the "dependency may be mutated later" check to fire incorrectly.
+    ///
+    /// Root cause: InferMutationAliasingRanges gives `player` (destructured from a
+    /// typed parameter `unit: Unit`) mutable_range [12, 115) in Rust vs a narrow
+    /// range in TS (because TS knows player is a number/primitive). This causes
+    /// InferReactiveScopeVariables to assign a scope that spans the whole function.
+    /// In ValidatePreservedManualMemoization, the scope isn't completed before
+    /// StartMemoize, so the check fires.
+    ///
+    /// This test documents the known divergence. When TypeScript type integration
+    /// is added (or a targeted fix is implemented), this test should be updated to
+    /// Regression test: destructured parameter used in useMemo + useEffect should not
+    /// produce false positive PreserveManualMemo error.
+    #[test]
+    fn test_no_false_positive_preserve_memo_destructured_param() {
+        // Regression: `player` (destructured from `unit`) was getting a wide mutable range
+        // because Assign effects from LoadLocal weren't filtered for Primitive sources.
+        let source = r#"import { useMemo, useState, useEffect } from 'react';
+export default function useUnitState(unit, biome) {
+  const { info, player } = unit;
+  const [currentState, setUnitState] = useState({ type: 'idle' });
+  const { type, ...props } = currentState;
+
+  const [entity, map] = useMemo(() => {
+    let entity = info.create(player);
+    if (unit.isTransportingUnits()) {
+      entity = entity.copy({ transports: unit.transports });
+    }
+    return [entity, makeMap(biome, ImmutableMap([[1, entity]]))];
+  }, [info, biome, player, type, unit]);
+
+  useEffect(() => {
+    if (player > 0) {
+      const interval = setInterval(() => {
+        setUnitState(getNext(currentState, entity));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [currentState, entity, player]);
+
+  return [entity, map, props];
+}"#;
+        let config = EnvironmentConfig {
+            validate_preserve_existing_memoization_guarantees: true,
+            enable_preserve_existing_memoization_guarantees: true,
+            ..EnvironmentConfig::default()
+        };
+        let allocator = oxc_allocator::Allocator::default();
+        let source_type = oxc_span::SourceType::jsx();
+        let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        assert!(parser_result.errors.is_empty());
+
+        let func = parser_result
+            .program
+            .body
+            .iter()
+            .find_map(|stmt| match stmt {
+                oxc_ast::ast::Statement::ExportDefaultDeclaration(e) => {
+                    match &e.declaration {
+                        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                            Some(oxc_react_compiler::hir::build_hir::LowerableFunction::Function(f))
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            })
+            .expect("No function found");
+
+        let env = oxc_react_compiler::hir::environment::Environment::new(
+            oxc_react_compiler::hir::ReactFunctionType::Hook,
+            oxc_react_compiler::hir::environment::CompilerOutputMode::Lint,
+            config,
+        )
+        .unwrap();
+
+        let outer_bindings =
+            oxc_react_compiler::hir::build_hir::collect_import_bindings(&parser_result.program.body);
+        let mut hir_func = oxc_react_compiler::hir::build_hir::lower(
+            &env,
+            oxc_react_compiler::hir::ReactFunctionType::Hook,
+            &func,
+            outer_bindings,
+        )
+        .expect("Lower failed");
+
+        let pipeline_result =
+            oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env);
+
+        // Collect ALL errors
+        let mut all_errors = String::new();
+        match pipeline_result {
+            Ok(output) => {
+                if let Some(recorded) = output.recorded_errors {
+                    all_errors.push_str(&format!("{recorded:?}"));
+                }
+            }
+            Err(error) => {
+                all_errors.push_str(&format!("{error:?}"));
+            }
+        }
+        for diag in hir_func.env.take_diagnostics() {
+            all_errors.push_str(&format!("{diag:?}"));
+        }
+
+        // Regression test: previously produced a false positive PreserveManualMemo because
+        // `player`'s Assign effect from LoadLocal wasn't filtered for Primitive sources,
+        // creating spurious alias edges that widened its mutable range.
+        assert!(
+            !all_errors.contains("PreserveManualMemo"),
+            "Should NOT produce PreserveManualMemo false positive, got: {all_errors}"
+        );
     }
 }

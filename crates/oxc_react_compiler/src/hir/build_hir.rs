@@ -798,6 +798,23 @@ fn lower_assignment_pattern_declaration(
 ) -> Result<(), CompilerError> {
     let pat_loc = span_to_loc(assign_pat.span);
 
+    // TS: lowerReorderableExpression checks isReorderableExpression and pushes a Todo
+    // error if the expression cannot be safely reordered (BuildHIR.ts line 4297).
+    // Destructuring default values are evaluated out of order, so we restrict them
+    // to reorderable expressions.
+    if !is_reorderable_expression(&assign_pat.right, true) {
+        let expr_type_name = expression_type_name(&assign_pat.right);
+        builder.errors.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+            category: ErrorCategory::Todo,
+            reason: format!(
+                "(BuildHIR::node.lowerReorderableExpression) Expression type `{expr_type_name}` cannot be safely reordered",
+            ),
+            description: None,
+            loc: Some(span_to_loc(assign_pat.right.span())),
+            suggestions: None,
+        }));
+    }
+
     // Create a temporary to hold the resolved value (either the provided value or the default).
     // Use an unnamed temporary (matching TS `buildTemporaryPlace`) so the ternary
     // result gets inlined into the declaration during codegen.
@@ -7924,6 +7941,32 @@ fn is_reorderable_expression(expr: &ast::Expression<'_>, allow_local_identifiers
                         is_reorderable_expression(other.to_expression(), allow_local_identifiers)
                     }
                 })
+        }
+        // MemberExpression: reorderable if the innermost object is a global-like identifier
+        // (i.e., not a locally bound variable). Since we can't resolve bindings here without
+        // builder context, we use `allow_local_identifiers` to decide — when called from
+        // destructuring defaults (allow_local_identifiers=true), member expressions on local
+        // variables are considered reorderable. This matches TS behavior where the check
+        // resolves identifiers against the scope (BuildHIR.ts lines 3219-3240).
+        ast::Expression::StaticMemberExpression(member) => {
+            let mut inner: &ast::Expression<'_> = &member.object;
+            while let ast::Expression::StaticMemberExpression(m) = inner {
+                inner = &m.object;
+            }
+            if let ast::Expression::ComputedMemberExpression(m) = inner {
+                inner = &m.object;
+            }
+            matches!(inner, ast::Expression::Identifier(_)) && allow_local_identifiers
+        }
+        ast::Expression::ComputedMemberExpression(member) => {
+            let mut inner: &ast::Expression<'_> = &member.object;
+            while let ast::Expression::StaticMemberExpression(m) = inner {
+                inner = &m.object;
+            }
+            if let ast::Expression::ComputedMemberExpression(m) = inner {
+                inner = &m.object;
+            }
+            matches!(inner, ast::Expression::Identifier(_)) && allow_local_identifiers
         }
         // FunctionExpression and all other expression types are NOT reorderable.
         _ => false,
