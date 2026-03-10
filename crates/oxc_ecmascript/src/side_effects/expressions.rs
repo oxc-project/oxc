@@ -65,6 +65,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::CallExpression(e) => e.may_have_side_effects(ctx),
             Expression::NewExpression(e) => e.may_have_side_effects(ctx),
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
+            Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
+            Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
     }
@@ -722,6 +724,51 @@ impl<'a> MayHaveSideEffects<'a> for TaggedTemplateExpression<'a> {
             self.quasi.may_have_side_effects(ctx)
         } else {
             true
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for AssignmentExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression writes are considered free.
+        // Other writes (to variables, destructuring targets) still have side effects.
+        match &self.left {
+            AssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+                    || e.expression.may_have_side_effects(ctx)
+                    || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            _ => true,
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression updates are considered free.
+        match &self.argument {
+            SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            _ => true,
         }
     }
 }
