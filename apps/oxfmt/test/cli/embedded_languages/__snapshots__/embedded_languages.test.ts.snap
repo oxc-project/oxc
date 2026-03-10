@@ -70,9 +70,7 @@ const mixedQuery = gql\`
   }
 \`;
 
-const mixedTemplate = html\`
-  <div><h1>Title</h1></div>
-\`;
+const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
 
 const mixedDocs = md\`
   #Documentation
@@ -548,16 +546,12 @@ const component = html\`<button type="button" onclick="handleClick()">Click</but
 
 --- AFTER ----------
 // Tagged template literals with html tag
-const template = html\`
-  <div class="container">
-    <h1>Hello</h1>
-    <p>World</p>
-  </div>
-\`;
+const template = html\`<div class="container">
+  <h1>Hello</h1>
+  <p>World</p>
+</div>\`;
 
-const component = html\`
-  <button type="button" onclick="handleClick()">Click</button>
-\`;
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
 
 --------------------"
 `;
@@ -827,16 +821,12 @@ const component = html\`<button type="button" onclick="handleClick()">Click</but
 
 --- AFTER ----------
 // Tagged template literals with html tag
-const template = html\`
-  <div class="container">
-    <h1>Hello</h1>
-    <p>World</p>
-  </div>
-\`;
+const template = html\`<div class="container">
+  <h1>Hello</h1>
+  <p>World</p>
+</div>\`;
 
-const component = html\`
-  <button type="button" onclick="handleClick()">Click</button>
-\`;
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
 
 --------------------
 

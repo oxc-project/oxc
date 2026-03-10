@@ -80,6 +80,22 @@ const categories: Category[] = [
       "styled-components.js": "`Xxx.extend` not recognized as tag",
     },
   },
+  {
+    name: "html-in-js",
+    sources: [
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-html"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(EDGE_CASES_DIR, "html-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {
+      "language-comment/not-language-comment.js": "`/* HTML */` comment tag not yet supported",
+      "issue-10691.js": "`/* HTML */` comment tag not yet supported",
+    },
+  },
 ];
 
 // ---
