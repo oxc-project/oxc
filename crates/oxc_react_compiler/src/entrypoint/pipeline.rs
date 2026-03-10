@@ -260,9 +260,11 @@ pub fn run_pipeline(
             crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func)?;
         }
 
-        func.env.record_errors(
-            crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
-        );
+        if env.config.validate_no_freezing_known_mutable_functions {
+            func.env.record_errors(
+                crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
+            );
+        }
     }
 
     // 24. InferReactivePlaces

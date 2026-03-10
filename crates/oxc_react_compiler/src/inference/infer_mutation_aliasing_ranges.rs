@@ -702,10 +702,24 @@ pub fn infer_mutation_aliasing_ranges(
             state.assign(i, &remap(&ret.value), &func.returns);
         }
 
-        // Handle MaybeThrow and Return terminal effects
-        // Note: Rust terminal types don't have `effects` fields, so we skip this.
-        // The TS code processes terminal.effects for MaybeThrow/Return terminals,
-        // but in the Rust port these effects are folded into instruction effects.
+        // Handle MaybeThrow and Return terminal effects.
+        // Port of TS InferMutationAliasingRanges.ts lines 216-230.
+        let terminal_effects = match &block.terminal {
+            Terminal::MaybeThrow(t) => t.effects.as_ref(),
+            Terminal::Return(t) => t.effects.as_ref(),
+            _ => None,
+        };
+        if let Some(effects) = terminal_effects {
+            for effect in effects {
+                if let AliasingEffect::Alias { from, into } = effect {
+                    let i = index;
+                    index += 1;
+                    state.assign(i, &remap(from), &remap(into));
+                }
+                // Freeze effects are also valid on terminals but don't need
+                // assign() processing — they are handled elsewhere.
+            }
+        }
     }
 
     // Apply all deferred mutations

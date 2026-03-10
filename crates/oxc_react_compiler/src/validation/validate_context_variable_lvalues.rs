@@ -8,13 +8,20 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
-    hir::{HIRFunction, IdentifierId, InstructionValue},
+    hir::{HIRFunction, IdentifierId, InstructionValue, visitors::each_pattern_operand},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum IdentifierKindTag {
     Local,
     Context,
+    Destructure,
+}
+
+impl IdentifierKindTag {
+    fn is_context(self) -> bool {
+        self == Self::Context
+    }
 }
 
 /// Validate that context variable lvalues are consistent.
@@ -60,6 +67,17 @@ fn validate_context_impl(
                         visit(kinds, v.place.identifier.id, IdentifierKindTag::Local)?;
                     }
                 }
+                InstructionValue::PostfixUpdate(v) => {
+                    visit(kinds, v.lvalue.identifier.id, IdentifierKindTag::Local)?;
+                }
+                InstructionValue::PrefixUpdate(v) => {
+                    visit(kinds, v.lvalue.identifier.id, IdentifierKindTag::Local)?;
+                }
+                InstructionValue::Destructure(v) => {
+                    for place in each_pattern_operand(&v.lvalue.pattern) {
+                        visit(kinds, place.identifier.id, IdentifierKindTag::Destructure)?;
+                    }
+                }
                 // NOTE: The TS implementation recurses into FunctionExpression
                 // and ObjectMethod with a shared identifierKinds map. However,
                 // enabling recursion here causes false positives in our Rust
@@ -82,7 +100,7 @@ fn visit(
     expected: IdentifierKindTag,
 ) -> Result<(), CompilerError> {
     if let Some(&existing) = kinds.get(&id) {
-        if existing != expected {
+        if existing.is_context() != expected.is_context() {
             return Err(CompilerError::invariant(
                 "Expected all references to a variable to be consistently local or context references",
                 Some(&format!(
@@ -104,5 +122,6 @@ fn kind_tag_name(tag: IdentifierKindTag) -> &'static str {
     match tag {
         IdentifierKindTag::Local => "local",
         IdentifierKindTag::Context => "context",
+        IdentifierKindTag::Destructure => "destructure",
     }
 }

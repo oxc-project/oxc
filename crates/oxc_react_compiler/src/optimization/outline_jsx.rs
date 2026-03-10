@@ -415,6 +415,7 @@ fn emit_outlined_fn(
             id: InstructionId::ZERO,
             value: return_lvalue,
             return_variant: ReturnVariant::Explicit,
+            effects: None,
             loc: GENERATED_SOURCE,
         }),
         preds: FxHashSet::default(),

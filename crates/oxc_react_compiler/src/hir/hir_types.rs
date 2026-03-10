@@ -291,6 +291,7 @@ pub struct ReturnTerminal {
     pub id: InstructionId,
     pub value: Place,
     pub return_variant: ReturnVariant,
+    pub effects: Option<Vec<crate::inference::aliasing_effects::AliasingEffect>>,
     pub loc: SourceLocation,
 }
 
@@ -439,6 +440,7 @@ pub struct MaybeThrowTerminal {
     pub id: InstructionId,
     pub continuation: BlockId,
     pub handler: Option<BlockId>,
+    pub effects: Option<Vec<crate::inference::aliasing_effects::AliasingEffect>>,
     pub loc: SourceLocation,
 }
 
@@ -1151,6 +1153,7 @@ pub struct StartMemoize {
     pub manual_memo_id: u32,
     pub deps: Option<Vec<ManualMemoDependency>>,
     pub deps_loc: Option<SourceLocation>,
+    pub has_invalid_deps: bool,
     pub loc: SourceLocation,
 }
 

@@ -1,6 +1,22 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+  ⚠ react_compiler(react-compiler-rule): Error: Calling setState synchronously within an effect can trigger cascading renders. Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+  │ * Update external systems with the latest state from React.
+  │ * Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+  │ 
+  │ Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+    ╭─[react_compiler_rule.tsx:3:13]
+  2 │                 import { useState, useLayoutEffect } from 'react';
+  3 │ ╭─▶             function Component(props) {
+  4 │ │                 const [state, setState] = useState(props.initial);
+  5 │ │                 useLayoutEffect(() => {
+  6 │ │                   setState(derive(props.value));
+  7 │ │                 }, [props.value]);
+  8 │ │                 return <div>{state}</div>;
+  9 │ ╰─▶             }
+ 10 │                 
+    ╰────
 
   ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
@@ -30,6 +46,46 @@ source: crates/oxc_linter/src/tester.rs
   8 │ │                 return props.cond && useConditionalHook();
   9 │ ╰─▶             }
  10 │                 
+    ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
+  │ react/useState).
+    ╭─[react_compiler_rule.tsx:4:13]
+  3 │     
+  4 │ ╭─▶             function Component({item, cond}) {
+  5 │ │                 const [prevItem, setPrevItem] = useState(item);
+  6 │ │                 const [state, setState] = useState(0);
+  7 │ │   
+  8 │ │                 useMemo(() => {
+  9 │ │                   if (cond) {
+ 10 │ │                     setPrevItem(item);
+ 11 │ │                     setState(0);
+ 12 │ │                   }
+ 13 │ │                 }, [cond, item, init]);
+ 14 │ │   
+ 15 │ │                 return <Child x={state} />;
+ 16 │ ╰─▶             }
+ 17 │                 
+    ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
+  │ react/useState).
+    ╭─[react_compiler_rule.tsx:4:13]
+  3 │     
+  4 │ ╭─▶             function Component({item, cond}) {
+  5 │ │                 const [prevItem, setPrevItem] = useState(item);
+  6 │ │                 const [state, setState] = useState(0);
+  7 │ │   
+  8 │ │                 useMemo(() => {
+  9 │ │                   if (cond) {
+ 10 │ │                     setPrevItem(item);
+ 11 │ │                     setState(0);
+ 12 │ │                   }
+ 13 │ │                 }, [cond, item, init]);
+ 14 │ │   
+ 15 │ │                 return <Child x={state} />;
+ 16 │ ╰─▶             }
+ 17 │                 
     ╰────
 
   ⚠ react_compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
@@ -135,4 +191,12 @@ source: crates/oxc_linter/src/tester.rs
  7 │ │                 return <div>{props.foo}</div>;
  8 │ ╰─▶             }
  9 │                 
+   ╰────
+
+  ⚠ react_compiler(react-compiler-rule): Error: Cannot reassign variable after render completes. Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+   ╭─[react_compiler_rule.tsx:4:39]
+ 3 │               let x = props.value;
+ 4 │               const handler = () => { x = 1; };
+   ·                                       ─
+ 5 │               return <div onClick={handler}>{x}</div>;
    ╰────

@@ -16,9 +16,7 @@ use crate::{
     hir::{
         ArrayExpressionElement, BlockId, CallArg, FunctionExpressionValue, HIRFunction,
         IdentifierId, InstructionValue,
-        object_shape::{
-            BUILT_IN_SET_STATE_ID, BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
-        },
+        object_shape::{BUILT_IN_SET_STATE_ID, BUILT_IN_USE_EFFECT_HOOK_ID},
         types::{FunctionType, Type},
         visitors::each_instruction_value_operand,
     },
@@ -274,6 +272,6 @@ fn is_use_effect_hook_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function(FunctionType { shape_id: Some(id), .. })
-        if id == BUILT_IN_USE_EFFECT_HOOK_ID || id == BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID
+        if id == BUILT_IN_USE_EFFECT_HOOK_ID
     )
 }

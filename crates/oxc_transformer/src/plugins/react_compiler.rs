@@ -330,8 +330,12 @@ impl ReactCompiler {
         for (index, statement) in program.body.iter().enumerate() {
             let results = self.compile_statement(statement, &cache_identifier_name, ctx);
             for (output, function_name, declarator_index) in results {
-                compiled_results
-                    .push(CompileResult { index, output, function_name, declarator_index });
+                compiled_results.push(CompileResult {
+                    index,
+                    output,
+                    function_name,
+                    declarator_index,
+                });
             }
         }
 
@@ -387,9 +391,8 @@ impl ReactCompiler {
                                 Ok(dg) => Some(dg),
                                 Err(errors) => {
                                     for msg in &errors {
-                                        let diagnostic = OxcDiagnostic::error(format!(
-                                            "React Compiler: {msg}"
-                                        ));
+                                        let diagnostic =
+                                            OxcDiagnostic::error(format!("React Compiler: {msg}"));
                                         ctx.state.error(diagnostic.with_label(SPAN));
                                     }
                                     Some(None)
@@ -419,36 +422,31 @@ impl ReactCompiler {
                                 let stmt_ref = stmt_opt.as_ref().expect(
                                     "stmt should not have been consumed before gating check",
                                 );
-                                let directives =
-                                    get_declarator_directives(stmt_ref, decl_idx);
-                                let dynamic_gating =
-                                    match extract_dynamic_gating_directive(
-                                        &directives,
-                                        self.dynamic_gating.as_ref(),
-                                    ) {
-                                        Ok(dg) => dg,
-                                        Err(errors) => {
-                                            for msg in &errors {
-                                                let diagnostic = OxcDiagnostic::error(
-                                                    format!("React Compiler: {msg}"),
-                                                );
-                                                ctx.state
-                                                    .error(diagnostic.with_label(SPAN));
-                                            }
-                                            None
+                                let directives = get_declarator_directives(stmt_ref, decl_idx);
+                                let dynamic_gating = match extract_dynamic_gating_directive(
+                                    &directives,
+                                    self.dynamic_gating.as_ref(),
+                                ) {
+                                    Ok(dg) => dg,
+                                    Err(errors) => {
+                                        for msg in &errors {
+                                            let diagnostic = OxcDiagnostic::error(format!(
+                                                "React Compiler: {msg}"
+                                            ));
+                                            ctx.state.error(diagnostic.with_label(SPAN));
                                         }
-                                    };
+                                        None
+                                    }
+                                };
                                 let effective_gating =
                                     dynamic_gating.as_ref().or(self.gating.as_ref());
                                 if let Some(gating) = effective_gating {
-                                    let fn_kind =
-                                        get_declarator_function_kind(stmt_ref, decl_idx);
+                                    let fn_kind = get_declarator_function_kind(stmt_ref, decl_idx);
                                     let parent_context = get_gating_parent_context(stmt_ref);
                                     let is_ref_before_decl = referenced_before_declared
                                         .as_ref()
                                         .is_some_and(|set| set.contains(&i));
-                                    let param_info =
-                                        get_declarator_param_info(stmt_ref, decl_idx);
+                                    let param_info = get_declarator_param_info(stmt_ref, decl_idx);
                                     Some(build_gating_output(
                                         fn_name.as_deref(),
                                         fn_kind,
@@ -529,14 +527,13 @@ impl ReactCompiler {
                                 );
                                 match &gating_output {
                                     GatingOutput::Ternary { gating_fn_name, wrap } => {
-                                        let replacement_stmts =
-                                            build_ternary_gating_replacement(
-                                                gating_stmt,
-                                                compiled,
-                                                gating_fn_name,
-                                                wrap,
-                                                ctx,
-                                            );
+                                        let replacement_stmts = build_ternary_gating_replacement(
+                                            gating_stmt,
+                                            compiled,
+                                            gating_fn_name,
+                                            wrap,
+                                            ctx,
+                                        );
                                         for replacement in replacement_stmts {
                                             let new_idx = new_body.len();
                                             replaced_indices.push(new_idx);
@@ -545,13 +542,12 @@ impl ReactCompiler {
                                         }
                                     }
                                     GatingOutput::Hoisted { .. } => {
-                                        let replacement_stmts =
-                                            build_hoisted_gating_replacement(
-                                                gating_stmt,
-                                                compiled,
-                                                &gating_output,
-                                                ctx,
-                                            );
+                                        let replacement_stmts = build_hoisted_gating_replacement(
+                                            gating_stmt,
+                                            compiled,
+                                            &gating_output,
+                                            ctx,
+                                        );
                                         for replacement in replacement_stmts {
                                             let new_idx = new_body.len();
                                             replaced_indices.push(new_idx);
@@ -639,8 +635,7 @@ impl ReactCompiler {
         // - In `all` mode, only top-level functions are compiled (TS Program.ts:501-508
         //   checks `fn.scope.getProgramParent() !== fn.scope.parent` and returns early).
         //   So we skip Phase 3 entirely in `all` mode.
-        let compilation_mode =
-            parse_compilation_mode(self.options.compilation_mode.as_deref());
+        let compilation_mode = parse_compilation_mode(self.options.compilation_mode.as_deref());
         let mut compiled_any_nested = false;
         // In `all` mode, upstream only compiles top-level functions (Program.ts:501-508),
         // so skip Phase 3 nested discovery entirely.
@@ -738,8 +733,7 @@ impl ReactCompiler {
                 for (local, imported) in specifiers {
                     // Create a binding in the root scope with the exact local
                     // name that ProgramContext already used in codegen output.
-                    let name =
-                        oxc_span::Ident::from(ctx.ast.allocator.alloc_str(&local));
+                    let name = oxc_span::Ident::from(ctx.ast.allocator.alloc_str(&local));
                     let symbol_id = ctx.scoping_mut().create_symbol(
                         SPAN,
                         name,
@@ -1047,7 +1041,18 @@ impl ReactCompiler {
         }
 
         let environment =
-            Environment::new(fn_type, self.output_mode, self.environment_config.clone());
+            match Environment::new(fn_type, self.output_mode, self.environment_config.clone()) {
+                Ok(env) => env,
+                Err(error) => {
+                    Self::report_compiler_error(
+                        &error,
+                        fallback_span,
+                        self.panic_threshold,
+                        ctx,
+                    );
+                    return None;
+                }
+            };
 
         let mut hir_function =
             match lower(&environment, fn_type, function, self.outer_bindings.clone()) {
@@ -1185,7 +1190,18 @@ impl ReactCompiler {
         };
 
         let environment =
-            Environment::new(fn_type, self.output_mode, self.environment_config.clone());
+            match Environment::new(fn_type, self.output_mode, self.environment_config.clone()) {
+                Ok(env) => env,
+                Err(error) => {
+                    Self::report_compiler_error(
+                        &error,
+                        function.span,
+                        self.panic_threshold,
+                        ctx,
+                    );
+                    return None;
+                }
+            };
 
         let lowerable_function = LowerableFunction::Function(function);
         let mut hir_function =
@@ -1340,7 +1356,8 @@ impl ReactCompiler {
                     }
                 }
             }
-            // Variable declarations: check initializers for function expressions.
+            // Variable declarations: check initializers for function expressions,
+            // and also walk binding pattern defaults (e.g. `const {useHook = () => {}} = {}`).
             Statement::VariableDeclaration(declaration) => {
                 for declarator in &mut declaration.declarations {
                     if let Some(init) = &mut declarator.init {
@@ -1359,6 +1376,17 @@ impl ReactCompiler {
                             ctx,
                         );
                     }
+                    // Walk binding pattern defaults for destructuring with default values.
+                    // Port of getFunctionName context for AssignmentPattern (Program.ts:1103-1116).
+                    self.walk_binding_pattern_for_nested_functions(
+                        &mut declarator.id,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
                 }
             }
             // Expression statements: walk the expression.
@@ -1444,6 +1472,15 @@ impl ReactCompiler {
                                         ctx,
                                     );
                                 }
+                                self.walk_binding_pattern_for_nested_functions(
+                                    &mut declarator.id,
+                                    cache_identifier_name,
+                                    needs_memo_import,
+                                    compiled_any,
+                                    outlined_outputs,
+                                    inside_class,
+                                    ctx,
+                                );
                             }
                         }
                         init_expr => {
@@ -2153,6 +2190,107 @@ impl ReactCompiler {
         }
     }
 
+    /// Walk a binding pattern for nested function discovery in default values.
+    ///
+    /// Handles `AssignmentPattern` (destructuring defaults) where the default
+    /// value may be a function expression. For example:
+    /// - `const {useHook = () => {}} = {}`
+    /// - `const [useHook = () => {}] = []`
+    ///
+    /// Port of `getFunctionName` context for `AssignmentPattern` (Program.ts:1103-1116).
+    #[expect(clippy::too_many_arguments)]
+    fn walk_binding_pattern_for_nested_functions<'a>(
+        &self,
+        pattern: &mut BindingPattern<'a>,
+        cache_identifier_name: &str,
+        needs_memo_import: &mut bool,
+        compiled_any: &mut bool,
+        outlined_outputs: &mut Vec<OutlinedOutput<'a>>,
+        inside_class: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match pattern {
+            BindingPattern::ObjectPattern(obj) => {
+                for prop in &mut obj.properties {
+                    self.walk_binding_pattern_for_nested_functions(
+                        &mut prop.value,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+                if let Some(rest) = &mut obj.rest {
+                    self.walk_binding_pattern_for_nested_functions(
+                        &mut rest.argument,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            BindingPattern::ArrayPattern(arr) => {
+                for pat in (&mut arr.elements).into_iter().flatten() {
+                    self.walk_binding_pattern_for_nested_functions(
+                        pat,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+                if let Some(rest) = &mut arr.rest {
+                    self.walk_binding_pattern_for_nested_functions(
+                        &mut rest.argument,
+                        cache_identifier_name,
+                        needs_memo_import,
+                        compiled_any,
+                        outlined_outputs,
+                        inside_class,
+                        ctx,
+                    );
+                }
+            }
+            BindingPattern::AssignmentPattern(assign) => {
+                // Infer function name from the LHS of the assignment pattern.
+                let binding_name = match &assign.left {
+                    BindingPattern::BindingIdentifier(id) => Some(id.name),
+                    _ => None,
+                };
+                self.walk_expression_for_nested_functions(
+                    &mut assign.right,
+                    binding_name.as_deref(),
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+                // Also recurse into the LHS pattern (could be nested destructuring with defaults).
+                self.walk_binding_pattern_for_nested_functions(
+                    &mut assign.left,
+                    cache_identifier_name,
+                    needs_memo_import,
+                    compiled_any,
+                    outlined_outputs,
+                    inside_class,
+                    ctx,
+                );
+            }
+            BindingPattern::BindingIdentifier(_) => {
+                // Leaf node, nothing to recurse into.
+            }
+        }
+    }
+
     /// Try to compile a nested function declaration.
     ///
     /// Helper that extracts the function's name and directives, then delegates
@@ -2451,7 +2589,6 @@ fn extract_dynamic_gating_directive(
     }
 }
 
-
 /// Determine the gating function kind from the statement and its function.
 fn get_gating_function_kind(stmt: &Statement<'_>) -> GatingFunctionKind {
     match stmt {
@@ -2539,7 +2676,9 @@ fn get_declarator_directives(stmt: &Statement<'_>, declarator_index: usize) -> V
 fn get_declarator_param_info(stmt: &Statement<'_>, declarator_index: usize) -> Vec<ParamInfo> {
     match get_declarator_init(stmt, declarator_index) {
         Some(Expression::FunctionExpression(f)) => get_param_info_from_formal(&f.params),
-        Some(Expression::ArrowFunctionExpression(arrow)) => get_param_info_from_formal(&arrow.params),
+        Some(Expression::ArrowFunctionExpression(arrow)) => {
+            get_param_info_from_formal(&arrow.params)
+        }
         _ => Vec::new(),
     }
 }
@@ -2571,13 +2710,12 @@ fn apply_ternary_gating_in_place<'a>(
         _ => return,
     };
 
-    if let Some(declarator) = declarations.get_mut(declarator_index) {
-        if let Some(init) = &mut declarator.init {
+    if let Some(declarator) = declarations.get_mut(declarator_index)
+        && let Some(init) = &mut declarator.init {
             let original_expr = std::mem::replace(init, ctx.ast.expression_null_literal(SPAN));
             let ternary = build_gating_ternary(gating_fn_name, compiled_expr, original_expr, ctx);
             declarator.init = Some(ternary);
         }
-    }
 }
 
 /// Get the directives from a statement's function body, for dynamic gating.
@@ -3512,7 +3650,12 @@ fn replace_statement_function_in_place<'a>(
             function.body = Some(build_compiled_body(&mut compiled, ctx));
         }
         Statement::VariableDeclaration(declaration) => {
-            replace_var_decl_function(&mut declaration.declarations, &mut compiled, declarator_index, ctx);
+            replace_var_decl_function(
+                &mut declaration.declarations,
+                &mut compiled,
+                declarator_index,
+                ctx,
+            );
         }
         Statement::ExportDefaultDeclaration(export_default) => {
             match &mut export_default.declaration {
@@ -3544,7 +3687,12 @@ fn replace_statement_function_in_place<'a>(
                         function.body = Some(build_compiled_body(&mut compiled, ctx));
                     }
                     Declaration::VariableDeclaration(var_decl) => {
-                        replace_var_decl_function(&mut var_decl.declarations, &mut compiled, declarator_index, ctx);
+                        replace_var_decl_function(
+                            &mut var_decl.declarations,
+                            &mut compiled,
+                            declarator_index,
+                            ctx,
+                        );
                     }
                     _ => {}
                 }
@@ -3562,11 +3710,12 @@ fn replace_var_decl_function<'a>(
     declarator_index: Option<usize>,
     ctx: &TraverseCtx<'a>,
 ) {
-    let iter: Box<dyn Iterator<Item = &mut VariableDeclarator<'a>>> = if let Some(idx) = declarator_index {
-        Box::new(declarations.iter_mut().skip(idx).take(1))
-    } else {
-        Box::new(declarations.iter_mut())
-    };
+    let iter: Box<dyn Iterator<Item = &mut VariableDeclarator<'a>>> =
+        if let Some(idx) = declarator_index {
+            Box::new(declarations.iter_mut().skip(idx).take(1))
+        } else {
+            Box::new(declarations.iter_mut())
+        };
     for declarator in iter {
         let Some(init) = &mut declarator.init else {
             continue;
@@ -3585,9 +3734,7 @@ fn replace_var_decl_function<'a>(
                 arrow.expression = false;
                 break;
             }
-            Expression::CallExpression(call)
-                if is_memo_or_forwardref_call(&call.callee) =>
-            {
+            Expression::CallExpression(call) if is_memo_or_forwardref_call(&call.callee) => {
                 replace_memo_inner_function_body(call, compiled, ctx);
                 break;
             }
@@ -4177,5 +4324,19 @@ mod tests {
     #[should_panic(expected = "Invalid panicThreshold")]
     fn invalid_panic_threshold_panics() {
         parse_panic_threshold(Some("invalid"));
+    }
+
+    #[test]
+    fn parse_valid_output_modes() {
+        assert_eq!(parse_output_mode(Some("client")), Some(CompilerOutputMode::Client));
+        assert_eq!(parse_output_mode(Some("ssr")), Some(CompilerOutputMode::Ssr));
+        assert_eq!(parse_output_mode(Some("lint")), Some(CompilerOutputMode::Lint));
+        assert_eq!(parse_output_mode(None), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid outputMode")]
+    fn invalid_output_mode_panics() {
+        parse_output_mode(Some("invalid"));
     }
 }

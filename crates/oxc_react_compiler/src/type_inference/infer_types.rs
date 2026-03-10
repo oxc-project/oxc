@@ -7,8 +7,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
-    HIRFunction, Hir, IdentifierId, IdentifierName, Instruction, InstructionKind,
-    InstructionValue, Place, ReactFunctionType, ReactiveParam,
+    HIRFunction, Hir, IdentifierId, IdentifierName, Instruction, InstructionKind, InstructionValue,
+    Place, ReactFunctionType, ReactiveParam,
     environment::Environment,
     globals::Global,
     object_shape::{
@@ -314,13 +314,8 @@ impl ResolvedTypes {
 pub fn infer_types(func: &mut HIRFunction) -> Result<(), crate::compiler_error::CompilerError> {
     // Generate type equations first (needs &mut env for module type resolution on cache miss).
     // Split borrow: read func fields immutably while mutably borrowing env.
-    let (equations, errors) = generate(
-        func.fn_type,
-        &func.params,
-        &func.returns,
-        &func.body,
-        &mut func.env,
-    );
+    let (equations, errors) =
+        generate(func.fn_type, &func.params, &func.returns, &func.body, &mut func.env);
 
     // If there are type-provider validation errors, return the first one.
     if let Some(error) = errors.into_iter().next() {
@@ -698,13 +693,7 @@ fn generate(
         }
 
         for instr in &block.instructions {
-            generate_instruction_equations(
-                instr,
-                env,
-                &mut names,
-                &mut equations,
-                &mut errors,
-            );
+            generate_instruction_equations(instr, env, &mut names, &mut equations, &mut errors);
         }
     }
 

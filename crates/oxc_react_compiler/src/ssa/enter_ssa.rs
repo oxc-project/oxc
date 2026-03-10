@@ -489,7 +489,8 @@ fn placeholder_lowered_function() -> LoweredFunction {
                 crate::hir::ReactFunctionType::Other,
                 crate::hir::environment::CompilerOutputMode::Client,
                 crate::hir::environment::EnvironmentConfig::default(),
-            ),
+            )
+            .expect("default EnvironmentConfig should never fail"),
             params: Vec::new(),
             returns: Place {
                 identifier: Identifier {

@@ -377,52 +377,58 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
     if let ReactiveValue::Instruction(instr_value) = value {
         match instr_value.as_ref() {
             InstructionValue::StartMemoize(v) => {
-                let deps_from_source = v.deps.clone();
+                // If ValidateExhaustiveDependencies already reported an error for this
+                // memo block, skip validation to avoid duplicate errors
+                if v.has_invalid_deps {
+                    // Don't set manual_memo_state — FinishMemoize will check for None
+                } else {
+                    let deps_from_source = v.deps.clone();
 
-                // Check scope dependencies of operands
-                // Port of TS ValidatePreservedManualMemoization.ts lines 497-518:
-                // Check that each dep's scope has already completed. The TS reference
-                // only checks `scopes` and `prunedScopes` — it does NOT check active
-                // scopes. If a dep's scope is "active" (still being traversed), it
-                // means the dep may be mutated later within the same scope, which is
-                // exactly the case this validation catches.
-                for operand in each_instruction_value_operand(instr_value) {
-                    if let Some(ref scope) = operand.identifier.scope
-                        && !state.scopes.contains(&scope.id)
-                        && !state.pruned_scopes.contains(&scope.id)
-                    {
-                        state.errors.push_diagnostic(
-                            CompilerDiagnostic::create(
-                                ErrorCategory::PreserveManualMemo,
-                                "Existing memoization could not be preserved".to_string(),
-                                Some(
-                                    "React Compiler has skipped optimizing this component \
-                                         because the existing manual memoization could not be \
-                                         preserved. This dependency may be mutated later, which \
-                                         could cause the value to change unexpectedly"
-                                        .to_string(),
-                                ),
-                                None,
-                            )
-                            .with_detail(
-                                CompilerDiagnosticDetail::Error {
-                                    loc: Some(operand.loc),
-                                    message: Some(
-                                        "This dependency may be modified later".to_string(),
+                    // Check scope dependencies of operands
+                    // Port of TS ValidatePreservedManualMemoization.ts lines 497-518:
+                    // Check that each dep's scope has already completed. The TS reference
+                    // only checks `scopes` and `prunedScopes` — it does NOT check active
+                    // scopes. If a dep's scope is "active" (still being traversed), it
+                    // means the dep may be mutated later within the same scope, which is
+                    // exactly the case this validation catches.
+                    for operand in each_instruction_value_operand(instr_value) {
+                        if let Some(ref scope) = operand.identifier.scope
+                            && !state.scopes.contains(&scope.id)
+                            && !state.pruned_scopes.contains(&scope.id)
+                        {
+                            state.errors.push_diagnostic(
+                                CompilerDiagnostic::create(
+                                    ErrorCategory::PreserveManualMemo,
+                                    "Existing memoization could not be preserved".to_string(),
+                                    Some(
+                                        "React Compiler has skipped optimizing this component \
+                                             because the existing manual memoization could not be \
+                                             preserved. This dependency may be mutated later, which \
+                                             could cause the value to change unexpectedly"
+                                            .to_string(),
                                     ),
-                                },
-                            ),
-                        );
+                                    None,
+                                )
+                                .with_detail(
+                                    CompilerDiagnosticDetail::Error {
+                                        loc: Some(operand.loc),
+                                        message: Some(
+                                            "This dependency may be modified later".to_string(),
+                                        ),
+                                    },
+                                ),
+                            );
+                        }
                     }
-                }
 
-                state.manual_memo_state = Some(ManualMemoBlockState {
-                    loc: instruction.loc,
-                    decls: FxHashSet::default(),
-                    deps_from_source,
-                    manual_memo_id: v.manual_memo_id,
-                    reassignments: FxHashMap::default(),
-                });
+                    state.manual_memo_state = Some(ManualMemoBlockState {
+                        loc: instruction.loc,
+                        decls: FxHashSet::default(),
+                        deps_from_source,
+                        manual_memo_id: v.manual_memo_id,
+                        reassignments: FxHashMap::default(),
+                    });
+                }
             }
             InstructionValue::FinishMemoize(v) => {
                 if let Some(memo_state) = state.manual_memo_state.take() {
