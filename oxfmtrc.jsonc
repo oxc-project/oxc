@@ -15,6 +15,7 @@
     "**/generated/**",
     "**/CHANGELOG.md",
     "**/*.snap.md",
+    "apps/oxfmt/conformance/snapshots/**",
     "apps/oxlint/conformance/snapshots/**",
     "tasks/coverage/node-compat-table",
     "tasks/coverage/misc",
