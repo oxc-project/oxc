@@ -62,7 +62,8 @@ fn debug_aliased_mutation_lambda_deps() {
         ReactFunctionType::Other,
         CompilerOutputMode::Client,
         oxc_react_compiler::hir::environment::EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func = lower(&env, ReactFunctionType::Other, &func, FxHashMap::default()).unwrap();
 
@@ -216,7 +217,8 @@ function Component(props) {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
@@ -362,7 +364,8 @@ export const FIXTURE_ENTRYPOINT = {
             ReactFunctionType::Component,
             CompilerOutputMode::Client,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let mut hir_func =
             lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
@@ -469,7 +472,8 @@ fn debug_normalized_comparison() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
@@ -548,7 +552,8 @@ function Component(props) {
     env_config.enable_preserve_existing_memoization_guarantees = false;
 
     let env =
-        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config).unwrap();
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config)
+            .unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
@@ -633,7 +638,8 @@ fn lower_function_source(source: &str) -> HIRFunction {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let result = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default());
     assert!(result.is_ok(), "Lowering failed: {:?}", result.err());
@@ -1815,7 +1821,8 @@ function Component({a, b}) {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default())
         .expect("lowering failed");

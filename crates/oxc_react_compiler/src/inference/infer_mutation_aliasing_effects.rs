@@ -826,20 +826,21 @@ pub fn infer_mutation_aliasing_effects(
                 // Port of TS lines 467-501.
                 Terminal::MaybeThrow(t) => {
                     if let Some(handler_block) = t.handler
-                        && let Some(handler_param) = catch_handlers.get(&handler_block) {
-                            for instr in &block.instructions {
-                                if matches!(
-                                    &instr.value,
-                                    InstructionValue::CallExpression(_)
-                                        | InstructionValue::MethodCall(_)
-                                ) {
-                                    state.add_alias(
-                                        instr.lvalue.identifier.id,
-                                        handler_param.identifier.id,
-                                    );
-                                }
+                        && let Some(handler_param) = catch_handlers.get(&handler_block)
+                    {
+                        for instr in &block.instructions {
+                            if matches!(
+                                &instr.value,
+                                InstructionValue::CallExpression(_)
+                                    | InstructionValue::MethodCall(_)
+                            ) {
+                                state.add_alias(
+                                    instr.lvalue.identifier.id,
+                                    handler_param.identifier.id,
+                                );
                             }
                         }
+                    }
                 }
                 // Return terminal: freeze the return value for components/hooks.
                 // Port of TS lines 502-511.
@@ -958,31 +959,29 @@ pub fn infer_mutation_aliasing_effects(
             match &mut block.terminal {
                 Terminal::MaybeThrow(t) => {
                     if let Some(handler_block) = t.handler
-                        && let Some(handler_param) = catch_handlers.get(&handler_block) {
-                            let mut effects = Vec::new();
-                            for instr in &block.instructions {
-                                if matches!(
-                                    &instr.value,
-                                    InstructionValue::CallExpression(_)
-                                        | InstructionValue::MethodCall(_)
-                                ) {
-                                    let kind = replay_state
-                                        .values
-                                        .get(&instr.lvalue.identifier.id)
-                                        .map(|av| &av.kind);
-                                    if matches!(
-                                        kind,
-                                        Some(ValueKind::Mutable | ValueKind::Context)
-                                    ) {
-                                        effects.push(AliasingEffect::Alias {
-                                            from: instr.lvalue.clone(),
-                                            into: handler_param.clone(),
-                                        });
-                                    }
+                        && let Some(handler_param) = catch_handlers.get(&handler_block)
+                    {
+                        let mut effects = Vec::new();
+                        for instr in &block.instructions {
+                            if matches!(
+                                &instr.value,
+                                InstructionValue::CallExpression(_)
+                                    | InstructionValue::MethodCall(_)
+                            ) {
+                                let kind = replay_state
+                                    .values
+                                    .get(&instr.lvalue.identifier.id)
+                                    .map(|av| &av.kind);
+                                if matches!(kind, Some(ValueKind::Mutable | ValueKind::Context)) {
+                                    effects.push(AliasingEffect::Alias {
+                                        from: instr.lvalue.clone(),
+                                        into: handler_param.clone(),
+                                    });
                                 }
                             }
-                            t.effects = if effects.is_empty() { None } else { Some(effects) };
                         }
+                        t.effects = if effects.is_empty() { None } else { Some(effects) };
+                    }
                 }
                 Terminal::Return(t) => {
                     if !options.is_function_expression {

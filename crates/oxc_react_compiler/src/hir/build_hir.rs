@@ -1909,7 +1909,7 @@ pub fn lower(
         None,
     );
 
-    let (body, mut built_env) = builder.build_with_env()?;
+    let (body, mut built_env) = builder.build_with_env();
     let returns = create_temporary_place(&mut built_env, func_loc);
 
     Ok(HIRFunction {
@@ -2669,7 +2669,7 @@ fn lower_function_to_value(
         None,
     );
 
-    let (mut body, mut built_env) = inner_builder.build_with_env()?;
+    let (mut body, mut built_env) = inner_builder.build_with_env();
 
     // Remove unreachable blocks from the inner function's HIR.
     // This matches TS behavior: HIRBuilder.build() calls getReversePostorderedBlocks()

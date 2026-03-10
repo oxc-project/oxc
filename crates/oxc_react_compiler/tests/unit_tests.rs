@@ -274,7 +274,8 @@ mod env_config_tests {
             ReactFunctionType::Component,
             CompilerOutputMode::Client,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
         assert!(env.enable_memoization, "Client: enable_memoization should be true");
         assert!(
             env.enable_drop_manual_memoization,
@@ -286,7 +287,8 @@ mod env_config_tests {
             ReactFunctionType::Component,
             CompilerOutputMode::Lint,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
         assert!(env.enable_memoization, "Lint: enable_memoization should be true");
         assert!(
             env.enable_drop_manual_memoization,
@@ -298,7 +300,8 @@ mod env_config_tests {
             ReactFunctionType::Component,
             CompilerOutputMode::Ssr,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
         assert!(!env.enable_memoization, "Ssr: enable_memoization should be false");
         assert!(
             env.enable_drop_manual_memoization,
@@ -310,7 +313,8 @@ mod env_config_tests {
             ReactFunctionType::Component,
             CompilerOutputMode::ClientNoMemo,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
         assert!(!env.enable_memoization, "ClientNoMemo: enable_memoization should be false");
         assert!(
             !env.enable_drop_manual_memoization,
@@ -338,7 +342,8 @@ mod env_config_tests {
         );
 
         let mut env =
-            Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config).unwrap();
+            Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config)
+                .unwrap();
 
         // Look up "useCustom" via get_global_declaration as a Global binding
         let result = env
@@ -354,8 +359,8 @@ mod env_config_tests {
     /// built-in global returns an error instead of panicking.
     #[test]
     fn custom_hook_collision_with_builtin_global_returns_error() {
-        use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment};
         use oxc_react_compiler::hir::ReactFunctionType;
+        use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment};
 
         // "console" is a built-in global — registering a custom hook with that name
         // should fail gracefully.
@@ -372,7 +377,10 @@ mod env_config_tests {
 
         let result =
             Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, config);
-        assert!(result.is_err(), "Should return error for custom hook colliding with built-in global");
+        assert!(
+            result.is_err(),
+            "Should return error for custom hook colliding with built-in global"
+        );
         let err = result.unwrap_err();
         let msg = format!("{err:?}");
         assert!(
@@ -694,7 +702,8 @@ fn test_console_readonly_output() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
@@ -782,7 +791,8 @@ fn test_context_variable_reactive_scopes() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let mut hir_func =
         lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
@@ -811,7 +821,8 @@ fn test_console_method_type_resolution() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     // Helper to verify a console-like object has a "log" method with Read effects.
     let verify_console_log = |env: &Environment,
@@ -916,7 +927,8 @@ fn test_context_variable_debug() {
 
     let env_config = EnvironmentConfig::default();
     let env =
-        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config).unwrap();
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config)
+            .unwrap();
 
     let func_decl = parser_result
         .program
@@ -1133,7 +1145,8 @@ mod alignment_fix_tests {
             ReactFunctionType::Component,
             CompilerOutputMode::Client,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let outer_bindings = collect_import_bindings(&parser_result.program.body);
         let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)

@@ -3,14 +3,16 @@ source: crates/oxc_react_compiler/tests/fixtures.rs
 assertion_line: 9066
 expression: snapshot
 ---
-Error fixture conformance: 278/281 (98.9%)
+Error fixture conformance: 277/282 (98.2%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 3
+  unexpected_success: 5
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
+  [unexpected_success] error.bug-invariant-couldnt-find-binding-for-decl.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
+  [unexpected_success] fbt/error.todo-fbt-as-local.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js

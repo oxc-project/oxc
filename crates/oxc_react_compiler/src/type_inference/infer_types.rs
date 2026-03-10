@@ -12,12 +12,13 @@ use crate::hir::{
     environment::Environment,
     globals::Global,
     object_shape::{
-        BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
-        BUILT_IN_PROPS_ID, BUILT_IN_REF_VALUE_ID, BUILT_IN_SET_STATE_ID, BUILT_IN_USE_REF_ID,
+        BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
+        BUILT_IN_OBJECT_ID, BUILT_IN_PROPS_ID, BUILT_IN_REF_VALUE_ID, BUILT_IN_SET_STATE_ID,
+        BUILT_IN_USE_REF_ID,
     },
     types::{
-        FunctionType, ObjectType, PropType, PropertyLiteral, PropertyName, Type, TypeId, make_type,
-        type_equals,
+        FunctionType, ObjectType, PhiType, PropType, PropertyLiteral, PropertyName, Type, TypeId,
+        make_type, type_equals,
     },
 };
 use oxc_syntax::operator::BinaryOperator;
@@ -171,12 +172,60 @@ impl<'a> Unifier<'a> {
 
         match (&left, &right) {
             (Type::Var(id), _) => {
-                self.substitutions.insert(*id, right);
+                // Ignore Poly types — we don't support polymorphic types correctly
+                // (port of TS bindVariableTo Poly guard)
+                if matches!(right, Type::Poly) {
+                    return;
+                }
+                // Port of TS bindVariableTo: if this var already has a substitution,
+                // recursively unify the existing substitution with the new type
+                // instead of overwriting it.
+                if let Some(existing) = self.substitutions.get(id).cloned() {
+                    self.unify(existing, right);
+                } else if let Type::Var(right_id) = &right {
+                    // If the type being bound is also a Var with an existing substitution,
+                    // unify the left var with the resolved type instead.
+                    if let Some(resolved) = self.substitutions.get(right_id).cloned() {
+                        self.unify(left, resolved);
+                    } else {
+                        self.substitutions.insert(*id, right);
+                    }
+                } else if self.occurs_check(*id, &right) {
+                    // Port of TS occursCheck + tryResolveType (lines 635-642):
+                    // If the var occurs inside the type, try to resolve the cycle.
+                    if let Some(resolved) = self.try_resolve_type(*id, &right) {
+                        self.substitutions.insert(*id, resolved);
+                    }
+                    // else: cycle detected but unresolvable — silently drop
+                    // (TS throws but this is caught in practice)
+                } else {
+                    self.substitutions.insert(*id, right);
+                }
             }
             (_, Type::Var(id)) => {
-                self.substitutions.insert(*id, left);
+                // Ignore Poly types — we don't support polymorphic types correctly
+                // (port of TS bindVariableTo Poly guard)
+                if matches!(left, Type::Poly) {
+                    return;
+                }
+                if let Some(existing) = self.substitutions.get(id).cloned() {
+                    self.unify(existing, left);
+                } else if let Type::Var(left_id) = &left {
+                    if let Some(resolved) = self.substitutions.get(left_id).cloned() {
+                        self.unify(resolved, right);
+                    } else {
+                        self.substitutions.insert(*id, left);
+                    }
+                } else if self.occurs_check(*id, &left) {
+                    // Symmetric occurs check for (_, Var) case
+                    if let Some(resolved) = self.try_resolve_type(*id, &left) {
+                        self.substitutions.insert(*id, resolved);
+                    }
+                } else {
+                    self.substitutions.insert(*id, left);
+                }
             }
-            (Type::Function(fa), Type::Function(fb)) => {
+            (Type::Function(fa), Type::Function(fb)) if fa.is_constructor == fb.is_constructor => {
                 self.unify(*fa.return_type.clone(), *fb.return_type.clone());
             }
             _ => {
@@ -214,11 +263,12 @@ impl<'a> Unifier<'a> {
                 }
                 Some(prev) => {
                     if !type_equals(&resolved, prev) {
-                        // Disagreement: no consensus possible.
-                        // (We don't implement tryUnionTypes for simplicity, since
-                        // it only handles BuiltInMixedReadonlyId which is rarely
-                        // relevant for the ref-type propagation use case.)
-                        return None;
+                        // Disagreement: try union types before giving up.
+                        if let Some(union_type) = try_union_types(&resolved, prev) {
+                            candidate = Some(union_type);
+                        } else {
+                            return None;
+                        }
                     }
                 }
             }
@@ -226,7 +276,77 @@ impl<'a> Unifier<'a> {
         candidate
     }
 
-    /// Resolve a type by following substitutions (iterative to avoid stack overflow).
+    /// Port of TS `occursCheck(v, type)` (lines 741-757):
+    /// Checks if the type variable `var_id` occurs inside `ty`, which would create a cycle.
+    fn occurs_check(&self, var_id: TypeId, ty: &Type) -> bool {
+        match ty {
+            Type::Var(id) if *id == var_id => true,
+            Type::Var(id) => {
+                if let Some(substitution) = self.substitutions.get(id) {
+                    self.occurs_check(var_id, substitution)
+                } else {
+                    false
+                }
+            }
+            Type::Phi(phi) => phi.operands.iter().any(|o| self.occurs_check(var_id, o)),
+            Type::Function(func) => self.occurs_check(var_id, &func.return_type),
+            _ => false,
+        }
+    }
+
+    /// Port of TS `tryResolveType(v, type)` (lines 647-738):
+    /// Tries to resolve a cycle by removing/replacing the cyclic reference to `var_id` in `ty`.
+    /// Returns `None` if the cycle cannot be resolved.
+    fn try_resolve_type(&mut self, var_id: TypeId, ty: &Type) -> Option<Type> {
+        match ty {
+            Type::Phi(phi) => {
+                // Remove occurrences of var_id from phi operands, recursing into nested phis.
+                let mut operands = Vec::new();
+                for operand in &phi.operands {
+                    if let Type::Var(id) = operand
+                        && *id == var_id
+                    {
+                        continue; // Skip the cyclic reference
+                    }
+                    let resolved = self.try_resolve_type(var_id, operand)?;
+                    operands.push(resolved);
+                }
+                Some(Type::Phi(PhiType { operands }))
+            }
+            Type::Var(id) => {
+                let resolved = self.resolve(ty.clone());
+                if type_equals(&resolved, ty) {
+                    return Some(ty.clone());
+                }
+                let result = self.try_resolve_type(var_id, &resolved)?;
+                self.substitutions.insert(*id, result.clone());
+                Some(result)
+            }
+            Type::Property(prop) => {
+                let object_resolved = self.resolve(prop.object_type.clone());
+                let object_type = self.try_resolve_type(var_id, &object_resolved)?;
+                Some(Type::Property(Box::new(PropType {
+                    object_type,
+                    object_name: prop.object_name.clone(),
+                    property_name: prop.property_name.clone(),
+                })))
+            }
+            Type::Function(func) => {
+                let return_resolved = self.resolve(*func.return_type.clone());
+                let return_type = self.try_resolve_type(var_id, &return_resolved)?;
+                Some(Type::Function(FunctionType {
+                    return_type: Box::new(return_type),
+                    shape_id: func.shape_id.clone(),
+                    is_constructor: func.is_constructor,
+                }))
+            }
+            // ObjectMethod, Object, Primitive, Poly — no recursive structure, return as-is
+            _ => Some(ty.clone()),
+        }
+    }
+
+    /// Resolve a type by following substitutions, recursing into compound types
+    /// (Phi operands, Function return types) to match TS `get()` behavior.
     fn resolve(&self, mut ty: Type) -> Type {
         // Iteratively follow Var → substitution chains to avoid stack overflow
         // for deep chains (e.g. many phi equations creating long Var→Var chains).
@@ -238,6 +358,16 @@ impl<'a> Unifier<'a> {
                     }
                     None => return Type::Var(id),
                 },
+                Type::Phi(mut phi) => {
+                    for operand in &mut phi.operands {
+                        *operand = self.resolve(std::mem::replace(operand, Type::Primitive));
+                    }
+                    return Type::Phi(phi);
+                }
+                Type::Function(mut func) => {
+                    *func.return_type = self.resolve(*func.return_type);
+                    return Type::Function(func);
+                }
                 other => return other,
             }
         }
@@ -1100,6 +1230,36 @@ fn is_primitive_binary_op(op: BinaryOperator) -> bool {
 /// Returns true if the property is `.current` on an identifier whose name
 /// ends with `Ref` (e.g. `myRef.current`) or is exactly `ref`.
 ///
+/// Attempts to create a union type from two types when phi consensus fails.
+///
+/// Port of `tryUnionTypes()` from `TypeInference/InferTypes.ts`.
+///
+/// Handles two specific cases:
+/// - `Union(Primitive | MixedReadonly) = MixedReadonly` — e.g., `data ?? null`
+/// - `Union(Array | MixedReadonly) = Array` — array result from mixed-readonly context
+fn try_union_types(ty1: &Type, ty2: &Type) -> Option<Type> {
+    let (readonly_type, other_type) = if matches!(ty1, Type::Object(obj) if obj.shape_id.as_deref() == Some(BUILT_IN_MIXED_READONLY_ID))
+    {
+        (ty1, ty2)
+    } else if matches!(ty2, Type::Object(obj) if obj.shape_id.as_deref() == Some(BUILT_IN_MIXED_READONLY_ID))
+    {
+        (ty2, ty1)
+    } else {
+        return None;
+    };
+
+    if matches!(other_type, Type::Primitive) {
+        // Union(Primitive | MixedReadonly) = MixedReadonly
+        Some(readonly_type.clone())
+    } else if matches!(other_type, Type::Object(obj) if obj.shape_id.as_deref() == Some(BUILT_IN_ARRAY_ID))
+    {
+        // Union(Array | MixedReadonly) = Array
+        Some(other_type.clone())
+    } else {
+        None
+    }
+}
+
 /// This is used by the `enableTreatRefLikeIdentifiersAsRefs` behavior to
 /// infer that `someRef.current` accesses produce a BuiltInRefValue type,
 /// which prevents mutations to `.current` from extending mutable ranges.

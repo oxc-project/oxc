@@ -17,6 +17,9 @@ use std::cell::RefCell;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_react_compiler::{
     compiler_error::{ErrorCategory, ErrorSeverity},
+    entrypoint::suppression::{
+        DEFAULT_ESLINT_SUPPRESSION_RULES, SuppressionRange, find_program_suppressions,
+    },
     hir::build_hir::collect_import_bindings,
 };
 use oxc_span::Span;
@@ -65,7 +68,20 @@ pub fn ensure_compiled(ctx: &LintContext<'_>, config: &ReactCompilerConfig) {
     let program = ctx.nodes().program();
     let outer_bindings = collect_import_bindings(&program.body);
     let mut diagnostics = Vec::new();
-    shared::walk_statements(&program.body, &outer_bindings, config, &mut diagnostics);
+
+    // Compute program-level ESLint suppression ranges (port of Program.ts:391-403).
+    // If both validateExhaustiveMemoizationDependencies and validateHooksUsage are
+    // enabled, the TS reference passes null for ruleNames (skipping suppression checks),
+    // because those validations already catch the underlying issues.
+    let suppressions = compute_suppressions(ctx, config);
+
+    shared::walk_statements(
+        &program.body,
+        &outer_bindings,
+        config,
+        &suppressions,
+        &mut diagnostics,
+    );
 
     CACHE.with(|cache| {
         *cache.borrow_mut() = Some(CompilerCache { file_id, diagnostics });
@@ -101,4 +117,38 @@ fn make_oxc_diagnostic(diag: &CachedDiagnostic) -> OxcDiagnostic {
         ErrorSeverity::Error => OxcDiagnostic::error(diag.message.clone()).with_label(diag.span),
         _ => OxcDiagnostic::warn(diag.message.clone()).with_label(diag.span),
     }
+}
+
+/// Compute program-level ESLint suppression ranges.
+///
+/// Port of Program.ts lines 391-403: if `validateExhaustiveMemoizationDependencies`
+/// and `validateHooksUsage` are both true, we skip eslint-disable checks (pass null
+/// for rule names) because those validations already catch the underlying issues.
+/// Otherwise, we check for `DEFAULT_ESLINT_SUPPRESSION_RULES`.
+///
+/// Flow suppressions are always checked (matching `pass.opts.flowSuppressions`
+/// which defaults to true).
+fn compute_suppressions(
+    ctx: &LintContext<'_>,
+    config: &ReactCompilerConfig,
+) -> Vec<SuppressionRange> {
+    let skip_eslint_suppressions = config.environment.validate_exhaustive_memoization_dependencies
+        && config.environment.validate_hooks_usage;
+
+    let rule_names: Option<Vec<String>> = if skip_eslint_suppressions {
+        None
+    } else {
+        Some(DEFAULT_ESLINT_SUPPRESSION_RULES.iter().map(|s| (*s).to_string()).collect())
+    };
+
+    let comments = ctx.semantic().comments();
+    let source_text = ctx.semantic().source_text();
+
+    find_program_suppressions(
+        comments,
+        source_text,
+        rule_names.as_deref(),
+        // Flow suppressions: always true (matching upstream default).
+        true,
+    )
 }
