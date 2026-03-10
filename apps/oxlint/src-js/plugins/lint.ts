@@ -21,6 +21,7 @@ import {
 
 import { walkProgram, ancestors } from "../generated/walk.js";
 
+import type { VisitFn, EnterExit } from "./visitor.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
@@ -239,7 +240,7 @@ export function lintFileImpl(
     if (visitorState === VISITOR_CFG) {
       walkProgramWithCfg(ast, compiledVisitor);
     } else {
-      walkProgram(ast, compiledVisitor);
+      walkProgram(ast, compiledVisitor as (VisitFn | EnterExit | null)[]);
     }
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");

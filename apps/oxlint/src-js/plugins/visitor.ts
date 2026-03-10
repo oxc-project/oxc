@@ -102,7 +102,7 @@ import {
   EXIT_FLAG,
   IDENTIFIER_COUNT_INCREMENT,
 } from "./selector.ts";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { Node } from "./types.ts";
 import type { VisitorObject } from "../generated/visitor.d.ts";
@@ -120,11 +120,11 @@ export interface EnterExit {
 }
 
 // Visitor function and details of its specificity.
-interface VisitProp {
+interface VisitProp<Visit = VisitFn> {
   // Visit function.
   // Only `null` in between compilations - this field is only nullable to allow `VisitProp` objects to be reused,
   // while allowing the `VisitFn` to be garbage collected.
-  fn: VisitFn | null;
+  fn: Visit | null;
   // Specificity of visitor function.
   specificity: number;
   // Selector string e.g. `Program`, `Program > ExpressionStatement`, `*`.
@@ -134,6 +134,9 @@ interface VisitProp {
   // while allowing the string to be garbage collected.
   selectorStr: string | null;
 }
+
+// Visitor function and details of its specificity, where the visitor function is for a CFG event.
+type CfgVisitProp = VisitProp<CfgVisitFn>;
 
 // Entry and exit visitors for a non-leaf node.
 interface CompilingNonLeafVisitorEntry {
@@ -163,7 +166,7 @@ const CFG_EVENTS_COUNT = TYPE_IDS_COUNT - NODE_TYPES_COUNT;
 // and emptied at the end in `finalizeCompiledVisitor`, so can be reused for next compilation.
 const compilingLeafVisitor: VisitProp[][] = [];
 const compilingNonLeafVisitor: CompilingNonLeafVisitorEntry[] = [];
-const compilingCfgVisitor: VisitProp[][] = [];
+const compilingCfgVisitor: CfgVisitProp[][] = [];
 
 for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   compilingLeafVisitor.push([]);
@@ -188,7 +191,7 @@ for (let i = CFG_EVENTS_COUNT; i !== 0; i--) {
 // not "holey" (hash map). This is critical, as looking up elements in this array is a very hot path
 // during AST visitation, and holey arrays are much slower.
 // https://v8.dev/blog/elements-kinds
-export const compiledVisitor: (VisitFn | EnterExit | null)[] = [];
+export const compiledVisitor: (VisitFn | EnterExit | CfgVisitFn | null)[] = [];
 
 for (let i = TYPE_IDS_COUNT; i !== 0; i--) {
   compiledVisitor.push(null);
@@ -252,7 +255,7 @@ for (let i = NON_LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
 //
 // `visitPropsCacheNextIndex` is the index of first object in cache which is currently unused.
 // It may point to the end of the cache array.
-const visitPropsCache: VisitProp[] = [];
+const visitPropsCache: VisitProp<VisitFn | CfgVisitFn>[] = [];
 let visitPropsCacheNextIndex = 0;
 
 /**
@@ -285,7 +288,7 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
   for (let i = 0; i < keysLen; i++) {
     let name = keys[i];
 
-    const visitFn = visitor[name] as VisitFn;
+    const visitFn = visitor[name] as VisitFn | CfgVisitFn;
     if (typeof visitFn !== "function") {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
@@ -318,15 +321,19 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
       visitProp.specificity |= IDENTIFIER_COUNT_INCREMENT;
 
       if (typeId < LEAF_NODE_TYPES_COUNT) {
-        addLeafVisitFn(typeId, visitProp);
+        addLeafVisitFn(typeId, visitProp as VisitProp);
       } else if (typeId < NODE_TYPES_COUNT) {
-        addNonLeafVisitFn(typeId, visitProp, isExit);
+        addNonLeafVisitFn(typeId, visitProp as VisitProp, isExit);
       } else {
-        addCfgVisitFn(typeId, visitProp, isExit);
+        addCfgVisitFn(typeId, visitProp as CfgVisitProp, isExit);
       }
 
       continue;
     }
+
+    // CFG event handlers have been dealt with above
+    typeAssertIs<VisitFn>(visitFn);
+    typeAssertIs<VisitProp>(visitProp);
 
     // `*` matches any node without any filtering, so no need to wrap it
     if (name !== "*") {
@@ -350,7 +357,7 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
         // We could return it to the cache, but this should be a very rare case, so don't bother.
         for (let i = 0, len = typeIds.length; i < len; i++) {
           const typeId = typeIds[i];
-          // `typeId` can't refer to a CFG event
+          debugAssert(typeId < NODE_TYPES_COUNT, "`typeId` should be of a leaf or non-leaf node");
           if (typeId < LEAF_NODE_TYPES_COUNT) {
             addLeafVisitFn(typeId, visitProp);
           } else {
@@ -420,7 +427,7 @@ function addNonLeafVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean
  * @param visitProp - Visitor property
  * @param isExit - `true` if is an exit visit fn
  */
-function addCfgVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean): void {
+function addCfgVisitFn(typeId: number, visitProp: CfgVisitProp, isExit: boolean): void {
   if (isExit) throw new Error(`Invalid visitor key: \`${visitProp.selectorStr}:exit\``);
 
   const visitProps = compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!;
@@ -440,14 +447,14 @@ export function finalizeCompiledVisitor(): VisitorState {
 
   // Merge visitors for leaf nodes
   for (let i = activeLeafVisitorsCount - 1; i >= 0; i--) {
-    const typeId = activeLeafVisitorTypeIds[i]!;
-    compiledVisitor[typeId] = mergeVisitFns(compilingLeafVisitor[typeId]!);
+    const typeId = activeLeafVisitorTypeIds[i];
+    compiledVisitor[typeId] = mergeVisitFns(compilingLeafVisitor[typeId]);
   }
 
   // Merge visitors for non-leaf nodes
   for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
-    const typeId = activeNonLeafVisitorTypeIds[i]!;
-    const entry = compilingNonLeafVisitor[typeId - LEAF_NODE_TYPES_COUNT]!;
+    const typeId = activeNonLeafVisitorTypeIds[i];
+    const entry = compilingNonLeafVisitor[typeId - LEAF_NODE_TYPES_COUNT];
 
     // Reuse `EnterExit` object from cache.
     // Cache is pre-populated with enough objects that `i` cannot be out of bounds.
@@ -472,8 +479,8 @@ export function finalizeCompiledVisitor(): VisitorState {
     visitState = VISITOR_CFG;
 
     for (let i = activeCfgVisitorsCount - 1; i >= 0; i--) {
-      const typeId = activeCfgVisitorTypeIds[i]!;
-      compiledVisitor[typeId] = mergeCfgVisitFns(compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!);
+      const typeId = activeCfgVisitorTypeIds[i];
+      compiledVisitor[typeId] = mergeCfgVisitFns(compilingCfgVisitor[typeId - NODE_TYPES_COUNT]);
     }
 
     // Reset state, ready for next time
@@ -519,7 +526,7 @@ export function resetCompiledVisitor(): void {
 
 // Array used by `mergeVisitFns` and `mergeCfgVisitFns` to store visit functions extracted from an array of `VisitProp`s.
 // This array is used ephemerally, so we re-use same array for each merge.
-const visitFns: VisitFn[] = [];
+const visitFns: (VisitFn | CfgVisitFn)[] = [];
 
 /**
  * Merge array of visit functions into a single function, which calls each of input functions in turn.
@@ -577,6 +584,7 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
     // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
+    typeAssertIs<VisitFn[]>(visitFns);
     debugAssert(visitFns.length === 0, "`visitFns` should be empty");
 
     for (let i = 0; i < numVisitFns; i++) {
@@ -664,7 +672,7 @@ const mergers: (Merger | null)[] = [
  * @param visitProps - Array of `VisitProp` objects
  * @returns Function which calls all CFG visit functions in turn
  */
-function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
+function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
   const numVisitFns = visitProps.length;
 
   debugAssert(numVisitFns > 0, "`visitProps` should have at least 1 element");
@@ -673,7 +681,7 @@ function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
   if (numVisitFns === 1) {
     // Only 1 visit function, so no need to merge
     debugAssertIsNonNull(visitProps[0].fn);
-    mergedFn = visitProps[0].fn as CfgVisitFn;
+    mergedFn = visitProps[0].fn;
   } else {
     // No need to sort in order of specificity, because each rule can only have 1 handler for each CFG event
 
@@ -693,13 +701,14 @@ function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
     // TODO: Make merger functions take an array of `VisitProp`s to avoid this operation?
+    typeAssertIs<CfgVisitFn[]>(visitFns);
     debugAssert(visitFns.length === 0, "`visitFns` should be empty");
 
     for (let i = 0; i < numVisitFns; i++) {
       debugAssertIsNonNull(visitProps[i].fn);
       visitFns.push(visitProps[i].fn!);
     }
-    mergedFn = merger(...(visitFns as CfgVisitFn[]));
+    mergedFn = merger(...visitFns);
 
     visitFns.length = 0;
   }
