@@ -599,6 +599,7 @@ fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
         "promise" => "eslint-plugin-promise",
         "react_perf" => "eslint-plugin-react-perf",
         "react" => "eslint-plugin-react",
+        "react_compiler" => "react-compiler",
         "typescript" => "typescript-eslint",
         "unicorn" => "eslint-plugin-unicorn",
         "vitest" => "eslint-plugin-vitest",
