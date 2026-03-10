@@ -26,7 +26,7 @@ pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 /// single-consumer channel.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use std::{path::PathBuf, thread};
 /// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
 ///

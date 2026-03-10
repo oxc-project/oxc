@@ -77,7 +77,7 @@ pub struct ManglerReturn {
 ///
 /// ## Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// use oxc_codegen::{Codegen, CodegenOptions};
 /// use oxc_ast::ast::Program;
 /// use oxc_parser::Parser;

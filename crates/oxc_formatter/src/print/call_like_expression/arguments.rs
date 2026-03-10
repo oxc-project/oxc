@@ -439,7 +439,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// additional cases through. The simplicity is determined as
 /// either being a keyword type or any reference type with no additional type
 /// parameters. For example:
-/// ```
+/// ```text
 ///     number          => true
 ///     unknown         => true
 ///     HTMLElement     => true
@@ -448,7 +448,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// ```
 /// This function also introspects into array and generic types to extract the
 /// core type, but only to a limited extent:
-/// ```
+/// ```text
 ///     string[]        => string
 ///     string[][]      => string
 ///     string[][][]    => string

@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.9.1 -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.10.0 -y
   # Node.js related init
   pnpm install
 
