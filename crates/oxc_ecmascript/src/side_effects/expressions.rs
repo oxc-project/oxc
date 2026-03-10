@@ -549,8 +549,8 @@ fn is_known_global_property(global: &str, property: &str) -> bool {
             | "freeze" | "fromEntries" | "getOwnPropertyDescriptor"
             | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
             | "getOwnPropertySymbols" | "getPrototypeOf" | "is" | "isExtensible"
-            | "isFrozen" | "isSealed" | "keys" | "preventExtensions" | "seal"
-            | "setPrototypeOf" | "values"
+            | "isFrozen" | "isSealed" | "keys" | "preventExtensions" | "prototype"
+            | "seal" | "setPrototypeOf" | "values"
         ),
         "Reflect" => matches!(property,
             "apply" | "construct" | "defineProperty" | "deleteProperty" | "get"
