@@ -2558,31 +2558,45 @@ impl Gen for JSXAttributeItem<'_> {
 
 impl Gen for JSXElement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        // Opening element.
-        // Cannot `impl Gen for JSXOpeningElement` because it needs to know value of `self.closing_element`
-        // to determine whether to print a trailing `/`.
-        p.add_source_mapping(self.opening_element.span);
-        p.print_ascii_byte(b'<');
-        self.opening_element.name.print(p, ctx);
-        if let Some(type_arguments) = &self.opening_element.type_arguments {
-            type_arguments.print(p, ctx);
-        }
-        for attr in &self.opening_element.attributes {
-            match attr {
-                JSXAttributeItem::Attribute(_) => {
-                    p.print_hard_space();
-                }
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    p.print_soft_space();
-                }
+        // Check if this JSXElement represents a fragment (empty JSXIdentifier name).
+        // This can occur when transformers create fragment-like JSXElements programmatically
+        // instead of using JSXFragment nodes.
+        let is_fragment = matches!(
+            &self.opening_element.name,
+            JSXElementName::Identifier(ident) if ident.name.is_empty()
+        );
+
+        if is_fragment {
+            // Print as fragment: <>
+            p.add_source_mapping(self.opening_element.span);
+            p.print_str("<>");
+        } else {
+            // Opening element.
+            // Cannot `impl Gen for JSXOpeningElement` because it needs to know value of `self.closing_element`
+            // to determine whether to print a trailing `/`.
+            p.add_source_mapping(self.opening_element.span);
+            p.print_ascii_byte(b'<');
+            self.opening_element.name.print(p, ctx);
+            if let Some(type_arguments) = &self.opening_element.type_arguments {
+                type_arguments.print(p, ctx);
             }
-            attr.print(p, ctx);
+            for attr in &self.opening_element.attributes {
+                match attr {
+                    JSXAttributeItem::Attribute(_) => {
+                        p.print_hard_space();
+                    }
+                    JSXAttributeItem::SpreadAttribute(_) => {
+                        p.print_soft_space();
+                    }
+                }
+                attr.print(p, ctx);
+            }
+            if self.closing_element.is_none() {
+                p.print_soft_space();
+                p.print_ascii_byte(b'/');
+            }
+            p.print_ascii_byte(b'>');
         }
-        if self.closing_element.is_none() {
-            p.print_soft_space();
-            p.print_ascii_byte(b'/');
-        }
-        p.print_ascii_byte(b'>');
 
         // Children
         for child in &self.children {
@@ -2590,7 +2604,11 @@ impl Gen for JSXElement<'_> {
         }
 
         // Closing element
-        if let Some(closing_element) = &self.closing_element {
+        if is_fragment {
+            if self.closing_element.is_some() {
+                p.print_str("</>");
+            }
+        } else if let Some(closing_element) = &self.closing_element {
             p.add_source_mapping(closing_element.span);
             p.print_str("</");
             closing_element.name.print(p, ctx);

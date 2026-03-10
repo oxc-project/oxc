@@ -783,3 +783,77 @@ fn html_comments() {
         "const x = 1;\n--> comment\nconst y = 2;\n",
     );
 }
+
+/// Regression: JSXElement with empty name (fragment-like) should codegen as `<>...</>`
+/// not `<<>>...</>`. This occurs when transformers create JSXElement nodes with empty
+/// JSXIdentifier names instead of using JSXFragment nodes.
+#[test]
+fn jsx_element_with_empty_name_as_fragment() {
+    use oxc_ast::ast::*;
+
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    // Build: <>{b ? <div /> : <section />}</>
+    // represented as a JSXElement with empty name (not JSXFragment)
+
+    // Inner <div /> element (self-closing, no closing element)
+    let div_opening = ast.jsx_opening_element(
+        SPAN,
+        ast.jsx_element_name_identifier(SPAN, "div"),
+        None::<TSTypeParameterInstantiation>,
+        ast.vec(),
+    );
+    let div_expr =
+        ast.expression_jsx_element(SPAN, div_opening, ast.vec(), None::<JSXClosingElement>);
+
+    // Inner <section /> element (self-closing, no closing element)
+    let section_opening = ast.jsx_opening_element(
+        SPAN,
+        ast.jsx_element_name_identifier(SPAN, "section"),
+        None::<TSTypeParameterInstantiation>,
+        ast.vec(),
+    );
+    let section_expr =
+        ast.expression_jsx_element(SPAN, section_opening, ast.vec(), None::<JSXClosingElement>);
+
+    // b ? <div /> : <section />
+    let cond = ast.expression_conditional(
+        SPAN,
+        ast.expression_identifier(SPAN, "b"),
+        div_expr,
+        section_expr,
+    );
+
+    // Wrap in expression container as JSXChild
+    let expr_container = ast.jsx_child_expression_container(SPAN, JSXExpression::from(cond));
+
+    // Fragment-like JSXElement with empty name and empty type_arguments.
+    // This is the key: type_arguments = Some(TSTypeParameterInstantiation { params: [] })
+    // Without the fix, codegen prints '<' + '' (empty name) + '<>' (empty type args) + '>' = '<<>>'
+    let empty_type_args = ast.ts_type_parameter_instantiation(SPAN, ast.vec());
+    let opening = ast.jsx_opening_element(
+        SPAN,
+        ast.jsx_element_name_identifier(SPAN, ""),
+        Some(empty_type_args),
+        ast.vec(),
+    );
+    let closing = ast.jsx_closing_element(SPAN, ast.jsx_element_name_identifier(SPAN, ""));
+
+    let fragment_el =
+        ast.expression_jsx_element(SPAN, opening, ast.vec1(expr_container), Some(closing));
+
+    let stmt = ast.statement_expression(SPAN, fragment_el);
+    let program = ast.program(
+        SPAN,
+        oxc_span::SourceType::tsx(),
+        "",
+        ast.vec(),
+        None,
+        ast.vec(),
+        ast.vec1(stmt),
+    );
+
+    let result = Codegen::new().build(&program).code;
+    assert_eq!(result, "<>{b ? <div /> : <section />}</>;\n");
+}
