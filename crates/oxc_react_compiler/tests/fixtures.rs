@@ -11096,5 +11096,99 @@ function Component() {
 }
 
 // ===========================================================================
+// Regression test: PreserveManualMemo false positive on destructured param deps
+// ===========================================================================
+
+/// Minimal reproduction of false positive PreserveManualMemo error for destructured
+/// parameter properties used as useMemo dependencies.
+///
+/// Pattern: `const { info, player } = unit;` followed by `useMemo(() => ..., [info, player, ...])`
+/// The TS compiler does NOT produce a PreserveManualMemo error for this pattern.
+/// The Rust compiler should also not produce one.
+#[test]
+fn test_no_false_positive_preserve_memo_destructured_param() {
+    let source = r#"
+import { useEffect, useMemo, useState } from 'react';
+
+function useHook(unit, biome) {
+  const { info, player } = unit;
+  const [currentState, setUnitState] = useState({ type: "idle" });
+  const { type, ...props } = currentState;
+
+  const [entity, map] = useMemo(() => {
+    let entity = info.create(player);
+    if (info.hasAbility(1)) {
+      entity = entity[type === "attack" ? "unfold" : "fold"]();
+    }
+    if (unit.isTransportingUnits()) {
+      entity = entity.copy({ transports: unit.transports });
+    }
+    return [entity, biome];
+  }, [info, biome, player, type, unit]);
+
+  useEffect(() => {
+    console.log(player > 0);
+  }, [player]);
+
+  return [entity, map, props];
+}
+"#;
+
+    // Use lint-mode defaults (matching linter EnvironmentConfigOverrides)
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty(), "Parse failed: {:?}", parser_result.errors);
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .expect("No function found");
+
+    // Match the linter's lint-mode defaults
+    let env_config = EnvironmentConfig {
+        validate_preserve_existing_memoization_guarantees: true,
+        enable_preserve_existing_memoization_guarantees: true,
+        ..EnvironmentConfig::default()
+    };
+    let env = Environment::new(
+        ReactFunctionType::Hook,
+        CompilerOutputMode::Lint,
+        env_config,
+    )
+    .unwrap();
+
+    let outer_bindings = collect_import_bindings(&parser_result.program.body);
+    let mut hir_func = lower(&env, ReactFunctionType::Hook, &func, outer_bindings)
+        .expect("Lower should succeed");
+
+    let pipeline_result = run_pipeline(&mut hir_func, &env);
+    match pipeline_result {
+        Ok(output) => {
+            // Check for accumulated PreserveManualMemo errors
+            if let Some(ref errors) = output.recorded_errors {
+                let error_str = format!("{errors:?}");
+                assert!(
+                    !error_str.contains("PreserveManualMemo"),
+                    "Should not produce PreserveManualMemo error for destructured param deps, but got: {error_str}"
+                );
+            }
+        }
+        Err(e) => {
+            let error_str = format!("{e:?}");
+            assert!(
+                !error_str.contains("PreserveManualMemo"),
+                "Should not produce PreserveManualMemo error for destructured param deps, but got: {error_str}"
+            );
+        }
+    }
+}
+
+// ===========================================================================
 // End of fixtures tests
 // ===========================================================================
