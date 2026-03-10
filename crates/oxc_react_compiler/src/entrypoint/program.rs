@@ -1,10 +1,13 @@
 use oxc_ast::ast::{
-    self, BindingPattern, Expression, FormalParameters, Statement, TSType, TSTypeAnnotation,
+    self, BindingPattern, Expression, FormalParameters, ImportDeclarationSpecifier, Statement,
+    TSType, TSTypeAnnotation,
 };
 
 use crate::{
     compiler_error::{CompilerError, ErrorCategory},
-    entrypoint::options::{CompilationMode, OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES, PanicThreshold},
+    entrypoint::options::{
+        CompilationMode, CompilerReactTarget, OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES, PanicThreshold,
+    },
     hir::{ReactFunctionType, build_hir::LowerableFunction},
     utils::{component_declaration::is_component_name, hook_declaration::is_hook_name},
 };
@@ -506,4 +509,46 @@ pub fn parse_dynamic_gating_directive(directive: &str) -> Option<Result<&str, &s
     } else {
         Some(Err(trimmed))
     }
+}
+
+/// Get the React compiler runtime module name for the given target.
+///
+/// Port of `getReactCompilerRuntimeModule` from Program.ts (lines 1291-1310).
+///
+/// Returns the module name from which the compiler imports the `c` (useMemoCache)
+/// function:
+/// - React 19: `"react/compiler-runtime"` (from react namespace)
+/// - React 17/18: `"react-compiler-runtime"` (npm package)
+/// - Meta-internal: custom `runtimeModule` from config
+pub fn get_react_compiler_runtime_module(target: &CompilerReactTarget) -> &str {
+    match target {
+        CompilerReactTarget::React19 => "react/compiler-runtime",
+        CompilerReactTarget::React17 | CompilerReactTarget::React18 => "react-compiler-runtime",
+        CompilerReactTarget::MetaInternal { runtime_module } => runtime_module.as_str(),
+    }
+}
+
+/// Returns true if the program contains an `import { c } from "<moduleName>"` declaration,
+/// regardless of the local name of the `c` specifier and the presence of other specifiers
+/// in the same declaration.
+///
+/// Port of `hasMemoCacheFunctionImport` from Program.ts (lines 866-895).
+///
+/// This is used to detect files that have already been compiled by the React Compiler,
+/// preventing double-compilation.
+pub fn has_memo_cache_function_import(body: &[Statement<'_>], module_name: &str) -> bool {
+    for stmt in body {
+        if let Statement::ImportDeclaration(import) = stmt
+            && import.source.value.as_str() == module_name
+            && import.specifiers.as_ref().is_some_and(|specs| {
+                specs.iter().any(|spec| {
+                    matches!(spec, ImportDeclarationSpecifier::ImportSpecifier(s)
+                        if s.imported.name() == "c")
+                })
+            })
+        {
+            return true;
+        }
+    }
+    false
 }

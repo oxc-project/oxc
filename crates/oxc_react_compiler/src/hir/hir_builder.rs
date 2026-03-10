@@ -692,13 +692,17 @@ impl HirBuilder {
     /// Use this instead of `build()` when you need the environment with its
     /// advanced ID counters (e.g., to store in the resulting `HIRFunction`).
     ///
-    /// # Errors
-    /// Returns an error if the builder encountered errors during construction.
-    pub fn build_with_env(self) -> Result<(Hir, Environment), CompilerError> {
+    /// Any errors accumulated during HIR construction are transferred to the
+    /// environment's `recorded_errors` rather than aborting immediately. This
+    /// matches the TS compiler's behavior where `builder.recordError()` sends
+    /// errors to the environment and `build()` always returns the HIR. The
+    /// errors are checked at the end of the pipeline via `env.hasErrors()`.
+    pub fn build_with_env(self) -> (Hir, Environment) {
+        let mut env = self.env;
         if self.errors.has_any_errors() {
-            return Err(self.errors);
+            env.record_errors(Err(self.errors));
         }
-        Ok((Hir { entry: self.entry, blocks: self.completed }, self.env))
+        (Hir { entry: self.entry, blocks: self.completed }, env)
     }
 
     /// Terminate the current block with the given terminal, and start a new block.

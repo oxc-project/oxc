@@ -13,7 +13,8 @@ use oxc_react_compiler::{
         options::{CompilationMode, CompilerReactTarget, DynamicGatingOptions, PanicThreshold},
         pipeline::{resolve_output_mode, run_codegen, run_pipeline},
         program::{
-            ErrorAction, find_directive_disabling_memoization, handle_compilation_error,
+            ErrorAction, find_directive_disabling_memoization, get_react_compiler_runtime_module,
+            handle_compilation_error, has_memo_cache_function_import,
             parse_dynamic_gating_directive, should_compile_function,
         },
         suppression::{
@@ -129,7 +130,9 @@ pub struct DynamicGatingConfig {
 pub struct ReactCompiler {
     options: ReactCompilerOptions,
     panic_threshold: PanicThreshold,
-    target: CompilerReactTarget,
+    /// The runtime module name for the target (e.g. "react/compiler-runtime").
+    /// Computed once from `target` and stored to avoid repeated allocation.
+    runtime_module: String,
     environment_config: EnvironmentConfig,
     output_mode: CompilerOutputMode,
     ignore_use_no_forget: bool,
@@ -198,10 +201,11 @@ impl ReactCompiler {
         if let Some(v) = options.validate_exhaustive_memoization_dependencies {
             environment_config.validate_exhaustive_memoization_dependencies = v;
         }
+        let runtime_module = get_react_compiler_runtime_module(&target).to_string();
         Self {
             options,
             panic_threshold,
-            target,
+            runtime_module,
             environment_config,
             output_mode,
             ignore_use_no_forget,
@@ -244,23 +248,11 @@ impl ReactCompiler {
             }
         }
 
-        let runtime_module = get_runtime_module(&self.target);
-
         // Check for already-compiled marker import: `import { c } from "<runtime_module>"`.
         // If found, skip compilation entirely to prevent double-compilation.
         // Port of `hasMemoCacheFunctionImport` from Program.ts.
-        for stmt in &program.body {
-            if let Statement::ImportDeclaration(import) = stmt
-                && import.source.value.as_str() == runtime_module
-                && import.specifiers.as_ref().is_some_and(|specs| {
-                    specs.iter().any(|spec| {
-                        matches!(spec, ImportDeclarationSpecifier::ImportSpecifier(s)
-                            if s.imported.name() == "c")
-                    })
-                })
-            {
-                return;
-            }
+        if has_memo_cache_function_import(&program.body, &self.runtime_module) {
+            return;
         }
 
         // Check for module-level opt-out directives.
@@ -703,7 +695,7 @@ impl ReactCompiler {
         // compiled function (top-level or nested) uses memo slots.
         if needs_memo_import {
             ctx.state.module_imports.add_named_import(
-                Atom::from(runtime_module),
+                ctx.ast.atom(&self.runtime_module),
                 Atom::from("c"),
                 cache_binding,
                 false,
@@ -1044,12 +1036,7 @@ impl ReactCompiler {
             match Environment::new(fn_type, self.output_mode, self.environment_config.clone()) {
                 Ok(env) => env,
                 Err(error) => {
-                    Self::report_compiler_error(
-                        &error,
-                        fallback_span,
-                        self.panic_threshold,
-                        ctx,
-                    );
+                    Self::report_compiler_error(&error, fallback_span, self.panic_threshold, ctx);
                     return None;
                 }
             };
@@ -1193,12 +1180,7 @@ impl ReactCompiler {
             match Environment::new(fn_type, self.output_mode, self.environment_config.clone()) {
                 Ok(env) => env,
                 Err(error) => {
-                    Self::report_compiler_error(
-                        &error,
-                        function.span,
-                        self.panic_threshold,
-                        ctx,
-                    );
+                    Self::report_compiler_error(&error, function.span, self.panic_threshold, ctx);
                     return None;
                 }
             };
@@ -2711,11 +2693,12 @@ fn apply_ternary_gating_in_place<'a>(
     };
 
     if let Some(declarator) = declarations.get_mut(declarator_index)
-        && let Some(init) = &mut declarator.init {
-            let original_expr = std::mem::replace(init, ctx.ast.expression_null_literal(SPAN));
-            let ternary = build_gating_ternary(gating_fn_name, compiled_expr, original_expr, ctx);
-            declarator.init = Some(ternary);
-        }
+        && let Some(init) = &mut declarator.init
+    {
+        let original_expr = std::mem::replace(init, ctx.ast.expression_null_literal(SPAN));
+        let ternary = build_gating_ternary(gating_fn_name, compiled_expr, original_expr, ctx);
+        declarator.init = Some(ternary);
+    }
 }
 
 /// Get the directives from a statement's function body, for dynamic gating.
@@ -3392,17 +3375,6 @@ fn parse_target(target: Option<&str>) -> CompilerReactTarget {
                  Expected \"react-17\", \"react-18\", or \"react-19\"."
             );
         }
-    }
-}
-
-/// Get the runtime module name for the given target.
-///
-/// Port of `getReactCompilerRuntimeModule` from Program.ts.
-fn get_runtime_module(target: &CompilerReactTarget) -> &'static str {
-    match target {
-        CompilerReactTarget::React17 | CompilerReactTarget::React18 => "react-compiler-runtime",
-        CompilerReactTarget::React19 => "react/compiler-runtime",
-        CompilerReactTarget::MetaInternal { .. } => "react",
     }
 }
 

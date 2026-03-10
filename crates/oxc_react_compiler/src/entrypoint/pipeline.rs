@@ -260,11 +260,9 @@ pub fn run_pipeline(
             crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func)?;
         }
 
-        if env.config.validate_no_freezing_known_mutable_functions {
-            func.env.record_errors(
-                crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
-            );
-        }
+        func.env.record_errors(
+            crate::validation::validate_no_freezing_known_mutable_functions::validate_no_freezing_known_mutable_functions(func),
+        );
     }
 
     // 24. InferReactivePlaces
@@ -576,14 +574,15 @@ pub fn run_codegen<'a>(
         ));
     }
 
-    // Check for accumulated non-fatal validation errors from the pipeline.
-    // In the TS upstream, validation passes record errors via env.recordError()
-    // and the pipeline continues through codegen. At the end of the pipeline
-    // (Pipeline.ts:527), env.hasErrors() checks for accumulated errors and
-    // returns them. This matches that pattern: codegen runs to completion,
-    // but the error is still returned to the caller.
+    // Check for accumulated non-fatal errors from HIR building and validation.
+    // In the TS upstream, builder.recordError() and env.recordError() accumulate
+    // errors on the environment, and the pipeline continues through codegen.
+    // At the end of the pipeline (Pipeline.ts:527), env.hasErrors() checks for
+    // ANY accumulated errors (regardless of severity) and returns them.
+    // This uses has_any_errors() to match the TS behavior where hasErrors()
+    // delegates to hasAnyErrors() (checks non-empty, not severity).
     if let Some(errors) = recorded_errors
-        && errors.has_errors()
+        && errors.has_any_errors()
     {
         return Err(errors);
     }
