@@ -949,10 +949,6 @@ fn generate_instruction_equations(
         InstructionValue::FunctionExpression(v) => {
             // Port of TS InferTypes.ts `case 'FunctionExpression': yield* generate(value.loweredFunc.func)`.
             // Recursively generate type equations for the inner function's instructions.
-            // This is critical for propagating types through LoadContext instructions
-            // inside inner functions (e.g. LoadContext setState → lvalue gets the
-            // TFunction<BuiltInSetState> type, enabling the correct aliasing signature
-            // to be used in InferMutationAliasingEffects instead of the conservative fallback).
             let inner_func = &v.lowered_func.func;
             let (inner_eqs, inner_errors) = generate(
                 inner_func.fn_type,

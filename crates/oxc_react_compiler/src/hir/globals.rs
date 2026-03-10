@@ -49,7 +49,6 @@ fn untyped_globals() -> FxHashSet<String> {
     [
         "Function",
         "RegExp",
-        "Date",
         "Error",
         "TypeError",
         "RangeError",
@@ -69,7 +68,6 @@ fn untyped_globals() -> FxHashSet<String> {
         "Uint32Array",
         "ArrayBuffer",
         "JSON",
-        "performance",
         "window",
         "document",
         "navigator",
@@ -2447,6 +2445,56 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
     globals.insert(
         "Math".to_string(),
         Global::Typed(Type::Object(ObjectType { shape_id: Some(math_shape_id) })),
+    );
+
+    // --- Date ---
+    let date_now_sig = FunctionSignature {
+        rest_param: Some(Effect::Read),
+        return_type: Type::Poly,
+        return_value_kind: ValueKind::Mutable,
+        callee_effect: Effect::Read,
+        impure: true,
+        canonical_name: Some("Date.now".to_string()),
+        ..FunctionSignature::default()
+    };
+    let date_now_id = add_function(shapes, None, Vec::new(), date_now_sig);
+    let date_props = vec![(
+        "now".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(date_now_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    )];
+    let date_shape_id = add_object(shapes, "Global$Date", date_props);
+    globals.insert(
+        "Date".to_string(),
+        Global::Typed(Type::Object(ObjectType { shape_id: Some(date_shape_id) })),
+    );
+
+    // --- performance ---
+    let perf_now_sig = FunctionSignature {
+        rest_param: Some(Effect::Read),
+        return_type: Type::Poly,
+        return_value_kind: ValueKind::Mutable,
+        callee_effect: Effect::Read,
+        impure: true,
+        canonical_name: Some("performance.now".to_string()),
+        ..FunctionSignature::default()
+    };
+    let perf_now_id = add_function(shapes, None, Vec::new(), perf_now_sig);
+    let perf_props = vec![(
+        "now".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(perf_now_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    )];
+    let perf_shape_id = add_object(shapes, "Global$performance", perf_props);
+    globals.insert(
+        "performance".to_string(),
+        Global::Typed(Type::Object(ObjectType { shape_id: Some(perf_shape_id) })),
     );
 
     // --- Constructor globals (Map, Set, WeakMap, WeakSet) ---

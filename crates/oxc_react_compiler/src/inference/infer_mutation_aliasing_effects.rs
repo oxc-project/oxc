@@ -2638,6 +2638,34 @@ fn filter_mutation_effects(
                     }
                 }
             }
+            // Assign:
+            // TS applyEffect (lines 947-1015): if the source is Global/Primitive,
+            // the destination becomes an independent value (copy-on-write semantics)
+            // and the Assign effect is NOT emitted. If the source is Frozen, the
+            // effect is downgraded to ImmutableCapture. Otherwise keep as-is.
+            //
+            // This filtering is safe for instruction effects because the check is
+            // on the SOURCE (which is already in the abstract state from a previous
+            // instruction), not the destination (which may not be in the state yet).
+            AliasingEffect::Assign { from, into } => {
+                let from_kind = state.get(from).map(|av| av.kind);
+                match from_kind {
+                    Some(ValueKind::Global | ValueKind::Primitive) => {
+                        // Drop: global/primitive sources have copy-on-write semantics.
+                        // No alias edge should be created.
+                    }
+                    Some(ValueKind::Frozen | ValueKind::MaybeFrozen) => {
+                        filtered.push(AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        });
+                    }
+                    _ => {
+                        // Mutable, Context, Unknown -> keep as-is
+                        filtered.push(effect);
+                    }
+                }
+            }
             // All other effects pass through unchanged
             _ => {
                 filtered.push(effect);
@@ -2797,7 +2825,10 @@ fn filter_substituted_effects(
             }
 
             // Assign:
-            // TS applyEffect (lines 947-1015): frozen source -> ImmutableCapture.
+            // TS applyEffect (lines 947-1015):
+            // - frozen/maybeFrozen source -> ImmutableCapture
+            // - global/primitive source -> drop (copy-on-write: create new value, no alias)
+            // - mutable/context/unknown -> keep as Assign
             AliasingEffect::Assign { from, into } => {
                 let from_kind = state.get(from).map(|av| av.kind);
                 match from_kind {
@@ -2807,8 +2838,17 @@ fn filter_substituted_effects(
                             into: into.clone(),
                         });
                     }
+                    Some(ValueKind::Global | ValueKind::Primitive) => {
+                        // Drop: global/primitive sources have copy-on-write semantics.
+                        // TS creates a new Primitive value and defines the destination
+                        // without emitting the Assign effect (lines 990-1006).
+                        // Not emitting the effect prevents alias edges from being
+                        // created in InferMutationAliasingRanges, which would otherwise
+                        // allow mutation propagation through what should be independent
+                        // primitive values.
+                    }
                     _ => {
-                        // Global, Primitive, Mutable, Context, Unknown -> keep as-is
+                        // Mutable, Context, Unknown -> keep as-is
                         filtered.push(effect);
                     }
                 }
