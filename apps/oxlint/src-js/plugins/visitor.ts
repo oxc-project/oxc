@@ -215,10 +215,10 @@ let hasActiveVisitors = false;
 // `compiledVisitor` may contain many `{ enter, exit }` objects.
 // Use this cache to reuse those objects across all visitor compilations.
 //
-// `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
-// It may point to the end of the cache array.
+// `activeNonLeafVisitorsCount` is the number of populated non-leaf visitors in `compiledVisitor`,
+// and therefore the number of `EnterExit` objects currently in use.
 const enterExitObjectCache: EnterExit[] = [];
-let enterExitObjectCacheNextIndex = 0;
+let activeNonLeafVisitorsCount = 0;
 
 // `VisitProp` object cache.
 //
@@ -417,21 +417,23 @@ export function finalizeCompiledVisitor(): VisitorState {
     compiledVisitor[typeId] = mergeVisitFns(compilingLeafVisitor[typeId]!);
   }
 
+  // Populate `enterExitObjectCache` with enough entries for all non-leaf visitors.
+  // After warming up over first few files, the cache will be large enough to service all files,
+  // and this loop will be skipped. This avoids the main loop below from having to branch repeatedly
+  // on whether there are enough `EnterExit` objects in cache, and to create one if not.
+  activeNonLeafVisitorsCount = activeNonLeafVisitorTypeIds.length;
+  while (enterExitObjectCache.length < activeNonLeafVisitorsCount) {
+    enterExitObjectCache.push({ enter: null, exit: null });
+  }
+
   // Merge visitors for non-leaf nodes
-  for (let i = activeNonLeafVisitorTypeIds.length - 1; i >= 0; i--) {
+  for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
     const typeId = activeNonLeafVisitorTypeIds[i]!;
     const entry = compilingNonLeafVisitor[typeId - LEAF_NODE_TYPES_COUNT]!;
 
-    // Get or create enter-exit object.
-    // Use an existing object from cache if available, otherwise create a new one.
-    let enterExit: EnterExit;
-    if (enterExitObjectCacheNextIndex < enterExitObjectCache.length) {
-      enterExit = enterExitObjectCache[enterExitObjectCacheNextIndex];
-    } else {
-      enterExit = { enter: null, exit: null };
-      enterExitObjectCache.push(enterExit);
-    }
-    enterExitObjectCacheNextIndex++;
+    // Use enter-exit object from cache. Loop above ensures cache is filled with enough objects.
+    const enterExit = enterExitObjectCache[i];
+    debugAssertIsNonNull(enterExit, "`enterExit` should not be null");
 
     // Merge enter and exit visitors
     const enterArr = entry.enter;
@@ -487,13 +489,13 @@ export function resetCompiledVisitor(): void {
   // Reset `compiledVisitor` array
   compiledVisitor.fill(null);
 
-  // Reset enter+exit objects
-  for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
+  // Reset `EnterExit` objects
+  for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
     const enterExit = enterExitObjectCache[i];
     enterExit.enter = null;
     enterExit.exit = null;
   }
-  enterExitObjectCacheNextIndex = 0;
+  activeNonLeafVisitorsCount = 0;
 }
 
 // Array used by `mergeVisitFns` and `mergeCfgVisitFns` to store visit functions extracted from an array of `VisitProp`s.
