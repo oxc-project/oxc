@@ -6,6 +6,14 @@
 /// invalid functions to call during render are `Math.random()` and `Date.now()`.
 /// Users may extend this set of impure functions via a module type provider
 /// and specifying functions with `impure: true`.
+///
+/// NOTE: In the TS reference, this file exists but is NOT called in Pipeline.ts.
+/// The primary mechanism is the `Impure` effect emitted during inference in
+/// `computeEffectsForLegacySignature` (InferMutationAliasingEffects.ts line 2332),
+/// which propagates through function expression boundaries via effect bubbling.
+/// The Rust port now also emits `Impure` effects during inference (in
+/// `effects_from_signature`), making this separate pass a redundant safety net
+/// for top-level impure calls only.
 use crate::{
     compiler_error::{
         CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,

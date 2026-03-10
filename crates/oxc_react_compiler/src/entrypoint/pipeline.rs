@@ -116,7 +116,12 @@ pub fn run_pipeline(
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
 
     // 3. ValidateContextVariableLValues
-    crate::validation::validate_context_variable_lvalues::validate_context_variable_lvalues(func)?;
+    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
+    func.env.record_errors(
+        crate::validation::validate_context_variable_lvalues::validate_context_variable_lvalues(
+            func,
+        ),
+    );
 
     // 4. ValidateUseMemo — context variable reassignment errors are fatal (thrown
     //    via `.unwrap()` in TS), while void-memo errors are non-fatal (logged via
@@ -163,13 +168,19 @@ pub fn run_pipeline(
     // =========================================================================
 
     // 13. ValidateHooksUsage (optional)
+    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations && env.config.validate_hooks_usage {
-        crate::validation::validate_hooks_usage::validate_hooks_usage(func)?;
+        func.env.record_errors(
+            crate::validation::validate_hooks_usage::validate_hooks_usage(func),
+        );
     }
 
     // 14. ValidateNoCapitalizedCalls (optional)
+    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations && env.config.validate_no_capitalized_calls.is_some() {
-        crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func)?;
+        func.env.record_errors(
+            crate::validation::validate_no_capitalized_calls::validate_no_capitalized_calls(func),
+        );
     }
 
     // 15. OptimizePropsMethodCalls
@@ -206,15 +217,22 @@ pub fn run_pipeline(
     crate::hir::hir_builder::mark_predecessors(&mut func.body);
 
     // 21. InferMutationAliasingRanges
+    // TS uses fn.env.recordError() internally for MutateFrozen/MutateGlobal errors,
+    // so they are non-fatal and the pipeline continues to subsequent validation passes.
+    // Match that behavior by recording errors instead of propagating them via `?`.
     let range_opts = InferRangesOptions { is_function_expression: false };
-    crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
+    let range_result = crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
         func,
         &range_opts,
-    )?;
+    );
+    func.env.record_errors(range_result.map(|_| ()));
 
     // 22. ValidateLocalsNotReassignedAfterRender
+    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations {
-        crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func)?;
+        func.env.record_errors(
+            crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func),
+        );
     }
 
     // 23. Validations (conditional on config)
@@ -231,9 +249,12 @@ pub fn run_pipeline(
             );
         }
         if env.config.validate_no_set_state_in_render {
-            crate::validation::validate_no_set_state_in_render::validate_no_set_state_in_render(
-                func,
-            )?;
+            // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
+            func.env.record_errors(
+                crate::validation::validate_no_set_state_in_render::validate_no_set_state_in_render(
+                    func,
+                ),
+            );
         }
 
         if env.config.validate_no_derived_computations_in_effects_exp
@@ -241,7 +262,10 @@ pub fn run_pipeline(
         {
             func.env.log_errors(crate::validation::validate_no_derived_computations_in_effects_exp::validate_no_derived_computations_in_effects_exp(func).into_result());
         } else if env.config.validate_no_derived_computations_in_effects {
-            crate::validation::validate_no_derived_computations_in_effects::validate_no_derived_computations_in_effects(func)?;
+            // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
+            func.env.record_errors(
+                crate::validation::validate_no_derived_computations_in_effects::validate_no_derived_computations_in_effects(func),
+            );
         }
 
         if env.config.validate_no_set_state_in_effects
@@ -257,7 +281,17 @@ pub fn run_pipeline(
         }
 
         if env.config.validate_no_impure_functions_in_render {
-            crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func)?;
+            // NOTE: In the TS reference, the primary impure-function detection mechanism is
+            // the Impure effect emitted during inference in computeEffectsForLegacySignature
+            // (InferMutationAliasingEffects.ts line 2332). That approach also handles nested
+            // function expressions via effect bubbling through InferMutationAliasingRanges.
+            // The Rust port now also emits Impure effects during inference (effects_from_signature),
+            // so this separate validation pass is redundant for top-level calls but kept as a
+            // safety net. The TS file ValidateNoImpureFunctionsInRender.ts exists but is unused
+            // in Pipeline.ts.
+            func.env.record_errors(
+                crate::validation::validate_no_impure_functions_in_render::validate_no_impure_functions_in_render(func),
+            );
         }
 
         func.env.record_errors(
@@ -269,14 +303,17 @@ pub fn run_pipeline(
     crate::inference::infer_reactive_places::infer_reactive_places(func);
 
     // ValidateExhaustiveDependencies (optional, relies on reactivity inference)
+    // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations
         && (env.config.validate_exhaustive_memoization_dependencies
             || env.config.validate_exhaustive_effect_dependencies
                 != crate::hir::environment::ExhaustiveEffectDepsMode::Off)
     {
-        crate::validation::validate_exhaustive_dependencies::validate_exhaustive_dependencies(
-            func,
-        )?;
+        let result =
+            crate::validation::validate_exhaustive_dependencies::validate_exhaustive_dependencies(
+                func,
+            );
+        func.env.record_errors(result);
     }
 
     // 25. RewriteInstructionKindsBasedOnReassignment

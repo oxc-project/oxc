@@ -1500,6 +1500,7 @@ fn effects_from_signature(
     args: &[crate::hir::CallArg],
     lvalue: &Place,
     state: &InferenceState,
+    validate_no_impure: bool,
 ) -> Result<Vec<AliasingEffect>, CompilerError> {
     use crate::hir::{CallArg, Effect};
 
@@ -1523,6 +1524,43 @@ fn effects_from_signature(
         value: sig.return_value_kind,
         reason: return_value_reason,
     });
+
+    // Port of TS InferMutationAliasingEffects.ts lines 2332-2349:
+    // If the signature is marked as impure and the config flag is enabled,
+    // emit an Impure effect that will propagate through inference (including
+    // bubbling up through function expression boundaries). This is the primary
+    // mechanism for detecting impure function calls in the TS reference.
+    if sig.impure && validate_no_impure {
+        effects.push(AliasingEffect::Impure {
+            place: callee_or_receiver.clone(),
+            error: CompilerDiagnostic::create(
+                ErrorCategory::Purity,
+                "Cannot call impure function during render".to_string(),
+                Some(
+                    if let Some(ref name) = sig.canonical_name {
+                        format!(
+                            "`{name}` is an impure function. \
+                             Calling an impure function can produce unstable results that update \
+                             unpredictably when the component happens to re-render. \
+                             (https://react.dev/reference/rules/components-and-hooks-must-be-pure\
+                             #components-and-hooks-must-be-idempotent)"
+                        )
+                    } else {
+                        "Calling an impure function can produce unstable results that update \
+                         unpredictably when the component happens to re-render. \
+                         (https://react.dev/reference/rules/components-and-hooks-must-be-pure\
+                         #components-and-hooks-must-be-idempotent)"
+                            .to_string()
+                    },
+                ),
+                None,
+            )
+            .with_detail(CompilerDiagnosticDetail::Error {
+                loc: Some(callee_or_receiver.loc),
+                message: Some("Cannot call impure function".to_string()),
+            }),
+        });
+    }
 
     // Port of TS InferMutationAliasingEffects.ts lines 2224-2243:
     // If the signature is marked as knownIncompatible, throw an error immediately.
@@ -2970,7 +3008,7 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // 2b. Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=callee, function=callee, mutatesFunction=true
@@ -3067,7 +3105,7 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // 2c. Legacy fallback for method calls
-                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue, state);
+                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=receiver, function=property, mutatesFunction=false
@@ -3102,7 +3140,7 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
             }
             // Conservative fallback when no signature is found.
             // TS: receiver=callee, function=callee, mutatesFunction=false
