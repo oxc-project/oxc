@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ react_compiler(react-compiler-rule): Error: Calling setState synchronously within an effect can trigger cascading renders. Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+
+  ⚠ react-compiler(react-compiler-rule): Error: Calling setState synchronously within an effect can trigger cascading renders. Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
   │ * Update external systems with the latest state from React.
   │ * Subscribe for updates from some external system, calling setState in a callback function when external state changes.
   │ 
@@ -18,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │                 
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function Component() {
@@ -28,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function useConditional1() {
@@ -38,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 function useConditional2(props) {
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
     ╭─[react_compiler_rule.tsx:6:13]
   5 │                 }
   6 │ ╭─▶             function useConditional2(props) {
@@ -48,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │                 
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
+  ⚠ react-compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
   │ react/useState).
     ╭─[react_compiler_rule.tsx:4:13]
   3 │     
@@ -68,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  17 │                 
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
+  ⚠ react-compiler(react-compiler-rule): Error: Calling setState from useMemo may trigger an infinite loop. Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/
   │ react/useState).
     ╭─[react_compiler_rule.tsx:4:13]
   3 │     
@@ -88,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
  17 │                 
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
+  ⚠ react-compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
     ╭─[react_compiler_rule.tsx:8:23]
   7 │     
   8 │ ╭─▶               useMemo(() => {
@@ -100,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
  14 │     
     ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function useConditional() {
@@ -111,7 +112,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function useConditional() {
@@ -122,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+  ⚠ react-compiler(react-compiler-rule): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function useConditional() {
@@ -133,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+  ⚠ react-compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
    ╭─[react_compiler_rule.tsx:5:18]
  4 │               return <>
  5 │                 {Child()}
@@ -141,7 +142,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │               </>;
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+  ⚠ react-compiler(react-compiler-rule): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
    ╭─[react_compiler_rule.tsx:5:18]
  4 │               return <>
  5 │                 {myModule.Child()}
@@ -149,7 +150,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │               </>;
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Cannot call impure function during render. `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+  ⚠ react-compiler(react-compiler-rule): Error: Cannot call impure function during render. `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function Component() {
@@ -161,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Avoid constructing JSX within try/catch. React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-
+  ⚠ react-compiler(react-compiler-rule): Error: Avoid constructing JSX within try/catch. React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-
   │ error-boundary).
    ╭─[react_compiler_rule.tsx:5:22]
  4 │               try {
@@ -170,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │               } catch {
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Cannot access refs during render. React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+  ⚠ react-compiler(react-compiler-rule): Error: Cannot access refs during render. React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
    ╭─[react_compiler_rule.tsx:2:13]
  1 │     
  2 │ ╭─▶             function Component(props) {
@@ -181,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: This value cannot be modified. This modifies a variable that React considers immutable.
+  ⚠ react-compiler(react-compiler-rule): Error: This value cannot be modified. This modifies a variable that React considers immutable.
    ╭─[react_compiler_rule.tsx:3:13]
  2 │                 import { useState } from 'react';
  3 │ ╭─▶             function Component(props) {
@@ -193,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
  9 │                 
    ╰────
 
-  ⚠ react_compiler(react-compiler-rule): Error: Cannot reassign variable after render completes. Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+  ⚠ react-compiler(react-compiler-rule): Error: Cannot reassign variable after render completes. Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
    ╭─[react_compiler_rule.tsx:4:39]
  3 │               let x = props.value;
  4 │               const handler = () => { x = 1; };

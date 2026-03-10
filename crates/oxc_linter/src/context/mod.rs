@@ -604,6 +604,7 @@ fn plugin_display_name(plugin_name: &'static str) -> &'static str {
     match plugin_name {
         "jsx_a11y" => "jsx-a11y",
         "react_perf" => "react-perf",
+        "react_compiler" => "react-compiler",
         "nextjs" => "next",
         _ => plugin_name,
     }
