@@ -446,13 +446,12 @@ pub fn find_directive_disabling_memoization(
     directives: &[String],
     custom_opt_out: Option<&[String]>,
 ) -> Option<String> {
-    // Check custom opt-out directives first
-    if let Some(custom) = custom_opt_out
-        && let Some(found) = directives.iter().find(|d| custom.contains(d))
-    {
-        return Some(found.clone());
+    // When custom opt-out directives are configured, ONLY check those
+    // (do not fall through to standard directives). Matches TS Program.ts:73-80.
+    if let Some(custom) = custom_opt_out {
+        return directives.iter().find(|d| custom.contains(d)).cloned();
     }
-    // Then check standard opt-out
+    // Otherwise check standard opt-out directives
     directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).cloned()
 }
 

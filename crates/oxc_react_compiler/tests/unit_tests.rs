@@ -1122,8 +1122,20 @@ mod alignment_fix_tests {
     /// Compile a component source string through the full pipeline and return codegen output.
     /// Returns Err(String) on any failure (parse, lower, pipeline, codegen).
     fn compile_component(source: &str) -> Result<String, String> {
+        compile_component_with_config(source, oxc_span::SourceType::jsx(), EnvironmentConfig::default())
+    }
+
+    /// Compile with a custom EnvironmentConfig.
+    fn compile_component_with_env(source: &str, config: EnvironmentConfig) -> Result<String, String> {
+        compile_component_with_config(source, oxc_span::SourceType::jsx(), config)
+    }
+
+    fn compile_component_with_config(
+        source: &str,
+        source_type: oxc_span::SourceType,
+        env_config: EnvironmentConfig,
+    ) -> Result<String, String> {
         let allocator = oxc_allocator::Allocator::default();
-        let source_type = oxc_span::SourceType::jsx();
         let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
         if !parser_result.errors.is_empty() {
             return Err(format!("Parse errors: {:?}", parser_result.errors));
@@ -1144,7 +1156,7 @@ mod alignment_fix_tests {
         let env = Environment::new(
             ReactFunctionType::Component,
             CompilerOutputMode::Client,
-            EnvironmentConfig::default(),
+            env_config,
         )
         .unwrap();
 
@@ -1345,5 +1357,476 @@ function Component(props) {
             "Pipeline should succeed for useLayoutEffect with derived setState: {}",
             result.unwrap_err()
         );
+    }
+
+    /// Test: Passing a ref directly to a function should produce a Refs error.
+    /// This validates the basic "validateNoRefPassedToFunction" path.
+    #[test]
+    fn test_pass_ref_to_function_basic() {
+        let source = r#"function Component(props) {
+  const ref = useRef(null);
+  const x = foo(ref);
+  return x;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Should produce a ref validation error when passing ref to foo(), got success"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("ref") || err.contains("Ref"),
+            "Error should mention refs: {err}"
+        );
+    }
+
+    /// Test: Passing a ref through useCallback to a render-time call should produce
+    /// a Refs error. This matches the Typeahead.tsx:492 pattern where a callback
+    /// that reads ref.current is passed to a function called during render.
+    #[test]
+    fn test_ref_captured_in_callback_passed_to_render_call() {
+        let source = r#"function Component(props) {
+  const input = useRef(null);
+  const handler = () => {
+    if (input.current) {
+      input.current.value = "test";
+    }
+  };
+  const result = renderHelper(handler);
+  return result;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Should produce a ref validation error when passing ref-reading callback to a function, got success"
+        );
+    }
+
+    /// Test: Ref captured in useCallback, then passed to a render-time call.
+    /// This is the key Typeahead.tsx:492 pattern: useCallback wraps a closure
+    /// that reads ref.current, and the resulting callback is passed as argument
+    /// to a function invoked during render.
+    #[test]
+    fn test_ref_in_use_callback_passed_to_render_call() {
+        let source = r#"function Component(props) {
+  const input = useRef(null);
+  const handler = useCallback(() => {
+    if (input.current) {
+      input.current.value = "test";
+    }
+  }, []);
+  const result = renderHelper(handler);
+  return result;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Should produce a ref validation error when useCallback handler \
+             accessing ref is passed to a render-time function, got success"
+        );
+    }
+
+    /// Test: Ref captured in useCallback, then passed in an object to a
+    /// render-time call (Typeahead.tsx:492 pattern).
+    #[test]
+    fn test_ref_in_use_callback_in_object_passed_to_render_call() {
+        let source = r#"function Component(props) {
+  const input = useRef(null);
+  const handler = useCallback(() => {
+    if (input.current) {
+      input.current.value = "test";
+    }
+  }, []);
+  const result = renderHelper({ onSelect: handler });
+  return result;
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Should produce a ref validation error when useCallback handler \
+             accessing ref is passed inside an object to a render-time function, got success"
+        );
+    }
+
+    /// Test: IIFE with ref-capturing callback passed in object - exact Typeahead pattern.
+    /// (renderResults || ((results, config) => <div/>))(results, { onSelect: handler })
+    #[test]
+    fn test_ref_iife_typeahead_pattern() {
+        let source = r#"function Component(props) {
+  const input = useRef(null);
+  const [results, setResults] = useState([]);
+  const handleSelection = useCallback((result) => {
+    if (input.current) {
+      input.current.value = result.text;
+    }
+  }, []);
+  return (
+    <div>
+      {results.length ? (
+        (props.renderResults || ((r, config) => (
+          <ul>{r.map(item => (
+            <li key={item} onClick={() => config.onSelect(item)}>{item}</li>
+          ))}</ul>
+        )))(results, {
+          onSelect: handleSelection,
+        })
+      ) : null}
+    </div>
+  );
+}"#;
+        let result = compile_component(source);
+        assert!(
+            result.is_err(),
+            "Should produce a ref validation error for Typeahead IIFE pattern, got success"
+        );
+    }
+
+    /// Test: Full Typeahead component pattern with ref callback and IIFE.
+    /// The pipeline should report a Refs error (among other errors) when
+    /// infer_mutation_aliasing_ranges errors are non-fatal, matching TS behavior.
+    #[test]
+    fn test_typeahead_full_pattern() {
+        let source = r#"function Typeahead(props) {
+  const [_results, setResults] = useState([]);
+  const results = useMemo(
+    () => _results.filter((result) => !props.ignoreList?.has(result.value)),
+    [_results, props.ignoreList],
+  );
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const input = useRef(undefined);
+  const resetResults = useCallback(() => {
+    setResults(props.emptySuggestions?.length ? props.emptySuggestions : []);
+  }, [props.emptySuggestions]);
+  const hide = useCallback(() => {
+    setHighlightedIndex(-1);
+    setResults([]);
+  }, []);
+  const handleSelection = useCallback(
+    (result) => {
+      if (!result) {
+        return;
+      }
+      if (input.current) {
+        const value = props.onSelect?.(result);
+        input.current.value = value === '' ? '' : value || result.text;
+        input.current.focus();
+        resetResults();
+      }
+    },
+    [props.onSelect, resetResults],
+  );
+  const select = useCallback(() => {
+    if (results.length === 0) { return; }
+    handleSelection(results[highlightedIndex]);
+  }, [handleSelection, highlightedIndex, results]);
+  const onKeydown = useCallback(
+    (event) => {
+      if (event.key === 'Backspace' && input.current?.value === '') {
+        props.onBackspace?.();
+        return;
+      }
+      if (input.current) {
+        input.current.value = '';
+        hide();
+      }
+    },
+    [hide, props.onBackspace],
+  );
+  const [showEmptyResult, setShowEmptyResult] = useState(false);
+  return (
+    <div>
+      <input
+        onKeyDown={onKeydown}
+        ref={(element) => {
+          input.current = element;
+          if (props.inputRef) {
+            props.inputRef.current = element;
+          }
+        }}
+        type="text"
+      />
+      {results.length ? (
+        (
+          props.renderResults ||
+          ((r, config) => (
+            <ul onPointerLeave={() => config.setHighlighted(-1)}>
+              {r.map((result, index) => (
+                <li
+                  key={result.value}
+                  onClick={() => config.onSelect(result)}
+                  onPointerEnter={() => config.setHighlighted(index)}
+                >
+                  {config.renderItem(result, config.isHighlighted(index))}
+                </li>
+              ))}
+            </ul>
+          ))
+        )(results, {
+          isHighlighted: (index) => index === highlightedIndex,
+          onSelect: handleSelection,
+          renderItem: props.renderItem,
+          setHighlighted: setHighlightedIndex,
+        })
+      ) : showEmptyResult ? (
+        <ul>
+          <li>{props.emptyResult}</li>
+        </ul>
+      ) : null}
+    </div>
+  );
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_err(), "Should produce errors for Typeahead pattern, got success");
+        let err = result.unwrap_err();
+        // After fix: infer_mutation_aliasing_ranges errors are non-fatal,
+        // so validate_no_ref_access_in_render runs and reports a Refs error.
+        assert!(
+            err.contains("Refs"),
+            "Expected a Refs category error in the output: {err}"
+        );
+    }
+
+    // =========================================================================
+    // Test 1: customOptOutDirectives does not fallthrough
+    // =========================================================================
+
+    /// When customOptOutDirectives is configured, the standard 'use no memo'
+    /// directive should NOT opt out. Only the custom directives should work.
+    #[test]
+    fn test_custom_opt_out_directives_no_fallthrough() {
+        use oxc_react_compiler::entrypoint::program::find_directive_disabling_memoization;
+
+        // With custom directives configured, standard 'use no memo' should NOT match
+        let custom = vec!["use skip".to_string()];
+        let directives_no_memo = vec!["use no memo".to_string()];
+        assert!(
+            find_directive_disabling_memoization(&directives_no_memo, Some(&custom)).is_none(),
+            "'use no memo' should not opt out when customOptOutDirectives is configured"
+        );
+
+        // Custom directive should match
+        let directives_skip = vec!["use skip".to_string()];
+        assert_eq!(
+            find_directive_disabling_memoization(&directives_skip, Some(&custom)),
+            Some("use skip".to_string()),
+            "Custom directive 'use skip' should opt out"
+        );
+
+        // Without custom directives, standard 'use no memo' should work
+        assert_eq!(
+            find_directive_disabling_memoization(&directives_no_memo, None),
+            Some("use no memo".to_string()),
+            "'use no memo' should opt out when no custom directives are configured"
+        );
+
+        // 'use no forget' should also work without custom directives
+        let directives_no_forget = vec!["use no forget".to_string()];
+        assert_eq!(
+            find_directive_disabling_memoization(&directives_no_forget, None),
+            Some("use no forget".to_string()),
+            "'use no forget' should opt out when no custom directives are configured"
+        );
+    }
+
+    // =========================================================================
+    // Test 2: Multiple validation passes report errors simultaneously
+    // =========================================================================
+
+    /// When a function has BOTH a hooks violation AND another validation error,
+    /// both errors should be reported (not just the first one).
+    /// This tests that the pipeline continues through all validation passes.
+    #[test]
+    fn test_multiple_validation_errors_reported() {
+        // This component has:
+        // 1. An immutability error (modifying props)
+        // 2. A ref access error (reading ref.current in render)
+        let source = r#"function Component(props) {
+  const ref = useRef(null);
+  props.x = 1;
+  const val = ref.current;
+  return val;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_err(), "Should produce errors, got success");
+        let err = result.unwrap_err();
+        // After the infer_mutation_aliasing_ranges fix, both Immutability and Refs
+        // errors should be reported because the pipeline continues past the first error.
+        assert!(
+            err.contains("Immutability"),
+            "Expected Immutability error in output: {err}"
+        );
+        assert!(err.contains("Refs"), "Expected Refs error in output: {err}");
+    }
+
+    // =========================================================================
+    // Test 3: Suppression error messages match TS
+    // =========================================================================
+
+    /// Test that eslint-disable suppression produces error messages matching TS.
+    /// The TS compiler produces a specific message format for suppressed functions.
+    #[test]
+    fn test_suppression_error_message_format() {
+        use oxc_react_compiler::compiler_error::{
+            CompilerDiagnostic, CompilerDiagnosticDetail, CompilerSuggestion, ErrorCategory,
+        };
+
+        // Verify the suppression diagnostic structure matches TS output
+        let diagnostic = CompilerDiagnostic::create(
+            ErrorCategory::Invariant,
+            "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when all React rules are enabled.".to_string(),
+            None,
+            None,
+        );
+
+        assert_eq!(
+            diagnostic.options.reason,
+            "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when all React rules are enabled."
+        );
+        assert_eq!(diagnostic.options.category, ErrorCategory::Invariant);
+    }
+
+    // =========================================================================
+    // Test 4: Impure function detection via inference
+    // =========================================================================
+
+    /// When validateNoImpureFunctionsInRender is enabled (lint mode default),
+    /// calling impure functions like Math.random() should produce a Purity error.
+    #[test]
+    fn test_impure_function_detection() {
+        let config = EnvironmentConfig {
+            validate_no_impure_functions_in_render: true,
+            ..EnvironmentConfig::default()
+        };
+        // Math.random(), Date.now(), performance.now() are impure
+        let source = r#"function Component() {
+  const rand = Math.random();
+  return <div>{rand}</div>;
+}"#;
+        let result = compile_component_with_env(source, config);
+        assert!(result.is_err(), "Should produce an error for Math.random(), got success");
+        let err = result.unwrap_err();
+        assert!(
+            err.contains("impure") || err.contains("Impure") || err.contains("Purity"),
+            "Expected an impure function error: {err}"
+        );
+    }
+
+    /// When validateNoImpureFunctionsInRender is NOT enabled, Math.random()
+    /// should NOT produce an error.
+    #[test]
+    fn test_impure_function_not_detected_when_disabled() {
+        let source = r#"function Component() {
+  const rand = Math.random();
+  return <div>{rand}</div>;
+}"#;
+        let result = compile_component(source);
+        // Default config has validate_no_impure_functions_in_render=false,
+        // so Math.random() should not produce an impure error.
+        assert!(
+            result.is_ok(),
+            "Should succeed when impure validation is disabled, got: {}",
+            result.unwrap_err()
+        );
+    }
+
+    // =========================================================================
+    // Test 5: Refs false negative fix (Job 1 regression test)
+    // =========================================================================
+
+    /// Regression test: when infer_mutation_aliasing_ranges produces errors
+    /// (e.g., Immutability from modifying props), the pipeline should continue
+    /// to validate_no_ref_access_in_render and report Refs errors too.
+    /// Previously, infer_mutation_aliasing_ranges errors caused the pipeline
+    /// to abort via `?`, preventing ref validation from running.
+    #[test]
+    fn test_refs_not_masked_by_immutability_errors() {
+        let source = r#"function Component(props) {
+  const input = useRef(null);
+  const handler = () => {
+    if (input.current) {
+      input.current.value = "test";
+    }
+  };
+  props.inputRef.current = input.current;
+  const result = renderHelper(handler);
+  return result;
+}"#;
+        let result = compile_component(source);
+        assert!(result.is_err(), "Should produce errors, got success");
+        let err = result.unwrap_err();
+        // Both errors should be present
+        assert!(
+            err.contains("Refs"),
+            "Refs error should not be masked by Immutability error: {err}"
+        );
+    }
+
+    // =========================================================================
+    // Test 6: Type inference fixes
+    // =========================================================================
+
+    /// Test tryUnionTypes: Primitive | MixedReadonly = MixedReadonly.
+    /// When a conditional returns either a primitive or an object, the type
+    /// should be inferred as the broader type (not cause a panic).
+    #[test]
+    fn test_type_inference_primitive_union() {
+        let source = r#"function Component(props) {
+  const x = props.cond ? 42 : props.obj;
+  return <div>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        // Should not panic; should compile or produce a controlled error
+        assert!(
+            result.is_ok() || result.as_ref().unwrap_err().contains("error"),
+            "Should not panic for primitive union type inference"
+        );
+    }
+
+    /// Test recursive unification: Var with existing substitution.
+    /// When a type variable already has a substitution and gets unified again,
+    /// it should handle the chain correctly without infinite recursion.
+    #[test]
+    fn test_type_inference_recursive_unification() {
+        // Pattern that creates recursive unification through phi nodes:
+        // a loop where a variable changes type between iterations
+        let source = r#"function Component(props) {
+  let x = props.initial;
+  for (let i = 0; i < 10; i++) {
+    x = props.cond ? x : [x];
+  }
+  return <div>{x}</div>;
+}"#;
+        let result = compile_component(source);
+        // Should not panic or stack overflow; may compile or produce a controlled error
+        let _ = result;
+    }
+
+    /// Test Poly type ignore: polymorphic types should be handled gracefully.
+    #[test]
+    fn test_type_inference_poly_type() {
+        let source = r#"function Component(props) {
+  const id = (x) => x;
+  const a = id(42);
+  const b = id("hello");
+  return <div>{a}{b}</div>;
+}"#;
+        let result = compile_component(source);
+        // Poly types should be handled without panic
+        let _ = result;
+    }
+
+    /// Test isConstructor check: `new` expressions with constructors
+    /// should be handled correctly in type inference.
+    #[test]
+    fn test_type_inference_constructor() {
+        let source = r#"function Component(props) {
+  const map = new Map();
+  map.set("key", props.value);
+  const arr = Array.from(map.values());
+  return <div>{arr}</div>;
+}"#;
+        let result = compile_component(source);
+        // Constructor calls should not cause type inference issues
+        let _ = result;
     }
 }

@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ react-compiler(react-compiler-rule): Error: Calling setState synchronously within an effect can trigger cascading renders. Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
   │ * Update external systems with the latest state from React.
   │ * Subscribe for updates from some external system, calling setState in a callback function when external state changes.
@@ -89,6 +88,14 @@ source: crates/oxc_linter/src/tester.rs
  17 │                 
     ╰────
 
+  ⚠ react-compiler(react-compiler-rule): Error: Found extra memoization dependencies. Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often.
+    ╭─[react_compiler_rule.tsx:13:31]
+ 12 │                 }
+ 13 │               }, [cond, item, init]);
+    ·                               ────
+ 14 │ 
+    ╰────
+
   ⚠ react-compiler(react-compiler-rule): Error: useMemo() callbacks must return a value. This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects.
     ╭─[react_compiler_rule.tsx:8:23]
   7 │     
@@ -162,6 +169,18 @@ source: crates/oxc_linter/src/tester.rs
  8 │                 
    ╰────
 
+  ⚠ react-compiler(react-compiler-rule): Error: Cannot call impure function during render. `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function Component() {
+ 3 │ │                 const date = Date.now();
+ 4 │ │                 const now = performance.now();
+ 5 │ │                 const rand = Math.random();
+ 6 │ │                 return <Foo date={date} now={now} rand={rand} />;
+ 7 │ ╰─▶             }
+ 8 │                 
+   ╰────
+
   ⚠ react-compiler(react-compiler-rule): Error: Avoid constructing JSX within try/catch. React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-
   │ error-boundary).
    ╭─[react_compiler_rule.tsx:5:22]
@@ -200,4 +219,15 @@ source: crates/oxc_linter/src/tester.rs
  4 │               const handler = () => { x = 1; };
    ·                                       ─
  5 │               return <div onClick={handler}>{x}</div>;
+   ╰────
+
+  ⚠ react-compiler(react-compiler-rule): Error: Cannot modify local variables after render completes. This argument is a function which may reassign or mutate `x` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead.
+   ╭─[react_compiler_rule.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             function Component(props) {
+ 3 │ │                 let x = props.value;
+ 4 │ │                 const handler = () => { x = 1; };
+ 5 │ │                 return <div onClick={handler}>{x}</div>;
+ 6 │ ╰─▶             }
+ 7 │                 
    ╰────
