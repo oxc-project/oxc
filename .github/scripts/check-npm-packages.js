@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const { execSync } = require("child_process");
+const { execSync, execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -14,16 +14,21 @@ const path = require("path");
 
 /**
  * Query npm registry for a package version.
- * Returns the version string if found, or null on any error (not found, network issue, etc).
+ * Returns the version string if found, or null if the package/version does not exist.
+ * Throws on unexpected errors (network issues, auth failures, etc).
  */
 function npmViewVersion(spec) {
   try {
-    return execSync(`npm view ${spec} version`, {
+    return execFileSync("npm", ["view", spec, "version"], {
       stdio: "pipe",
       encoding: "utf-8",
     }).trim();
-  } catch {
-    return null;
+  } catch (error) {
+    // npm exits with E404 when the package or version doesn't exist
+    if (error.stderr && error.stderr.includes("E404")) {
+      return null;
+    }
+    throw error;
   }
 }
 
