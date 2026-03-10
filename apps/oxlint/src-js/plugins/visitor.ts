@@ -570,17 +570,10 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
       return strA === strB ? 0 : strA < strB ? -1 : 1;
     });
 
-    // Get or create merger for merging `numVisitFns` functions
-    let merger: Merger | null;
-    if (mergers.length <= numVisitFns) {
-      while (mergers.length < numVisitFns) {
-        mergers.push(null);
-      }
-      merger = createMerger(numVisitFns);
-      mergers.push(merger);
-    } else {
-      merger = mergers[numVisitFns];
-      if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    // If no existing merger for `numVisitFns` functions, create mergers for all numbers of functions up to
+    // and including `numVisitFns`. After warm-up over first few files, this loop will be skipped.
+    while (mergers.length <= numVisitFns) {
+      mergers.push(createMerger(mergers.length));
     }
 
     // Merge functions.
@@ -593,6 +586,8 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
       debugAssertIsNonNull(visitProps[i].fn);
       visitFns.push(visitProps[i].fn!);
     }
+
+    const merger = mergers[numVisitFns]!;
     mergedFn = merger(...visitFns);
 
     visitFns.length = 0;
@@ -687,17 +682,10 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
   } else {
     // No need to sort in order of specificity, because each rule can only have 1 handler for each CFG event
 
-    // Get or create merger for merging `numVisitFns` functions
-    let merger: CfgMerger | null;
-    if (cfgMergers.length <= numVisitFns) {
-      while (cfgMergers.length < numVisitFns) {
-        cfgMergers.push(null);
-      }
-      merger = createCfgMerger(numVisitFns);
-      cfgMergers.push(merger);
-    } else {
-      merger = cfgMergers[numVisitFns];
-      if (merger === null) merger = cfgMergers[numVisitFns] = createCfgMerger(numVisitFns);
+    // If no existing merger for `numVisitFns` functions, create mergers for all numbers of functions up to
+    // and including `numVisitFns`. After warm-up over first few files, this loop will be skipped.
+    while (cfgMergers.length <= numVisitFns) {
+      cfgMergers.push(createCfgMerger(cfgMergers.length));
     }
 
     // Merge functions.
@@ -710,6 +698,8 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
       debugAssertIsNonNull(visitProps[i].fn);
       visitFns.push(visitProps[i].fn!);
     }
+
+    const merger = cfgMergers[numVisitFns]!;
     mergedFn = merger(...visitFns);
 
     visitFns.length = 0;
