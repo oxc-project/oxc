@@ -65,3 +65,29 @@
 | File | Note |
 | :--- | :--- |
 | [styled-components.js](diffs/css-in-js/styled-components.js.md) | `Xxx.extend` not recognized as tag |
+
+## html-in-js
+
+### Option 1: 1/4 (25.00%)
+
+```json
+{"printWidth":80}
+```
+
+| File | Note |
+| :--- | :--- |
+| [html-template-literals.js](diffs/html-in-js/html-template-literals.js.md) |  |
+| [issue-10691.js](diffs/html-in-js/issue-10691.js.md) | `/* HTML */` comment tag not yet supported |
+| [lit-html.js](diffs/html-in-js/lit-html.js.md) |  |
+
+### Option 2: 1/4 (25.00%)
+
+```json
+{"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
+```
+
+| File | Note |
+| :--- | :--- |
+| [html-template-literals.js](diffs/html-in-js/html-template-literals.js.md) |  |
+| [issue-10691.js](diffs/html-in-js/issue-10691.js.md) | `/* HTML */` comment tag not yet supported |
+| [lit-html.js](diffs/html-in-js/lit-html.js.md) |  |

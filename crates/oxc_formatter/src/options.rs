@@ -69,6 +69,10 @@ pub struct FormatOptions {
     /// - `false` - Retain the default behavior of ternaries; keep question marks on the same line as the consequent.
     pub experimental_ternaries: bool,
 
+    /// Whether HTML whitespace sensitivity is set to "ignore".
+    /// When true, HTML-in-JS templates always use hard line breaks for wrapping.
+    pub html_whitespace_sensitivity_ignore: bool,
+
     /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
     pub embedded_language_formatting: EmbeddedLanguageFormatting,
 
@@ -145,6 +149,7 @@ impl FormatOptions {
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
             experimental_ternaries: false,
+            html_whitespace_sensitivity_ignore: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             sort_imports: None,
             sort_tailwindcss: None,

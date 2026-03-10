@@ -10,8 +10,8 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 use super::format_config::{
     ArrowParensConfig, CustomGroupItemConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig,
-    FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig, SortOrderConfig,
-    SortPackageJsonConfig, TrailingCommaConfig,
+    FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, QuotePropsConfig,
+    SortGroupItemConfig, SortOrderConfig, SortPackageJsonConfig, TrailingCommaConfig,
 };
 
 /// Resolved format options from `FormatConfig`.
@@ -139,6 +139,12 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
             ObjectWrapConfig::Preserve => Expand::Auto,
             ObjectWrapConfig::Collapse => Expand::Never,
         };
+    }
+
+    // [Prettier] htmlWhitespaceSensitivity: "css" | "strict" | "ignore"
+    if let Some(sensitivity) = config.html_whitespace_sensitivity {
+        format_options.html_whitespace_sensitivity_ignore =
+            matches!(sensitivity, HtmlWhitespaceSensitivityConfig::Ignore);
     }
 
     // [Prettier] embeddedLanguageFormatting: "auto" | "off"

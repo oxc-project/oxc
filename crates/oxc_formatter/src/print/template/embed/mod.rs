@@ -1,13 +1,15 @@
 mod css;
 mod graphql;
+mod html;
 
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::ast::*;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
+    IndentWidth,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Formatter, prelude::*},
+    formatter::{FormatElement, Formatter, format_element::TextWidth, prelude::*},
     write,
 };
 
@@ -164,12 +166,7 @@ fn try_embed_html<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    // TODO: Remove this check and use placeholder approach for expressions
-    if !tagged.quasi.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = tagged.quasi.quasis[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-html", template_content)
+    html::format_html_doc(tagged.quasi(), f)
 }
 
 fn try_embed_markdown<'a>(
@@ -250,4 +247,35 @@ fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
     }
 
     result.into_str()
+}
+
+/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
+///
+/// Uses `Text("\n") + ExpandParent` (= `literalline()`)
+/// instead of `hard_line_break()` to avoid adding indentation.
+///
+/// The external formatter has already computed proper indentation in the text content,
+/// so we must not add extra indent from the surrounding `block_indent`.
+fn write_text_with_line_breaks<'a>(
+    f: &mut Formatter<'_, 'a>,
+    text: &str,
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) {
+    let mut first = true;
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
+    for line in text.split('\n') {
+        if !first {
+            // Emit literalline: Text("\n") + ExpandParent
+            let newline = allocator.alloc_str("\n");
+            f.write_element(FormatElement::Text { text: newline, width: TextWidth::multiline(0) });
+            f.write_element(FormatElement::ExpandParent);
+        }
+        first = false;
+        if !line.is_empty() {
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            f.write_element(FormatElement::Text { text: arena_text, width });
+        }
+    }
 }

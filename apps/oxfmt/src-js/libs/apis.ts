@@ -25,6 +25,22 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   if (prettierCache) return prettierCache;
 
   prettierCache = await import("prettier");
+
+  // Patch Prettier's hidden defaults to allow `parentParser` to pass through
+  // `normalizeFormatOptions`. Without this, `parentParser` is stripped before
+  // reaching the printer, causing sub-formatters (e.g., CSS inside HTML style
+  // attributes) to run when they shouldn't for embedded code.
+  // @ts-expect-error: Use internal API
+  const { formatOptionsHiddenDefaults } = prettierCache.__internal;
+  if (formatOptionsHiddenDefaults) {
+    if (!("parentParser" in formatOptionsHiddenDefaults)) {
+      formatOptionsHiddenDefaults.parentParser = undefined;
+    }
+    if (!("__onHtmlRoot" in formatOptionsHiddenDefaults)) {
+      formatOptionsHiddenDefaults.__onHtmlRoot = undefined;
+    }
+  }
+
   return prettierCache;
 }
 
@@ -128,8 +144,27 @@ export async function formatEmbeddedDoc({
   // - Specified parser is not available
   // - Or, code has syntax errors
   // In such cases, Rust side will fallback to original code
+  const isHtml = options.parser === "html";
+
+  if (isHtml) {
+    // Tell Prettier this is embedded (not standalone). This prevents
+    // sub-formatters from running (e.g., CSS formatting inside HTML style attributes).
+    // The actual value doesn't matter — Prettier's HTML embed checks only test
+    // `!options.parentParser` (truthy), never the specific parser name.
+    options.parentParser = "babel";
+  }
+
   return Promise.all(
     texts.map(async (text) => {
+      // For HTML, use `__onHtmlRoot` callback to capture topLevelCount
+      // from the AST root during `printToDoc`, avoiding a separate parse call.
+      let topLevelCount = 0;
+      if (isHtml) {
+        options.__onHtmlRoot = (root: { children?: unknown[] }) => {
+          topLevelCount = root.children?.length ?? 0;
+        };
+      }
+
       // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
       const doc = await prettier.__debug.printToDoc(text, options);
 
@@ -139,14 +174,21 @@ export async function formatEmbeddedDoc({
       const symbolToNumber = new Map<symbol, number>();
       let nextId = 1;
 
-      return JSON.stringify(doc, (_key, value) => {
+      const replacer = (_key: string, value: unknown) => {
         if (typeof value === "symbol") {
           if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
           return symbolToNumber.get(value);
         }
         if (value === -Infinity) return "__NEGATIVE_INFINITY__";
         return value;
-      });
+      };
+
+      // For HTML, wrap the doc with metadata so Rust side can use topLevelCount.
+      if (isHtml) {
+        return JSON.stringify({ doc, topLevelCount }, replacer);
+      }
+
+      return JSON.stringify(doc, replacer);
     }),
   );
 }
