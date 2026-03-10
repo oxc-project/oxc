@@ -12,13 +12,18 @@ const path = require("path");
  * Example: node check-npm-packages.js "release-dir/*" "napi/parser"
  */
 
-function checkPackageExists(packageName) {
+/**
+ * Query npm registry for a package version.
+ * Returns the version string if found, or null on any error (not found, network issue, etc).
+ */
+function npmViewVersion(spec) {
   try {
-    execSync(`npm view ${packageName} version`, { stdio: "pipe" });
-    return true;
-  } catch (error) {
-    console.error(`Failed to check package ${packageName}:`, error.message);
-    return false;
+    return execSync(`npm view ${spec} version`, {
+      stdio: "pipe",
+      encoding: "utf-8",
+    }).trim();
+  } catch {
+    return null;
   }
 }
 
@@ -81,12 +86,20 @@ function checkPackage(packageDir, skipExistenceCheck = false) {
 
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
   const packageName = packageJson.name;
+  const packageVersion = packageJson.version;
+
+  // Check if this exact version is already published (single npm registry call)
+  if (npmViewVersion(`${packageName}@${packageVersion}`) === packageVersion) {
+    console.log(`⏭ ${packageName}@${packageVersion} already published, skipping.`);
+    console.log("");
+    return true;
+  }
 
   // Check if package exists on npm (unless skipped)
   if (!skipExistenceCheck) {
     console.log(`Checking if package '${packageName}' exists on npm...`);
 
-    if (!checkPackageExists(packageName)) {
+    if (!npmViewVersion(packageName)) {
       console.error(`::error::Package '${packageName}' does not exist on npm!`);
       console.log("");
       console.log(

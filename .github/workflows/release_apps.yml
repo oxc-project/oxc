@@ -325,11 +325,11 @@ jobs:
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           # Publish `oxlint` package
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
           # Publish `@oxlint/plugins` package
-          pnpm publish ${plugins_package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${plugins_package_path} ${PUBLISH_FLAGS}
           # Publish `oxlint-plugin-eslint` package
-          pnpm publish ${plugin_eslint_package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${plugin_eslint_package_path} ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
@@ -604,7 +604,7 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:
     name: GitHub Release
