@@ -216,9 +216,22 @@ let hasActiveVisitors = false;
 // `compiledVisitor` may contain many `{ enter, exit }` objects.
 // Use this cache to reuse those objects across all visitor compilations.
 //
-// `activeNonLeafVisitorsCount` is the number of populated non-leaf visitors in `compiledVisitor`,
+// Pre-populate the cache with enough `EnterExit` objects for all non-leaf AST node types.
+// This removes the need to check if cache contains enough objects before using it in `finalizeCompiledVisitor`.
+//
+// More importantly, allocating all these objects in one go will put them together in memory in "new space".
+// When these objects graduate to "old space", V8 does not necessarily keep them together in memory,
+// but it will tend to - it makes it more likely they'll be grouped together.
+// These objects are accessed over and over during AST walk, so having them all close together in memory
+// makes L1 cache misses less likely.
+//
+// `activeNonLeafVisitorsCount` is the number of active non-leaf visitors in `compiledVisitor`,
 // and therefore the number of `EnterExit` objects currently in use.
 const enterExitObjectCache: EnterExit[] = [];
+
+for (let i = NON_LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
+  enterExitObjectCache.push({ enter: null, exit: null });
+}
 
 // `VisitProp` object cache.
 //
@@ -419,20 +432,13 @@ export function finalizeCompiledVisitor(): VisitorState {
     compiledVisitor[typeId] = mergeVisitFns(compilingLeafVisitor[typeId]!);
   }
 
-  // Populate `enterExitObjectCache` with enough entries for all non-leaf visitors.
-  // After warming up over first few files, the cache will be large enough to service all files,
-  // and this loop will be skipped. This avoids the main loop below from having to branch repeatedly
-  // on whether there are enough `EnterExit` objects in cache, and to create one if not.
-  while (enterExitObjectCache.length < activeNonLeafVisitorsCount) {
-    enterExitObjectCache.push({ enter: null, exit: null });
-  }
-
   // Merge visitors for non-leaf nodes
   for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
     const typeId = activeNonLeafVisitorTypeIds[i]!;
     const entry = compilingNonLeafVisitor[typeId - LEAF_NODE_TYPES_COUNT]!;
 
-    // Use enter-exit object from cache. Loop above ensures cache is filled with enough objects.
+    // Reuse `EnterExit` object from cache.
+    // Cache is pre-populated with enough objects that `i` cannot be out of bounds.
     const enterExit = enterExitObjectCache[i];
     debugAssertIsNonNull(enterExit, "`enterExit` should not be null");
 
@@ -485,20 +491,12 @@ export function finalizeCompiledVisitor(): VisitorState {
  * This frees visit functions stored in `compiledVisitor`, and makes them eligible for garbage collection.
  *
  * After calling this function, `compiledVisitor` is in a clean state, ready for next file's visitor to be compiled.
- *
- * `finalizeCompiledVisitor` must have been called before calling this function, to ensure that `enterExitObjectCache`
- * contains at least `activeNonLeafVisitorsCount` objects.
  */
 export function resetCompiledVisitor(): void {
   // Reset `compiledVisitor` array
   compiledVisitor.fill(null);
 
   // Reset `EnterExit` objects
-  debugAssert(
-    enterExitObjectCache.length >= activeNonLeafVisitorsCount,
-    "`enterExitObjectCache` should contain at least `activeNonLeafVisitorsCount` entries",
-  );
-
   for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
     const enterExit = enterExitObjectCache[i];
     enterExit.enter = null;
