@@ -274,6 +274,13 @@ export function resetFile() {
  * in the correct initial state for linting the next file.
  */
 export function resetStateAfterError() {
+  // In case error occurred during visitor compilation, clear internal state of visitor compilation,
+  // so no leftovers bleed into next file.
+  // We could have a separate function to reset state which could be simpler and faster, but `resetStateAfterError`
+  // should never be called - only happens when rules return an invalid visitor or malfunction.
+  // So better to use the existing function, rather than bloat the package with more code which should never run.
+  finalizeCompiledVisitor();
+
   diagnostics.length = 0;
   ancestors.length = 0;
   resetFile();
