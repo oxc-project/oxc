@@ -9,7 +9,8 @@ use oxc_ast::ast::Comment;
 use oxc_span::Span;
 
 use crate::compiler_error::{
-    CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory, SourceLocation,
+    CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, CompilerSuggestion,
+    ErrorCategory, SourceLocation,
 };
 
 /// A suppression range from an eslint-disable comment pair.
@@ -18,6 +19,8 @@ pub struct SuppressionRange {
     pub start: u32,
     pub end: Option<u32>,
     pub source: SuppressionSource,
+    /// The trimmed text content of the disable comment (e.g. "eslint-disable react-hooks/rules-of-hooks").
+    pub comment_text: String,
 }
 
 /// Source of a suppression (ESLint or Flow).
@@ -118,6 +121,7 @@ pub fn find_program_suppressions(
     let mut disable_start: Option<u32> = None;
     let mut enable_end: Option<u32> = None;
     let mut source: Option<SuppressionSource> = None;
+    let mut disable_comment_text: Option<String> = None;
 
     // Convert rule_names to a usable form
     let rules: Vec<String> = match rule_names {
@@ -139,6 +143,7 @@ pub fn find_program_suppressions(
             disable_start = Some(comment_start);
             enable_end = Some(comment_end);
             source = Some(SuppressionSource::Eslint);
+            disable_comment_text = Some(comment_text.trim().to_string());
         }
 
         // Check for Flow suppression (only if not already in a block)
@@ -146,12 +151,14 @@ pub fn find_program_suppressions(
             disable_start = Some(comment_start);
             enable_end = Some(comment_end);
             source = Some(SuppressionSource::Flow);
+            disable_comment_text = Some(comment_text.trim().to_string());
         }
 
         // Check for eslint-disable (block start)
         if has_rules && matches_disable(comment_text, &rules) {
             disable_start = Some(comment_start);
             source = Some(SuppressionSource::Eslint);
+            disable_comment_text = Some(comment_text.trim().to_string());
         }
 
         // Check for eslint-enable (block end)
@@ -164,7 +171,12 @@ pub fn find_program_suppressions(
 
         // If we have a complete suppression, push it
         if let (Some(start), Some(src)) = (disable_start, source) {
-            suppression_ranges.push(SuppressionRange { start, end: enable_end, source: src });
+            suppression_ranges.push(SuppressionRange {
+                start,
+                end: enable_end,
+                source: src,
+                comment_text: disable_comment_text.take().unwrap_or_default(),
+            });
             disable_start = None;
             enable_end = None;
             source = None;
@@ -218,23 +230,30 @@ pub fn filter_suppressions_that_affect_function(
 pub fn suppressions_to_compiler_error(suppressions: &[&SuppressionRange]) -> CompilerError {
     let mut error = CompilerError::new();
     for suppression in suppressions {
-        let reason = match suppression.source {
-            SuppressionSource::Eslint => {
-                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled. React Compiler only works when it can safely apply React rules of hooks and other React rules."
-            }
-            SuppressionSource::Flow => {
-                "React Compiler has skipped optimizing this component because a Flow suppression was found."
-            }
+        let (reason, suggestion) = match suppression.source {
+            SuppressionSource::Eslint => (
+                "React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled",
+                "Remove the ESLint suppression and address the React error",
+            ),
+            SuppressionSource::Flow => (
+                "React Compiler has skipped optimizing this component because one or more React rule violations were reported by Flow",
+                "Remove the Flow suppression and address the React error",
+            ),
         };
+        let description = format!(
+            "React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `{}`",
+            suppression.comment_text
+        );
+        let range = (suppression.start, suppression.end.unwrap_or(suppression.start));
         error.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
             category: ErrorCategory::Suppression,
             reason: reason.to_string(),
-            description: None,
-            loc: Some(SourceLocation::Source(Span::new(
-                suppression.start,
-                suppression.end.unwrap_or(suppression.start),
-            ))),
-            suggestions: None,
+            description: Some(description),
+            loc: Some(SourceLocation::Source(Span::new(range.0, range.1))),
+            suggestions: Some(vec![CompilerSuggestion::Remove {
+                range,
+                description: suggestion.to_string(),
+            }]),
         }));
     }
     error
