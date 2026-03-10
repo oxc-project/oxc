@@ -22,14 +22,14 @@ pub use crate::external_formatter::{
     EmbeddedDocFormatterCallback, EmbeddedDocResult, EmbeddedFormatterCallback, ExternalCallbacks,
     TailwindCallback,
 };
+pub use crate::formatter::format_element::document::propagate_expand_elements;
 pub use crate::formatter::format_element::tag::{
     Align, Condition, DedentMode, Group, GroupMode, Tag,
 };
-pub use crate::formatter::format_element::document::propagate_expand_elements;
 pub use crate::formatter::format_element::{
     BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
 };
-pub use crate::formatter::printer::{Printer, PrintWidth, PrinterOptions};
+pub use crate::formatter::printer::{PrintWidth, Printer, PrinterOptions};
 pub use crate::formatter::{Format, Formatted, PrintError, Printed};
 pub use crate::formatter::{GroupId, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;

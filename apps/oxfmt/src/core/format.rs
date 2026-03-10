@@ -289,25 +289,30 @@ impl SourceFormatter {
         }
 
         // Extract printer options before moving external_options
-        let printer_options =
-            if use_doc_path { Some(external_options_to_printer_options(&external_options)) } else { None };
+        let printer_options = if use_doc_path {
+            Some(external_options_to_printer_options(&external_options))
+        } else {
+            None
+        };
 
-        let result = external_formatter.format_file(external_options, source_text).map_err(|err| {
-            let relative = std::env::current_dir()
-                .ok()
-                .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
-            let display_path = relative.as_deref().unwrap_or(path).to_string_lossy();
-            let message = if let Some((first, rest)) = err.split_once('\n') {
-                format!("{first}\n[{display_path}]\n{rest}")
-            } else {
-                format!("{err}\n[{display_path}]")
-            };
-            OxcDiagnostic::error(message)
-        })?;
+        let result =
+            external_formatter.format_file(external_options, source_text).map_err(|err| {
+                let relative = std::env::current_dir()
+                    .ok()
+                    .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
+                let display_path = relative.as_deref().unwrap_or(path).to_string_lossy();
+                let message = if let Some((first, rest)) = err.split_once('\n') {
+                    format!("{first}\n[{display_path}]\n{rest}")
+                } else {
+                    format!("{err}\n[{display_path}]")
+                };
+                OxcDiagnostic::error(message)
+            })?;
 
         if let Some(printer_options) = printer_options {
-            self.print_doc_json(&result, &printer_options)
-                .map_err(|err| OxcDiagnostic::error(format!("Doc path failed for {}: {err}", path.display())))
+            self.print_doc_json(&result, &printer_options).map_err(|err| {
+                OxcDiagnostic::error(format!("Doc path failed for {}: {err}", path.display()))
+            })
         } else {
             Ok(result)
         }
@@ -325,8 +330,8 @@ impl SourceFormatter {
         let allocator = self.allocator_pool.get();
         let group_id_builder = UniqueGroupIdBuilder::default();
 
-        let doc_json: serde_json::Value =
-            serde_json::from_str(doc_json_str).map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
+        let doc_json: serde_json::Value = serde_json::from_str(doc_json_str)
+            .map_err(|e| format!("Failed to parse Doc JSON: {e}"))?;
 
         let elements = from_prettier_doc::to_format_elements_for_file(
             &doc_json,

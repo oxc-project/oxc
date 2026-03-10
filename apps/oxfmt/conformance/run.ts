@@ -30,10 +30,7 @@ type Source = {
 const categories: Category[] = [
   {
     name: "json",
-    sources: [
-      { dir: PRETTIER_FIXTURES_DIR, ext: ".json" },
-      { dir: join(EDGE_CASES_DIR, "json") },
-    ],
+    sources: [{ dir: PRETTIER_FIXTURES_DIR, ext: ".json" }, { dir: join(EDGE_CASES_DIR, "json") }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
