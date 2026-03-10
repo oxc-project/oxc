@@ -235,9 +235,7 @@ let visitPropsCacheNextIndex = 0;
  */
 export function initCompiledVisitor(): void {
   // Reset `compiledVisitor` array after previous compilation
-  for (let i = 0; i < TYPE_IDS_COUNT; i++) {
-    compiledVisitor[i] = null;
-  }
+  compiledVisitor.fill(null);
 
   // Reset enter+exit objects which were used in previous compilation
   for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
