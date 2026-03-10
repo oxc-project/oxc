@@ -1,4 +1,4 @@
 /**
  * @example
- *   { "testArr": [1, 2] }
+ *   { testArr: [1, 2] }
  */

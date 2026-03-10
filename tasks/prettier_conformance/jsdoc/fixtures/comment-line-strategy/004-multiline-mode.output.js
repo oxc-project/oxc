@@ -1,5 +1,5 @@
 /**
- * @type {import("eslint").Linter.Config} should Be multiline
+ * @type {import("eslint").Linter.Config} Should be multiline
  */
 const config = {
   // ...
