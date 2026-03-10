@@ -796,7 +796,7 @@ fn test_property_access() {
 #[test]
 fn test_new_expressions() {
     test("new AggregateError", true);
-    test("new DataView", true);
+    test("new DataView", false);
     test("new Symbol", true);
     test("new Set", false);
     test("new Map", false);
