@@ -136,6 +136,16 @@ export default defineConfig([
     ...pluginEslintPkgConfig,
     entry: { index: "src-js/plugin-eslint/index.ts" },
     format: "esm",
+    banner: {
+      js: [
+        "/**",
+        " * ESLint's rules code copied from https://github.com/eslint/eslint",
+        " *",
+        " * License: MIT",
+        " * https://github.com/eslint/eslint/blob/a0d1a3772679d3d74bb860fc65b5b58678acd452/LICENSE",
+        " */",
+      ].join("\n"),
+    },
   },
   {
     ...pluginEslintPkgConfig,
