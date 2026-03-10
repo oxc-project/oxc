@@ -183,29 +183,30 @@ for (let i = TYPE_IDS_COUNT; i !== 0; i--) {
 }
 
 // Arrays containing type IDs of types which have visit functions defined for them.
-//
-// Fill with zeros initially up to maximum size they could ever need to be so that:
-// 1. These arrays never need to grow.
-// 2. V8 treats these arrays as "PACKED_SMI_ELEMENTS".
-const activeLeafVisitorTypeIds: number[] = [],
-  activeNonLeafVisitorTypeIds: number[] = [],
-  activeCfgVisitorTypeIds: number[] = [];
+// All three share a single underlying buffer.
+const activeTypeIdsBuffer = new ArrayBuffer(TYPE_IDS_COUNT);
+const activeLeafVisitorTypeIds = new Uint8Array(activeTypeIdsBuffer, 0, LEAF_NODE_TYPES_COUNT);
+const activeNonLeafVisitorTypeIds = new Uint8Array(
+  activeTypeIdsBuffer,
+  LEAF_NODE_TYPES_COUNT,
+  NON_LEAF_NODE_TYPES_COUNT,
+);
+const activeCfgVisitorTypeIds = new Uint8Array(
+  activeTypeIdsBuffer,
+  LEAF_NODE_TYPES_COUNT + NON_LEAF_NODE_TYPES_COUNT,
+  CFG_EVENTS_COUNT,
+);
 
-for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
-  activeLeafVisitorTypeIds.push(0);
+// Debug check that a `u8` is large enough to hold all type IDs
+if (DEBUG) {
+  const maxTypeId = NODE_TYPE_IDS_MAP.values().reduce((max, id) => Math.max(max, id), 0);
+  if (maxTypeId > 255) throw new Error("All type IDs must be <= 255 to fit in a `u8`");
 }
 
-for (let i = NON_LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
-  activeNonLeafVisitorTypeIds.push(0);
-}
-
-for (let i = CFG_EVENTS_COUNT; i !== 0; i--) {
-  activeCfgVisitorTypeIds.push(0);
-}
-
-activeLeafVisitorTypeIds.length = 0;
-activeNonLeafVisitorTypeIds.length = 0;
-activeCfgVisitorTypeIds.length = 0;
+// Number of active visitors of each type
+let activeLeafVisitorsCount = 0,
+  activeNonLeafVisitorsCount = 0,
+  activeCfgVisitorsCount = 0;
 
 // `true` if `addVisitor` has been called with a visitor which visits at least one AST type
 let hasActiveVisitors = false;
@@ -218,7 +219,6 @@ let hasActiveVisitors = false;
 // `activeNonLeafVisitorsCount` is the number of populated non-leaf visitors in `compiledVisitor`,
 // and therefore the number of `EnterExit` objects currently in use.
 const enterExitObjectCache: EnterExit[] = [];
-let activeNonLeafVisitorsCount = 0;
 
 // `VisitProp` object cache.
 //
@@ -360,7 +360,7 @@ export function addVisitorToCompiled(visitor: VisitorObject): void {
  */
 function addLeafVisitFn(typeId: number, visitProp: VisitProp): void {
   const visitProps = compilingLeafVisitor[typeId]!;
-  if (visitProps.length === 0) activeLeafVisitorTypeIds.push(typeId);
+  if (visitProps.length === 0) activeLeafVisitorTypeIds[activeLeafVisitorsCount++] = typeId;
   visitProps.push(visitProp);
 }
 
@@ -376,7 +376,7 @@ function addLeafVisitFn(typeId: number, visitProp: VisitProp): void {
 function addNonLeafVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean): void {
   const { enter, exit } = compilingNonLeafVisitor[typeId - LEAF_NODE_TYPES_COUNT]!;
   if (enter.length === 0 && exit.length === 0) {
-    activeNonLeafVisitorTypeIds.push(typeId);
+    activeNonLeafVisitorTypeIds[activeNonLeafVisitorsCount++] = typeId;
   }
 
   if (isExit) {
@@ -399,7 +399,7 @@ function addCfgVisitFn(typeId: number, visitProp: VisitProp, isExit: boolean): v
   if (isExit) throw new Error(`Invalid visitor key: \`${visitProp.selectorStr}:exit\``);
 
   const visitProps = compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!;
-  if (visitProps.length === 0) activeCfgVisitorTypeIds.push(typeId);
+  if (visitProps.length === 0) activeCfgVisitorTypeIds[activeCfgVisitorsCount++] = typeId;
   visitProps.push(visitProp);
 }
 
@@ -414,7 +414,7 @@ export function finalizeCompiledVisitor(): VisitorState {
   if (hasActiveVisitors === false) return VISITOR_EMPTY;
 
   // Merge visitors for leaf nodes
-  for (let i = activeLeafVisitorTypeIds.length - 1; i >= 0; i--) {
+  for (let i = activeLeafVisitorsCount - 1; i >= 0; i--) {
     const typeId = activeLeafVisitorTypeIds[i]!;
     compiledVisitor[typeId] = mergeVisitFns(compilingLeafVisitor[typeId]!);
   }
@@ -423,7 +423,6 @@ export function finalizeCompiledVisitor(): VisitorState {
   // After warming up over first few files, the cache will be large enough to service all files,
   // and this loop will be skipped. This avoids the main loop below from having to branch repeatedly
   // on whether there are enough `EnterExit` objects in cache, and to create one if not.
-  activeNonLeafVisitorsCount = activeNonLeafVisitorTypeIds.length;
   while (enterExitObjectCache.length < activeNonLeafVisitorsCount) {
     enterExitObjectCache.push({ enter: null, exit: null });
   }
@@ -451,16 +450,16 @@ export function finalizeCompiledVisitor(): VisitorState {
   // Merge visitors for CFG events
   let visitState: VisitorState = VISITOR_NOT_EMPTY;
 
-  if (activeCfgVisitorTypeIds.length > 0) {
+  if (activeCfgVisitorsCount > 0) {
     visitState = VISITOR_CFG;
 
-    for (let i = activeCfgVisitorTypeIds.length - 1; i >= 0; i--) {
+    for (let i = activeCfgVisitorsCount - 1; i >= 0; i--) {
       const typeId = activeCfgVisitorTypeIds[i]!;
       compiledVisitor[typeId] = mergeCfgVisitFns(compilingCfgVisitor[typeId - NODE_TYPES_COUNT]!);
     }
 
     // Reset state, ready for next time
-    activeCfgVisitorTypeIds.length = 0;
+    activeCfgVisitorsCount = 0;
   }
 
   // Reset `visitPropsCache`.
@@ -471,9 +470,9 @@ export function finalizeCompiledVisitor(): VisitorState {
   }
   visitPropsCacheNextIndex = 0;
 
-  // Reset state, ready for next time
-  activeLeafVisitorTypeIds.length = 0;
-  activeNonLeafVisitorTypeIds.length = 0;
+  // Reset state, ready for next time.
+  // `activeNonLeafVisitorsCount` is not reset, as it's used later in `resetCompiledVisitor`.
+  activeLeafVisitorsCount = 0;
 
   hasActiveVisitors = false;
 
@@ -486,12 +485,20 @@ export function finalizeCompiledVisitor(): VisitorState {
  * This frees visit functions stored in `compiledVisitor`, and makes them eligible for garbage collection.
  *
  * After calling this function, `compiledVisitor` is in a clean state, ready for next file's visitor to be compiled.
+ *
+ * `finalizeCompiledVisitor` must have been called before calling this function, to ensure that `enterExitObjectCache`
+ * contains at least `activeNonLeafVisitorsCount` objects.
  */
 export function resetCompiledVisitor(): void {
   // Reset `compiledVisitor` array
   compiledVisitor.fill(null);
 
   // Reset `EnterExit` objects
+  debugAssert(
+    enterExitObjectCache.length >= activeNonLeafVisitorsCount,
+    "`enterExitObjectCache` should contain at least `activeNonLeafVisitorsCount` entries",
+  );
+
   for (let i = 0; i < activeNonLeafVisitorsCount; i++) {
     const enterExit = enterExitObjectCache[i];
     enterExit.enter = null;
