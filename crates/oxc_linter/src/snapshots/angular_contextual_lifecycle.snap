@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngOnInit` lifecycle method within `@Injectable()` classes
+   ╭─[contextual_lifecycle.tsx:5:13]
+ 4 │         class TestService implements OnInit {
+ 5 │             ngOnInit() {}
+   ·             ─────────────
+ 6 │         }
+   ╰────
+  help: Remove `ngOnInit` or move the class to an appropriate Angular class type that supports this lifecycle method
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngAfterViewInit` lifecycle method within `@Injectable()` classes
+   ╭─[contextual_lifecycle.tsx:5:13]
+ 4 │         class TestService implements AfterViewInit {
+ 5 │             ngAfterViewInit() {}
+   ·             ────────────────────
+ 6 │         }
+   ╰────
+  help: Remove `ngAfterViewInit` or move the class to an appropriate Angular class type that supports this lifecycle method
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngOnInit` lifecycle method within `@Pipe()` classes
+   ╭─[contextual_lifecycle.tsx:5:13]
+ 4 │         class MyPipe implements OnInit {
+ 5 │             ngOnInit() {}
+   ·             ─────────────
+ 6 │         }
+   ╰────
+  help: Remove `ngOnInit` or move the class to an appropriate Angular class type that supports this lifecycle method
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngOnInit` lifecycle method within `@NgModule()` classes
+   ╭─[contextual_lifecycle.tsx:5:13]
+ 4 │         class AppModule implements OnInit {
+ 5 │             ngOnInit() {}
+   ·             ─────────────
+ 6 │         }
+   ╰────
+  help: Remove `ngOnInit` or move the class to an appropriate Angular class type that supports this lifecycle method
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngOnDestroy` lifecycle method within `@NgModule()` classes
+   ╭─[contextual_lifecycle.tsx:5:13]
+ 4 │         class AppModule implements OnDestroy {
+ 5 │             ngOnDestroy() {}
+   ·             ────────────────
+ 6 │         }
+   ╰────
+  help: Remove `ngOnDestroy` or move the class to an appropriate Angular class type that supports this lifecycle method
+
+  ⚠ angular(contextual-lifecycle): Angular will not invoke the `ngDoBootstrap` lifecycle method within `@Component()` classes
+   ╭─[contextual_lifecycle.tsx:8:13]
+ 7 │         class TestComponent implements DoBootstrap {
+ 8 │             ngDoBootstrap() {}
+   ·             ──────────────────
+ 9 │         }
+   ╰────
+  help: Remove `ngDoBootstrap` or move the class to an appropriate Angular class type that supports this lifecycle method

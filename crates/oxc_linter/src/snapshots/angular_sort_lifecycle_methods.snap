@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(sort-lifecycle-methods): Lifecycle methods are not declared in order of execution
+    ╭─[sort_lifecycle_methods.tsx:9:13]
+  8 │             ngOnDestroy() {}
+  9 │             ngOnInit() {}
+    ·             ─────────────
+ 10 │         }
+    ╰────
+  help: Declare lifecycle methods in the order they are invoked by Angular: ngOnChanges → ngOnInit → ngDoCheck → ngAfterContentInit → ngAfterContentChecked → ngAfterViewInit → ngAfterViewChecked → ngOnDestroy
+
+  ⚠ angular(sort-lifecycle-methods): Lifecycle methods are not declared in order of execution
+    ╭─[sort_lifecycle_methods.tsx:9:13]
+  8 │             ngAfterViewInit() {}
+  9 │             ngOnInit() {}
+    ·             ─────────────
+ 10 │         }
+    ╰────
+  help: Declare lifecycle methods in the order they are invoked by Angular: ngOnChanges → ngOnInit → ngDoCheck → ngAfterContentInit → ngAfterContentChecked → ngAfterViewInit → ngAfterViewChecked → ngOnDestroy
+
+  ⚠ angular(sort-lifecycle-methods): Lifecycle methods are not declared in order of execution
+    ╭─[sort_lifecycle_methods.tsx:9:13]
+  8 │             ngOnDestroy() {}
+  9 │             ngAfterViewInit() {}
+    ·             ────────────────────
+ 10 │             ngOnInit() {}
+    ╰────
+  help: Declare lifecycle methods in the order they are invoked by Angular: ngOnChanges → ngOnInit → ngDoCheck → ngAfterContentInit → ngAfterContentChecked → ngAfterViewInit → ngAfterViewChecked → ngOnDestroy
+
+  ⚠ angular(sort-lifecycle-methods): Lifecycle methods are not declared in order of execution
+    ╭─[sort_lifecycle_methods.tsx:10:13]
+  9 │             ngAfterViewInit() {}
+ 10 │             ngOnInit() {}
+    ·             ─────────────
+ 11 │         }
+    ╰────
+  help: Declare lifecycle methods in the order they are invoked by Angular: ngOnChanges → ngOnInit → ngDoCheck → ngAfterContentInit → ngAfterContentChecked → ngAfterViewInit → ngAfterViewChecked → ngOnDestroy
+
+  ⚠ angular(sort-lifecycle-methods): Lifecycle methods are not declared in order of execution
+    ╭─[sort_lifecycle_methods.tsx:9:13]
+  8 │             ngOnInit() {}
+  9 │             ngOnChanges() {}
+    ·             ────────────────
+ 10 │         }
+    ╰────
+  help: Declare lifecycle methods in the order they are invoked by Angular: ngOnChanges → ngOnInit → ngDoCheck → ngAfterContentInit → ngAfterContentChecked → ngAfterViewInit → ngAfterViewChecked → ngOnDestroy

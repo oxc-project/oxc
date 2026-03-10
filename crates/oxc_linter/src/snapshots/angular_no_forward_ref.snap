@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-forward-ref): Avoid using `forwardRef`
+   ╭─[no_forward_ref.tsx:3:21]
+ 2 │         import { forwardRef } from '@angular/core';
+ 3 │         const ref = forwardRef(() => SomeClass);
+   ·                     ───────────────────────────
+ 4 │         
+   ╰────
+  help: The use of `forwardRef` can often be avoided by restructuring your code. Consider moving the referenced class above the usage, using injection tokens, or refactoring to avoid circular dependencies.
+
+  ⚠ angular(no-forward-ref): Avoid using `forwardRef`
+   ╭─[no_forward_ref.tsx:8:33]
+ 7 │         class TestComponent {
+ 8 │             constructor(@Inject(forwardRef(() => SomeService)) private service: any) {}
+   ·                                 ─────────────────────────────
+ 9 │         }
+   ╰────
+  help: The use of `forwardRef` can often be avoided by restructuring your code. Consider moving the referenced class above the usage, using injection tokens, or refactoring to avoid circular dependencies.
+
+  ⚠ angular(no-forward-ref): Avoid using `forwardRef`
+   ╭─[no_forward_ref.tsx:5:47]
+ 4 │             providers: [
+ 5 │                 { provide: 'TOKEN', useClass: forwardRef(() => MyService) }
+   ·                                               ───────────────────────────
+ 6 │             ]
+   ╰────
+  help: The use of `forwardRef` can often be avoided by restructuring your code. Consider moving the referenced class above the usage, using injection tokens, or refactoring to avoid circular dependencies.

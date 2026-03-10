@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-conflicting-lifecycle): Class implements both `DoCheck` and `OnChanges` lifecycle interfaces
+   ╭─[no_conflicting_lifecycle.tsx:7:15]
+ 6 │         })
+ 7 │         class TestComponent implements DoCheck, OnChanges {
+   ·               ─────────────
+ 8 │             ngDoCheck() {}
+   ╰────
+  help: Implementing both `DoCheck` and `OnChanges` can lead to unexpected behavior. `ngOnChanges` is called when input properties change, while `ngDoCheck` is called during every change detection cycle. Choose one based on your needs: use `ngOnChanges` for reacting to input changes, or `ngDoCheck` for custom change detection logic.
+
+  ⚠ angular(no-conflicting-lifecycle): Class implements both `DoCheck` and `OnChanges` lifecycle interfaces
+   ╭─[no_conflicting_lifecycle.tsx:7:15]
+ 6 │         })
+ 7 │         class TestComponent {
+   ·               ─────────────
+ 8 │             ngDoCheck() {}
+   ╰────
+  help: Implementing both `DoCheck` and `OnChanges` can lead to unexpected behavior. `ngOnChanges` is called when input properties change, while `ngDoCheck` is called during every change detection cycle. Choose one based on your needs: use `ngOnChanges` for reacting to input changes, or `ngDoCheck` for custom change detection logic.
+
+  ⚠ angular(no-conflicting-lifecycle): Class implements both `DoCheck` and `OnChanges` lifecycle interfaces
+   ╭─[no_conflicting_lifecycle.tsx:6:15]
+ 5 │         })
+ 6 │         class TestDirective implements DoCheck, OnChanges {
+   ·               ─────────────
+ 7 │             ngDoCheck() {}
+   ╰────
+  help: Implementing both `DoCheck` and `OnChanges` can lead to unexpected behavior. `ngOnChanges` is called when input properties change, while `ngDoCheck` is called during every change detection cycle. Choose one based on your needs: use `ngOnChanges` for reacting to input changes, or `ngDoCheck` for custom change detection logic.

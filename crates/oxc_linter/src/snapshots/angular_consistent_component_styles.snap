@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(consistent-component-styles): Component styles should use string format
+   ╭─[consistent_component_styles.tsx:6:17]
+ 5 │                 template: '',
+ 6 │                 styles: ['.class { color: red; }']
+   ·                 ──────────────────────────────────
+ 7 │             })
+   ╰────
+  help: Use a single string instead of an array for component styles: `styles: 'css-here'`
+
+  ⚠ angular(consistent-component-styles): Component styles should use array format
+   ╭─[consistent_component_styles.tsx:6:17]
+ 5 │                 template: '',
+ 6 │                 styles: '.class { color: red; }'
+   ·                 ────────────────────────────────
+ 7 │             })
+   ╰────
+  help: Use an array for component styles: `styles: ['css-here']`
+
+  ⚠ angular(consistent-component-styles): Component styles should use string format
+   ╭─[consistent_component_styles.tsx:6:17]
+ 5 │                 template: '',
+ 6 │                 styles: [`.class { color: red; }`]
+   ·                 ──────────────────────────────────
+ 7 │             })
+   ╰────
+  help: Use a single string instead of an array for component styles: `styles: 'css-here'`
+
+  ⚠ angular(consistent-component-styles): Use `styleUrl` instead of `styleUrls` for a single stylesheet
+   ╭─[consistent_component_styles.tsx:6:17]
+ 5 │                 template: '',
+ 6 │                 styleUrls: ['./test.component.css']
+   ·                 ───────────────────────────────────
+ 7 │             })
+   ╰────
+  help: Use `styleUrl: './style.css'` instead of `styleUrls: ['./style.css']`
+
+  ⚠ angular(consistent-component-styles): Use `styleUrls` instead of `styleUrl`
+   ╭─[consistent_component_styles.tsx:6:17]
+ 5 │                 template: '',
+ 6 │                 styleUrl: './test.component.css'
+   ·                 ────────────────────────────────
+ 7 │             })
+   ╰────
+  help: Use `styleUrls: ['./style.css']` instead of `styleUrl: './style.css'`

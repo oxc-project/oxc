@@ -1,0 +1,43 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(pipe-prefix): Pipe names should be prefixed with: app
+   ╭─[pipe_prefix.tsx:3:13]
+ 2 │                 import { Pipe, PipeTransform } from '@angular/core';
+ 3 │ ╭─▶             @Pipe({
+ 4 │ │                   name: 'formatDate'
+ 5 │ ╰─▶             })
+ 6 │                 class FormatDatePipe implements PipeTransform {
+   ╰────
+  help: Use a consistent prefix for pipe names to avoid naming collisions and to make it clear which pipes belong to your application.
+
+  ⚠ angular(pipe-prefix): Pipe names should be prefixed with: app
+   ╭─[pipe_prefix.tsx:3:13]
+ 2 │                 import { Pipe, PipeTransform } from '@angular/core';
+ 3 │ ╭─▶             @Pipe({
+ 4 │ │                   name: 'myFormatDate'
+ 5 │ ╰─▶             })
+ 6 │                 class FormatDatePipe implements PipeTransform {
+   ╰────
+  help: Use a consistent prefix for pipe names to avoid naming collisions and to make it clear which pipes belong to your application.
+
+  ⚠ angular(pipe-prefix): Pipe names should be prefixed with: app
+   ╭─[pipe_prefix.tsx:3:13]
+ 2 │                 import { Pipe, PipeTransform } from '@angular/core';
+ 3 │ ╭─▶             @Pipe({
+ 4 │ │                   name: 'appformatdate'
+ 5 │ ╰─▶             })
+ 6 │                 class FormatDatePipe implements PipeTransform {
+   ╰────
+  help: Use a consistent prefix for pipe names to avoid naming collisions and to make it clear which pipes belong to your application.
+
+  ⚠ angular(pipe-prefix): Pipe names should be prefixed with: app
+   ╭─[pipe_prefix.tsx:3:13]
+ 2 │                 import { Pipe, PipeTransform } from '@angular/core';
+ 3 │ ╭─▶             @Pipe({
+ 4 │ │                   name: `formatDate`
+ 5 │ ╰─▶             })
+ 6 │                 class FormatDatePipe implements PipeTransform {
+   ╰────
+  help: Use a consistent prefix for pipe names to avoid naming collisions and to make it clear which pipes belong to your application.

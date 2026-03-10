@@ -94,6 +94,8 @@ bitflags! {
         const NODE = 1 << 12;
         /// `eslint-plugin-vue`
         const VUE = 1 << 13;
+        /// Angular 20 linting rules
+        const ANGULAR = 1 << 14;
     }
 }
 
@@ -129,6 +131,12 @@ impl LintPlugins {
     pub fn has_import(self) -> bool {
         self.contains(LintPlugins::IMPORT)
     }
+
+    /// Returns `true` if the Angular plugin is enabled.
+    #[inline]
+    pub fn has_angular(self) -> bool {
+        self.contains(LintPlugins::ANGULAR)
+    }
 }
 
 impl TryFrom<&str> for LintPlugins {
@@ -158,6 +166,7 @@ impl TryFrom<&str> for LintPlugins {
             "promise" => Ok(LintPlugins::PROMISE),
             "node" => Ok(LintPlugins::NODE),
             "vue" => Ok(LintPlugins::VUE),
+            "angular" => Ok(LintPlugins::ANGULAR),
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             "eslint" => Ok(LintPlugins::ESLINT),
@@ -183,6 +192,7 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
             LintPlugins::VUE => "vue",
+            LintPlugins::ANGULAR => "angular",
             _ => "",
         }
     }
@@ -254,6 +264,7 @@ impl JsonSchema for LintPlugins {
             Promise,
             Node,
             Vue,
+            Angular,
         }
 
         let enum_schema = r#gen.subschema_for::<LintPluginOptionsSchema>();

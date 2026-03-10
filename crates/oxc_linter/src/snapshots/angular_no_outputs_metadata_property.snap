@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-outputs-metadata-property): Use `@Output` decorator rather than the `outputs` metadata property
+   ╭─[no_outputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             outputs: ['change']
+   ·             ───────
+ 7 │         })
+   ╰────
+  help: The `outputs` metadata property is a legacy API. Use the `@Output()` decorator or `output()` signal function directly on properties instead.
+
+  ⚠ angular(no-outputs-metadata-property): Use `@Output` decorator rather than the `outputs` metadata property
+   ╭─[no_outputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             outputs: ['change', 'submit', 'cancel']
+   ·             ───────
+ 7 │         })
+   ╰────
+  help: The `outputs` metadata property is a legacy API. Use the `@Output()` decorator or `output()` signal function directly on properties instead.
+
+  ⚠ angular(no-outputs-metadata-property): Use `@Output` decorator rather than the `outputs` metadata property
+   ╭─[no_outputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             outputs: ['submit: formSubmit']
+   ·             ───────
+ 7 │         })
+   ╰────
+  help: The `outputs` metadata property is a legacy API. Use the `@Output()` decorator or `output()` signal function directly on properties instead.
+
+  ⚠ angular(no-outputs-metadata-property): Use `@Output` decorator rather than the `outputs` metadata property
+   ╭─[no_outputs_metadata_property.tsx:5:13]
+ 4 │             selector: '[appTest]',
+ 5 │             outputs: ['activated']
+   ·             ───────
+ 6 │         })
+   ╰────
+  help: The `outputs` metadata property is a legacy API. Use the `@Output()` decorator or `output()` signal function directly on properties instead.
+
+  ⚠ angular(no-outputs-metadata-property): Use `@Output` decorator rather than the `outputs` metadata property
+   ╭─[no_outputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             outputs: []
+   ·             ───────
+ 7 │         })
+   ╰────
+  help: The `outputs` metadata property is a legacy API. Use the `@Output()` decorator or `output()` signal function directly on properties instead.

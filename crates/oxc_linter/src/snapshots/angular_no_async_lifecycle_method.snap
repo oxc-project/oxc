@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnInit` should not be async
+   ╭─[no_async_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             async ngOnInit() {}
+   ·             ───────────────────
+ 9 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnDestroy` should not be async
+   ╭─[no_async_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             async ngOnDestroy() {}
+   ·             ──────────────────────
+ 9 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngAfterViewInit` should not be async
+   ╭─[no_async_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             async ngAfterViewInit() {}
+   ·             ──────────────────────────
+ 9 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnInit` should not be async
+   ╭─[no_async_lifecycle_method.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             async ngOnInit() {}
+   ·             ───────────────────
+ 8 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnDestroy` should not be async
+   ╭─[no_async_lifecycle_method.tsx:5:13]
+ 4 │         class TestService {
+ 5 │             async ngOnDestroy() {}
+   ·             ──────────────────────
+ 6 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnDestroy` should not be async
+   ╭─[no_async_lifecycle_method.tsx:5:13]
+ 4 │         class TestPipe {
+ 5 │             async ngOnDestroy() {}
+   ·             ──────────────────────
+ 6 │         }
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnInit` should not be async
+   ╭─[no_async_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             async ngOnInit() {}
+   ·             ───────────────────
+ 9 │             async ngOnDestroy() {}
+   ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.
+
+  ⚠ angular(no-async-lifecycle-method): Lifecycle method `ngOnDestroy` should not be async
+    ╭─[no_async_lifecycle_method.tsx:9:13]
+  8 │             async ngOnInit() {}
+  9 │             async ngOnDestroy() {}
+    ·             ──────────────────────
+ 10 │         }
+    ╰────
+  help: Angular does not wait for async lifecycle methods to complete. Remove the async keyword and handle async operations differently, such as subscribing to observables or using promises without await.

@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(component-max-inline-declarations): Inline `template` has too many lines (7). Maximum allowed is 3.
+    ╭─[component_max_inline_declarations.tsx:5:17]
+  4 │                     selector: 'app-test',
+  5 │ ╭─▶                 template: `
+  6 │ │                       <div>Line 1</div>
+  7 │ │                       <div>Line 2</div>
+  8 │ │                       <div>Line 3</div>
+  9 │ │                       <div>Line 4</div>
+ 10 │ │                       <div>Line 5</div>
+ 11 │ ╰─▶                 `
+ 12 │                 })
+    ╰────
+  help: Extract the inline template to a separate file. For templates use `templateUrl`, for styles use `styleUrl` or `styleUrls`.
+
+  ⚠ angular(component-max-inline-declarations): Inline `styles` has too many lines (6). Maximum allowed is 3.
+    ╭─[component_max_inline_declarations.tsx:6:17]
+  5 │                     template: '',
+  6 │ ╭─▶                 styles: [`
+  7 │ │                       .class1 { color: red; }
+  8 │ │                       .class2 { color: blue; }
+  9 │ │                       .class3 { color: green; }
+ 10 │ │                       .class4 { color: yellow; }
+ 11 │ ╰─▶                 `]
+ 12 │                 })
+    ╰────
+  help: Extract the inline styles to a separate file. For templates use `templateUrl`, for styles use `styleUrl` or `styleUrls`.
+
+  ⚠ angular(component-max-inline-declarations): Inline `template` has too many lines (3). Maximum allowed is 1.
+   ╭─[component_max_inline_declarations.tsx:5:17]
+ 4 │                     selector: 'app-test',
+ 5 │ ╭─▶                 template: `<div>
+ 6 │ │                       Content
+ 7 │ ╰─▶                 </div>`
+ 8 │                 })
+   ╰────
+  help: Extract the inline template to a separate file. For templates use `templateUrl`, for styles use `styleUrl` or `styleUrls`.

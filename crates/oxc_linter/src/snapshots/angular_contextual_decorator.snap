@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(contextual-decorator): `@Input` cannot be used in `@Injectable` class
+   ╭─[contextual_decorator.tsx:5:13]
+ 4 │         class TestService {
+ 5 │             @Input() value: string;
+   ·             ────────
+ 6 │         }
+   ╰────
+  help: The `@Input` decorator is not valid in a class decorated with `@Injectable`. This decorator is only allowed in @Component or @Directive classes.
+
+  ⚠ angular(contextual-decorator): `@Output` cannot be used in `@Pipe` class
+   ╭─[contextual_decorator.tsx:5:13]
+ 4 │         class TestPipe {
+ 5 │             @Output() myEvent = new EventEmitter();
+   ·             ─────────
+ 6 │         }
+   ╰────
+  help: The `@Output` decorator is not valid in a class decorated with `@Pipe`. This decorator is only allowed in @Component or @Directive classes.
+
+  ⚠ angular(contextual-decorator): `@HostBinding` cannot be used in `@NgModule` class
+   ╭─[contextual_decorator.tsx:5:13]
+ 4 │         class TestModule {
+ 5 │             @HostBinding('class.active') isActive = false;
+   ·             ────────────────────────────
+ 6 │         }
+   ╰────
+  help: The `@HostBinding` decorator is not valid in a class decorated with `@NgModule`. This decorator is only allowed in @Component or @Directive classes.
+
+  ⚠ angular(contextual-decorator): `@ViewChild` cannot be used in `@Injectable` class
+   ╭─[contextual_decorator.tsx:5:13]
+ 4 │         class TestService {
+ 5 │             @ViewChild('element') element: ElementRef;
+   ·             ─────────────────────
+ 6 │         }
+   ╰────
+  help: The `@ViewChild` decorator is not valid in a class decorated with `@Injectable`. This decorator is only allowed in @Component or @Directive classes.
+
+  ⚠ angular(contextual-decorator): `@ContentChild` cannot be used in `@Pipe` class
+   ╭─[contextual_decorator.tsx:5:13]
+ 4 │         class TestPipe {
+ 5 │             @ContentChild('content') content: ElementRef;
+   ·             ────────────────────────
+ 6 │         }
+   ╰────
+  help: The `@ContentChild` decorator is not valid in a class decorated with `@Pipe`. This decorator is only allowed in @Component or @Directive classes.

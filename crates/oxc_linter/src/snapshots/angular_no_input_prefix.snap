@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-input-prefix): Input should not be prefixed with `on`
+   ╭─[no_input_prefix.tsx:8:17]
+ 7 │             class TestComponent {
+ 8 │                 @Input() onSelect: any;
+   ·                 ────────
+ 9 │             }
+   ╰────
+  help: Rename the input to not start with `on`. Inputs should use descriptive names without unnecessary prefixes that can make the code harder to read or inconsistent with other inputs.
+
+  ⚠ angular(no-input-prefix): Input should not be prefixed with `on`
+   ╭─[no_input_prefix.tsx:8:17]
+ 7 │             class TestComponent {
+ 8 │                 @Input('onSelect') select: any;
+   ·                 ──────────────────
+ 9 │             }
+   ╰────
+  help: Rename the input to not start with `on`. Inputs should use descriptive names without unnecessary prefixes that can make the code harder to read or inconsistent with other inputs.
+
+  ⚠ angular(no-input-prefix): Input should not be prefixed with `can`
+   ╭─[no_input_prefix.tsx:8:17]
+ 7 │             class TestComponent {
+ 8 │                 @Input() canEdit: boolean;
+   ·                 ────────
+ 9 │             }
+   ╰────
+  help: Rename the input to not start with `can`. Inputs should use descriptive names without unnecessary prefixes that can make the code harder to read or inconsistent with other inputs.
+
+  ⚠ angular(no-input-prefix): Input should not be prefixed with `on`
+   ╭─[no_input_prefix.tsx:7:17]
+ 6 │             class TestDirective {
+ 7 │                 @Input() onHover: any;
+   ·                 ────────
+ 8 │             }
+   ╰────
+  help: Rename the input to not start with `on`. Inputs should use descriptive names without unnecessary prefixes that can make the code harder to read or inconsistent with other inputs.

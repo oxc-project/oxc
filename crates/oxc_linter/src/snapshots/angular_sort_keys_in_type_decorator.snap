@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(sort-keys-in-type-decorator): Keys in @Component decorator should be ordered: selector, template
+   ╭─[sort_keys_in_type_decorator.tsx:4:13]
+ 3 │         @Component({
+ 4 │             template: '',
+   ·             ────────
+ 5 │             selector: 'app-test'
+   ╰────
+  help: Maintaining a consistent order for properties in Angular decorators makes code more predictable and easier to scan.
+
+  ⚠ angular(sort-keys-in-type-decorator): Keys in @Component decorator should be ordered: selector, template, styles
+   ╭─[sort_keys_in_type_decorator.tsx:5:13]
+ 4 │             selector: 'app-test',
+ 5 │             styles: [],
+   ·             ──────
+ 6 │             template: ''
+   ╰────
+  help: Maintaining a consistent order for properties in Angular decorators makes code more predictable and easier to scan.
+
+  ⚠ angular(sort-keys-in-type-decorator): Keys in @Directive decorator should be ordered: selector, providers
+   ╭─[sort_keys_in_type_decorator.tsx:4:13]
+ 3 │         @Directive({
+ 4 │             providers: [],
+   ·             ─────────
+ 5 │             selector: '[appTest]'
+   ╰────
+  help: Maintaining a consistent order for properties in Angular decorators makes code more predictable and easier to scan.
+
+  ⚠ angular(sort-keys-in-type-decorator): Keys in @NgModule decorator should be ordered: imports, exports
+   ╭─[sort_keys_in_type_decorator.tsx:4:13]
+ 3 │         @NgModule({
+ 4 │             exports: [],
+   ·             ───────
+ 5 │             imports: []
+   ╰────
+  help: Maintaining a consistent order for properties in Angular decorators makes code more predictable and easier to scan.
+
+  ⚠ angular(sort-keys-in-type-decorator): Keys in @Pipe decorator should be ordered: name, pure
+   ╭─[sort_keys_in_type_decorator.tsx:4:13]
+ 3 │         @Pipe({
+ 4 │             pure: true,
+   ·             ────
+ 5 │             name: 'testPipe'
+   ╰────
+  help: Maintaining a consistent order for properties in Angular decorators makes code more predictable and easier to scan.

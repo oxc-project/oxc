@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `CommonModule` in `imports` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:5:37]
+ 4 │         @NgModule({
+ 5 │             imports: [CommonModule, CommonModule]
+   ·                                     ────────────
+ 6 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `MyComponent` in `declarations` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:4:41]
+ 3 │         @NgModule({
+ 4 │             declarations: [MyComponent, MyComponent]
+   ·                                         ───────────
+ 5 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `MyService` in `providers` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:4:36]
+ 3 │         @NgModule({
+ 4 │             providers: [MyService, MyService]
+   ·                                    ─────────
+ 5 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `MyComponent` in `exports` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:4:36]
+ 3 │         @NgModule({
+ 4 │             exports: [MyComponent, MyComponent]
+   ·                                    ───────────
+ 5 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `ModuleA` in `imports` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:4:32]
+ 3 │         @NgModule({
+ 4 │             imports: [ModuleA, ModuleA, ModuleA]
+   ·                                ───────
+ 5 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `ModuleA` in `imports` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:4:41]
+ 3 │         @NgModule({
+ 4 │             imports: [ModuleA, ModuleA, ModuleA]
+   ·                                         ───────
+ 5 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.
+
+  ⚠ angular(no-duplicates-in-metadata-arrays): Duplicate `CommonModule` in `imports` metadata array
+   ╭─[no_duplicates_in_metadata_arrays.tsx:6:37]
+ 5 │             template: '',
+ 6 │             imports: [CommonModule, CommonModule]
+   ·                                     ────────────
+ 7 │         })
+   ╰────
+  help: Remove the duplicate entry from the metadata array.

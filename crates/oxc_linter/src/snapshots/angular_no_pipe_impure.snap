@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-pipe-impure): Impure pipes should be avoided
+   ╭─[no_pipe_impure.tsx:5:13]
+ 4 │             name: 'myPipe',
+ 5 │             pure: false
+   ·             ───────────
+ 6 │         })
+   ╰────
+  help: Impure pipes (`pure: false`) are invoked on each change-detection cycle, which can significantly impact performance. Consider redesigning your pipe to be pure, or use a different approach such as a method in the component.
+
+  ⚠ angular(no-pipe-impure): Impure pipes should be avoided
+   ╭─[no_pipe_impure.tsx:6:13]
+ 5 │             standalone: true,
+ 6 │             pure: false
+   ·             ───────────
+ 7 │         })
+   ╰────
+  help: Impure pipes (`pure: false`) are invoked on each change-detection cycle, which can significantly impact performance. Consider redesigning your pipe to be pure, or use a different approach such as a method in the component.
+
+  ⚠ angular(no-pipe-impure): Impure pipes should be avoided
+   ╭─[no_pipe_impure.tsx:5:13]
+ 4 │             name: 'myPipe',
+ 5 │             pure: !true
+   ·             ───────────
+ 6 │         })
+   ╰────
+  help: Impure pipes (`pure: false`) are invoked on each change-detection cycle, which can significantly impact performance. Consider redesigning your pipe to be pure, or use a different approach such as a method in the component.

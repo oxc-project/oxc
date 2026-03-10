@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(use-component-selector): Components should have a selector
+   ╭─[use_component_selector.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               template: ''
+ 5 │ ╰─▶         })
+ 6 │             class TestComponent {}
+   ╰────
+  help: Add a `selector` property to the @Component decorator. Without a selector, the component can only be used programmatically and not in templates.
+
+  ⚠ angular(use-component-selector): Components should have a selector
+   ╭─[use_component_selector.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: '',
+ 5 │ │               template: ''
+ 6 │ ╰─▶         })
+ 7 │             class TestComponent {}
+   ╰────
+  help: Add a `selector` property to the @Component decorator. Without a selector, the component can only be used programmatically and not in templates.
+
+  ⚠ angular(use-component-selector): Components should have a selector
+   ╭─[use_component_selector.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               template: '',
+ 5 │ │               standalone: true
+ 6 │ ╰─▶         })
+ 7 │             class TestComponent {}
+   ╰────
+  help: Add a `selector` property to the @Component decorator. Without a selector, the component can only be used programmatically and not in templates.
+
+  ⚠ angular(use-component-selector): Components should have a selector
+   ╭─[use_component_selector.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               templateUrl: './test.component.html'
+ 5 │ ╰─▶         })
+ 6 │             class TestComponent {}
+   ╰────
+  help: Add a `selector` property to the @Component decorator. Without a selector, the component can only be used programmatically and not in templates.

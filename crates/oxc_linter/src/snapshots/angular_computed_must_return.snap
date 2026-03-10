@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(computed-must-return): Computed signal callback must return a value
+   ╭─[computed_must_return.tsx:4:33]
+ 3 │             const count = signal(0);
+ 4 │ ╭─▶         const double = computed(() => {
+ 5 │ │               count() * 2;
+ 6 │ ╰─▶         });
+ 7 │             
+   ╰────
+  help: The function passed to `computed()` must return a value. Computed signals derive their value from the return value of this function. Add a return statement or use an arrow function with an expression body.
+
+  ⚠ angular(computed-must-return): Computed signal callback must return a value
+   ╭─[computed_must_return.tsx:4:33]
+ 3 │             const count = signal(0);
+ 4 │ ╭─▶         const double = computed(function() {
+ 5 │ │               count() * 2;
+ 6 │ ╰─▶         });
+ 7 │             
+   ╰────
+  help: The function passed to `computed()` must return a value. Computed signals derive their value from the return value of this function. Add a return statement or use an arrow function with an expression body.
+
+  ⚠ angular(computed-must-return): Computed signal callback must return a value
+   ╭─[computed_must_return.tsx:4:32]
+ 3 │             const count = signal(0);
+ 4 │ ╭─▶         const value = computed(() => {
+ 5 │ │               console.log(count());
+ 6 │ ╰─▶         });
+ 7 │             
+   ╰────
+  help: The function passed to `computed()` must return a value. Computed signals derive their value from the return value of this function. Add a return statement or use an arrow function with an expression body.
+
+  ⚠ angular(computed-must-return): Computed signal callback must return a value
+   ╭─[computed_must_return.tsx:4:32]
+ 3 │             const count = signal(0);
+ 4 │ ╭─▶         const value = computed(() => {
+ 5 │ │               if (count() > 0) {
+ 6 │ │                   return;
+ 7 │ │               }
+ 8 │ ╰─▶         });
+ 9 │             
+   ╰────
+  help: The function passed to `computed()` must return a value. Computed signals derive their value from the return value of this function. Add a return statement or use an arrow function with an expression body.

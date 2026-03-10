@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-standalone): Redundant `standalone: true` property
+   ╭─[prefer_standalone.tsx:3:70]
+ 2 │         import { Component } from '@angular/core';
+ 3 │         @Component({ selector: 'app-test', template: '', standalone: true })
+   ·                                                                      ────
+ 4 │         class TestComponent {}
+   ╰────
+  help: In Angular 20, components are standalone by default. You can remove the explicit `standalone: true` declaration.

@@ -1,0 +1,34 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-queries-metadata-property): Avoid using `queries` metadata property
+   ╭─[no_queries_metadata_property.tsx:6:13]
+ 5 │                 template: '<div #myDiv></div>',
+ 6 │ ╭─▶             queries: {
+ 7 │ │                   myDiv: new ViewChild('myDiv')
+ 8 │ ╰─▶             }
+ 9 │             })
+   ╰────
+  help: Use `@ViewChild`, `@ViewChildren`, `@ContentChild`, or `@ContentChildren` decorators instead of the `queries` metadata property. Decorator-based queries provide better type inference and are easier to understand.
+
+  ⚠ angular(no-queries-metadata-property): Avoid using `queries` metadata property
+   ╭─[no_queries_metadata_property.tsx:5:13]
+ 4 │                 selector: '[appTest]',
+ 5 │ ╭─▶             queries: {
+ 6 │ │                   content: new ContentChild('content')
+ 7 │ ╰─▶             }
+ 8 │             })
+   ╰────
+  help: Use `@ViewChild`, `@ViewChildren`, `@ContentChild`, or `@ContentChildren` decorators instead of the `queries` metadata property. Decorator-based queries provide better type inference and are easier to understand.
+
+  ⚠ angular(no-queries-metadata-property): Avoid using `queries` metadata property
+    ╭─[no_queries_metadata_property.tsx:6:13]
+  5 │                 template: '',
+  6 │ ╭─▶             queries: {
+  7 │ │                   item: new ViewChild('item'),
+  8 │ │                   items: new ViewChildren('item')
+  9 │ ╰─▶             }
+ 10 │             })
+    ╰────
+  help: Use `@ViewChild`, `@ViewChildren`, `@ContentChild`, or `@ContentChildren` decorators instead of the `queries` metadata property. Decorator-based queries provide better type inference and are easier to understand.

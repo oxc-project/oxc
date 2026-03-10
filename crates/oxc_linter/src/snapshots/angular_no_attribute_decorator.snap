@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-attribute-decorator): The `@Attribute` decorator is rarely what is required; use `@Input` instead
+   ╭─[no_attribute_decorator.tsx:8:25]
+ 7 │         class TestComponent {
+ 8 │             constructor(@Attribute('type') private type: string) {}
+   ·                         ──────────────────
+ 9 │         }
+   ╰────
+  help: `@Attribute` can only obtain a single static value from the DOM attribute and does not support data binding. In most cases, `@Input` is the appropriate choice as it supports both static values and data binding.
+
+  ⚠ angular(no-attribute-decorator): The `@Attribute` decorator is rarely what is required; use `@Input` instead
+    ╭─[no_attribute_decorator.tsx:9:17]
+  8 │             constructor(
+  9 │                 @Attribute('type') private type: string,
+    ·                 ──────────────────
+ 10 │                 @Attribute('size') private size: string
+    ╰────
+  help: `@Attribute` can only obtain a single static value from the DOM attribute and does not support data binding. In most cases, `@Input` is the appropriate choice as it supports both static values and data binding.
+
+  ⚠ angular(no-attribute-decorator): The `@Attribute` decorator is rarely what is required; use `@Input` instead
+    ╭─[no_attribute_decorator.tsx:10:17]
+  9 │                 @Attribute('type') private type: string,
+ 10 │                 @Attribute('size') private size: string
+    ·                 ──────────────────
+ 11 │             ) {}
+    ╰────
+  help: `@Attribute` can only obtain a single static value from the DOM attribute and does not support data binding. In most cases, `@Input` is the appropriate choice as it supports both static values and data binding.
+
+  ⚠ angular(no-attribute-decorator): The `@Attribute` decorator is rarely what is required; use `@Input` instead
+   ╭─[no_attribute_decorator.tsx:7:25]
+ 6 │         class TestDirective {
+ 7 │             constructor(@Attribute('title') private title: string) {}
+   ·                         ───────────────────
+ 8 │         }
+   ╰────
+  help: `@Attribute` can only obtain a single static value from the DOM attribute and does not support data binding. In most cases, `@Input` is the appropriate choice as it supports both static values and data binding.

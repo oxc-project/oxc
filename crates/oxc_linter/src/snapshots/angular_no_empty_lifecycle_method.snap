@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngOnInit` should not be empty
+   ╭─[no_empty_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent implements OnInit {
+ 8 │             ngOnInit() {}
+   ·             ─────────────
+ 9 │         }
+   ╰────
+  help: Either implement the lifecycle method or remove it from the class
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngOnDestroy` should not be empty
+   ╭─[no_empty_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent implements OnDestroy {
+ 8 │             ngOnDestroy() {}
+   ·             ────────────────
+ 9 │         }
+   ╰────
+  help: Either implement the lifecycle method or remove it from the class
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngAfterViewInit` should not be empty
+   ╭─[no_empty_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent implements AfterViewInit {
+ 8 │             ngAfterViewInit() {}
+   ·             ────────────────────
+ 9 │         }
+   ╰────
+  help: Either implement the lifecycle method or remove it from the class
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngOnInit` should not be empty
+   ╭─[no_empty_lifecycle_method.tsx:7:13]
+ 6 │         class TestDirective implements OnInit {
+ 7 │             ngOnInit() {}
+   ·             ─────────────
+ 8 │         }
+   ╰────
+  help: Either implement the lifecycle method or remove it from the class
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngOnInit` should not be empty
+   ╭─[no_empty_lifecycle_method.tsx:8:13]
+ 7 │         class TestComponent implements OnInit, OnDestroy {
+ 8 │             ngOnInit() {}
+   ·             ─────────────
+ 9 │             ngOnDestroy() {}
+   ╰────
+  help: Either implement the lifecycle method or remove it from the class
+
+  ⚠ angular(no-empty-lifecycle-method): Lifecycle method `ngOnDestroy` should not be empty
+    ╭─[no_empty_lifecycle_method.tsx:9:13]
+  8 │             ngOnInit() {}
+  9 │             ngOnDestroy() {}
+    ·             ────────────────
+ 10 │         }
+    ╰────
+  help: Either implement the lifecycle method or remove it from the class

@@ -396,7 +396,8 @@
         "react-perf",
         "promise",
         "node",
-        "vue"
+        "vue",
+        "angular"
       ]
     },
     "LintPlugins": {

@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-input-rename): Input bindings should not be aliased
+   ╭─[no_input_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Input('label') name: string;
+   ·             ───────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing inputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-input-rename): Input bindings should not be aliased
+   ╭─[no_input_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Input({ alias: 'label' }) name: string;
+   ·             ──────────────────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing inputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-input-rename): Input bindings should not be aliased
+   ╭─[no_input_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             name = input<string>({ alias: 'label' });
+   ·             ─────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing inputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-input-rename): Input bindings should not be aliased
+   ╭─[no_input_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Input('firstName') name: string;
+   ·             ───────────────────
+ 9 │             @Input('userAge') age: number;
+   ╰────
+  help: Avoid aliasing inputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-input-rename): Input bindings should not be aliased
+    ╭─[no_input_rename.tsx:9:13]
+  8 │             @Input('firstName') name: string;
+  9 │             @Input('userAge') age: number;
+    ·             ─────────────────
+ 10 │         }
+    ╰────
+  help: Avoid aliasing inputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.

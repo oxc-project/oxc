@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-signal-model): Input `value` and output `valueChange` can be replaced with `model()`
+   ╭─[prefer_signal_model.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             value = input<string>();
+   ·             ────────────────────────
+ 9 │             valueChange = output<string>();
+   ╰────
+  help: Use the `model()` function instead of separate `input()` and `output()` for two-way binding patterns. Example: `value = model<string>();` replaces both `value = input<string>()` and `valueChange = output<string>()`.
+
+  ⚠ angular(prefer-signal-model): Input `count` and output `countChange` can be replaced with `model()`
+   ╭─[prefer_signal_model.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             count = input<number>();
+   ·             ────────────────────────
+ 9 │             countChange = output<number>();
+   ╰────
+  help: Use the `model()` function instead of separate `input()` and `output()` for two-way binding patterns. Example: `value = model<string>();` replaces both `value = input<string>()` and `valueChange = output<string>()`.
+
+  ⚠ angular(prefer-signal-model): Input `name` and output `nameChange` can be replaced with `model()`
+    ╭─[prefer_signal_model.tsx:10:13]
+  9 │             countChange = output<number>();
+ 10 │             name = input<string>();
+    ·             ───────────────────────
+ 11 │             nameChange = output<string>();
+    ╰────
+  help: Use the `model()` function instead of separate `input()` and `output()` for two-way binding patterns. Example: `value = model<string>();` replaces both `value = input<string>()` and `valueChange = output<string>()`.
+
+  ⚠ angular(prefer-signal-model): Input `selected` and output `selectedChange` can be replaced with `model()`
+   ╭─[prefer_signal_model.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             selected = input<boolean>();
+   ·             ────────────────────────────
+ 8 │             selectedChange = output<boolean>();
+   ╰────
+  help: Use the `model()` function instead of separate `input()` and `output()` for two-way binding patterns. Example: `value = model<string>();` replaces both `value = input<string>()` and `valueChange = output<string>()`.

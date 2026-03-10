@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(component-selector): Component selector should be used as an element
+   ╭─[component_selector.tsx:3:13]
+ 2 │                 import { Component } from '@angular/core';
+ 3 │ ╭─▶             @Component({
+ 4 │ │                   selector: '[appExample]',
+ 5 │ │                   template: ''
+ 6 │ ╰─▶             })
+ 7 │                 class ExampleComponent {}
+   ╰────
+  help: Change the selector to use an element style (e.g., 'app-example' for element)
+
+  ⚠ angular(component-selector): Component selector should be prefixed with one of: app
+   ╭─[component_selector.tsx:3:13]
+ 2 │                 import { Component } from '@angular/core';
+ 3 │ ╭─▶             @Component({
+ 4 │ │                   selector: 'example',
+ 5 │ │                   template: ''
+ 6 │ ╰─▶             })
+ 7 │                 class ExampleComponent {}
+   ╰────
+  help: Add a prefix to the selector (e.g., 'app-example' with prefix 'app')
+
+  ⚠ angular(component-selector): Component selector should be prefixed with one of: app
+   ╭─[component_selector.tsx:3:13]
+ 2 │                 import { Component } from '@angular/core';
+ 3 │ ╭─▶             @Component({
+ 4 │ │                   selector: 'AppExample',
+ 5 │ │                   template: ''
+ 6 │ ╰─▶             })
+ 7 │                 class ExampleComponent {}
+   ╰────
+  help: Add a prefix to the selector (e.g., 'app-example' with prefix 'app')

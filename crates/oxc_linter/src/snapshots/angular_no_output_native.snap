@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `click`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() click = new EventEmitter<void>();
+   ·             ───────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `change`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() change = new EventEmitter<string>();
+   ·             ──────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `blur`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() blur = new EventEmitter<void>();
+   ·             ──────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `focus`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() focus = new EventEmitter<void>();
+   ·             ───────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `click`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output('click') buttonClick = new EventEmitter<void>();
+   ·             ────────────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `scroll`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             scroll = output<void>();
+   ·             ────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.
+
+  ⚠ angular(no-output-native): Output bindings, including aliases, should not be named as native DOM events: `keydown`
+   ╭─[no_output_native.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             buttonPress = output<void>({ alias: 'keydown' });
+   ·             ─────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Using native event names like 'click', 'change', 'blur' can cause confusion and unexpected behavior. Rename your output to something more descriptive like 'itemClick' or 'valueChange'.

@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on @Output() properties
+   ╭─[prefer_output_readonly.tsx:5:23]
+ 4 │         class TestComponent {
+ 5 │             @Output() clicked = new EventEmitter<void>();
+   ·                       ───────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on output() properties
+   ╭─[prefer_output_readonly.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             valueChange = output<string>();
+   ·             ───────────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on @Output() properties
+   ╭─[prefer_output_readonly.tsx:5:23]
+ 4 │         class TestComponent {
+ 5 │             @Output() clicked = new EventEmitter<void>();
+   ·                       ───────
+ 6 │             @Output() hovered = new EventEmitter<MouseEvent>();
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on @Output() properties
+   ╭─[prefer_output_readonly.tsx:6:23]
+ 5 │             @Output() clicked = new EventEmitter<void>();
+ 6 │             @Output() hovered = new EventEmitter<MouseEvent>();
+   ·                       ───────
+ 7 │             valueChange = output<string>();
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on output() properties
+   ╭─[prefer_output_readonly.tsx:7:13]
+ 6 │             @Output() hovered = new EventEmitter<MouseEvent>();
+ 7 │             valueChange = output<string>();
+   ·             ───────────
+ 8 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on @Output() properties
+   ╭─[prefer_output_readonly.tsx:5:30]
+ 4 │         class TestComponent {
+ 5 │             @Output('click') clicked = new EventEmitter<void>();
+   ·                              ───────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on @Output() properties
+   ╭─[prefer_output_readonly.tsx:5:23]
+ 4 │         class TestDirective {
+ 5 │             @Output() activated = new EventEmitter<void>();
+   ·                       ─────────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on output() properties
+   ╭─[prefer_output_readonly.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             valueChange = outputFromObservable(this.value$);
+   ·             ───────────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on output() properties
+   ╭─[prefer_output_readonly.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             clicked: OutputEmitterRef<void>;
+   ·             ───────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.
+
+  ⚠ angular(prefer-output-readonly): Prefer `readonly` modifier on output() properties
+   ╭─[prefer_output_readonly.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             valueChange: OutputRef<string>;
+   ·             ───────────
+ 6 │         }
+   ╰────
+  help: Add the `readonly` modifier to prevent accidental reassignment of the output. Outputs should not be reassigned after initialization.

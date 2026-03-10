@@ -188,6 +188,7 @@ new-n-rule name: (new-rule name "n")
 new-promise-rule name: (new-rule name "promise")
 new-vitest-rule name: (new-rule name "vitest")
 new-vue-rule name: (new-rule name "vue")
+new-angular-rule name: (new-rule name "angular")
 
 # Alias for backward compatibility
 alias new-typescript-rule := new-ts-rule

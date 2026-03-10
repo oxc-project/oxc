@@ -746,6 +746,76 @@ pub(crate) mod vue {
     pub mod valid_define_props;
 }
 
+/// Angular 20 linting rules
+/// <https://angular.dev/guide/signals>
+pub(crate) mod angular {
+    // Phase 1: Original rules
+    pub mod no_host_metadata_property;
+    pub mod prefer_control_flow;
+    pub mod prefer_output_readonly;
+    pub mod prefer_signals;
+    pub mod prefer_standalone;
+
+    // Phase 2.5: Naming convention rules
+    pub mod component_class_suffix;
+    pub mod component_selector;
+    pub mod directive_class_suffix;
+    pub mod directive_selector;
+
+    // Phase 2.6: Lifecycle rules
+    pub mod contextual_lifecycle;
+    pub mod no_empty_lifecycle_method;
+    pub mod no_lifecycle_call;
+    pub mod sort_lifecycle_methods;
+    pub mod use_lifecycle_interface;
+
+    // Phase 2.7: Modern DI & Performance rules
+    pub mod prefer_inject;
+    pub mod prefer_on_push_component_change_detection;
+    pub mod use_injectable_provided_in;
+
+    // Phase 2.8: Input/Output rules
+    pub mod no_input_rename;
+    pub mod no_inputs_metadata_property;
+    pub mod no_output_native;
+    pub mod no_output_on_prefix;
+    pub mod no_output_rename;
+    pub mod no_outputs_metadata_property;
+
+    // Phase 2.9: Pipe rules
+    pub mod no_pipe_impure;
+    pub mod pipe_prefix;
+    pub mod use_pipe_transform_interface;
+
+    // Phase 2.10: Component architecture rules
+    pub mod relative_url_prefix;
+    pub mod use_component_selector;
+    pub mod use_component_view_encapsulation;
+
+    // Phase 2.11: Additional rules
+    pub mod no_attribute_decorator;
+
+    // Phase 3: Additional rules for angular-eslint parity
+    pub mod component_max_inline_declarations;
+    pub mod computed_must_return;
+    pub mod consistent_component_styles;
+    pub mod contextual_decorator;
+    pub mod no_async_lifecycle_method;
+    pub mod no_conflicting_lifecycle;
+    pub mod no_duplicates_in_metadata_arrays;
+    pub mod no_forward_ref;
+    pub mod no_implicit_take_until_destroyed;
+    pub mod no_input_prefix;
+    pub mod no_queries_metadata_property;
+    pub mod prefer_host_metadata_property;
+    pub mod prefer_output_emitter_ref;
+    pub mod prefer_signal_model;
+    pub mod require_lifecycle_on_prototype;
+    pub mod require_localize_metadata;
+    pub mod runtime_localize;
+    pub mod sort_keys_in_type_decorator;
+}
+
 // Re-export RuleEnum, RULES, and all rule type aliases from generated code
 pub use crate::generated::rules_enum::*;
 

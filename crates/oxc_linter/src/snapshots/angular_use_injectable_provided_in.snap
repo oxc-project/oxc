@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(use-injectable-provided-in): Injectable should use `providedIn` for tree-shaking support
+   ╭─[use_injectable_provided_in.tsx:3:13]
+ 2 │             import { Injectable } from '@angular/core';
+ 3 │             @Injectable()
+   ·             ─────────────
+ 4 │             class MyService {}
+   ╰────
+  help: Add `providedIn: 'root'` (or 'any', 'platform') to the @Injectable decorator. This enables tree-shaking, which removes unused services from your bundle.
+
+  ⚠ angular(use-injectable-provided-in): Injectable should use `providedIn` for tree-shaking support
+   ╭─[use_injectable_provided_in.tsx:3:13]
+ 2 │             import { Injectable } from '@angular/core';
+ 3 │             @Injectable({})
+   ·             ───────────────
+ 4 │             class MyService {}
+   ╰────
+  help: Add `providedIn: 'root'` (or 'any', 'platform') to the @Injectable decorator. This enables tree-shaking, which removes unused services from your bundle.
+
+  ⚠ angular(use-injectable-provided-in): Injectable should use `providedIn` for tree-shaking support
+   ╭─[use_injectable_provided_in.tsx:3:13]
+ 2 │             import { Injectable } from '@angular/core';
+ 3 │             @Injectable({ providedIn: null })
+   ·             ─────────────────────────────────
+ 4 │             class MyService {}
+   ╰────
+  help: Add `providedIn: 'root'` (or 'any', 'platform') to the @Injectable decorator. This enables tree-shaking, which removes unused services from your bundle.
+
+  ⚠ angular(use-injectable-provided-in): Injectable should use `providedIn` for tree-shaking support
+   ╭─[use_injectable_provided_in.tsx:3:13]
+ 2 │             import { Injectable } from '@angular/core';
+ 3 │             @Injectable({ providedIn: undefined })
+   ·             ──────────────────────────────────────
+ 4 │             class MyService {}
+   ╰────
+  help: Add `providedIn: 'root'` (or 'any', 'platform') to the @Injectable decorator. This enables tree-shaking, which removes unused services from your bundle.

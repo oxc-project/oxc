@@ -480,6 +480,11 @@ impl<'a> ContextHost<'a> {
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
         }
 
+        if self.plugins().has_angular() {
+            let angular_like = frameworks::has_angular_imports(self.module_record());
+            self.frameworks.set(FrameworkFlags::Angular, angular_like);
+        }
+
         self
     }
 

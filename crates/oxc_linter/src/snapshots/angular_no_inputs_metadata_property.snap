@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-inputs-metadata-property): Use `@Input` decorator rather than the `inputs` metadata property
+   ╭─[no_inputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             inputs: ['name']
+   ·             ──────
+ 7 │         })
+   ╰────
+  help: The `inputs` metadata property is a legacy API. Use the `@Input()` decorator or `input()` signal function directly on properties instead.
+
+  ⚠ angular(no-inputs-metadata-property): Use `@Input` decorator rather than the `inputs` metadata property
+   ╭─[no_inputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             inputs: ['name', 'value', 'count']
+   ·             ──────
+ 7 │         })
+   ╰────
+  help: The `inputs` metadata property is a legacy API. Use the `@Input()` decorator or `input()` signal function directly on properties instead.
+
+  ⚠ angular(no-inputs-metadata-property): Use `@Input` decorator rather than the `inputs` metadata property
+   ╭─[no_inputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             inputs: ['value: inputValue']
+   ·             ──────
+ 7 │         })
+   ╰────
+  help: The `inputs` metadata property is a legacy API. Use the `@Input()` decorator or `input()` signal function directly on properties instead.
+
+  ⚠ angular(no-inputs-metadata-property): Use `@Input` decorator rather than the `inputs` metadata property
+   ╭─[no_inputs_metadata_property.tsx:5:13]
+ 4 │             selector: '[appTest]',
+ 5 │             inputs: ['highlight']
+   ·             ──────
+ 6 │         })
+   ╰────
+  help: The `inputs` metadata property is a legacy API. Use the `@Input()` decorator or `input()` signal function directly on properties instead.
+
+  ⚠ angular(no-inputs-metadata-property): Use `@Input` decorator rather than the `inputs` metadata property
+   ╭─[no_inputs_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             inputs: []
+   ·             ──────
+ 7 │         })
+   ╰────
+  help: The `inputs` metadata property is a legacy API. Use the `@Input()` decorator or `input()` signal function directly on properties instead.

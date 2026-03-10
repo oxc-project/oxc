@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(relative-url-prefix): `templateUrl` should use relative paths starting with `./` or `../`
+   ╭─[relative_url_prefix.tsx:5:26]
+ 4 │             selector: 'app-test',
+ 5 │             templateUrl: 'test.component.html'
+   ·                          ─────────────────────
+ 6 │         })
+   ╰────
+  help: Use relative paths (starting with `./` or `../`) for `templateUrl` and `styleUrls` to ensure proper resolution in all build scenarios.
+
+  ⚠ angular(relative-url-prefix): `styleUrls` should use relative paths starting with `./` or `../`
+   ╭─[relative_url_prefix.tsx:6:25]
+ 5 │             template: '',
+ 6 │             styleUrls: ['test.component.css']
+   ·                         ────────────────────
+ 7 │         })
+   ╰────
+  help: Use relative paths (starting with `./` or `../`) for `templateUrl` and `styleUrls` to ensure proper resolution in all build scenarios.
+
+  ⚠ angular(relative-url-prefix): `templateUrl` should use relative paths starting with `./` or `../`
+   ╭─[relative_url_prefix.tsx:5:26]
+ 4 │             selector: 'app-test',
+ 5 │             templateUrl: '/app/test.component.html'
+   ·                          ──────────────────────────
+ 6 │         })
+   ╰────
+  help: Use relative paths (starting with `./` or `../`) for `templateUrl` and `styleUrls` to ensure proper resolution in all build scenarios.
+
+  ⚠ angular(relative-url-prefix): `styleUrls` should use relative paths starting with `./` or `../`
+   ╭─[relative_url_prefix.tsx:6:40]
+ 5 │             template: '',
+ 6 │             styleUrls: ['./valid.css', 'invalid.css']
+   ·                                        ─────────────
+ 7 │         })
+   ╰────
+  help: Use relative paths (starting with `./` or `../`) for `templateUrl` and `styleUrls` to ensure proper resolution in all build scenarios.

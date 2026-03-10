@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onClick`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() onClick = new EventEmitter<void>();
+   ·             ─────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onChange`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() onChange = new EventEmitter<string>();
+   ·             ────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `on`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() on = new EventEmitter<void>();
+   ·             ────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onClick`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output('onClick') clickHandler = new EventEmitter<void>();
+   ·             ───────────────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onSelect`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             onSelect = output<string>();
+   ·             ────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onSelect`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             selectHandler = output<string>({ alias: 'onSelect' });
+   ·             ──────────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onBlur`
+   ╭─[no_output_on_prefix.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() onBlur = new EventEmitter<void>();
+   ·             ────────────────────────────────────────────
+ 9 │             @Output() onFocus = new EventEmitter<void>();
+   ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.
+
+  ⚠ angular(no-output-on-prefix): Output bindings, including aliases, should not be named "on" or prefixed with it: `onFocus`
+    ╭─[no_output_on_prefix.tsx:9:13]
+  8 │             @Output() onBlur = new EventEmitter<void>();
+  9 │             @Output() onFocus = new EventEmitter<void>();
+    ·             ─────────────────────────────────────────────
+ 10 │         }
+    ╰────
+  help: Remove the 'on' prefix from the output name. In Angular templates, outputs are already bound with (output) syntax which implies an event. Adding 'on' is redundant: (onClick)="handler()" becomes confusing.

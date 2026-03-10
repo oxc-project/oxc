@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+    ╭─[prefer_inject.tsx:9:25]
+  8 │         class TestComponent {
+  9 │             constructor(private myService: MyService) {}
+    ·                         ────────────────────────────
+ 10 │         }
+    ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+   ╭─[prefer_inject.tsx:8:25]
+ 7 │         class TestDirective {
+ 8 │             constructor(private myService: MyService) {}
+   ·                         ────────────────────────────
+ 9 │         }
+   ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+   ╭─[prefer_inject.tsx:5:25]
+ 4 │         class TestService {
+ 5 │             constructor(@Inject('TOKEN') private value: string) {}
+   ·                         ──────────────────────────────────────
+ 6 │         }
+   ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+   ╭─[prefer_inject.tsx:6:25]
+ 5 │         class TestPipe {
+ 6 │             constructor(private myService: MyService) {}
+   ·                         ────────────────────────────
+ 7 │         }
+   ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+    ╭─[prefer_inject.tsx:10:17]
+  9 │             constructor(
+ 10 │                 private serviceA: ServiceA,
+    ·                 ──────────────────────────
+ 11 │                 private serviceB: ServiceB
+    ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+    ╭─[prefer_inject.tsx:11:17]
+ 10 │                 private serviceA: ServiceA,
+ 11 │                 private serviceB: ServiceB
+    ·                 ──────────────────────────
+ 12 │             ) {}
+    ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`
+
+  ⚠ angular(prefer-inject): Prefer using the `inject()` function over constructor parameter injection
+    ╭─[prefer_inject.tsx:9:25]
+  8 │         class TestComponent {
+  9 │             constructor(@Optional() private myService: MyService) {}
+    ·                         ────────────────────────────────────────
+ 10 │         }
+    ╰────
+  help: Use the `inject()` function to inject dependencies. It provides better type inference, works with signals, and allows for more flexible dependency injection patterns. Example: `private readonly service = inject(MyService);`

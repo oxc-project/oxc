@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnInit` should be implemented for method `ngOnInit`
+   ╭─[use_lifecycle_interface.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnInit() {}
+   ·             ─────────────
+ 9 │         }
+   ╰────
+  help: Add `implements OnInit` to the class declaration and import `OnInit` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnDestroy` should be implemented for method `ngOnDestroy`
+   ╭─[use_lifecycle_interface.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnDestroy() {}
+   ·             ────────────────
+ 9 │         }
+   ╰────
+  help: Add `implements OnDestroy` to the class declaration and import `OnDestroy` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `AfterViewInit` should be implemented for method `ngAfterViewInit`
+   ╭─[use_lifecycle_interface.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngAfterViewInit() {}
+   ·             ────────────────────
+ 9 │         }
+   ╰────
+  help: Add `implements AfterViewInit` to the class declaration and import `AfterViewInit` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnInit` should be implemented for method `ngOnInit`
+   ╭─[use_lifecycle_interface.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             ngOnInit() {}
+   ·             ─────────────
+ 8 │         }
+   ╰────
+  help: Add `implements OnInit` to the class declaration and import `OnInit` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnDestroy` should be implemented for method `ngOnDestroy`
+   ╭─[use_lifecycle_interface.tsx:5:13]
+ 4 │         class TestService {
+ 5 │             ngOnDestroy() {}
+   ·             ────────────────
+ 6 │         }
+   ╰────
+  help: Add `implements OnDestroy` to the class declaration and import `OnDestroy` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnInit` should be implemented for method `ngOnInit`
+   ╭─[use_lifecycle_interface.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnInit() {}
+   ·             ─────────────
+ 9 │             ngOnDestroy() {}
+   ╰────
+  help: Add `implements OnInit` to the class declaration and import `OnInit` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnDestroy` should be implemented for method `ngOnDestroy`
+    ╭─[use_lifecycle_interface.tsx:9:13]
+  8 │             ngOnInit() {}
+  9 │             ngOnDestroy() {}
+    ·             ────────────────
+ 10 │         }
+    ╰────
+  help: Add `implements OnDestroy` to the class declaration and import `OnDestroy` from '@angular/core'
+
+  ⚠ angular(use-lifecycle-interface): Lifecycle interface `OnDestroy` should be implemented for method `ngOnDestroy`
+    ╭─[use_lifecycle_interface.tsx:9:13]
+  8 │             ngOnInit() {}
+  9 │             ngOnDestroy() {}
+    ·             ────────────────
+ 10 │         }
+    ╰────
+  help: Add `implements OnDestroy` to the class declaration and import `OnDestroy` from '@angular/core'

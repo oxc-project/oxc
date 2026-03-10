@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(directive-class-suffix): Directive class names should end with one of these suffixes: Directive
+   ╭─[directive_class_suffix.tsx:6:19]
+ 5 │             })
+ 6 │             class Highlight {}
+   ·                   ─────────
+ 7 │             
+   ╰────
+  help: Rename the class to include a valid suffix (e.g., 'HighlightDirective').
+
+  ⚠ angular(directive-class-suffix): Directive class names should end with one of these suffixes: Directive
+   ╭─[directive_class_suffix.tsx:6:19]
+ 5 │             })
+ 6 │             class HighlightComponent {}
+   ·                   ──────────────────
+ 7 │             
+   ╰────
+  help: Rename the class to include a valid suffix (e.g., 'HighlightDirective').

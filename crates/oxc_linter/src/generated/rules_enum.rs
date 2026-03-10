@@ -8,6 +8,54 @@
     clippy::missing_errors_doc,
     clippy::match_same_arms
 )]
+pub use crate::rules::angular::component_class_suffix::ComponentClassSuffix as AngularComponentClassSuffix;
+pub use crate::rules::angular::component_max_inline_declarations::ComponentMaxInlineDeclarations as AngularComponentMaxInlineDeclarations;
+pub use crate::rules::angular::component_selector::ComponentSelector as AngularComponentSelector;
+pub use crate::rules::angular::computed_must_return::ComputedMustReturn as AngularComputedMustReturn;
+pub use crate::rules::angular::consistent_component_styles::ConsistentComponentStyles as AngularConsistentComponentStyles;
+pub use crate::rules::angular::contextual_decorator::ContextualDecorator as AngularContextualDecorator;
+pub use crate::rules::angular::contextual_lifecycle::ContextualLifecycle as AngularContextualLifecycle;
+pub use crate::rules::angular::directive_class_suffix::DirectiveClassSuffix as AngularDirectiveClassSuffix;
+pub use crate::rules::angular::directive_selector::DirectiveSelector as AngularDirectiveSelector;
+pub use crate::rules::angular::no_async_lifecycle_method::NoAsyncLifecycleMethod as AngularNoAsyncLifecycleMethod;
+pub use crate::rules::angular::no_attribute_decorator::NoAttributeDecorator as AngularNoAttributeDecorator;
+pub use crate::rules::angular::no_conflicting_lifecycle::NoConflictingLifecycle as AngularNoConflictingLifecycle;
+pub use crate::rules::angular::no_duplicates_in_metadata_arrays::NoDuplicatesInMetadataArrays as AngularNoDuplicatesInMetadataArrays;
+pub use crate::rules::angular::no_empty_lifecycle_method::NoEmptyLifecycleMethod as AngularNoEmptyLifecycleMethod;
+pub use crate::rules::angular::no_forward_ref::NoForwardRef as AngularNoForwardRef;
+pub use crate::rules::angular::no_host_metadata_property::NoHostMetadataProperty as AngularNoHostMetadataProperty;
+pub use crate::rules::angular::no_implicit_take_until_destroyed::NoImplicitTakeUntilDestroyed as AngularNoImplicitTakeUntilDestroyed;
+pub use crate::rules::angular::no_input_prefix::NoInputPrefix as AngularNoInputPrefix;
+pub use crate::rules::angular::no_input_rename::NoInputRename as AngularNoInputRename;
+pub use crate::rules::angular::no_inputs_metadata_property::NoInputsMetadataProperty as AngularNoInputsMetadataProperty;
+pub use crate::rules::angular::no_lifecycle_call::NoLifecycleCall as AngularNoLifecycleCall;
+pub use crate::rules::angular::no_output_native::NoOutputNative as AngularNoOutputNative;
+pub use crate::rules::angular::no_output_on_prefix::NoOutputOnPrefix as AngularNoOutputOnPrefix;
+pub use crate::rules::angular::no_output_rename::NoOutputRename as AngularNoOutputRename;
+pub use crate::rules::angular::no_outputs_metadata_property::NoOutputsMetadataProperty as AngularNoOutputsMetadataProperty;
+pub use crate::rules::angular::no_pipe_impure::NoPipeImpure as AngularNoPipeImpure;
+pub use crate::rules::angular::no_queries_metadata_property::NoQueriesMetadataProperty as AngularNoQueriesMetadataProperty;
+pub use crate::rules::angular::pipe_prefix::PipePrefix as AngularPipePrefix;
+pub use crate::rules::angular::prefer_control_flow::PreferControlFlow as AngularPreferControlFlow;
+pub use crate::rules::angular::prefer_host_metadata_property::PreferHostMetadataProperty as AngularPreferHostMetadataProperty;
+pub use crate::rules::angular::prefer_inject::PreferInject as AngularPreferInject;
+pub use crate::rules::angular::prefer_on_push_component_change_detection::PreferOnPushComponentChangeDetection as AngularPreferOnPushComponentChangeDetection;
+pub use crate::rules::angular::prefer_output_emitter_ref::PreferOutputEmitterRef as AngularPreferOutputEmitterRef;
+pub use crate::rules::angular::prefer_output_readonly::PreferOutputReadonly as AngularPreferOutputReadonly;
+pub use crate::rules::angular::prefer_signal_model::PreferSignalModel as AngularPreferSignalModel;
+pub use crate::rules::angular::prefer_signals::PreferSignals as AngularPreferSignals;
+pub use crate::rules::angular::prefer_standalone::PreferStandalone as AngularPreferStandalone;
+pub use crate::rules::angular::relative_url_prefix::RelativeUrlPrefix as AngularRelativeUrlPrefix;
+pub use crate::rules::angular::require_lifecycle_on_prototype::RequireLifecycleOnPrototype as AngularRequireLifecycleOnPrototype;
+pub use crate::rules::angular::require_localize_metadata::RequireLocalizeMetadata as AngularRequireLocalizeMetadata;
+pub use crate::rules::angular::runtime_localize::RuntimeLocalize as AngularRuntimeLocalize;
+pub use crate::rules::angular::sort_keys_in_type_decorator::SortKeysInTypeDecorator as AngularSortKeysInTypeDecorator;
+pub use crate::rules::angular::sort_lifecycle_methods::SortLifecycleMethods as AngularSortLifecycleMethods;
+pub use crate::rules::angular::use_component_selector::UseComponentSelector as AngularUseComponentSelector;
+pub use crate::rules::angular::use_component_view_encapsulation::UseComponentViewEncapsulation as AngularUseComponentViewEncapsulation;
+pub use crate::rules::angular::use_injectable_provided_in::UseInjectableProvidedIn as AngularUseInjectableProvidedIn;
+pub use crate::rules::angular::use_lifecycle_interface::UseLifecycleInterface as AngularUseLifecycleInterface;
+pub use crate::rules::angular::use_pipe_transform_interface::UsePipeTransformInterface as AngularUsePipeTransformInterface;
 pub use crate::rules::eslint::accessor_pairs::AccessorPairs as EslintAccessorPairs;
 pub use crate::rules::eslint::array_callback_return::ArrayCallbackReturn as EslintArrayCallbackReturn;
 pub use crate::rules::eslint::arrow_body_style::ArrowBodyStyle as EslintArrowBodyStyle;
@@ -1413,6 +1461,54 @@ pub enum RuleEnum {
     VueRequireTypedRef(VueRequireTypedRef),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
+    AngularNoHostMetadataProperty(AngularNoHostMetadataProperty),
+    AngularPreferControlFlow(AngularPreferControlFlow),
+    AngularPreferOutputReadonly(AngularPreferOutputReadonly),
+    AngularPreferSignals(AngularPreferSignals),
+    AngularPreferStandalone(AngularPreferStandalone),
+    AngularComponentClassSuffix(AngularComponentClassSuffix),
+    AngularComponentSelector(AngularComponentSelector),
+    AngularDirectiveClassSuffix(AngularDirectiveClassSuffix),
+    AngularDirectiveSelector(AngularDirectiveSelector),
+    AngularContextualLifecycle(AngularContextualLifecycle),
+    AngularNoEmptyLifecycleMethod(AngularNoEmptyLifecycleMethod),
+    AngularNoLifecycleCall(AngularNoLifecycleCall),
+    AngularSortLifecycleMethods(AngularSortLifecycleMethods),
+    AngularUseLifecycleInterface(AngularUseLifecycleInterface),
+    AngularPreferInject(AngularPreferInject),
+    AngularPreferOnPushComponentChangeDetection(AngularPreferOnPushComponentChangeDetection),
+    AngularUseInjectableProvidedIn(AngularUseInjectableProvidedIn),
+    AngularNoInputRename(AngularNoInputRename),
+    AngularNoInputsMetadataProperty(AngularNoInputsMetadataProperty),
+    AngularNoOutputNative(AngularNoOutputNative),
+    AngularNoOutputOnPrefix(AngularNoOutputOnPrefix),
+    AngularNoOutputRename(AngularNoOutputRename),
+    AngularNoOutputsMetadataProperty(AngularNoOutputsMetadataProperty),
+    AngularNoPipeImpure(AngularNoPipeImpure),
+    AngularPipePrefix(AngularPipePrefix),
+    AngularUsePipeTransformInterface(AngularUsePipeTransformInterface),
+    AngularRelativeUrlPrefix(AngularRelativeUrlPrefix),
+    AngularUseComponentSelector(AngularUseComponentSelector),
+    AngularUseComponentViewEncapsulation(AngularUseComponentViewEncapsulation),
+    AngularNoAttributeDecorator(AngularNoAttributeDecorator),
+    AngularComponentMaxInlineDeclarations(AngularComponentMaxInlineDeclarations),
+    AngularComputedMustReturn(AngularComputedMustReturn),
+    AngularConsistentComponentStyles(AngularConsistentComponentStyles),
+    AngularContextualDecorator(AngularContextualDecorator),
+    AngularNoAsyncLifecycleMethod(AngularNoAsyncLifecycleMethod),
+    AngularNoConflictingLifecycle(AngularNoConflictingLifecycle),
+    AngularNoDuplicatesInMetadataArrays(AngularNoDuplicatesInMetadataArrays),
+    AngularNoForwardRef(AngularNoForwardRef),
+    AngularNoImplicitTakeUntilDestroyed(AngularNoImplicitTakeUntilDestroyed),
+    AngularNoInputPrefix(AngularNoInputPrefix),
+    AngularNoQueriesMetadataProperty(AngularNoQueriesMetadataProperty),
+    AngularPreferHostMetadataProperty(AngularPreferHostMetadataProperty),
+    AngularPreferOutputEmitterRef(AngularPreferOutputEmitterRef),
+    AngularPreferSignalModel(AngularPreferSignalModel),
+    AngularRequireLifecycleOnPrototype(AngularRequireLifecycleOnPrototype),
+    AngularRequireLocalizeMetadata(AngularRequireLocalizeMetadata),
+    AngularRuntimeLocalize(AngularRuntimeLocalize),
+    AngularSortKeysInTypeDecorator(AngularSortKeysInTypeDecorator),
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
 const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
@@ -2193,6 +2289,64 @@ const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = VUE_PREFER_IMPORT_FROM_VUE_ID + 1us
 const VUE_REQUIRE_TYPED_REF_ID: usize = VUE_REQUIRE_DEFAULT_EXPORT_ID + 1usize;
 const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_REQUIRE_TYPED_REF_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
+const ANGULAR_NO_HOST_METADATA_PROPERTY_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
+const ANGULAR_PREFER_CONTROL_FLOW_ID: usize = ANGULAR_NO_HOST_METADATA_PROPERTY_ID + 1usize;
+const ANGULAR_PREFER_OUTPUT_READONLY_ID: usize = ANGULAR_PREFER_CONTROL_FLOW_ID + 1usize;
+const ANGULAR_PREFER_SIGNALS_ID: usize = ANGULAR_PREFER_OUTPUT_READONLY_ID + 1usize;
+const ANGULAR_PREFER_STANDALONE_ID: usize = ANGULAR_PREFER_SIGNALS_ID + 1usize;
+const ANGULAR_COMPONENT_CLASS_SUFFIX_ID: usize = ANGULAR_PREFER_STANDALONE_ID + 1usize;
+const ANGULAR_COMPONENT_SELECTOR_ID: usize = ANGULAR_COMPONENT_CLASS_SUFFIX_ID + 1usize;
+const ANGULAR_DIRECTIVE_CLASS_SUFFIX_ID: usize = ANGULAR_COMPONENT_SELECTOR_ID + 1usize;
+const ANGULAR_DIRECTIVE_SELECTOR_ID: usize = ANGULAR_DIRECTIVE_CLASS_SUFFIX_ID + 1usize;
+const ANGULAR_CONTEXTUAL_LIFECYCLE_ID: usize = ANGULAR_DIRECTIVE_SELECTOR_ID + 1usize;
+const ANGULAR_NO_EMPTY_LIFECYCLE_METHOD_ID: usize = ANGULAR_CONTEXTUAL_LIFECYCLE_ID + 1usize;
+const ANGULAR_NO_LIFECYCLE_CALL_ID: usize = ANGULAR_NO_EMPTY_LIFECYCLE_METHOD_ID + 1usize;
+const ANGULAR_SORT_LIFECYCLE_METHODS_ID: usize = ANGULAR_NO_LIFECYCLE_CALL_ID + 1usize;
+const ANGULAR_USE_LIFECYCLE_INTERFACE_ID: usize = ANGULAR_SORT_LIFECYCLE_METHODS_ID + 1usize;
+const ANGULAR_PREFER_INJECT_ID: usize = ANGULAR_USE_LIFECYCLE_INTERFACE_ID + 1usize;
+const ANGULAR_PREFER_ON_PUSH_COMPONENT_CHANGE_DETECTION_ID: usize =
+    ANGULAR_PREFER_INJECT_ID + 1usize;
+const ANGULAR_USE_INJECTABLE_PROVIDED_IN_ID: usize =
+    ANGULAR_PREFER_ON_PUSH_COMPONENT_CHANGE_DETECTION_ID + 1usize;
+const ANGULAR_NO_INPUT_RENAME_ID: usize = ANGULAR_USE_INJECTABLE_PROVIDED_IN_ID + 1usize;
+const ANGULAR_NO_INPUTS_METADATA_PROPERTY_ID: usize = ANGULAR_NO_INPUT_RENAME_ID + 1usize;
+const ANGULAR_NO_OUTPUT_NATIVE_ID: usize = ANGULAR_NO_INPUTS_METADATA_PROPERTY_ID + 1usize;
+const ANGULAR_NO_OUTPUT_ON_PREFIX_ID: usize = ANGULAR_NO_OUTPUT_NATIVE_ID + 1usize;
+const ANGULAR_NO_OUTPUT_RENAME_ID: usize = ANGULAR_NO_OUTPUT_ON_PREFIX_ID + 1usize;
+const ANGULAR_NO_OUTPUTS_METADATA_PROPERTY_ID: usize = ANGULAR_NO_OUTPUT_RENAME_ID + 1usize;
+const ANGULAR_NO_PIPE_IMPURE_ID: usize = ANGULAR_NO_OUTPUTS_METADATA_PROPERTY_ID + 1usize;
+const ANGULAR_PIPE_PREFIX_ID: usize = ANGULAR_NO_PIPE_IMPURE_ID + 1usize;
+const ANGULAR_USE_PIPE_TRANSFORM_INTERFACE_ID: usize = ANGULAR_PIPE_PREFIX_ID + 1usize;
+const ANGULAR_RELATIVE_URL_PREFIX_ID: usize = ANGULAR_USE_PIPE_TRANSFORM_INTERFACE_ID + 1usize;
+const ANGULAR_USE_COMPONENT_SELECTOR_ID: usize = ANGULAR_RELATIVE_URL_PREFIX_ID + 1usize;
+const ANGULAR_USE_COMPONENT_VIEW_ENCAPSULATION_ID: usize =
+    ANGULAR_USE_COMPONENT_SELECTOR_ID + 1usize;
+const ANGULAR_NO_ATTRIBUTE_DECORATOR_ID: usize =
+    ANGULAR_USE_COMPONENT_VIEW_ENCAPSULATION_ID + 1usize;
+const ANGULAR_COMPONENT_MAX_INLINE_DECLARATIONS_ID: usize =
+    ANGULAR_NO_ATTRIBUTE_DECORATOR_ID + 1usize;
+const ANGULAR_COMPUTED_MUST_RETURN_ID: usize =
+    ANGULAR_COMPONENT_MAX_INLINE_DECLARATIONS_ID + 1usize;
+const ANGULAR_CONSISTENT_COMPONENT_STYLES_ID: usize = ANGULAR_COMPUTED_MUST_RETURN_ID + 1usize;
+const ANGULAR_CONTEXTUAL_DECORATOR_ID: usize = ANGULAR_CONSISTENT_COMPONENT_STYLES_ID + 1usize;
+const ANGULAR_NO_ASYNC_LIFECYCLE_METHOD_ID: usize = ANGULAR_CONTEXTUAL_DECORATOR_ID + 1usize;
+const ANGULAR_NO_CONFLICTING_LIFECYCLE_ID: usize = ANGULAR_NO_ASYNC_LIFECYCLE_METHOD_ID + 1usize;
+const ANGULAR_NO_DUPLICATES_IN_METADATA_ARRAYS_ID: usize =
+    ANGULAR_NO_CONFLICTING_LIFECYCLE_ID + 1usize;
+const ANGULAR_NO_FORWARD_REF_ID: usize = ANGULAR_NO_DUPLICATES_IN_METADATA_ARRAYS_ID + 1usize;
+const ANGULAR_NO_IMPLICIT_TAKE_UNTIL_DESTROYED_ID: usize = ANGULAR_NO_FORWARD_REF_ID + 1usize;
+const ANGULAR_NO_INPUT_PREFIX_ID: usize = ANGULAR_NO_IMPLICIT_TAKE_UNTIL_DESTROYED_ID + 1usize;
+const ANGULAR_NO_QUERIES_METADATA_PROPERTY_ID: usize = ANGULAR_NO_INPUT_PREFIX_ID + 1usize;
+const ANGULAR_PREFER_HOST_METADATA_PROPERTY_ID: usize =
+    ANGULAR_NO_QUERIES_METADATA_PROPERTY_ID + 1usize;
+const ANGULAR_PREFER_OUTPUT_EMITTER_REF_ID: usize =
+    ANGULAR_PREFER_HOST_METADATA_PROPERTY_ID + 1usize;
+const ANGULAR_PREFER_SIGNAL_MODEL_ID: usize = ANGULAR_PREFER_OUTPUT_EMITTER_REF_ID + 1usize;
+const ANGULAR_REQUIRE_LIFECYCLE_ON_PROTOTYPE_ID: usize = ANGULAR_PREFER_SIGNAL_MODEL_ID + 1usize;
+const ANGULAR_REQUIRE_LOCALIZE_METADATA_ID: usize =
+    ANGULAR_REQUIRE_LIFECYCLE_ON_PROTOTYPE_ID + 1usize;
+const ANGULAR_RUNTIME_LOCALIZE_ID: usize = ANGULAR_REQUIRE_LOCALIZE_METADATA_ID + 1usize;
+const ANGULAR_SORT_KEYS_IN_TYPE_DECORATOR_ID: usize = ANGULAR_RUNTIME_LOCALIZE_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
@@ -3000,6 +3154,66 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VUE_REQUIRE_TYPED_REF_ID,
             Self::VueValidDefineEmits(_) => VUE_VALID_DEFINE_EMITS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
+            Self::AngularNoHostMetadataProperty(_) => ANGULAR_NO_HOST_METADATA_PROPERTY_ID,
+            Self::AngularPreferControlFlow(_) => ANGULAR_PREFER_CONTROL_FLOW_ID,
+            Self::AngularPreferOutputReadonly(_) => ANGULAR_PREFER_OUTPUT_READONLY_ID,
+            Self::AngularPreferSignals(_) => ANGULAR_PREFER_SIGNALS_ID,
+            Self::AngularPreferStandalone(_) => ANGULAR_PREFER_STANDALONE_ID,
+            Self::AngularComponentClassSuffix(_) => ANGULAR_COMPONENT_CLASS_SUFFIX_ID,
+            Self::AngularComponentSelector(_) => ANGULAR_COMPONENT_SELECTOR_ID,
+            Self::AngularDirectiveClassSuffix(_) => ANGULAR_DIRECTIVE_CLASS_SUFFIX_ID,
+            Self::AngularDirectiveSelector(_) => ANGULAR_DIRECTIVE_SELECTOR_ID,
+            Self::AngularContextualLifecycle(_) => ANGULAR_CONTEXTUAL_LIFECYCLE_ID,
+            Self::AngularNoEmptyLifecycleMethod(_) => ANGULAR_NO_EMPTY_LIFECYCLE_METHOD_ID,
+            Self::AngularNoLifecycleCall(_) => ANGULAR_NO_LIFECYCLE_CALL_ID,
+            Self::AngularSortLifecycleMethods(_) => ANGULAR_SORT_LIFECYCLE_METHODS_ID,
+            Self::AngularUseLifecycleInterface(_) => ANGULAR_USE_LIFECYCLE_INTERFACE_ID,
+            Self::AngularPreferInject(_) => ANGULAR_PREFER_INJECT_ID,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                ANGULAR_PREFER_ON_PUSH_COMPONENT_CHANGE_DETECTION_ID
+            }
+            Self::AngularUseInjectableProvidedIn(_) => ANGULAR_USE_INJECTABLE_PROVIDED_IN_ID,
+            Self::AngularNoInputRename(_) => ANGULAR_NO_INPUT_RENAME_ID,
+            Self::AngularNoInputsMetadataProperty(_) => ANGULAR_NO_INPUTS_METADATA_PROPERTY_ID,
+            Self::AngularNoOutputNative(_) => ANGULAR_NO_OUTPUT_NATIVE_ID,
+            Self::AngularNoOutputOnPrefix(_) => ANGULAR_NO_OUTPUT_ON_PREFIX_ID,
+            Self::AngularNoOutputRename(_) => ANGULAR_NO_OUTPUT_RENAME_ID,
+            Self::AngularNoOutputsMetadataProperty(_) => ANGULAR_NO_OUTPUTS_METADATA_PROPERTY_ID,
+            Self::AngularNoPipeImpure(_) => ANGULAR_NO_PIPE_IMPURE_ID,
+            Self::AngularPipePrefix(_) => ANGULAR_PIPE_PREFIX_ID,
+            Self::AngularUsePipeTransformInterface(_) => ANGULAR_USE_PIPE_TRANSFORM_INTERFACE_ID,
+            Self::AngularRelativeUrlPrefix(_) => ANGULAR_RELATIVE_URL_PREFIX_ID,
+            Self::AngularUseComponentSelector(_) => ANGULAR_USE_COMPONENT_SELECTOR_ID,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                ANGULAR_USE_COMPONENT_VIEW_ENCAPSULATION_ID
+            }
+            Self::AngularNoAttributeDecorator(_) => ANGULAR_NO_ATTRIBUTE_DECORATOR_ID,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                ANGULAR_COMPONENT_MAX_INLINE_DECLARATIONS_ID
+            }
+            Self::AngularComputedMustReturn(_) => ANGULAR_COMPUTED_MUST_RETURN_ID,
+            Self::AngularConsistentComponentStyles(_) => ANGULAR_CONSISTENT_COMPONENT_STYLES_ID,
+            Self::AngularContextualDecorator(_) => ANGULAR_CONTEXTUAL_DECORATOR_ID,
+            Self::AngularNoAsyncLifecycleMethod(_) => ANGULAR_NO_ASYNC_LIFECYCLE_METHOD_ID,
+            Self::AngularNoConflictingLifecycle(_) => ANGULAR_NO_CONFLICTING_LIFECYCLE_ID,
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                ANGULAR_NO_DUPLICATES_IN_METADATA_ARRAYS_ID
+            }
+            Self::AngularNoForwardRef(_) => ANGULAR_NO_FORWARD_REF_ID,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                ANGULAR_NO_IMPLICIT_TAKE_UNTIL_DESTROYED_ID
+            }
+            Self::AngularNoInputPrefix(_) => ANGULAR_NO_INPUT_PREFIX_ID,
+            Self::AngularNoQueriesMetadataProperty(_) => ANGULAR_NO_QUERIES_METADATA_PROPERTY_ID,
+            Self::AngularPreferHostMetadataProperty(_) => ANGULAR_PREFER_HOST_METADATA_PROPERTY_ID,
+            Self::AngularPreferOutputEmitterRef(_) => ANGULAR_PREFER_OUTPUT_EMITTER_REF_ID,
+            Self::AngularPreferSignalModel(_) => ANGULAR_PREFER_SIGNAL_MODEL_ID,
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                ANGULAR_REQUIRE_LIFECYCLE_ON_PROTOTYPE_ID
+            }
+            Self::AngularRequireLocalizeMetadata(_) => ANGULAR_REQUIRE_LOCALIZE_METADATA_ID,
+            Self::AngularRuntimeLocalize(_) => ANGULAR_RUNTIME_LOCALIZE_ID,
+            Self::AngularSortKeysInTypeDecorator(_) => ANGULAR_SORT_KEYS_IN_TYPE_DECORATOR_ID,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -3796,6 +4010,64 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
+            Self::AngularNoHostMetadataProperty(_) => AngularNoHostMetadataProperty::NAME,
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::NAME,
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::NAME,
+            Self::AngularPreferSignals(_) => AngularPreferSignals::NAME,
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::NAME,
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::NAME,
+            Self::AngularComponentSelector(_) => AngularComponentSelector::NAME,
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::NAME,
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::NAME,
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::NAME,
+            Self::AngularNoEmptyLifecycleMethod(_) => AngularNoEmptyLifecycleMethod::NAME,
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::NAME,
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::NAME,
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::NAME,
+            Self::AngularPreferInject(_) => AngularPreferInject::NAME,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::NAME
+            }
+            Self::AngularUseInjectableProvidedIn(_) => AngularUseInjectableProvidedIn::NAME,
+            Self::AngularNoInputRename(_) => AngularNoInputRename::NAME,
+            Self::AngularNoInputsMetadataProperty(_) => AngularNoInputsMetadataProperty::NAME,
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::NAME,
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::NAME,
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::NAME,
+            Self::AngularNoOutputsMetadataProperty(_) => AngularNoOutputsMetadataProperty::NAME,
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::NAME,
+            Self::AngularPipePrefix(_) => AngularPipePrefix::NAME,
+            Self::AngularUsePipeTransformInterface(_) => AngularUsePipeTransformInterface::NAME,
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::NAME,
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::NAME,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::NAME
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::NAME,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::NAME
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::NAME,
+            Self::AngularConsistentComponentStyles(_) => AngularConsistentComponentStyles::NAME,
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::NAME,
+            Self::AngularNoAsyncLifecycleMethod(_) => AngularNoAsyncLifecycleMethod::NAME,
+            Self::AngularNoConflictingLifecycle(_) => AngularNoConflictingLifecycle::NAME,
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::NAME
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::NAME,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::NAME
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::NAME,
+            Self::AngularNoQueriesMetadataProperty(_) => AngularNoQueriesMetadataProperty::NAME,
+            Self::AngularPreferHostMetadataProperty(_) => AngularPreferHostMetadataProperty::NAME,
+            Self::AngularPreferOutputEmitterRef(_) => AngularPreferOutputEmitterRef::NAME,
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::NAME,
+            Self::AngularRequireLifecycleOnPrototype(_) => AngularRequireLifecycleOnPrototype::NAME,
+            Self::AngularRequireLocalizeMetadata(_) => AngularRequireLocalizeMetadata::NAME,
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::NAME,
+            Self::AngularSortKeysInTypeDecorator(_) => AngularSortKeysInTypeDecorator::NAME,
         }
     }
     pub fn category(&self) -> RuleCategory {
@@ -4638,6 +4910,68 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
+            Self::AngularNoHostMetadataProperty(_) => AngularNoHostMetadataProperty::CATEGORY,
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::CATEGORY,
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::CATEGORY,
+            Self::AngularPreferSignals(_) => AngularPreferSignals::CATEGORY,
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::CATEGORY,
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::CATEGORY,
+            Self::AngularComponentSelector(_) => AngularComponentSelector::CATEGORY,
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::CATEGORY,
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::CATEGORY,
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::CATEGORY,
+            Self::AngularNoEmptyLifecycleMethod(_) => AngularNoEmptyLifecycleMethod::CATEGORY,
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::CATEGORY,
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::CATEGORY,
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::CATEGORY,
+            Self::AngularPreferInject(_) => AngularPreferInject::CATEGORY,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::CATEGORY
+            }
+            Self::AngularUseInjectableProvidedIn(_) => AngularUseInjectableProvidedIn::CATEGORY,
+            Self::AngularNoInputRename(_) => AngularNoInputRename::CATEGORY,
+            Self::AngularNoInputsMetadataProperty(_) => AngularNoInputsMetadataProperty::CATEGORY,
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::CATEGORY,
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::CATEGORY,
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::CATEGORY,
+            Self::AngularNoOutputsMetadataProperty(_) => AngularNoOutputsMetadataProperty::CATEGORY,
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::CATEGORY,
+            Self::AngularPipePrefix(_) => AngularPipePrefix::CATEGORY,
+            Self::AngularUsePipeTransformInterface(_) => AngularUsePipeTransformInterface::CATEGORY,
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::CATEGORY,
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::CATEGORY,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::CATEGORY
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::CATEGORY,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::CATEGORY
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::CATEGORY,
+            Self::AngularConsistentComponentStyles(_) => AngularConsistentComponentStyles::CATEGORY,
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::CATEGORY,
+            Self::AngularNoAsyncLifecycleMethod(_) => AngularNoAsyncLifecycleMethod::CATEGORY,
+            Self::AngularNoConflictingLifecycle(_) => AngularNoConflictingLifecycle::CATEGORY,
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::CATEGORY
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::CATEGORY,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::CATEGORY
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::CATEGORY,
+            Self::AngularNoQueriesMetadataProperty(_) => AngularNoQueriesMetadataProperty::CATEGORY,
+            Self::AngularPreferHostMetadataProperty(_) => {
+                AngularPreferHostMetadataProperty::CATEGORY
+            }
+            Self::AngularPreferOutputEmitterRef(_) => AngularPreferOutputEmitterRef::CATEGORY,
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::CATEGORY,
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                AngularRequireLifecycleOnPrototype::CATEGORY
+            }
+            Self::AngularRequireLocalizeMetadata(_) => AngularRequireLocalizeMetadata::CATEGORY,
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::CATEGORY,
+            Self::AngularSortKeysInTypeDecorator(_) => AngularSortKeysInTypeDecorator::CATEGORY,
         }
     }
     #[doc = r" This [`Rule`]'s auto-fix capabilities."]
@@ -5435,6 +5769,64 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
+            Self::AngularNoHostMetadataProperty(_) => AngularNoHostMetadataProperty::FIX,
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::FIX,
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::FIX,
+            Self::AngularPreferSignals(_) => AngularPreferSignals::FIX,
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::FIX,
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::FIX,
+            Self::AngularComponentSelector(_) => AngularComponentSelector::FIX,
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::FIX,
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::FIX,
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::FIX,
+            Self::AngularNoEmptyLifecycleMethod(_) => AngularNoEmptyLifecycleMethod::FIX,
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::FIX,
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::FIX,
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::FIX,
+            Self::AngularPreferInject(_) => AngularPreferInject::FIX,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::FIX
+            }
+            Self::AngularUseInjectableProvidedIn(_) => AngularUseInjectableProvidedIn::FIX,
+            Self::AngularNoInputRename(_) => AngularNoInputRename::FIX,
+            Self::AngularNoInputsMetadataProperty(_) => AngularNoInputsMetadataProperty::FIX,
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::FIX,
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::FIX,
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::FIX,
+            Self::AngularNoOutputsMetadataProperty(_) => AngularNoOutputsMetadataProperty::FIX,
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::FIX,
+            Self::AngularPipePrefix(_) => AngularPipePrefix::FIX,
+            Self::AngularUsePipeTransformInterface(_) => AngularUsePipeTransformInterface::FIX,
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::FIX,
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::FIX,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::FIX
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::FIX,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::FIX
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::FIX,
+            Self::AngularConsistentComponentStyles(_) => AngularConsistentComponentStyles::FIX,
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::FIX,
+            Self::AngularNoAsyncLifecycleMethod(_) => AngularNoAsyncLifecycleMethod::FIX,
+            Self::AngularNoConflictingLifecycle(_) => AngularNoConflictingLifecycle::FIX,
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::FIX
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::FIX,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::FIX
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::FIX,
+            Self::AngularNoQueriesMetadataProperty(_) => AngularNoQueriesMetadataProperty::FIX,
+            Self::AngularPreferHostMetadataProperty(_) => AngularPreferHostMetadataProperty::FIX,
+            Self::AngularPreferOutputEmitterRef(_) => AngularPreferOutputEmitterRef::FIX,
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::FIX,
+            Self::AngularRequireLifecycleOnPrototype(_) => AngularRequireLifecycleOnPrototype::FIX,
+            Self::AngularRequireLocalizeMetadata(_) => AngularRequireLocalizeMetadata::FIX,
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::FIX,
+            Self::AngularSortKeysInTypeDecorator(_) => AngularSortKeysInTypeDecorator::FIX,
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -6430,6 +6822,94 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
+            Self::AngularNoHostMetadataProperty(_) => {
+                AngularNoHostMetadataProperty::documentation()
+            }
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::documentation(),
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::documentation(),
+            Self::AngularPreferSignals(_) => AngularPreferSignals::documentation(),
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::documentation(),
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::documentation(),
+            Self::AngularComponentSelector(_) => AngularComponentSelector::documentation(),
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::documentation(),
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::documentation(),
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::documentation(),
+            Self::AngularNoEmptyLifecycleMethod(_) => {
+                AngularNoEmptyLifecycleMethod::documentation()
+            }
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::documentation(),
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::documentation(),
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::documentation(),
+            Self::AngularPreferInject(_) => AngularPreferInject::documentation(),
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::documentation()
+            }
+            Self::AngularUseInjectableProvidedIn(_) => {
+                AngularUseInjectableProvidedIn::documentation()
+            }
+            Self::AngularNoInputRename(_) => AngularNoInputRename::documentation(),
+            Self::AngularNoInputsMetadataProperty(_) => {
+                AngularNoInputsMetadataProperty::documentation()
+            }
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::documentation(),
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::documentation(),
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::documentation(),
+            Self::AngularNoOutputsMetadataProperty(_) => {
+                AngularNoOutputsMetadataProperty::documentation()
+            }
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::documentation(),
+            Self::AngularPipePrefix(_) => AngularPipePrefix::documentation(),
+            Self::AngularUsePipeTransformInterface(_) => {
+                AngularUsePipeTransformInterface::documentation()
+            }
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::documentation(),
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::documentation(),
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::documentation()
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::documentation(),
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::documentation()
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::documentation(),
+            Self::AngularConsistentComponentStyles(_) => {
+                AngularConsistentComponentStyles::documentation()
+            }
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::documentation(),
+            Self::AngularNoAsyncLifecycleMethod(_) => {
+                AngularNoAsyncLifecycleMethod::documentation()
+            }
+            Self::AngularNoConflictingLifecycle(_) => {
+                AngularNoConflictingLifecycle::documentation()
+            }
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::documentation()
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::documentation(),
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::documentation()
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::documentation(),
+            Self::AngularNoQueriesMetadataProperty(_) => {
+                AngularNoQueriesMetadataProperty::documentation()
+            }
+            Self::AngularPreferHostMetadataProperty(_) => {
+                AngularPreferHostMetadataProperty::documentation()
+            }
+            Self::AngularPreferOutputEmitterRef(_) => {
+                AngularPreferOutputEmitterRef::documentation()
+            }
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::documentation(),
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                AngularRequireLifecycleOnPrototype::documentation()
+            }
+            Self::AngularRequireLocalizeMetadata(_) => {
+                AngularRequireLocalizeMetadata::documentation()
+            }
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::documentation(),
+            Self::AngularSortKeysInTypeDecorator(_) => {
+                AngularSortKeysInTypeDecorator::documentation()
+            }
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -8411,6 +8891,162 @@ impl RuleEnum {
                 .or_else(|| VueValidDefineEmits::schema(generator)),
             Self::VueValidDefineProps(_) => VueValidDefineProps::config_schema(generator)
                 .or_else(|| VueValidDefineProps::schema(generator)),
+            Self::AngularNoHostMetadataProperty(_) => {
+                AngularNoHostMetadataProperty::config_schema(generator)
+                    .or_else(|| AngularNoHostMetadataProperty::schema(generator))
+            }
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::config_schema(generator)
+                .or_else(|| AngularPreferControlFlow::schema(generator)),
+            Self::AngularPreferOutputReadonly(_) => {
+                AngularPreferOutputReadonly::config_schema(generator)
+                    .or_else(|| AngularPreferOutputReadonly::schema(generator))
+            }
+            Self::AngularPreferSignals(_) => AngularPreferSignals::config_schema(generator)
+                .or_else(|| AngularPreferSignals::schema(generator)),
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::config_schema(generator)
+                .or_else(|| AngularPreferStandalone::schema(generator)),
+            Self::AngularComponentClassSuffix(_) => {
+                AngularComponentClassSuffix::config_schema(generator)
+                    .or_else(|| AngularComponentClassSuffix::schema(generator))
+            }
+            Self::AngularComponentSelector(_) => AngularComponentSelector::config_schema(generator)
+                .or_else(|| AngularComponentSelector::schema(generator)),
+            Self::AngularDirectiveClassSuffix(_) => {
+                AngularDirectiveClassSuffix::config_schema(generator)
+                    .or_else(|| AngularDirectiveClassSuffix::schema(generator))
+            }
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::config_schema(generator)
+                .or_else(|| AngularDirectiveSelector::schema(generator)),
+            Self::AngularContextualLifecycle(_) => {
+                AngularContextualLifecycle::config_schema(generator)
+                    .or_else(|| AngularContextualLifecycle::schema(generator))
+            }
+            Self::AngularNoEmptyLifecycleMethod(_) => {
+                AngularNoEmptyLifecycleMethod::config_schema(generator)
+                    .or_else(|| AngularNoEmptyLifecycleMethod::schema(generator))
+            }
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::config_schema(generator)
+                .or_else(|| AngularNoLifecycleCall::schema(generator)),
+            Self::AngularSortLifecycleMethods(_) => {
+                AngularSortLifecycleMethods::config_schema(generator)
+                    .or_else(|| AngularSortLifecycleMethods::schema(generator))
+            }
+            Self::AngularUseLifecycleInterface(_) => {
+                AngularUseLifecycleInterface::config_schema(generator)
+                    .or_else(|| AngularUseLifecycleInterface::schema(generator))
+            }
+            Self::AngularPreferInject(_) => AngularPreferInject::config_schema(generator)
+                .or_else(|| AngularPreferInject::schema(generator)),
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::config_schema(generator)
+                    .or_else(|| AngularPreferOnPushComponentChangeDetection::schema(generator))
+            }
+            Self::AngularUseInjectableProvidedIn(_) => {
+                AngularUseInjectableProvidedIn::config_schema(generator)
+                    .or_else(|| AngularUseInjectableProvidedIn::schema(generator))
+            }
+            Self::AngularNoInputRename(_) => AngularNoInputRename::config_schema(generator)
+                .or_else(|| AngularNoInputRename::schema(generator)),
+            Self::AngularNoInputsMetadataProperty(_) => {
+                AngularNoInputsMetadataProperty::config_schema(generator)
+                    .or_else(|| AngularNoInputsMetadataProperty::schema(generator))
+            }
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::config_schema(generator)
+                .or_else(|| AngularNoOutputNative::schema(generator)),
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::config_schema(generator)
+                .or_else(|| AngularNoOutputOnPrefix::schema(generator)),
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::config_schema(generator)
+                .or_else(|| AngularNoOutputRename::schema(generator)),
+            Self::AngularNoOutputsMetadataProperty(_) => {
+                AngularNoOutputsMetadataProperty::config_schema(generator)
+                    .or_else(|| AngularNoOutputsMetadataProperty::schema(generator))
+            }
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::config_schema(generator)
+                .or_else(|| AngularNoPipeImpure::schema(generator)),
+            Self::AngularPipePrefix(_) => AngularPipePrefix::config_schema(generator)
+                .or_else(|| AngularPipePrefix::schema(generator)),
+            Self::AngularUsePipeTransformInterface(_) => {
+                AngularUsePipeTransformInterface::config_schema(generator)
+                    .or_else(|| AngularUsePipeTransformInterface::schema(generator))
+            }
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::config_schema(generator)
+                .or_else(|| AngularRelativeUrlPrefix::schema(generator)),
+            Self::AngularUseComponentSelector(_) => {
+                AngularUseComponentSelector::config_schema(generator)
+                    .or_else(|| AngularUseComponentSelector::schema(generator))
+            }
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::config_schema(generator)
+                    .or_else(|| AngularUseComponentViewEncapsulation::schema(generator))
+            }
+            Self::AngularNoAttributeDecorator(_) => {
+                AngularNoAttributeDecorator::config_schema(generator)
+                    .or_else(|| AngularNoAttributeDecorator::schema(generator))
+            }
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::config_schema(generator)
+                    .or_else(|| AngularComponentMaxInlineDeclarations::schema(generator))
+            }
+            Self::AngularComputedMustReturn(_) => {
+                AngularComputedMustReturn::config_schema(generator)
+                    .or_else(|| AngularComputedMustReturn::schema(generator))
+            }
+            Self::AngularConsistentComponentStyles(_) => {
+                AngularConsistentComponentStyles::config_schema(generator)
+                    .or_else(|| AngularConsistentComponentStyles::schema(generator))
+            }
+            Self::AngularContextualDecorator(_) => {
+                AngularContextualDecorator::config_schema(generator)
+                    .or_else(|| AngularContextualDecorator::schema(generator))
+            }
+            Self::AngularNoAsyncLifecycleMethod(_) => {
+                AngularNoAsyncLifecycleMethod::config_schema(generator)
+                    .or_else(|| AngularNoAsyncLifecycleMethod::schema(generator))
+            }
+            Self::AngularNoConflictingLifecycle(_) => {
+                AngularNoConflictingLifecycle::config_schema(generator)
+                    .or_else(|| AngularNoConflictingLifecycle::schema(generator))
+            }
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::config_schema(generator)
+                    .or_else(|| AngularNoDuplicatesInMetadataArrays::schema(generator))
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::config_schema(generator)
+                .or_else(|| AngularNoForwardRef::schema(generator)),
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::config_schema(generator)
+                    .or_else(|| AngularNoImplicitTakeUntilDestroyed::schema(generator))
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::config_schema(generator)
+                .or_else(|| AngularNoInputPrefix::schema(generator)),
+            Self::AngularNoQueriesMetadataProperty(_) => {
+                AngularNoQueriesMetadataProperty::config_schema(generator)
+                    .or_else(|| AngularNoQueriesMetadataProperty::schema(generator))
+            }
+            Self::AngularPreferHostMetadataProperty(_) => {
+                AngularPreferHostMetadataProperty::config_schema(generator)
+                    .or_else(|| AngularPreferHostMetadataProperty::schema(generator))
+            }
+            Self::AngularPreferOutputEmitterRef(_) => {
+                AngularPreferOutputEmitterRef::config_schema(generator)
+                    .or_else(|| AngularPreferOutputEmitterRef::schema(generator))
+            }
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::config_schema(generator)
+                .or_else(|| AngularPreferSignalModel::schema(generator)),
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                AngularRequireLifecycleOnPrototype::config_schema(generator)
+                    .or_else(|| AngularRequireLifecycleOnPrototype::schema(generator))
+            }
+            Self::AngularRequireLocalizeMetadata(_) => {
+                AngularRequireLocalizeMetadata::config_schema(generator)
+                    .or_else(|| AngularRequireLocalizeMetadata::schema(generator))
+            }
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::config_schema(generator)
+                .or_else(|| AngularRuntimeLocalize::schema(generator)),
+            Self::AngularSortKeysInTypeDecorator(_) => {
+                AngularSortKeysInTypeDecorator::config_schema(generator)
+                    .or_else(|| AngularSortKeysInTypeDecorator::schema(generator))
+            }
         }
     }
     pub fn plugin_name(&self) -> &'static str {
@@ -9111,6 +9747,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
+            Self::AngularNoHostMetadataProperty(_) => "angular",
+            Self::AngularPreferControlFlow(_) => "angular",
+            Self::AngularPreferOutputReadonly(_) => "angular",
+            Self::AngularPreferSignals(_) => "angular",
+            Self::AngularPreferStandalone(_) => "angular",
+            Self::AngularComponentClassSuffix(_) => "angular",
+            Self::AngularComponentSelector(_) => "angular",
+            Self::AngularDirectiveClassSuffix(_) => "angular",
+            Self::AngularDirectiveSelector(_) => "angular",
+            Self::AngularContextualLifecycle(_) => "angular",
+            Self::AngularNoEmptyLifecycleMethod(_) => "angular",
+            Self::AngularNoLifecycleCall(_) => "angular",
+            Self::AngularSortLifecycleMethods(_) => "angular",
+            Self::AngularUseLifecycleInterface(_) => "angular",
+            Self::AngularPreferInject(_) => "angular",
+            Self::AngularPreferOnPushComponentChangeDetection(_) => "angular",
+            Self::AngularUseInjectableProvidedIn(_) => "angular",
+            Self::AngularNoInputRename(_) => "angular",
+            Self::AngularNoInputsMetadataProperty(_) => "angular",
+            Self::AngularNoOutputNative(_) => "angular",
+            Self::AngularNoOutputOnPrefix(_) => "angular",
+            Self::AngularNoOutputRename(_) => "angular",
+            Self::AngularNoOutputsMetadataProperty(_) => "angular",
+            Self::AngularNoPipeImpure(_) => "angular",
+            Self::AngularPipePrefix(_) => "angular",
+            Self::AngularUsePipeTransformInterface(_) => "angular",
+            Self::AngularRelativeUrlPrefix(_) => "angular",
+            Self::AngularUseComponentSelector(_) => "angular",
+            Self::AngularUseComponentViewEncapsulation(_) => "angular",
+            Self::AngularNoAttributeDecorator(_) => "angular",
+            Self::AngularComponentMaxInlineDeclarations(_) => "angular",
+            Self::AngularComputedMustReturn(_) => "angular",
+            Self::AngularConsistentComponentStyles(_) => "angular",
+            Self::AngularContextualDecorator(_) => "angular",
+            Self::AngularNoAsyncLifecycleMethod(_) => "angular",
+            Self::AngularNoConflictingLifecycle(_) => "angular",
+            Self::AngularNoDuplicatesInMetadataArrays(_) => "angular",
+            Self::AngularNoForwardRef(_) => "angular",
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => "angular",
+            Self::AngularNoInputPrefix(_) => "angular",
+            Self::AngularNoQueriesMetadataProperty(_) => "angular",
+            Self::AngularPreferHostMetadataProperty(_) => "angular",
+            Self::AngularPreferOutputEmitterRef(_) => "angular",
+            Self::AngularPreferSignalModel(_) => "angular",
+            Self::AngularRequireLifecycleOnPrototype(_) => "angular",
+            Self::AngularRequireLocalizeMetadata(_) => "angular",
+            Self::AngularRuntimeLocalize(_) => "angular",
+            Self::AngularSortKeysInTypeDecorator(_) => "angular",
         }
     }
     pub fn from_configuration(
@@ -11350,6 +12034,172 @@ impl RuleEnum {
             Self::VueValidDefineProps(_) => {
                 Ok(Self::VueValidDefineProps(VueValidDefineProps::from_configuration(value)?))
             }
+            Self::AngularNoHostMetadataProperty(_) => Ok(Self::AngularNoHostMetadataProperty(
+                AngularNoHostMetadataProperty::from_configuration(value)?,
+            )),
+            Self::AngularPreferControlFlow(_) => Ok(Self::AngularPreferControlFlow(
+                AngularPreferControlFlow::from_configuration(value)?,
+            )),
+            Self::AngularPreferOutputReadonly(_) => Ok(Self::AngularPreferOutputReadonly(
+                AngularPreferOutputReadonly::from_configuration(value)?,
+            )),
+            Self::AngularPreferSignals(_) => {
+                Ok(Self::AngularPreferSignals(AngularPreferSignals::from_configuration(value)?))
+            }
+            Self::AngularPreferStandalone(_) => Ok(Self::AngularPreferStandalone(
+                AngularPreferStandalone::from_configuration(value)?,
+            )),
+            Self::AngularComponentClassSuffix(_) => Ok(Self::AngularComponentClassSuffix(
+                AngularComponentClassSuffix::from_configuration(value)?,
+            )),
+            Self::AngularComponentSelector(_) => Ok(Self::AngularComponentSelector(
+                AngularComponentSelector::from_configuration(value)?,
+            )),
+            Self::AngularDirectiveClassSuffix(_) => Ok(Self::AngularDirectiveClassSuffix(
+                AngularDirectiveClassSuffix::from_configuration(value)?,
+            )),
+            Self::AngularDirectiveSelector(_) => Ok(Self::AngularDirectiveSelector(
+                AngularDirectiveSelector::from_configuration(value)?,
+            )),
+            Self::AngularContextualLifecycle(_) => Ok(Self::AngularContextualLifecycle(
+                AngularContextualLifecycle::from_configuration(value)?,
+            )),
+            Self::AngularNoEmptyLifecycleMethod(_) => Ok(Self::AngularNoEmptyLifecycleMethod(
+                AngularNoEmptyLifecycleMethod::from_configuration(value)?,
+            )),
+            Self::AngularNoLifecycleCall(_) => {
+                Ok(Self::AngularNoLifecycleCall(AngularNoLifecycleCall::from_configuration(value)?))
+            }
+            Self::AngularSortLifecycleMethods(_) => Ok(Self::AngularSortLifecycleMethods(
+                AngularSortLifecycleMethods::from_configuration(value)?,
+            )),
+            Self::AngularUseLifecycleInterface(_) => Ok(Self::AngularUseLifecycleInterface(
+                AngularUseLifecycleInterface::from_configuration(value)?,
+            )),
+            Self::AngularPreferInject(_) => {
+                Ok(Self::AngularPreferInject(AngularPreferInject::from_configuration(value)?))
+            }
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                Ok(Self::AngularPreferOnPushComponentChangeDetection(
+                    AngularPreferOnPushComponentChangeDetection::from_configuration(value)?,
+                ))
+            }
+            Self::AngularUseInjectableProvidedIn(_) => Ok(Self::AngularUseInjectableProvidedIn(
+                AngularUseInjectableProvidedIn::from_configuration(value)?,
+            )),
+            Self::AngularNoInputRename(_) => {
+                Ok(Self::AngularNoInputRename(AngularNoInputRename::from_configuration(value)?))
+            }
+            Self::AngularNoInputsMetadataProperty(_) => Ok(Self::AngularNoInputsMetadataProperty(
+                AngularNoInputsMetadataProperty::from_configuration(value)?,
+            )),
+            Self::AngularNoOutputNative(_) => {
+                Ok(Self::AngularNoOutputNative(AngularNoOutputNative::from_configuration(value)?))
+            }
+            Self::AngularNoOutputOnPrefix(_) => Ok(Self::AngularNoOutputOnPrefix(
+                AngularNoOutputOnPrefix::from_configuration(value)?,
+            )),
+            Self::AngularNoOutputRename(_) => {
+                Ok(Self::AngularNoOutputRename(AngularNoOutputRename::from_configuration(value)?))
+            }
+            Self::AngularNoOutputsMetadataProperty(_) => {
+                Ok(Self::AngularNoOutputsMetadataProperty(
+                    AngularNoOutputsMetadataProperty::from_configuration(value)?,
+                ))
+            }
+            Self::AngularNoPipeImpure(_) => {
+                Ok(Self::AngularNoPipeImpure(AngularNoPipeImpure::from_configuration(value)?))
+            }
+            Self::AngularPipePrefix(_) => {
+                Ok(Self::AngularPipePrefix(AngularPipePrefix::from_configuration(value)?))
+            }
+            Self::AngularUsePipeTransformInterface(_) => {
+                Ok(Self::AngularUsePipeTransformInterface(
+                    AngularUsePipeTransformInterface::from_configuration(value)?,
+                ))
+            }
+            Self::AngularRelativeUrlPrefix(_) => Ok(Self::AngularRelativeUrlPrefix(
+                AngularRelativeUrlPrefix::from_configuration(value)?,
+            )),
+            Self::AngularUseComponentSelector(_) => Ok(Self::AngularUseComponentSelector(
+                AngularUseComponentSelector::from_configuration(value)?,
+            )),
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                Ok(Self::AngularUseComponentViewEncapsulation(
+                    AngularUseComponentViewEncapsulation::from_configuration(value)?,
+                ))
+            }
+            Self::AngularNoAttributeDecorator(_) => Ok(Self::AngularNoAttributeDecorator(
+                AngularNoAttributeDecorator::from_configuration(value)?,
+            )),
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                Ok(Self::AngularComponentMaxInlineDeclarations(
+                    AngularComponentMaxInlineDeclarations::from_configuration(value)?,
+                ))
+            }
+            Self::AngularComputedMustReturn(_) => Ok(Self::AngularComputedMustReturn(
+                AngularComputedMustReturn::from_configuration(value)?,
+            )),
+            Self::AngularConsistentComponentStyles(_) => {
+                Ok(Self::AngularConsistentComponentStyles(
+                    AngularConsistentComponentStyles::from_configuration(value)?,
+                ))
+            }
+            Self::AngularContextualDecorator(_) => Ok(Self::AngularContextualDecorator(
+                AngularContextualDecorator::from_configuration(value)?,
+            )),
+            Self::AngularNoAsyncLifecycleMethod(_) => Ok(Self::AngularNoAsyncLifecycleMethod(
+                AngularNoAsyncLifecycleMethod::from_configuration(value)?,
+            )),
+            Self::AngularNoConflictingLifecycle(_) => Ok(Self::AngularNoConflictingLifecycle(
+                AngularNoConflictingLifecycle::from_configuration(value)?,
+            )),
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                Ok(Self::AngularNoDuplicatesInMetadataArrays(
+                    AngularNoDuplicatesInMetadataArrays::from_configuration(value)?,
+                ))
+            }
+            Self::AngularNoForwardRef(_) => {
+                Ok(Self::AngularNoForwardRef(AngularNoForwardRef::from_configuration(value)?))
+            }
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                Ok(Self::AngularNoImplicitTakeUntilDestroyed(
+                    AngularNoImplicitTakeUntilDestroyed::from_configuration(value)?,
+                ))
+            }
+            Self::AngularNoInputPrefix(_) => {
+                Ok(Self::AngularNoInputPrefix(AngularNoInputPrefix::from_configuration(value)?))
+            }
+            Self::AngularNoQueriesMetadataProperty(_) => {
+                Ok(Self::AngularNoQueriesMetadataProperty(
+                    AngularNoQueriesMetadataProperty::from_configuration(value)?,
+                ))
+            }
+            Self::AngularPreferHostMetadataProperty(_) => {
+                Ok(Self::AngularPreferHostMetadataProperty(
+                    AngularPreferHostMetadataProperty::from_configuration(value)?,
+                ))
+            }
+            Self::AngularPreferOutputEmitterRef(_) => Ok(Self::AngularPreferOutputEmitterRef(
+                AngularPreferOutputEmitterRef::from_configuration(value)?,
+            )),
+            Self::AngularPreferSignalModel(_) => Ok(Self::AngularPreferSignalModel(
+                AngularPreferSignalModel::from_configuration(value)?,
+            )),
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                Ok(Self::AngularRequireLifecycleOnPrototype(
+                    AngularRequireLifecycleOnPrototype::from_configuration(value)?,
+                ))
+            }
+            Self::AngularRequireLocalizeMetadata(_) => Ok(Self::AngularRequireLocalizeMetadata(
+                AngularRequireLocalizeMetadata::from_configuration(value)?,
+            )),
+            Self::AngularRuntimeLocalize(_) => {
+                Ok(Self::AngularRuntimeLocalize(AngularRuntimeLocalize::from_configuration(value)?))
+            }
+            Self::AngularSortKeysInTypeDecorator(_) => Ok(Self::AngularSortKeysInTypeDecorator(
+                AngularSortKeysInTypeDecorator::from_configuration(value)?,
+            )),
         }
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -12054,6 +12904,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
+            Self::AngularNoHostMetadataProperty(rule) => rule.to_configuration(),
+            Self::AngularPreferControlFlow(rule) => rule.to_configuration(),
+            Self::AngularPreferOutputReadonly(rule) => rule.to_configuration(),
+            Self::AngularPreferSignals(rule) => rule.to_configuration(),
+            Self::AngularPreferStandalone(rule) => rule.to_configuration(),
+            Self::AngularComponentClassSuffix(rule) => rule.to_configuration(),
+            Self::AngularComponentSelector(rule) => rule.to_configuration(),
+            Self::AngularDirectiveClassSuffix(rule) => rule.to_configuration(),
+            Self::AngularDirectiveSelector(rule) => rule.to_configuration(),
+            Self::AngularContextualLifecycle(rule) => rule.to_configuration(),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.to_configuration(),
+            Self::AngularNoLifecycleCall(rule) => rule.to_configuration(),
+            Self::AngularSortLifecycleMethods(rule) => rule.to_configuration(),
+            Self::AngularUseLifecycleInterface(rule) => rule.to_configuration(),
+            Self::AngularPreferInject(rule) => rule.to_configuration(),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.to_configuration(),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.to_configuration(),
+            Self::AngularNoInputRename(rule) => rule.to_configuration(),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.to_configuration(),
+            Self::AngularNoOutputNative(rule) => rule.to_configuration(),
+            Self::AngularNoOutputOnPrefix(rule) => rule.to_configuration(),
+            Self::AngularNoOutputRename(rule) => rule.to_configuration(),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.to_configuration(),
+            Self::AngularNoPipeImpure(rule) => rule.to_configuration(),
+            Self::AngularPipePrefix(rule) => rule.to_configuration(),
+            Self::AngularUsePipeTransformInterface(rule) => rule.to_configuration(),
+            Self::AngularRelativeUrlPrefix(rule) => rule.to_configuration(),
+            Self::AngularUseComponentSelector(rule) => rule.to_configuration(),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.to_configuration(),
+            Self::AngularNoAttributeDecorator(rule) => rule.to_configuration(),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.to_configuration(),
+            Self::AngularComputedMustReturn(rule) => rule.to_configuration(),
+            Self::AngularConsistentComponentStyles(rule) => rule.to_configuration(),
+            Self::AngularContextualDecorator(rule) => rule.to_configuration(),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.to_configuration(),
+            Self::AngularNoConflictingLifecycle(rule) => rule.to_configuration(),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.to_configuration(),
+            Self::AngularNoForwardRef(rule) => rule.to_configuration(),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.to_configuration(),
+            Self::AngularNoInputPrefix(rule) => rule.to_configuration(),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.to_configuration(),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.to_configuration(),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.to_configuration(),
+            Self::AngularPreferSignalModel(rule) => rule.to_configuration(),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.to_configuration(),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.to_configuration(),
+            Self::AngularRuntimeLocalize(rule) => rule.to_configuration(),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.to_configuration(),
         }
     }
     pub(crate) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -12754,6 +13652,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
+            Self::AngularNoHostMetadataProperty(rule) => rule.run(node, ctx),
+            Self::AngularPreferControlFlow(rule) => rule.run(node, ctx),
+            Self::AngularPreferOutputReadonly(rule) => rule.run(node, ctx),
+            Self::AngularPreferSignals(rule) => rule.run(node, ctx),
+            Self::AngularPreferStandalone(rule) => rule.run(node, ctx),
+            Self::AngularComponentClassSuffix(rule) => rule.run(node, ctx),
+            Self::AngularComponentSelector(rule) => rule.run(node, ctx),
+            Self::AngularDirectiveClassSuffix(rule) => rule.run(node, ctx),
+            Self::AngularDirectiveSelector(rule) => rule.run(node, ctx),
+            Self::AngularContextualLifecycle(rule) => rule.run(node, ctx),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.run(node, ctx),
+            Self::AngularNoLifecycleCall(rule) => rule.run(node, ctx),
+            Self::AngularSortLifecycleMethods(rule) => rule.run(node, ctx),
+            Self::AngularUseLifecycleInterface(rule) => rule.run(node, ctx),
+            Self::AngularPreferInject(rule) => rule.run(node, ctx),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.run(node, ctx),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.run(node, ctx),
+            Self::AngularNoInputRename(rule) => rule.run(node, ctx),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.run(node, ctx),
+            Self::AngularNoOutputNative(rule) => rule.run(node, ctx),
+            Self::AngularNoOutputOnPrefix(rule) => rule.run(node, ctx),
+            Self::AngularNoOutputRename(rule) => rule.run(node, ctx),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.run(node, ctx),
+            Self::AngularNoPipeImpure(rule) => rule.run(node, ctx),
+            Self::AngularPipePrefix(rule) => rule.run(node, ctx),
+            Self::AngularUsePipeTransformInterface(rule) => rule.run(node, ctx),
+            Self::AngularRelativeUrlPrefix(rule) => rule.run(node, ctx),
+            Self::AngularUseComponentSelector(rule) => rule.run(node, ctx),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.run(node, ctx),
+            Self::AngularNoAttributeDecorator(rule) => rule.run(node, ctx),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.run(node, ctx),
+            Self::AngularComputedMustReturn(rule) => rule.run(node, ctx),
+            Self::AngularConsistentComponentStyles(rule) => rule.run(node, ctx),
+            Self::AngularContextualDecorator(rule) => rule.run(node, ctx),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.run(node, ctx),
+            Self::AngularNoConflictingLifecycle(rule) => rule.run(node, ctx),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.run(node, ctx),
+            Self::AngularNoForwardRef(rule) => rule.run(node, ctx),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.run(node, ctx),
+            Self::AngularNoInputPrefix(rule) => rule.run(node, ctx),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.run(node, ctx),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.run(node, ctx),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.run(node, ctx),
+            Self::AngularPreferSignalModel(rule) => rule.run(node, ctx),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.run(node, ctx),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.run(node, ctx),
+            Self::AngularRuntimeLocalize(rule) => rule.run(node, ctx),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.run(node, ctx),
         }
     }
     pub(crate) fn run_once(&self, ctx: &LintContext<'_>) {
@@ -13454,6 +14400,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
+            Self::AngularNoHostMetadataProperty(rule) => rule.run_once(ctx),
+            Self::AngularPreferControlFlow(rule) => rule.run_once(ctx),
+            Self::AngularPreferOutputReadonly(rule) => rule.run_once(ctx),
+            Self::AngularPreferSignals(rule) => rule.run_once(ctx),
+            Self::AngularPreferStandalone(rule) => rule.run_once(ctx),
+            Self::AngularComponentClassSuffix(rule) => rule.run_once(ctx),
+            Self::AngularComponentSelector(rule) => rule.run_once(ctx),
+            Self::AngularDirectiveClassSuffix(rule) => rule.run_once(ctx),
+            Self::AngularDirectiveSelector(rule) => rule.run_once(ctx),
+            Self::AngularContextualLifecycle(rule) => rule.run_once(ctx),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.run_once(ctx),
+            Self::AngularNoLifecycleCall(rule) => rule.run_once(ctx),
+            Self::AngularSortLifecycleMethods(rule) => rule.run_once(ctx),
+            Self::AngularUseLifecycleInterface(rule) => rule.run_once(ctx),
+            Self::AngularPreferInject(rule) => rule.run_once(ctx),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.run_once(ctx),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.run_once(ctx),
+            Self::AngularNoInputRename(rule) => rule.run_once(ctx),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.run_once(ctx),
+            Self::AngularNoOutputNative(rule) => rule.run_once(ctx),
+            Self::AngularNoOutputOnPrefix(rule) => rule.run_once(ctx),
+            Self::AngularNoOutputRename(rule) => rule.run_once(ctx),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.run_once(ctx),
+            Self::AngularNoPipeImpure(rule) => rule.run_once(ctx),
+            Self::AngularPipePrefix(rule) => rule.run_once(ctx),
+            Self::AngularUsePipeTransformInterface(rule) => rule.run_once(ctx),
+            Self::AngularRelativeUrlPrefix(rule) => rule.run_once(ctx),
+            Self::AngularUseComponentSelector(rule) => rule.run_once(ctx),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.run_once(ctx),
+            Self::AngularNoAttributeDecorator(rule) => rule.run_once(ctx),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.run_once(ctx),
+            Self::AngularComputedMustReturn(rule) => rule.run_once(ctx),
+            Self::AngularConsistentComponentStyles(rule) => rule.run_once(ctx),
+            Self::AngularContextualDecorator(rule) => rule.run_once(ctx),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.run_once(ctx),
+            Self::AngularNoConflictingLifecycle(rule) => rule.run_once(ctx),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.run_once(ctx),
+            Self::AngularNoForwardRef(rule) => rule.run_once(ctx),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.run_once(ctx),
+            Self::AngularNoInputPrefix(rule) => rule.run_once(ctx),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.run_once(ctx),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.run_once(ctx),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.run_once(ctx),
+            Self::AngularPreferSignalModel(rule) => rule.run_once(ctx),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.run_once(ctx),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.run_once(ctx),
+            Self::AngularRuntimeLocalize(rule) => rule.run_once(ctx),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.run_once(ctx),
         }
     }
     pub(crate) fn run_on_jest_node<'a, 'c>(
@@ -14254,6 +15248,64 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoHostMetadataProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferControlFlow(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferOutputReadonly(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferSignals(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferStandalone(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularComponentClassSuffix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularComponentSelector(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularDirectiveClassSuffix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularDirectiveSelector(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularContextualLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoLifecycleCall(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularSortLifecycleMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularUseLifecycleInterface(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferInject(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::AngularUseInjectableProvidedIn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoInputRename(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoOutputNative(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoOutputOnPrefix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoOutputRename(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoPipeImpure(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPipePrefix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularUsePipeTransformInterface(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularRelativeUrlPrefix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularUseComponentSelector(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularUseComponentViewEncapsulation(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::AngularNoAttributeDecorator(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularComponentMaxInlineDeclarations(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::AngularComputedMustReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularConsistentComponentStyles(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularContextualDecorator(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoConflictingLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::AngularNoForwardRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::AngularNoInputPrefix(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularPreferSignalModel(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularRuntimeLocalize(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
     }
     pub(crate) fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -14954,6 +16006,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
+            Self::AngularNoHostMetadataProperty(rule) => rule.should_run(ctx),
+            Self::AngularPreferControlFlow(rule) => rule.should_run(ctx),
+            Self::AngularPreferOutputReadonly(rule) => rule.should_run(ctx),
+            Self::AngularPreferSignals(rule) => rule.should_run(ctx),
+            Self::AngularPreferStandalone(rule) => rule.should_run(ctx),
+            Self::AngularComponentClassSuffix(rule) => rule.should_run(ctx),
+            Self::AngularComponentSelector(rule) => rule.should_run(ctx),
+            Self::AngularDirectiveClassSuffix(rule) => rule.should_run(ctx),
+            Self::AngularDirectiveSelector(rule) => rule.should_run(ctx),
+            Self::AngularContextualLifecycle(rule) => rule.should_run(ctx),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.should_run(ctx),
+            Self::AngularNoLifecycleCall(rule) => rule.should_run(ctx),
+            Self::AngularSortLifecycleMethods(rule) => rule.should_run(ctx),
+            Self::AngularUseLifecycleInterface(rule) => rule.should_run(ctx),
+            Self::AngularPreferInject(rule) => rule.should_run(ctx),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.should_run(ctx),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.should_run(ctx),
+            Self::AngularNoInputRename(rule) => rule.should_run(ctx),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.should_run(ctx),
+            Self::AngularNoOutputNative(rule) => rule.should_run(ctx),
+            Self::AngularNoOutputOnPrefix(rule) => rule.should_run(ctx),
+            Self::AngularNoOutputRename(rule) => rule.should_run(ctx),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.should_run(ctx),
+            Self::AngularNoPipeImpure(rule) => rule.should_run(ctx),
+            Self::AngularPipePrefix(rule) => rule.should_run(ctx),
+            Self::AngularUsePipeTransformInterface(rule) => rule.should_run(ctx),
+            Self::AngularRelativeUrlPrefix(rule) => rule.should_run(ctx),
+            Self::AngularUseComponentSelector(rule) => rule.should_run(ctx),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.should_run(ctx),
+            Self::AngularNoAttributeDecorator(rule) => rule.should_run(ctx),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.should_run(ctx),
+            Self::AngularComputedMustReturn(rule) => rule.should_run(ctx),
+            Self::AngularConsistentComponentStyles(rule) => rule.should_run(ctx),
+            Self::AngularContextualDecorator(rule) => rule.should_run(ctx),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.should_run(ctx),
+            Self::AngularNoConflictingLifecycle(rule) => rule.should_run(ctx),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.should_run(ctx),
+            Self::AngularNoForwardRef(rule) => rule.should_run(ctx),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.should_run(ctx),
+            Self::AngularNoInputPrefix(rule) => rule.should_run(ctx),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.should_run(ctx),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.should_run(ctx),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.should_run(ctx),
+            Self::AngularPreferSignalModel(rule) => rule.should_run(ctx),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.should_run(ctx),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.should_run(ctx),
+            Self::AngularRuntimeLocalize(rule) => rule.should_run(ctx),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.should_run(ctx),
         }
     }
     pub fn is_tsgolint_rule(&self) -> bool {
@@ -15948,6 +17048,94 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
+            Self::AngularNoHostMetadataProperty(_) => {
+                AngularNoHostMetadataProperty::IS_TSGOLINT_RULE
+            }
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::IS_TSGOLINT_RULE,
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::IS_TSGOLINT_RULE,
+            Self::AngularPreferSignals(_) => AngularPreferSignals::IS_TSGOLINT_RULE,
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::IS_TSGOLINT_RULE,
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::IS_TSGOLINT_RULE,
+            Self::AngularComponentSelector(_) => AngularComponentSelector::IS_TSGOLINT_RULE,
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::IS_TSGOLINT_RULE,
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::IS_TSGOLINT_RULE,
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::IS_TSGOLINT_RULE,
+            Self::AngularNoEmptyLifecycleMethod(_) => {
+                AngularNoEmptyLifecycleMethod::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::IS_TSGOLINT_RULE,
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::IS_TSGOLINT_RULE,
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::IS_TSGOLINT_RULE,
+            Self::AngularPreferInject(_) => AngularPreferInject::IS_TSGOLINT_RULE,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::IS_TSGOLINT_RULE
+            }
+            Self::AngularUseInjectableProvidedIn(_) => {
+                AngularUseInjectableProvidedIn::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoInputRename(_) => AngularNoInputRename::IS_TSGOLINT_RULE,
+            Self::AngularNoInputsMetadataProperty(_) => {
+                AngularNoInputsMetadataProperty::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::IS_TSGOLINT_RULE,
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::IS_TSGOLINT_RULE,
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::IS_TSGOLINT_RULE,
+            Self::AngularNoOutputsMetadataProperty(_) => {
+                AngularNoOutputsMetadataProperty::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::IS_TSGOLINT_RULE,
+            Self::AngularPipePrefix(_) => AngularPipePrefix::IS_TSGOLINT_RULE,
+            Self::AngularUsePipeTransformInterface(_) => {
+                AngularUsePipeTransformInterface::IS_TSGOLINT_RULE
+            }
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::IS_TSGOLINT_RULE,
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::IS_TSGOLINT_RULE,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::IS_TSGOLINT_RULE,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::IS_TSGOLINT_RULE
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::IS_TSGOLINT_RULE,
+            Self::AngularConsistentComponentStyles(_) => {
+                AngularConsistentComponentStyles::IS_TSGOLINT_RULE
+            }
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::IS_TSGOLINT_RULE,
+            Self::AngularNoAsyncLifecycleMethod(_) => {
+                AngularNoAsyncLifecycleMethod::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoConflictingLifecycle(_) => {
+                AngularNoConflictingLifecycle::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::IS_TSGOLINT_RULE,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::IS_TSGOLINT_RULE
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::IS_TSGOLINT_RULE,
+            Self::AngularNoQueriesMetadataProperty(_) => {
+                AngularNoQueriesMetadataProperty::IS_TSGOLINT_RULE
+            }
+            Self::AngularPreferHostMetadataProperty(_) => {
+                AngularPreferHostMetadataProperty::IS_TSGOLINT_RULE
+            }
+            Self::AngularPreferOutputEmitterRef(_) => {
+                AngularPreferOutputEmitterRef::IS_TSGOLINT_RULE
+            }
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::IS_TSGOLINT_RULE,
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                AngularRequireLifecycleOnPrototype::IS_TSGOLINT_RULE
+            }
+            Self::AngularRequireLocalizeMetadata(_) => {
+                AngularRequireLocalizeMetadata::IS_TSGOLINT_RULE
+            }
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::IS_TSGOLINT_RULE,
+            Self::AngularSortKeysInTypeDecorator(_) => {
+                AngularSortKeysInTypeDecorator::IS_TSGOLINT_RULE
+            }
         }
     }
     #[doc = r" Whether this rule declares a configuration type."]
@@ -16817,6 +18005,76 @@ impl RuleEnum {
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
+            Self::AngularNoHostMetadataProperty(_) => AngularNoHostMetadataProperty::HAS_CONFIG,
+            Self::AngularPreferControlFlow(_) => AngularPreferControlFlow::HAS_CONFIG,
+            Self::AngularPreferOutputReadonly(_) => AngularPreferOutputReadonly::HAS_CONFIG,
+            Self::AngularPreferSignals(_) => AngularPreferSignals::HAS_CONFIG,
+            Self::AngularPreferStandalone(_) => AngularPreferStandalone::HAS_CONFIG,
+            Self::AngularComponentClassSuffix(_) => AngularComponentClassSuffix::HAS_CONFIG,
+            Self::AngularComponentSelector(_) => AngularComponentSelector::HAS_CONFIG,
+            Self::AngularDirectiveClassSuffix(_) => AngularDirectiveClassSuffix::HAS_CONFIG,
+            Self::AngularDirectiveSelector(_) => AngularDirectiveSelector::HAS_CONFIG,
+            Self::AngularContextualLifecycle(_) => AngularContextualLifecycle::HAS_CONFIG,
+            Self::AngularNoEmptyLifecycleMethod(_) => AngularNoEmptyLifecycleMethod::HAS_CONFIG,
+            Self::AngularNoLifecycleCall(_) => AngularNoLifecycleCall::HAS_CONFIG,
+            Self::AngularSortLifecycleMethods(_) => AngularSortLifecycleMethods::HAS_CONFIG,
+            Self::AngularUseLifecycleInterface(_) => AngularUseLifecycleInterface::HAS_CONFIG,
+            Self::AngularPreferInject(_) => AngularPreferInject::HAS_CONFIG,
+            Self::AngularPreferOnPushComponentChangeDetection(_) => {
+                AngularPreferOnPushComponentChangeDetection::HAS_CONFIG
+            }
+            Self::AngularUseInjectableProvidedIn(_) => AngularUseInjectableProvidedIn::HAS_CONFIG,
+            Self::AngularNoInputRename(_) => AngularNoInputRename::HAS_CONFIG,
+            Self::AngularNoInputsMetadataProperty(_) => AngularNoInputsMetadataProperty::HAS_CONFIG,
+            Self::AngularNoOutputNative(_) => AngularNoOutputNative::HAS_CONFIG,
+            Self::AngularNoOutputOnPrefix(_) => AngularNoOutputOnPrefix::HAS_CONFIG,
+            Self::AngularNoOutputRename(_) => AngularNoOutputRename::HAS_CONFIG,
+            Self::AngularNoOutputsMetadataProperty(_) => {
+                AngularNoOutputsMetadataProperty::HAS_CONFIG
+            }
+            Self::AngularNoPipeImpure(_) => AngularNoPipeImpure::HAS_CONFIG,
+            Self::AngularPipePrefix(_) => AngularPipePrefix::HAS_CONFIG,
+            Self::AngularUsePipeTransformInterface(_) => {
+                AngularUsePipeTransformInterface::HAS_CONFIG
+            }
+            Self::AngularRelativeUrlPrefix(_) => AngularRelativeUrlPrefix::HAS_CONFIG,
+            Self::AngularUseComponentSelector(_) => AngularUseComponentSelector::HAS_CONFIG,
+            Self::AngularUseComponentViewEncapsulation(_) => {
+                AngularUseComponentViewEncapsulation::HAS_CONFIG
+            }
+            Self::AngularNoAttributeDecorator(_) => AngularNoAttributeDecorator::HAS_CONFIG,
+            Self::AngularComponentMaxInlineDeclarations(_) => {
+                AngularComponentMaxInlineDeclarations::HAS_CONFIG
+            }
+            Self::AngularComputedMustReturn(_) => AngularComputedMustReturn::HAS_CONFIG,
+            Self::AngularConsistentComponentStyles(_) => {
+                AngularConsistentComponentStyles::HAS_CONFIG
+            }
+            Self::AngularContextualDecorator(_) => AngularContextualDecorator::HAS_CONFIG,
+            Self::AngularNoAsyncLifecycleMethod(_) => AngularNoAsyncLifecycleMethod::HAS_CONFIG,
+            Self::AngularNoConflictingLifecycle(_) => AngularNoConflictingLifecycle::HAS_CONFIG,
+            Self::AngularNoDuplicatesInMetadataArrays(_) => {
+                AngularNoDuplicatesInMetadataArrays::HAS_CONFIG
+            }
+            Self::AngularNoForwardRef(_) => AngularNoForwardRef::HAS_CONFIG,
+            Self::AngularNoImplicitTakeUntilDestroyed(_) => {
+                AngularNoImplicitTakeUntilDestroyed::HAS_CONFIG
+            }
+            Self::AngularNoInputPrefix(_) => AngularNoInputPrefix::HAS_CONFIG,
+            Self::AngularNoQueriesMetadataProperty(_) => {
+                AngularNoQueriesMetadataProperty::HAS_CONFIG
+            }
+            Self::AngularPreferHostMetadataProperty(_) => {
+                AngularPreferHostMetadataProperty::HAS_CONFIG
+            }
+            Self::AngularPreferOutputEmitterRef(_) => AngularPreferOutputEmitterRef::HAS_CONFIG,
+            Self::AngularPreferSignalModel(_) => AngularPreferSignalModel::HAS_CONFIG,
+            Self::AngularRequireLifecycleOnPrototype(_) => {
+                AngularRequireLifecycleOnPrototype::HAS_CONFIG
+            }
+            Self::AngularRequireLocalizeMetadata(_) => AngularRequireLocalizeMetadata::HAS_CONFIG,
+            Self::AngularRuntimeLocalize(_) => AngularRuntimeLocalize::HAS_CONFIG,
+            Self::AngularSortKeysInTypeDecorator(_) => AngularSortKeysInTypeDecorator::HAS_CONFIG,
         }
     }
     pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
@@ -17517,6 +18775,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
+            Self::AngularNoHostMetadataProperty(rule) => rule.types_info(),
+            Self::AngularPreferControlFlow(rule) => rule.types_info(),
+            Self::AngularPreferOutputReadonly(rule) => rule.types_info(),
+            Self::AngularPreferSignals(rule) => rule.types_info(),
+            Self::AngularPreferStandalone(rule) => rule.types_info(),
+            Self::AngularComponentClassSuffix(rule) => rule.types_info(),
+            Self::AngularComponentSelector(rule) => rule.types_info(),
+            Self::AngularDirectiveClassSuffix(rule) => rule.types_info(),
+            Self::AngularDirectiveSelector(rule) => rule.types_info(),
+            Self::AngularContextualLifecycle(rule) => rule.types_info(),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.types_info(),
+            Self::AngularNoLifecycleCall(rule) => rule.types_info(),
+            Self::AngularSortLifecycleMethods(rule) => rule.types_info(),
+            Self::AngularUseLifecycleInterface(rule) => rule.types_info(),
+            Self::AngularPreferInject(rule) => rule.types_info(),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.types_info(),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.types_info(),
+            Self::AngularNoInputRename(rule) => rule.types_info(),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.types_info(),
+            Self::AngularNoOutputNative(rule) => rule.types_info(),
+            Self::AngularNoOutputOnPrefix(rule) => rule.types_info(),
+            Self::AngularNoOutputRename(rule) => rule.types_info(),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.types_info(),
+            Self::AngularNoPipeImpure(rule) => rule.types_info(),
+            Self::AngularPipePrefix(rule) => rule.types_info(),
+            Self::AngularUsePipeTransformInterface(rule) => rule.types_info(),
+            Self::AngularRelativeUrlPrefix(rule) => rule.types_info(),
+            Self::AngularUseComponentSelector(rule) => rule.types_info(),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.types_info(),
+            Self::AngularNoAttributeDecorator(rule) => rule.types_info(),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.types_info(),
+            Self::AngularComputedMustReturn(rule) => rule.types_info(),
+            Self::AngularConsistentComponentStyles(rule) => rule.types_info(),
+            Self::AngularContextualDecorator(rule) => rule.types_info(),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.types_info(),
+            Self::AngularNoConflictingLifecycle(rule) => rule.types_info(),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.types_info(),
+            Self::AngularNoForwardRef(rule) => rule.types_info(),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.types_info(),
+            Self::AngularNoInputPrefix(rule) => rule.types_info(),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.types_info(),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.types_info(),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.types_info(),
+            Self::AngularPreferSignalModel(rule) => rule.types_info(),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.types_info(),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.types_info(),
+            Self::AngularRuntimeLocalize(rule) => rule.types_info(),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.types_info(),
         }
     }
     pub fn run_info(&self) -> RuleRunFunctionsImplemented {
@@ -18217,6 +19523,54 @@ impl RuleEnum {
             Self::VueRequireTypedRef(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
+            Self::AngularNoHostMetadataProperty(rule) => rule.run_info(),
+            Self::AngularPreferControlFlow(rule) => rule.run_info(),
+            Self::AngularPreferOutputReadonly(rule) => rule.run_info(),
+            Self::AngularPreferSignals(rule) => rule.run_info(),
+            Self::AngularPreferStandalone(rule) => rule.run_info(),
+            Self::AngularComponentClassSuffix(rule) => rule.run_info(),
+            Self::AngularComponentSelector(rule) => rule.run_info(),
+            Self::AngularDirectiveClassSuffix(rule) => rule.run_info(),
+            Self::AngularDirectiveSelector(rule) => rule.run_info(),
+            Self::AngularContextualLifecycle(rule) => rule.run_info(),
+            Self::AngularNoEmptyLifecycleMethod(rule) => rule.run_info(),
+            Self::AngularNoLifecycleCall(rule) => rule.run_info(),
+            Self::AngularSortLifecycleMethods(rule) => rule.run_info(),
+            Self::AngularUseLifecycleInterface(rule) => rule.run_info(),
+            Self::AngularPreferInject(rule) => rule.run_info(),
+            Self::AngularPreferOnPushComponentChangeDetection(rule) => rule.run_info(),
+            Self::AngularUseInjectableProvidedIn(rule) => rule.run_info(),
+            Self::AngularNoInputRename(rule) => rule.run_info(),
+            Self::AngularNoInputsMetadataProperty(rule) => rule.run_info(),
+            Self::AngularNoOutputNative(rule) => rule.run_info(),
+            Self::AngularNoOutputOnPrefix(rule) => rule.run_info(),
+            Self::AngularNoOutputRename(rule) => rule.run_info(),
+            Self::AngularNoOutputsMetadataProperty(rule) => rule.run_info(),
+            Self::AngularNoPipeImpure(rule) => rule.run_info(),
+            Self::AngularPipePrefix(rule) => rule.run_info(),
+            Self::AngularUsePipeTransformInterface(rule) => rule.run_info(),
+            Self::AngularRelativeUrlPrefix(rule) => rule.run_info(),
+            Self::AngularUseComponentSelector(rule) => rule.run_info(),
+            Self::AngularUseComponentViewEncapsulation(rule) => rule.run_info(),
+            Self::AngularNoAttributeDecorator(rule) => rule.run_info(),
+            Self::AngularComponentMaxInlineDeclarations(rule) => rule.run_info(),
+            Self::AngularComputedMustReturn(rule) => rule.run_info(),
+            Self::AngularConsistentComponentStyles(rule) => rule.run_info(),
+            Self::AngularContextualDecorator(rule) => rule.run_info(),
+            Self::AngularNoAsyncLifecycleMethod(rule) => rule.run_info(),
+            Self::AngularNoConflictingLifecycle(rule) => rule.run_info(),
+            Self::AngularNoDuplicatesInMetadataArrays(rule) => rule.run_info(),
+            Self::AngularNoForwardRef(rule) => rule.run_info(),
+            Self::AngularNoImplicitTakeUntilDestroyed(rule) => rule.run_info(),
+            Self::AngularNoInputPrefix(rule) => rule.run_info(),
+            Self::AngularNoQueriesMetadataProperty(rule) => rule.run_info(),
+            Self::AngularPreferHostMetadataProperty(rule) => rule.run_info(),
+            Self::AngularPreferOutputEmitterRef(rule) => rule.run_info(),
+            Self::AngularPreferSignalModel(rule) => rule.run_info(),
+            Self::AngularRequireLifecycleOnPrototype(rule) => rule.run_info(),
+            Self::AngularRequireLocalizeMetadata(rule) => rule.run_info(),
+            Self::AngularRuntimeLocalize(rule) => rule.run_info(),
+            Self::AngularSortKeysInTypeDecorator(rule) => rule.run_info(),
         }
     }
 }
@@ -19035,5 +20389,63 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
+        RuleEnum::AngularNoHostMetadataProperty(AngularNoHostMetadataProperty::default()),
+        RuleEnum::AngularPreferControlFlow(AngularPreferControlFlow::default()),
+        RuleEnum::AngularPreferOutputReadonly(AngularPreferOutputReadonly::default()),
+        RuleEnum::AngularPreferSignals(AngularPreferSignals::default()),
+        RuleEnum::AngularPreferStandalone(AngularPreferStandalone::default()),
+        RuleEnum::AngularComponentClassSuffix(AngularComponentClassSuffix::default()),
+        RuleEnum::AngularComponentSelector(AngularComponentSelector::default()),
+        RuleEnum::AngularDirectiveClassSuffix(AngularDirectiveClassSuffix::default()),
+        RuleEnum::AngularDirectiveSelector(AngularDirectiveSelector::default()),
+        RuleEnum::AngularContextualLifecycle(AngularContextualLifecycle::default()),
+        RuleEnum::AngularNoEmptyLifecycleMethod(AngularNoEmptyLifecycleMethod::default()),
+        RuleEnum::AngularNoLifecycleCall(AngularNoLifecycleCall::default()),
+        RuleEnum::AngularSortLifecycleMethods(AngularSortLifecycleMethods::default()),
+        RuleEnum::AngularUseLifecycleInterface(AngularUseLifecycleInterface::default()),
+        RuleEnum::AngularPreferInject(AngularPreferInject::default()),
+        RuleEnum::AngularPreferOnPushComponentChangeDetection(
+            AngularPreferOnPushComponentChangeDetection::default(),
+        ),
+        RuleEnum::AngularUseInjectableProvidedIn(AngularUseInjectableProvidedIn::default()),
+        RuleEnum::AngularNoInputRename(AngularNoInputRename::default()),
+        RuleEnum::AngularNoInputsMetadataProperty(AngularNoInputsMetadataProperty::default()),
+        RuleEnum::AngularNoOutputNative(AngularNoOutputNative::default()),
+        RuleEnum::AngularNoOutputOnPrefix(AngularNoOutputOnPrefix::default()),
+        RuleEnum::AngularNoOutputRename(AngularNoOutputRename::default()),
+        RuleEnum::AngularNoOutputsMetadataProperty(AngularNoOutputsMetadataProperty::default()),
+        RuleEnum::AngularNoPipeImpure(AngularNoPipeImpure::default()),
+        RuleEnum::AngularPipePrefix(AngularPipePrefix::default()),
+        RuleEnum::AngularUsePipeTransformInterface(AngularUsePipeTransformInterface::default()),
+        RuleEnum::AngularRelativeUrlPrefix(AngularRelativeUrlPrefix::default()),
+        RuleEnum::AngularUseComponentSelector(AngularUseComponentSelector::default()),
+        RuleEnum::AngularUseComponentViewEncapsulation(
+            AngularUseComponentViewEncapsulation::default(),
+        ),
+        RuleEnum::AngularNoAttributeDecorator(AngularNoAttributeDecorator::default()),
+        RuleEnum::AngularComponentMaxInlineDeclarations(
+            AngularComponentMaxInlineDeclarations::default(),
+        ),
+        RuleEnum::AngularComputedMustReturn(AngularComputedMustReturn::default()),
+        RuleEnum::AngularConsistentComponentStyles(AngularConsistentComponentStyles::default()),
+        RuleEnum::AngularContextualDecorator(AngularContextualDecorator::default()),
+        RuleEnum::AngularNoAsyncLifecycleMethod(AngularNoAsyncLifecycleMethod::default()),
+        RuleEnum::AngularNoConflictingLifecycle(AngularNoConflictingLifecycle::default()),
+        RuleEnum::AngularNoDuplicatesInMetadataArrays(
+            AngularNoDuplicatesInMetadataArrays::default(),
+        ),
+        RuleEnum::AngularNoForwardRef(AngularNoForwardRef::default()),
+        RuleEnum::AngularNoImplicitTakeUntilDestroyed(
+            AngularNoImplicitTakeUntilDestroyed::default(),
+        ),
+        RuleEnum::AngularNoInputPrefix(AngularNoInputPrefix::default()),
+        RuleEnum::AngularNoQueriesMetadataProperty(AngularNoQueriesMetadataProperty::default()),
+        RuleEnum::AngularPreferHostMetadataProperty(AngularPreferHostMetadataProperty::default()),
+        RuleEnum::AngularPreferOutputEmitterRef(AngularPreferOutputEmitterRef::default()),
+        RuleEnum::AngularPreferSignalModel(AngularPreferSignalModel::default()),
+        RuleEnum::AngularRequireLifecycleOnPrototype(AngularRequireLifecycleOnPrototype::default()),
+        RuleEnum::AngularRequireLocalizeMetadata(AngularRequireLocalizeMetadata::default()),
+        RuleEnum::AngularRuntimeLocalize(AngularRuntimeLocalize::default()),
+        RuleEnum::AngularSortKeysInTypeDecorator(AngularSortKeysInTypeDecorator::default()),
     ]
 });

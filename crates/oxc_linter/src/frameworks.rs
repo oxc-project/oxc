@@ -69,6 +69,11 @@ impl FrameworkFlags {
     pub const fn is_jest(self) -> bool {
         self.contains(Self::Jest)
     }
+
+    #[inline]
+    pub const fn is_angular(self) -> bool {
+        self.contains(Self::Angular)
+    }
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
@@ -94,6 +99,14 @@ pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
 
 pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
+}
+
+/// Check if a file has Angular-related imports from `@angular/*` packages.
+pub fn has_angular_imports(module_record: &ModuleRecord) -> bool {
+    module_record.import_entries.iter().any(|entry| {
+        let name = entry.module_request.name();
+        name.starts_with("@angular/")
+    })
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -1,0 +1,84 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnInit`
+   ╭─[no_lifecycle_call.tsx:7:17]
+ 6 │             reset() {
+ 7 │                 this.ngOnInit();
+   ·                 ───────────────
+ 8 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnDestroy`
+   ╭─[no_lifecycle_call.tsx:7:17]
+ 6 │             cleanup() {
+ 7 │                 this.ngOnDestroy();
+   ·                 ──────────────────
+ 8 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngAfterViewInit`
+   ╭─[no_lifecycle_call.tsx:7:17]
+ 6 │             refresh() {
+ 7 │                 this.ngAfterViewInit();
+   ·                 ──────────────────────
+ 8 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnInit`
+   ╭─[no_lifecycle_call.tsx:7:17]
+ 6 │             test() {
+ 7 │                 this.otherComponent.ngOnInit();
+   ·                 ──────────────────────────────
+ 8 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnInit`
+   ╭─[no_lifecycle_call.tsx:8:17]
+ 7 │             reset() {
+ 8 │                 this.ngOnInit();
+   ·                 ───────────────
+ 9 │                 this.ngOnDestroy();
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnDestroy`
+    ╭─[no_lifecycle_call.tsx:9:17]
+  8 │                 this.ngOnInit();
+  9 │                 this.ngOnDestroy();
+    ·                 ──────────────────
+ 10 │             }
+    ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnDestroy`
+   ╭─[no_lifecycle_call.tsx:6:17]
+ 5 │             ngOnInit() {
+ 6 │                 super.ngOnDestroy();
+   ·                 ───────────────────
+ 7 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnInit`
+   ╭─[no_lifecycle_call.tsx:8:21]
+ 7 │                 const fn = () => {
+ 8 │                     this.ngOnInit();
+   ·                     ───────────────
+ 9 │                 };
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.
+
+  ⚠ angular(no-lifecycle-call): Avoid explicit calls to lifecycle method `ngOnInit`
+   ╭─[no_lifecycle_call.tsx:7:17]
+ 6 │             reset() {
+ 7 │                 this.ngOnInit();
+   ·                 ───────────────
+ 8 │             }
+   ╰────
+  help: Lifecycle methods are called by Angular. Calling them explicitly can lead to unexpected behavior. Move the logic to a separate method if you need to call it.

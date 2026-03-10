@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-signals): Prefer signal-based `input()` over legacy `@Input()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @Input() name: string;
+   ·             ────────
+ 6 │         }
+   ╰────
+  help: Replace `@Input()` with `input()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `input()` over legacy `@Input()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @Input({ required: true }) id: number;
+   ·             ──────────────────────────
+ 6 │         }
+   ╰────
+  help: Replace `@Input()` with `input()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `output()` over legacy `@Output()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @Output() clicked = new EventEmitter<void>();
+   ·             ─────────
+ 6 │         }
+   ╰────
+  help: Replace `@Output()` with `output()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `viewChild()` over legacy `@ViewChild()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @ViewChild('container') container: ElementRef;
+   ·             ───────────────────────
+ 6 │         }
+   ╰────
+  help: Replace `@ViewChild()` with `viewChild()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `viewChildren()` over legacy `@ViewChildren()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @ViewChildren('item') items: QueryList<ElementRef>;
+   ·             ─────────────────────
+ 6 │         }
+   ╰────
+  help: Replace `@ViewChildren()` with `viewChildren()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `contentChild()` over legacy `@ContentChild()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @ContentChild('content') content: ElementRef;
+   ·             ────────────────────────
+ 6 │         }
+   ╰────
+  help: Replace `@ContentChild()` with `contentChild()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.
+
+  ⚠ angular(prefer-signals): Prefer signal-based `contentChildren()` over legacy `@ContentChildren()` decorator
+   ╭─[prefer_signals.tsx:5:13]
+ 4 │         class TestComponent {
+ 5 │             @ContentChildren('item') items: QueryList<ElementRef>;
+   ·             ────────────────────────
+ 6 │         }
+   ╰────
+  help: Replace `@ContentChildren()` with `contentChildren()` for better performance and reactivity. See https://angular.dev/guide/signals for migration guidance.

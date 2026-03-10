@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-control-flow): Prefer built-in control flow over `*ngIf`
+   ╭─[prefer_control_flow.tsx:5:29]
+ 4 │             selector: 'app-test',
+ 5 │             template: '<div *ngIf="isVisible">Content</div>'
+   ·                             ─────
+ 6 │         })
+   ╰────
+  help: Replace `*ngIf` with `@if` syntax. Built-in control flow was introduced in Angular 17 and is the recommended approach. See https://angular.dev/guide/templates/control-flow for migration guidance.
+
+  ⚠ angular(prefer-control-flow): Prefer built-in control flow over `*ngFor`
+   ╭─[prefer_control_flow.tsx:5:29]
+ 4 │             selector: 'app-test',
+ 5 │             template: '<div *ngFor="let item of items">{{ item }}</div>'
+   ·                             ──────
+ 6 │         })
+   ╰────
+  help: Replace `*ngFor` with `@for` syntax. Built-in control flow was introduced in Angular 17 and is the recommended approach. See https://angular.dev/guide/templates/control-flow for migration guidance.
+
+  ⚠ angular(prefer-control-flow): Prefer built-in control flow over `*ngSwitch`
+   ╭─[prefer_control_flow.tsx:5:29]
+ 4 │             selector: 'app-test',
+ 5 │             template: '<div *ngSwitch="status"><span *ngSwitchCase="active">Active</span></div>'
+   ·                             ─────────
+ 6 │         })
+   ╰────
+  help: Replace `*ngSwitch` with `@switch` syntax. Built-in control flow was introduced in Angular 17 and is the recommended approach. See https://angular.dev/guide/templates/control-flow for migration guidance.
+
+  ⚠ angular(prefer-control-flow): Prefer built-in control flow over `[ngIf]`
+   ╭─[prefer_control_flow.tsx:5:37]
+ 4 │             selector: 'app-test',
+ 5 │             template: '<ng-template [ngIf]="isVisible"><div>Content</div></ng-template>'
+   ·                                     ──────
+ 6 │         })
+   ╰────
+  help: Replace `[ngIf]` with `@if` syntax. Built-in control flow was introduced in Angular 17 and is the recommended approach. See https://angular.dev/guide/templates/control-flow for migration guidance.
+
+  ⚠ angular(prefer-control-flow): Prefer built-in control flow over `*ngIf`
+   ╭─[prefer_control_flow.tsx:6:23]
+ 5 │             template: `
+ 6 │                 <div *ngIf="isVisible">
+   ·                       ─────
+ 7 │                     Content
+   ╰────
+  help: Replace `*ngIf` with `@if` syntax. Built-in control flow was introduced in Angular 17 and is the recommended approach. See https://angular.dev/guide/templates/control-flow for migration guidance.

@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+   ╭─[prefer_output_emitter_ref.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() myEvent = new EventEmitter<string>();
+   ·             ─────────
+ 9 │         }
+   ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+   ╭─[prefer_output_emitter_ref.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output('onMyEvent') myEvent = new EventEmitter();
+   ·             ────────────────────
+ 9 │         }
+   ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+   ╭─[prefer_output_emitter_ref.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() eventA = new EventEmitter();
+   ·             ─────────
+ 9 │             @Output() eventB = new EventEmitter();
+   ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+    ╭─[prefer_output_emitter_ref.tsx:9:13]
+  8 │             @Output() eventA = new EventEmitter();
+  9 │             @Output() eventB = new EventEmitter();
+    ·             ─────────
+ 10 │         }
+    ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+   ╭─[prefer_output_emitter_ref.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             @Output() myEvent = new EventEmitter();
+   ·             ─────────
+ 8 │         }
+   ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`
+
+  ⚠ angular(prefer-output-emitter-ref): Prefer using `output()` function over `@Output()` decorator
+   ╭─[prefer_output_emitter_ref.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output() itemSelected = new EventEmitter<{ id: number; name: string }>();
+   ·             ─────────
+ 9 │         }
+   ╰────
+  help: Use the `output()` function instead of `@Output()` with `EventEmitter`. The `output()` function provides better type inference, cleaner syntax, and integrates better with Angular's signal-based architecture. Example: `myEvent = output<string>();`

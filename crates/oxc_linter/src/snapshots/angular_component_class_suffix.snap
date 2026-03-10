@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(component-class-suffix): Component class names should end with one of these suffixes: Component
+   ╭─[component_class_suffix.tsx:7:19]
+ 6 │             })
+ 7 │             class Test {}
+   ·                   ────
+ 8 │             
+   ╰────
+  help: Rename the class to include a valid suffix (e.g., 'ExampleComponent'). Note: As of Angular v20, this naming convention is no longer officially recommended.
+
+  ⚠ angular(component-class-suffix): Component class names should end with one of these suffixes: Component
+   ╭─[component_class_suffix.tsx:7:19]
+ 6 │             })
+ 7 │             class TestComp {}
+   ·                   ────────
+ 8 │             
+   ╰────
+  help: Rename the class to include a valid suffix (e.g., 'ExampleComponent'). Note: As of Angular v20, this naming convention is no longer officially recommended.
+
+  ⚠ angular(component-class-suffix): Component class names should end with one of these suffixes: Component, View
+   ╭─[component_class_suffix.tsx:7:19]
+ 6 │             })
+ 7 │             class TestPage {}
+   ·                   ────────
+ 8 │             
+   ╰────
+  help: Rename the class to include a valid suffix (e.g., 'ExampleComponent'). Note: As of Angular v20, this naming convention is no longer officially recommended.

@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-output-rename): Output bindings should not be aliased
+   ╭─[no_output_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output('valueChanged') change = new EventEmitter<string>();
+   ·             ───────────────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing outputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-output-rename): Output bindings should not be aliased
+   ╭─[no_output_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @Output({ alias: 'valueChanged' }) change = new EventEmitter<string>();
+   ·             ──────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing outputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.
+
+  ⚠ angular(no-output-rename): Output bindings should not be aliased
+   ╭─[no_output_rename.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             change = output<string>({ alias: 'valueChanged' });
+   ·             ───────────────────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Avoid aliasing outputs as it can lead to confusion. Use the original property name or rename the property if the alias is more appropriate.

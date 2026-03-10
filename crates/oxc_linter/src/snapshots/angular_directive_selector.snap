@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(directive-selector): Directive selector should be used as an attribute
+   ╭─[directive_selector.tsx:3:13]
+ 2 │                 import { Directive } from '@angular/core';
+ 3 │ ╭─▶             @Directive({
+ 4 │ │                   selector: 'app-highlight'
+ 5 │ ╰─▶             })
+ 6 │                 class HighlightDirective {}
+   ╰────
+  help: Change the selector to use an attribute style (e.g., '[appExample]' for attribute)
+
+  ⚠ angular(directive-selector): Directive selector should be prefixed with one of: app
+   ╭─[directive_selector.tsx:3:13]
+ 2 │                 import { Directive } from '@angular/core';
+ 3 │ ╭─▶             @Directive({
+ 4 │ │                   selector: '[highlight]'
+ 5 │ ╰─▶             })
+ 6 │                 class HighlightDirective {}
+   ╰────
+  help: Add a prefix to the selector (e.g., '[appHighlight]' with prefix 'app')
+
+  ⚠ angular(directive-selector): Directive selector should be camelCase
+   ╭─[directive_selector.tsx:3:13]
+ 2 │                 import { Directive } from '@angular/core';
+ 3 │ ╭─▶             @Directive({
+ 4 │ │                   selector: '[app-highlight]'
+ 5 │ ╰─▶             })
+ 6 │                 class HighlightDirective {}
+   ╰────
+  help: Use camelCase for the selector (e.g., 'appHighlight' for camelCase)

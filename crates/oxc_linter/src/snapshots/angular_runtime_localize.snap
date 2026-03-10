@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(runtime-localize): `$localize` used at module load time
+   ╭─[runtime_localize.tsx:2:26]
+ 1 │ 
+ 2 │         const GREETING = $localize`Hello`;
+   ·                          ────────────────
+ 3 │         
+   ╰────
+  help: Move the `$localize` call inside a function, method, or getter to ensure it runs at runtime when localization data is available. Using `$localize` at module load time may cause issues if the localization data hasn't been loaded yet.
+
+  ⚠ angular(runtime-localize): `$localize` used at module load time
+   ╭─[runtime_localize.tsx:3:37]
+ 2 │         class MyComponent {
+ 3 │             static readonly TITLE = $localize`Welcome`;
+   ·                                     ──────────────────
+ 4 │         }
+   ╰────
+  help: Move the `$localize` call inside a function, method, or getter to ensure it runs at runtime when localization data is available. Using `$localize` at module load time may cause issues if the localization data hasn't been loaded yet.
+
+  ⚠ angular(runtime-localize): `$localize` used at module load time
+   ╭─[runtime_localize.tsx:3:23]
+ 2 │         class MyComponent {
+ 3 │             message = $localize`Hello World`;
+   ·                       ──────────────────────
+ 4 │         }
+   ╰────
+  help: Move the `$localize` call inside a function, method, or getter to ensure it runs at runtime when localization data is available. Using `$localize` at module load time may cause issues if the localization data hasn't been loaded yet.
+
+  ⚠ angular(runtime-localize): `$localize` used at module load time
+   ╭─[runtime_localize.tsx:2:38]
+ 1 │ 
+ 2 │         export const ERROR_MESSAGE = $localize`An error occurred`;
+   ·                                      ────────────────────────────
+ 3 │         
+   ╰────
+  help: Move the `$localize` call inside a function, method, or getter to ensure it runs at runtime when localization data is available. Using `$localize` at module load time may cause issues if the localization data hasn't been loaded yet.

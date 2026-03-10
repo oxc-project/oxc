@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-host-metadata-property): Avoid using the `host` metadata property
+   ╭─[no_host_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             host: {
+   ·             ────
+ 7 │                 '[class.active]': 'isActive',
+   ╰────
+  help: Use `@HostBinding()` and `@HostListener()` decorators instead of the `host` metadata property. Decorator-based host bindings provide better type safety and are easier to understand. Alternatively, consider using the `host` property with signal-based syntax in Angular 18+.
+
+  ⚠ angular(no-host-metadata-property): Avoid using the `host` metadata property
+   ╭─[no_host_metadata_property.tsx:5:13]
+ 4 │             selector: '[appTest]',
+ 5 │             host: {
+   ·             ────
+ 6 │                 '[attr.role]': 'role'
+   ╰────
+  help: Use `@HostBinding()` and `@HostListener()` decorators instead of the `host` metadata property. Decorator-based host bindings provide better type safety and are easier to understand. Alternatively, consider using the `host` property with signal-based syntax in Angular 18+.
+
+  ⚠ angular(no-host-metadata-property): Avoid using the `host` metadata property
+   ╭─[no_host_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             host: {}
+   ·             ────
+ 7 │         })
+   ╰────
+  help: Use `@HostBinding()` and `@HostListener()` decorators instead of the `host` metadata property. Decorator-based host bindings provide better type safety and are easier to understand. Alternatively, consider using the `host` property with signal-based syntax in Angular 18+.
+
+  ⚠ angular(no-host-metadata-property): Avoid using the `host` metadata property
+   ╭─[no_host_metadata_property.tsx:6:13]
+ 5 │             template: '',
+ 6 │             host: {
+   ·             ────
+ 7 │                 '[style.width.px]': 'width',
+   ╰────
+  help: Use `@HostBinding()` and `@HostListener()` decorators instead of the `host` metadata property. Decorator-based host bindings provide better type safety and are easier to understand. Alternatively, consider using the `host` property with signal-based syntax in Angular 18+.
+
+  ⚠ angular(no-host-metadata-property): Avoid using the `host` metadata property
+   ╭─[no_host_metadata_property.tsx:5:13]
+ 4 │             selector: '[appTest]',
+ 5 │             host: {
+   ·             ────
+ 6 │                 '(mouseenter)': 'onMouseEnter()',
+   ╰────
+  help: Use `@HostBinding()` and `@HostListener()` decorators instead of the `host` metadata property. Decorator-based host bindings provide better type safety and are easier to understand. Alternatively, consider using the `host` property with signal-based syntax in Angular 18+.

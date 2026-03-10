@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(use-component-view-encapsulation): Avoid using `ViewEncapsulation.None`
+   ╭─[use_component_view_encapsulation.tsx:6:13]
+ 5 │             template: '',
+ 6 │             encapsulation: ViewEncapsulation.None
+   ·             ─────────────────────────────────────
+ 7 │         })
+   ╰────
+  help: Using `ViewEncapsulation.None` makes component styles global, which can lead to unintended style conflicts. Use `ViewEncapsulation.Emulated` (default) or `ViewEncapsulation.ShadowDom` instead.
+
+  ⚠ angular(use-component-view-encapsulation): Avoid using `ViewEncapsulation.None`
+   ╭─[use_component_view_encapsulation.tsx:6:13]
+ 5 │             template: '',
+ 6 │             encapsulation: 2
+   ·             ────────────────
+ 7 │         })
+   ╰────
+  help: Using `ViewEncapsulation.None` makes component styles global, which can lead to unintended style conflicts. Use `ViewEncapsulation.Emulated` (default) or `ViewEncapsulation.ShadowDom` instead.
+
+  ⚠ angular(use-component-view-encapsulation): Avoid using `ViewEncapsulation.None`
+   ╭─[use_component_view_encapsulation.tsx:7:13]
+ 6 │             standalone: true,
+ 7 │             encapsulation: ViewEncapsulation.None
+   ·             ─────────────────────────────────────
+ 8 │         })
+   ╰────
+  help: Using `ViewEncapsulation.None` makes component styles global, which can lead to unintended style conflicts. Use `ViewEncapsulation.Emulated` (default) or `ViewEncapsulation.ShadowDom` instead.

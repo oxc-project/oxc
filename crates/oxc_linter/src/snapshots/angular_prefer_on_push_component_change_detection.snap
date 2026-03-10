@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: ''
+ 6 │ ╰─▶         })
+ 7 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component, ChangeDetectionStrategy } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: '',
+ 6 │ │               changeDetection: ChangeDetectionStrategy.Default
+ 7 │ ╰─▶         })
+ 8 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: '',
+ 6 │ │               changeDetection: 1
+ 7 │ ╰─▶         })
+ 8 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: '',
+ 6 │ │               standalone: true
+ 7 │ ╰─▶         })
+ 8 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component, ChangeDetectionStrategy } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: '',
+ 6 │ │               'changeDetection': ChangeDetectionStrategy.Default
+ 7 │ ╰─▶         })
+ 8 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.
+
+  ⚠ angular(prefer-on-push-component-change-detection): Component should use `ChangeDetectionStrategy.OnPush` for better performance
+   ╭─[prefer_on_push_component_change_detection.tsx:3:9]
+ 2 │             import { Component, ChangeDetectionStrategy } from '@angular/core';
+ 3 │ ╭─▶         @Component({
+ 4 │ │               selector: 'app-test',
+ 5 │ │               template: '',
+ 6 │ │               ['changeDetection']: ChangeDetectionStrategy.Default
+ 7 │ ╰─▶         })
+ 8 │             class TestComponent {}
+   ╰────
+  help: Add `changeDetection: ChangeDetectionStrategy.OnPush` to the component decorator. OnPush change detection only checks the component when its inputs change or when events are triggered within it.

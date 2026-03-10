@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-standalone): Component should use standalone architecture
+   ╭─[prefer_standalone.tsx:3:70]
+ 2 │         import { Component } from '@angular/core';
+ 3 │         @Component({ selector: 'app-test', template: '', standalone: false })
+   ·                                                                      ─────
+ 4 │         class TestComponent {}
+   ╰────
+  help: Remove `standalone: false` to use standalone components. In Angular 20, components are standalone by default. See https://angular.dev/guide/components/importing for migration guidance.
+
+  ⚠ angular(prefer-standalone): Component should use standalone architecture
+   ╭─[prefer_standalone.tsx:3:57]
+ 2 │         import { Directive } from '@angular/core';
+ 3 │         @Directive({ selector: '[appTest]', standalone: false })
+   ·                                                         ─────
+ 4 │         class TestDirective {}
+   ╰────
+  help: Remove `standalone: false` to use standalone components. In Angular 20, components are standalone by default. See https://angular.dev/guide/components/importing for migration guidance.
+
+  ⚠ angular(prefer-standalone): Component should use standalone architecture
+   ╭─[prefer_standalone.tsx:7:25]
+ 6 │             styleUrls: ['./test.css'],
+ 7 │             standalone: false
+   ·                         ─────
+ 8 │         })
+   ╰────
+  help: Remove `standalone: false` to use standalone components. In Angular 20, components are standalone by default. See https://angular.dev/guide/components/importing for migration guidance.
+
+  ⚠ angular(prefer-standalone): Component should use standalone architecture
+   ╭─[prefer_standalone.tsx:7:25]
+ 6 │             providers: [],
+ 7 │             standalone: false
+   ·                         ─────
+ 8 │         })
+   ╰────
+  help: Remove `standalone: false` to use standalone components. In Angular 20, components are standalone by default. See https://angular.dev/guide/components/importing for migration guidance.
+
+  ⚠ angular(prefer-standalone): Component should use standalone architecture
+   ╭─[prefer_standalone.tsx:5:25]
+ 4 │             selector: '[appHighlight]',
+ 5 │             standalone: false
+   ·                         ─────
+ 6 │         })
+   ╰────
+  help: Remove `standalone: false` to use standalone components. In Angular 20, components are standalone by default. See https://angular.dev/guide/components/importing for migration guidance.

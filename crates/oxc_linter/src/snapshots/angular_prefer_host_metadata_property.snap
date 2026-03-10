@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostBinding`
+   ╭─[prefer_host_metadata_property.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @HostBinding('class.active') isActive = false;
+   ·             ────────────────────────────
+ 9 │         }
+   ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostListener`
+   ╭─[prefer_host_metadata_property.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @HostListener('click') onClick() {}
+   ·             ──────────────────────
+ 9 │         }
+   ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostBinding`
+   ╭─[prefer_host_metadata_property.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @HostBinding('class.active') isActive = false;
+   ·             ────────────────────────────
+ 9 │             @HostListener('click') onClick() {}
+   ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostListener`
+    ╭─[prefer_host_metadata_property.tsx:9:13]
+  8 │             @HostBinding('class.active') isActive = false;
+  9 │             @HostListener('click') onClick() {}
+    ·             ──────────────────────
+ 10 │         }
+    ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostBinding`
+   ╭─[prefer_host_metadata_property.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             @HostBinding('attr.role') role = 'button';
+   ·             ─────────────────────────
+ 8 │         }
+   ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.
+
+  ⚠ angular(prefer-host-metadata-property): Prefer using the `host` metadata property over `@HostListener`
+   ╭─[prefer_host_metadata_property.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             @HostListener('keydown', ['$event']) onKeyDown(event: KeyboardEvent) {}
+   ·             ────────────────────────────────────
+ 9 │         }
+   ╰────
+  help: Use the `host` property in the @Component or @Directive decorator instead of `@HostBinding` and `@HostListener` decorators. This centralizes host-related configuration and can improve readability.

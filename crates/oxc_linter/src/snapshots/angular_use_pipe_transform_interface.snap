@@ -1,0 +1,34 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(use-pipe-transform-interface): Pipes should implement `PipeTransform` interface
+   ╭─[use_pipe_transform_interface.tsx:3:9]
+ 2 │             import { Pipe } from '@angular/core';
+ 3 │ ╭─▶         @Pipe({
+ 4 │ │               name: 'myPipe'
+ 5 │ ╰─▶         })
+ 6 │             class MyPipe {
+   ╰────
+  help: Add `implements PipeTransform` to the class declaration and import `PipeTransform` from '@angular/core'. This provides type safety for the `transform` method.
+
+  ⚠ angular(use-pipe-transform-interface): Pipes should implement `PipeTransform` interface
+   ╭─[use_pipe_transform_interface.tsx:3:9]
+ 2 │             import { Pipe } from '@angular/core';
+ 3 │ ╭─▶         @Pipe({
+ 4 │ │               name: 'myPipe',
+ 5 │ │               standalone: true
+ 6 │ ╰─▶         })
+ 7 │             class MyPipe {
+   ╰────
+  help: Add `implements PipeTransform` to the class declaration and import `PipeTransform` from '@angular/core'. This provides type safety for the `transform` method.
+
+  ⚠ angular(use-pipe-transform-interface): Pipes should implement `PipeTransform` interface
+   ╭─[use_pipe_transform_interface.tsx:3:9]
+ 2 │             import { Pipe, OnDestroy } from '@angular/core';
+ 3 │ ╭─▶         @Pipe({
+ 4 │ │               name: 'myPipe'
+ 5 │ ╰─▶         })
+ 6 │             class MyPipe implements OnDestroy {
+   ╰────
+  help: Add `implements PipeTransform` to the class declaration and import `PipeTransform` from '@angular/core'. This provides type safety for the `transform` method.

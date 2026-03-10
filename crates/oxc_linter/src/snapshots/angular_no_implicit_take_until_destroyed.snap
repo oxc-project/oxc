@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(no-implicit-take-until-destroyed): `takeUntilDestroyed()` called without `DestroyRef` argument outside injection context
+   ╭─[no_implicit_take_until_destroyed.tsx:5:33]
+ 4 │             ngOnInit() {
+ 5 │                 this.data$.pipe(takeUntilDestroyed()).subscribe();
+   ·                                 ────────────────────
+ 6 │             }
+   ╰────
+  help: When using `takeUntilDestroyed()` outside of an injection context (like inside `ngOnInit`, event handlers, or subscriptions), you must pass a `DestroyRef` explicitly. Example: `takeUntilDestroyed(this.destroyRef)` where `destroyRef = inject(DestroyRef)`.
+
+  ⚠ angular(no-implicit-take-until-destroyed): `takeUntilDestroyed()` called without `DestroyRef` argument outside injection context
+   ╭─[no_implicit_take_until_destroyed.tsx:5:33]
+ 4 │             ngAfterViewInit() {
+ 5 │                 this.data$.pipe(takeUntilDestroyed()).subscribe();
+   ·                                 ────────────────────
+ 6 │             }
+   ╰────
+  help: When using `takeUntilDestroyed()` outside of an injection context (like inside `ngOnInit`, event handlers, or subscriptions), you must pass a `DestroyRef` explicitly. Example: `takeUntilDestroyed(this.destroyRef)` where `destroyRef = inject(DestroyRef)`.
+
+  ⚠ angular(no-implicit-take-until-destroyed): `takeUntilDestroyed()` called without `DestroyRef` argument outside injection context
+   ╭─[no_implicit_take_until_destroyed.tsx:5:33]
+ 4 │             loadData() {
+ 5 │                 this.data$.pipe(takeUntilDestroyed()).subscribe();
+   ·                                 ────────────────────
+ 6 │             }
+   ╰────
+  help: When using `takeUntilDestroyed()` outside of an injection context (like inside `ngOnInit`, event handlers, or subscriptions), you must pass a `DestroyRef` explicitly. Example: `takeUntilDestroyed(this.destroyRef)` where `destroyRef = inject(DestroyRef)`.
+
+  ⚠ angular(no-implicit-take-until-destroyed): `takeUntilDestroyed()` called without `DestroyRef` argument outside injection context
+   ╭─[no_implicit_take_until_destroyed.tsx:5:45]
+ 4 │             onClick() {
+ 5 │                 this.service.getData().pipe(takeUntilDestroyed()).subscribe();
+   ·                                             ────────────────────
+ 6 │             }
+   ╰────
+  help: When using `takeUntilDestroyed()` outside of an injection context (like inside `ngOnInit`, event handlers, or subscriptions), you must pass a `DestroyRef` explicitly. Example: `takeUntilDestroyed(this.destroyRef)` where `destroyRef = inject(DestroyRef)`.

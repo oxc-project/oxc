@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngOnInit` should be defined on the class prototype, not as a property
+   ╭─[require_lifecycle_on_prototype.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnInit = () => {};
+   ·             ────────
+ 9 │         }
+   ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngOnDestroy` should be defined on the class prototype, not as a property
+   ╭─[require_lifecycle_on_prototype.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnDestroy = function() {};
+   ·             ───────────
+ 9 │         }
+   ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngOnInit` should be defined on the class prototype, not as a property
+   ╭─[require_lifecycle_on_prototype.tsx:8:13]
+ 7 │         class TestComponent {
+ 8 │             ngOnInit = () => {};
+   ·             ────────
+ 9 │             ngOnChanges = () => {};
+   ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngOnChanges` should be defined on the class prototype, not as a property
+    ╭─[require_lifecycle_on_prototype.tsx:9:13]
+  8 │             ngOnInit = () => {};
+  9 │             ngOnChanges = () => {};
+    ·             ───────────
+ 10 │         }
+    ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngAfterViewInit` should be defined on the class prototype, not as a property
+   ╭─[require_lifecycle_on_prototype.tsx:7:13]
+ 6 │         class TestDirective {
+ 7 │             ngAfterViewInit = () => {};
+   ·             ───────────────
+ 8 │         }
+   ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
+
+  ⚠ angular(require-lifecycle-on-prototype): Lifecycle method `ngOnDestroy` should be defined on the class prototype, not as a property
+   ╭─[require_lifecycle_on_prototype.tsx:5:13]
+ 4 │         class TestService {
+ 5 │             ngOnDestroy = () => {};
+   ·             ───────────
+ 6 │         }
+   ╰────
+  help: Define lifecycle methods as regular methods on the class, not as property assignments. Angular's change detection and lifecycle hooks work with prototype methods, not instance properties.
