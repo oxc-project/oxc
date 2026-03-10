@@ -141,6 +141,9 @@ export default defineConfig([
     ...pluginEslintPkgConfig,
     entry: pluginEslintRulesEntries,
     format: "commonjs",
+    outputOptions: {
+      chunkFileNames: "common/[name].cjs",
+    },
   },
 ]);
 

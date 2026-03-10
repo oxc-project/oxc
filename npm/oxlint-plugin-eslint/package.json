@@ -23,6 +23,7 @@
   "files": [
     "index.js",
     "rules",
+    "common",
     "README.md"
   ],
   "type": "module",
