@@ -148,6 +148,18 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
+  // The order rules run in is indeterminate.
+  // To make order predictable in tests, in debug builds, sort rules by ID in ascending order.
+  // i.e. rules run in same order as they're defined in plugin.
+  let ruleIndexes: number[] | undefined;
+  if (DEBUG) {
+    const rules = ruleIds.map((ruleId, index) => ({ ruleId, optionsId: optionsIds[index], index }));
+    rules.sort((rule1, rule2) => rule1.ruleId - rule2.ruleId);
+    ruleIds = rules.map((rule) => rule.ruleId);
+    optionsIds = rules.map((rule) => rule.optionsId);
+    ruleIndexes = rules.map((rule) => rule.index);
+  }
+
   // Switch to requested workspace.
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
@@ -181,7 +193,8 @@ export function lintFileImpl(
     const ruleDetails = registeredRules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
-    ruleDetails.ruleIndex = i;
+    // In debug build, use `ruleIndexes`, because `ruleIds` has been re-ordered.
+    ruleDetails.ruleIndex = DEBUG ? ruleIndexes![i] : i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
