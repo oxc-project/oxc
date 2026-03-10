@@ -2,6 +2,6 @@
 /** @type {{ foo: string }} */
 
 /**
- * @typedef{import('@jest/types/build/Config').InitialOptions} name A
+ * @typedef{import('@jest/types/build/Config').InitialOptions} name a
  * description
  */
