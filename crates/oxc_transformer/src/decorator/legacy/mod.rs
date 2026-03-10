@@ -799,7 +799,7 @@ impl<'a> LegacyDecorator<'a> {
     /// ```
     ///
     /// These decorators transform into:
-    /// ```
+    /// ```rust,ignore
     /// _decorate([
     ///   _decorateParam(0, dec)
     ///   ], Class.prototype, "method", null);

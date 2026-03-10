@@ -221,7 +221,7 @@ jobs:
           environment_variables: "DEBUG RUSTUP_IO_THREADS"
           shell: bash
           run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
             curl https://sh.rustup.rs -sSf --output rustup.sh
             sh rustup.sh -y --profile minimal --default-toolchain stable
             source "$HOME/.cargo/env"
@@ -277,6 +277,7 @@ jobs:
     env:
       package_path: npm/oxlint
       plugins_package_path: npm/oxlint-plugins
+      plugin_eslint_package_path: npm/oxlint-plugin-eslint
       npm_dir: npm/oxlint-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
@@ -306,12 +307,17 @@ jobs:
         run: |
           cp apps/oxlint/dist-pkg-plugins/* ${plugins_package_path}/
 
+      - name: Copy dist files to oxlint-plugin-eslint npm package
+        run: |
+          cp -r apps/oxlint/dist-pkg-plugin-eslint/. ${plugin_eslint_package_path}/
+
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
         run: |
           node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
           node .github/scripts/check-npm-packages.js "${plugins_package_path}"
+          node .github/scripts/check-npm-packages.js "${plugin_eslint_package_path}"
 
       - name: Trusted Publish
         run: |
@@ -319,9 +325,11 @@ jobs:
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           # Publish `oxlint` package
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
           # Publish `@oxlint/plugins` package
-          pnpm publish ${plugins_package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${plugins_package_path} ${PUBLISH_FLAGS}
+          # Publish `oxlint-plugin-eslint` package
+          bash .github/scripts/publish-if-needed.sh ${plugin_eslint_package_path} ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
@@ -506,7 +514,7 @@ jobs:
           environment_variables: "DEBUG RUSTUP_IO_THREADS"
           shell: bash
           run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
             curl https://sh.rustup.rs -sSf --output rustup.sh
             sh rustup.sh -y --profile minimal --default-toolchain stable
             source "$HOME/.cargo/env"
@@ -596,7 +604,7 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:
     name: GitHub Release

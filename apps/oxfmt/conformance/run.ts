@@ -1,6 +1,7 @@
 // oxlint-disable no-console, no-await-in-loop
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createTwoFilesPatch } from "diff";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
 import { format } from "../dist/index.js";
@@ -73,7 +74,7 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "styled-components.js": "Multiple issues: `Button.extend` not recognized as tag",
+      "styled-components.js": "`Xxx.extend` not recognized as tag",
     },
   },
 ];
@@ -109,6 +110,8 @@ type Fixture = { name: string; fullPath: string };
 type Failure = {
   name: string;
   note?: string;
+  oxfmt: string;
+  prettier: string;
 };
 
 type OptionSetResult = {
@@ -162,7 +165,12 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
       if (oxfmtResult === prettierResult) {
         passed++;
       } else {
-        failures.push({ name: fixture.name, note: category.notes?.[fixture.name] });
+        failures.push({
+          name: fixture.name,
+          note: category.notes?.[fixture.name],
+          oxfmt: oxfmtResult,
+          prettier: prettierResult,
+        });
       }
     }
 
@@ -200,10 +208,35 @@ async function compareWithPrettier(
 
 function writeReport(results: CategoryResult[]) {
   const lines: string[] = [];
+  const diffsDir = join(SNAPSHOTS_DIR, "diffs");
+
+  // Clean up old diffs and recreate
+  rmSync(diffsDir, { recursive: true, force: true });
 
   for (const result of results) {
     lines.push(`## ${result.name}`);
     lines.push("");
+
+    // Collect all failures per fixture across option sets
+    const failuresByFixture = new Map<
+      string,
+      { optionIndex: number; options: Record<string, unknown>; failure: Failure }[]
+    >();
+    for (let i = 0; i < result.optionSetResults.length; i++) {
+      for (const failure of result.optionSetResults[i].failures) {
+        let entries = failuresByFixture.get(failure.name);
+        if (!entries) {
+          entries = [];
+          failuresByFixture.set(failure.name, entries);
+        }
+        entries.push({ optionIndex: i + 1, options: result.optionSetResults[i].options, failure });
+      }
+    }
+
+    // Write one diff file per fixture
+    for (const [fixtureName, entries] of failuresByFixture) {
+      writeDiffFile(diffsDir, result.name, fixtureName, entries);
+    }
 
     for (let i = 0; i < result.optionSetResults.length; i++) {
       const r = result.optionSetResults[i];
@@ -219,7 +252,10 @@ function writeReport(results: CategoryResult[]) {
         lines.push("| File | Note |");
         lines.push("| :--- | :--- |");
         for (const failure of r.failures) {
-          lines.push(`| ${failure.name} | ${failure.note ?? ""} |`);
+          const safeName = failure.name.replaceAll("/", "__");
+          const diffRelPath = `diffs/${result.name}/${safeName}.md`;
+          const diffLink = `[${failure.name}](${diffRelPath})`;
+          lines.push(`| ${diffLink} | ${failure.note ?? ""} |`);
         }
         lines.push("");
       }
@@ -231,4 +267,64 @@ function writeReport(results: CategoryResult[]) {
   writeFileSync(outPath, lines.join("\n"));
   console.log("=".repeat(60));
   console.log(`Report written to ${relative(process.cwd(), outPath)}`);
+}
+
+function writeDiffFile(
+  diffsDir: string,
+  categoryName: string,
+  fixtureName: string,
+  entries: { optionIndex: number; options: Record<string, unknown>; failure: Failure }[],
+) {
+  const safeName = fixtureName.replaceAll("/", "__");
+  const dir = join(diffsDir, categoryName);
+  mkdirSync(dir, { recursive: true });
+
+  const lines: string[] = [];
+  lines.push(`# ${fixtureName}`);
+  lines.push("");
+
+  const {
+    failure: { note },
+  } = entries[0];
+  if (note) {
+    lines.push(`> ${note}`);
+    lines.push("");
+  }
+
+  for (const entry of entries) {
+    lines.push(`## Option ${entry.optionIndex}`);
+    lines.push("");
+    lines.push("`````json");
+    lines.push(JSON.stringify(entry.options));
+    lines.push("`````");
+    lines.push("");
+    const lang = fixtureName.split(".").pop() ?? "";
+    const patch = createTwoFilesPatch(
+      "prettier",
+      "oxfmt",
+      entry.failure.prettier,
+      entry.failure.oxfmt,
+    );
+    lines.push("### Diff");
+    lines.push("");
+    lines.push("`````diff");
+    lines.push(patch);
+    lines.push("`````");
+    lines.push("");
+    lines.push("### Actual (oxfmt)");
+    lines.push("");
+    lines.push(`\`\`\`\`\`${lang}`);
+    lines.push(entry.failure.oxfmt);
+    lines.push("`````");
+    lines.push("");
+    lines.push("### Expected (prettier)");
+    lines.push("");
+    lines.push(`\`\`\`\`\`${lang}`);
+    lines.push(entry.failure.prettier);
+    lines.push("`````");
+    lines.push("");
+  }
+
+  const filePath = join(dir, `${safeName}.md`);
+  writeFileSync(filePath, lines.join("\n"));
 }

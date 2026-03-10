@@ -8,7 +8,7 @@
 
 | File | Note |
 | :--- | :--- |
-| vue/multiparser/lang-tsx.vue | `lang=tsx` is not supported |
+| [vue/multiparser/lang-tsx.vue](diffs/js-in-vue/vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
 
 ### Option 2: 94/95 (98.95%)
 
@@ -18,7 +18,7 @@
 
 | File | Note |
 | :--- | :--- |
-| vue/multiparser/lang-tsx.vue | `lang=tsx` is not supported |
+| [vue/multiparser/lang-tsx.vue](diffs/js-in-vue/vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
 
 ## gql-in-js
 
@@ -30,7 +30,7 @@
 
 | File | Note |
 | :--- | :--- |
-| comment-tag.js | `/* GraphQL */` comment tag not yet supported |
+| [comment-tag.js](diffs/gql-in-js/comment-tag.js.md) | `/* GraphQL */` comment tag not yet supported |
 
 ### Option 2: 8/9 (88.89%)
 
@@ -40,7 +40,7 @@
 
 | File | Note |
 | :--- | :--- |
-| comment-tag.js | `/* GraphQL */` comment tag not yet supported |
+| [comment-tag.js](diffs/gql-in-js/comment-tag.js.md) | `/* GraphQL */` comment tag not yet supported |
 
 ## css-in-js
 
@@ -52,7 +52,7 @@
 
 | File | Note |
 | :--- | :--- |
-| styled-components.js | Multiple issues: `Button.extend` not recognized as tag |
+| [styled-components.js](diffs/css-in-js/styled-components.js.md) | `Xxx.extend` not recognized as tag |
 
 ### Option 2: 16/17 (94.12%)
 
@@ -62,4 +62,4 @@
 
 | File | Note |
 | :--- | :--- |
-| styled-components.js | Multiple issues: `Button.extend` not recognized as tag |
+| [styled-components.js](diffs/css-in-js/styled-components.js.md) | `Xxx.extend` not recognized as tag |

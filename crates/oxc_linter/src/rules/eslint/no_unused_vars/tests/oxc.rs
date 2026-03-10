@@ -493,6 +493,10 @@ fn test_vars_catch() {
     let pass = vec![
         ("try {} catch (e) { throw e }", None),
         ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
+        (
+            "try {} catch (err) { console.error(err) }",
+            Some(json!([{ "caughtErrors": "none", "reportUsedIgnorePattern": true }])),
+        ),
         ("try {} catch { }", None),
         ("try {} catch(_) { }", Some(json!([{ "caughtErrorsIgnorePattern": "^_" }]))),
         (
@@ -515,6 +519,12 @@ fn test_vars_catch() {
         (
             "try {} catch(foo) { }",
             Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignored" }])),
+        ),
+        (
+            "try {} catch(_err) { console.error(_err) }",
+            Some(
+                json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_", "reportUsedIgnorePattern": true }]),
+            ),
         ),
     ];
 
@@ -1522,6 +1532,113 @@ fn test_jsx_non_ascii() {
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .test();
+}
+
+#[test]
+fn test_ignore() {
+    let pass = vec![
+        ("arr.map(({ x, ...rest }) => rest)", Some(json!([{ "ignoreRestSiblings": true }]))),
+        (
+            "arr.map(({ x, ...rest }) => rest)",
+            Some(json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": false }])),
+        ),
+        // using an unpacked property does not count as an illegal usage of ignored symbol
+        (
+            "arr.map(({ x, ...rest }) => ({ x, ...rest }))",
+            Some(json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true }])),
+        ),
+        ("const { x: _x, y } = obj; console.log(y)", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+        (
+            "const { a: { b: [c, _d] }, ...rest } = obj; console.log(c, rest);",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        // matches argsIgnorePattern, not varsIgnorePattern
+        (
+            "const [a, _b] = arr; console.log(a, _b)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }])),
+        ),
+        // property name matches ignore pattern; bound name does not
+        (
+            "const { _x: x, y } = obj; console.log(x, y)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "arr.map(({ x, ...rest }) => rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        ("const _x = 1;", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+        ("function foo(_bar) {}; foo()", Some(json!([{ "argsIgnorePattern": "^_" }]))),
+        (
+            "const [a, _b] = arr; console.log(a)",
+            Some(json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "const { x: _x, ...rest } = obj; console.log(rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // top-level var matches default _ prefix and is used — but reportUsedIgnorePattern
+        // only fires when varsIgnorePattern is explicitly set, not the default prefix
+        ("const _x = 1; console.log(_x)", Some(json!([{ "reportUsedIgnorePattern": true }]))),
+    ];
+
+    let fail = vec![
+        // not a rest sibling
+        ("const { x, y } = obj; console.log(y)", Some(json!([{ "ignoreRestSiblings": true }]))),
+        (
+            "function _foo() {} _foo()",
+            Some(json!([{ "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }])),
+        ),
+        // getting ignored both by ignoreRestSiblings and ignore pattern counts as used ignore pattern
+        (
+            "const { x: _x, ...rest } = obj; console.log(_x, rest)",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // rest sibling also matches argsIgnorePattern and is used
+        (
+            "arr.map(({ x: _x, ...rest }) => ({ x: _x, ...rest }))",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
+        // ignoreRestSiblings does not apply to unpacked arrays
+        (
+            "const { a: { b: [c, unused], ...rest } } = obj; console.log(c, rest);",
+            Some(json!([{ "ignoreRestSiblings": true }])),
+        ),
+        (
+            "const { a: { b: [_c], ...rest } } = obj; console.log(_c, rest);",
+            Some(
+                json!([{ "ignoreRestSiblings": true, "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        (
+            "const [a, _b] = arr; console.log(a, _b)",
+            Some(
+                json!([{ "reportUsedIgnorePattern": true, "destructuredArrayIgnorePattern": "^_" }]),
+            ),
+        ),
+        (
+            "function foo(_bar) { return _bar; } foo(1)",
+            Some(json!([{ "reportUsedIgnorePattern": true, "argsIgnorePattern": "^_" }])),
+        ),
+        (
+            "try { foo() } catch (_err) { console.error(_err) }",
+            Some(json!([{ "reportUsedIgnorePattern": true, "caughtErrorsIgnorePattern": "^_" }])),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("oxc-ignore")
+        .test_and_snapshot();
 }
 
 // #[test]

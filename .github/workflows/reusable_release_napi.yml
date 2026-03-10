@@ -184,7 +184,7 @@ jobs:
           environment_variables: "DEBUG RUSTUP_IO_THREADS"
           shell: bash
           run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
             curl https://sh.rustup.rs -sSf --output rustup.sh
             sh rustup.sh -y --profile minimal --default-toolchain stable
             source "$HOME/.cargo/env"
@@ -256,4 +256,4 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}

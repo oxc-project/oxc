@@ -157,7 +157,7 @@ pub type FormatResult<F> = Result<F, FormatError>;
 /// ## Example
 /// Implementing `Format` for a custom struct
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{format, write, IndentStyle, LineWidth};
 /// use biome_formatter::prelude::*;
 /// use biome_rowan::TextSize;
@@ -245,7 +245,7 @@ impl Format<'_> for &'static str {
 ///
 /// # Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
@@ -264,7 +264,7 @@ impl Format<'_> for &'static str {
 ///
 /// Please note that using [`write!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{VecBuffer, format_args, FormatState, write, Formatted};
 ///
@@ -294,7 +294,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 ///
 /// Basic usage:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///
@@ -307,7 +307,7 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) {
 ///
 /// Please note that using [`format!`] might be preferable. Example:
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format};
 ///

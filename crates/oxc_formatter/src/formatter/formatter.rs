@@ -77,7 +77,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     ///
     /// ## Examples
     ///
-    /// ```rust
+    /// ```text
     /// use biome_formatter::format;
     /// use biome_formatter::prelude::*;
     ///
@@ -109,7 +109,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     ///
     /// Joining different tokens by separating them with a comma and a space.
     ///
-    /// ```
+    /// ```text
     /// use biome_formatter::{format, format_args};
     /// use biome_formatter::prelude::*;
     ///
@@ -185,7 +185,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     ///
     /// ## Examples
     ///
-    /// ```rust
+    /// ```text
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{format, format_args};
     ///
@@ -207,7 +207,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// # }
     /// ```
     ///
-    /// ```rust
+    /// ```text
     /// use biome_formatter::prelude::*;
     /// use biome_formatter::{format, format_args};
     ///
