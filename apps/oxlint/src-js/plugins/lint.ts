@@ -14,7 +14,7 @@ import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
-  initCompiledVisitor,
+  resetCompiledVisitor,
   VISITOR_EMPTY,
   VISITOR_CFG,
 } from "./visitor.ts";
@@ -185,8 +185,6 @@ export function lintFileImpl(
   setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
-  initCompiledVisitor();
-
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
     debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
@@ -245,6 +243,9 @@ export function lintFileImpl(
     }
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
+
+    // Reset compiled visitor, ready for next file
+    resetCompiledVisitor();
   }
 
   // Run any `after` hooks
@@ -317,8 +318,9 @@ export function resetStateAfterError() {
   // so no leftovers bleed into next file.
   // We could have a separate function to reset state which could be simpler and faster, but `resetStateAfterError`
   // should never be called - only happens when rules return an invalid visitor or malfunction.
-  // So better to use the existing function, rather than bloat the package with more code which should never run.
+  // So better to use the existing functions, rather than bloat the package with more code which should never run.
   finalizeCompiledVisitor();
+  resetCompiledVisitor();
 
   diagnostics.length = 0;
   ancestors.length = 0;

@@ -60,12 +60,12 @@
 // No more than 1 compiled visitor exists at any time, so we reuse a single array `compiledVisitor`,
 // rather than creating a new array for each file being linted.
 //
-// To compile visitors, call:
-// * `initCompiledVisitor` once.
-// * `addVisitorToCompiled` with each visitor object.
-// * `finalizeCompiledVisitor` once.
+// To compile a visitor and use it:
 //
-// After this sequence of calls, `compiledVisitor` is ready to be used to walk the AST.
+// 1. Call `addVisitorToCompiled` with each visitor object.
+// 2. Call `finalizeCompiledVisitor` once.
+// 3. Walk AST with compiled visitor.
+// 4. Call `resetCompiledVisitor` once.
 //
 // We also recycle:
 //
@@ -229,22 +229,6 @@ let enterExitObjectCacheNextIndex = 0;
 // It may point to the end of the cache array.
 const visitPropsCache: VisitProp[] = [];
 let visitPropsCacheNextIndex = 0;
-
-/**
- * Initialize compiled visitor, ready for calls to `addVisitor`.
- */
-export function initCompiledVisitor(): void {
-  // Reset `compiledVisitor` array after previous compilation
-  compiledVisitor.fill(null);
-
-  // Reset enter+exit objects which were used in previous compilation
-  for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
-    const enterExit = enterExitObjectCache[i];
-    enterExit.enter = null;
-    enterExit.exit = null;
-  }
-  enterExitObjectCacheNextIndex = 0;
-}
 
 /**
  * Add a visitor to compiled visitor.
@@ -490,6 +474,26 @@ export function finalizeCompiledVisitor(): VisitorState {
   hasActiveVisitors = false;
 
   return visitState;
+}
+
+/**
+ * Reset compiled visitor.
+ *
+ * This frees visit functions stored in `compiledVisitor`, and makes them eligible for garbage collection.
+ *
+ * After calling this function, `compiledVisitor` is in a clean state, ready for next file's visitor to be compiled.
+ */
+export function resetCompiledVisitor(): void {
+  // Reset `compiledVisitor` array
+  compiledVisitor.fill(null);
+
+  // Reset enter+exit objects
+  for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
+    const enterExit = enterExitObjectCache[i];
+    enterExit.enter = null;
+    enterExit.exit = null;
+  }
+  enterExitObjectCacheNextIndex = 0;
 }
 
 // Array used by `mergeVisitFns` and `mergeCfgVisitFns` to store visit functions extracted from an array of `VisitProp`s.
