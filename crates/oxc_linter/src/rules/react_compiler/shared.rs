@@ -10,6 +10,10 @@ use oxc_react_compiler::{
     entrypoint::{
         pipeline::run_pipeline,
         program::{find_directive_disabling_memoization, should_compile_function},
+        suppression::{
+            SuppressionRange, filter_suppressions_that_affect_function,
+            suppressions_to_compiler_error,
+        },
     },
     hir::{
         NonLocalBinding,
@@ -27,11 +31,12 @@ pub fn walk_statements<'a>(
     statements: &'a oxc_allocator::Vec<'a, Statement<'a>>,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     for statement in statements {
-        lint_statement(statement, outer_bindings, config, diagnostics);
-        walk_nested_statement(statement, outer_bindings, config, diagnostics);
+        lint_statement(statement, outer_bindings, config, suppressions, diagnostics);
+        walk_nested_statement(statement, outer_bindings, config, suppressions, diagnostics);
     }
 }
 
@@ -39,55 +44,68 @@ fn walk_nested_statement<'a>(
     statement: &'a Statement<'a>,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     match statement {
         Statement::BlockStatement(block) => {
-            walk_statements(&block.body, outer_bindings, config, diagnostics);
+            walk_statements(&block.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::IfStatement(s) => {
-            walk_nested_statement(&s.consequent, outer_bindings, config, diagnostics);
+            walk_nested_statement(&s.consequent, outer_bindings, config, suppressions, diagnostics);
             if let Some(alt) = &s.alternate {
-                walk_nested_statement(alt, outer_bindings, config, diagnostics);
+                walk_nested_statement(alt, outer_bindings, config, suppressions, diagnostics);
             }
         }
         Statement::ForStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::ForInStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::ForOfStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::WhileStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::DoWhileStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         Statement::TryStatement(s) => {
-            walk_statements(&s.block.body, outer_bindings, config, diagnostics);
+            walk_statements(&s.block.body, outer_bindings, config, suppressions, diagnostics);
             if let Some(handler) = &s.handler {
-                walk_statements(&handler.body.body, outer_bindings, config, diagnostics);
+                walk_statements(
+                    &handler.body.body,
+                    outer_bindings,
+                    config,
+                    suppressions,
+                    diagnostics,
+                );
             }
             if let Some(finalizer) = &s.finalizer {
-                walk_statements(&finalizer.body, outer_bindings, config, diagnostics);
+                walk_statements(&finalizer.body, outer_bindings, config, suppressions, diagnostics);
             }
         }
         Statement::SwitchStatement(s) => {
             for case in &s.cases {
-                walk_statements(&case.consequent, outer_bindings, config, diagnostics);
+                walk_statements(
+                    &case.consequent,
+                    outer_bindings,
+                    config,
+                    suppressions,
+                    diagnostics,
+                );
             }
         }
         Statement::LabeledStatement(s) => {
-            lint_statement(&s.body, outer_bindings, config, diagnostics);
-            walk_nested_statement(&s.body, outer_bindings, config, diagnostics);
+            lint_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
+            walk_nested_statement(&s.body, outer_bindings, config, suppressions, diagnostics);
         }
         _ => {}
     }
@@ -97,6 +115,7 @@ fn lint_statement<'a>(
     statement: &'a Statement<'a>,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     match statement {
@@ -111,11 +130,18 @@ fn lint_statement<'a>(
                 outer_bindings,
                 config,
                 false,
+                suppressions,
                 diagnostics,
             );
         }
         Statement::VariableDeclaration(declaration) => {
-            lint_variable_declaration(declaration, outer_bindings, config, diagnostics);
+            lint_variable_declaration(
+                declaration,
+                outer_bindings,
+                config,
+                suppressions,
+                diagnostics,
+            );
         }
         Statement::ExportDefaultDeclaration(export_default) => match &export_default.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(function)
@@ -130,6 +156,7 @@ fn lint_statement<'a>(
                     outer_bindings,
                     config,
                     false,
+                    suppressions,
                     diagnostics,
                 );
             }
@@ -144,11 +171,19 @@ fn lint_statement<'a>(
                     outer_bindings,
                     config,
                     false,
+                    suppressions,
                     diagnostics,
                 );
             }
             ExportDefaultDeclarationKind::CallExpression(call) => {
-                lint_memo_or_forwardref_call(call, None, outer_bindings, config, diagnostics);
+                lint_memo_or_forwardref_call(
+                    call,
+                    None,
+                    outer_bindings,
+                    config,
+                    suppressions,
+                    diagnostics,
+                );
             }
             _ => {}
         },
@@ -166,11 +201,18 @@ fn lint_statement<'a>(
                             outer_bindings,
                             config,
                             false,
+                            suppressions,
                             diagnostics,
                         );
                     }
                     Declaration::VariableDeclaration(declaration) => {
-                        lint_variable_declaration(declaration, outer_bindings, config, diagnostics);
+                        lint_variable_declaration(
+                            declaration,
+                            outer_bindings,
+                            config,
+                            suppressions,
+                            diagnostics,
+                        );
                     }
                     _ => {}
                 }
@@ -198,6 +240,7 @@ fn lint_statement<'a>(
                             outer_bindings,
                             config,
                             false,
+                            suppressions,
                             diagnostics,
                         );
                     }
@@ -212,6 +255,7 @@ fn lint_statement<'a>(
                             outer_bindings,
                             config,
                             false,
+                            suppressions,
                             diagnostics,
                         );
                     }
@@ -221,6 +265,7 @@ fn lint_statement<'a>(
                             assign_name,
                             outer_bindings,
                             config,
+                            suppressions,
                             diagnostics,
                         );
                     }
@@ -236,6 +281,7 @@ fn lint_variable_declaration<'a>(
     declaration: &'a VariableDeclaration<'a>,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     for declarator in &declaration.declarations {
@@ -262,6 +308,7 @@ fn lint_variable_declaration<'a>(
                     outer_bindings,
                     config,
                     false,
+                    suppressions,
                     diagnostics,
                 );
             }
@@ -276,6 +323,7 @@ fn lint_variable_declaration<'a>(
                     outer_bindings,
                     config,
                     false,
+                    suppressions,
                     diagnostics,
                 );
             }
@@ -285,6 +333,7 @@ fn lint_variable_declaration<'a>(
                     binding_name,
                     outer_bindings,
                     config,
+                    suppressions,
                     diagnostics,
                 );
             }
@@ -319,6 +368,7 @@ fn lint_memo_or_forwardref_call<'a>(
     binding_name: Option<&str>,
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     if !is_memo_or_forwardref_callee(&call.callee) {
@@ -343,6 +393,7 @@ fn lint_memo_or_forwardref_call<'a>(
                 outer_bindings,
                 config,
                 true,
+                suppressions,
                 diagnostics,
             );
         }
@@ -357,6 +408,7 @@ fn lint_memo_or_forwardref_call<'a>(
                 outer_bindings,
                 config,
                 true,
+                suppressions,
                 diagnostics,
             );
         }
@@ -372,6 +424,7 @@ fn lint_function(
     outer_bindings: &FxHashMap<String, NonLocalBinding>,
     config: &ReactCompilerConfig,
     is_memo_or_forwardref_arg: bool,
+    suppressions: &[SuppressionRange],
     diagnostics: &mut Vec<CachedDiagnostic>,
 ) {
     let Some(fn_type) = should_compile_function(
@@ -392,6 +445,16 @@ fn lint_function(
         )
         .is_some()
     {
+        return;
+    }
+
+    // Check if any eslint-disable suppression range covers this function.
+    // Port of tryCompileFunction in Program.ts (lines 688-697).
+    let affecting_suppressions =
+        filter_suppressions_that_affect_function(suppressions, fallback_span);
+    if !affecting_suppressions.is_empty() {
+        let error = suppressions_to_compiler_error(&affecting_suppressions);
+        collect_compiler_error(&error, fallback_span, diagnostics);
         return;
     }
 

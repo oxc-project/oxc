@@ -70,9 +70,10 @@ pub fn validate_exhaustive_dependencies(func: &mut HIRFunction) -> Result<(), Co
         for block in func.body.blocks.values_mut() {
             for instr in &mut block.instructions {
                 if let InstructionValue::StartMemoize(ref mut v) = instr.value
-                    && invalid_memo_ids.contains(&v.manual_memo_id) {
-                        v.has_invalid_deps = true;
-                    }
+                    && invalid_memo_ids.contains(&v.manual_memo_id)
+                {
+                    v.has_invalid_deps = true;
+                }
             }
         }
     }

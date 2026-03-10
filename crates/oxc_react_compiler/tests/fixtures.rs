@@ -268,7 +268,8 @@ fn test_pipeline_runs_without_panic() {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     // Lower to HIR
     let outer_bindings = collect_import_bindings(&parser_result.program.body);
@@ -369,7 +370,8 @@ fn run_pipeline_on_source(source: &str) -> Result<(), String> {
         ReactFunctionType::Component,
         CompilerOutputMode::Client,
         EnvironmentConfig::default(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let outer_bindings = collect_import_bindings(&parser_result.program.body);
     let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
@@ -460,7 +462,8 @@ fn test_lower_fixture_pass_rate() {
             ReactFunctionType::Component,
             CompilerOutputMode::Client,
             EnvironmentConfig::default(),
-        ).unwrap();
+        )
+        .unwrap();
 
         // Catch panics from the lower step.
         let outer_bindings = collect_import_bindings(&parser_result.program.body);
@@ -1433,7 +1436,8 @@ fn run_pipeline_for_codegen_impl(
             None => continue,
         };
 
-        let env = Environment::new(fn_type, CompilerOutputMode::Client, env_config.clone()).unwrap();
+        let env =
+            Environment::new(fn_type, CompilerOutputMode::Client, env_config.clone()).unwrap();
 
         let mut hir_func = match lower(&env, fn_type, &func, outer_bindings.clone()) {
             Ok(f) => f,
