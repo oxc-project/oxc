@@ -79,6 +79,19 @@ const categories: Category[] = [
     },
   },
   {
+    name: "html-in-js",
+    sources: [
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-html"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(EDGE_CASES_DIR, "html-in-js") },
+    ],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
+    notes: {},
+  },
+  {
     name: "xxx-in-js-comment",
     sources: [
       {
@@ -94,9 +107,7 @@ const categories: Category[] = [
       { dir: join(EDGE_CASES_DIR, "xxx-in-js-comment") },
     ],
     optionSets: [{ printWidth: 80 }],
-    notes: {
-      "comment-inside.js": "html embed expressions not yet implemented",
-    },
+    notes: {},
   },
 ];
 

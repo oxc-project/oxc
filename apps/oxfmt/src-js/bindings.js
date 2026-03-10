@@ -579,8 +579,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Severity, format, jsTextToDoc, runCli } = nativeBinding
-export { Severity }
+const { format, jsTextToDoc, runCli } = nativeBinding
 export { format }
 export { jsTextToDoc }
 export { runCli }

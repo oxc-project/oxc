@@ -1,13 +1,12 @@
-use oxc_allocator::{Allocator, StringBuilder};
+use oxc_allocator::StringBuilder;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    IndentWidth,
     ast_nodes::AstNode,
     external_formatter::EmbeddedDocResult,
     format_args,
-    formatter::{FormatElement, Formatter, format_element::TextWidth, prelude::*},
+    formatter::{FormatElement, Formatter, prelude::*},
     write,
 };
 
@@ -40,7 +39,7 @@ pub(super) fn format_css_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders(ir, _))) = f
+        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, .. })) = f
             .context()
             .external_callbacks()
             .format_embedded_doc(allocator, group_id_builder, "tagged-css", &[raw])
@@ -72,7 +71,7 @@ pub(super) fn format_css_doc<'a>(
     // Phase 2: Format via the Doc→IR path
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders(ir, placeholder_count))) = f
+    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders { ir, placeholder_count, .. })) = f
         .context()
         .external_callbacks()
         .format_embedded_doc(allocator, group_id_builder, "tagged-css", &[joined])
@@ -100,7 +99,7 @@ pub(super) fn format_css_doc<'a>(
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             if !part.is_empty() {
-                                write_text_with_line_breaks(f, part, allocator, indent_width);
+                                super::write_text_with_line_breaks(f, part, allocator, indent_width);
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(&expr) = expressions.get(idx)
@@ -207,35 +206,4 @@ fn split_on_placeholders(text: &str) -> Vec<&str> {
     }
 
     result
-}
-
-/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
-///
-/// Uses `Text("\n") + ExpandParent` (= `literalline()`)
-/// instead of `hard_line_break()` to avoid adding indentation.
-///
-/// The SCSS formatter has already computed proper indentation in the text content,
-/// so we must not add extra indent from the surrounding `block_indent`.
-fn write_text_with_line_breaks<'a>(
-    f: &mut Formatter<'_, 'a>,
-    text: &str,
-    allocator: &'a Allocator,
-    indent_width: IndentWidth,
-) {
-    let mut first = true;
-    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
-    for line in text.split('\n') {
-        if !first {
-            // Emit literalline: Text("\n") + ExpandParent
-            let newline = allocator.alloc_str("\n");
-            f.write_element(FormatElement::Text { text: newline, width: TextWidth::multiline(0) });
-            f.write_element(FormatElement::ExpandParent);
-        }
-        first = false;
-        if !line.is_empty() {
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            f.write_element(FormatElement::Text { text: arena_text, width });
-        }
-    }
 }

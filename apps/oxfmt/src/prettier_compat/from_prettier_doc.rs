@@ -36,13 +36,6 @@ pub fn to_format_elements_for_template<'a>(
     };
 
     match language {
-        "tagged-css" => {
-            let doc_json = doc_jsons
-                .first()
-                .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
-            let (ir, count) = convert(doc_json, false)?;
-            Ok(EmbeddedDocResult::DocWithPlaceholders(ir, count))
-        }
         "tagged-graphql" => {
             let irs = doc_jsons
                 .iter()
@@ -52,6 +45,43 @@ pub fn to_format_elements_for_template<'a>(
                 })
                 .collect::<Result<Vec<_>, String>>()?;
             Ok(EmbeddedDocResult::MultipleDocs(irs))
+        }
+        "tagged-css" => {
+            let doc_json = doc_jsons
+                .first()
+                .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
+            let (ir, count) = convert(doc_json, false)?;
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count: count,
+                top_level_count: None,
+            })
+        }
+        "tagged-html" => {
+            let wrapper = doc_jsons
+                .first()
+                .ok_or_else(|| "Expected exactly one Doc JSON for HTML".to_string())?;
+
+            // HTML Doc JSON is wrapped: { "doc": ..., "topLevelCount": N }
+            let obj = wrapper
+                .as_object()
+                .ok_or_else(|| "Expected HTML Doc JSON to be an object".to_string())?;
+            let doc_json = obj
+                .get("doc")
+                .ok_or_else(|| "Missing 'doc' field in HTML Doc JSON".to_string())?;
+            #[expect(clippy::cast_possible_truncation)]
+            let top_level_count = obj
+                .get("topLevelCount")
+                .and_then(Value::as_u64)
+                .map(|v| v as usize);
+
+            let (ir, _) = convert(doc_json, true)?;
+            let count = count_html_placeholders(&ir);
+            Ok(EmbeddedDocResult::DocWithPlaceholders {
+                ir,
+                placeholder_count: count,
+                top_level_count,
+            })
         }
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }
@@ -444,6 +474,50 @@ fn postprocess<'a>(
     }
     ir.truncate(write);
     placeholder_count
+}
+
+/// Count `PRETTIER_HTML_PLACEHOLDER_N_C_IN_JS` patterns in the IR.
+///
+/// This is separate from `postprocess`'s CSS placeholder counting because the formats differ:
+/// - CSS: `@prettier-placeholder-N-id`
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_N_C_IN_JS`
+fn count_html_placeholders(ir: &[FormatElement<'_>]) -> usize {
+    const PREFIX: &str = "PRETTIER_HTML_PLACEHOLDER_";
+    const SUFFIX: &str = "_IN_JS";
+
+    let mut count = 0;
+    for element in ir {
+        if let FormatElement::Text { text, .. } = element {
+            let mut remaining = *text;
+            while let Some(start) = remaining.find(PREFIX) {
+                let after_prefix = &remaining[start + PREFIX.len()..];
+                let digit_end = after_prefix
+                    .bytes()
+                    .position(|b| !b.is_ascii_digit())
+                    .unwrap_or(after_prefix.len());
+                if digit_end > 0 {
+                    let after_digits = &after_prefix[digit_end..];
+                    // Skip `_{counter}`
+                    if let Some(after_underscore) = after_digits.strip_prefix('_') {
+                        let counter_end = after_underscore
+                            .bytes()
+                            .position(|b| !b.is_ascii_digit())
+                            .unwrap_or(after_underscore.len());
+                        if counter_end > 0 {
+                            let after_counter = &after_underscore[counter_end..];
+                            if let Some(rest) = after_counter.strip_prefix(SUFFIX) {
+                                count += 1;
+                                remaining = rest;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                remaining = &remaining[start + PREFIX.len()..];
+            }
+        }
+    }
+    count
 }
 
 /// Escape characters that would break template literal syntax.

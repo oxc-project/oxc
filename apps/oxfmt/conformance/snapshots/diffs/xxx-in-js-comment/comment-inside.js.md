@@ -1,7 +1,5 @@
 # comment-inside.js
 
-> html embed expressions not yet implemented
-
 ## Option 1
 
 `````json
@@ -14,32 +12,37 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -12,12 +12,12 @@
-   foo
-   /* comment */
+@@ -1,22 +1,21 @@
+ // #9274
+ html`
+   <div>
+-    ${
+-      this.set && this.set.artist
+-      /* avoid console errors if `this.set` is undefined */
++    ${this.set &&
++    this.set
++      .artist
++    /* avoid console errors if `this.set` is undefined */
+     }
+   </div>
+ `;
+ 
+-html`${
+-  foo
+-  /* comment */
++html`${foo
++/* comment */
  }`;
  html`
 -  ${
 -    foo
 -    /* comment */
--  }
-+${
-+  foo
++  ${foo
 +  /* comment */
-+}
+   }
  `;
  
  graphql`
-   ${
-@@ -61,7 +61,6 @@
-   <div>
-     ${x(
-       foo, // fg
-       bar,
--    )}
--  </div>
-+    )}</div>
- `;
 
 `````
 
@@ -49,22 +52,21 @@
 // #9274
 html`
   <div>
-    ${
-      this.set && this.set.artist
-      /* avoid console errors if `this.set` is undefined */
+    ${this.set &&
+    this.set
+      .artist
+    /* avoid console errors if `this.set` is undefined */
     }
   </div>
 `;
 
-html`${
-  foo
-  /* comment */
+html`${foo
+/* comment */
 }`;
 html`
-${
-  foo
+  ${foo
   /* comment */
-}
+  }
 `;
 
 graphql`
@@ -110,7 +112,8 @@ expr1 = html`
     ${x(
       foo, // fg
       bar,
-    )}</div>
+    )}
+  </div>
 `;
 
 `````
