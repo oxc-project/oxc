@@ -18,6 +18,7 @@ workspace = true
 
 [lib]
 test = true
+doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["bitset"] }

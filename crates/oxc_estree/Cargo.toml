@@ -16,6 +16,7 @@ description.workspace = true
 workspace = true
 
 [lib]
+doctest = false
 
 [dependencies]
 oxc_data_structures = { workspace = true, features = [
