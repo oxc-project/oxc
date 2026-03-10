@@ -802,12 +802,6 @@ fn property_access_may_have_side_effects<'a>(
         return false;
     }
 
-    // `import.meta` is a spec-defined ordinary object with null prototype.
-    // Property reads on it are always side-effect-free.
-    if matches!(object, Expression::MetaProperty(_)) {
-        return false;
-    }
-
     // Check known global property reads (e.g. Math.PI, console.log)
     if let Expression::Identifier(ident) = object
         && ctx.is_global_reference(ident)
