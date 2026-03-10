@@ -27,7 +27,7 @@ jobs:
         with:
           restore-cache: true
           cache-key: warm
-          tools: just,cargo-shear@1.9.1
+          tools: just,cargo-shear@1.10.0
           components: rustfmt
 
       - name: cargo-shear
