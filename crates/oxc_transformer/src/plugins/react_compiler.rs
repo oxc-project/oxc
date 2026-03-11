@@ -302,12 +302,14 @@ impl ReactCompiler {
 
         self.outer_bindings = collect_import_bindings(&program.body);
 
-        // Seed ProgramContext.known_referenced_names with all top-level binding
-        // names so that ProgramContext::new_uid avoids collisions with real scope
-        // bindings. This matches upstream Imports.ts which receives the program
-        // scope and checks it for existing names.
-        let root_scope_id = ctx.scoping().root_scope_id();
-        for (name, _) in ctx.scoping().get_bindings(root_scope_id) {
+        // Seed ProgramContext.known_referenced_names with all symbol names and
+        // unresolved references so that ProgramContext::new_uid avoids collisions.
+        // This mirrors Babel's `scope.generateUidIdentifier()` which checks
+        // bindings, globals, AND references in the scope hierarchy.
+        for name in ctx.scoping().symbol_names() {
+            self.program_context.add_reference(name);
+        }
+        for (name, _) in ctx.scoping().root_unresolved_references() {
             self.program_context.add_reference(name);
         }
 
@@ -3876,11 +3878,28 @@ fn assign_scope_ids_to_statement(
 ) {
     match stmt {
         Statement::FunctionDeclaration(f) => {
-            // For outlined functions (which have no scope_id yet), create a new scope.
+            // For outlined functions (which have no scope_id yet), create a new scope
+            // and register the function name as a symbol in the parent scope.
             if f.scope_id.get().is_none() {
                 let scope_id =
                     ctx.create_child_scope(parent_scope_id, ScopeFlags::Function | ScopeFlags::Top);
                 f.scope_id.set(Some(scope_id));
+
+                // Create a symbol for the function name in the parent (root) scope.
+                // In Babel, `pushContainer`/`insertAfter` handles scope registration
+                // automatically; we must do it manually here.
+                if let Some(id) = &f.id {
+                    let symbol_id = ctx.scoping_mut().create_symbol(
+                        SPAN,
+                        id.name,
+                        SymbolFlags::Function,
+                        parent_scope_id,
+                        NodeId::DUMMY,
+                    );
+                    ctx.scoping_mut().add_binding(parent_scope_id, id.name, symbol_id);
+                    id.symbol_id.set(Some(symbol_id));
+                }
+
                 if let Some(body) = &mut f.body {
                     assign_scope_ids_to_function_body(body, scope_id, ctx);
                 }

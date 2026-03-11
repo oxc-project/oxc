@@ -641,6 +641,40 @@ describe("react-compiler e2e", () => {
     });
   });
 
+  describe("generated names avoid global references", () => {
+    test("generated names do not shadow global references", () => {
+      // _temp is used as a global reference
+      const source = `
+        const result = _temp(42);
+        export function Component() {
+          const [x, setX] = useState(0);
+          return <div onClick={() => setX(x + 1)}>{result}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // The compiler should NOT generate a variable called _temp since it's already used
+      // Check that no `let _temp` declaration appears (it should be _temp2 or similar)
+      expect(result.code).not.toMatch(/\blet _temp[\s;=]/);
+    });
+
+    test("generated names avoid multiple unresolved globals", () => {
+      const source = `
+        _temp;
+        _temp2;
+        export function Component() {
+          const [x, setX] = useState(0);
+          return <div onClick={() => setX(x + 1)}>{x}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Neither _temp nor _temp2 should be generated as declarations
+      expect(result.code).not.toMatch(/\blet _temp[\s;=]/);
+      expect(result.code).not.toMatch(/\blet _temp2[\s;=]/);
+    });
+  });
+
   describe("unique identifier generation across functions", () => {
     test("multiple functions should not produce duplicate _temp names", () => {
       const source = `
@@ -880,6 +914,54 @@ describe("react-compiler e2e", () => {
       `;
       const result = compileWithReactCompiler(source);
       expect(result.errors).toEqual([]);
+      expect(result.code).toContain("_jsx");
+    });
+  });
+
+  describe("outlined functions", () => {
+    test("outlined callback function is inserted as top-level FunctionDeclaration", () => {
+      // When the compiler outlines a callback (e.g., from `.map()`), it creates
+      // a new top-level FunctionDeclaration. The BindingIdentifier for the function
+      // name must have a symbol_id so downstream transforms work correctly.
+      const source = `
+        function Component(props) {
+          return (
+            <div>
+              {props.items.map(item => (
+                <Stringify key={item.id} item={item.name} />
+              ))}
+            </div>
+          );
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // The compiler should outline the arrow function into a top-level function
+      expect(result.code).toContain("function _temp");
+      // The compiled body should reference the outlined function
+      expect(result.code).toContain(".map(_temp)");
+    });
+
+    test("outlined function output compiles without undefined references", () => {
+      // Verify the output is syntactically valid and the outlined function
+      // is properly declared before use.
+      const source = `
+        import {Stringify} from 'shared-runtime';
+        function Component(props) {
+          return (
+            <div>
+              {props.items.map(item => (
+                <Stringify key={item.id} item={item.name} />
+              ))}
+            </div>
+          );
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Outlined function should appear as a top-level function declaration
+      expect(result.code).toMatch(/^function _temp/m);
+      // The function should contain JSX (the outlined body)
       expect(result.code).toContain("_jsx");
     });
   });
