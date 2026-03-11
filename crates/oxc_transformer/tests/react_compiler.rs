@@ -13,6 +13,30 @@ use oxc_transformer::{
 ///
 /// Parses as JSX, runs the transformer with JSX automatic runtime + React Compiler,
 /// and returns the codegen output.
+fn transform_react_compiler_tsx(source: &str, compiler_opts: ReactCompilerOptions) -> String {
+    let source_type = SourceType::tsx();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    let mut program = ret.program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let options = TransformOptions {
+        jsx: JsxOptions { runtime: JsxRuntime::Automatic, ..JsxOptions::default() },
+        plugins: PluginsOptions {
+            react_compiler: Some(compiler_opts),
+            ..PluginsOptions::default()
+        },
+        ..TransformOptions::default()
+    };
+    let ret = Transformer::new(&allocator, Path::new("test.tsx"), &options)
+        .build_with_scoping(scoping, &mut program);
+    let _ = ret.errors;
+    Codegen::new()
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+        .build(&program)
+        .code
+}
+
 fn transform_react_compiler(source: &str, compiler_opts: ReactCompilerOptions) -> String {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
@@ -556,5 +580,80 @@ const Foo = ({ a }) => {
     assert!(
         code.contains("Foo =") && code.contains("Bar ="),
         "Expected both Foo and Bar in output.\nOutput:\n{code}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Arrow functions inside .map() callbacks returning JSX
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_arrow_in_map_with_jsx() {
+    // Reproduces the scope_id panic: the compiled codegen creates inner
+    // ArrowFunctionExpression nodes (from FunctionExpression lowering) that
+    // lack a scope_id. When the traverse later walks them it panics on
+    // `.get().unwrap()` in walk_arrow_function_expression.
+    let source = r#"
+import { memo } from 'react';
+export default memo(function EffectTitle({ effect }) {
+    const players = effect.players
+        ? [...effect.players].map((id) => <PlayerIcon id={id} key={id} />)
+        : null;
+    return <div>{players}</div>;
+});
+"#;
+    let code = transform_react_compiler(source, default_enabled_opts());
+    // Should compile without panicking; output should contain JSX transform
+    assert!(
+        code.contains("_jsx") || code.contains("jsx("),
+        "Expected JSX runtime calls in output, got:\n{code}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Arrow functions with TypeScript type predicates inside compiled functions
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_tsx_arrow_with_type_predicate() {
+    // EffectTitle.tsx pattern: arrow function with TS type predicate in .find()
+    // plus arrow in .map() returning JSX, inside a memo-wrapped component.
+    let source = r#"
+import { memo } from 'react';
+
+type GameEndCondition = { type: 'GameEnd'; value: number };
+type OptionalObjectiveCondition = { type: 'OptionalObjective'; value: number };
+type Condition = GameEndCondition | OptionalObjectiveCondition | { type: string };
+
+interface Effect {
+    players?: Set<number>;
+    conditions?: Condition[];
+}
+
+export default memo(function EffectTitle({ effect, trigger }: { effect: Effect; trigger: string }) {
+    const players = effect.players
+        ? [...effect.players].map((id) => <PlayerIcon id={id} key={id} />)
+        : null;
+
+    if (trigger === 'GameEnd' || trigger === 'OptionalObjective') {
+        const condition = effect.conditions?.find(
+            (condition): condition is GameEndCondition | OptionalObjectiveCondition =>
+                condition.type === trigger,
+        );
+        return (
+            <div>
+                {condition && <span>{condition.type}</span>}
+                {players}
+            </div>
+        );
+    }
+
+    return <div>{trigger}{players}</div>;
+});
+"#;
+    let code = transform_react_compiler_tsx(source, default_enabled_opts());
+    assert!(
+        code.contains("_jsx") || code.contains("jsx("),
+        "Expected JSX runtime calls in output, got:\n{code}"
     );
 }
