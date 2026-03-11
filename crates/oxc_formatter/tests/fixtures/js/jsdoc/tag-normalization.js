@@ -27,3 +27,9 @@ const e = {};
  * @exception {Error} If something fails
  */
 function f() {}
+
+/**
+ * @template T
+ * @typedef {Object} Container
+ * @property {T} value
+ */

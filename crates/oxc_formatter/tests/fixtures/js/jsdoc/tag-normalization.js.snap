@@ -32,6 +32,12 @@ const e = {};
  */
 function f() {}
 
+/**
+ * @template T
+ * @typedef {Object} Container
+ * @property {T} value
+ */
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -54,6 +60,12 @@ const e = {};
 /** @throws {Error} If something fails */
 function f() {}
 
+/**
+ * @template T
+ * @typedef {Object} Container
+ * @property {T} value
+ */
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -74,5 +86,11 @@ const e = {};
 
 /** @throws {Error} If something fails */
 function f() {}
+
+/**
+ * @template T
+ * @typedef {Object} Container
+ * @property {T} value
+ */
 
 ===================== End =====================

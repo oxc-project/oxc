@@ -235,7 +235,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     // when coming from a different tag kind (but not from @import)
                     matches!(normalized_kind, "typedef" | "callback")
                         && prev_normalized_kind
-                            .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import"))
+                            .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import" | "template"))
                 };
 
                 if should_separate && !self.content_lines.last_is_empty() {
@@ -481,6 +481,16 @@ pub(super) fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> S
 /// Matches upstream's `TAGS_PEV_FORMAT_DESCRIPTION` exactly:
 /// borrows, default, defaultValue, import, memberof, module, see.
 fn should_skip_capitalize(tag_kind: &str) -> bool {
+    matches!(
+        tag_kind,
+        "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
+    )
+}
+
+/// Tags whose descriptions should NOT have line wrapping applied.
+/// Matches upstream's `TAGS_PEV_FORMATE_DESCRIPTION` list (roles.ts:126-134).
+/// These tags skip description formatting entirely (no wrapping, no capitalization).
+pub(super) fn should_skip_description_formatting(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
         "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
