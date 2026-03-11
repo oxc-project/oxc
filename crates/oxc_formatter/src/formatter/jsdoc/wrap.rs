@@ -159,9 +159,10 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
                 }
                 i += 1;
             }
-            // Include trailing punctuation (`.`, `,`, `;`, `:`, `!`, `?`) as part of the token
-            // This prevents wrapping from splitting `{@link Foo}.` into separate lines
-            while i < len && matches!(bytes[i], b'.' | b',' | b';' | b':' | b'!' | b'?') {
+            // Include trailing non-whitespace text as part of the {@link} token.
+            // This prevents wrapping from splitting `{@link collect}ed` into
+            // `{@link collect} ed` — the suffix must stay attached.
+            while i < len && !bytes[i].is_ascii_whitespace() {
                 i += 1;
             }
             tokens.push(&text[start..i]);

@@ -12,3 +12,8 @@ function longParamDesc(name) {}
  * Short.
  */
 function shortDesc() {}
+
+/**
+ * @returns The {@link collect}ed values from the array
+ */
+function collectValues() {}
