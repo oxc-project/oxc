@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * @param {string | number | boolean | null | undefined | object | symbol} value - The value
+ */
+function longUnion(value) {}
+
+/**
+ * @example
+ * const x = 1;
+ * const y = 2;
+ */
+function withExample() {}
+
+==================== Output ====================
+----------------------------------------------
+{ jsdoc: true, printWidth: 80, useTabs: true }
+----------------------------------------------
+/**
+ * @param {string | number | boolean | null | undefined | object | symbol} value
+ * 	The value
+ */
+function longUnion(value) {}
+
+/**
+ * @example
+ * 	const x = 1;
+ * 	const y = 2;
+ */
+function withExample() {}
+
+-----------------------------------------------
+{ jsdoc: true, printWidth: 100, useTabs: true }
+-----------------------------------------------
+/** @param {string | number | boolean | null | undefined | object | symbol} value - The value */
+function longUnion(value) {}
+
+/**
+ * @example
+ * 	const x = 1;
+ * 	const y = 2;
+ */
+function withExample() {}
+
+===================== End =====================
