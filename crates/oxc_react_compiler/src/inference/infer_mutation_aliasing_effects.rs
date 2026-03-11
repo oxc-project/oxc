@@ -759,9 +759,6 @@ pub fn infer_mutation_aliasing_effects(
     // The queue function compares NEW outgoing state against OLD incoming state to
     // detect whether re-processing is needed.
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
-    // Map of blocks to the incoming state (after merge/phis, before instructions).
-    // Used for effect annotation replay to compute per-instruction state.
-    let mut incoming_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     // Pending incoming states for each block. Merged incrementally as predecessors complete.
     let mut queued_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     queued_states.insert(func.body.entry, initial_state);
@@ -798,9 +795,6 @@ pub fn infer_mutation_aliasing_effects(
             for phi in &block.phis {
                 state.infer_phi(phi);
             }
-
-            // Store the incoming state (after phis, before instructions) for effect annotation.
-            incoming_states.insert(block_id, state.clone());
 
             // Process instructions.
             for instr in &block.instructions {
@@ -871,13 +865,18 @@ pub fn infer_mutation_aliasing_effects(
     // (infer_mutation_aliasing_ranges) still process them correctly.
     let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
-        let Some(block) = func.body.blocks.get_mut(&block_id) else {
-            continue;
-        };
-        if let Some(incoming_state) = incoming_states.get(&block_id) {
-            // Replay instructions to build per-instruction state.
-            // incoming_state already has phis processed.
-            let mut replay_state = incoming_state.clone();
+        if let Some(pre_phi_state) = states_by_block.get(&block_id) {
+            // Re-derive post-phi state from pre-phi state (cheap value merging).
+            let mut replay_state = pre_phi_state.clone();
+            if let Some(block_ref) = func.body.blocks.get(&block_id) {
+                for phi in &block_ref.phis {
+                    replay_state.infer_phi(phi);
+                }
+            }
+            // Now get mutable block for effect annotation.
+            let Some(block) = func.body.blocks.get_mut(&block_id) else {
+                continue;
+            };
             for instr in &mut block.instructions {
                 // Compute effects using the state BEFORE this instruction
                 let raw_effects = compute_instruction_effects(
@@ -996,6 +995,9 @@ pub fn infer_mutation_aliasing_effects(
             }
         } else {
             // Unreachable block: set empty effects so downstream passes don't skip
+            let Some(block) = func.body.blocks.get_mut(&block_id) else {
+                continue;
+            };
             for instr in &mut block.instructions {
                 if instr.effects.is_none() {
                     instr.effects = Some(Vec::new());
