@@ -13,6 +13,8 @@
 /// 2. Abstract interpretation with fixpoint iteration
 /// 3. Track abstract value kinds and aliasing through the CFG
 /// 4. Apply/rewrite effects based on abstract state
+use std::rc::Rc;
+
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -72,7 +74,7 @@ struct InferenceState {
     /// Map from identifier ID to the FunctionExpressionValue it was defined as.
     /// Used to resolve Apply effects for locally-defined functions with known
     /// aliasing effects (port of TS `state.values(place)` returning FunctionExpression).
-    function_values: FxHashMap<IdentifierId, FunctionExpressionValue>,
+    function_values: FxHashMap<IdentifierId, Rc<FunctionExpressionValue>>,
     /// Whether to transitively freeze FunctionExpression context captures.
     /// Gated by `enablePreserveExistingMemoizationGuarantees || enableTransitivelyFreezeFunctionExpressions`.
     transitively_freeze_function_expressions: bool,
@@ -293,7 +295,7 @@ impl InferenceState {
     fn infer_phi(&mut self, phi: &Phi) {
         let phi_id = phi.place.identifier.id;
         let mut merged_value: Option<AbstractValue> = None;
-        let mut merged_fn_val: Option<FunctionExpressionValue> = None;
+        let mut merged_fn_val: Option<Rc<FunctionExpressionValue>> = None;
 
         for operand in phi.operands.values() {
             let op_id = operand.identifier.id;
@@ -1094,7 +1096,7 @@ fn infer_instruction_effects(
             } else {
                 state.define(&instr.lvalue, AbstractValue::frozen(FxHashSet::default()));
             }
-            state.function_values.insert(lvalue_id, v.clone());
+            state.function_values.insert(lvalue_id, Rc::new(v.clone()));
         }
         InstructionValue::ObjectMethod(v) => {
             let is_mutable = is_function_expression_mutable(state, &v.lowered_func.func);
