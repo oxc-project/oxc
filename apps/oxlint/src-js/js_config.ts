@@ -105,13 +105,18 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
 
-        if (!isDefineConfig(config)) {
-          throw new Error(
-            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-          );
-        }
+        // Vite config files (e.g. `vite.config.ts`) are not Oxlint configs,
+        // so skip `defineConfig()` and `extends` validation.
+        // The `.lint` field extraction is handled on the Rust side.
+        if (!path.endsWith("/vite.config.ts")) {
+          if (!isDefineConfig(config)) {
+            throw new Error(
+              `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
+            );
+          }
 
-        validateConfigExtends(config as object);
+          validateConfigExtends(config as object);
+        }
 
         return { path, config };
       }),

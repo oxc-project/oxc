@@ -12,7 +12,9 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::{
+    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+};
 
 #[cfg(feature = "napi")]
 use crate::js_config;
@@ -485,6 +487,12 @@ impl<'a> ConfigLoader<'a> {
         }
         if jsonc_exists {
             return Oxlintrc::from_file(&jsonc_path).map(Some);
+        }
+
+        // Fallback: check for vite.config.ts with .lint field (lowest priority)
+        let vite_path = dir.join(VITE_CONFIG_NAME);
+        if vite_path.is_file() {
+            return self.load_root_js_config(&vite_path).map(Some);
         }
 
         Ok(None)

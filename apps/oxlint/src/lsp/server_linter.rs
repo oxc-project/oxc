@@ -494,6 +494,7 @@ impl Tool for ServerLinter {
                     "**/.oxlintrc.json".to_string(),
                     "**/.oxlintrc.jsonc".to_string(),
                     "**/oxlint.config.ts".to_string(),
+                    "**/vite.config.ts".to_string(),
                 ]
             }
             Some(v) => vec![v.to_string()],
@@ -1090,10 +1091,11 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -1106,10 +1108,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -1131,12 +1134,13 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
-            assert_eq!(patterns.len(), 4);
+            // The `.oxlintrc.json` extends `./lint.json` -> 5 watchers (json, jsonc, ts, vite, lint.json)
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "lint.json".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
+            assert_eq!(patterns[4], "lint.json".to_string());
         }
 
         #[test]
@@ -1164,11 +1168,12 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
+            assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1219,11 +1224,12 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/vite.config.ts".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
         }
     }
 }

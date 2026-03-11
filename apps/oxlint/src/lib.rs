@@ -59,6 +59,9 @@ static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
 const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
+/// Vite config file that may contain oxlint config under a `.lint` field.
+const VITE_CONFIG_NAME: &str = "vite.config.ts";
+const VITE_OXLINT_CONFIG_FIELD: &str = "lint";
 
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///

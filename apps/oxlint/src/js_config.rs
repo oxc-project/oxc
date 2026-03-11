@@ -5,6 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::Oxlintrc;
 
 use crate::run::JsLoadJsConfigsCb;
+use crate::{VITE_CONFIG_NAME, VITE_OXLINT_CONFIG_FIELD};
 
 /// Callback type for loading JavaScript/TypeScript config files.
 pub type JsConfigLoaderCb =
@@ -118,7 +119,27 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                 (Vec::with_capacity(count), Vec::new()),
                 |(mut configs, mut errors), entry| {
                     let path = PathBuf::from(&entry.path);
-                    let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
+
+                    // Vite config files: extract the `.lint` field
+                    let is_vite_config = path
+                        .file_name()
+                        .and_then(|f| f.to_str())
+                        .is_some_and(|name| name == VITE_CONFIG_NAME);
+                    let config_value = if is_vite_config {
+                        if let Some(v) = entry.config.get(VITE_OXLINT_CONFIG_FIELD).cloned() {
+                            v
+                        } else {
+                            errors.push(OxcDiagnostic::error(format!(
+                                "Expected a `{VITE_OXLINT_CONFIG_FIELD}` field in the default export of {}",
+                                entry.path
+                            )));
+                            return (configs, errors);
+                        }
+                    } else {
+                        entry.config
+                    };
+
+                    let mut oxlintrc = match parse_js_oxlintrc(config_value) {
                         Ok(config) => config,
                         Err(err) => {
                             errors.push(
