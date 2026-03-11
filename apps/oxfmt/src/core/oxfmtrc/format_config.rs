@@ -621,7 +621,7 @@ pub struct SortTailwindcssConfig {
 /// - `null` values in overlay reset the field to default (via `Option<T>` → `None`)
 ///
 /// All Prettier options are flat, but some our options are nested.
-fn json_deep_merge(base: Value, overlay: Value) -> Value {
+pub(crate) fn json_deep_merge(base: Value, overlay: Value) -> Value {
     match (base, overlay) {
         (Value::Object(mut base_map), Value::Object(overlay_map)) => {
             for (key, overlay_value) in overlay_map {

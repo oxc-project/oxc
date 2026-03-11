@@ -16,8 +16,8 @@ use super::js_config::JsConfigLoaderCb;
 use super::{
     FormatFileStrategy,
     oxfmtrc::{
-        EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
-        finalize_external_options, sync_external_options, to_oxfmt_options,
+        EndOfLineConfig, FormatConfig, OxfmtOptions, Oxfmtrc, finalize_external_options,
+        json_deep_merge, sync_external_options, to_oxfmt_options,
     },
     utils,
 };
@@ -212,6 +212,16 @@ pub struct ConfigResolver {
     editorconfig: Option<EditorConfig>,
 }
 
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RawOxfmtOverrideConfig {
+    files: Vec<String>,
+    #[serde(default)]
+    exclude_files: Option<Vec<String>>,
+    #[serde(default)]
+    options: Value,
+}
+
 impl ConfigResolver {
     /// Shared internal constructor used by both `from_json_config()` (JSON/JSONC)
     /// and `from_config()` (JS/TS config evaluated externally).
@@ -339,8 +349,21 @@ impl ConfigResolver {
 
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
+        let raw_overrides: Option<Vec<RawOxfmtOverrideConfig>> = self
+            .raw_config
+            .get("overrides")
+            .cloned()
+            .map(serde_json::from_value)
+            .transpose()
+            .map_err(|err| err.to_string())?;
+        if let Some(overrides) = &raw_overrides {
+            for override_config in overrides {
+                let _: FormatConfig = serde_json::from_value(override_config.options.clone())
+                    .map_err(|err| err.to_string())?;
+            }
+        }
         self.oxfmtrc_overrides =
-            oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
+            raw_overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
 
         let mut format_config = oxfmtrc.format_config;
 
@@ -410,15 +433,19 @@ impl ConfigResolver {
 
         // Slow path: reconstruct `FormatConfig` to apply overrides
         // Overrides are merged at `FormatConfig` level, not `OxfmtOptions` level
-        let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
+        let base_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
+        let mut format_config_value =
+            serde_json::to_value(base_config).expect("FormatConfig serialization should not fail");
 
         // Apply oxfmtrc overrides first (explicit settings)
         if let Some(overrides) = &self.oxfmtrc_overrides {
             for options in overrides.get_matching(path) {
-                format_config.merge(options);
+                format_config_value = json_deep_merge(format_config_value, options.clone());
             }
         }
+        let mut format_config: FormatConfig = serde_json::from_value(format_config_value)
+            .expect("If this fails, there is an issue with override values");
         // Apply `.editorconfig` as fallback (fills in unset fields only)
         if let Some(ec) = &self.editorconfig {
             let props = ec.resolve(path);
@@ -453,7 +480,7 @@ struct OxfmtrcOverrides {
 }
 
 impl OxfmtrcOverrides {
-    fn new(overrides: Vec<OxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
+    fn new(overrides: Vec<RawOxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
         // Normalize glob patterns by adding `**/` prefix to patterns without `/`.
         // This matches ESLint/Prettier behavior.
         let normalize_patterns = |patterns: Vec<String>| {
@@ -487,7 +514,7 @@ impl OxfmtrcOverrides {
     }
 
     /// Get all matching override options for a given path.
-    fn get_matching(&self, path: &Path) -> impl Iterator<Item = &FormatConfig> + '_ {
+    fn get_matching(&self, path: &Path) -> impl Iterator<Item = &Value> + '_ {
         let relative = self.relative_path(path);
         self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative)).map(|e| &e.options)
     }
@@ -515,7 +542,7 @@ impl OxfmtrcOverrides {
 struct OxfmtrcOverrideEntry {
     files: Vec<String>,
     exclude_files: Vec<String>,
-    options: FormatConfig,
+    options: Value,
 }
 
 // ---
@@ -623,5 +650,39 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use serde_json::json;
+
+    use super::ConfigResolver;
+
+    #[test]
+    fn sort_imports_can_be_disabled_in_overrides_with_null() {
+        let raw_config = json!({
+            "semi": false,
+            "sortImports": {},
+            "overrides": [
+                {
+                    "files": ["pages/**"],
+                    "options": {
+                        "sortImports": null
+                    }
+                }
+            ]
+        });
+
+        let mut resolver = ConfigResolver::new(raw_config, None, None);
+        resolver.build_and_validate().unwrap();
+
+        let (page_options, _) = resolver.resolve_options(Path::new("pages/index.ts"));
+        assert_eq!(page_options.format_options.sort_imports, None);
+
+        let (other_options, _) = resolver.resolve_options(Path::new("src/index.ts"));
+        assert!(other_options.format_options.sort_imports.is_some());
     }
 }
