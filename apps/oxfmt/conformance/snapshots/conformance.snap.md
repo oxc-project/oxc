@@ -44,7 +44,7 @@
 
 ## css-in-js
 
-### Option 1: 16/17 (94.12%)
+### Option 1: 17/18 (94.44%)
 
 ```json
 {"printWidth":80}
@@ -54,7 +54,7 @@
 | :--- | :--- |
 | [styled-components.js](diffs/css-in-js/styled-components.js.md) | `Xxx.extend` not recognized as tag |
 
-### Option 2: 16/17 (94.12%)
+### Option 2: 17/18 (94.44%)
 
 ```json
 {"printWidth":100}
