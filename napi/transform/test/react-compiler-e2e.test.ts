@@ -755,6 +755,47 @@ describe("react-compiler e2e", () => {
     });
   });
 
+  describe("JSX closing element with compiler-generated references", () => {
+    test("PascalCase component with children does not panic", () => {
+      const source = `
+        function App() {
+          return <Wrapper>children</Wrapper>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("Wrapper");
+    });
+
+    test("JSX member expression with children does not panic", () => {
+      const source = `
+        function App() {
+          return <motion.div>children</motion.div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("motion.div");
+    });
+
+    test("nested PascalCase components with children do not panic", () => {
+      const source = `
+        function App({ items }) {
+          return (
+            <Layout>
+              <Header>
+                <Title>Hello</Title>
+              </Header>
+              <Content>{items}</Content>
+            </Layout>
+          );
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+    });
+  });
+
   describe("JSX output correctness", () => {
     test("jsx runtime import is added", () => {
       const source = `
