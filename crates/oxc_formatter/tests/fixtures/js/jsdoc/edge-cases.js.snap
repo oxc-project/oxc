@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 236
 ---
 ==================== Input ====================
 /**
@@ -45,6 +46,19 @@ function seeUrl() {}
  */
 function internalFunction() {}
 
+/**
+ * When the user selects an <option> from the <select> element,
+ * the value is updated accordingly.
+ */
+function handleSelect() {}
+
+/**
+ * Renders a
+ * <div>
+ * element with the given props.
+ */
+function renderDiv() {}
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -84,6 +98,15 @@ function seeUrl() {}
  */
 function internalFunction() {}
 
+/**
+ * When the user selects an <option> from the <select> element, the value is
+ * updated accordingly.
+ */
+function handleSelect() {}
+
+/** Renders a <div> element with the given props. */
+function renderDiv() {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -117,5 +140,11 @@ function seeUrl() {}
  *   This function is internal and should not be used directly.
  */
 function internalFunction() {}
+
+/** When the user selects an <option> from the <select> element, the value is updated accordingly. */
+function handleSelect() {}
+
+/** Renders a <div> element with the given props. */
+function renderDiv() {}
 
 ===================== End =====================
