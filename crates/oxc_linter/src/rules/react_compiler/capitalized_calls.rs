@@ -25,4 +25,55 @@ impl Rule for CapitalizedCalls {
 }
 
 #[test]
-fn test() {}
+fn test() {
+    use crate::tester::Tester;
+    let pass = vec![
+        // Valid: capitalized component invoked via JSX, not called directly
+        r#"
+        import Child from './Child';
+        function Component() {
+          return <Child />;
+        }
+        "#,
+        // Cross-category: conditional hook triggers Hooks, not CapitalizedCalls
+        r#"
+        function useConditional() {
+          if (cond) {
+            useConditionalHook();
+          }
+        }
+        "#,
+    ];
+    let fail = vec![
+        // Direct capitalized call
+        r#"
+        import Child from './Child';
+        function Component() {
+          return <>
+            {Child()}
+          </>;
+        }
+        "#,
+        // Method call with capitalized name
+        r#"
+        import myModule from './MyModule';
+        function Component() {
+          return <>
+            {myModule.Child()}
+          </>;
+        }
+        "#,
+        // Multiple capitalized calls
+        r#"
+        import Child1 from './Child1';
+        import MyModule from './MyModule';
+        function Component() {
+          return <>
+            {Child1()}
+            {MyModule.Child2()}
+          </>;
+        }
+        "#,
+    ];
+    Tester::new(CapitalizedCalls::NAME, CapitalizedCalls::PLUGIN, pass, fail).test_and_snapshot();
+}

@@ -25,4 +25,35 @@ impl Rule for Refs {
 }
 
 #[test]
-fn test() {}
+fn test() {
+    use crate::tester::Tester;
+    let pass = vec![
+        // Valid: ref access inside useEffect is fine
+        r#"
+        function Component() {
+          const ref = useRef(null);
+          useEffect(() => { console.log(ref.current); }, []);
+          return <div />;
+        }
+        "#,
+        // Cross-category: conditional hook triggers Hooks, not Refs
+        r#"
+        function useConditional() {
+          if (cond) {
+            useConditionalHook();
+          }
+        }
+        "#,
+    ];
+    let fail = vec![
+        // Ref access during render
+        r#"
+        function Component(props) {
+          const ref = useRef(null);
+          const value = ref.current;
+          return value;
+        }
+        "#,
+    ];
+    Tester::new(Refs::NAME, Refs::PLUGIN, pass, fail).test_and_snapshot();
+}
