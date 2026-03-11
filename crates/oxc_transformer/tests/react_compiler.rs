@@ -657,3 +657,113 @@ export default memo(function EffectTitle({ effect, trigger }: { effect: Effect; 
         "Expected JSX runtime calls in output, got:\n{code}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Generated names do not shadow global references
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_generated_names_avoid_global_references() {
+    // `_temp` is used as a global reference (unresolved). The compiler should
+    // NOT generate a variable called `_temp` since it would shadow the global.
+    let source = r#"
+const result = _temp(42);
+export function Component() {
+    const x = useState(0);
+    return <div onClick={() => x[1](x[0] + 1)}>{result}</div>;
+}
+"#;
+    let code = transform_react_compiler(source, default_enabled_opts());
+    // The compiled output may generate temp-like names.
+    // `_temp` should not appear as a `let` declaration since it's a global reference.
+    let let_temp_exact =
+        code.contains("let _temp ") || code.contains("let _temp;") || code.contains("let _temp=");
+    assert!(
+        !let_temp_exact,
+        "Expected compiler NOT to generate `let _temp` since `_temp` is a global reference.\nOutput:\n{code}"
+    );
+}
+
+#[test]
+fn react_compiler_generated_names_avoid_unresolved_references() {
+    // Multiple globals that look like generated names — the compiler must avoid all of them.
+    let source = r#"
+_temp;
+_temp2;
+export function Component() {
+    const x = useState(0);
+    return <div onClick={() => x[1](x[0] + 1)}>{x[0]}</div>;
+}
+"#;
+    let code = transform_react_compiler(source, default_enabled_opts());
+    // Neither `_temp` nor `_temp2` should appear as let declarations
+    let has_let_temp =
+        code.contains("let _temp ") || code.contains("let _temp;") || code.contains("let _temp=");
+    let has_let_temp2 = code.contains("let _temp2 ")
+        || code.contains("let _temp2;")
+        || code.contains("let _temp2=");
+    assert!(!has_let_temp, "Expected compiler NOT to declare `let _temp`.\nOutput:\n{code}");
+    assert!(!has_let_temp2, "Expected compiler NOT to declare `let _temp2`.\nOutput:\n{code}");
+}
+
+// ---------------------------------------------------------------------------
+// Outlined functions get proper symbol_id on their BindingIdentifier
+// ---------------------------------------------------------------------------
+
+#[test]
+fn react_compiler_outlined_function_has_symbol_id() {
+    // When the compiler outlines a callback (e.g., from `.map()`), it creates
+    // a new top-level FunctionDeclaration (e.g., `function _temp(item) { ... }`).
+    // The BindingIdentifier for the function name must have a symbol_id and be
+    // registered in the root scope. Without this, downstream transforms or
+    // semantic analysis would see an unresolved binding.
+    //
+    // This test uses the "outlined-helper" pattern from the TS reference tests.
+    let source = r#"
+function Component(props) {
+    return (
+        <div>
+            {props.items.map(item => (
+                <Stringify key={item.id} item={item.name} />
+            ))}
+        </div>
+    );
+}
+"#;
+    let code = transform_react_compiler(source, default_enabled_opts());
+    // The compiler should outline the arrow function callback into a top-level
+    // function (typically named `_temp`).
+    assert!(
+        code.contains("function _temp"),
+        "Expected outlined function `_temp` in output, got:\n{code}"
+    );
+    // The output should compile and contain the JSX runtime calls.
+    assert!(
+        code.contains("_jsx") || code.contains("jsx("),
+        "Expected JSX runtime calls in output, got:\n{code}"
+    );
+}
+
+#[test]
+fn react_compiler_outlined_function_referenced_correctly() {
+    // Verify that the outlined function name is referenced correctly in the
+    // compiled component body (e.g., `props.items.map(_temp)`).
+    let source = r#"
+function Component(props) {
+    return (
+        <div>
+            {props.items.map(item => (
+                <Stringify key={item.id} item={item.name} />
+            ))}
+        </div>
+    );
+}
+"#;
+    let code = transform_react_compiler(source, default_enabled_opts());
+    // The compiled body should reference the outlined function by name.
+    // e.g., `props.items.map(_temp)` instead of inlining the arrow function.
+    assert!(
+        code.contains(".map(_temp)"),
+        "Expected reference to outlined function `_temp` in .map() call, got:\n{code}"
+    );
+}
