@@ -860,17 +860,27 @@ fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
 
     while i < len {
         if bytes[i] == b'\'' {
-            // Convert single-quoted string to double-quoted
+            // Convert single-quoted string to double-quoted, escaping inner double quotes
             result.push('"');
             i += 1;
             while i < len && bytes[i] != b'\'' {
                 if bytes[i] == b'\\' && i + 1 < len {
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
+                    // If the escape is `\'`, remove it (no longer needed inside double quotes)
+                    if bytes[i + 1] == b'\'' {
+                        result.push('\'');
+                        i += 2;
+                    } else {
+                        let ch = type_str[i..].chars().next().unwrap();
+                        result.push(ch);
+                        i += ch.len_utf8();
+                        let ch = type_str[i..].chars().next().unwrap();
+                        result.push(ch);
+                        i += ch.len_utf8();
+                    }
+                } else if bytes[i] == b'"' {
+                    // Escape inner double quotes
+                    result.push_str("\\\"");
+                    i += 1;
                 } else {
                     let ch = type_str[i..].chars().next().unwrap();
                     result.push(ch);
