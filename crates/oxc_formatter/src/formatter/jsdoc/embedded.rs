@@ -243,21 +243,17 @@ pub(super) fn format_type_via_formatter(
     let result = formatted.get("type __t = ".len()..)?;
 
     // Upstream cleanup: strip leading whitespace, trailing `;` and newlines,
-    // leading `|`, then trim.
+    // leading `|`, then trim. Matches upstream's regex:
+    //   .replace(/^\s*/g, "")     — strip leading whitespace
+    //   .replace(/[;\n]*$/g, "")  — strip trailing `;` and newlines
+    //   .replace(/^\|/g, "")      — strip leading pipe
+    //   .trim()
+    // Interior newlines are preserved — the TS formatter's multi-line output
+    // for complex types (object literals, function types) is kept as-is.
     let result = result.trim_start();
     let result = result.trim_end_matches([';', '\n']);
     let result = result.strip_prefix('|').unwrap_or(result);
-    let result = result.trim();
-
-    // When the TS formatter wraps a type across multiple lines (e.g., object types
-    // inside generics like `ProxyHandler<{ props: Record<string, unknown> }>`),
-    // collapse back to a single line. JSDoc types are always single-line expressions;
-    // line-wrapping for long types is handled separately by `wrap_type_expression()`.
-    let mut result = if result.contains('\n') {
-        collapse_multiline_type(result)
-    } else {
-        String::from(result)
-    };
+    let mut result = String::from(result.trim());
 
     // Restore original string literals from placeholders
     if !string_literals.is_empty() {

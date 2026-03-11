@@ -114,9 +114,10 @@ function quoteTypes(quote) {}
 let handler;
 
 /**
- * @type {ProxyHandler<
- *   { props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }
- * >}
+ * @type {ProxyHandler<{
+ *   props: Record<string, unknown>;
+ *   handler: (event: CustomEvent<string>) => void;
+ * }>}
  */
 let handler2;
 
@@ -155,7 +156,12 @@ class Foo {
   /** @param {null | Element | Text | Comment} node - The target node */
   method3(node) {}
 
-  /** @returns {SomeConfigValue | AnotherConfigValue | YetAnotherConfigVal | null} */
+  /**
+   * @returns {SomeConfigValue
+   *   | AnotherConfigValue
+   *   | YetAnotherConfigVal
+   *   | null}
+   */
   borderlineUnion() {}
 }
 
@@ -188,9 +194,10 @@ function quoteTypes(quote) {}
 let handler;
 
 /**
- * @type {ProxyHandler<
- *   { props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }
- * >}
+ * @type {ProxyHandler<{
+ *   props: Record<string, unknown>;
+ *   handler: (event: CustomEvent<string>) => void;
+ * }>}
  */
 let handler2;
 

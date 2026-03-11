@@ -20,7 +20,7 @@ function withExample() {}
 ----------------------------------------------
 /**
  * @param {string | number | boolean | null | undefined | object | symbol} value
- * 	The value
+ *   The value
  */
 function longUnion(value) {}
 
