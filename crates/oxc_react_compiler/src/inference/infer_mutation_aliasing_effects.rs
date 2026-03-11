@@ -373,7 +373,7 @@ impl InferenceState {
 
         for (&id, other_fn) in &other.function_values {
             if let std::collections::hash_map::Entry::Vacant(e) = self.function_values.entry(id) {
-                e.insert(other_fn.clone());
+                e.insert(Rc::clone(other_fn));
                 changed = true;
             }
         }
