@@ -23,16 +23,24 @@ use super::{
 };
 
 /// JSON/JSONC config file names, in order of preference.
-pub const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
-/// JS/TS config file names, in order of preference.
-pub const JS_CONFIG_FILES: &[&str] = &[
-    "oxfmt.config.ts",
-    "oxfmt.config.mts",
-    "oxfmt.config.cts",
-    "oxfmt.config.js",
-    "oxfmt.config.mjs",
-    "oxfmt.config.cjs",
-];
+const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
+/// JS/TS config file extensions.
+const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
+/// Oxfmt JS/TS config file prefix.
+const OXFMT_JS_CONFIG_PREFIX: &str = "oxfmt.config.";
+/// Vite+ config file prefix that may contain Oxfmt config under a `.fmt` field.
+const VITE_PLUS_JS_CONFIG_PREFIX: &str = "vite.config.";
+#[cfg(feature = "napi")]
+const VITE_PLUS_OXFMT_CONFIG_FIELD: &str = "fmt";
+
+/// Returns an iterator of all supported config file names, in priority order.
+pub fn all_config_file_names() -> impl Iterator<Item = String> {
+    let json = JSON_CONFIG_FILES.iter().map(|f| (*f).to_string());
+    let oxfmt_js = JS_CONFIG_EXTENSIONS.iter().map(|ext| format!("{OXFMT_JS_CONFIG_PREFIX}{ext}"));
+    let vite_plus =
+        JS_CONFIG_EXTENSIONS.iter().map(|ext| format!("{VITE_PLUS_JS_CONFIG_PREFIX}{ext}"));
+    json.chain(oxfmt_js).chain(vite_plus)
+}
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
@@ -41,12 +49,12 @@ pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<Pa
         return Some(utils::normalize_relative_path(cwd, config_path));
     }
 
-    // If `--config` is not specified, search the nearest config file from cwd upwards
-    // Support JSON, JSONC, and JS/TS config files
-    // Prefer JSON/JSONC over JS/TS if both exist in the same directory
+    // If `--config` is not specified, search the nearest config file from cwd upwards.
+    // Support JSON, JSONC, and JS/TS config files.
+    // Prefer Oxfmt JSON/JSONC over JS/TS over Vite+ config if multiple exist in the same directory.
     cwd.ancestors().find_map(|dir| {
-        for filename in JSON_CONFIG_FILES.iter().chain(JS_CONFIG_FILES.iter()) {
-            let config_path = dir.join(filename);
+        for filename in all_config_file_names() {
+            let config_path = dir.join(&filename);
             if config_path.exists() {
                 return Some(config_path);
             }
@@ -230,39 +238,54 @@ impl ConfigResolver {
     ) -> Result<Self, String> {
         // Uses extension-based matching so that both auto-discovered files (e.g. `oxfmt.config.ts`)
         // and explicitly specified files (e.g. `--config ./my-config.ts`) are handled.
-        let is_js_config_path = |path: &Path| {
-            let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
-                return false;
-            };
-            JS_CONFIG_FILES.iter().any(|f| f.ends_with(ext))
-        };
+        let is_js_config = oxfmtrc_path.is_some_and(|path| {
+            path.extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
+        });
 
-        if let Some(path) = oxfmtrc_path
-            && is_js_config_path(path)
-        {
-            #[cfg(not(feature = "napi"))]
-            return Err(format!(
+        #[cfg(not(feature = "napi"))]
+        if is_js_config {
+            return Err(
                 "JS/TS config files are not supported in pure Rust CLI.\nUse JSON/JSONC instead."
-            ));
+                    .to_string(),
+            );
+        }
 
-            // Call `import(oxfmtrc_path)` via NAPI
-            #[cfg(feature = "napi")]
-            {
-                let raw_config = js_config_loader
-                    .expect("JS config loader must be set when `napi` feature is enabled")(
-                    path.to_string_lossy().into_owned(),
+        // Call `import(oxfmtrc_path)` via NAPI
+        #[cfg(feature = "napi")]
+        if let Some(path) = oxfmtrc_path
+            && is_js_config
+        {
+            let raw_config = js_config_loader
+                .expect("JS config loader must be set when `napi` feature is enabled")(
+                path.to_string_lossy().into_owned(),
+            )
+            .map_err(|_| {
+                format!(
+                    "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
+                    path.display()
                 )
-                .map_err(|_| {
-                    format!(
-                        "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
-                        path.display()
-                    )
-                })?;
-                let config_dir = path.parent().map(Path::to_path_buf);
-                let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+            })?;
 
-                return Ok(Self::new(raw_config, config_dir, editorconfig));
-            }
+            // Vite+ config files (e.g. `vite.config.ts`),
+            // under a `.fmt` field instead of the default export directly.
+            let is_vite_plus = path
+                .file_name()
+                .and_then(|f| f.to_str())
+                .is_some_and(|name| name.starts_with(VITE_PLUS_JS_CONFIG_PREFIX));
+            let raw_config = if is_vite_plus {
+                raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned().ok_or_else(|| {
+                    format!("{}\nExpected a `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field in the default export.", path.display())
+                })?
+            } else {
+                raw_config
+            };
+
+            let config_dir = path.parent().map(Path::to_path_buf);
+            let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+
+            return Ok(Self::new(raw_config, config_dir, editorconfig));
         }
 
         Self::from_json_config(cwd, oxfmtrc_path, editorconfig_path)

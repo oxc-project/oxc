@@ -217,6 +217,7 @@ impl FormatRunner {
             );
             // Config stats: only show when no config is found
             if oxfmtrc_path.is_none() && editorconfig_path.is_none() {
+                #[cfg(feature = "napi")]
                 let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
                 #[cfg(not(feature = "napi"))]
                 let hint =

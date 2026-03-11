@@ -8,9 +8,8 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JS_CONFIG_FILES,
-    JSON_CONFIG_FILES, JsConfigLoaderCb, SourceFormatter, resolve_editorconfig_path,
-    resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
+    SourceFormatter, all_config_file_names, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -234,11 +233,8 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                JSON_CONFIG_FILES
-                    .iter()
-                    .chain(JS_CONFIG_FILES.iter())
-                    .map(|file| (*file).to_string())
-                    .collect()
+                // TODO: This can be glob patterns?
+                all_config_file_names().collect()
             };
 
         patterns.push(".editorconfig".to_string());

@@ -189,6 +189,18 @@ file://<fixture>/config-sort-tailwindcss/test.vue
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-vite-semi/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-vite-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-vue-indent/test.vue 1`] = `
 "--- URI -----------
 file://<fixture>/config-vue-indent/test.vue

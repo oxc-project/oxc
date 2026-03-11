@@ -10,12 +10,12 @@ mod external_formatter;
 mod js_config;
 
 #[cfg(feature = "napi")]
+pub use config::all_config_file_names;
+#[cfg(feature = "napi")]
 pub use config::resolve_options_from_value;
 pub use config::{
     ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
 };
-#[cfg(feature = "napi")]
-pub use config::{JS_CONFIG_FILES, JSON_CONFIG_FILES};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;
 
