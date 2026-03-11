@@ -23,3 +23,18 @@ let handler;
 
 /** @type {ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>} */
 let handler2;
+
+/**
+ * @param {AST.Fragment['nodes']} nodes
+ */
+function getNodes(nodes) {}
+
+/**
+ * @param {Binding['kind']} kind
+ */
+function getKind(kind) {}
+
+/**
+ * @param {'foo' | 'bar'} value - String literal union
+ */
+function stringLiterals(value) {}

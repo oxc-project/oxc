@@ -840,84 +840,76 @@ fn contains_quotes(s: &str) -> bool {
     s.contains('"') || s.contains('\'')
 }
 
-/// Convert single quotes to double quotes in JSDoc type expressions.
-/// Matches Prettier's TS parser behavior which normalizes quote style.
+/// Convert single quotes to double quotes ONLY inside `import()` paths.
+/// Matches Prettier's TS parser behavior which normalizes import path quotes.
 /// Converts:
 /// - `import('foo')` → `import("foo")`
-/// - `'string literal'` → `"string literal"` (standalone string literal types)
 ///
-/// Does NOT convert single quotes inside double-quoted strings (already protected by
-/// `without_strings()` in the transformation phase).
+/// Does NOT convert quotes in property access (`Foo['bar']`), string literal types
+/// (`'hello'`), or other contexts. The upstream prettier-plugin-jsdoc uses
+/// `withoutStrings()` to protect all string literals from quote changes.
 fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
     if !type_str.contains('\'') {
         return Cow::Borrowed(type_str);
     }
 
+    // Only convert quotes inside import() calls
     let mut result = String::with_capacity(type_str.len());
     let bytes = type_str.as_bytes();
     let len = bytes.len();
     let mut i = 0;
 
     while i < len {
-        if bytes[i] == b'\'' {
-            // Convert single-quoted string to double-quoted, escaping inner double quotes
-            result.push('"');
-            i += 1;
-            while i < len && bytes[i] != b'\'' {
-                if bytes[i] == b'\\' && i + 1 < len {
-                    // If the escape is `\'`, remove it (no longer needed inside double quotes)
-                    if bytes[i + 1] == b'\'' {
-                        result.push('\'');
-                        i += 2;
+        // Check for `import(` pattern
+        if i + 7 <= len && &bytes[i..i + 7] == b"import(" {
+            result.push_str("import(");
+            i += 7;
+            // Skip whitespace after `(`
+            while i < len && bytes[i] == b' ' {
+                result.push(' ');
+                i += 1;
+            }
+            // Convert single-quoted import path to double-quoted
+            if i < len && bytes[i] == b'\'' {
+                result.push('"');
+                i += 1;
+                while i < len && bytes[i] != b'\'' {
+                    if bytes[i] == b'\\' && i + 1 < len {
+                        if bytes[i + 1] == b'\'' {
+                            result.push('\'');
+                            i += 2;
+                        } else {
+                            let ch = type_str[i..].chars().next().unwrap();
+                            result.push(ch);
+                            i += ch.len_utf8();
+                            let ch = type_str[i..].chars().next().unwrap();
+                            result.push(ch);
+                            i += ch.len_utf8();
+                        }
+                    } else if bytes[i] == b'"' {
+                        result.push_str("\\\"");
+                        i += 1;
                     } else {
                         let ch = type_str[i..].chars().next().unwrap();
                         result.push(ch);
                         i += ch.len_utf8();
-                        let ch = type_str[i..].chars().next().unwrap();
-                        result.push(ch);
-                        i += ch.len_utf8();
                     }
-                } else if bytes[i] == b'"' {
-                    // Escape inner double quotes
-                    result.push_str("\\\"");
+                }
+                if i < len && bytes[i] == b'\'' {
+                    result.push('"');
                     i += 1;
-                } else {
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
                 }
             }
-            if i < len && bytes[i] == b'\'' {
-                result.push('"');
-                i += 1;
-            }
-        } else if bytes[i] == b'"' {
-            // Skip over double-quoted strings entirely (preserve as-is)
-            result.push('"');
-            i += 1;
-            while i < len && bytes[i] != b'"' {
-                if bytes[i] == b'\\' && i + 1 < len {
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
-                } else {
-                    let ch = type_str[i..].chars().next().unwrap();
-                    result.push(ch);
-                    i += ch.len_utf8();
-                }
-            }
-            if i < len && bytes[i] == b'"' {
-                result.push('"');
-                i += 1;
-            }
+            // Continue copying the rest (e.g., closing `)`)
         } else {
             let ch = type_str[i..].chars().next().unwrap();
             result.push(ch);
             i += ch.len_utf8();
         }
+    }
+
+    if result == type_str {
+        return Cow::Borrowed(type_str);
     }
     Cow::Owned(result)
 }
@@ -1300,6 +1292,12 @@ mod tests {
         assert_eq!(normalize_type("import('axios')"), "import(\"axios\")");
         assert_eq!(normalize_type("import('../types').Foo"), "import(\"../types\").Foo");
         assert_eq!(normalize_type("import(\"axios\")"), "import(\"axios\")");
+        // Property access quotes should be preserved (not converted)
+        assert_eq!(normalize_type("AST.Fragment['nodes']"), "AST.Fragment['nodes']");
+        assert_eq!(normalize_type("Binding['kind']"), "Binding['kind']");
+        // String literal types should be preserved
+        assert_eq!(normalize_type("'hello'"), "'hello'");
+        assert_eq!(normalize_type("'foo' | 'bar'"), "'foo' | 'bar'");
     }
 
     #[test]
