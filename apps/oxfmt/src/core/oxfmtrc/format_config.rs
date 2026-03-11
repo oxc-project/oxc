@@ -250,14 +250,88 @@ impl FormatConfig {
 
     /// Merge another `FormatConfig`, overwriting only fields that are `Some<T>`.
     ///
+    /// This performs a field-level merge (not JSON-based) to properly handle the case
+    /// where an override sets a field to `null` to disable it. Using JSON serialization
+    /// would lose this distinction because `skip_serializing_if = "Option::is_none"`
+    /// causes `None` to be serialized as missing, not as `null`.
+    ///
     /// # Panics
     /// Panics if serialization/deserialization fails,
     /// which should never happen for valid `FormatConfig` structs.
     pub fn merge(&mut self, other: &Self) {
-        let base = serde_json::to_value(&*self).unwrap();
-        let overlay = serde_json::to_value(other).unwrap();
-        let merged = json_deep_merge(base, overlay);
-        *self = serde_json::from_value(merged).unwrap();
+        // Field-level merge: if other.field is Some, use it; otherwise keep self.field
+        // Note: For sortImports specifically, null handling is done at the config.rs level
+        // to properly distinguish "not set" from "explicitly set to null"
+        if other.use_tabs.is_some() {
+            self.use_tabs = other.use_tabs;
+        }
+        if other.tab_width.is_some() {
+            self.tab_width = other.tab_width;
+        }
+        if other.end_of_line.is_some() {
+            self.end_of_line = other.end_of_line;
+        }
+        if other.print_width.is_some() {
+            self.print_width = other.print_width;
+        }
+        if other.single_quote.is_some() {
+            self.single_quote = other.single_quote;
+        }
+        if other.jsx_single_quote.is_some() {
+            self.jsx_single_quote = other.jsx_single_quote;
+        }
+        if other.quote_props.is_some() {
+            self.quote_props = other.quote_props;
+        }
+        if other.trailing_comma.is_some() {
+            self.trailing_comma = other.trailing_comma;
+        }
+        if other.semi.is_some() {
+            self.semi = other.semi;
+        }
+        if other.arrow_parens.is_some() {
+            self.arrow_parens = other.arrow_parens;
+        }
+        if other.bracket_spacing.is_some() {
+            self.bracket_spacing = other.bracket_spacing;
+        }
+        if other.bracket_same_line.is_some() {
+            self.bracket_same_line = other.bracket_same_line;
+        }
+        if other.object_wrap.is_some() {
+            self.object_wrap = other.object_wrap;
+        }
+        if other.single_attribute_per_line.is_some() {
+            self.single_attribute_per_line = other.single_attribute_per_line;
+        }
+        if other.experimental_operator_position.is_some() {
+            self.experimental_operator_position = other.experimental_operator_position.clone();
+        }
+        if other.experimental_ternaries.is_some() {
+            self.experimental_ternaries = other.experimental_ternaries;
+        }
+        if other.embedded_language_formatting.is_some() {
+            self.embedded_language_formatting = other.embedded_language_formatting;
+        }
+        if other.prose_wrap.is_some() {
+            self.prose_wrap = other.prose_wrap;
+        }
+        if other.html_whitespace_sensitivity.is_some() {
+            self.html_whitespace_sensitivity = other.html_whitespace_sensitivity;
+        }
+        if other.vue_indent_script_and_style.is_some() {
+            self.vue_indent_script_and_style = other.vue_indent_script_and_style;
+        }
+        if other.insert_final_newline.is_some() {
+            self.insert_final_newline = other.insert_final_newline;
+        }
+        // Note: sort_imports handling is done at config.rs level to properly handle null
+        if other.sort_package_json.is_some() {
+            self.sort_package_json = other.sort_package_json.clone();
+        }
+        if other.sort_tailwindcss.is_some() {
+            self.sort_tailwindcss = other.sort_tailwindcss.clone();
+        }
     }
 }
 

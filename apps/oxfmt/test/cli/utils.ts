@@ -85,6 +85,11 @@ function normalizeOutput(output: string, cwd: string): string {
   const repoRoot = join(import.meta.dirname, "..", "..", "..", "..");
   const rootPath = repoRoot.replace(/\\/g, "/");
 
+  // Polyfill RegExp.escape for Node.js < 22.6
+  if (typeof RegExp.escape !== "function") {
+    RegExp.escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   return (
     output
       // Normalize timing information

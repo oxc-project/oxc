@@ -1,0 +1,11 @@
+{
+  "sortImports": {},
+  "overrides": [
+    {
+      "files": ["pages/**"],
+      "options": {
+        "sortImports": null
+      }
+    }
+  ]
+}
