@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -155,6 +157,11 @@ pub(super) fn format_embedded_js(
 /// the formatted type. Handles `...Type` rest params by formatting the inner type
 /// separately. Returns `None` on parse/format failure.
 /// `type_options` must already have `jsdoc: None` to prevent recursive formatting.
+///
+/// String literals (`"..."` and `'...'`) are protected from the formatter by replacing
+/// them with placeholder identifiers before formatting, then restoring afterwards.
+/// This matches the upstream prettier-plugin-jsdoc's `withoutStrings()` approach,
+/// preventing the formatter from changing quote style inside type expressions.
 pub(super) fn format_type_via_formatter(
     type_str: &str,
     type_options: &FormatOptions,
@@ -188,11 +195,42 @@ pub(super) fn format_type_via_formatter(
         return None;
     }
 
-    let input = allocator.alloc_concat_strs_array(["type __t = ", type_str, ";"]);
+    // Protect string literals from the formatter by replacing them with placeholder
+    // identifiers. This prevents the TS formatter from changing quote style.
+    let (protected, string_literals) = protect_string_literals(type_str);
+    let type_to_format = if string_literals.is_empty() { type_str } else { &protected };
+
+    let input = allocator.alloc_concat_strs_array(["type __t = ", type_to_format, ";"]);
 
     let ret =
         Parser::new(allocator, input, SourceType::tsx()).with_options(get_parse_options()).parse();
     if ret.panicked || !ret.errors.is_empty() {
+        // If parsing fails with placeholders, try without protection as fallback
+        if !string_literals.is_empty() {
+            let input = allocator.alloc_concat_strs_array(["type __t = ", type_str, ";"]);
+            let ret = Parser::new(allocator, input, SourceType::tsx())
+                .with_options(get_parse_options())
+                .parse();
+            if ret.panicked || !ret.errors.is_empty() {
+                return None;
+            }
+            let formatted = Formatter::new(allocator, type_options.clone()).build(&ret.program);
+            let formatted = formatted.trim_end();
+            let result = formatted.get("type __t = ".len()..)?;
+            let result = result.trim_start();
+            let result = result.trim_end_matches([';', '\n']);
+            let result = result.strip_prefix('|').unwrap_or(result);
+            let result = result.trim();
+            let result = if result.contains('\n') {
+                collapse_multiline_type(result)
+            } else {
+                String::from(result)
+            };
+            if result.is_empty() || result == type_str {
+                return None;
+            }
+            return Some(result);
+        }
         return None;
     }
 
@@ -215,17 +253,112 @@ pub(super) fn format_type_via_formatter(
     // inside generics like `ProxyHandler<{ props: Record<string, unknown> }>`),
     // collapse back to a single line. JSDoc types are always single-line expressions;
     // line-wrapping for long types is handled separately by `wrap_type_expression()`.
-    let result = if result.contains('\n') {
+    let mut result = if result.contains('\n') {
         collapse_multiline_type(result)
     } else {
         String::from(result)
     };
+
+    // Restore original string literals from placeholders
+    if !string_literals.is_empty() {
+        result = restore_string_literals(&result, &string_literals);
+    }
 
     if result.is_empty() || result == type_str {
         return None;
     }
 
     Some(result)
+}
+
+/// Replace string literals (`"..."` and `'...'`) with placeholder identifiers
+/// (`__str0__`, `__str1__`, etc.) so the TS formatter doesn't modify their quotes.
+/// Returns the modified string and the list of original string literals.
+fn protect_string_literals(type_str: &str) -> (String, Vec<String>) {
+    if !type_str.contains('"') && !type_str.contains('\'') {
+        return (type_str.to_string(), Vec::new());
+    }
+
+    let mut literals: Vec<String> = Vec::new();
+    let mut result = String::with_capacity(type_str.len());
+    let bytes = type_str.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        let ch = bytes[i];
+        if ch == b'"' || ch == b'\'' {
+            let quote = ch;
+            let start = i;
+            i += 1;
+            // Scan to closing quote, handling backslash escapes
+            while i < len {
+                if bytes[i] == b'\\' {
+                    i += 1; // skip backslash
+                    if i < len {
+                        i += 1; // skip escaped char
+                    }
+                    continue;
+                }
+                if bytes[i] == quote {
+                    i += 1;
+                    break;
+                }
+                i += 1;
+            }
+            let matched = &type_str[start..i.min(len)];
+            literals.push(matched.to_string());
+            write!(result, "__str{}__", literals.len() - 1).unwrap();
+        } else {
+            let c = type_str[i..].chars().next().unwrap();
+            result.push(c);
+            i += c.len_utf8();
+        }
+    }
+
+    (result, literals)
+}
+
+/// Restore original string literals from `__strN__` placeholders.
+fn restore_string_literals(formatted: &str, literals: &[String]) -> String {
+    if literals.is_empty() {
+        return formatted.to_string();
+    }
+
+    let mut result = String::with_capacity(formatted.len());
+    let bytes = formatted.as_bytes();
+    let len = bytes.len();
+    let prefix = b"__str";
+    let prefix_len = prefix.len();
+    let mut i = 0;
+
+    while i < len {
+        // Check for `__str` prefix
+        if i + prefix_len < len && &bytes[i..i + prefix_len] == prefix {
+            let digit_start = i + prefix_len;
+            let mut digit_end = digit_start;
+            while digit_end < len && bytes[digit_end].is_ascii_digit() {
+                digit_end += 1;
+            }
+            // Must have digits followed by `__`
+            if digit_end > digit_start
+                && digit_end + 1 < len
+                && bytes[digit_end] == b'_'
+                && bytes[digit_end + 1] == b'_'
+                && let Ok(idx) = formatted[digit_start..digit_end].parse::<usize>()
+                && idx < literals.len()
+            {
+                result.push_str(&literals[idx]);
+                i = digit_end + 2; // skip past trailing `__`
+                continue;
+            }
+        }
+        let ch = formatted[i..].chars().next().unwrap();
+        result.push(ch);
+        i += ch.len_utf8();
+    }
+
+    result
 }
 
 /// Collapse a multi-line TS-formatted type back to a single-line JSDoc type.
