@@ -397,24 +397,39 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         type_str: &str,
         name_and_rest: &str,
     ) -> bool {
-        // Only wrap if the full line exceeds the width
-        let full_len = tag_prefix.len()
-            + 2 // " {"
-            + type_str.len()
-            + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
-        if full_len <= self.wrap_width {
-            return false;
-        }
-
         // Check if the type contains `|` at the top level for union wrapping
         let parts = split_type_at_top_level_pipe(type_str);
         if parts.len() <= 1 {
-            // Check for generic type `Foo<...>` wrapping at top-level angle bracket
-            if let Some(wrapped) =
-                wrap_generic_type(tag_prefix, type_str, name_and_rest, &mut self.content_lines)
-            {
+            // Not a union type — check for generic type `Foo<...>` wrapping
+            let full_len = tag_prefix.len()
+                + 2 // " {"
+                + type_str.len()
+                + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
+            if full_len <= self.wrap_width {
+                return false;
+            }
+            let cont_indent = self.continuation_indent();
+            if let Some(wrapped) = wrap_generic_type(
+                tag_prefix,
+                type_str,
+                name_and_rest,
+                cont_indent,
+                &mut self.content_lines,
+            ) {
                 return wrapped;
             }
+            return false;
+        }
+
+        // For union types, use printWidth as the threshold to match upstream behavior.
+        // The upstream plugin formats types via Prettier's TS formatter at the full
+        // printWidth (wrapping `type __t = <type>;`). The TS formatter only breaks
+        // union types when `"type __t = ".len() + type_str.len() + 1 > printWidth`,
+        // i.e., `type_str.len() + 12 > printWidth`. We replicate that threshold here
+        // since we format types at LineWidth::MAX to prevent premature wrapping.
+        let print_width = self.format_options.line_width.value() as usize;
+        let type_wrap_threshold = print_width.saturating_sub(12);
+        if type_str.len() <= type_wrap_threshold {
             return false;
         }
 
@@ -427,10 +442,12 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             s.push_str(first_part);
         }
 
+        let cont_indent = self.continuation_indent();
         for (i, part) in parts.iter().enumerate().skip(1) {
             let part = part.trim();
             let s = self.content_lines.begin_line();
-            s.push_str("  | ");
+            s.push_str(cont_indent);
+            s.push_str("| ");
             s.push_str(part);
             if i == parts.len() - 1 {
                 s.push('}');
@@ -442,6 +459,30 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         }
 
         true
+    }
+
+    /// Returns the continuation indent string for JSDoc content.
+    /// Uses `"\t"` when `useTabs` is enabled, otherwise spaces equal to `indent_width`
+    /// (matching upstream's `useTabs ? "\t" : " ".repeat(tabWidth)`).
+    pub(super) fn continuation_indent(&self) -> &'static str {
+        if self.format_options.indent_style.is_tab() {
+            "\t"
+        } else {
+            // indent_width defaults to 2; build a static str for common cases
+            match self.format_options.indent_width.value() {
+                0 => "",
+                1 => " ",
+                3 => "   ",
+                4 => "    ",
+                _ => "  ", // default: 2 spaces (also fallback for unusual widths)
+            }
+        }
+    }
+
+    /// Returns the width (in columns) of the continuation indent.
+    /// Tabs count as `indent_width` columns for width calculations.
+    pub(super) fn continuation_indent_width(&self) -> usize {
+        self.format_options.indent_width.value() as usize
     }
 
     /// Whether bracket spacing is enabled.
@@ -731,6 +772,7 @@ fn wrap_generic_type(
     tag_prefix: &str,
     type_str: &str,
     name_and_rest: &str,
+    indent: &str,
     content_lines: &mut LineBuffer,
 ) -> Option<bool> {
     // Find the first top-level `<` (depth 0)
@@ -775,10 +817,10 @@ fn wrap_generic_type(
         s.push_str(" {");
         s.push_str(prefix_part);
     }
-    // Inner content with 2-space indent
+    // Inner content with continuation indent
     {
         let s = content_lines.begin_line();
-        s.push_str("  ");
+        s.push_str(indent);
         s.push_str(inner);
     }
     // Closing >} with optional name

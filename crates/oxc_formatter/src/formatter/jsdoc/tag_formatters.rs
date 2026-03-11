@@ -51,7 +51,7 @@ impl JsdocFormatter<'_, '_> {
         self.format_example_code(trimmed);
     }
 
-    /// Format example code content with 2-space base indent.
+    /// Format example code content with continuation indent.
     /// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
     fn format_example_code(&mut self, code: &str) {
         if code.is_empty() {
@@ -78,13 +78,15 @@ impl JsdocFormatter<'_, '_> {
             }
         }
 
+        let indent = self.continuation_indent();
+
         // Try formatting the code. The effective print width for @example code is
-        // wrap_width - 2 (for the 2-space indent within the comment).
-        let effective_width = self.wrap_width.saturating_sub(2);
+        // wrap_width minus the continuation indent width.
+        let effective_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
         if let Some(formatted) =
             format_embedded_js(code, effective_width, self.format_options, self.allocator)
         {
-            // Add 2-space indent to code structure lines, but NOT to template literal
+            // Add continuation indent to code structure lines, but NOT to template literal
             // content. The formatter preserves template literal content verbatim, so
             // adding indent to those lines would shift them incorrectly.
             let mut template_depth: u32 = 0;
@@ -94,7 +96,7 @@ impl JsdocFormatter<'_, '_> {
                 } else if template_depth == 0 {
                     {
                         let s = self.content_lines.begin_line();
-                        s.push_str("  ");
+                        s.push_str(indent);
                         s.push_str(line);
                     }
                 } else {
@@ -106,7 +108,7 @@ impl JsdocFormatter<'_, '_> {
             return;
         }
 
-        // Fallback: pass through with 2-space indent
+        // Fallback: pass through with continuation indent
         for line in code.lines() {
             let line_content =
                 if self.options.keep_unparsable_example_indent { line } else { line.trim() };
@@ -115,7 +117,7 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 {
                     let s = self.content_lines.begin_line();
-                    s.push_str("  ");
+                    s.push_str(indent);
                     s.push_str(line_content);
                 }
             }
@@ -124,19 +126,20 @@ impl JsdocFormatter<'_, '_> {
 
     /// Handle fenced code blocks inside @example tags.
     /// Strips the ``` markers, formats the inner code, and re-adds fences
-    /// with proper 2-space indentation.
+    /// with proper continuation indentation.
     fn format_example_fenced_block(
         &mut self,
         lang_line: &str,
         inner_code: &str,
         closing_fence: &str,
     ) {
-        let effective_width = self.wrap_width.saturating_sub(2);
+        let indent = self.continuation_indent();
+        let effective_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
 
         // Add opening fence with indent
         {
             let s = self.content_lines.begin_line();
-            s.push_str("  ");
+            s.push_str(indent);
             s.push_str(lang_line);
         }
 
@@ -156,7 +159,7 @@ impl JsdocFormatter<'_, '_> {
                         } else if template_depth == 0 {
                             {
                                 let s = self.content_lines.begin_line();
-                                s.push_str("  ");
+                                s.push_str(indent);
                                 s.push_str(line);
                             }
                         } else {
@@ -177,14 +180,14 @@ impl JsdocFormatter<'_, '_> {
                         } else {
                             {
                                 let s = self.content_lines.begin_line();
-                                s.push_str("  ");
+                                s.push_str(indent);
                                 s.push_str(content);
                             }
                         }
                     }
                 }
             } else {
-                // Non-JS/TS fenced code: preserve with 2-space indent
+                // Non-JS/TS fenced code: preserve with continuation indent
                 for line in inner_code.lines() {
                     let content = if self.options.keep_unparsable_example_indent {
                         line
@@ -196,7 +199,7 @@ impl JsdocFormatter<'_, '_> {
                     } else {
                         {
                             let s = self.content_lines.begin_line();
-                            s.push_str("  ");
+                            s.push_str(indent);
                             s.push_str(content);
                         }
                     }
@@ -207,7 +210,7 @@ impl JsdocFormatter<'_, '_> {
         // Add closing fence with indent
         {
             let s = self.content_lines.begin_line();
-            s.push_str("  ");
+            s.push_str(indent);
             s.push_str(closing_fence);
         }
     }
@@ -353,8 +356,12 @@ impl JsdocFormatter<'_, '_> {
         if first_text_line.starts_with("```") {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
-            let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let indent = if matches!(normalized_kind, "typedef" | "callback") {
+                ""
+            } else {
+                self.continuation_indent()
+            };
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
             let mut desc = wrap_text(
                 desc_raw,
                 indent_width,
@@ -460,8 +467,12 @@ impl JsdocFormatter<'_, '_> {
             // Multi-line: pass full description through wrap_text with tag_string_length.
             // This matches upstream's approach of passing the entire description through
             // formatDescription with a tagStringLength parameter that controls first-line offset.
-            let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let indent = if matches!(normalized_kind, "typedef" | "callback") {
+                ""
+            } else {
+                self.continuation_indent()
+            };
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
 
             // Build full description text (first line + remaining)
             let full_desc = if has_remaining {
@@ -474,7 +485,7 @@ impl JsdocFormatter<'_, '_> {
                 String::from(first_text.as_ref())
             };
 
-            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
 
             // Upstream: tagString.length + firstWord.length > printWidth → new line
             let first_word_w = full_desc.split_whitespace().next().map_or(0, str_width);
@@ -631,8 +642,8 @@ impl JsdocFormatter<'_, '_> {
             && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
         {
             // Type was wrapped. Add description as continuation.
-            let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
             let desc = wrap_text(
                 &desc_text,
                 indent_width,
@@ -645,9 +656,9 @@ impl JsdocFormatter<'_, '_> {
             self.push_indented_desc(indent, desc);
         } else {
             // Pass description through wrap_text with tag_string_length offset
-            let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
-            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
 
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w >= self.wrap_width {
@@ -759,8 +770,8 @@ impl JsdocFormatter<'_, '_> {
         if has_leading_blank_line {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
-            let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
             let mut desc = wrap_text(
                 &desc_text,
                 indent_width,
@@ -790,9 +801,9 @@ impl JsdocFormatter<'_, '_> {
             s.push_str(&desc_text);
         } else {
             // Pass description through wrap_text with tag_string_length offset
-            let indent = "  ";
-            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
-            let tag_str_len = prefix_len.saturating_sub(str_width(indent));
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
 
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w >= self.wrap_width {
