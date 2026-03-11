@@ -18,7 +18,8 @@ use oxc_span::{SourceType, Span};
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
 use crate::{
-    CompositeFix, FixKind, Fixer, Message, PossibleFixes, SuppressionManager, WEBSITE_BASE_RULES_URL,
+    CompositeFix, FixKind, Fixer, Message, PossibleFixes, SuppressionManager,
+    WEBSITE_BASE_RULES_URL,
     suppression::{Filename, SuppressionFile, SuppressionSender},
 };
 
@@ -263,20 +264,14 @@ impl TsGoLintState {
                                 messages,
                             );
                         let diffs = runtime_counts.map_or(vec![], |counts| {
-                            SuppressionManager::diff_filename(
-                                &suppression_file,
-                                &counts,
-                                &filename,
-                            )
+                            SuppressionManager::diff_filename(&suppression_file, &counts, &filename)
                         });
                         (filtered, diffs)
                     };
 
                     for diff in diffs {
                         if is_updating {
-                            suppression_sender
-                                .send(diff)
-                                .expect("Failed to send suppression diff");
+                            suppression_sender.send(diff).expect("Failed to send suppression diff");
                         } else {
                             error_sender
                                 .send(vec![OxcDiagnostic::from(diff)])
@@ -285,8 +280,11 @@ impl TsGoLintState {
                     }
 
                     if !filtered.is_empty() {
-                        let source_text =
-                            if silent { String::new() } else { read_to_string(&path).unwrap_or_default() };
+                        let source_text = if silent {
+                            String::new()
+                        } else {
+                            read_to_string(&path).unwrap_or_default()
+                        };
                         let diagnostics = DiagnosticService::wrap_diagnostics(
                             &cwd,
                             &path,
@@ -348,8 +346,11 @@ impl TsGoLintState {
                         }
 
                         if !filtered.is_empty() {
-                            let source_for_diagnostics: &str =
-                                if fix_result.fixed { &fix_result.fixed_code } else { &source_text };
+                            let source_for_diagnostics: &str = if fix_result.fixed {
+                                &fix_result.fixed_code
+                            } else {
+                                &source_text
+                            };
                             let diagnostics = DiagnosticService::wrap_diagnostics(
                                 &cwd,
                                 &path,
@@ -1091,8 +1092,7 @@ impl DiagnosticHandler {
         // Convert to Message (source text only needed for fix computation; empty string is fine for no-fix)
         let source_text_for_fixes =
             if has_fixes { self.get_source_text(&path).to_string() } else { String::new() };
-        let mut message =
-            Message::from_tsgo_lint_diagnostic(diagnostic, &source_text_for_fixes);
+        let mut message = Message::from_tsgo_lint_diagnostic(diagnostic, &source_text_for_fixes);
         message.error.severity =
             if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
 
@@ -1129,9 +1129,7 @@ impl DiagnosticHandler {
     /// Returns `(no_fix_messages, fix_requiring_messages)`:
     /// - `no_fix_messages`: rule diagnostics without fixes, keyed by path
     /// - `fix_requiring_messages`: rule diagnostics with fixes, along with source text
-    fn finalize(
-        self,
-    ) -> (FxHashMap<PathBuf, Vec<Message>>, Vec<(PathBuf, String, Vec<Message>)>) {
+    fn finalize(self) -> (FxHashMap<PathBuf, Vec<Message>>, Vec<(PathBuf, String, Vec<Message>)>) {
         let Self {
             no_fix_messages,
             messages_requiring_fixes,
