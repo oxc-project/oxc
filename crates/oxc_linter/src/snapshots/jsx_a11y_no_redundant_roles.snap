@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
@@ -65,12 +66,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the redundant role `document` from the element `body`.
 
-  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
-   ╭─[no_redundant_roles.tsx:1:6]
- 1 │ <nav role='navigation' />
-   ·      ─────────────────
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `body` element has an implicit role of `document`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:7]
+ 1 │ <body role='DOCUMENT' />
+   ·       ───────────────
    ╰────
-  help: Remove the redundant role `navigation` from the element `nav`.
+  help: Remove the redundant role `document` from the element `body`.
 
   ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
@@ -78,3 +79,206 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the redundant role `button` from the element `button`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `article` element has an implicit role of `article`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:10]
+ 1 │ <article role='article' />
+   ·          ──────────────
+   ╰────
+  help: Remove the redundant role `article` from the element `article`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `h1` element has an implicit role of `heading`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <h1 role='heading' />
+   ·     ──────────────
+   ╰────
+  help: Remove the redundant role `heading` from the element `h1`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `ul` element has an implicit role of `list`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <ul role='list' />
+   ·     ───────────
+   ╰────
+  help: Remove the redundant role `list` from the element `ul`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `li` element has an implicit role of `listitem`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <li role='listitem' />
+   ·     ───────────────
+   ╰────
+  help: Remove the redundant role `listitem` from the element `li`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `aside` element has an implicit role of `complementary`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:8]
+ 1 │ <aside role='complementary' />
+   ·        ────────────────────
+   ╰────
+  help: Remove the redundant role `complementary` from the element `aside`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `textarea` element has an implicit role of `textbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:11]
+ 1 │ <textarea role='textbox' />
+   ·           ──────────────
+   ╰────
+  help: Remove the redundant role `textbox` from the element `textarea`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `hr` element has an implicit role of `separator`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:5]
+ 1 │ <hr role='separator' />
+   ·     ────────────────
+   ╰────
+  help: Remove the redundant role `separator` from the element `hr`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `dialog` element has an implicit role of `dialog`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <dialog role='dialog' />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `dialog` from the element `dialog`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `form` element has an implicit role of `form`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:7]
+ 1 │ <form role='form' />
+   ·       ───────────
+   ╰────
+  help: Remove the redundant role `form` from the element `form`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `option` element has an implicit role of `option`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <option role='option' />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `option` from the element `option`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `output` element has an implicit role of `status`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <output role='status' />
+   ·         ─────────────
+   ╰────
+  help: Remove the redundant role `status` from the element `output`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `section` element has an implicit role of `region`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:10]
+ 1 │ <section role='region' />
+   ·          ─────────────
+   ╰────
+  help: Remove the redundant role `region` from the element `section`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `details` element has an implicit role of `group`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:10]
+ 1 │ <details role='group' />
+   ·          ────────────
+   ╰────
+  help: Remove the redundant role `group` from the element `details`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox'><option>1</option><option>2</option></select>
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' size='' />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' size={1} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' size='1' />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' size={null} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' size={undefined} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' multiple={undefined} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' multiple={false} />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `combobox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='combobox' multiple='' />
+   ·         ───────────────
+   ╰────
+  help: Remove the redundant role `combobox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='listbox' size='3' />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='listbox' size={2} />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='listbox' multiple><option>1</option><option>2</option></select>
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `select` element has an implicit role of `listbox`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <select role='listbox' multiple={true} />
+   ·         ──────────────
+   ╰────
+  help: Remove the redundant role `listbox` from the element `select`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `img` element has an implicit role of `img`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:6]
+ 1 │ <img role='img' />
+   ·      ──────────
+   ╰────
+  help: Remove the redundant role `img` from the element `img`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `img` element has an implicit role of `img`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:25]
+ 1 │ <img src={someVariable} role='img' />
+   ·                         ──────────
+   ╰────
+  help: Remove the redundant role `img` from the element `img`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `nav` element has an implicit role of `navigation`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:6]
+ 1 │ <nav role='navigation' />
+   ·      ─────────────────
+   ╰────
+  help: Remove the redundant role `navigation` from the element `nav`.
