@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.38.0] - 2026-03-11
+
+### 🚀 Features
+
+- 95943aa oxfmt: Support `vite.config.*` `.fmt` field (#20197) (leaysgur)
+- 172fc07 oxfmt: .js/.ts config file support (#20135) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e483569 oxfmt: Avoid double-escaping in css-in-js (#20211) (leaysgur)
+
 ## [0.37.0] - 2026-03-09
 
 ### 🚀 Features

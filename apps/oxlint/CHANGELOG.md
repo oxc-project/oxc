@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.53.0] - 2026-03-11
+
+### 🚀 Features
+
+- 04a5ce0 oxlint: Support `vite.config.ts` `.lint` field (#20214) (leaysgur)
+- fe3b32e linter/plugins: Add `oxlint-plugin-eslint` package (#20009) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- f85e16c linter/plugins: Fix types for visitor compilation (#20203) (overlookmotel)
+- ad27fd6 linter: Add help messages to import plugin diagnostics (#20158) (John Costa)
+- 1340307 linter/plugins: Ensure `after` hooks always run (#20167) (overlookmotel)
+- c4812ec linter/plugins: Reset visitor compilation state if error during compilation (#20166) (overlookmotel)
+- 887eecc linter/plugins: Add license notice to `oxlint-plugin-eslint` package (#20164) (overlookmotel)
+- e1713a4 linter/plugins: Include common chunks in `oxlint-plugin-eslint` package (#20163) (overlookmotel)
+- de7c0e2 linter/plugins: Correct error message for `markVariableAsUsed` (#20152) (overlookmotel)
+
+### ⚡ Performance
+
+- 3a86427 linter/plugins: Pre-populate cache of `EnterExit` objects at startup (#20194) (overlookmotel)
+- d243391 linter/plugins: Replace arrays with `Uint8Array`s (#20190) (overlookmotel)
+- 8742f8b linter/plugins: Pre-populate cache of `VisitProp` objects (#20189) (overlookmotel)
+- 3061acb linter/plugins: Pre-populate cache of `EnterExit` objects (#20187) (overlookmotel)
+- c73912b linter/plugins: Free visit functions earlier (#20186) (overlookmotel)
+- d9f8ff4 linter/plugins: Faster reset of visitor state (#20185) (overlookmotel)
+- 42aff15 oxlint/lsp: Avoid computing diagnostics for non invoked code actions requests (#20080) (Sysix)
+
+### 📚 Documentation
+
+- a080650 linter/plugins: Fix documentation of visitor compilation (#20202) (overlookmotel)
+
 ## [1.52.0] - 2026-03-09
 
 ### 🚀 Features
