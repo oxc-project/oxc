@@ -348,8 +348,13 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Delete reference for an `IdentifierReference`.
+    ///
+    /// If `ident` has no `ReferenceId` (e.g. it was created by a transformer
+    /// without semantic info), this is a no-op.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
-        self.delete_reference(ident.reference_id(), ident.name);
+        if let Some(reference_id) = ident.reference_id.get() {
+            self.delete_reference(reference_id, ident.name);
+        }
     }
 }
 
