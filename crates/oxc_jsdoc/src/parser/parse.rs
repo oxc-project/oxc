@@ -96,18 +96,30 @@ pub fn parse_jsdoc(
                 }
                 // Mismatched count inside a backtick section: ignore
             }
-            '"' => in_double_quotes = !in_double_quotes,
-            '\'' => in_single_quotes = !in_single_quotes,
+            // Inside backtick-quoted sections (inline code / code fences),
+            // all bracket/quote tracking is suspended. Characters like `{`, `}`,
+            // `"`, etc. inside code literals are not syntactic and must not
+            // affect `can_parse` — otherwise a stray `{` in inline code
+            // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
+            // recognized, causing them to merge into the description.
+            '"' if backtick_count == 0 => in_double_quotes = !in_double_quotes,
+            '\'' if backtick_count == 0 => in_single_quotes = !in_single_quotes,
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
             }
-            '{' => curly_brace_depth += 1,
-            '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
-            '(' => brace_depth += 1,
-            ')' => brace_depth = brace_depth.saturating_sub(1),
-            '[' => square_brace_depth += 1,
-            ']' => square_brace_depth = square_brace_depth.saturating_sub(1),
+            '{' if backtick_count == 0 => curly_brace_depth += 1,
+            '}' if backtick_count == 0 => {
+                curly_brace_depth = curly_brace_depth.saturating_sub(1);
+            }
+            '(' if backtick_count == 0 => brace_depth += 1,
+            ')' if backtick_count == 0 => {
+                brace_depth = brace_depth.saturating_sub(1);
+            }
+            '[' if backtick_count == 0 => square_brace_depth += 1,
+            ']' if backtick_count == 0 => {
+                square_brace_depth = square_brace_depth.saturating_sub(1);
+            }
 
             '@' if can_parse && at_line_start => {
                 let part = &source_text[start..end];
