@@ -355,19 +355,6 @@ impl JsdocFormatter<'_, '_> {
         let desc_raw = desc_raw.trim();
 
         if desc_raw.is_empty() && default_value.is_none() {
-            // If the type is already multi-line (from the TS formatter), skip
-            // wrap_type_expression — the formatter already handled wrapping.
-            if !normalized_type_str.contains('\n')
-                && str_width(&tag_line) > self.wrap_width
-                && !normalized_type_str.is_empty()
-                && self.wrap_type_expression(
-                    &tag_line[..tag_prefix_len],
-                    &normalized_type_str,
-                    name_str,
-                )
-            {
-                return;
-            }
             self.content_lines.push(tag_line);
             return;
         }
@@ -583,6 +570,7 @@ impl JsdocFormatter<'_, '_> {
         let (type_part, comment_part) = tag.type_comment();
 
         let tag_prefix_len = 1 + normalized_kind.len();
+        #[expect(unused_assignments)]
         let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
         let mut tag_line = String::with_capacity(tag_prefix_len + 32);
         tag_line.push('@');
@@ -657,15 +645,6 @@ impl JsdocFormatter<'_, '_> {
         let desc_text = desc_text.trim();
 
         if desc_text.is_empty() {
-            // If the type is already multi-line (from the TS formatter), skip
-            // wrap_type_expression — the formatter already handled wrapping.
-            if !normalized_type_str.contains('\n')
-                && str_width(&tag_line) > self.wrap_width
-                && !normalized_type_str.is_empty()
-                && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
-            {
-                return;
-            }
             self.content_lines.push(tag_line);
             return;
         }
@@ -673,31 +652,20 @@ impl JsdocFormatter<'_, '_> {
         let desc_text: Cow<'_, str> =
             if should_capitalize { capitalize_first(desc_text) } else { Cow::Borrowed(desc_text) };
 
-        let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
+        // For multi-line tag lines (multi-line types), check if desc fits on the
+        // last line rather than computing width of the entire multi-line string.
+        let last_line_width = if tag_line.contains('\n') {
+            str_width(tag_line.rsplit('\n').next().unwrap_or(&tag_line))
+        } else {
+            str_width(&tag_line)
+        };
+        let prefix_len = last_line_width + 1; // last line of tag_line + " "
         let one_liner_len = prefix_len + str_width(&desc_text);
         if one_liner_len <= self.wrap_width {
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push(' ');
             s.push_str(&desc_text);
-        } else if !normalized_type_str.contains('\n')
-            && !normalized_type_str.is_empty()
-            && str_width(&tag_line) > self.wrap_width
-            && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
-        {
-            // Type was wrapped. Add description as continuation.
-            let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
-            let desc = wrap_text(
-                &desc_text,
-                indent_width,
-                0,
-                false,
-                Some(self.format_options),
-                Some(self.external_callbacks),
-                Some(self.allocator),
-            );
-            self.push_indented_desc(indent, desc);
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
@@ -810,15 +778,14 @@ impl JsdocFormatter<'_, '_> {
 
         // If there was a blank line between the tag and the description,
         // preserve the separation: output the tag alone, a blank line, then
-        // the description as a separate paragraph.
+        // the description as a separate paragraph (no continuation indent —
+        // the blank line makes this a new top-level block, not a tag continuation).
         if has_leading_blank_line {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
-            let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
             let mut desc = wrap_text(
                 &desc_text,
-                indent_width,
+                self.wrap_width,
                 0,
                 false,
                 Some(self.format_options),
@@ -829,7 +796,7 @@ impl JsdocFormatter<'_, '_> {
             if desc.starts_with('\n') {
                 desc.remove(0);
             }
-            self.push_indented_desc(indent, desc);
+            self.push_indented_desc("", desc);
             return;
         }
 
