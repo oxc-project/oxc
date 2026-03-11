@@ -77,13 +77,15 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         available_width: usize,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
-        // Null out Vec-containing fields to make clone cheap (they're irrelevant for JSDoc).
-        // Use maximum line width for type formatting to prevent the TS formatter from
-        // wrapping types across multiple lines. JSDoc types are always single-line
-        // expressions — wrapping is handled separately by `wrap_type_expression()`.
-        // This mirrors upstream's behavior where `formatType()` formats at infinite width.
+        // Use commentContentPrintWidth (= wrap_width) as the line width for type
+        // formatting, matching upstream's `formatType()` which passes
+        // `commentContentPrintWidth` to Prettier's TS formatter. This lets the
+        // formatter wrap complex types (object literals, function types) across
+        // multiple lines when they exceed the available width.
+        let type_width =
+            u16::try_from(wrap_width).unwrap_or(80).clamp(1, crate::LineWidth::MAX);
         let type_format_options = FormatOptions {
-            line_width: crate::LineWidth::try_from(crate::LineWidth::MAX).unwrap(),
+            line_width: crate::LineWidth::try_from(type_width).unwrap(),
             jsdoc: None,
             sort_imports: None,
             sort_tailwindcss: None,
@@ -397,18 +399,23 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         type_str: &str,
         name_and_rest: &str,
     ) -> bool {
+        // Only wrap if the full tag line exceeds the available width.
+        // This matches upstream where formatType() produces single-line types
+        // (newlines stripped), and wrapping only happens when the full tag line
+        // (`@tag {type} name desc`) exceeds the comment content width.
+        let full_len = tag_prefix.len()
+            + 2 // " {"
+            + type_str.len()
+            + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
+        if full_len <= self.wrap_width {
+            return false;
+        }
+
         // Check if the type contains `|` at the top level for union wrapping
         let parts = split_type_at_top_level_pipe(type_str);
         if parts.len() <= 1 {
             // Not a union type — check for generic type `Foo<...>` wrapping
-            let full_len = tag_prefix.len()
-                + 2 // " {"
-                + type_str.len()
-                + if name_and_rest.is_empty() { 1 } else { 2 + name_and_rest.len() }; // "}" or "} name"
-            if full_len <= self.wrap_width {
-                return false;
-            }
-            let cont_indent = self.continuation_indent();
+            let cont_indent = self.code_indent();
             if let Some(wrapped) = wrap_generic_type(
                 tag_prefix,
                 type_str,
@@ -421,18 +428,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             return false;
         }
 
-        // For union types, use printWidth as the threshold to match upstream behavior.
-        // The upstream plugin formats types via Prettier's TS formatter at the full
-        // printWidth (wrapping `type __t = <type>;`). The TS formatter only breaks
-        // union types when `"type __t = ".len() + type_str.len() + 1 > printWidth`,
-        // i.e., `type_str.len() + 12 > printWidth`. We replicate that threshold here
-        // since we format types at LineWidth::MAX to prevent premature wrapping.
-        let print_width = self.format_options.line_width.value() as usize;
-        let type_wrap_threshold = print_width.saturating_sub(12);
-        if type_str.len() <= type_wrap_threshold {
-            return false;
-        }
-
         // Wrap union type at `|` operators
         let first_part = parts[0].trim();
         {
@@ -442,7 +437,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             s.push_str(first_part);
         }
 
-        let cont_indent = self.continuation_indent();
+        let cont_indent = self.code_indent();
         for (i, part) in parts.iter().enumerate().skip(1) {
             let part = part.trim();
             let s = self.content_lines.begin_line();
@@ -461,27 +456,42 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         true
     }
 
-    /// Returns the continuation indent string for JSDoc content.
+    /// Returns the continuation indent string for description wrapping.
+    /// Always `"  "` (2 spaces) matching upstream's "google style guide" constant,
+    /// regardless of `useTabs`. See `stringify.ts:145`.
+    #[expect(clippy::unused_self)]
+    pub(super) fn continuation_indent(&self) -> &'static str {
+        "  "
+    }
+
+    /// Returns the width (in columns) of the description continuation indent.
+    /// Always 2 (matching the 2-space google style guide indent).
+    #[expect(clippy::unused_self)]
+    pub(super) fn continuation_indent_width(&self) -> usize {
+        2
+    }
+
+    /// Returns the continuation indent string for code blocks (`@example`) and
+    /// type continuation lines (union `|` wrapping, generic `<...>` wrapping).
     /// Uses `"\t"` when `useTabs` is enabled, otherwise spaces equal to `indent_width`
     /// (matching upstream's `useTabs ? "\t" : " ".repeat(tabWidth)`).
-    pub(super) fn continuation_indent(&self) -> &'static str {
+    pub(super) fn code_indent(&self) -> &'static str {
         if self.format_options.indent_style.is_tab() {
             "\t"
         } else {
-            // indent_width defaults to 2; build a static str for common cases
             match self.format_options.indent_width.value() {
                 0 => "",
                 1 => " ",
                 3 => "   ",
                 4 => "    ",
-                _ => "  ", // default: 2 spaces (also fallback for unusual widths)
+                _ => "  ",
             }
         }
     }
 
-    /// Returns the width (in columns) of the continuation indent.
+    /// Returns the width (in columns) of the code indent.
     /// Tabs count as `indent_width` columns for width calculations.
-    pub(super) fn continuation_indent_width(&self) -> usize {
+    pub(super) fn code_indent_width(&self) -> usize {
         self.format_options.indent_width.value() as usize
     }
 
@@ -1150,31 +1160,28 @@ mod tests {
         );
 
         // Complex generic with object type — at default width (80), the TS formatter
-        // wraps it (since `type __t = ...;` is >80 chars). The result is collapsed
-        // back to single-line. The formatter may add trailing semicolons.
+        // may wrap it across multiple lines. Interior newlines are preserved (matching
+        // upstream's formatType() behavior).
         let result = fmt_type("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>");
-        if let Some(ref s) = result {
-            assert!(!s.contains('\n'), "Type should not contain newlines: {s:?}");
-        }
+        assert!(result.is_some(), "Complex ProxyHandler type should be formatted");
 
-        // At max width (320), the type fits on one line and stays unchanged.
-        // This simulates the real JSDoc pipeline where type_format_options uses max width.
+        // At wide width (320), the type fits on one line and stays unchanged.
         assert_eq!(
             fmt_type_width("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>", 320),
             None,
-            "Complex ProxyHandler type should stay unchanged at max width"
+            "Complex ProxyHandler type should stay unchanged at wide width"
         );
     }
 
     #[test]
-    fn test_format_type_multiline_collapse() {
+    fn test_format_type_multiline_preserved() {
         // When format_type_via_formatter receives a narrow width that forces wrapping,
-        // the result should be collapsed back to a single line.
+        // interior newlines are preserved (matching upstream behavior).
         let type_str = "ProxyHandler<{ props: Record<string, unknown>; handler: (event: string) => void }>";
         let result = fmt_type_width(type_str, 40);
-        if let Some(ref s) = result {
-            assert!(!s.contains('\n'), "Collapsed type should not contain newlines: {s:?}");
-        }
+        assert!(result.is_some(), "Narrow width should produce formatted output");
+        let s = result.unwrap();
+        assert!(s.contains('\n'), "Narrow width should produce multi-line output: {s:?}");
     }
 
     #[test]

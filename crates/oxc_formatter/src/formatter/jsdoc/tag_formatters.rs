@@ -6,7 +6,8 @@ use super::{
     },
     normalize::{
         capitalize_first, normalize_markdown_emphasis, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return, strip_optional_type_suffix,
+        normalize_type_preserve_quotes, normalize_type_return,
+        strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
     },
     serialize::{
         JsdocFormatter, format_default_value, is_named_generic_tag, join_iter,
@@ -78,11 +79,11 @@ impl JsdocFormatter<'_, '_> {
             }
         }
 
-        let indent = self.continuation_indent();
+        let indent = self.code_indent();
 
         // Try formatting the code. The effective print width for @example code is
-        // wrap_width minus the continuation indent width.
-        let effective_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+        // wrap_width minus the code indent width.
+        let effective_width = self.wrap_width.saturating_sub(self.code_indent_width());
         if let Some(formatted) =
             format_embedded_js(code, effective_width, self.format_options, self.allocator)
         {
@@ -133,8 +134,8 @@ impl JsdocFormatter<'_, '_> {
         inner_code: &str,
         closing_fence: &str,
     ) {
-        let indent = self.continuation_indent();
-        let effective_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+        let indent = self.code_indent();
+        let effective_width = self.wrap_width.saturating_sub(self.code_indent_width());
 
         // Add opening fence with indent
         {
@@ -245,15 +246,39 @@ impl JsdocFormatter<'_, '_> {
                 } else {
                     normalize_type(type_to_normalize)
                 };
-                // Try formatting via the formatter (simulates upstream's formatType())
-                if !preserve_quotes
-                    && let Some(formatted) = format_type_via_formatter(
-                        &normalized_type_str,
+                // Try formatting via the formatter (simulates upstream's formatType()).
+                // For multi-line types, pass a version with newlines preserved so the
+                // TS formatter receives multi-line input and maintains line structure.
+                // This matches upstream where comment-parser strips `*` prefixes but
+                // preserves newlines before passing to formatType().
+                if !preserve_quotes {
+                    let was_multiline = type_to_normalize.contains('\n');
+                    let formatter_input = if was_multiline {
+                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize))
+                    } else {
+                        Cow::Borrowed(normalized_type_str.as_ref())
+                    };
+                    if let Some(formatted) = format_type_via_formatter(
+                        &formatter_input,
                         &self.type_format_options,
                         self.allocator,
-                    )
-                {
-                    normalized_type_str = Cow::Owned(formatted);
+                    ) {
+                        // If the original type was multi-line but the formatter
+                        // collapsed it to single-line, keep the multi-line version.
+                        // Prettier's TS formatter preserves multi-line structure,
+                        // but oxfmt's collapses short types — so we restore it.
+                        if was_multiline && !formatted.contains('\n') {
+                            normalized_type_str =
+                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize));
+                        } else {
+                            normalized_type_str = Cow::Owned(formatted);
+                        }
+                    } else if was_multiline {
+                        // Formatter failed (parse error) but type was multi-line;
+                        // use the star-stripped version with newlines preserved.
+                        normalized_type_str =
+                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize));
+                    }
                 }
             }
         }
@@ -330,8 +355,10 @@ impl JsdocFormatter<'_, '_> {
         let desc_raw = desc_raw.trim();
 
         if desc_raw.is_empty() && default_value.is_none() {
-            // Try type wrapping if line is too long
-            if str_width(&tag_line) > self.wrap_width
+            // If the type is already multi-line (from the TS formatter), skip
+            // wrap_type_expression — the formatter already handled wrapping.
+            if !normalized_type_str.contains('\n')
+                && str_width(&tag_line) > self.wrap_width
                 && !normalized_type_str.is_empty()
                 && self.wrap_type_expression(
                     &tag_line[..tag_prefix_len],
@@ -581,14 +608,28 @@ impl JsdocFormatter<'_, '_> {
                 let skip_formatter = preserve_quotes
                     && has_no_space_before_type
                     && !normalized_type_str.starts_with('{');
-                if !skip_formatter
-                    && let Some(formatted) = format_type_via_formatter(
-                        &normalized_type_str,
+                if !skip_formatter {
+                    let was_multiline = raw_type.contains('\n');
+                    let formatter_input = if was_multiline {
+                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type))
+                    } else {
+                        Cow::Borrowed(normalized_type_str.as_ref())
+                    };
+                    if let Some(formatted) = format_type_via_formatter(
+                        &formatter_input,
                         &self.type_format_options,
                         self.allocator,
-                    )
-                {
-                    normalized_type_str = Cow::Owned(formatted);
+                    ) {
+                        if was_multiline && !formatted.contains('\n') {
+                            normalized_type_str =
+                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type));
+                        } else {
+                            normalized_type_str = Cow::Owned(formatted);
+                        }
+                    } else if was_multiline {
+                        normalized_type_str =
+                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type));
+                    }
                 }
                 // Preserve no-space only when the type isn't an object literal
                 // (object types start with `{`, making `@type{{` → should be `@type {{`)
@@ -616,8 +657,10 @@ impl JsdocFormatter<'_, '_> {
         let desc_text = desc_text.trim();
 
         if desc_text.is_empty() {
-            // Try type wrapping if line is too long
-            if str_width(&tag_line) > self.wrap_width
+            // If the type is already multi-line (from the TS formatter), skip
+            // wrap_type_expression — the formatter already handled wrapping.
+            if !normalized_type_str.contains('\n')
+                && str_width(&tag_line) > self.wrap_width
                 && !normalized_type_str.is_empty()
                 && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
             {
@@ -637,7 +680,8 @@ impl JsdocFormatter<'_, '_> {
             s.push_str(&tag_line);
             s.push(' ');
             s.push_str(&desc_text);
-        } else if !normalized_type_str.is_empty()
+        } else if !normalized_type_str.contains('\n')
+            && !normalized_type_str.is_empty()
             && str_width(&tag_line) > self.wrap_width
             && self.wrap_type_expression(&tag_line[..tag_prefix_len], &normalized_type_str, "")
         {

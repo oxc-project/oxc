@@ -309,6 +309,35 @@ fn strip_jsdoc_continuation_prefixes(s: &str) -> String {
     result
 }
 
+/// Strip JSDoc `*` continuation prefixes but **preserve newlines**.
+///
+/// Similar to `strip_jsdoc_continuation_prefixes()` but keeps `\n` instead
+/// of collapsing to spaces. This preserves multi-line type structure so the
+/// TS formatter receives multi-line input and maintains the line breaks.
+/// Matches upstream behavior where `comment-parser` strips `*` prefixes
+/// but the type retains its newline structure for `formatType()`.
+pub fn strip_jsdoc_stars_preserve_newlines(s: &str) -> String {
+    if !s.contains('\n') {
+        return s.to_string();
+    }
+    let mut result = String::with_capacity(s.len());
+    for (i, line) in s.lines().enumerate() {
+        if i == 0 {
+            result.push_str(line);
+            continue;
+        }
+        result.push('\n');
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix('*') {
+            let rest = rest.strip_prefix(' ').unwrap_or(rest);
+            result.push_str(rest);
+        } else {
+            result.push_str(trimmed);
+        }
+    }
+    result
+}
+
 /// Normalize JSDoc type expression syntax:
 /// - `?Type` → `Type | null`
 /// - `Type?` → `Type | null` (except inside quotes)

@@ -14,11 +14,14 @@ impl LineBuffer {
         Self { buf: String::new(), has_content: false }
     }
 
+    /// Push a line (or multiple lines if the string contains embedded `\n`).
+    /// Each `\n` in the input creates a new line in the buffer.
     pub(super) fn push(&mut self, line: impl AsRef<str>) {
+        let s = line.as_ref();
         if self.has_content {
             self.buf.push('\n');
         }
-        self.buf.push_str(line.as_ref());
+        self.buf.push_str(s);
         self.has_content = true;
     }
 
