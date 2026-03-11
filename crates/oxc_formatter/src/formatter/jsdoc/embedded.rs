@@ -12,6 +12,7 @@ use super::serialize::truncate_trim_end;
 
 /// Map fenced code block language tags to external formatter language identifiers.
 /// Returns `None` if the language should be handled by the native JS/TS formatter.
+#[expect(dead_code)]
 pub(super) fn fenced_lang_to_external_language(lang: &str) -> Option<&'static str> {
     match lang {
         "css" | "scss" | "less" => Some("tagged-css"),
@@ -30,6 +31,7 @@ pub(super) fn is_js_ts_lang(lang: &str) -> bool {
 
 /// Format code using the external formatter (Prettier) for non-JS/TS languages.
 /// Returns `Some(formatted)` on success, `None` if no callback is available or formatting fails.
+#[expect(dead_code)]
 pub(super) fn format_external_language(
     code: &str,
     language: &str,

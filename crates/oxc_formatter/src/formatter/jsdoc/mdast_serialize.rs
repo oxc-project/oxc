@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use cow_utils::CowUtils;
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
 use oxc_allocator::Allocator;
@@ -228,8 +227,13 @@ struct SerializeOptions<'a> {
     prefer_code_fences: bool,
     line_wrapping_style: crate::LineWrappingStyle,
     source: &'a str,
+    // These fields are currently unused because description code blocks are
+    // preserved verbatim (not formatted). Kept for future re-enablement.
+    #[expect(dead_code)]
     format_options: Option<&'a FormatOptions>,
+    #[expect(dead_code)]
     external_callbacks: Option<&'a ExternalCallbacks>,
+    #[expect(dead_code)]
     allocator: Option<&'a Allocator>,
 }
 
@@ -322,9 +326,19 @@ fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<&str>) {
             let idx = placeholders.len();
             placeholders.push(token);
             // Use a placeholder that looks like a single word (no spaces)
-            // so tokenize_words treats it atomically
+            // so tokenize_words treats it atomically.
+            // Pad to match original token length so wrapping width calculations
+            // are correct (otherwise shorter placeholders cause lines to exceed
+            // the wrap width after restoration).
+            let mut itoa_buf = itoa::Buffer::new();
+            let idx_str = itoa_buf.format(idx);
+            let placeholder_len = PLACEHOLDER_PREFIX.len() + idx_str.len();
             result.push_str(PLACEHOLDER_PREFIX);
-            result.push_str(itoa::Buffer::new().format(idx));
+            result.push_str(idx_str);
+            // Pad with \x01 to match original width
+            for _ in placeholder_len..token.len() {
+                result.push('\x01');
+            }
         } else {
             let ch = text[i..].chars().next().unwrap();
             result.push(ch);
@@ -370,7 +384,12 @@ fn replace_placeholders(s: &str, placeholders: &[&str]) -> String {
                 && let Some(original) = placeholders.get(idx)
             {
                 result.push_str(original);
-                i = digit_end;
+                // Skip \x01 padding characters after the index
+                let mut pad_end = digit_end;
+                while pad_end < len && bytes[pad_end] == 0x01 {
+                    pad_end += 1;
+                }
+                i = pad_end;
                 continue;
             }
             // Not a valid placeholder, copy the prefix character and advance
@@ -1088,42 +1107,16 @@ fn serialize_code(
     }
 }
 
-/// Try to format the code value using the appropriate formatter.
-/// Returns the formatted code if successful, or the original code as-is.
+/// Return the code value as-is.
+/// prettier-plugin-jsdoc preserves code block content in descriptions verbatim
+/// (no reformatting). Only `@example` code blocks are formatted (handled separately
+/// in `tag_formatters.rs`).
 fn format_code_value<'a>(
     code: &'a str,
-    lang: Option<&str>,
-    width: usize,
-    opts: &SerializeOptions<'_>,
+    _lang: Option<&str>,
+    _width: usize,
+    _opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) else {
-        return Cow::Borrowed(code);
-    };
-
-    let Some(lang) = lang else {
-        return Cow::Borrowed(code);
-    };
-
-    // Case-insensitive matching (matches upstream's `mdAst.lang.toLowerCase()`)
-    let lang_lower = lang.cow_to_ascii_lowercase();
-    let lang = lang_lower.as_ref();
-
-    // JS/TS: native formatter
-    if super::embedded::is_js_ts_lang(lang)
-        && let Some(formatted) =
-            super::embedded::format_embedded_js(code, width, format_options, allocator)
-    {
-        return Cow::Owned(formatted);
-    }
-    // CSS/HTML/GraphQL/MD/YAML: external formatter
-    if let Some(ext_lang) = super::embedded::fenced_lang_to_external_language(lang)
-        && let Some(cbs) = opts.external_callbacks
-        && let Some(formatted) =
-            super::embedded::format_external_language(code, ext_lang, width, cbs)
-    {
-        return Cow::Owned(formatted);
-    }
-    // Unknown language: return as-is (don't try to format as JS)
     Cow::Borrowed(code)
 }
 
