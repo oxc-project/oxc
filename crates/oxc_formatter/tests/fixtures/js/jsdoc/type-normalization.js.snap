@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 236
 ---
 ==================== Input ====================
 /**
@@ -23,6 +22,12 @@ const c = true;
  */
 function quoteTypes(quote) {}
 
+/** @type {ProxyHandler<{ props: Record<string, unknown> }>} */
+let handler;
+
+/** @type {ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>} */
+let handler2;
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -39,6 +44,16 @@ const c = true;
 /** @param {"'" | '"' | "`"} quote */
 function quoteTypes(quote) {}
 
+/** @type {ProxyHandler<{ props: Record<string, unknown> }>} */
+let handler;
+
+/**
+ * @type {ProxyHandler<
+ *   { props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }
+ * >}
+ */
+let handler2;
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -53,5 +68,15 @@ const c = true;
 
 /** @param {"'" | '"' | "`"} quote */
 function quoteTypes(quote) {}
+
+/** @type {ProxyHandler<{ props: Record<string, unknown> }>} */
+let handler;
+
+/**
+ * @type {ProxyHandler<
+ *   { props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }
+ * >}
+ */
+let handler2;
 
 ===================== End =====================
