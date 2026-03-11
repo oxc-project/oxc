@@ -17,6 +17,11 @@ function longParamDesc(name) {}
  */
 function shortDesc() {}
 
+/**
+ * @returns The {@link collect}ed values from the array
+ */
+function collectValues() {}
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -37,6 +42,9 @@ function longParamDesc(name) {}
 /** Short. */
 function shortDesc() {}
 
+/** @returns The {@link collect}ed values from the array */
+function collectValues() {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -54,5 +62,8 @@ function longParamDesc(name) {}
 
 /** Short. */
 function shortDesc() {}
+
+/** @returns The {@link collect}ed values from the array */
+function collectValues() {}
 
 ===================== End =====================
