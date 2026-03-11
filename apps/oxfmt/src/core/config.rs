@@ -414,9 +414,46 @@ impl ConfigResolver {
             .expect("`build_and_validate()` should catch this before");
 
         // Apply oxfmtrc overrides first (explicit settings)
+        // We need to check the RAW JSON to detect null values since serde's Option<T>
+        // can't distinguish "not set" from "set to null" after deserialization.
         if let Some(overrides) = &self.oxfmtrc_overrides {
-            for options in overrides.get_matching(path) {
-                format_config.merge(options);
+            // Get raw override JSONs from self.raw_config
+            let raw_overrides = self.raw_config.get("overrides").and_then(|v| v.as_array());
+
+            for entry in overrides.get_matching_entries(path) {
+                // Apply field-level merge
+                format_config.merge(&entry.options);
+
+                // Check if the raw JSON has sortImports: null for this override entry
+                // We need to find the raw entry that corresponds to this deserialized entry
+                if let Some(raw_overrides) = raw_overrides {
+                    // Look for the raw entry with matching files pattern
+                    for raw_entry in raw_overrides {
+                        let raw_files = raw_entry.get("files").and_then(|v| v.as_array());
+                        let raw_options = raw_entry.get("options");
+
+                        // Check if files match
+                        let files_match = raw_files.map(|arr| {
+                            arr.iter().any(|f| {
+                                let pat = f.as_str().unwrap_or("");
+                                entry.files.iter().any(|file| glob_match(pat, file) || glob_match(file, pat))
+                            })
+                        }).unwrap_or(false);
+
+                        if files_match {
+                            // Found the matching raw entry - check for sortImports: null
+                            if let Some(raw_opts) = raw_options {
+                                if let Some(sort_imports_val) = raw_opts.get("sortImports") {
+                                    if sort_imports_val.is_null() {
+                                        // Explicitly set to null in override → disable sorting
+                                        format_config.sort_imports = None;
+                                    }
+                                }
+                            }
+                            break; // Found the matching entry, no need to check other raw entries
+                        }
+                    }
+                }
             }
         }
         // Apply `.editorconfig` as fallback (fills in unset fields only)
@@ -469,14 +506,13 @@ impl OxfmtrcOverrides {
 
         Self {
             base_dir,
-            entries: overrides
-                .into_iter()
-                .map(|o| OxfmtrcOverrideEntry {
+            entries: overrides.into_iter().map(|o| {
+                OxfmtrcOverrideEntry {
                     files: normalize_patterns(o.files),
                     exclude_files: o.exclude_files.map(normalize_patterns).unwrap_or_default(),
                     options: o.options,
-                })
-                .collect(),
+                }
+            }).collect(),
         }
     }
 
@@ -486,10 +522,10 @@ impl OxfmtrcOverrides {
         self.entries.iter().any(|e| Self::is_entry_match(e, &relative))
     }
 
-    /// Get all matching override options for a given path.
-    fn get_matching(&self, path: &Path) -> impl Iterator<Item = &FormatConfig> + '_ {
+    /// Get all matching override entries for a given path.
+    fn get_matching_entries(&self, path: &Path) -> impl Iterator<Item = &OxfmtrcOverrideEntry> + '_ {
         let relative = self.relative_path(path);
-        self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative)).map(|e| &e.options)
+        self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative))
     }
 
     /// NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.

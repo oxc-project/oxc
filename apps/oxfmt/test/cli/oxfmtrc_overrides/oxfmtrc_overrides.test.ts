@@ -123,4 +123,21 @@ describe("oxfmtrc overrides", () => {
     const snapshot = await runAndSnapshot(cwd, [["--check", "."]]);
     expect(snapshot).toMatchSnapshot();
   });
+
+  // .oxfmtrc.json:
+  //   sortImports: {}
+  //   overrides: [
+  //     { files: ["pages/**"], options: { sortImports: null } }
+  //   ]
+  //
+  // Expected:
+  // - app.js: imports sorted (base config has sortImports enabled)
+  // - pages/test.js: imports NOT sorted (override sets sortImports to null to disable)
+  //
+  // This test verifies that setting a field to null in overrides properly disables it
+  it("override with null disables sortImports", async () => {
+    const cwd = join(fixturesDir, "sort_imports_null_override");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "."]]);
+    expect(snapshot).toMatchSnapshot();
+  });
 });
