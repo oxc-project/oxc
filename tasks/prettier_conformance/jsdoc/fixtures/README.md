@@ -17,3 +17,56 @@ Expected outputs were generated using **prettier-plugin-jsdoc** at commit [`1bbf
 Default options: `jsdocCapitalizeDescription: true`, `jsdocSingleLineComment: true`, `printWidth: 80`.
 
 Upstream snapshot reference: [`tests/__snapshots__/main.test.ts.snap`](https://github.com/hosseinmd/prettier-plugin-jsdoc/blob/1bbf9ee43e31f054cc27b7355b4dc53a90b31302/tests/__snapshots__/main.test.ts.snap)
+
+## Known Divergences from prettier-plugin-jsdoc
+
+The following fixtures have outputs that intentionally differ from what prettier-plugin-jsdoc produces, due to plugin quirks/bugs we do not replicate:
+
+### Mid-sentence capitalization bug
+
+**Fixtures:** `comment-line-strategy/001-keep-single`, `002-keep-multi`, `003-singleline-mode`, `004-multiline-mode`
+
+The plugin incorrectly capitalizes a word after a type expression, treating it as a new sentence.
+
+```
+// plugin output (wrong):  "should Be single line"
+// our output (correct):   "should be single line"
+```
+
+### `@description` tag content splitting
+
+**Fixture:** `description-tag/002-existing-desc-tag`
+
+The plugin splits inline `@description` content to a new line with a blank separator.
+
+```
+// plugin output:
+@description
+//
+// This is a description tag
+
+// our output:
+@description This is a description tag
+```
+
+### JSON key quoting in `@example`
+
+**Fixtures:** `keep-unparseable-indent/001-json-example`, `004-indent-stripped`
+
+The plugin parses `@example` content as JSON and re-serializes it, adding quotes around keys.
+
+```
+// plugin output:  { "testArr": [1, 2] }
+// our output:     { testArr: [1, 2] }
+```
+
+### Lowercase after typedef name
+
+**Fixture:** `main/011-bad-defined-name`
+
+The plugin lowercases the first word after a typedef name, misidentifying the sentence boundary.
+
+```
+// plugin output (wrong):  @typedef{...} name a description
+// our output (correct):   @typedef{...} name A description
+```
