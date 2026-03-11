@@ -53,9 +53,7 @@ const categories: Category[] = [
       { dir: join(EDGE_CASES_DIR, "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
-    },
+    notes: {},
   },
   {
     name: "css-in-js",

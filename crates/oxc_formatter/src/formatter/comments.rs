@@ -400,6 +400,19 @@ impl<'a> Comments<'a> {
             .any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Find a block comment immediately before the given position (regardless of printed state).
+    ///
+    /// This searches through ALL comments (including already-printed ones)
+    /// to find the last block comment that ends before `pos`.
+    /// Used for language comment detection (e.g., `/* HTML */` before template literals).
+    pub fn find_block_comment_before(&self, pos: u32) -> Option<&Comment> {
+        self.inner
+            .iter()
+            .take_while(|c| c.span.end <= pos)
+            .filter(|c| c.is_block())
+            .last()
+    }
+
     /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
     ///
     /// `prettier-ignore` is also supported for compatibility.

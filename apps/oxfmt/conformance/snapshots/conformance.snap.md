@@ -22,25 +22,17 @@
 
 ## gql-in-js
 
-### Option 1: 8/9 (88.89%)
+### Option 1: 9/9 (100.00%)
 
 ```json
 {"printWidth":80}
 ```
 
-| File | Note |
-| :--- | :--- |
-| [comment-tag.js](diffs/gql-in-js/comment-tag.js.md) | `/* GraphQL */` comment tag not yet supported |
-
-### Option 2: 8/9 (88.89%)
+### Option 2: 9/9 (100.00%)
 
 ```json
 {"printWidth":100}
 ```
-
-| File | Note |
-| :--- | :--- |
-| [comment-tag.js](diffs/gql-in-js/comment-tag.js.md) | `/* GraphQL */` comment tag not yet supported |
 
 ## css-in-js
 
