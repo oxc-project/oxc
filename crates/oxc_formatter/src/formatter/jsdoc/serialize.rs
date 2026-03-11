@@ -268,10 +268,16 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     has_no_space_before_type,
                 );
             } else if is_type_comment_tag(normalized_kind) {
+                // For @type/@satisfies, the text after {type} is a "name" in
+                // comment-parser's model (TAGS_NAMELESS does not include "type"
+                // or "satisfies"), so it should NOT be capitalized. Only
+                // @returns/@yields/@throws/etc. have true descriptions.
+                let capitalize = should_capitalize
+                    && !matches!(normalized_kind, "type" | "satisfies");
                 self.format_type_comment_tag(
                     normalized_kind,
                     tag,
-                    should_capitalize,
+                    capitalize,
                     has_no_space_before_type,
                 );
             } else {
