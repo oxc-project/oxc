@@ -1,3 +1,5 @@
+import { basename as pathBasename } from "node:path";
+
 import { getErrorMessage } from "./utils/utils.ts";
 import { isDefineConfig } from "./package/config.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
@@ -11,6 +13,9 @@ type LoadJsConfigsResult =
   | { Success: JsConfigResult[] }
   | { Failures: { path: string; error: string }[] }
   | { Error: string };
+
+const VITE_CONFIG_NAME = "vite.config.ts";
+const VITE_OXLINT_CONFIG_FIELD = "lint";
 
 function validateConfigExtends(root: object): void {
   const visited = new WeakSet<object>();
@@ -95,7 +100,7 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
         // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
         const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
         const module = await import(fileUrl.href);
-        const config = module.default;
+        let config = module.default;
 
         if (config === undefined) {
           throw new Error(`Configuration file has no default export.`);
@@ -105,18 +110,22 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
 
-        // Vite config files (e.g. `vite.config.ts`) are not Oxlint configs,
-        // so skip `defineConfig()` and `extends` validation.
-        // The `.lint` field extraction is handled on the Rust side.
-        if (!path.endsWith("/vite.config.ts")) {
+        if (pathBasename(path) === VITE_CONFIG_NAME) {
+          config = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD] ?? {};
+          if (typeof config !== "object" || config === null || Array.isArray(config)) {
+            throw new Error(
+              `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
+            );
+          }
+        } else {
           if (!isDefineConfig(config)) {
             throw new Error(
               `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
             );
           }
-
-          validateConfigExtends(config as object);
         }
+
+        validateConfigExtends(config as object);
 
         return { path, config };
       }),

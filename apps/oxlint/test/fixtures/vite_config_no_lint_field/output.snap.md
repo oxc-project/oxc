@@ -1,11 +1,17 @@
 # Exit code
-1
+0
 
 # stdout
 ```
-Failed to parse oxlint configuration file.
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[files/test.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
 
-  x Expected a `lint` field in the default export of <fixture>/vite.config.ts
+Found 1 warning and 0 errors.
+Finished in Xms on 1 file with 93 rules using X threads.
 ```
 
 # stderr

@@ -5,7 +5,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::Oxlintrc;
 
 use crate::run::JsLoadJsConfigsCb;
-use crate::{VITE_CONFIG_NAME, VITE_OXLINT_CONFIG_FIELD};
 
 /// Callback type for loading JavaScript/TypeScript config files.
 pub type JsConfigLoaderCb =
@@ -119,27 +118,7 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                 (Vec::with_capacity(count), Vec::new()),
                 |(mut configs, mut errors), entry| {
                     let path = PathBuf::from(&entry.path);
-
-                    // Vite config files: extract the `.lint` field
-                    let is_vite_config = path
-                        .file_name()
-                        .and_then(|f| f.to_str())
-                        .is_some_and(|name| name == VITE_CONFIG_NAME);
-                    let config_value = if is_vite_config {
-                        if let Some(v) = entry.config.get(VITE_OXLINT_CONFIG_FIELD).cloned() {
-                            v
-                        } else {
-                            errors.push(OxcDiagnostic::error(format!(
-                                "Expected a `{VITE_OXLINT_CONFIG_FIELD}` field in the default export of {}",
-                                entry.path
-                            )));
-                            return (configs, errors);
-                        }
-                    } else {
-                        entry.config
-                    };
-
-                    let mut oxlintrc = match parse_js_oxlintrc(config_value) {
+                    let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
                         Ok(config) => config,
                         Err(err) => {
                             errors.push(
@@ -183,5 +162,38 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
         LoadJsConfigsResponse::Error { error } => {
             Err(vec![OxcDiagnostic::error(format!("Failed to load config files:\n\n{error}"))])
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use serde_json::json;
+
+    use super::parse_js_config_response;
+
+    #[test]
+    fn test_parse_js_config_response_accepts_vite_lint_payloads() {
+        let path = std::env::temp_dir().join("vite.config.ts");
+        let json = serde_json::to_string(&json!({
+            "Success": [{
+                "path": path,
+                "config": {
+                    "options": { "typeAware": true },
+                    "extends": [{
+                        "options": { "typeCheck": true }
+                    }]
+                }
+            }]
+        }))
+        .unwrap();
+
+        let configs = parse_js_config_response(&json).unwrap();
+        assert_eq!(configs.len(), 1);
+
+        let config = &configs[0].config;
+        assert_eq!(config.path, path);
+        assert_eq!(config.options.type_aware, Some(true));
+        assert_eq!(config.extends_configs.len(), 1);
+        assert_eq!(config.extends_configs[0].options.type_check, Some(true));
     }
 }
