@@ -77,8 +77,13 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         available_width: usize,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
-        // Null out Vec-containing fields to make clone cheap (they're irrelevant for JSDoc)
+        // Null out Vec-containing fields to make clone cheap (they're irrelevant for JSDoc).
+        // Use maximum line width for type formatting to prevent the TS formatter from
+        // wrapping types across multiple lines. JSDoc types are always single-line
+        // expressions — wrapping is handled separately by `wrap_type_expression()`.
+        // This mirrors upstream's behavior where `formatType()` formats at infinite width.
         let type_format_options = FormatOptions {
+            line_width: crate::LineWidth::try_from(crate::LineWidth::MAX).unwrap(),
             jsdoc: None,
             sort_imports: None,
             sort_tailwindcss: None,
@@ -1067,6 +1072,57 @@ mod tests {
         // Types that would actually change
         assert_eq!(fmt_type("string|number"), Some("string | number".to_string()));
         assert_eq!(fmt_type(""), None);
+    }
+
+    fn fmt_type_width(type_str: &str, width: u16) -> Option<String> {
+        use crate::formatter::jsdoc::embedded::format_type_via_formatter;
+        use crate::LineWidth;
+        let allocator = oxc_allocator::Allocator::default();
+        let opts = FormatOptions {
+            line_width: LineWidth::try_from(width).unwrap(),
+            jsdoc: None,
+            sort_imports: None,
+            sort_tailwindcss: None,
+            ..FormatOptions::default()
+        };
+        format_type_via_formatter(type_str, &opts, &allocator)
+    }
+
+    #[test]
+    fn test_format_type_via_formatter_proxy_handler() {
+        // Simple generic with object type — fits on one line at default width (80)
+        assert_eq!(
+            fmt_type("ProxyHandler<{ props: Record<string, unknown> }>"),
+            None,
+            "Simple ProxyHandler type should stay unchanged"
+        );
+
+        // Complex generic with object type — at default width (80), the TS formatter
+        // wraps it (since `type __t = ...;` is >80 chars). The result is collapsed
+        // back to single-line. The formatter may add trailing semicolons.
+        let result = fmt_type("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>");
+        if let Some(ref s) = result {
+            assert!(!s.contains('\n'), "Type should not contain newlines: {s:?}");
+        }
+
+        // At max width (320), the type fits on one line and stays unchanged.
+        // This simulates the real JSDoc pipeline where type_format_options uses max width.
+        assert_eq!(
+            fmt_type_width("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>", 320),
+            None,
+            "Complex ProxyHandler type should stay unchanged at max width"
+        );
+    }
+
+    #[test]
+    fn test_format_type_multiline_collapse() {
+        // When format_type_via_formatter receives a narrow width that forces wrapping,
+        // the result should be collapsed back to a single line.
+        let type_str = "ProxyHandler<{ props: Record<string, unknown>; handler: (event: string) => void }>";
+        let result = fmt_type_width(type_str, 40);
+        if let Some(ref s) = result {
+            assert!(!s.contains('\n'), "Collapsed type should not contain newlines: {s:?}");
+        }
     }
 
     #[test]

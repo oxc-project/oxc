@@ -211,11 +211,54 @@ pub(super) fn format_type_via_formatter(
     let result = result.strip_prefix('|').unwrap_or(result);
     let result = result.trim();
 
+    // When the TS formatter wraps a type across multiple lines (e.g., object types
+    // inside generics like `ProxyHandler<{ props: Record<string, unknown> }>`),
+    // collapse back to a single line. JSDoc types are always single-line expressions;
+    // line-wrapping for long types is handled separately by `wrap_type_expression()`.
+    let result = if result.contains('\n') {
+        collapse_multiline_type(result)
+    } else {
+        String::from(result)
+    };
+
     if result.is_empty() || result == type_str {
         return None;
     }
 
-    Some(String::from(result))
+    Some(result)
+}
+
+/// Collapse a multi-line TS-formatted type back to a single-line JSDoc type.
+///
+/// The TS formatter may wrap complex types (e.g., object types inside generics)
+/// across multiple lines. JSDoc type expressions are single-line, so we collapse
+/// newlines + indentation into single spaces while preserving the content
+/// (including semicolons which are valid JSDoc object type member separators).
+fn collapse_multiline_type(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for line in s.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if !result.is_empty() {
+            // Add space between collapsed lines, but avoid double spaces
+            // and avoid space before closing brackets
+            let last_char = result.as_bytes().last().copied().unwrap_or(b' ');
+            let first_char = trimmed.as_bytes().first().copied().unwrap_or(b' ');
+            if last_char != b' '
+                && first_char != b' '
+                && first_char != b'>'
+                && first_char != b'}'
+                && first_char != b']'
+                && first_char != b')'
+            {
+                result.push(' ');
+            }
+        }
+        result.push_str(trimmed);
+    }
+    result
 }
 
 /// Check if a type expression needs to go through the TS formatter.
