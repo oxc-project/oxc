@@ -17,8 +17,8 @@ catalog:
   eslint: 9.39.3
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.18
-  rolldown: 1.0.0-rc.8
-  tsdown: 0.21.1
+  rolldown: 1.0.0-rc.9
+  tsdown: 0.21.2
   vitest: 4.0.18
 
 onlyBuiltDependencies:
