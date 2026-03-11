@@ -641,6 +641,62 @@ describe("react-compiler e2e", () => {
     });
   });
 
+  describe("unique identifier generation across functions", () => {
+    test("multiple functions should not produce duplicate _temp names", () => {
+      const source = `
+        import { useState } from 'react';
+
+        export function ComponentA() {
+          const [a, setA] = useState(0);
+          return <div onClick={() => setA(a + 1)}>{a}</div>;
+        }
+
+        export function ComponentB() {
+          const [b, setB] = useState(0);
+          return <div onClick={() => setB(b + 1)}>{b}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Extract all _temp-like function/variable declarations
+      // If both functions generate `_temp`, parsing will fail or we get duplicates.
+      // After the fix, the second function should generate `_temp2` or similar.
+      const tempDeclarations = result.code.match(/\blet\s+(_temp\w*)\b/g) || [];
+      const tempNames = tempDeclarations.map((d: string) => d.replace("let ", ""));
+      const uniqueNames = new Set(tempNames);
+      // All generated temp names must be unique across functions
+      expect(uniqueNames.size).toBe(tempNames.length);
+    });
+
+    test("three functions should all get unique temp identifiers", () => {
+      const source = `
+        import { useState } from 'react';
+
+        export function CompA() {
+          const [a, setA] = useState(0);
+          return <div onClick={() => setA(a + 1)}>{a}</div>;
+        }
+
+        export function CompB() {
+          const [b, setB] = useState(0);
+          return <div onClick={() => setB(b + 1)}>{b}</div>;
+        }
+
+        export function CompC() {
+          const [c, setC] = useState(0);
+          return <div onClick={() => setC(c + 1)}>{c}</div>;
+        }
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      // Collect all temp identifier declarations
+      const tempDeclarations = result.code.match(/\blet\s+(_temp\w*)\b/g) || [];
+      const tempNames = tempDeclarations.map((d: string) => d.replace("let ", ""));
+      const uniqueNames = new Set(tempNames);
+      expect(uniqueNames.size).toBe(tempNames.length);
+    });
+  });
+
   describe("memo/forwardRef discovery", () => {
     test("React.memo wrapped component compiles", () => {
       const source = `
@@ -793,6 +849,38 @@ describe("react-compiler e2e", () => {
       `;
       const result = compileWithReactCompiler(source);
       expect(result.errors).toEqual([]);
+    });
+  });
+
+  describe("arrow functions in optional chaining", () => {
+    test("arrow in .map() inside ternary does not panic", () => {
+      const source = `
+        import { memo } from 'react';
+        export default memo(function EffectTitle({ effect }) {
+          const players = effect.players
+            ? [...effect.players].map((id) => <PlayerIcon id={id} key={id} />)
+            : null;
+          return <div>{players}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("_jsx");
+    });
+
+    test("arrow in optional chaining .find() does not panic", () => {
+      const source = `
+        import { memo } from 'react';
+        export default memo(function Component({ effect, trigger }) {
+          const condition = effect.conditions?.find(
+            (c) => c.type === trigger,
+          );
+          return <div>{condition && <span>{condition.type}</span>}</div>;
+        });
+      `;
+      const result = compileWithReactCompiler(source);
+      expect(result.errors).toEqual([]);
+      expect(result.code).toContain("_jsx");
     });
   });
 
