@@ -10,7 +10,7 @@ use super::{
     },
     serialize::{
         JsdocFormatter, format_default_value, is_named_generic_tag, join_iter,
-        strip_default_is_suffix,
+        should_skip_description_formatting, strip_default_is_suffix,
     },
     wrap::{str_width, wrap_text},
 };
@@ -701,6 +701,18 @@ impl JsdocFormatter<'_, '_> {
         let mut tag_line = String::with_capacity(normalized_kind.len() + 1);
         tag_line.push('@');
         tag_line.push_str(normalized_kind);
+
+        // Check if there's a blank line between the tag and description using
+        // whitespace-preserving parse. This detects patterns like:
+        //   @internal
+        //
+        //   Some description
+        let raw_ws = tag.comment().parsed_preserving_whitespace();
+        let has_leading_blank_line = {
+            let trimmed_start = raw_ws.trim_start_matches(' ');
+            trimmed_start.starts_with("\n\n") || trimmed_start.starts_with("\n \n")
+        };
+
         let desc_text = tag.comment().parsed();
         let desc_text = normalize_markdown_emphasis(desc_text.trim());
         let desc_text = desc_text.trim();
@@ -741,8 +753,37 @@ impl JsdocFormatter<'_, '_> {
             Cow::Borrowed(desc_text)
         };
 
+        // If there was a blank line between the tag and the description,
+        // preserve the separation: output the tag alone, a blank line, then
+        // the description as a separate paragraph.
+        if has_leading_blank_line {
+            self.content_lines.push(tag_line);
+            self.content_lines.push_empty();
+            let indent = "  ";
+            let indent_width = self.wrap_width.saturating_sub(str_width(indent));
+            let mut desc = wrap_text(
+                &desc_text,
+                indent_width,
+                0,
+                false,
+                Some(self.format_options),
+                Some(self.external_callbacks),
+                Some(self.allocator),
+            );
+            // Skip leading blank line from wrap_text since we already added one
+            if desc.starts_with('\n') {
+                desc.remove(0);
+            }
+            self.push_indented_desc(indent, desc);
+            return;
+        }
+
         let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
-        if prefix_len + str_width(&desc_text) <= self.wrap_width {
+        let skip_wrapping = should_skip_description_formatting(normalized_kind);
+        if prefix_len + str_width(&desc_text) <= self.wrap_width || skip_wrapping {
+            // Fits on one line, or tag skips description formatting (no wrapping).
+            // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) keep their description
+            // on one line regardless of length.
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push(' ');

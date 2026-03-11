@@ -28,3 +28,15 @@ function e() {}
  * @see newFunc
  */
 function f() {}
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style#setting_styles
+ */
+function seeUrl() {}
+
+/**
+ * @internal
+ *
+ * This function is internal and should not be used directly.
+ */
+function internalFunction() {}
