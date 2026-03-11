@@ -26,19 +26,20 @@ use super::{
 const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
 /// JS/TS config file extensions.
 const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
-/// Oxfmt JS/TS config file prefix.
-const OXFMT_JS_CONFIG_PREFIX: &str = "oxfmt.config.";
-/// Vite+ config file prefix that may contain Oxfmt config under a `.fmt` field.
-const VITE_PLUS_JS_CONFIG_PREFIX: &str = "vite.config.";
+/// Oxfmt JS/TS config file name.
+/// Only `.ts` extension is supported, matching oxlint's behavior.
+const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
+/// Vite+ config file name that may contain Oxfmt config under a `.fmt` field.
+/// Only `.ts` extension is supported, matching oxlint's behavior.
+const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
 #[cfg(feature = "napi")]
 const VITE_PLUS_OXFMT_CONFIG_FIELD: &str = "fmt";
 
 /// Returns an iterator of all supported config file names, in priority order.
 pub fn all_config_file_names() -> impl Iterator<Item = String> {
     let json = JSON_CONFIG_FILES.iter().map(|f| (*f).to_string());
-    let oxfmt_js = JS_CONFIG_EXTENSIONS.iter().map(|ext| format!("{OXFMT_JS_CONFIG_PREFIX}{ext}"));
-    let vite_plus =
-        JS_CONFIG_EXTENSIONS.iter().map(|ext| format!("{VITE_PLUS_JS_CONFIG_PREFIX}{ext}"));
+    let oxfmt_js = std::iter::once(OXFMT_JS_CONFIG_NAME.to_string());
+    let vite_plus = std::iter::once(VITE_PLUS_CONFIG_NAME.to_string());
     json.chain(oxfmt_js).chain(vite_plus)
 }
 
@@ -273,7 +274,7 @@ impl ConfigResolver {
             let is_vite_plus = path
                 .file_name()
                 .and_then(|f| f.to_str())
-                .is_some_and(|name| name.starts_with(VITE_PLUS_JS_CONFIG_PREFIX));
+                .is_some_and(|name| name == VITE_PLUS_CONFIG_NAME);
             let raw_config = if is_vite_plus {
                 raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned().ok_or_else(|| {
                     format!("{}\nExpected a `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field in the default export.", path.display())

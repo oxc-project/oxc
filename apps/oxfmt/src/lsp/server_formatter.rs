@@ -233,7 +233,6 @@ impl Tool for ServerFormatter {
             if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
                 vec![config_path.clone()]
             } else {
-                // TODO: This can be glob patterns?
                 all_config_file_names().collect()
             };
 
