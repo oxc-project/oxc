@@ -25,4 +25,34 @@ impl Rule for Immutability {
 }
 
 #[test]
-fn test() {}
+fn test() {
+    use crate::tester::Tester;
+    let pass = vec![
+        // Valid: no mutation of props or hook return values
+        r#"
+        function Component(props) {
+          const [state, setState] = useState(0);
+          return <div onClick={() => setState(state + 1)}>{props.value}</div>;
+        }
+        "#,
+        // Cross-category: conditional hook triggers Hooks, not Immutability
+        r#"
+        function useConditional() {
+          if (cond) {
+            useConditionalHook();
+          }
+        }
+        "#,
+    ];
+    let fail = vec![
+        // Local reassignment in callback
+        r#"
+        function Component(props) {
+          let x = props.value;
+          const handler = () => { x = 1; };
+          return <div onClick={handler}>{x}</div>;
+        }
+        "#,
+    ];
+    Tester::new(Immutability::NAME, Immutability::PLUGIN, pass, fail).test_and_snapshot();
+}

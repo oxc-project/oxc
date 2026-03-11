@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(use-memo): Error: useMemo() callbacks may not accept parameters. useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation.
+   ╭─[use_memo.tsx:4:35]
+ 3 │         function Component({value}) {
+ 4 │           const result = useMemo((x) => x + 1, [value]);
+   ·                                   ─
+ 5 │           return <div>{result}</div>;
+   ╰────

@@ -25,4 +25,59 @@ impl Rule for Hooks {
 }
 
 #[test]
-fn test() {}
+fn test() {
+    use crate::tester::Tester;
+    let pass = vec![
+        // Basic hook usage
+        r#"
+        function Component() {
+          useHook();
+          return <div>Hello world</div>;
+        }
+        "#,
+        // Invariant: defined after use (not surfaced)
+        r#"
+        function Component(props) {
+          let y = function () {
+            m(x);
+          };
+          let x = { a };
+          m(x);
+          return y;
+        }
+        "#,
+        // Classes don't throw
+        r#"
+        class Foo {
+          #bar() {}
+        }
+        "#,
+        // Cross-category: impure calls trigger Purity, not Hooks
+        r#"
+        function Component() {
+          const date = Date.now();
+          return <Foo date={date} />;
+        }
+        "#,
+    ];
+    let fail = vec![
+        // Simple conditional hook violation
+        r#"
+        function Component() {
+          if (cond) {
+            useConditionalHook();
+          }
+          return <div />;
+        }
+        "#,
+        // Multiple conditional hooks in same function
+        r#"
+        function Component() {
+          cond ?? useConditionalHook();
+          props.cond && useConditionalHook();
+          return <div>Hello world</div>;
+        }
+        "#,
+    ];
+    Tester::new(Hooks::NAME, Hooks::PLUGIN, pass, fail).test_and_snapshot();
+}

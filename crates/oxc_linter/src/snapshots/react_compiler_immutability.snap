@@ -1,0 +1,22 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(immutability): Error: Cannot reassign variable after render completes. Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead.
+   ╭─[immutability.tsx:4:35]
+ 3 │           let x = props.value;
+ 4 │           const handler = () => { x = 1; };
+   ·                                   ─
+ 5 │           return <div onClick={handler}>{x}</div>;
+   ╰────
+
+  ⚠ react-compiler(immutability): Error: Cannot modify local variables after render completes. This argument is a function which may reassign or mutate `x` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead.
+   ╭─[immutability.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         function Component(props) {
+ 3 │ │             let x = props.value;
+ 4 │ │             const handler = () => { x = 1; };
+ 5 │ │             return <div onClick={handler}>{x}</div>;
+ 6 │ ╰─▶         }
+ 7 │             
+   ╰────

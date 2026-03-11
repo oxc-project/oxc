@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(capitalized-calls): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+   ╭─[capitalized_calls.tsx:5:14]
+ 4 │           return <>
+ 5 │             {Child()}
+   ·              ───────
+ 6 │           </>;
+   ╰────
+
+  ⚠ react-compiler(capitalized-calls): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child may be a component.
+   ╭─[capitalized_calls.tsx:5:14]
+ 4 │           return <>
+ 5 │             {myModule.Child()}
+   ·              ────────────────
+ 6 │           </>;
+   ╰────
+
+  ⚠ react-compiler(capitalized-calls): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child1 may be a component.
+   ╭─[capitalized_calls.tsx:6:14]
+ 5 │           return <>
+ 6 │             {Child1()}
+   ·              ────────
+ 7 │             {MyModule.Child2()}
+   ╰────
+
+  ⚠ react-compiler(capitalized-calls): Error: Capitalized functions are reserved for components, which must be invoked with JSX. Child2 may be a component.
+   ╭─[capitalized_calls.tsx:7:14]
+ 6 │             {Child1()}
+ 7 │             {MyModule.Child2()}
+   ·              ─────────────────
+ 8 │           </>;
+   ╰────

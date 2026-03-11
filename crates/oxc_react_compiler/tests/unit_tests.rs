@@ -1122,11 +1122,18 @@ mod alignment_fix_tests {
     /// Compile a component source string through the full pipeline and return codegen output.
     /// Returns Err(String) on any failure (parse, lower, pipeline, codegen).
     fn compile_component(source: &str) -> Result<String, String> {
-        compile_component_with_config(source, oxc_span::SourceType::jsx(), EnvironmentConfig::default())
+        compile_component_with_config(
+            source,
+            oxc_span::SourceType::jsx(),
+            EnvironmentConfig::default(),
+        )
     }
 
     /// Compile with a custom EnvironmentConfig.
-    fn compile_component_with_env(source: &str, config: EnvironmentConfig) -> Result<String, String> {
+    fn compile_component_with_env(
+        source: &str,
+        config: EnvironmentConfig,
+    ) -> Result<String, String> {
         compile_component_with_config(source, oxc_span::SourceType::jsx(), config)
     }
 
@@ -1153,12 +1160,9 @@ mod alignment_fix_tests {
             })
             .ok_or_else(|| "No function declaration found in source".to_string())?;
 
-        let env = Environment::new(
-            ReactFunctionType::Component,
-            CompilerOutputMode::Client,
-            env_config,
-        )
-        .unwrap();
+        let env =
+            Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config)
+                .unwrap();
 
         let outer_bindings = collect_import_bindings(&parser_result.program.body);
         let mut hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings)
@@ -1374,10 +1378,7 @@ function Component(props) {
             "Should produce a ref validation error when passing ref to foo(), got success"
         );
         let err = result.unwrap_err();
-        assert!(
-            err.contains("ref") || err.contains("Ref"),
-            "Error should mention refs: {err}"
-        );
+        assert!(err.contains("ref") || err.contains("Ref"), "Error should mention refs: {err}");
     }
 
     /// Test: Passing a ref through useCallback to a render-time call should produce
@@ -1580,10 +1581,7 @@ function Component(props) {
         let err = result.unwrap_err();
         // After fix: infer_mutation_aliasing_ranges errors are non-fatal,
         // so validate_no_ref_access_in_render runs and reports a Refs error.
-        assert!(
-            err.contains("Refs"),
-            "Expected a Refs category error in the output: {err}"
-        );
+        assert!(err.contains("Refs"), "Expected a Refs category error in the output: {err}");
     }
 
     // =========================================================================
@@ -1651,10 +1649,7 @@ function Component(props) {
         let err = result.unwrap_err();
         // After the infer_mutation_aliasing_ranges fix, both Immutability and Refs
         // errors should be reported because the pipeline continues past the first error.
-        assert!(
-            err.contains("Immutability"),
-            "Expected Immutability error in output: {err}"
-        );
+        assert!(err.contains("Immutability"), "Expected Immutability error in output: {err}");
         assert!(err.contains("Refs"), "Expected Refs error in output: {err}");
     }
 
@@ -2011,14 +2006,12 @@ export default function useUnitState(unit, biome) {
             .body
             .iter()
             .find_map(|stmt| match stmt {
-                oxc_ast::ast::Statement::ExportDefaultDeclaration(e) => {
-                    match &e.declaration {
-                        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
-                            Some(oxc_react_compiler::hir::build_hir::LowerableFunction::Function(f))
-                        }
-                        _ => None,
+                oxc_ast::ast::Statement::ExportDefaultDeclaration(e) => match &e.declaration {
+                    oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                        Some(oxc_react_compiler::hir::build_hir::LowerableFunction::Function(f))
                     }
-                }
+                    _ => None,
+                },
                 _ => None,
             })
             .expect("No function found");
@@ -2030,8 +2023,9 @@ export default function useUnitState(unit, biome) {
         )
         .unwrap();
 
-        let outer_bindings =
-            oxc_react_compiler::hir::build_hir::collect_import_bindings(&parser_result.program.body);
+        let outer_bindings = oxc_react_compiler::hir::build_hir::collect_import_bindings(
+            &parser_result.program.body,
+        );
         let mut hir_func = oxc_react_compiler::hir::build_hir::lower(
             &env,
             oxc_react_compiler::hir::ReactFunctionType::Hook,

@@ -1536,23 +1536,21 @@ fn effects_from_signature(
             error: CompilerDiagnostic::create(
                 ErrorCategory::Purity,
                 "Cannot call impure function during render".to_string(),
-                Some(
-                    if let Some(ref name) = sig.canonical_name {
-                        format!(
-                            "`{name}` is an impure function. \
+                Some(if let Some(ref name) = sig.canonical_name {
+                    format!(
+                        "`{name}` is an impure function. \
                              Calling an impure function can produce unstable results that update \
                              unpredictably when the component happens to re-render. \
                              (https://react.dev/reference/rules/components-and-hooks-must-be-pure\
                              #components-and-hooks-must-be-idempotent)"
-                        )
-                    } else {
-                        "Calling an impure function can produce unstable results that update \
+                    )
+                } else {
+                    "Calling an impure function can produce unstable results that update \
                          unpredictably when the component happens to re-render. \
                          (https://react.dev/reference/rules/components-and-hooks-must-be-pure\
                          #components-and-hooks-must-be-idempotent)"
-                            .to_string()
-                    },
-                ),
+                        .to_string()
+                }),
                 None,
             )
             .with_detail(CompilerDiagnosticDetail::Error {
@@ -3048,7 +3046,14 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // 2b. Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
+                return effects_from_signature(
+                    &sig,
+                    &v.callee,
+                    &v.args,
+                    lvalue,
+                    state,
+                    env.config.validate_no_impure_functions_in_render,
+                );
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=callee, function=callee, mutatesFunction=true
@@ -3145,7 +3150,14 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // 2c. Legacy fallback for method calls
-                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
+                return effects_from_signature(
+                    &sig,
+                    &v.receiver,
+                    &v.args,
+                    lvalue,
+                    state,
+                    env.config.validate_no_impure_functions_in_render,
+                );
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=receiver, function=property, mutatesFunction=false
@@ -3180,7 +3192,14 @@ fn compute_instruction_effects(
                     return Ok(effects);
                 }
                 // Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state, env.config.validate_no_impure_functions_in_render);
+                return effects_from_signature(
+                    &sig,
+                    &v.callee,
+                    &v.args,
+                    lvalue,
+                    state,
+                    env.config.validate_no_impure_functions_in_render,
+                );
             }
             // Conservative fallback when no signature is found.
             // TS: receiver=callee, function=callee, mutatesFunction=false

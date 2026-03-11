@@ -170,9 +170,7 @@ pub fn run_pipeline(
     // 13. ValidateHooksUsage (optional)
     // TS uses fn.env.recordError() internally — errors are non-fatal and accumulated.
     if env.enable_validations && env.config.validate_hooks_usage {
-        func.env.record_errors(
-            crate::validation::validate_hooks_usage::validate_hooks_usage(func),
-        );
+        func.env.record_errors(crate::validation::validate_hooks_usage::validate_hooks_usage(func));
     }
 
     // 14. ValidateNoCapitalizedCalls (optional)
@@ -221,10 +219,11 @@ pub fn run_pipeline(
     // so they are non-fatal and the pipeline continues to subsequent validation passes.
     // Match that behavior by recording errors instead of propagating them via `?`.
     let range_opts = InferRangesOptions { is_function_expression: false };
-    let range_result = crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
-        func,
-        &range_opts,
-    );
+    let range_result =
+        crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
+            func,
+            &range_opts,
+        );
     func.env.record_errors(range_result.map(|_| ()));
 
     // 22. ValidateLocalsNotReassignedAfterRender

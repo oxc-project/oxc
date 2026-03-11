@@ -11156,16 +11156,12 @@ function useHook(unit, biome) {
         enable_preserve_existing_memoization_guarantees: true,
         ..EnvironmentConfig::default()
     };
-    let env = Environment::new(
-        ReactFunctionType::Hook,
-        CompilerOutputMode::Lint,
-        env_config,
-    )
-    .unwrap();
+    let env =
+        Environment::new(ReactFunctionType::Hook, CompilerOutputMode::Lint, env_config).unwrap();
 
     let outer_bindings = collect_import_bindings(&parser_result.program.body);
-    let mut hir_func = lower(&env, ReactFunctionType::Hook, &func, outer_bindings)
-        .expect("Lower should succeed");
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Hook, &func, outer_bindings).expect("Lower should succeed");
 
     let pipeline_result = run_pipeline(&mut hir_func, &env);
     match pipeline_result {
