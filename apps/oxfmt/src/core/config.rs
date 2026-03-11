@@ -32,8 +32,6 @@ const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
 /// Vite+ config file name that may contain Oxfmt config under a `.fmt` field.
 /// Only `.ts` extension is supported, matching oxlint's behavior.
 const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
-#[cfg(feature = "napi")]
-const VITE_PLUS_OXFMT_CONFIG_FIELD: &str = "fmt";
 
 /// Returns an iterator of all supported config file names, in priority order.
 pub fn all_config_file_names() -> impl Iterator<Item = String> {
@@ -268,20 +266,6 @@ impl ConfigResolver {
                     path.display()
                 )
             })?;
-
-            // Vite+ config files (e.g. `vite.config.ts`),
-            // under a `.fmt` field instead of the default export directly.
-            let is_vite_plus = path
-                .file_name()
-                .and_then(|f| f.to_str())
-                .is_some_and(|name| name == VITE_PLUS_CONFIG_NAME);
-            let raw_config = if is_vite_plus {
-                raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned().ok_or_else(|| {
-                    format!("{}\nExpected a `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field in the default export.", path.display())
-                })?
-            } else {
-                raw_config
-            };
 
             let config_dir = path.parent().map(Path::to_path_buf);
             let editorconfig = load_editorconfig(cwd, editorconfig_path)?;

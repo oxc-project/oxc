@@ -111,7 +111,10 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
         }
 
         if (pathBasename(path) === VITE_CONFIG_NAME) {
-          config = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD] ?? {};
+          config =
+            VITE_OXLINT_CONFIG_FIELD in config
+              ? (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD]
+              : {};
           if (typeof config !== "object" || config === null || Array.isArray(config)) {
             throw new Error(
               `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,

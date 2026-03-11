@@ -11,8 +11,8 @@ describe("vite_config", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
-  it("error: no fmt field in vite.config.ts", async () => {
-    const cwd = join(fixturesDir, "error_no_fmt_field");
+  it("missing fmt field in vite.config.ts falls back to default config", async () => {
+    const cwd = join(fixturesDir, "missing_fmt_field");
     const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
     expect(snapshot).toMatchSnapshot();
   });
