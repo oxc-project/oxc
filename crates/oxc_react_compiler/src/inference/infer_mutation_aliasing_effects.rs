@@ -787,9 +787,8 @@ pub fn infer_mutation_aliasing_effects(
             // Store the incoming state (before phis/instructions) — matches TS line 203.
             states_by_block.insert(block_id, state.clone());
 
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b.clone(),
-                None => continue,
+            let Some(block) = func.body.blocks.get(&block_id) else {
+                continue;
             };
 
             // Process phi nodes before instructions — port of TypeScript inferBlock()
