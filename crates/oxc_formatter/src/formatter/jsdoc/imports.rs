@@ -62,6 +62,17 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     Some(ImportInfo { default_import, named_imports, module_path: module_path.to_string() })
 }
 
+/// Case-insensitive ASCII string comparison (no allocation).
+fn cmp_ascii_case_insensitive(a: &str, b: &str) -> std::cmp::Ordering {
+    for (ca, cb) in a.bytes().zip(b.bytes()) {
+        let ord = ca.to_ascii_lowercase().cmp(&cb.to_ascii_lowercase());
+        if ord != std::cmp::Ordering::Equal {
+            return ord;
+        }
+    }
+    a.len().cmp(&b.len())
+}
+
 /// Get the sort key for a named import specifier (sort by alias).
 /// `"B as B1"` → `"B1"`, `"B2"` → `"B2"`.
 fn import_specifier_sort_key(specifier: &str) -> &str {
@@ -102,11 +113,14 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
         }
     }
 
-    // Sort named imports within each group by original import name
+    // Sort named imports within each group by original import name (case-insensitive)
     for import in &mut groups {
-        import
-            .named_imports
-            .sort_by(|a, b| import_specifier_sort_key(a).cmp(import_specifier_sort_key(b)));
+        import.named_imports.sort_by(|a, b| {
+            cmp_ascii_case_insensitive(
+                import_specifier_sort_key(a),
+                import_specifier_sort_key(b),
+            )
+        });
     }
 
     // Sort groups: third-party (no ./ or ../) before relative, then alphabetically
@@ -116,7 +130,7 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
         match (a_relative, b_relative) {
             (false, true) => std::cmp::Ordering::Less,
             (true, false) => std::cmp::Ordering::Greater,
-            _ => a.module_path.cmp(&b.module_path),
+            _ => cmp_ascii_case_insensitive(&a.module_path, &b.module_path),
         }
     });
 
