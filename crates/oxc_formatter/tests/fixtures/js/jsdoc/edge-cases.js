@@ -40,3 +40,16 @@ function seeUrl() {}
  * This function is internal and should not be used directly.
  */
 function internalFunction() {}
+
+/**
+ * When the user selects an <option> from the <select> element,
+ * the value is updated accordingly.
+ */
+function handleSelect() {}
+
+/**
+ * Renders a
+ * <div>
+ * element with the given props.
+ */
+function renderDiv() {}

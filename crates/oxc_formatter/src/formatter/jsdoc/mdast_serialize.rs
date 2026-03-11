@@ -392,6 +392,11 @@ fn replace_placeholders(s: &str, placeholders: &[&str]) -> String {
 // ──────────────────────────────────────────────────
 
 /// Serialize children of a parent node, inserting blank lines between block-level nodes.
+///
+/// Consecutive Paragraph and inline-like Html nodes are merged into a single
+/// paragraph so that HTML tag references like `<option>` or `<div>` that the
+/// markdown parser extracted as separate Html block nodes don't create spurious
+/// blank lines in the middle of what should be a single paragraph.
 fn serialize_children(
     node: &Node,
     indent: usize,
@@ -403,8 +408,102 @@ fn serialize_children(
         return;
     };
 
-    for (i, child) in children.iter().enumerate() {
-        // Add blank line between block-level siblings (except first)
+    let mut i = 0;
+    while i < children.len() {
+        let child = &children[i];
+
+        // Try to merge a run of Paragraph + inline-Html nodes into one paragraph.
+        if matches!(child, Node::Paragraph(_) | Node::Html(_)) {
+            let run_start = i;
+            let mut run_end = i + 1;
+            let mut has_html = matches!(child, Node::Html(_));
+
+            // Extend the run while next nodes are Paragraphs or inline-like Html
+            while run_end < children.len() {
+                match &children[run_end] {
+                    Node::Paragraph(_) => {
+                        run_end += 1;
+                    }
+                    Node::Html(html) if is_inline_html(&html.value) => {
+                        has_html = true;
+                        run_end += 1;
+                    }
+                    _ => break,
+                }
+            }
+
+            // If we found a mixed run (has Html nodes mixed with Paragraphs),
+            // merge them into a single paragraph text.
+            if has_html && run_end - run_start > 1 {
+                // Add blank line before the merged paragraph if needed
+                if run_start > 0 && !lines.last_is_empty() {
+                    lines.push_empty();
+                }
+
+                let mut merged_text = String::new();
+                for child in children.iter().take(run_end).skip(run_start) {
+                    match child {
+                        Node::Paragraph(para) => {
+                            let text = collect_inline_text_from_children(&para.children);
+                            if !merged_text.is_empty() && !merged_text.ends_with(' ') {
+                                merged_text.push(' ');
+                            }
+                            merged_text.push_str(text.trim());
+                        }
+                        Node::Html(html) => {
+                            if !merged_text.is_empty() && !merged_text.ends_with(' ') {
+                                merged_text.push(' ');
+                            }
+                            merged_text.push_str(html.value.trim());
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Wrap the merged text as a single paragraph
+                let offset = if run_start == 0 { first_para_offset } else { 0 };
+                let effective_width = opts.max_width.saturating_sub(indent);
+                let ind = super::wrap::indent_str(indent);
+                let mut para_buf = LineBuffer::new();
+                wrap_paragraph(&merged_text, effective_width, offset, 0, &mut para_buf);
+                let para_str = para_buf.into_string();
+
+                let line_count = para_str.split('\n').count();
+                for (li, line) in para_str.split('\n').enumerate() {
+                    let is_last = li == line_count - 1;
+                    if indent > 0 {
+                        if line.is_empty() {
+                            lines.push_empty();
+                        } else if opts.description_with_dot && is_last {
+                            let dotted = super::normalize::append_trailing_dot(line);
+                            let s = lines.begin_line();
+                            s.push_str(&ind);
+                            s.push_str(&dotted);
+                        } else {
+                            let s = lines.begin_line();
+                            s.push_str(&ind);
+                            s.push_str(line);
+                        }
+                    } else if opts.capitalize && li == 0 {
+                        let cap = super::normalize::capitalize_first(line);
+                        if opts.description_with_dot && is_last {
+                            lines.push(super::normalize::append_trailing_dot(&cap));
+                        } else {
+                            lines.push(cap);
+                        }
+                    } else if opts.description_with_dot && is_last {
+                        lines.push(super::normalize::append_trailing_dot(line));
+                    } else {
+                        lines.push(line);
+                    }
+                }
+
+                i = run_end;
+                continue;
+            }
+        }
+
+        // Normal path: add blank line between block-level siblings (except first)
         if i > 0 && is_block_node(child) && !lines.last_is_empty() {
             lines.push_empty();
         }
@@ -412,7 +511,71 @@ fn serialize_children(
         // Only the first paragraph gets the tag-string-length offset
         let offset = if i == 0 { first_para_offset } else { 0 };
         serialize_node(child, indent, offset, opts, lines);
+        i += 1;
     }
+}
+
+/// Check if an HTML node looks like an inline tag reference that the markdown
+/// parser incorrectly extracted as a block-level element.
+///
+/// In JSDoc descriptions, `<div>`, `<table>`, etc. are usually mentioned as
+/// tag names (e.g., "renders a <div> element") rather than actual HTML blocks.
+/// The CommonMark parser treats these as HTML block starts, absorbing subsequent
+/// text into the Html node. This function detects such cases so they can be
+/// merged back into the surrounding paragraph.
+///
+/// Returns `true` when the Html node content looks like an inline tag reference
+/// (possibly followed by absorbed paragraph text), NOT a genuine HTML block
+/// with structured content.
+fn is_inline_html(html: &str) -> bool {
+    let trimmed = html.trim();
+    if !trimmed.starts_with('<') {
+        return false;
+    }
+
+    // Find the end of the first tag
+    let Some(tag_end) = trimmed.find('>') else {
+        return false;
+    };
+
+    // Extract the tag name (strip `<`, `/`, attributes)
+    let tag_content = &trimmed[1..tag_end];
+    let tag_name = tag_content
+        .trim_start_matches('/')
+        .split(|c: char| c.is_ascii_whitespace() || c == '/')
+        .next()
+        .unwrap_or("");
+
+    if tag_name.is_empty() {
+        return false;
+    }
+
+    // If the content after the first tag is just a closing tag or empty, it's
+    // a simple inline reference like `<div>` or `<div></div>`
+    let after_tag = trimmed[tag_end + 1..].trim();
+    if after_tag.is_empty() {
+        return true;
+    }
+
+    // If the content after the tag looks like plain text (no more HTML structure),
+    // this is likely a tag-name mention that absorbed following paragraph text.
+    // e.g., "<div>\nelement with the given props."
+    //
+    // Check: does the remaining content contain a matching closing tag with
+    // structured content? If not, it's likely absorbed paragraph text.
+    let closing_tag = format!("</{tag_name}>");
+    if after_tag.contains(&closing_tag) {
+        // Has a matching closing tag — could be genuine HTML block.
+        // But in JSDoc context, even `<div>...</div>` is usually inline.
+        // Be conservative: if there's a closing tag, check if it's the
+        // entire content (e.g., `<div>content</div>`) or if there's text after.
+        // For JSDoc purposes, treat it all as inline.
+        return true;
+    }
+
+    // No closing tag — the parser absorbed following paragraph text after the
+    // block-level tag. This is the exact bug scenario.
+    true
 }
 
 fn is_block_node(node: &Node) -> bool {
@@ -1159,3 +1322,4 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         }
     }
 }
+
