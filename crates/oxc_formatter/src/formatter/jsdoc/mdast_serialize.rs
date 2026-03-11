@@ -1315,4 +1315,3 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         }
     }
 }
-
