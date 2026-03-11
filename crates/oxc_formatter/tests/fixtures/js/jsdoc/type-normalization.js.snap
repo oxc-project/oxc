@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 236
 ---
 ==================== Input ====================
 /**
@@ -17,6 +18,11 @@ function b() {}
  */
 const c = true;
 
+/**
+ * @param {"'" | '"' | '`'} quote
+ */
+function quoteTypes(quote) {}
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -30,6 +36,9 @@ function b() {}
 /** @type {boolean} */
 const c = true;
 
+/** @param {"'" | '"' | "`"} quote */
+function quoteTypes(quote) {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -41,5 +50,8 @@ function b() {}
 
 /** @type {boolean} */
 const c = true;
+
+/** @param {"'" | '"' | "`"} quote */
+function quoteTypes(quote) {}
 
 ===================== End =====================

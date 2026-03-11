@@ -12,3 +12,8 @@ function b() {}
  * @type {  boolean  }
  */
 const c = true;
+
+/**
+ * @param {"'" | '"' | '`'} quote
+ */
+function quoteTypes(quote) {}
