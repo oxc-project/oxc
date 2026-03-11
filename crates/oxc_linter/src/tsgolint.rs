@@ -17,7 +17,10 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::{CompositeFix, FixKind, Fixer, Message, PossibleFixes, WEBSITE_BASE_RULES_URL};
+use crate::{
+    CompositeFix, FixKind, Fixer, Message, PossibleFixes, SuppressionManager, WEBSITE_BASE_RULES_URL,
+    suppression::{Filename, SuppressionFile, SuppressionSender},
+};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -109,6 +112,8 @@ impl TsGoLintState {
         disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
         error_sender: DiagnosticSender,
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
+        suppression_manager: &SuppressionManager,
+        suppression_sender: SuppressionSender,
     ) -> Result<(), String> {
         if paths.is_empty() {
             return Ok(());
@@ -123,16 +128,27 @@ impl TsGoLintState {
 
         let should_fix = self.fix || self.fix_suggestions;
         let cwd = self.cwd.clone();
-        let sender_for_fixes = error_sender.clone();
+        let silent = self.silent;
+
+        // Extract suppression data before spawning threads (SuppressionManager is not Send)
+        let concurrent_map = suppression_manager.concurrent_map();
+        let is_updating = suppression_manager.is_updating_file();
+        let file_exists = suppression_manager.exists_suppression_file();
+        let ignore = suppression_manager.ignore();
+        // suppress_all is true when there is no file yet but we're in suppress-all mode
+        let suppress_all = !file_exists && !ignore;
+
+        // Clone sender for the thread (internal diagnostics); original used after join for suppressed output
+        let error_sender_for_thread = error_sender.clone();
 
         let handler = std::thread::spawn(move || {
             let mut child = self.spawn_tsgolint(&json_input)?;
 
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
-            // Process stdout stream in a separate thread to send diagnostics as they arrive
+            // Process stdout stream in a separate thread to collect diagnostics
             let stdout_handler = std::thread::spawn(
-                move || -> Result<Vec<(PathBuf, String, Vec<Message>)>, String> {
+                move || -> Result<(FxHashMap<PathBuf, Vec<Message>>, Vec<(PathBuf, String, Vec<Message>)>), String> {
                     let disable_directives_map = disable_directives_map
                         .lock()
                         .expect("disable_directives_map mutex poisoned");
@@ -141,7 +157,7 @@ impl TsGoLintState {
                         self.cwd.clone(),
                         self.silent,
                         should_fix,
-                        error_sender,
+                        error_sender_for_thread,
                     );
 
                     let msg_iter = TsGoLintMessageStream::new(stdout);
@@ -203,7 +219,7 @@ impl TsGoLintState {
                         }
                     }
 
-                    Ok(diagnostic_handler.into_messages_requiring_fixes())
+                    Ok(diagnostic_handler.finalize())
                 },
             );
 
@@ -229,7 +245,59 @@ impl TsGoLintState {
         });
 
         match handler.join() {
-            Ok(Ok(messages_requiring_fixes)) => {
+            Ok(Ok((no_fix_messages, messages_requiring_fixes))) => {
+                // Apply suppression to no-fix messages and emit
+                for (path, messages) in no_fix_messages {
+                    let rel_path = path.strip_prefix(&cwd).unwrap_or(&path);
+                    let filename = Filename::new(rel_path);
+
+                    let (filtered, diffs) = if ignore {
+                        (messages, vec![])
+                    } else {
+                        let suppression_data = concurrent_map.get(&filename);
+                        let suppression_file =
+                            SuppressionFile::new(file_exists, suppress_all, suppression_data);
+                        let (filtered, runtime_counts) =
+                            SuppressionManager::suppress_lint_diagnostics(
+                                &suppression_file,
+                                messages,
+                            );
+                        let diffs = runtime_counts.map_or(vec![], |counts| {
+                            SuppressionManager::diff_filename(
+                                &suppression_file,
+                                &counts,
+                                &filename,
+                            )
+                        });
+                        (filtered, diffs)
+                    };
+
+                    for diff in diffs {
+                        if is_updating {
+                            suppression_sender
+                                .send(diff)
+                                .expect("Failed to send suppression diff");
+                        } else {
+                            error_sender
+                                .send(vec![OxcDiagnostic::from(diff)])
+                                .expect("Failed to send diff diagnostic");
+                        }
+                    }
+
+                    if !filtered.is_empty() {
+                        let source_text =
+                            if silent { String::new() } else { read_to_string(&path).unwrap_or_default() };
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            &cwd,
+                            &path,
+                            &source_text,
+                            filtered.into_iter().map(Into::into).collect(),
+                        );
+                        error_sender.send(diagnostics).expect("Failed to send diagnostics");
+                    }
+                }
+
+                // Apply fixes first, then suppression, to fix-requiring messages
                 for (path, source_text, messages) in messages_requiring_fixes {
                     let source_type = SourceType::from_path(&path)
                         .ok()
@@ -243,15 +311,53 @@ impl TsGoLintState {
                     }
 
                     if !fix_result.messages.is_empty() {
-                        let source_for_diagnostics: &str =
-                            if fix_result.fixed { &fix_result.fixed_code } else { &source_text };
-                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                            &cwd,
-                            &path,
-                            source_for_diagnostics,
-                            fix_result.messages.into_iter().map(Into::into).collect(),
-                        );
-                        sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
+                        let rel_path = path.strip_prefix(&cwd).unwrap_or(&path);
+                        let filename = Filename::new(rel_path);
+
+                        let (filtered, diffs) = if ignore {
+                            (fix_result.messages, vec![])
+                        } else {
+                            let suppression_data = concurrent_map.get(&filename);
+                            let suppression_file =
+                                SuppressionFile::new(file_exists, suppress_all, suppression_data);
+                            let (filtered, runtime_counts) =
+                                SuppressionManager::suppress_lint_diagnostics(
+                                    &suppression_file,
+                                    fix_result.messages,
+                                );
+                            let diffs = runtime_counts.map_or(vec![], |counts| {
+                                SuppressionManager::diff_filename(
+                                    &suppression_file,
+                                    &counts,
+                                    &filename,
+                                )
+                            });
+                            (filtered, diffs)
+                        };
+
+                        for diff in diffs {
+                            if is_updating {
+                                suppression_sender
+                                    .send(diff)
+                                    .expect("Failed to send suppression diff");
+                            } else {
+                                error_sender
+                                    .send(vec![OxcDiagnostic::from(diff)])
+                                    .expect("Failed to send diff diagnostic");
+                            }
+                        }
+
+                        if !filtered.is_empty() {
+                            let source_for_diagnostics: &str =
+                                if fix_result.fixed { &fix_result.fixed_code } else { &source_text };
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &cwd,
+                                &path,
+                                source_for_diagnostics,
+                                filtered.into_iter().map(Into::into).collect(),
+                            );
+                            error_sender.send(diagnostics).expect("Failed to send diagnostics");
+                        }
                     }
                 }
                 Ok(())
@@ -943,8 +1049,11 @@ struct DiagnosticHandler {
     silent: bool,
     should_fix: bool,
     source_text_cache: SourceTextCache,
+    /// Sender used only for internal (compiler) diagnostics, which have no OxcCode and cannot be suppressed.
     error_sender: DiagnosticSender,
-    /// Messages requiring fixes, grouped by file path: messages.
+    /// No-fix rule messages buffered for suppression processing in the main thread.
+    no_fix_messages: FxHashMap<PathBuf, Vec<Message>>,
+    /// Messages requiring fixes, grouped by file path.
     messages_requiring_fixes: FxHashMap<PathBuf, Vec<Message>>,
 }
 
@@ -956,6 +1065,7 @@ impl DiagnosticHandler {
             should_fix,
             source_text_cache: SourceTextCache::default(),
             error_sender,
+            no_fix_messages: FxHashMap::default(),
             messages_requiring_fixes: FxHashMap::default(),
         }
     }
@@ -978,23 +1088,24 @@ impl DiagnosticHandler {
         let has_fixes =
             self.should_fix && (!diagnostic.fixes.is_empty() || !diagnostic.suggestions.is_empty());
 
+        // Convert to Message (source text only needed for fix computation; empty string is fine for no-fix)
+        let source_text_for_fixes =
+            if has_fixes { self.get_source_text(&path).to_string() } else { String::new() };
+        let mut message =
+            Message::from_tsgo_lint_diagnostic(diagnostic, &source_text_for_fixes);
+        message.error.severity =
+            if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
+
         if has_fixes {
-            // Collect for later fix application
-            let mut message =
-                Message::from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
-            message.error.severity =
-                if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
-
-            let entry = self.messages_requiring_fixes.entry(path).or_default();
-
-            entry.push(message);
+            self.messages_requiring_fixes.entry(path).or_default().push(message);
         } else {
-            // Stream immediately
-            self.send_diagnostic(&path, diagnostic.into(), severity);
+            // Buffer for suppression processing after subprocess completes
+            self.no_fix_messages.entry(path).or_default().push(message);
         }
     }
 
     fn handle_internal_diagnostic(&mut self, e: TsGoLintInternalDiagnostic) {
+        // Internal diagnostics have no OxcCode and cannot be suppressed; send immediately
         let file_path = e.file_path.clone();
         let oxc_diagnostic: OxcDiagnostic = e.into();
 
@@ -1013,32 +1124,24 @@ impl DiagnosticHandler {
         self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
     }
 
-    fn send_diagnostic(
-        &mut self,
-        path: &Path,
-        oxc_diagnostic: OxcDiagnostic,
-        severity: AllowWarnDeny,
-    ) {
-        let source_text = self.get_source_text(path).to_string();
-        let oxc_diagnostic = oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
-            Severity::Error
-        } else {
-            Severity::Warning
-        });
-        let diagnostics = DiagnosticService::wrap_diagnostics(
-            &self.cwd,
-            path,
-            &source_text,
-            vec![oxc_diagnostic],
-        );
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
-    }
+    /// Consume the handler and return buffered messages for suppression processing.
+    ///
+    /// Returns `(no_fix_messages, fix_requiring_messages)`:
+    /// - `no_fix_messages`: rule diagnostics without fixes, keyed by path
+    /// - `fix_requiring_messages`: rule diagnostics with fixes, along with source text
+    fn finalize(
+        self,
+    ) -> (FxHashMap<PathBuf, Vec<Message>>, Vec<(PathBuf, String, Vec<Message>)>) {
+        let Self {
+            no_fix_messages,
+            messages_requiring_fixes,
+            mut source_text_cache,
+            should_fix,
+            silent,
+            ..
+        } = self;
 
-    /// Consume the handler and return collected messages requiring fixes.
-    fn into_messages_requiring_fixes(self) -> Vec<(PathBuf, String, Vec<Message>)> {
-        let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
-
-        messages_requiring_fixes
+        let fix_msgs = messages_requiring_fixes
             .into_iter()
             .map(|(path, messages)| {
                 let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
@@ -1050,7 +1153,9 @@ impl DiagnosticHandler {
                 });
                 (path, source_text, messages)
             })
-            .collect()
+            .collect();
+
+        (no_fix_messages, fix_msgs)
     }
 }
 

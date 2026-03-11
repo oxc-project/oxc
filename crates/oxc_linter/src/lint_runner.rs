@@ -239,7 +239,14 @@ impl LintRunner {
         );
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
-            type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
+            type_aware_linter.lint(
+                files,
+                self.directives_store.map(),
+                tx_error,
+                fs,
+                suppression_manager,
+                suppression_sender,
+            )?;
         } else {
             drop(tx_error);
             drop(suppression_sender);
