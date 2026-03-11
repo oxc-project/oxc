@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 236
 ---
 ==================== Input ====================
 /**
@@ -94,7 +93,7 @@ function seeUrl() {}
 /**
  * @internal
  *
- *   This function is internal and should not be used directly.
+ * This function is internal and should not be used directly.
  */
 function internalFunction() {}
 
@@ -137,7 +136,7 @@ function seeUrl() {}
 /**
  * @internal
  *
- *   This function is internal and should not be used directly.
+ * This function is internal and should not be used directly.
  */
 function internalFunction() {}
 
