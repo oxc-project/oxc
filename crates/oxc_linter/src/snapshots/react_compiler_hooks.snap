@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react-compiler(hooks): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[hooks.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         function Component() {
+ 3 │ │             if (cond) {
+ 4 │ │               useConditionalHook();
+ 5 │ │             }
+ 6 │ │             return <div />;
+ 7 │ ╰─▶         }
+ 8 │             
+   ╰────
+
+  ⚠ react-compiler(hooks): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[hooks.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         function Component() {
+ 3 │ │             cond ?? useConditionalHook();
+ 4 │ │             props.cond && useConditionalHook();
+ 5 │ │             return <div>Hello world</div>;
+ 6 │ ╰─▶         }
+ 7 │             
+   ╰────
+
+  ⚠ react-compiler(hooks): Error: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
+   ╭─[hooks.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         function Component() {
+ 3 │ │             cond ?? useConditionalHook();
+ 4 │ │             props.cond && useConditionalHook();
+ 5 │ │             return <div>Hello world</div>;
+ 6 │ ╰─▶         }
+ 7 │             
+   ╰────

@@ -25,4 +25,37 @@ impl Rule for ErrorBoundaries {
 }
 
 #[test]
-fn test() {}
+fn test() {
+    use crate::tester::Tester;
+    let pass = vec![
+        // Valid: JSX outside try/catch is fine
+        r#"
+        function Component(props) {
+          return <Child value={props.value} />;
+        }
+        "#,
+        // Cross-category: conditional hook triggers Hooks, not ErrorBoundaries
+        r#"
+        function useConditional() {
+          if (cond) {
+            useConditionalHook();
+          }
+        }
+        "#,
+    ];
+    let fail = vec![
+        // JSX in try blocks
+        r#"
+        function Component(props) {
+          let el;
+          try {
+            el = <Child />;
+          } catch {
+            return null;
+          }
+          return el;
+        }
+        "#,
+    ];
+    Tester::new(ErrorBoundaries::NAME, ErrorBoundaries::PLUGIN, pass, fail).test_and_snapshot();
+}
