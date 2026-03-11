@@ -94,9 +94,10 @@ fn get_language_comment<'a>(
 
     // Ensure there's nothing but whitespace between the comment and the template literal.
     // This prevents matching `const html /* HTML */ = \`...\`` where `=` is between them.
-    if !f.source_text().all_bytes_match(comment.span.end, template.span.start, |b| {
-        b.is_ascii_whitespace()
-    }) {
+    if !f
+        .source_text()
+        .all_bytes_match(comment.span.end, template.span.start, |b| b.is_ascii_whitespace())
+    {
         return None;
     }
 
