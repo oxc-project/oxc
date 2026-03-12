@@ -7,7 +7,7 @@ use std::{
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    SourceFormatter, resolve_editorconfig_path, utils,
 };
 
 pub struct StdinRunner {
@@ -56,11 +56,10 @@ impl StdinRunner {
         }
 
         // Load config
-        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
         let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
-            oxfmtrc_path.as_deref(),
+            config_options.config.as_deref(),
             editorconfig_path.as_deref(),
             Some(&self.js_config_loader),
         ) {

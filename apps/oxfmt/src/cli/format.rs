@@ -11,9 +11,7 @@ use super::{
 };
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
-use crate::core::{
-    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
-};
+use crate::core::{ConfigResolver, SourceFormatter, resolve_editorconfig_path, utils};
 
 pub struct FormatRunner {
     options: FormatCommand,
@@ -81,11 +79,10 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest config file from cwd upwards
-        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
         let editorconfig_path = resolve_editorconfig_path(&cwd);
         let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
-            oxfmtrc_path.as_deref(),
+            config_options.config.as_deref(),
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
@@ -134,7 +131,7 @@ impl FormatRunner {
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
-            oxfmtrc_path.as_deref(),
+            config_resolver.config_dir(),
             &ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,
@@ -174,6 +171,7 @@ impl FormatRunner {
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
+        let no_config = config_resolver.config_dir().is_none() && editorconfig_path.is_none();
         let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
@@ -216,7 +214,7 @@ impl FormatRunner {
                 ),
             );
             // Config stats: only show when no config is found
-            if oxfmtrc_path.is_none() && editorconfig_path.is_none() {
+            if no_config {
                 #[cfg(feature = "napi")]
                 let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
                 #[cfg(not(feature = "napi"))]
