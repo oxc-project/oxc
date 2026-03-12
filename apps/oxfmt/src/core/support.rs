@@ -612,9 +612,11 @@ mod tests {
             matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
         );
 
-        // Static extensions take precedence over plugin extensions
+        // Static extensions take precedence over plugin extensions (even with a conflicting entry)
+        let mut with_conflict = plugin_extensions.clone();
+        with_conflict.insert("css".to_string(), "some-other-parser".to_string());
         let kind =
-            classify_file_kind(Arc::from(Path::new("style.css")), &plugin_extensions).unwrap();
+            classify_file_kind(Arc::from(Path::new("style.css")), &with_conflict).unwrap();
         assert!(
             matches!(&kind, FileKind::ExternalFormatter { parser_name, .. } if parser_name == "css"),
             "Static extension should win over plugin extension"

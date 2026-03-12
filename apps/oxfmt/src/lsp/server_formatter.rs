@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -13,6 +14,7 @@ use oxc_language_server::{
     ToolRestartChanges,
 };
 
+use crate::cli::parse_plugin_extensions;
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, SourceFormatter,
     classify_file_kind, config_discovery, resolve_editorconfig_path, utils,
@@ -65,12 +67,17 @@ impl ServerFormatterBuilder {
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads, vec![])) {
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to setup external formatter.\n{err}\n");
-            }
-        }
+        let plugin_extensions = Arc::new(
+            match tokio::task::block_in_place(|| {
+                self.external_formatter.init(num_of_threads, vec![])
+            }) {
+                Ok(mappings) => parse_plugin_extensions(mappings),
+                Err(err) => {
+                    error!("Failed to setup external formatter.\n{err}\n");
+                    HashMap::new()
+                }
+            },
+        );
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
@@ -81,6 +88,7 @@ impl ServerFormatterBuilder {
             resolve_editorconfig_path(&root_path),
             prettierignore_glob,
             explicit_config_path,
+            plugin_extensions,
         )
     }
 }
@@ -137,6 +145,7 @@ pub struct ServerFormatter {
     /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
     /// config discovery; all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    plugin_extensions: Arc<HashMap<String, String>>,
 }
 
 impl Tool for ServerFormatter {
@@ -276,6 +285,7 @@ impl ServerFormatter {
         editorconfig_path: Option<PathBuf>,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        plugin_extensions: Arc<HashMap<String, String>>,
     ) -> Self {
         Self {
             root_path,
@@ -285,6 +295,7 @@ impl ServerFormatter {
             editorconfig_path,
             prettierignore_glob,
             explicit_config_path,
+            plugin_extensions,
         }
     }
 
@@ -353,7 +364,7 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path), &std::collections::HashMap::new()) else {
+        let Some(kind) = classify_file_kind(Arc::from(path), &self.plugin_extensions) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
