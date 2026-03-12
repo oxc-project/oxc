@@ -245,7 +245,9 @@ fn closure_compiler_tests() {
     // test("({},[]).foo = 2;", false);
     test("delete a.b", true);
     test("Math.random();", false);
-    test("Math.random(Math);", true);
+    // `Math` is a known global, so accessing it is side-effect-free.
+    test("Math.random(Math);", false);
+    test_with_global_variables("Math.random(seed);", &["seed"], true);
     // test("[1, 1].foo;", false);
     // test("export var x = 0;", true);
     // test("export let x = 0;", true);
@@ -796,6 +798,94 @@ fn test_property_access() {
     test("[...'😀'][0]", false);
     test("[...'😀'][1]", true);
     test("[...a, 1][0]", true); // "...a" may have a sideeffect
+}
+
+/// Tests for known global identifiers and property reads.
+/// Ported from Rolldown's global_reference.rs / GLOBAL_IDENT set.
+#[test]
+fn test_known_global_identifiers() {
+    // Known globals (in GLOBALS["builtin"]) should be side-effect-free to access
+    test("Math", false);
+    test("Array", false);
+    test("Object", false);
+    test("JSON", false);
+    test("Reflect", false);
+    test("Symbol", false);
+    test("Promise", false);
+    test("Map", false);
+    test("Set", false);
+    test("WeakMap", false);
+    test("WeakSet", false);
+    test("parseInt", false);
+    test("parseFloat", false);
+    test("isNaN", false);
+    test("isFinite", false);
+    test("encodeURI", false);
+    test("decodeURI", false);
+    test("globalThis", false);
+
+    // Browser/node globals need to be explicitly included in the global set
+    test_with_global_variables("console", &["console"], false);
+    test_with_global_variables("document", &["document"], false);
+    test_with_global_variables("window", &["window"], false);
+    test_with_global_variables("fetch", &["fetch"], false);
+
+    // Unknown globals should have side effects when marked as global references
+    test_with_global_variables("SomeUnknownGlobal", &["SomeUnknownGlobal"], true);
+}
+
+#[test]
+fn test_known_global_property_reads() {
+    // Math properties
+    test("Math.PI", false);
+    test("Math.E", false);
+    test("Math.abs", false);
+    test("Math.floor", false);
+    test("Math.random", false);
+    test("Math.unknownProp", true);
+
+    // Object properties
+    test("Object.keys", false);
+    test("Object.create", false);
+    test("Object.assign", false);
+    test("Object.prototype", false);
+    test("Object.unknownProp", true);
+
+    // Reflect properties
+    test("Reflect.apply", false);
+    test("Reflect.get", false);
+    test("Reflect.unknownProp", true);
+
+    // Symbol properties
+    test("Symbol.iterator", false);
+    test("Symbol.asyncIterator", false);
+    test("Symbol.unknownProp", true);
+
+    // JSON properties
+    test("JSON.parse", false);
+    test("JSON.stringify", false);
+    test("JSON.unknownProp", true);
+
+    // console needs to be explicitly in the global set
+    test_with_global_variables("console.log", &["console"], false);
+    test_with_global_variables("console.error", &["console"], false);
+    test_with_global_variables("console.warn", &["console"], false);
+    test_with_global_variables("console.unknownMethod", &["console"], true);
+}
+
+#[test]
+fn test_known_global_property_deep() {
+    // 3-level chains on Object.prototype
+    test("Object.prototype.hasOwnProperty", false);
+    test("Object.prototype.isPrototypeOf", false);
+    test("Object.prototype.toString", false);
+    test("Object.prototype.valueOf", false);
+    test("Object.prototype.propertyIsEnumerable", false);
+    test("Object.prototype.unknownProp", true);
+
+    // Non-Object 3-level chains are not supported
+    test("Math.PI.toString", true);
+    test("Array.prototype.push", true);
 }
 
 // `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
