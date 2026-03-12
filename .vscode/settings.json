@@ -11,6 +11,9 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "never" // let oxfmt handle import organization
   },
+  // Disable TypeScript's error checking — Oxlint handles this via the Oxc language server.
+  // VS Code's bundled TS version can disagree with Oxlint's newer TS support (via tsgolint).
+  "js/ts.validate.enabled": false,
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   }
