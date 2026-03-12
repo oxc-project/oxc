@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
+
 use std::path::{Path, PathBuf};
 
 use phf::phf_set;
@@ -33,7 +34,7 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-        Self::from_path(path, &HashMap::new())
+        Self::from_path(path, &FxHashMap::default())
     }
 }
 
@@ -45,7 +46,7 @@ impl FormatFileStrategy {
     /// route the file to the external formatter with the corresponding parser.
     pub fn from_path(
         path: PathBuf,
-        plugin_extensions: &HashMap<String, String>,
+        plugin_extensions: &FxHashMap<String, String>,
     ) -> Result<Self, ()> {
         // Check JS/TS files first
         // TODO: This logic should(can) move to this file, after LSP support is also moved here.
@@ -502,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_plugin_extensions() {
-        let mut plugin_extensions = HashMap::new();
+        let mut plugin_extensions = FxHashMap::default();
         plugin_extensions.insert("gjs".to_string(), "ember-template-tag".to_string());
         plugin_extensions.insert("gts".to_string(), "ember-template-tag".to_string());
         plugin_extensions.insert("astro".to_string(), "astro".to_string());
@@ -541,7 +542,7 @@ mod tests {
         );
 
         // Unknown extension with no plugin → Err
-        let empty: HashMap<String, String> = HashMap::new();
+        let empty: FxHashMap<String, String> = FxHashMap::default();
         assert!(
             FormatFileStrategy::from_path(PathBuf::from("foo.gjs"), &empty).is_err(),
             "gjs without plugin registered should be skipped"

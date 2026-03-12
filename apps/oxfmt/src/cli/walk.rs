@@ -1,9 +1,10 @@
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
 };
+
+use rustc_hash::FxHashMap;
 
 use ignore::{
     gitignore::{Gitignore, GitignoreBuilder},
@@ -15,7 +16,7 @@ use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl Walk {
@@ -26,7 +27,7 @@ impl Walk {
         with_node_modules: bool,
         oxfmtrc_path: Option<&Path>,
         ignore_patterns: &[String],
-        plugin_extensions: Arc<HashMap<String, String>>,
+        plugin_extensions: Arc<FxHashMap<String, String>>,
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
@@ -368,7 +369,7 @@ fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBu
 
 struct WalkBuilder {
     sender: mpsc::Sender<FormatFileStrategy>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -382,7 +383,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 
 struct WalkVisitor {
     sender: mpsc::Sender<FormatFileStrategy>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
