@@ -1,7 +1,6 @@
 import { basename as pathBasename } from "node:path";
 
 import { getErrorMessage } from "./utils/utils.ts";
-import { isDefineConfig } from "./package/config.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
@@ -134,12 +133,6 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
 
         if (!isObject(config)) {
           throw new Error(`Configuration file must have a default export that is an object.`);
-        }
-
-        if (!isDefineConfig(config)) {
-          throw new Error(
-            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-          );
         }
         validateConfigExtends(config as object);
         return { path, config };
