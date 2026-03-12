@@ -26,7 +26,7 @@ const group: TestGroup = {
 
     // Mock `vitest` - it's ESM-only and can't be `require()`-ed.
     // `no-uninstalled-addons` test uses `vi.mock()` which can't work in CJS context anyway.
-    mock("vitest", { vi: { mock: () => { }, importActual: () => ({}) } });
+    mock("vitest", { vi: { mock: () => {}, importActual: () => ({}) } });
   },
 
   shouldSkipTest(ruleName: string): boolean {
