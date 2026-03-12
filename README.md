@@ -65,11 +65,28 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 - [Contribute](https://oxc.rs/docs/contribute/introduction)
 - [Learn](https://oxc.rs/docs/learn/parser_in_rust/intro)
 
+## 🙋 Who's using Oxc?
+
+[Rolldown] and [Nuxt] use Oxc for parsing. [Rolldown] also uses Oxc for transformation and minification. [Nova], [swc-node], and [knip] use [oxc_resolver][docs-resolver-url] for module resolution. [Preact], [Shopify], [ByteDance], and [Shopee] use oxlint for linting.
+
+[See more projects using Oxc →](https://oxc.rs/docs/guide/projects.html)
+
+## ✍️ Contribute
+
+Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance, or read the complete [contributing guide on our website →](https://oxc.rs/docs/contribute/introduction.html)
+
+If you are unable to contribute by code, you can still participate by:
+
+- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project
+- Join us on [Discord][discord-url]
+- [Follow me on X](https://x.com/boshen_c) and post about this project
+
 ## Other Resources
 
 - [Troubleshooting](https://oxc.rs/docs/guide/troubleshooting)
 - [Benchmarks](https://oxc.rs/docs/guide/benchmarks)
-- [Projects using Oxc](https://oxc.rs/docs/guide/projects)
 - [Talks and media](https://oxc.rs/docs/guide/media)
 - [Team](https://oxc.rs/team)
 - [Endorsements](https://oxc.rs/endorsements)
@@ -103,5 +120,14 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue
 [website-url]: https://oxc.rs
+[docs-resolver-url]: https://docs.rs/oxc_resolver
 [rolldown]: https://rolldown.rs
 [vite]: https://vitejs.dev/
+[nuxt]: https://nuxt.com/
+[nova]: https://trynova.dev/
+[swc-node]: https://github.com/swc-project/swc-node
+[knip]: https://github.com/webpro/knip
+[preact]: https://preactjs.com/
+[shopify]: https://shopify.com/
+[bytedance]: https://www.bytedance.com/
+[shopee]: https://shopee.com/
