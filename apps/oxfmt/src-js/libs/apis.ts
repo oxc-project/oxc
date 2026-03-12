@@ -47,19 +47,20 @@ type PrettierLanguage = {
  * @returns `"ext:parserName"` strings derived from each plugin's `languages` metadata
  */
 export async function resolvePlugins(_numThreads: number, plugins: string[]): Promise<string[]> {
-  const mappings: string[] = [];
+  type PluginMod = { languages?: PrettierLanguage[]; default?: { languages?: PrettierLanguage[] } };
 
-  for (const pluginPath of plugins) {
-    let mod: { languages?: PrettierLanguage[]; default?: { languages?: PrettierLanguage[] } };
-    try {
-      mod = await import(pluginPath);
-    } catch {
+  const results = await Promise.allSettled(plugins.map((p) => import(p) as Promise<PluginMod>));
+
+  const mappings: string[] = [];
+  for (const result of results) {
+    if (result.status === "rejected") {
       // Plugin could not be loaded — skip silently.
       // No extension→parser mappings will be emitted for this plugin, so files for its
       // extensions will be ignored (not formatted or errored) rather than failing loudly.
       continue;
     }
 
+    const mod = result.value;
     const languages: PrettierLanguage[] = mod.languages ?? mod.default?.languages ?? [];
     for (const lang of languages) {
       const parserName = lang.parsers?.[0];
