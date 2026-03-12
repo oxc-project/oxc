@@ -155,7 +155,9 @@ class Token {
 // Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
 Object.defineProperty(Token.prototype, "loc", { enumerable: true });
 
-let uint32: Uint32Array | null = null;
+// Typed array views over the tokens region of the buffer
+let tokensUint8: Uint8Array | null = null;
+let tokensUint32: Uint32Array | null = null;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -178,7 +180,7 @@ const TOKEN_TYPES: TokenType["type"][] = [
 ];
 
 // Details of Rust `Token` type
-const TOKEN_SIZE = 16;
+const TOKEN_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Token` in Rust
 const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
 
@@ -193,9 +195,17 @@ export function initTokens() {
   debugAssertIsNonNull(sourceText);
 
   debugAssertIsNonNull(buffer);
-  uint32 = buffer.uint32;
 
+  const { uint32 } = buffer;
+  const tokensPos = uint32[TOKENS_OFFSET_POS_32];
   const tokensLen = uint32[TOKENS_LEN_POS_32];
+
+  // Create typed array views over just the tokens region of the buffer.
+  // These are zero-copy views over the same underlying `ArrayBuffer`.
+  const arrayBuffer = buffer.buffer,
+    absolutePos = buffer.byteOffset + tokensPos;
+  tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
+  tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
 
   // Grow cache if needed (one-time cost as cache warms up)
   while (cachedTokens.length < tokensLen) {
@@ -203,10 +213,12 @@ export function initTokens() {
   }
 
   // Deserialize into cached token objects
-  const pos = uint32[TOKENS_OFFSET_POS_32];
   for (let i = 0; i < tokensLen; i++) {
-    deserializeTokenInto(cachedTokens[i], pos + i * TOKEN_SIZE);
+    deserializeTokenInto(cachedTokens[i], i);
   }
+
+  tokensUint8 = null;
+  tokensUint32 = null;
 
   // Use `slice` rather than copying tokens one-by-one into a new array.
   // V8 implements `slice` with a single `memcpy` of the backing store, which is faster
@@ -222,23 +234,22 @@ export function initTokens() {
     tokens = (previousTokens = cachedTokens.slice(0, tokensLen)) as TokenType[];
   }
 
-  uint32 = null;
-
   // Check `tokens` have valid ranges and are in ascending order
   debugCheckValidRanges(tokens, "token");
 }
 
 /**
- * Deserialize a token from buffer at position `pos` into an existing token object.
+ * Deserialize token `i` from buffer into an existing token object.
  * @param token - Token object to mutate
- * @param pos - Position in buffer containing Rust `Token` type
+ * @param index - Token index
  */
-function deserializeTokenInto(token: Token, pos: number): void {
-  const pos32 = pos >> 2;
-  const start = uint32![pos32],
-    end = uint32![pos32 + 1];
+function deserializeTokenInto(token: Token, index: number): void {
+  const pos32 = index << 2;
+  const start = tokensUint32![pos32],
+    end = tokensUint32![pos32 + 1];
 
-  const kind = buffer![pos + KIND_FIELD_OFFSET];
+  const pos = pos32 << (TOKEN_SIZE_SHIFT - 2);
+  const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
@@ -246,7 +257,7 @@ function deserializeTokenInto(token: Token, pos: number): void {
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Unescape if `escaped` flag is set
-    if (buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    if (tokensUint8![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
