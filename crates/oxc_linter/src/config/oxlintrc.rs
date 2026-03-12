@@ -157,7 +157,6 @@ impl OxlintOptions {
 ///       }
 ///     }
 ///   ]
-///  }
 /// });
 /// ```
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
