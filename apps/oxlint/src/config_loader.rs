@@ -382,6 +382,41 @@ impl<'a> ConfigLoader<'a> {
             let path = config.path.clone();
             let dir = path.parent().unwrap().to_path_buf();
             let ignore_patterns = config.ignore_patterns.clone();
+            let is_root_config = root_config_dir
+                .and_then(|root| path.parent().map(|parent| parent == root))
+                .unwrap_or(false);
+
+            if !is_root_config {
+                let options = &config.options;
+                if options.type_aware.is_some() {
+                    errors
+                        .push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
+                    continue;
+                }
+                if options.type_check.is_some() {
+                    errors
+                        .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
+                    continue;
+                }
+                if options.deny_warnings.is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(nested_deny_warnings_not_supported(
+                        &path,
+                    )));
+                    continue;
+                }
+                if options.max_warnings.is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(nested_max_warnings_not_supported(
+                        &path,
+                    )));
+                    continue;
+                }
+                if options.report_unused_disable_directives.is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(
+                        nested_report_unused_disable_directives_not_supported(&path),
+                    ));
+                    continue;
+                }
+            }
 
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -396,41 +431,6 @@ impl<'a> ConfigLoader<'a> {
                     continue;
                 }
             };
-
-            let is_root_config = root_config_dir
-                .and_then(|root| path.parent().map(|parent| parent == root))
-                .unwrap_or(false);
-
-            if !is_root_config {
-                if builder.type_aware().is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
-                    continue;
-                }
-                if builder.type_check().is_some() {
-                    errors
-                        .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
-                    continue;
-                }
-                if builder.deny_warnings().is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(nested_deny_warnings_not_supported(
-                        &path,
-                    )));
-                    continue;
-                }
-                if builder.max_warnings().is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(nested_max_warnings_not_supported(
-                        &path,
-                    )));
-                    continue;
-                }
-                if builder.report_unused_disable_directives().is_some() {
-                    errors.push(ConfigLoadError::Diagnostic(
-                        nested_report_unused_disable_directives_not_supported(&path),
-                    ));
-                    continue;
-                }
-            }
 
             let extended_paths = builder.extended_paths.clone();
 
@@ -943,6 +943,24 @@ mod test {
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
 
+    #[test]
+    fn test_nested_json_config_allows_type_aware_from_extends() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let base_path = root_dir.path().join("base/.oxlintrc.json");
+        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
+        std::fs::create_dir_all(base_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&base_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
+        std::fs::write(&nested_path, r#"{ "extends": ["../base/.oxlintrc.json"] }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
+    }
+
     #[cfg(feature = "napi")]
     #[test]
     fn test_root_oxlint_config_ts_allows_type_aware() {
@@ -1075,7 +1093,7 @@ mod test {
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_aware_from_extends() {
+    fn test_nested_oxlint_config_ts_allows_type_aware_from_extends() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1102,15 +1120,15 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
+        let (configs, errors) = loader
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[cfg(feature = "napi")]
     #[test]
-    fn test_nested_oxlint_config_ts_rejects_type_check_from_extends() {
+    fn test_nested_oxlint_config_ts_allows_type_check_from_extends() {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/oxlint.config.ts");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -1137,10 +1155,10 @@ mod test {
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
 
-        let (_configs, errors) = loader
+        let (configs, errors) = loader
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
-        assert_eq!(errors.len(), 1);
-        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+        assert!(errors.is_empty());
+        assert_eq!(configs.len(), 1);
     }
 
     #[test]
