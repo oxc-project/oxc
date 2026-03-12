@@ -1,9 +1,9 @@
-commit: 0c2c7a35
+commit: c9e7428b
 
 parser_typescript Summary:
-AST Parsed     : 9824/9827 (99.97%)
-Positive Passed: 9813/9827 (99.86%)
-Negative Passed: 1532/2586 (59.24%)
+AST Parsed     : 9828/9831 (99.97%)
+Positive Passed: 9817/9831 (99.86%)
+Negative Passed: 1532/2587 (59.22%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -469,6 +469,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVar
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAssertionsDeprecated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importTypeAssertionDeprecation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
 
@@ -9451,11 +9453,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:32]
+   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:30]
  1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {1234, "resolution-mode": "require"} }).RequireInterface
-   ·                                ────
- 3 │     & import("pkg", { assert: {1234, "resolution-mode": "import"} }).ImportInterface;
+ 2 │     & import("pkg", { with: {1234, "resolution-mode": "require"} }).RequireInterface
+   ·                              ────
+ 3 │     & import("pkg", { with: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
   × Invalid characters after number

@@ -1,8 +1,8 @@
-commit: 0c2c7a35
+commit: c9e7428b
 
 semantic_typescript Summary:
-AST Parsed     : 4769/4769 (100.00%)
-Positive Passed: 2666/4769 (55.90%)
+AST Parsed     : 4772/4772 (100.00%)
+Positive Passed: 2667/4772 (55.89%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -3555,6 +3555,26 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : ["DropdownMenu"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedJsxChildren2.tsx
+Bindings mismatch:
+after transform: ScopeId(0): ["App", "React", "Subscribe", "TestComponentWithChildren", "TestComponentWithoutChildren", "_jsxFileName", "_result"]
+rebuilt        : ScopeId(0): ["App", "React", "_jsxFileName", "_result"]
+Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(14), ReferenceId(15), ReferenceId(29), ReferenceId(36), ReferenceId(38), ReferenceId(40), ReferenceId(42), ReferenceId(43), ReferenceId(44), ReferenceId(46)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(10), ReferenceId(13), ReferenceId(18)]
+Reference symbol mismatch for "TestComponentWithChildren":
+after transform: SymbolId(1) "TestComponentWithChildren"
+rebuilt        : <None>
+Reference symbol mismatch for "TestComponentWithoutChildren":
+after transform: SymbolId(7) "TestComponentWithoutChildren"
+rebuilt        : <None>
+Reference symbol mismatch for "Subscribe":
+after transform: SymbolId(19) "Subscribe"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Math", "NoInfer", "console"]
+rebuilt        : ["Math", "Subscribe", "TestComponentWithChildren", "TestComponentWithoutChildren", "console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedOptionalProperty.ts
 Bindings mismatch:
@@ -10245,6 +10265,23 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentAndFac
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "element", "fragment"]
 rebuilt        : ScopeId(0): ["a"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxFunctionTypeChildren.tsx
+Bindings mismatch:
+after transform: ScopeId(0): ["Comp", "React", "_jsx", "_jsxFileName", "_objectSpread", "bp", "el"]
+rebuilt        : ScopeId(0): ["React", "_jsx", "_jsxFileName", "_objectSpread", "bp", "el"]
+Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(2)]
+rebuilt        : SymbolId(0): []
+Reference symbol mismatch for "Comp":
+after transform: SymbolId(5) "Comp"
+rebuilt        : <None>
+Reference symbol mismatch for "Comp":
+after transform: SymbolId(5) "Comp"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["JSX"]
+rebuilt        : ["Comp"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxGenericComponentWithSpreadingResultOfGenericFunction.tsx
 Bindings mismatch:
