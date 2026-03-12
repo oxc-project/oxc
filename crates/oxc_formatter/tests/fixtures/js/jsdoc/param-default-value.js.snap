@@ -31,10 +31,8 @@ function parseNumber(x, int) {}
  */
 
 /**
- * @template {TypedArray} [T=Typed<TypedArray>] Desc
- *
- *   Default is `Typed<TypedArray>`
- *
+ * @template {TypedArray} [T=Typed<TypedArray>] Desc. Default is
+ *   `Typed<TypedArray>`
  * @typedef {T} Typed A generic type representing a TypedArray.
  */
 

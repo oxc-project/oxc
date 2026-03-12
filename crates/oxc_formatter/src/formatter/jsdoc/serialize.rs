@@ -82,8 +82,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // `commentContentPrintWidth` to Prettier's TS formatter. This lets the
         // formatter wrap complex types (object literals, function types) across
         // multiple lines when they exceed the available width.
-        let type_width =
-            u16::try_from(wrap_width).unwrap_or(80).clamp(1, crate::LineWidth::MAX);
+        let type_width = u16::try_from(wrap_width).unwrap_or(80).clamp(1, crate::LineWidth::MAX);
         let type_format_options = FormatOptions {
             line_width: crate::LineWidth::try_from(type_width).unwrap(),
             jsdoc: None,
@@ -186,6 +185,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Format tags
         let mut prev_normalized_kind: Option<&str> = None;
+        let mut prev_tag_kind_start: Option<u32> = None;
         let mut first_non_import_tag_emitted = false;
         for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
             // Skip successfully parsed @import tags — they are handled via merged import_lines.
@@ -241,9 +241,25 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     // Default: blank line before compound tag groups (@typedef, @callback)
                     // when coming from a different tag kind (but not from @import)
                     matches!(normalized_kind, "typedef" | "callback")
-                        && prev_normalized_kind
-                            .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import" | "template"))
+                        && prev_normalized_kind.is_some_and(|prev| {
+                            !matches!(prev, "typedef" | "callback" | "import" | "template")
+                        })
                 };
+
+                // Preserve original blank lines between tags: if the source had a
+                // blank `*` line between the previous tag and this tag, force a
+                // separator. We check the source from the previous tag's `@` to
+                // this tag's `@` because the parser includes inter-tag whitespace
+                // in the previous tag's body span.
+                let should_separate = should_separate
+                    || prev_tag_kind_start.is_some_and(|prev_start| {
+                        prev_start < tag.kind.span.start
+                            && has_blank_star_line_between(
+                                source_text,
+                                prev_start as usize,
+                                tag.kind.span.start as usize,
+                            )
+                    });
 
                 if should_separate && !self.content_lines.last_is_empty() {
                     self.content_lines.push_empty();
@@ -252,6 +268,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             first_non_import_tag_emitted = true;
             prev_normalized_kind = Some(normalized_kind);
+            prev_tag_kind_start = Some(tag.kind.span.start);
 
             // Track content before formatting this tag
             let lines_before = self.content_lines.byte_len();
@@ -277,8 +294,8 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 // comment-parser's model (TAGS_NAMELESS does not include "type"
                 // or "satisfies"), so it should NOT be capitalized. Only
                 // @returns/@yields/@throws/etc. have true descriptions.
-                let capitalize = should_capitalize
-                    && !matches!(normalized_kind, "type" | "satisfies");
+                let capitalize =
+                    should_capitalize && !matches!(normalized_kind, "type" | "satisfies");
                 self.format_type_comment_tag(
                     normalized_kind,
                     tag,
@@ -503,10 +520,7 @@ pub(super) fn is_type_name_comment_tag(tag_kind: &str) -> bool {
 /// Tags that use `type_comment()` pattern: `@tag {type} description`
 /// Expects canonical (normalized) tag names.
 pub(super) fn is_type_comment_tag(tag_kind: &str) -> bool {
-    matches!(
-        tag_kind,
-        "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends"
-    )
+    matches!(tag_kind, "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends")
 }
 
 /// Get the sort priority for a tag kind (lower number = higher priority).
@@ -695,6 +709,27 @@ fn sort_tags_by_groups<'a>(
         group.sort_by_key(|(_, kind)| tag_sort_priority(kind));
     }
     groups.into_iter().flatten().collect()
+}
+
+/// Check if the source text between two tag `@` positions contains a blank JSDoc line.
+/// The range `[start..end]` spans from the previous tag's `@` to the current tag's `@`.
+/// We skip the first line (previous tag's `@` line) and last line (` * ` prefix before
+/// the current `@`), and check intermediate lines for blank `*`-only lines.
+fn has_blank_star_line_between(source_text: &str, start: usize, end: usize) -> bool {
+    if start >= end || end > source_text.len() {
+        return false;
+    }
+    let between = &source_text[start..end];
+    let lines: Vec<&str> = between.lines().collect();
+    // Need at least 3 lines: first (prev tag), blank line, last (` * ` prefix)
+    if lines.len() < 3 {
+        return false;
+    }
+    // Check intermediate lines (skip first and last)
+    lines[1..lines.len() - 1].iter().any(|line| {
+        let trimmed = line.trim();
+        trimmed == "*"
+    })
 }
 
 /// Check if a tag has meaningful content.
@@ -1061,8 +1096,8 @@ mod tests {
     }
 
     fn fmt_type_width(type_str: &str, width: u16) -> Option<String> {
-        use crate::formatter::jsdoc::embedded::format_type_via_formatter;
         use crate::LineWidth;
+        use crate::formatter::jsdoc::embedded::format_type_via_formatter;
         let allocator = oxc_allocator::Allocator::default();
         let opts = FormatOptions {
             line_width: LineWidth::try_from(width).unwrap(),
@@ -1086,12 +1121,17 @@ mod tests {
         // Complex generic with object type — at default width (80), the TS formatter
         // may wrap it across multiple lines. Interior newlines are preserved (matching
         // upstream's formatType() behavior).
-        let result = fmt_type("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>");
+        let result = fmt_type(
+            "ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>",
+        );
         assert!(result.is_some(), "Complex ProxyHandler type should be formatted");
 
         // At wide width (320), the type fits on one line and stays unchanged.
         assert_eq!(
-            fmt_type_width("ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>", 320),
+            fmt_type_width(
+                "ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>",
+                320
+            ),
             None,
             "Complex ProxyHandler type should stay unchanged at wide width"
         );
@@ -1101,7 +1141,8 @@ mod tests {
     fn test_format_type_multiline_preserved() {
         // When format_type_via_formatter receives a narrow width that forces wrapping,
         // interior newlines are preserved (matching upstream behavior).
-        let type_str = "ProxyHandler<{ props: Record<string, unknown>; handler: (event: string) => void }>";
+        let type_str =
+            "ProxyHandler<{ props: Record<string, unknown>; handler: (event: string) => void }>";
         let result = fmt_type_width(type_str, 40);
         assert!(result.is_some(), "Narrow width should produce formatted output");
         let s = result.unwrap();

@@ -125,9 +125,7 @@ fn needs_mdast_parsing(text: &str) -> bool {
                                 }
                                 // Check if line ends with `|` (after trimming spaces)
                                 let mut end = line_end;
-                                while end > line_start + 1
-                                    && bytes[end - 1].is_ascii_whitespace()
-                                {
+                                while end > line_start + 1 && bytes[end - 1].is_ascii_whitespace() {
                                     end -= 1;
                                 }
                                 if end > line_start + 1 && bytes[end - 1] == b'|' {
@@ -137,9 +135,10 @@ fn needs_mdast_parsing(text: &str) -> bool {
                         }
                         // Unordered list markers: only at block start to avoid
                         // false positives from wrapped text like "min\n+ spacing"
-                        b'-' | b'+' if is_block_start
-                            && i + spaces + 1 < len
-                            && bytes[i + spaces + 1] == b' ' =>
+                        b'-' | b'+'
+                            if is_block_start
+                                && i + spaces + 1 < len
+                                && bytes[i + spaces + 1] == b' ' =>
                         {
                             return true;
                         }
@@ -236,6 +235,7 @@ pub fn format_description_mdast(
     }
 
     let text = normalize_legacy_ordered_list_markers(text);
+    let text = escape_false_list_markers(&text);
 
     // Protect JSDoc inline tags from markdown parsing (GFM autolink would mangle URLs)
     let (protected, placeholders) = protect_jsdoc_links(&text);
@@ -357,6 +357,42 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
         }
 
         result.push_str(line);
+    }
+
+    if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
+}
+
+/// Escape `+ ` at the start of continuation lines (lines preceded by a non-empty line)
+/// to prevent the markdown parser from treating them as unordered list markers.
+/// This handles cases like `min\n+ spacing` in JSDoc where `+` is an arithmetic operator.
+fn escape_false_list_markers(text: &str) -> Cow<'_, str> {
+    // Fast path: no `+ ` in text
+    if !text.contains("+ ") {
+        return Cow::Borrowed(text);
+    }
+
+    let lines: Vec<&str> = text.lines().collect();
+    let mut result = String::with_capacity(text.len());
+    let mut changed = false;
+
+    for (i, line) in lines.iter().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+
+        let trimmed = line.trim_start();
+        // Only escape `+ ` when:
+        // 1. Line starts with `+ ` (after indent)
+        // 2. Previous line is non-empty (it's a continuation, not a new block)
+        if trimmed.starts_with("+ ") && i > 0 && !lines[i - 1].trim().is_empty() {
+            let leading = line.len() - trimmed.len();
+            result.push_str(&line[..leading]);
+            result.push_str("\\+ ");
+            result.push_str(&trimmed[2..]);
+            changed = true;
+        } else {
+            result.push_str(line);
+        }
     }
 
     if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
@@ -1058,8 +1094,13 @@ fn serialize_list(
                 }
                 first_child = false;
             } else {
-                // Subsequent children: indented by marker width, with blank line separation
-                if is_block_node(item_child) && !lines.last_is_empty() {
+                // Subsequent children: indented by marker width, with blank line separation.
+                // Nested lists don't get a blank line before them — they attach
+                // directly to their parent item, matching upstream behavior.
+                if is_block_node(item_child)
+                    && !matches!(item_child, Node::List(_))
+                    && !lines.last_is_empty()
+                {
                     lines.push_empty();
                 }
 
@@ -1403,4 +1444,3 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         }
     }
 }
-

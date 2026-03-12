@@ -6,8 +6,8 @@ use super::{
     },
     normalize::{
         capitalize_first, normalize_markdown_emphasis, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return,
-        strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
+        normalize_type_preserve_quotes, normalize_type_return, strip_jsdoc_stars_preserve_newlines,
+        strip_optional_type_suffix,
     },
     serialize::{
         JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag, join_iter,
@@ -346,8 +346,12 @@ impl JsdocFormatter<'_, '_> {
         let desc_raw = desc_normalized.trim();
 
         // Strip existing "Default is ..." from description when we have an actual default value
-        // and `add_default_to_description` is enabled (we'll re-append a normalized version)
-        let desc_raw = if default_value.is_some() && self.options.add_default_to_description {
+        // and `add_default_to_description` is enabled (we'll re-append a normalized version).
+        // Skip for @template — its bracket default `[T=Value]` is syntactic, not a description default.
+        let desc_raw = if default_value.is_some()
+            && self.options.add_default_to_description
+            && normalized_kind != "template"
+        {
             strip_default_is_suffix(desc_raw)
         } else {
             Cow::Borrowed(desc_raw)
@@ -375,7 +379,11 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 self.continuation_indent()
             };
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
             let mut desc = wrap_text(
                 desc_raw,
                 indent_width,
@@ -408,9 +416,14 @@ impl JsdocFormatter<'_, '_> {
             Cow::Borrowed(first_text)
         };
 
-        // When add_default_to_description is false, don't append "Default is ..." to description
+        // When add_default_to_description is false, don't append "Default is ..." to description.
+        // Also skip for @template (bracket defaults are syntactic, not description-level).
         let default_value_for_desc =
-            if self.options.add_default_to_description { default_value } else { None };
+            if self.options.add_default_to_description && normalized_kind != "template" {
+                default_value
+            } else {
+                None
+            };
 
         // Default suffix length: "Default is `" (12) + value + "`" (1) = 13 + dv.len()
         let default_suffix_len: Option<usize> = default_value_for_desc.map(|dv| 13 + dv.len());
@@ -486,7 +499,11 @@ impl JsdocFormatter<'_, '_> {
             } else {
                 self.continuation_indent()
             };
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
 
             // When description is just a dash with text on the next line
             // (e.g., @param {Type} name -\n  description), output the tag + dash
@@ -520,7 +537,11 @@ impl JsdocFormatter<'_, '_> {
                 String::from(first_text.as_ref())
             };
 
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
 
             // Upstream: tagString.length + firstWord.length > printWidth → new line
             let first_word_w = full_desc.split_whitespace().next().map_or(0, str_width);
@@ -690,8 +711,16 @@ impl JsdocFormatter<'_, '_> {
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
 
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w >= self.wrap_width {
@@ -783,7 +812,10 @@ impl JsdocFormatter<'_, '_> {
         // For @default/@defaultValue, format JSON-like values
         let desc_text: Cow<'_, str> = if matches!(normalized_kind, "default" | "defaultValue") {
             format_default_value(desc_text, quote_style)
-        } else if should_capitalize && is_named_generic_tag(normalized_kind) && !has_leading_blank_line {
+        } else if should_capitalize
+            && is_named_generic_tag(normalized_kind)
+            && !has_leading_blank_line
+        {
             // Named tags: first word is the "name" (don't capitalize), rest is description.
             // Upstream comment-parser separates name/description; we do it inline.
             if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
@@ -855,7 +887,10 @@ impl JsdocFormatter<'_, '_> {
         // Named generic tags with description on new line: preserve the line break.
         // e.g., @categoryDescription Component\n  Description text...
         // Upstream stringify.ts:173 preserves `descriptionString.startsWith("\n")`.
-        if is_named_generic_tag(normalized_kind) && desc_starts_on_new_line && !should_skip_description_formatting(normalized_kind) {
+        if is_named_generic_tag(normalized_kind)
+            && desc_starts_on_new_line
+            && !should_skip_description_formatting(normalized_kind)
+        {
             if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
                 let name_part = &desc_text[..space_idx];
                 let desc_part = desc_text[space_idx..].trim_start();
@@ -942,8 +977,16 @@ impl JsdocFormatter<'_, '_> {
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
+            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
+            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
+                0
+            } else {
+                self.continuation_indent_width()
+            });
 
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w >= self.wrap_width {
