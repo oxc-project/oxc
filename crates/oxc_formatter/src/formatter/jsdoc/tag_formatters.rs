@@ -488,6 +488,27 @@ impl JsdocFormatter<'_, '_> {
             };
             let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() { 0 } else { self.continuation_indent_width() });
 
+            // When description is just a dash with text on the next line
+            // (e.g., @param {Type} name -\n  description), output the tag + dash
+            // on the first line and description on the next line with continuation indent.
+            // Without this, the leading \n in full_desc causes a spurious blank line.
+            if has_dash && first_text.is_empty() && has_remaining {
+                let s = self.content_lines.begin_line();
+                s.push_str(&tag_line);
+                s.push_str(" -");
+                let desc = wrap_text(
+                    &remaining_desc,
+                    indent_width,
+                    0,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                self.push_indented_desc(indent, desc);
+                return;
+            }
+
             // Build full description text (first line + remaining)
             let full_desc = if has_remaining {
                 let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
@@ -745,6 +766,12 @@ impl JsdocFormatter<'_, '_> {
         let desc_text = tag.comment().parsed();
         let desc_text = normalize_markdown_emphasis(desc_text.trim());
         let desc_text = desc_text.trim();
+        // Whitespace-preserving version for skip-formatting tags: preserves blank
+        // lines within the description that parsed() strips. Used when
+        // skip_wrapping is true and the content has embedded newlines.
+        let raw_ws_trimmed = raw_ws.trim();
+        let raw_ws_normalized = normalize_markdown_emphasis(raw_ws_trimmed);
+        let raw_ws_desc = raw_ws_normalized.trim();
 
         if desc_text.is_empty() {
             self.content_lines.push(tag_line);
@@ -756,7 +783,7 @@ impl JsdocFormatter<'_, '_> {
         // For @default/@defaultValue, format JSON-like values
         let desc_text: Cow<'_, str> = if matches!(normalized_kind, "default" | "defaultValue") {
             format_default_value(desc_text, quote_style)
-        } else if should_capitalize && is_named_generic_tag(normalized_kind) {
+        } else if should_capitalize && is_named_generic_tag(normalized_kind) && !has_leading_blank_line {
             // Named tags: first word is the "name" (don't capitalize), rest is description.
             // Upstream comment-parser separates name/description; we do it inline.
             if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
@@ -825,6 +852,42 @@ impl JsdocFormatter<'_, '_> {
             return;
         }
 
+        // Named generic tags with description on new line: preserve the line break.
+        // e.g., @categoryDescription Component\n  Description text...
+        // Upstream stringify.ts:173 preserves `descriptionString.startsWith("\n")`.
+        if is_named_generic_tag(normalized_kind) && desc_starts_on_new_line && !should_skip_description_formatting(normalized_kind) {
+            if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
+                let name_part = &desc_text[..space_idx];
+                let desc_part = desc_text[space_idx..].trim_start();
+                if !desc_part.is_empty() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push(' ');
+                    s.push_str(name_part);
+                    let indent = self.continuation_indent();
+                    let indent_width =
+                        self.wrap_width.saturating_sub(self.continuation_indent_width());
+                    let desc = wrap_text(
+                        desc_part,
+                        indent_width,
+                        0,
+                        false,
+                        Some(self.format_options),
+                        Some(self.external_callbacks),
+                        Some(self.allocator),
+                    );
+                    self.push_indented_desc(indent, desc);
+                    return;
+                }
+            }
+            // No description part — just tag + name on one line
+            let s = self.content_lines.begin_line();
+            s.push_str(&tag_line);
+            s.push(' ');
+            s.push_str(&desc_text);
+            return;
+        }
+
         let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
         let is_unknown = !is_known_tag(normalized_kind);
         // Skip wrapping for TAGS_PEV_FORMATE_DESCRIPTION (@see, @borrows, etc.)
@@ -852,10 +915,30 @@ impl JsdocFormatter<'_, '_> {
             // Fits on one line, or tag skips description formatting (no wrapping).
             // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) and unknown tags
             // keep their description on one line regardless of length.
-            let s = self.content_lines.begin_line();
-            s.push_str(&tag_line);
-            s.push(' ');
-            s.push_str(&desc_text);
+            // When desc has embedded newlines (e.g. @module Name\n\nMore text),
+            // split by lines to preserve blank lines in the output.
+            // Use raw_ws_desc which preserves blank lines that parsed() strips.
+            if skip_wrapping && raw_ws_desc.contains('\n') {
+                let mut lines = raw_ws_desc.split('\n');
+                if let Some(first) = lines.next() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push(' ');
+                    s.push_str(first);
+                }
+                for line in lines {
+                    if line.is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        self.content_lines.push(line);
+                    }
+                }
+            } else {
+                let s = self.content_lines.begin_line();
+                s.push_str(&tag_line);
+                s.push(' ');
+                s.push_str(&desc_text);
+            }
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
