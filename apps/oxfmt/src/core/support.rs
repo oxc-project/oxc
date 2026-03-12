@@ -527,10 +527,12 @@ mod tests {
             matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
         );
 
-        // Static extensions take precedence over plugin extensions
+        // Static extensions take precedence over plugin extensions (even with a conflicting entry)
+        let mut with_conflict = plugin_extensions.clone();
+        with_conflict.insert("css".to_string(), "some-other-parser".to_string());
         let strategy = FormatFileStrategy::from_path(
             PathBuf::from("style.css"),
-            &plugin_extensions,
+            &with_conflict,
         )
         .unwrap();
         assert!(

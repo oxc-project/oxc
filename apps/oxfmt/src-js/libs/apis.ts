@@ -54,8 +54,9 @@ export async function resolvePlugins(_numThreads: number, plugins: string[]): Pr
     try {
       mod = await import(pluginPath);
     } catch {
-      // Plugin not installed — skip silently.
-      // Users will see a Prettier error when a file of this type is actually formatted.
+      // Plugin could not be loaded — skip silently.
+      // No extension→parser mappings will be emitted for this plugin, so files for its
+      // extensions will be ignored (not formatted or errored) rather than failing loudly.
       continue;
     }
 

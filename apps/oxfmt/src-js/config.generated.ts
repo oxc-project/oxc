@@ -297,6 +297,17 @@ export interface FormatConfig {
    */
   objectWrap?: ObjectWrapConfig | null;
   /**
+   * Prettier plugins to load for external file formatting.
+   *
+   * Each entry is a module name or path resolvable from the project root
+   * (e.g. `"prettier-plugin-ember-template-tag"`).
+   * Plugins declare their supported file extensions; oxfmt uses this information
+   * to route otherwise-unrecognized files to the external formatter.
+   *
+   * - Default: `[]`
+   */
+  plugins?: string[] | null;
+  /**
    * Specify the line length that the printer will wrap on.
    *
    * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.

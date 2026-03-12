@@ -386,6 +386,11 @@ impl ConfigResolver {
     ///
     /// These are used to initialize the external formatter and discover
     /// which file extensions each plugin supports.
+    ///
+    /// Note: only the top-level `plugins` field is read. `plugins` inside
+    /// per-file `overrides` is intentionally not supported — plugin-provided
+    /// extensions must be known at walk/init time, before per-file config is
+    /// resolved.
     pub fn get_plugins(&self) -> Vec<String> {
         self.raw_config
             .get("plugins")

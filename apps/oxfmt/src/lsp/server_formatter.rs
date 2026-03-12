@@ -1,4 +1,8 @@
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -7,6 +11,7 @@ use tracing::{debug, error, warn};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
+use crate::cli::parse_plugin_extensions;
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
     SourceFormatter, all_config_file_names, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
@@ -72,12 +77,17 @@ impl ServerFormatterBuilder {
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
         let plugins = config_resolver.get_plugins();
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads, plugins)) {
-            Ok(_) => {}
-            Err(err) => {
-                error!("Failed to setup external formatter.\n{err}\n");
-            }
-        }
+        let plugin_extensions = Arc::new(
+            match tokio::task::block_in_place(|| {
+                self.external_formatter.init(num_of_threads, plugins)
+            }) {
+                Ok(mappings) => parse_plugin_extensions(mappings),
+                Err(err) => {
+                    error!("Failed to setup external formatter.\n{err}\n");
+                    HashMap::new()
+                }
+            },
+        );
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
@@ -86,6 +96,7 @@ impl ServerFormatterBuilder {
             source_formatter,
             config_resolver,
             gitignore_glob,
+            plugin_extensions,
         )
     }
 }
@@ -170,6 +181,7 @@ pub struct ServerFormatter {
     source_formatter: SourceFormatter,
     config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
+    plugin_extensions: Arc<HashMap<String, String>>,
 }
 
 impl Tool for ServerFormatter {
@@ -326,8 +338,9 @@ impl ServerFormatter {
         source_formatter: SourceFormatter,
         config_resolver: ConfigResolver,
         gitignore_glob: Option<Gitignore>,
+        plugin_extensions: Arc<HashMap<String, String>>,
     ) -> Self {
-        Self { root_path, source_formatter, config_resolver, gitignore_glob }
+        Self { root_path, source_formatter, config_resolver, gitignore_glob, plugin_extensions }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -356,8 +369,10 @@ impl ServerFormatter {
         // Prefer language_id over file extension to determine the format strategy.
         // This allows e.g. a `.txt` file opened as `typescript` to be formatted.
         let strategy_opt = super::apply_language_id_extension(language_id, path)
-            .and_then(|p| FormatFileStrategy::try_from(p).ok())
-            .or_else(|| FormatFileStrategy::try_from(path.to_path_buf()).ok());
+            .and_then(|p| FormatFileStrategy::from_path(p, &self.plugin_extensions).ok())
+            .or_else(|| {
+                FormatFileStrategy::from_path(path.to_path_buf(), &self.plugin_extensions).ok()
+            });
 
         let Some(strategy) = strategy_opt else {
             debug!("Unsupported file type for formatting: {}", path.display());
@@ -384,7 +399,8 @@ impl ServerFormatter {
             return None;
         };
 
-        let Ok(strategy) = FormatFileStrategy::try_from(path.clone()) else {
+        let Ok(strategy) = FormatFileStrategy::from_path(path.clone(), &self.plugin_extensions)
+        else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
