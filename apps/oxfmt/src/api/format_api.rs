@@ -1,5 +1,7 @@
 use std::{env, path::Path, sync::Arc};
 
+use rustc_hash::FxHashMap;
+
 use serde_json::Value;
 
 use oxc_napi::OxcError;
@@ -52,7 +54,7 @@ pub fn run(
         .unwrap_or_default();
 
     // Use `block_in_place()` to avoid nested async runtime access
-    let plugin_extensions =
+    let plugin_extensions: FxHashMap<String, String> =
         match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, plugins)) {
             Ok(mappings) => parse_plugin_extensions(mappings),
             Err(err) => {

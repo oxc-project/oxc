@@ -1,8 +1,9 @@
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+use rustc_hash::FxHashMap;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
@@ -74,7 +75,7 @@ impl ServerFormatterBuilder {
                 Ok(mappings) => parse_plugin_extensions(mappings),
                 Err(err) => {
                     error!("Failed to setup external formatter.\n{err}\n");
-                    HashMap::new()
+                    FxHashMap::default()
                 }
             },
         );
@@ -145,7 +146,7 @@ pub struct ServerFormatter {
     /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
     /// config discovery; all files use this single config.
     explicit_config_path: Option<PathBuf>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl Tool for ServerFormatter {
@@ -285,7 +286,7 @@ impl ServerFormatter {
         editorconfig_path: Option<PathBuf>,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
-        plugin_extensions: Arc<HashMap<String, String>>,
+        plugin_extensions: Arc<FxHashMap<String, String>>,
     ) -> Self {
         Self {
             root_path,

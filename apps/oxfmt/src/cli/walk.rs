@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
@@ -122,7 +121,7 @@ impl ScopedWalker {
         detect_nested: bool,
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
-        plugin_extensions: Arc<HashMap<String, String>>,
+        plugin_extensions: Arc<FxHashMap<String, String>>,
         sender: &mpsc::Sender<FormatStrategy>,
         tx_error: &DiagnosticSender,
     ) -> Result<bool, String> {
@@ -485,7 +484,7 @@ fn walk_and_stream(
     directly_processed: &Arc<FxHashSet<PathBuf>>,
     config_ancestors: Option<&Arc<FxHashSet<PathBuf>>>,
     child_scope_map: &Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
     sender: &mpsc::Sender<FormatStrategy>,
     tx_error: &DiagnosticSender,
 ) {
@@ -593,7 +592,7 @@ struct WalkVisitorBuilder {
     child_scope_map: Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
     /// Files already processed as direct file targets (for dedup with walk results).
     directly_processed: Arc<FxHashSet<PathBuf>>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
@@ -622,7 +621,7 @@ struct WalkVisitor {
     directly_processed: Arc<FxHashSet<PathBuf>>,
     /// Cache: parent dir → (resolved config, parent_ignored flag).
     scope_cache: FxHashMap<PathBuf, (Arc<ConfigResolver>, bool)>,
-    plugin_extensions: Arc<HashMap<String, String>>,
+    plugin_extensions: Arc<FxHashMap<String, String>>,
 }
 
 impl WalkVisitor {

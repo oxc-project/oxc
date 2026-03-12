@@ -1,4 +1,6 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
+
+use rustc_hash::FxHashMap;
 
 use phf::phf_set;
 
@@ -7,7 +9,7 @@ use oxc_span::SourceType;
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
-pub fn classify_file_kind(path: Arc<Path>, plugin_extensions: &HashMap<String, String>) -> Option<FileKind> {
+pub fn classify_file_kind(path: Arc<Path>, plugin_extensions: &FxHashMap<String, String>) -> Option<FileKind> {
     if let Some(source_type) = get_oxc_formatter_source_type(&path) {
         return Some(FileKind::OxcFormatter { path, source_type });
     }
@@ -553,16 +555,16 @@ mod tests {
     #[test]
     #[cfg(feature = "napi")]
     fn test_package_json_is_special() {
-        let kind = classify_file_kind(Arc::from(Path::new("package.json")), &HashMap::new()).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("package.json")), &FxHashMap::default()).unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatterPackageJson { .. }));
 
-        let kind = classify_file_kind(Arc::from(Path::new("composer.json")), &HashMap::new()).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("composer.json")), &FxHashMap::default()).unwrap();
         assert!(matches!(kind, FileKind::ExternalFormatter { .. }));
     }
 
     #[test]
     fn test_toml_files() {
-        let empty = HashMap::new();
+        let empty = FxHashMap::default();
         // Files that should be detected as TOML
         let toml_files = vec![
             "Cargo.toml",
@@ -593,7 +595,7 @@ mod tests {
     #[test]
     #[cfg(feature = "napi")]
     fn test_plugin_extensions() {
-        let mut plugin_extensions = HashMap::new();
+        let mut plugin_extensions = FxHashMap::default();
         plugin_extensions.insert("gjs".to_string(), "ember-template-tag".to_string());
         plugin_extensions.insert("gts".to_string(), "ember-template-tag".to_string());
         plugin_extensions.insert("astro".to_string(), "astro".to_string());
@@ -623,7 +625,7 @@ mod tests {
         );
 
         // Unknown extension with no plugin → None
-        let empty: HashMap<String, String> = HashMap::new();
+        let empty: FxHashMap<String, String> = FxHashMap::default();
         assert!(
             classify_file_kind(Arc::from(Path::new("foo.gjs")), &empty).is_none(),
             "gjs without plugin registered should be skipped"

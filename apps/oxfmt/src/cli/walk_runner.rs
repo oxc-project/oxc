@@ -1,4 +1,5 @@
-use std::{collections::HashMap, env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
+use rustc_hash::FxHashMap;
+use std::{ env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
 
@@ -122,7 +123,7 @@ impl WalkRunner {
             }
         };
         #[cfg(not(feature = "napi"))]
-        let plugin_extensions = Arc::new(HashMap::new());
+        let plugin_extensions = Arc::new(FxHashMap::default());
 
         // Resolve ignore paths early to validate before walk starts
         let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
@@ -301,7 +302,7 @@ impl WalkRunner {
 ///
 /// Each entry is a `"ext:parserName"` string (e.g. `"gjs:ember-template-tag"`).
 /// Invalid entries are silently ignored.
-pub fn parse_plugin_extensions(mappings: Vec<String>) -> HashMap<String, String> {
+pub fn parse_plugin_extensions(mappings: Vec<String>) -> FxHashMap<String, String> {
     mappings
         .into_iter()
         .filter_map(|s| {
