@@ -129,6 +129,8 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                         if let Some(v) = entry.config.get(VITE_OXLINT_CONFIG_FIELD).cloned() {
                             v
                         } else {
+                            // NOTE: This error message is shown to users (explicit `--config`) and also
+                            // matched by `try_load_root_vite_config` in config_loader.rs (auto-discovery skip).
                             errors.push(OxcDiagnostic::error(format!(
                                 "Expected a `{VITE_OXLINT_CONFIG_FIELD}` field in the default export of {}",
                                 entry.path
