@@ -39,7 +39,17 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 
 <sub>\* Oxidation is the chemical process that creates rust</sub>
 
-## 📦 Tools & Packages
+## Lint or Format a Codebase
+
+- **Lint**: [Oxlint](https://oxc.rs/docs/guide/usage/linter) — `npx oxlint@latest`
+- **Format**: [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) — `npx oxfmt@latest`
+
+## Build Tooling on Top of Oxc
+
+- Parse JavaScript and TypeScript: [Parser](https://oxc.rs/docs/guide/usage/parser)
+- Transform TypeScript, JSX, and modern JavaScript: [Transformer](https://oxc.rs/docs/guide/usage/transformer)
+- Minify JavaScript for production builds: [Minifier](https://oxc.rs/docs/guide/usage/minifier)
+- Resolve modules for JavaScript and TypeScript: [Resolver](https://oxc.rs/docs/guide/usage/resolver)
 
 | Tool        | npm                                                     | crates.io                                                   |
 | ----------- | ------------------------------------------------------- | ----------------------------------------------------------- |
@@ -50,56 +60,20 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 | Minifier    | [oxc-minify](https://npmx.dev/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
 | Resolver    | [oxc-resolver](https://npmx.dev/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
 
-## ⚡️ Quick Start
+## Contribute or Learn
 
-```bash
-npx oxlint@latest    # Lint
-npx oxfmt@latest     # Format
-```
+- [Contribute](https://oxc.rs/docs/contribute/introduction)
+- [Learn](https://oxc.rs/docs/learn/parser_in_rust/intro)
 
-<p float="left" align="left">
-  <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
-</p>
+## Other Resources
 
-See [documentation](https://oxc.rs/docs/guide/introduction.html) for detailed usage guides, API examples, and Rust crate usage.
-
-## VoidZero Inc.
-
-Oxc is a project of [VoidZero](https://voidzero.dev/), see our announcement [Announcing VoidZero - Next Generation Toolchain for JavaScript](https://voidzero.dev/blog).
-
-If you have requirements for JavaScript tools at scale, please [get in touch](https://forms.gle/WQgjyzYJpwurpxWKA)!
-
-## 🙋 Who's using Oxc?
-
-[Rolldown] and [Nuxt] use Oxc for parsing. [Rolldown] also uses Oxc for transformation and minification. [Nova], [swc-node], and [knip] use [oxc_resolver][docs-resolver-url] for module resolution. [Preact], [Shopify], [ByteDance], and [Shopee] use oxlint for linting.
-
-[See more projects using Oxc →](https://oxc.rs/docs/guide/projects.html)
-
-## ✍️ Contribute
-
-Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance, or read the complete [contributing guide on our website →](https://oxc.rs/docs/contribute/introduction.html)
-
-If you are unable to contribute by code, you can still participate by:
-
-- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project
-- Join us on [Discord][discord-url]
-- [Follow me on X](https://x.com/boshen_c) and post about this project
-
-## 🤝 Credits
-
-This project was incubated with the assistance of these exceptional mentors and their projects:
-
-- [Biome][biome] - [@ematipico](https://github.com/ematipico)
-- [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
-- [quick-lint-js](https://github.com/quick-lint/quick-lint-js) - [@strager](https://github.com/strager)
-- [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
-
-Special thanks go to:
-
-- [@domonji](https://github.com/domonji) for bootstrapping this project together and also completing the TypeScript parser
-- [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets)
+- [Troubleshooting](https://oxc.rs/docs/guide/troubleshooting)
+- [Benchmarks](https://oxc.rs/docs/guide/benchmarks)
+- [Projects using Oxc](https://oxc.rs/docs/guide/projects)
+- [Talks and media](https://oxc.rs/docs/guide/media)
+- [Team](https://oxc.rs/team)
+- [Endorsements](https://oxc.rs/endorsements)
+- [Releases](https://github.com/oxc-project/oxc/releases)
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
@@ -129,18 +103,5 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue
 [website-url]: https://oxc.rs
-[docs-resolver-url]: https://docs.rs/oxc_resolver
-[biome]: https://biomejs.dev/
-[ruff]: https://beta.ruff.rs
-[vscode]: https://github.com/microsoft/vscode
 [rolldown]: https://rolldown.rs
 [vite]: https://vitejs.dev/
-[nuxt]: https://nuxt.com/
-[nova]: https://trynova.dev/
-[swc-node]: https://github.com/swc-project/swc-node
-[knip]: https://github.com/webpro/knip
-[preact]: https://preactjs.com/
-[shopify]: https://shopify.com/
-[bytedance]: https://www.bytedance.com/
-[shopee]: https://shopee.com/
-[prettier]: https://prettier.io/
