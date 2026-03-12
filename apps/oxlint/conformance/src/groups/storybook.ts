@@ -26,7 +26,7 @@ const group: TestGroup = {
 
     // Mock `vitest` - it's ESM-only and can't be `require()`-ed.
     // `no-uninstalled-addons` test uses `vi.mock()` which can't work in CJS context anyway.
-    mock("vitest", { vi: { mock: () => {}, importActual: () => ({}) } });
+    mock("vitest", { vi: { mock: () => { }, importActual: () => ({}) } });
   },
 
   shouldSkipTest(ruleName: string): boolean {
@@ -65,9 +65,9 @@ function createTsRuleTester(tsEslintParser: TSEslintParser): { RuleTester: typeo
       });
     }
 
-    // Patch test case filenames from `.js` to `.ts` so oxlint parses as TypeScript.
+    // Patch test case filenames from `.js` to `.tsx` so oxlint parses as TypeScript.
     // Storybook's `StorybookRuleTester` sets `filename: 'MyComponent.stories.js'` as default,
-    // but many test cases contain TypeScript syntax.
+    // but many test cases contain TypeScript and/or JSX syntax.
     run(ruleName: string, rule: Rule, tests: TestCases): void {
       tests = {
         valid: tests.valid.map((test) => {
