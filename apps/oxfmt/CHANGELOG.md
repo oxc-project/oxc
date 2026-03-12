@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 96f761f oxfmt: Ensure stdin blocking mode is set for non-TTY environments (#20289) (camc314)
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
 ## [0.39.0] - 2026-03-12
 
 ### 🐛 Bug Fixes

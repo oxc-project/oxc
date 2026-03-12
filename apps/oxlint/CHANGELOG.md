@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.55.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 6b46ce8 oxlint: Ignore inherited root-only options in nested configs (#20291) (camc314)
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+- f26e6ab linter: Make `generate-plugin-eslint` script work on windows (#20246) (camc314)
+
+### 📚 Documentation
+
+- e4aa5b5 parser/napi, linter/plugins: Add JSDoc comments to raw transfer constants (#20286) (overlookmotel)
+- f339f10 linter/plugins: Promote JS plugins to alpha status (#20281) (overlookmotel)
+
 ## [1.54.0] - 2026-03-12
 
 ### 🐛 Bug Fixes

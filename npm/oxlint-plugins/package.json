@@ -1,6 +1,6 @@
 {
   "name": "@oxlint/plugins",
-  "version": "1.54.0",
+  "version": "1.55.0",
   "description": "Plugin utilities for Oxlint",
   "keywords": [
     "eslint",
