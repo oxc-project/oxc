@@ -178,7 +178,7 @@ pub struct Oxlintrc {
     /// Read more about JS plugins in
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
-    /// Note: JS plugins are experimental and not subject to semver.
+    /// Note: JS plugins are in alpha and not subject to semver.
     ///
     /// Examples:
     ///
