@@ -238,14 +238,13 @@ function deserializeTokenInto(token: Token, pos: number): void {
   const start = uint32![pos32],
     end = uint32![pos32 + 1];
 
-  let value = sourceText!.slice(start, end);
-
   const kind = buffer![pos + KIND_FIELD_OFFSET];
 
-  if (kind <= PRIVATE_IDENTIFIER_KIND) {
-    // Strip leading `#` from private identifiers
-    if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
+  // Get `value` as slice of source text `start..end`.
+  // Slice `start + 1..end` for private identifiers, to strip leading `#`.
+  let value = sourceText!.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
+  if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Unescape if `escaped` flag is set
     if (buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
