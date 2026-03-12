@@ -223,6 +223,20 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    // ============================================================================================
+    // Plugin support
+    // ============================================================================================
+    /// Prettier plugins to load for external file formatting.
+    ///
+    /// Each entry is a module name or path resolvable from the project root
+    /// (e.g. `"prettier-plugin-ember-template-tag"`).
+    /// Plugins declare their supported file extensions; oxfmt uses this information
+    /// to route otherwise-unrecognized files to the external formatter.
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<Vec<String>>,
 }
 
 impl FormatConfig {

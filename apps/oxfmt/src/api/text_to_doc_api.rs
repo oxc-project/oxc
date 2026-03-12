@@ -113,9 +113,9 @@ fn run_full(
         sort_tailwind_classes_cb,
     );
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
+    // Use `block_in_place()` to avoid nested async runtime access.
+    // This path always formats embedded JS/TS, so no plugin extension routing is needed.
+    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, vec![])) {
         Ok(_) => {}
         Err(err) => {
             debug!("`external_formatter.init()` failed: {err}");

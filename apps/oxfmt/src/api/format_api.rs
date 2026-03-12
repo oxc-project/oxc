@@ -1,13 +1,16 @@
-use std::{env, path::PathBuf};
+use std::{collections::HashMap, env, path::PathBuf};
 
 use serde_json::Value;
 
 use oxc_napi::OxcError;
 
-use crate::core::{
-    ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
-    JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter,
-    resolve_options_from_value,
+use crate::{
+    cli::parse_plugin_extensions,
+    core::{
+        ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb,
+        JsFormatEmbeddedDocCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+        SourceFormatter, resolve_options_from_value,
+    },
 };
 
 pub struct ApiFormatResult {
@@ -43,21 +46,30 @@ pub fn run(
         sort_tailwind_classes_cb,
     );
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
-        Err(err) => {
-            external_formatter.cleanup();
-            return ApiFormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
-            };
-        }
-    }
+    // Extract plugins from the raw options so they can be passed to the init callback.
+    let plugins: Vec<String> = options
+        .as_ref()
+        .and_then(|v| v.get("plugins"))
+        .and_then(|p| serde_json::from_value(p.clone()).ok())
+        .unwrap_or_default();
 
-    // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(filename))
+    // Use `block_in_place()` to avoid nested async runtime access
+    let plugin_extensions: HashMap<String, String> =
+        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, plugins)) {
+            Ok(mappings) => parse_plugin_extensions(mappings),
+            Err(err) => {
+                external_formatter.cleanup();
+                return ApiFormatResult {
+                    code: source_text,
+                    errors: vec![OxcError::new(format!(
+                        "Failed to setup external formatter: {err}"
+                    ))],
+                };
+            }
+        };
+
+    // Determine format strategy from file path (includes plugin-provided extensions)
+    let Ok(strategy) = FormatFileStrategy::from_path(PathBuf::from(filename), &plugin_extensions)
         .map(|s| s.resolve_relative_path(&cwd))
     else {
         external_formatter.cleanup();

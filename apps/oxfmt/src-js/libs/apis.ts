@@ -30,16 +30,49 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
 
 // ---
 
+type PrettierLanguage = {
+  parsers?: string[];
+  extensions?: string[];
+};
+
 /**
- * TODO: Plugins support
- * - Read `plugins` field
- * - Load plugins dynamically and parse `languages` field
- * - Map file extensions and filenames to Prettier parsers
+ * Load the given Prettier plugins, inspect each plugin's `languages` declaration,
+ * and return extension-to-parser mappings as `"ext:parserName"` strings.
  *
- * @returns Array of loaded plugin's `languages` info
+ * These mappings are used by the Rust side to route otherwise-unrecognized file
+ * extensions (e.g. `.gjs`, `.gts`) to the external formatter.
+ *
+ * @param _numThreads - Worker thread count (unused on JS side, present for callback compatibility)
+ * @param plugins - Plugin module names/paths from the oxfmt config (e.g. `["prettier-plugin-ember-template-tag"]`)
+ * @returns `"ext:parserName"` strings derived from each plugin's `languages` metadata
  */
-export async function resolvePlugins(): Promise<string[]> {
-  return [];
+export async function resolvePlugins(_numThreads: number, plugins: string[]): Promise<string[]> {
+  const mappings: string[] = [];
+
+  for (const pluginPath of plugins) {
+    let mod: { languages?: PrettierLanguage[]; default?: { languages?: PrettierLanguage[] } };
+    try {
+      mod = await import(pluginPath);
+    } catch {
+      // Plugin not installed — skip silently.
+      // Users will see a Prettier error when a file of this type is actually formatted.
+      continue;
+    }
+
+    const languages: PrettierLanguage[] = mod.languages ?? mod.default?.languages ?? [];
+    for (const lang of languages) {
+      const parserName = lang.parsers?.[0];
+      if (!parserName) continue;
+
+      for (const ext of lang.extensions ?? []) {
+        // Prettier extensions include the leading dot (e.g. ".gjs"); strip it.
+        const bareExt = ext.startsWith(".") ? ext.slice(1) : ext;
+        mappings.push(`${bareExt}:${parserName}`);
+      }
+    }
+  }
+
+  return mappings;
 }
 
 // ---

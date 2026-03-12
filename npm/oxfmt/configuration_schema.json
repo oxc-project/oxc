@@ -118,6 +118,17 @@
       },
       "markdownDescription": "File-specific overrides.\nWhen a file matches multiple overrides, the later override takes precedence (array order matters).\n\n- Default: `[]`"
     },
+    "plugins": {
+      "description": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`",
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`"
+    },
     "printWidth": {
       "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "type": [
@@ -409,6 +420,17 @@
             }
           ],
           "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
+        },
+        "plugins": {
+          "description": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Prettier plugins to load for external file formatting.\n\nEach entry is a module name or path resolvable from the project root\n(e.g. `\"prettier-plugin-ember-template-tag\"`).\nPlugins declare their supported file extensions; oxfmt uses this information\nto route otherwise-unrecognized files to the external formatter.\n\n- Default: `[]`"
         },
         "printWidth": {
           "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",

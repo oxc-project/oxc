@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::cli::{CliRunResult, FormatCommand, Mode};
+use crate::cli::{CliRunResult, FormatCommand, Mode, parse_plugin_extensions};
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
     SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
@@ -82,21 +82,22 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
+        let plugins = config_resolver.get_plugins();
+        let plugin_extensions =
+            match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads, plugins)) {
+                Ok(mappings) => parse_plugin_extensions(mappings),
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to setup external formatter.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            };
 
-        // Determine format strategy from filepath
+        // Determine format strategy from filepath (includes plugin-provided extensions)
         let Ok(strategy) =
-            FormatFileStrategy::try_from(filepath).map(|s| s.resolve_relative_path(&cwd))
+            FormatFileStrategy::from_path(filepath, &plugin_extensions).map(|s| s.resolve_relative_path(&cwd))
         else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;

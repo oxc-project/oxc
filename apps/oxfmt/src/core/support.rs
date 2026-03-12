@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use phf::phf_set;
@@ -18,12 +19,13 @@ pub enum FormatFileStrategy {
     },
     ExternalFormatter {
         path: PathBuf,
-        parser_name: &'static str,
+        /// Prettier parser name (e.g. `"json"`, `"vue"`, `"ember-template-tag"`).
+        parser_name: String,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     ExternalFormatterPackageJson {
         path: PathBuf,
-        parser_name: &'static str,
+        parser_name: String,
     },
 }
 
@@ -31,6 +33,20 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Self::from_path(path, &HashMap::new())
+    }
+}
+
+impl FormatFileStrategy {
+    /// Determine the format strategy for a file, with support for plugin-provided extensions.
+    ///
+    /// `plugin_extensions` maps bare file extensions (e.g. `"gjs"`) to Prettier parser names
+    /// (e.g. `"ember-template-tag"`). After all static checks fail, extensions listed here
+    /// route the file to the external formatter with the corresponding parser.
+    pub fn from_path(
+        path: PathBuf,
+        plugin_extensions: &HashMap<String, String>,
+    ) -> Result<Self, ()> {
         // Check JS/TS files first
         // TODO: This logic should(can) move to this file, after LSP support is also moved here.
         if let Some(source_type) = get_supported_source_type(&path) {
@@ -55,19 +71,27 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
-            return Ok(Self::ExternalFormatterPackageJson { path, parser_name: "json-stringify" });
+            return Ok(Self::ExternalFormatterPackageJson {
+                path,
+                parser_name: "json-stringify".to_string(),
+            });
         }
 
         let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Ok(Self::ExternalFormatter { path, parser_name });
+            return Ok(Self::ExternalFormatter { path, parser_name: parser_name.to_string() });
+        }
+
+        // Finally, check plugin-provided extensions
+        if let Some(ext) = extension {
+            if let Some(parser_name) = plugin_extensions.get(ext) {
+                return Ok(Self::ExternalFormatter { path, parser_name: parser_name.clone() });
+            }
         }
 
         Err(())
     }
-}
 
-impl FormatFileStrategy {
     #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
         matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
@@ -474,5 +498,51 @@ mod tests {
             let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
             assert!(result.is_err(), "`{file_name}` should be excluded (lock file)");
         }
+    }
+
+    #[test]
+    fn test_plugin_extensions() {
+        let mut plugin_extensions = HashMap::new();
+        plugin_extensions.insert("gjs".to_string(), "ember-template-tag".to_string());
+        plugin_extensions.insert("gts".to_string(), "ember-template-tag".to_string());
+        plugin_extensions.insert("astro".to_string(), "astro".to_string());
+
+        // Plugin extension is routed to ExternalFormatter
+        let strategy = FormatFileStrategy::from_path(
+            PathBuf::from("component.gjs"),
+            &plugin_extensions,
+        )
+        .unwrap();
+        assert!(
+            matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
+            "gjs should route to ExternalFormatter with ember-template-tag parser"
+        );
+
+        let strategy = FormatFileStrategy::from_path(
+            PathBuf::from("types.gts"),
+            &plugin_extensions,
+        )
+        .unwrap();
+        assert!(
+            matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
+        );
+
+        // Static extensions take precedence over plugin extensions
+        let strategy = FormatFileStrategy::from_path(
+            PathBuf::from("style.css"),
+            &plugin_extensions,
+        )
+        .unwrap();
+        assert!(
+            matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "css"),
+            "Static extension should win over plugin extension"
+        );
+
+        // Unknown extension with no plugin → Err
+        let empty: HashMap<String, String> = HashMap::new();
+        assert!(
+            FormatFileStrategy::from_path(PathBuf::from("foo.gjs"), &empty).is_err(),
+            "gjs without plugin registered should be skipped"
+        );
     }
 }
