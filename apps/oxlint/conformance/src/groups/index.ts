@@ -6,6 +6,7 @@ import stylistic from "./stylistic.ts";
 import sonarjs from "./sonarjs.ts";
 import e18e from "./e18e.ts";
 import testingLibrary from "./testing_library.ts";
+import storybook from "./storybook.ts";
 
 export const TEST_GROUPS: TestGroup[] = [
   eslint,
@@ -14,4 +15,5 @@ export const TEST_GROUPS: TestGroup[] = [
   sonarjs,
   e18e,
   testingLibrary,
+  storybook,
 ];

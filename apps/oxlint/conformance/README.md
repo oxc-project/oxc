@@ -16,6 +16,7 @@ Build Oxlint in conformance mode:
 
 ```sh
 cd apps/oxlint
+pnpm install
 pnpm run build-conformance
 ```
 
@@ -36,3 +37,10 @@ pnpm run conformance
 - Add code to `init.sh` to clone the plugin's repo.
 - Add a file to `src/groups` directory (copy pattern used for other plugins).
 - Add the group to `src/groups/index.ts`.
+
+### Testing only the new plugin you added
+
+For ease of adding a new plugin, consider testing just the new plugin so you can get it working quicker.
+
+- In `src/groups/index.ts`, comment out all other plugins except the one you added.
+- Run the conformance tests with `pnpm run conformance`.
