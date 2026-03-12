@@ -14,6 +14,8 @@ const group: TestGroup = {
 
   transformTestFilename(filename: string) {
     if (!filename.endsWith(".test.ts")) return null;
+    // `rules.test.ts` is a meta-test for plugin exports/README, not a rule test.
+    if (filename === "rules.test.ts") return null;
     return filename.slice(0, -".test.ts".length);
   },
 

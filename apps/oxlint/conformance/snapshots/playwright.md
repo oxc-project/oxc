@@ -6,11 +6,11 @@
 
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
-| Total rules       |    59 | 100.0% |
-| Fully passing     |    57 |  96.6% |
+| Total rules       |    58 | 100.0% |
+| Fully passing     |    57 |  98.3% |
 | Partially passing |     1 |   1.7% |
 | Fully failing     |     0 |   0.0% |
-| Load errors       |     1 |   1.7% |
+| Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
 
 ### Tests
@@ -296,17 +296,4 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
     at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
     at apps/oxlint/dist/plugins-dev.js
-
-
-## Load Errors
-
-### `rules`
-
-Error: Transform failed with 1 error:
-/Users/connorshea/code/oxc/apps/oxlint/conformance/submodules/playwright/src/rules/rules.test.ts:4:23: ERROR: Top-level await is currently not supported with the "cjs" output format
-    at failureErrorWithLog (node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:1467:15)
-    at node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:736:50
-    at responseCallbacks.<computed> (node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:603:9)
-    at handleIncomingPacket (node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/lib/main.js:658:12)
-
 
