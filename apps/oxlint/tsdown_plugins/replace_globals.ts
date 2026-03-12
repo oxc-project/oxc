@@ -47,8 +47,8 @@ const availableGlobals = getAvailableGlobals(GLOBALS_PATH);
 const plugin: Plugin = {
   name: "replace-globals",
   transform: {
-    // Only process TS files in `src-js` directory
-    filter: { id: /\/src-js\/.+(?<!\.d)\.ts$/ },
+    // Only process JS and TS files in `src-js` directory
+    filter: { id: /\/src-js\/.+(?<!\.d)\.[jt]s$/ },
 
     async handler(code, path, meta) {
       const magicString = meta.magicString!;
