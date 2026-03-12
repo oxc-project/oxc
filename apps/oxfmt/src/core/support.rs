@@ -49,15 +49,15 @@ pub fn classify_file_kind(path: Arc<Path>, plugin_extensions: &FxHashMap<String,
         }
 
         // Finally, check plugin-provided extensions
-        if let Some(ext) = extension {
-            if let Some(parser_name) = plugin_extensions.get(ext) {
-                return Some(FileKind::ExternalFormatter {
-                    path,
-                    parser_name: parser_name.clone(),
-                    supports_tailwind: false,
-                    supports_oxfmt: false,
-                });
-            }
+        if let Some(ext) = extension
+            && let Some(parser_name) = plugin_extensions.get(ext)
+        {
+            return Some(FileKind::ExternalFormatter {
+                path,
+                parser_name: parser_name.clone(),
+                supports_tailwind: false,
+                supports_oxfmt: false,
+            });
         }
     }
 
