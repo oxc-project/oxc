@@ -32,7 +32,7 @@ const commonConfig = defineConfig({
   deps: {
     // tsdown warns about final bundled modules by `unbundle` + `deps.neverBundle`.
     // But we know what we are doing, just suppress the warnings.
-    onlyAllowBundle: false,
+    onlyBundle: false,
   },
 });
 
