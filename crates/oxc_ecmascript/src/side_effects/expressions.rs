@@ -297,7 +297,10 @@ fn is_pure_call(name: &str) -> bool {
 fn is_pure_constructor(name: &str) -> bool {
     matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
             | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String")
+            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String"
+            | "Int8Array" | "Uint8Array" | "Uint8ClampedArray" | "Int16Array" | "Uint16Array"
+            | "Int32Array" | "Uint32Array" | "Float32Array" | "Float64Array"
+            | "BigInt64Array" | "BigUint64Array")
 }
 
 /// Whether the name matches any known global constructors.
@@ -641,12 +644,18 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(ctx),
-            ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
-                _ => true,
-            },
+            ObjectPropertyKind::SpreadProperty(e) => {
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    e.argument.may_have_side_effects(ctx)
+                } else {
+                    match &e.argument {
+                        Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
+                        Expression::StringLiteral(_) => false,
+                        Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                        _ => true,
+                    }
+                }
+            }
         }
     }
 }
@@ -701,7 +710,9 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
                 block.body.iter().any(|stmt| stmt.may_have_side_effects(ctx))
             }
             ClassElement::MethodDefinition(e) => {
-                !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(ctx)
+                    || e.value.params.items.iter().any(|item| !item.decorators.is_empty())
             }
             ClassElement::PropertyDefinition(e) => {
                 !e.decorators.is_empty()
@@ -710,7 +721,9 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
                         && e.value.as_ref().is_some_and(|v| v.may_have_side_effects(ctx)))
             }
             ClassElement::AccessorProperty(e) => {
-                !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(ctx)
+                    || e.value.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
             }
             ClassElement::TSIndexSignature(_) => false,
         }
@@ -767,7 +780,17 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
                     !integer_index_property_access_may_have_side_effects(&self.object, b, ctx)
                 })
             }
-            _ => true,
+            _ => {
+                // Non-literal keys (e.g. `obj[expr]`) may trigger toString/valueOf on the key,
+                // which is a side effect. But if property read side effects are disabled,
+                // only check the key expression and object for their own side effects.
+                if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
+                    self.expression.may_have_side_effects(ctx)
+                        || self.object.may_have_side_effects(ctx)
+                } else {
+                    true
+                }
+            }
         }
     }
 }

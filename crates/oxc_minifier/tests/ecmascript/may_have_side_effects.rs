@@ -74,6 +74,20 @@ fn test(source_text: &str, expected: bool) {
 }
 
 #[track_caller]
+fn test_ts(source_text: &str, expected: bool) {
+    let ctx = Ctx::default();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
+}
+
+#[track_caller]
 fn test_with_global_variables(
     source_text: &str,
     global_variable_names: &[&'static str],
@@ -751,8 +765,17 @@ fn test_class_expression() {
     test("(class { static a = foo() })", true);
     test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
+    // AccessorProperty with value
+    test("(class { accessor a = 1; })", false);
+    test("(class { accessor a = foo(); })", true);
+    test("(class { static accessor a = 1; })", false);
+    test("(class { static accessor a = foo(); })", true);
     test("(class { #x; static { #x in {}; } })", false);
     test("(class { #x; static { #x in foo(); } })", true);
+    // MethodDefinition with parameter decorators (TypeScript feature)
+    test_ts("(class { a(@foo x) {} })", true);
+    test_ts("(class { a(@foo x, @bar y) {} })", true);
+    test_ts("(class { a(x) {} })", false);
 }
 
 #[test]
@@ -913,6 +936,21 @@ fn test_new_expressions() {
     test("new Number", false);
     test("new Object", false);
     test("new String", false);
+
+    // TypedArray constructors
+    test("new Int8Array", false);
+    test("new Uint8Array", false);
+    test("new Uint8ClampedArray", false);
+    test("new Int16Array", false);
+    test("new Uint16Array", false);
+    test("new Int32Array", false);
+    test("new Uint32Array", false);
+    test("new Float32Array", false);
+    test("new Float64Array", false);
+    test("new BigInt64Array", false);
+    test("new BigUint64Array", false);
+    // DataView requires an ArrayBuffer argument; calling without one throws
+    test("new DataView", true);
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -1149,10 +1187,23 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
+    // Non-literal keys: when property_read_side_effects is None,
+    // only the key expression and object are checked for side effects
+    test_with_ctx("foo[bar]", &all_ctx, true);
+    test_with_ctx("foo[bar]", &none_ctx, false);
+    test_with_ctx("foo[bar()]", &all_ctx, true);
+    test_with_ctx("foo[bar()]", &none_ctx, true); // bar() itself has side effects
     test_with_ctx("foo.#bar", &all_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
+
+    // ObjectExpression spread: when property_read_side_effects is None,
+    // spread delegates to the argument's own side effects
+    test_with_ctx("({...foo})", &all_ctx, true);
+    test_with_ctx("({...foo})", &none_ctx, false);
+    test_with_ctx("({...foo()})", &all_ctx, true);
+    test_with_ctx("({...foo()})", &none_ctx, true); // foo() itself has side effects
 }
 
 #[test]
