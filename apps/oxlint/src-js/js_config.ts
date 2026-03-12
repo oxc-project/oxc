@@ -1,11 +1,16 @@
+import { basename as pathBasename } from "node:path";
+
 import { getErrorMessage } from "./utils/utils.ts";
 import { isDefineConfig } from "./package/config.ts";
 import { DateNow, JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
   path: string;
-  config: unknown; // Will be validated as Oxlintrc on Rust side
+  config: unknown; // Will be validated as Oxlintrc on Rust side, `null` means "skip this config"
 }
+
+const VITE_CONFIG_NAME = "vite.config.ts";
+const VITE_OXLINT_CONFIG_FIELD = "lint";
 
 type LoadJsConfigsResult =
   | { Success: JsConfigResult[] }
@@ -105,19 +110,29 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
 
-        // Vite config files (e.g. `vite.config.ts`) are not Oxlint configs,
-        // so skip `defineConfig()` and `extends` validation.
-        // The `.lint` field extraction is handled on the Rust side.
-        if (!path.endsWith("/vite.config.ts")) {
-          if (!isDefineConfig(config)) {
-            throw new Error(
-              `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
-            );
+        // Vite config: extract `.lint` field, skip `defineConfig()` validation
+        if (pathBasename(path) === VITE_CONFIG_NAME) {
+          const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
+          // NOTE: return `null` if `.lint` is missing which signals "skip" this
+          if (lintConfig === undefined) {
+            return { path, config: null };
           }
 
-          validateConfigExtends(config as object);
+          if (typeof lintConfig !== "object" || lintConfig === null || Array.isArray(lintConfig)) {
+            throw new Error(
+              `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
+            );
+          }
+          validateConfigExtends(lintConfig as object);
+          return { path, config: lintConfig };
         }
 
+        if (!isDefineConfig(config)) {
+          throw new Error(
+            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
+          );
+        }
+        validateConfigExtends(config as object);
         return { path, config };
       }),
     );
