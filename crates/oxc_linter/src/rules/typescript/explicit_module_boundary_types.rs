@@ -562,7 +562,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         match get_typed_inner_expression(init) {
             // we consider these well-typed
-            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => {}
+            Expression::TSAsExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSSatisfiesExpression(_) => {}
             expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
@@ -921,6 +923,10 @@ mod test {
             (
                 "const x = (() => {}) as Foo;",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
+            ),
+            (
+                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
+                None,
             ),
             (
                 "
