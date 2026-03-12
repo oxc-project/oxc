@@ -28,40 +28,36 @@ const JSON_CONFIG_FILES: &[&str] = &[".oxfmtrc.json", ".oxfmtrc.jsonc"];
 const JS_CONFIG_EXTENSIONS: &[&str] = &["ts", "mts", "cts", "js", "mjs", "cjs"];
 /// Oxfmt JS/TS config file name.
 /// Only `.ts` extension is supported, matching oxlint's behavior.
+#[cfg(feature = "napi")]
 const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
 /// Vite+ config file name that may contain Oxfmt config under a `.fmt` field.
 /// Only `.ts` extension is supported, matching oxlint's behavior.
+#[cfg(feature = "napi")]
 const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
 #[cfg(feature = "napi")]
 const VITE_PLUS_OXFMT_CONFIG_FIELD: &str = "fmt";
 
-/// Returns an iterator of all supported config file names, in priority order.
-pub fn all_config_file_names() -> impl Iterator<Item = String> {
-    let json = JSON_CONFIG_FILES.iter().map(|f| (*f).to_string());
-    let oxfmt_js = std::iter::once(OXFMT_JS_CONFIG_NAME.to_string());
-    let vite_plus = std::iter::once(VITE_PLUS_CONFIG_NAME.to_string());
-    json.chain(oxfmt_js).chain(vite_plus)
+fn is_js_config_file(path: &Path) -> bool {
+    path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
 }
 
-/// Resolve config file path from cwd and optional explicit path.
-pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
-    // If `--config` is explicitly specified, use that path
-    if let Some(config_path) = config_path {
-        return Some(utils::normalize_relative_path(cwd, config_path));
-    }
+#[cfg(feature = "napi")]
+fn is_vite_plus_config(path: &Path) -> bool {
+    path.file_name().and_then(|f| f.to_str()).is_some_and(|name| name == VITE_PLUS_CONFIG_NAME)
+}
 
-    // If `--config` is not specified, search the nearest config file from cwd upwards.
-    // Support JSON, JSONC, and JS/TS config files.
-    // Prefer Oxfmt JSON/JSONC over JS/TS over Vite+ config if multiple exist in the same directory.
-    cwd.ancestors().find_map(|dir| {
-        for filename in all_config_file_names() {
-            let config_path = dir.join(&filename);
-            if config_path.exists() {
-                return Some(config_path);
-            }
-        }
-        None
-    })
+/// Returns an iterator of all supported config file names, in priority order.
+pub fn all_config_file_names() -> impl Iterator<Item = String> {
+    #[cfg(feature = "napi")]
+    {
+        JSON_CONFIG_FILES
+            .iter()
+            .copied()
+            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
+            .map(ToString::to_string)
+    }
+    #[cfg(not(feature = "napi"))]
+    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
@@ -223,7 +219,15 @@ impl ConfigResolver {
         Self { raw_config, config_dir, cached_options: None, oxfmtrc_overrides: None, editorconfig }
     }
 
+    /// Returns the directory containing the config file, if any was loaded.
+    pub fn config_dir(&self) -> Option<&Path> {
+        self.config_dir.as_deref()
+    }
+
     /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
+    ///
+    /// When `oxfmtrc_path` is `Some`, it is treated as an explicitly specified config file.
+    /// When `oxfmtrc_path` is `None`, auto-discovery searches upwards from `cwd`.
     ///
     /// If the resolved config path is a JS/TS file:
     /// - With `napi` feature: evaluates it via the provided `js_config_loader` callback.
@@ -237,45 +241,51 @@ impl ConfigResolver {
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> Result<Self, String> {
-        // Uses extension-based matching so that both auto-discovered files (e.g. `oxfmt.config.ts`)
-        // and explicitly specified files (e.g. `--config ./my-config.ts`) are handled.
-        let is_js_config = oxfmtrc_path.is_some_and(|path| {
-            path.extension()
-                .and_then(|e| e.to_str())
-                .is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
-        });
+        // Explicit path: normalize and load directly
+        if let Some(config_path) = oxfmtrc_path {
+            let path = utils::normalize_relative_path(cwd, config_path);
+            return Self::load_config_at(
+                cwd,
+                &path,
+                editorconfig_path,
+                #[cfg(feature = "napi")]
+                js_config_loader,
+            );
+        }
 
+        // Auto-discovery: search upwards from cwd, load in one pass
+        Self::discover_config(
+            cwd,
+            editorconfig_path,
+            #[cfg(feature = "napi")]
+            js_config_loader,
+        )
+    }
+
+    /// Load a config file at a known path.
+    /// Handles both JSON/JSONC and JS/TS config files.
+    fn load_config_at(
+        cwd: &Path,
+        path: &Path,
+        editorconfig_path: Option<&Path>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
+    ) -> Result<Self, String> {
         #[cfg(not(feature = "napi"))]
-        if is_js_config {
+        if is_js_config_file(path) {
             return Err(
                 "JS/TS config files are not supported in pure Rust CLI.\nUse JSON/JSONC instead."
                     .to_string(),
             );
         }
 
-        // Call `import(oxfmtrc_path)` via NAPI
         #[cfg(feature = "napi")]
-        if let Some(path) = oxfmtrc_path
-            && is_js_config
-        {
-            let raw_config = js_config_loader
-                .expect("JS config loader must be set when `napi` feature is enabled")(
-                path.to_string_lossy().into_owned(),
-            )
-            .map_err(|_| {
-                format!(
-                    "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
-                    path.display()
-                )
-            })?;
+        if is_js_config_file(path) {
+            let loader = js_config_loader
+                .expect("JS config loader must be set when `napi` feature is enabled");
+            let raw_config = load_js_config(loader, path)?;
 
-            // Vite+ config files (e.g. `vite.config.ts`),
-            // under a `.fmt` field instead of the default export directly.
-            let is_vite_plus = path
-                .file_name()
-                .and_then(|f| f.to_str())
-                .is_some_and(|name| name == VITE_PLUS_CONFIG_NAME);
-            let raw_config = if is_vite_plus {
+            // Vite+ config files use a `.fmt` field instead of the default export directly.
+            let raw_config = if is_vite_plus_config(path) {
                 raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned().ok_or_else(|| {
                     format!("{}\nExpected a `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field in the default export.", path.display())
                 })?
@@ -283,13 +293,60 @@ impl ConfigResolver {
                 raw_config
             };
 
-            let config_dir = path.parent().map(Path::to_path_buf);
             let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-
-            return Ok(Self::new(raw_config, config_dir, editorconfig));
+            return Ok(Self::new(raw_config, path.parent().map(Path::to_path_buf), editorconfig));
         }
 
-        Self::from_json_config(cwd, oxfmtrc_path, editorconfig_path)
+        Self::from_json_config(cwd, Some(path), editorconfig_path)
+    }
+
+    /// Auto-discover and load config by searching upwards from `cwd`.
+    ///
+    /// Tries each candidate file in priority order. If a `vite.config.ts` is found
+    /// but lacks a `.fmt` field, it is skipped and the search continues.
+    fn discover_config(
+        cwd: &Path,
+        editorconfig_path: Option<&Path>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
+    ) -> Result<Self, String> {
+        let candidates: Vec<String> = all_config_file_names().collect();
+        for dir in cwd.ancestors() {
+            for filename in &candidates {
+                let path = dir.join(filename);
+                if !path.exists() {
+                    continue;
+                }
+
+                // Special case: vite.config.ts is only used if it has a `.fmt` field.
+                // If not, skip it and continue searching for other config files.
+                #[cfg(feature = "napi")]
+                if is_vite_plus_config(&path) {
+                    let loader = js_config_loader
+                        .expect("JS config loader must be set when `napi` feature is enabled");
+                    if let Some(raw_config) = try_load_vite_config(loader, &path)? {
+                        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+                        return Ok(Self::new(
+                            raw_config,
+                            path.parent().map(Path::to_path_buf),
+                            editorconfig,
+                        ));
+                    }
+                    continue;
+                }
+
+                // All other config types: load directly
+                return Self::load_config_at(
+                    cwd,
+                    &path,
+                    editorconfig_path,
+                    #[cfg(feature = "napi")]
+                    js_config_loader,
+                );
+            }
+        }
+
+        // No config found — use defaults
+        Self::from_json_config(cwd, None, editorconfig_path)
     }
 
     /// Create a resolver by loading JSON/JSONC config from a file path.
@@ -440,6 +497,36 @@ impl ConfigResolver {
 
         (oxfmt_options, external_options)
     }
+}
+
+/// Load a JS/TS config file via NAPI and return the raw JSON value.
+#[cfg(feature = "napi")]
+fn load_js_config(js_config_loader: &JsConfigLoaderCb, path: &Path) -> Result<Value, String> {
+    js_config_loader(path.to_string_lossy().into_owned()).map_err(|_| {
+        format!(
+            "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
+            path.display()
+        )
+    })
+}
+
+/// Try to load a `vite.config.ts` and extract the `.fmt` field.
+/// Returns `Ok(Some(value))` if the field exists, `Ok(None)` if it doesn't.
+#[cfg(feature = "napi")]
+fn try_load_vite_config(
+    js_config_loader: &JsConfigLoaderCb,
+    path: &Path,
+) -> Result<Option<Value>, String> {
+    let raw_config = load_js_config(js_config_loader, path)?;
+    if let Some(config) = raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned() {
+        return Ok(Some(config));
+    }
+
+    tracing::debug!(
+        "Skipping {} (no `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field), continuing config search...",
+        path.display()
+    );
+    Ok(None)
 }
 
 // ---

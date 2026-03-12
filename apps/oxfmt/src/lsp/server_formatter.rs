@@ -9,7 +9,7 @@ use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolResta
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
-    SourceFormatter, all_config_file_names, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    SourceFormatter, all_config_file_names, resolve_editorconfig_path, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -116,13 +116,12 @@ impl ServerFormatterBuilder {
         root_path: &Path,
         config_path: Option<&String>,
     ) -> Result<(ConfigResolver, Vec<String>), String> {
-        let oxfmtrc_path =
-            resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
+        let oxfmtrc_path = config_path.filter(|s| !s.is_empty()).map(Path::new);
         let editorconfig_path = resolve_editorconfig_path(root_path);
 
         let mut resolver = ConfigResolver::from_config(
             root_path,
-            oxfmtrc_path.as_deref(),
+            oxfmtrc_path,
             editorconfig_path.as_deref(),
             Some(&self.js_config_loader),
         )?;
