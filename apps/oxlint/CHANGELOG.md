@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.54.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 4ea67de oxlint,oxfmt: Skip `vite.config.ts` exports `defineConfig(fn)` (#20260) (leaysgur)
+- cc89dbf oxlint: Skip `vite.config.ts` w/o `.lint` field in auto-discovery (#20255) (leaysgur)
+
+### ⚡ Performance
+
+- d160dca linter/plugins: Reduce array lookups in visitor compilation (#20249) (overlookmotel)
+
+### 📚 Documentation
+
+- 13606c3 linter/plugins: Update conformance README (#20234) (overlookmotel)
+
 ## [1.53.0] - 2026-03-11
 
 ### 🚀 Features

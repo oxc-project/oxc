@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-eslint",
-  "version": "1.53.0",
+  "version": "1.54.0",
   "description": "ESLint's built-in rules as an Oxlint plugin",
   "keywords": [
     "eslint",
