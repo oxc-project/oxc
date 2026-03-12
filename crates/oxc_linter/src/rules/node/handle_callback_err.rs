@@ -140,27 +140,25 @@ impl Rule for HandleCallbackErr {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
-                check_for_error(&func.params, &self.0, ctx);
+                self.check_for_error(&func.params, ctx);
             }
             AstKind::ArrowFunctionExpression(arrow_func) => {
-                check_for_error(&arrow_func.params, &self.0, ctx);
+                self.check_for_error(&arrow_func.params, ctx);
             }
             _ => {}
         }
     }
 }
 
-fn check_for_error(params: &FormalParameters, pattern: &ErrorPattern, ctx: &LintContext) {
-    let Some(first_param) = params.items.first() else {
-        return;
-    };
-
-    let Some(ident) = first_param.pattern.get_binding_identifier() else {
-        return;
-    };
-
-    if pattern.matches(&ident.name) && ctx.symbol_references(ident.symbol_id()).count() == 0 {
-        ctx.diagnostic(handle_callback_err_diagnostic(ident.span));
+impl HandleCallbackErr {
+    fn check_for_error(&self, params: &FormalParameters, ctx: &LintContext) {
+        if let Some(first_param) = params.items.first()
+            && let Some(ident) = first_param.pattern.get_binding_identifier()
+            && self.0.matches(&ident.name)
+            && ctx.symbol_references(ident.symbol_id()).count() == 0
+        {
+            ctx.diagnostic(handle_callback_err_diagnostic(ident.span));
+        }
     }
 }
 
