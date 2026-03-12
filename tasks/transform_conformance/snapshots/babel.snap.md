@@ -1,6 +1,6 @@
-commit: de54b9b2
+commit: 87a048db
 
-Passed: 698/1163
+Passed: 689/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2468,7 +2468,16 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-preset-react (6/9)
+# babel-preset-react (4/10)
+* preset-options/development/input.js
+react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* preset-options/development-no-source-self/input.js
+x Output mismatch
+
+* preset-options/development-runtime-automatic/input.js
+react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
 * preset-options/pure/input.js
 x Output mismatch
 
@@ -2572,8 +2581,32 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (7/8)
-* cross-platform/within-ts-module-block/input.ts
+# babel-plugin-transform-react-jsx-development (0/9)
+* cross-platform/auto-import-dev/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/classic-runtime/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/fragments/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-fragments-with-key/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-nonstatic-children/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-static-children/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/no-source-self/input.js
 x Output mismatch
+
+* cross-platform/within-derived-classes-constructor/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/within-ts-module-block/input.ts
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 
