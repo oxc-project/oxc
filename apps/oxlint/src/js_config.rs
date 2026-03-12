@@ -5,17 +5,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::Oxlintrc;
 
 use crate::run::JsLoadJsConfigsCb;
-use crate::{VITE_CONFIG_NAME, VITE_OXLINT_CONFIG_FIELD};
 
 /// Callback type for loading JavaScript/TypeScript config files.
 pub type JsConfigLoaderCb =
     Box<dyn Fn(Vec<String>) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> + Send + Sync>;
 
 /// Result of loading a single JavaScript/TypeScript config file.
+/// `config` is `None` when the JS side signals "skip" (e.g., vite.config.ts without `.lint` field).
 #[derive(Debug, Clone)]
 pub struct JsConfigResult {
     pub path: PathBuf,
-    pub config: Oxlintrc,
+    pub config: Option<Oxlintrc>,
 }
 
 /// Response from JS side when loading JS configs.
@@ -120,28 +120,14 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                 |(mut configs, mut errors), entry| {
                     let path = PathBuf::from(&entry.path);
 
-                    // Vite config files: extract the `.lint` field
-                    let is_vite_config = path
-                        .file_name()
-                        .and_then(|f| f.to_str())
-                        .is_some_and(|name| name == VITE_CONFIG_NAME);
-                    let config_value = if is_vite_config {
-                        if let Some(v) = entry.config.get(VITE_OXLINT_CONFIG_FIELD).cloned() {
-                            v
-                        } else {
-                            // NOTE: This error message is shown to users (explicit `--config`) and also
-                            // matched by `try_load_root_vite_config` in config_loader.rs (auto-discovery skip).
-                            errors.push(OxcDiagnostic::error(format!(
-                                "Expected a `{VITE_OXLINT_CONFIG_FIELD}` field in the default export of {}",
-                                entry.path
-                            )));
-                            return (configs, errors);
-                        }
-                    } else {
-                        entry.config
-                    };
+                    // `config: null` signals that this config should be skipped
+                    // (e.g., vite.config.ts without a `.lint` field)
+                    if entry.config.is_null() {
+                        configs.push(JsConfigResult { path, config: None });
+                        return (configs, errors);
+                    }
 
-                    let mut oxlintrc = match parse_js_oxlintrc(config_value) {
+                    let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
                         Ok(config) => config,
                         Err(err) => {
                             errors.push(
@@ -165,7 +151,7 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                     };
                     let config_dir = config_dir_parent.to_path_buf();
                     oxlintrc.set_config_dir(&config_dir);
-                    configs.push(JsConfigResult { path, config: oxlintrc });
+                    configs.push(JsConfigResult { path, config: Some(oxlintrc) });
 
                     (configs, errors)
                 },
