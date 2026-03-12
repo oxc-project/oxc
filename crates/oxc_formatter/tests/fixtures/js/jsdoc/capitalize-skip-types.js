@@ -4,6 +4,11 @@
 function foo() {}
 
 /**
- * @fires myEvent some description here
+ * @fires {CustomEvent<{ id: string }>} when the item is clicked
  */
 function bar() {}
+
+/**
+ * @fires myEvent some description here
+ */
+function baz() {}

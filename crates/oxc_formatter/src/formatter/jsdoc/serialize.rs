@@ -503,7 +503,10 @@ pub(super) fn is_type_name_comment_tag(tag_kind: &str) -> bool {
 /// Tags that use `type_comment()` pattern: `@tag {type} description`
 /// Expects canonical (normalized) tag names.
 pub(super) fn is_type_comment_tag(tag_kind: &str) -> bool {
-    matches!(tag_kind, "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends")
+    matches!(
+        tag_kind,
+        "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends" | "fires"
+    )
 }
 
 /// Get the sort priority for a tag kind (lower number = higher priority).
@@ -614,7 +617,6 @@ pub(super) fn is_named_generic_tag(kind: &str) -> bool {
             | "class"
             | "constant"
             | "external"
-            | "fires"
             | "flow"
             | "function"
             | "groupDescription"
