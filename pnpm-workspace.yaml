@@ -6,7 +6,6 @@ packages:
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
-  - tasks/mcp
 
 catalog:
   "@arethetypeswrong/core": 0.18.2
