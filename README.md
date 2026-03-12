@@ -39,15 +39,6 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 
 <sub>\* Oxidation is the chemical process that creates rust</sub>
 
-## 🏗️ Design Principles
-
-- **Performance**: Through rigorous performance engineering.
-- **Correctness**: Through conformance testing to standards and similar projects.
-- **Developer Experience**: Clear APIs, comprehensive documentation, and sensible configuration.
-- **Modular composability**: Use individual components independently or compose them into complete toolchains.
-
-Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser.html) and [performance philosophy](https://oxc.rs/docs/learn/performance).
-
 ## 📦 Tools & Packages
 
 | Tool        | npm                                                     | crates.io                                                   |
@@ -59,93 +50,18 @@ Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser
 | Minifier    | [oxc-minify](https://npmx.dev/package/oxc-minify)       | [oxc_minifier](https://crates.io/crates/oxc_minifier)       |
 | Resolver    | [oxc-resolver](https://npmx.dev/package/oxc-resolver)   | [oxc_resolver](https://crates.io/crates/oxc_resolver)       |
 
-See [documentation](https://oxc.rs/) for detailed usage guides for each tool.
-
 ## ⚡️ Quick Start
 
-### Linter
-
-The production-ready linter catches mistakes for you with sensible defaults and optional configuration:
-
 ```bash
-npx oxlint@latest
+npx oxlint@latest    # Lint
+npx oxfmt@latest     # Format
 ```
-
-To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds:
 
 <p float="left" align="left">
   <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
 </p>
 
-→ [oxlint documentation](https://oxc.rs/docs/guide/usage/linter/cli.html)
-→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxlint`
-
-### Formatter
-
-Fast, opinionated code formatter compatible with [Prettier]:
-
-```bash
-npx oxfmt@latest
-```
-
-→ [Formatter documentation](https://oxc.rs/docs/guide/usage/formatter)
-→ AI migration skill is also available: `npx skills add oxc-project/oxc --skill migrate-oxfmt`
-
-### Parser (Node.js)
-
-The fastest JavaScript/TypeScript parser written in Rust:
-
-```bash
-npm install oxc-parser
-```
-
-```js
-import { parseSync } from "oxc-parser";
-const result = parseSync("const x = 1;");
-```
-
-→ [Parser documentation](https://oxc.rs/docs/guide/usage/parser)
-
-### Transformer (Node.js)
-
-TypeScript, React, and modern JavaScript transformation:
-
-```bash
-npm install oxc-transform
-```
-
-```js
-import { transform } from "oxc-transform";
-const result = transform("source.tsx", code, { typescript: true });
-```
-
-→ [Transformer documentation](https://oxc.rs/docs/guide/usage/transformer)
-
-### Minifier (Node.js)
-
-High-performance JavaScript minifier:
-
-```bash
-npm install oxc-minify
-```
-
-```js
-import { minify } from "oxc-minify";
-const result = minify(code, { mangle: true });
-```
-
-→ [Minifier documentation](https://oxc.rs/docs/guide/usage/minifier)
-
-### Rust
-
-Individual crates are published for building your own JavaScript tools:
-
-```toml
-[dependencies]
-oxc = "0.x"
-```
-
-→ [Rust documentation](https://docs.rs/oxc)
+See [documentation](https://oxc.rs/docs/guide/introduction.html) for detailed usage guides, API examples, and Rust crate usage.
 
 ## VoidZero Inc.
 
