@@ -84,10 +84,10 @@ impl FormatFileStrategy {
         }
 
         // Finally, check plugin-provided extensions
-        if let Some(ext) = extension {
-            if let Some(parser_name) = plugin_extensions.get(ext) {
-                return Ok(Self::ExternalFormatter { path, parser_name: parser_name.clone() });
-            }
+        if let Some(ext) = extension
+            && let Some(parser_name) = plugin_extensions.get(ext)
+        {
+            return Ok(Self::ExternalFormatter { path, parser_name: parser_name.clone() });
         }
 
         Err(())
