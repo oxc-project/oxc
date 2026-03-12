@@ -34,8 +34,6 @@ const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
 /// Only `.ts` extension is supported, matching oxlint's behavior.
 #[cfg(feature = "napi")]
 const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
-#[cfg(feature = "napi")]
-const VITE_PLUS_OXFMT_CONFIG_FIELD: &str = "fmt";
 
 fn is_js_config_file(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
@@ -282,16 +280,9 @@ impl ConfigResolver {
         if is_js_config_file(path) {
             let loader = js_config_loader
                 .expect("JS config loader must be set when `napi` feature is enabled");
-            let raw_config = load_js_config(loader, path)?;
-
-            // Vite+ config files use a `.fmt` field instead of the default export directly.
-            let raw_config = if is_vite_plus_config(path) {
-                raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned().ok_or_else(|| {
-                    format!("{}\nExpected a `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field in the default export.", path.display())
-                })?
-            } else {
-                raw_config
-            };
+            let raw_config = load_js_config(loader, path)?.ok_or_else(|| {
+                format!("Expected a `fmt` field in the default export of {}", path.display())
+            })?;
 
             let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
             return Ok(Self::new(raw_config, path.parent().map(Path::to_path_buf), editorconfig));
@@ -317,13 +308,14 @@ impl ConfigResolver {
                     continue;
                 }
 
-                // Special case: vite.config.ts is only used if it has a `.fmt` field.
-                // If not, skip it and continue searching for other config files.
+                // For `vite.config.ts`
                 #[cfg(feature = "napi")]
                 if is_vite_plus_config(&path) {
-                    let loader = js_config_loader
-                        .expect("JS config loader must be set when `napi` feature is enabled");
-                    if let Some(raw_config) = try_load_vite_config(loader, &path)? {
+                    if let Some(raw_config) = load_js_config(
+                        js_config_loader
+                            .expect("JS config loader must be set when `napi` feature is enabled"),
+                        &path,
+                    )? {
                         let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
                         return Ok(Self::new(
                             raw_config,
@@ -331,10 +323,12 @@ impl ConfigResolver {
                             editorconfig,
                         ));
                     }
+                    // `load_js_config()` returns `None` if `.fmt` is missing.
+                    // Skip it and continue, otherwise `load_config_at()` would treat as an error.
                     continue;
                 }
 
-                // All other config types: load directly
+                // Use Oxfmt config if found, even if a `vite.config.ts` with missing `.fmt` is present.
                 return Self::load_config_at(
                     cwd,
                     &path,
@@ -500,33 +494,22 @@ impl ConfigResolver {
 }
 
 /// Load a JS/TS config file via NAPI and return the raw JSON value.
+///
+/// Returns `Ok(None)` when the JS side returns `null` for `vite.config.ts` without `.fmt` field,
+/// signaling that this config should be skipped during auto-discovery.
 #[cfg(feature = "napi")]
-fn load_js_config(js_config_loader: &JsConfigLoaderCb, path: &Path) -> Result<Value, String> {
-    js_config_loader(path.to_string_lossy().into_owned()).map_err(|_| {
+fn load_js_config(
+    js_config_loader: &JsConfigLoaderCb,
+    path: &Path,
+) -> Result<Option<Value>, String> {
+    let value = js_config_loader(path.to_string_lossy().into_owned()).map_err(|_| {
         format!(
             "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
             path.display()
         )
-    })
-}
+    })?;
 
-/// Try to load a `vite.config.ts` and extract the `.fmt` field.
-/// Returns `Ok(Some(value))` if the field exists, `Ok(None)` if it doesn't.
-#[cfg(feature = "napi")]
-fn try_load_vite_config(
-    js_config_loader: &JsConfigLoaderCb,
-    path: &Path,
-) -> Result<Option<Value>, String> {
-    let raw_config = load_js_config(js_config_loader, path)?;
-    if let Some(config) = raw_config.get(VITE_PLUS_OXFMT_CONFIG_FIELD).cloned() {
-        return Ok(Some(config));
-    }
-
-    tracing::debug!(
-        "Skipping {} (no `{VITE_PLUS_OXFMT_CONFIG_FIELD}` field), continuing config search...",
-        path.display()
-    );
-    Ok(None)
+    Ok(if value.is_null() { None } else { Some(value) })
 }
 
 // ---
