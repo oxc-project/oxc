@@ -10,10 +10,7 @@ expression: json
   "properties": {
     "$schema": {
       "description": "Schema URI for editor tooling.",
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": "string",
       "markdownDescription": "Schema URI for editor tooling."
     },
     "categories": {
@@ -100,12 +97,9 @@ expression: json
     "plugins": {
       "description": "Enabled built-in plugins for Oxlint.\nYou can view the list of available plugins on\n[the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).\n\nNOTE: Setting the `plugins` field will overwrite the base set of plugins.\nThe `plugins` array should reflect all of the plugins you want to use.",
       "default": null,
-      "anyOf": [
+      "allOf": [
         {
           "$ref": "#/definitions/LintPlugins"
-        },
-        {
-          "type": "null"
         }
       ],
       "markdownDescription": "Enabled built-in plugins for Oxlint.\nYou can view the list of available plugins on\n[the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).\n\nNOTE: Setting the `plugins` field will overwrite the base set of plugins.\nThe `plugins` array should reflect all of the plugins you want to use."
@@ -374,10 +368,7 @@ expression: json
         },
         "polymorphicPropName": {
           "description": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`.",
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": "string",
           "markdownDescription": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`."
         }
       },
@@ -500,48 +491,33 @@ expression: json
       "properties": {
         "denyWarnings": {
           "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
         },
         "maxWarnings": {
           "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": "integer",
           "format": "uint",
           "minimum": 0.0,
           "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI."
         },
         "reportUnusedDisableDirectives": {
           "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
-          "anyOf": [
+          "allOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
-            },
-            {
-              "type": "null"
             }
           ],
           "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
         },
         "typeAware": {
           "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
           "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         }
       },
@@ -556,12 +532,9 @@ expression: json
       "properties": {
         "env": {
           "description": "Environments enable and disable collections of global variables.",
-          "anyOf": [
+          "allOf": [
             {
               "$ref": "#/definitions/OxlintEnv"
-            },
-            {
-              "type": "null"
             }
           ],
           "markdownDescription": "Environments enable and disable collections of global variables."
@@ -577,12 +550,9 @@ expression: json
         },
         "globals": {
           "description": "Enabled or disabled specific global variables.",
-          "anyOf": [
+          "allOf": [
             {
               "$ref": "#/definitions/OxlintGlobals"
-            },
-            {
-              "type": "null"
             }
           ],
           "markdownDescription": "Enabled or disabled specific global variables."
@@ -606,12 +576,9 @@ expression: json
         "plugins": {
           "description": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used.",
           "default": null,
-          "anyOf": [
+          "allOf": [
             {
               "$ref": "#/definitions/LintPlugins"
-            },
-            {
-              "type": "null"
             }
           ],
           "markdownDescription": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used."
@@ -740,10 +707,7 @@ expression: json
         "version": {
           "description": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
           "default": null,
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": "string",
           "pattern": "^[1-9]\\d*(\\.(0|[1-9]\\d*))?(\\.(0|[1-9]\\d*))?$",
           "markdownDescription": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
         }
