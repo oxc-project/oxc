@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use std::{ env, path::PathBuf};
+use std::{env, path::PathBuf};
 
 use serde_json::Value;
 
@@ -55,19 +55,18 @@ pub fn run(
         .unwrap_or_default();
 
     // Use `block_in_place()` to avoid nested async runtime access
-    let plugin_extensions: FxHashMap<String, String> =
-        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, plugins)) {
-            Ok(mappings) => parse_plugin_extensions(mappings),
-            Err(err) => {
-                external_formatter.cleanup();
-                return ApiFormatResult {
-                    code: source_text,
-                    errors: vec![OxcError::new(format!(
-                        "Failed to setup external formatter: {err}"
-                    ))],
-                };
-            }
-        };
+    let plugin_extensions: FxHashMap<String, String> = match tokio::task::block_in_place(|| {
+        external_formatter.init(num_of_threads, plugins)
+    }) {
+        Ok(mappings) => parse_plugin_extensions(mappings),
+        Err(err) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
+            };
+        }
+    };
 
     // Determine format strategy from file path (includes plugin-provided extensions)
     let Ok(strategy) = FormatFileStrategy::from_path(PathBuf::from(filename), &plugin_extensions)

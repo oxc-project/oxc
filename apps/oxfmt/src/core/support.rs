@@ -509,21 +509,16 @@ mod tests {
         plugin_extensions.insert("astro".to_string(), "astro".to_string());
 
         // Plugin extension is routed to ExternalFormatter
-        let strategy = FormatFileStrategy::from_path(
-            PathBuf::from("component.gjs"),
-            &plugin_extensions,
-        )
-        .unwrap();
+        let strategy =
+            FormatFileStrategy::from_path(PathBuf::from("component.gjs"), &plugin_extensions)
+                .unwrap();
         assert!(
             matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
             "gjs should route to ExternalFormatter with ember-template-tag parser"
         );
 
-        let strategy = FormatFileStrategy::from_path(
-            PathBuf::from("types.gts"),
-            &plugin_extensions,
-        )
-        .unwrap();
+        let strategy =
+            FormatFileStrategy::from_path(PathBuf::from("types.gts"), &plugin_extensions).unwrap();
         assert!(
             matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "ember-template-tag"),
         );
@@ -531,11 +526,8 @@ mod tests {
         // Static extensions take precedence over plugin extensions (even with a conflicting entry)
         let mut with_conflict = plugin_extensions.clone();
         with_conflict.insert("css".to_string(), "some-other-parser".to_string());
-        let strategy = FormatFileStrategy::from_path(
-            PathBuf::from("style.css"),
-            &with_conflict,
-        )
-        .unwrap();
+        let strategy =
+            FormatFileStrategy::from_path(PathBuf::from("style.css"), &with_conflict).unwrap();
         assert!(
             matches!(&strategy, FormatFileStrategy::ExternalFormatter { parser_name, .. } if parser_name == "css"),
             "Static extension should win over plugin extension"

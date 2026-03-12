@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap;
-use std::{ env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
+use std::{env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
 
