@@ -1343,17 +1343,64 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     #[rustfmt::skip]
     let js_output = format!("
+        /**
+         * Total size of the transfer buffer in bytes (block size minus allocator metadata).
+         */
         export const BUFFER_SIZE = {buffer_size};
+
+        /**
+         * Required alignment of the transfer buffer (4 GiB).
+         */
         export const BUFFER_ALIGN = {BLOCK_ALIGN};
+
+        /**
+         * Size of the active data area in bytes (buffer size minus raw metadata and chunk footer).
+         */
         export const ACTIVE_SIZE = {active_size};
+
+        /**
+         * Byte offset of the data pointer within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
+
+        /**
+         * Byte offset of the `is_ts` flag within the buffer.
+         */
         export const IS_TS_FLAG_POS = {is_ts_pos};
+
+        /**
+         * Byte offset of the `is_jsx` flag within the buffer.
+         */
         export const IS_JSX_FLAG_POS = {is_jsx_pos};
+
+        /**
+         * Byte offset of the `has_bom` flag within the buffer.
+         */
         export const HAS_BOM_FLAG_POS = {has_bom_pos};
+
+        /**
+         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const TOKENS_OFFSET_POS_32 = {tokens_offset_pos_32};
+
+        /**
+         * Byte offset of the tokens length within the buffer, divided by 4 (for `Uint32Array` indexing).
+         */
         export const TOKENS_LEN_POS_32 = {tokens_len_pos_32};
+
+        /**
+         * Byte offset of the `program` field, relative to start of `RawTransferData`.
+         */
         export const PROGRAM_OFFSET = {program_offset};
+
+        /**
+         * Byte offset of pointer to start of source text, relative to start of `Program`.
+         */
         export const SOURCE_START_OFFSET = {source_start_offset};
+
+        /**
+         * Byte offset of length of source text, relative to start of `Program`.
+         */
         export const SOURCE_LEN_OFFSET = {source_len_offset};
     ");
 
