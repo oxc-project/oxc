@@ -1246,16 +1246,22 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
                 }
                 t
             };
-            out.push('[');
-            out.push_str(&link_text);
-            out.push_str("](");
-            out.push_str(&link.url);
-            if let Some(title) = &link.title {
-                out.push_str(" \"");
-                out.push_str(title);
-                out.push('"');
+            // GFM autolink: bare URL parsed into a Link node where text == url.
+            // Emit just the bare URL, not [url](url).
+            if link_text == link.url && link.title.is_none() {
+                out.push_str(&link.url);
+            } else {
+                out.push('[');
+                out.push_str(&link_text);
+                out.push_str("](");
+                out.push_str(&link.url);
+                if let Some(title) = &link.title {
+                    out.push_str(" \"");
+                    out.push_str(title);
+                    out.push('"');
+                }
+                out.push(')');
             }
-            out.push(')');
         }
         Node::LinkReference(link_ref) => {
             out.push('[');

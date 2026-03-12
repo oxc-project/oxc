@@ -10,7 +10,7 @@ use super::{
         strip_jsdoc_stars_preserve_newlines, strip_optional_type_suffix,
     },
     serialize::{
-        JsdocFormatter, format_default_value, is_named_generic_tag, join_iter,
+        JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag, join_iter,
         should_skip_description_formatting, strip_default_is_suffix,
     },
     wrap::{str_width, wrap_text},
@@ -735,6 +735,12 @@ impl JsdocFormatter<'_, '_> {
             let trimmed_start = raw_ws.trim_start_matches(' ');
             trimmed_start.starts_with("\n\n") || trimmed_start.starts_with("\n \n")
         };
+        // For unknown tags, check if description starts on a new line
+        // (upstream preserves original line structure for unknown tags)
+        let desc_starts_on_new_line = {
+            let trimmed_start = raw_ws.trim_start_matches(' ');
+            trimmed_start.starts_with('\n')
+        };
 
         let desc_text = tag.comment().parsed();
         let desc_text = normalize_markdown_emphasis(desc_text.trim());
@@ -820,11 +826,30 @@ impl JsdocFormatter<'_, '_> {
         }
 
         let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
-        let skip_wrapping = should_skip_description_formatting(normalized_kind);
+        let is_unknown = !is_known_tag(normalized_kind);
+        // Skip wrapping for TAGS_PEV_FORMATE_DESCRIPTION (@see, @borrows, etc.)
+        // AND for unknown/custom tags (not in TAGS_ORDER) — upstream preserves
+        // their description as-is at stringify.ts:132-136.
+        let skip_wrapping = should_skip_description_formatting(normalized_kind) || is_unknown;
+
+        // Unknown tags: if description was originally on a new line, keep it
+        // there (upstream preserves original line structure).
+        if is_unknown && desc_starts_on_new_line {
+            self.content_lines.push(tag_line);
+            for line in desc_text.split('\n') {
+                if line.is_empty() {
+                    self.content_lines.push_empty();
+                } else {
+                    self.content_lines.push(line);
+                }
+            }
+            return;
+        }
+
         if prefix_len + str_width(&desc_text) <= self.wrap_width || skip_wrapping {
             // Fits on one line, or tag skips description formatting (no wrapping).
-            // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) keep their description
-            // on one line regardless of length.
+            // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) and unknown tags
+            // keep their description on one line regardless of length.
             let s = self.content_lines.begin_line();
             s.push_str(&tag_line);
             s.push(' ');

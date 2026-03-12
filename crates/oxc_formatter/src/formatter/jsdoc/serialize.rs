@@ -497,7 +497,7 @@ pub(super) fn should_skip_description_formatting(tag_kind: &str) -> bool {
 /// Tags that use `type_name_comment()` pattern: `@tag {type} name description`
 /// Expects canonical (normalized) tag names.
 pub(super) fn is_type_name_comment_tag(tag_kind: &str) -> bool {
-    matches!(tag_kind, "param" | "property" | "typedef" | "template")
+    matches!(tag_kind, "param" | "property" | "typedef" | "template" | "fires")
 }
 
 /// Tags that use `type_comment()` pattern: `@tag {type} description`
@@ -505,7 +505,7 @@ pub(super) fn is_type_name_comment_tag(tag_kind: &str) -> bool {
 pub(super) fn is_type_comment_tag(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
-        "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends" | "fires"
+        "returns" | "yields" | "throws" | "type" | "satisfies" | "this" | "extends"
     )
 }
 
@@ -569,7 +569,7 @@ fn tag_sort_priority(kind: &str) -> u32 {
 /// Check if a tag kind is known (has a specific sort priority).
 /// Unknown tags skip capitalization, matching upstream's
 /// `TAGS_ORDER[tag] === undefined` check in `stringify.js:77`.
-fn is_known_tag(kind: &str) -> bool {
+pub(super) fn is_known_tag(kind: &str) -> bool {
     // link/linkcode/linkplain are not in TAGS_ORDER but are special inline tags;
     // for the purposes of capitalization they behave like unknown tags.
     !matches!(tag_sort_priority(kind), 88)

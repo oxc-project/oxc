@@ -106,10 +106,23 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
     for (idx, _) in table_lines.iter().enumerate() {
         let mut row = String::with_capacity(row_capacity);
         if idx == separator_idx {
+            let sep_cells = parse_table_cells(table_lines[separator_idx]);
             for (j, &w) in col_widths.iter().enumerate() {
                 row.push_str(if j == 0 { "| " } else { " | " });
-                for _ in 0..w {
+                let cell = sep_cells.get(j).copied().unwrap_or("---");
+                let left_align = cell.starts_with(':');
+                let right_align = cell.ends_with(':');
+                if left_align {
+                    row.push(':');
+                }
+                let dashes = w
+                    - usize::from(left_align)
+                    - usize::from(right_align);
+                for _ in 0..dashes {
                     row.push('-');
+                }
+                if right_align {
+                    row.push(':');
                 }
             }
             row.push_str(" |");
