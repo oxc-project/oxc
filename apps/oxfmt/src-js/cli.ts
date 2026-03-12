@@ -23,6 +23,8 @@ void (async () => {
   // See: https://github.com/napi-rs/napi-rs/issues/1630
   // @ts-expect-error: `_handle` is an internal API
   if (!process.stdout.isTTY) process.stdout._handle?.setBlocking?.(true);
+  // @ts-expect-error: `_handle` is an internal API
+  if (!process.stdin.isTTY) process.stdin._handle?.setBlocking?.(true);
 
   // Call the Rust CLI first, to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
