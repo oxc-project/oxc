@@ -1498,13 +1498,14 @@ export function getTokenByRangeStart<Options extends RangeOptions | null | undef
   // Binary search for token starting at the given index
   for (let lo = 0, hi = tokenList.length; lo < hi; ) {
     const mid = (lo + hi) >> 1;
-    const tokenStart = tokenList[mid].start;
-    if (tokenStart === index) {
-      return tokenList[mid] as Result;
-    } else if (tokenStart < index) {
+    const token = tokenList[mid],
+      tokenStart = token.start;
+    if (tokenStart < index) {
       lo = mid + 1;
-    } else {
+    } else if (tokenStart > index) {
       hi = mid;
+    } else {
+      return token as Result;
     }
   }
 
