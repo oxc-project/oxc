@@ -14,6 +14,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+    VITE_OXLINT_CONFIG_FIELD,
 };
 
 #[cfg(feature = "napi")]
@@ -490,9 +491,12 @@ impl<'a> ConfigLoader<'a> {
         }
 
         // Fallback: check for vite.config.ts with .lint field (lowest priority)
-        let vite_path = dir.join(VITE_CONFIG_NAME);
-        if vite_path.is_file() {
-            return self.load_root_js_config(&vite_path).map(Some);
+        // If .lint field is missing, skip it and continue config search.
+        let vite_config_path = dir.join(VITE_CONFIG_NAME);
+        if vite_config_path.is_file()
+            && let Some(config) = self.try_load_root_vite_config(&vite_config_path)?
+        {
+            return Ok(Some(config));
         }
 
         Ok(None)
@@ -554,6 +558,28 @@ impl<'a> ConfigLoader<'a> {
 
         // No config found in any ancestor directory
         Ok(Oxlintrc::default())
+    }
+
+    /// Try to load vite.config.ts, returning `Ok(None)` if `.lint` field is missing.
+    /// Other errors (e.g., JS runtime not available, parse errors) are propagated.
+    fn try_load_root_vite_config(&self, path: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+        match self.load_root_js_config(path) {
+            Ok(config) => Ok(Some(config)),
+            Err(diagnostic) => {
+                let msg = diagnostic.message.to_string();
+                // NOTE: This relies on matching the error message from `parse_js_config_response` in js_config.rs.
+                // If that message changes, this match must be updated accordingly.
+                if msg.contains(&format!("Expected a `{VITE_OXLINT_CONFIG_FIELD}` field")) {
+                    tracing::debug!(
+                        "Skipping {} (no `{VITE_OXLINT_CONFIG_FIELD}` field), continuing config search...",
+                        path.display(),
+                    );
+                    Ok(None)
+                } else {
+                    Err(diagnostic)
+                }
+            }
+        }
     }
 
     fn load_root_js_config(&self, path: &Path) -> Result<Oxlintrc, OxcDiagnostic> {
