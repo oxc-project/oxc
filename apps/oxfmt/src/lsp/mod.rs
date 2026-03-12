@@ -33,6 +33,7 @@ pub(super) fn get_file_extension_from_language_id(
         "less" => Some("less"),
         "vue" => Some("vue"),
         "yaml" => Some("yaml"),
+        "angular" => Some("component.html"),
         _ => None,
     }
 }
