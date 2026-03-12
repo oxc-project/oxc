@@ -1,0 +1,53 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * This function handles the case where something wraps and the continuation
+ * line starts with a character that looks like a list marker — like `await a
+ * + b` or some em-dash — prefix.
+ */
+const a = 1;
+
+/**
+ * - This is a real list item
+ * - Another real list item
+ */
+const b = 2;
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/**
+ * This function handles the case where something wraps and the continuation
+ * line starts with a character that looks like a list marker — like `await a
+ *
+ * - B` or some em-dash — prefix.
+ */
+const a = 1;
+
+/**
+ * - This is a real list item
+ * - Another real list item
+ */
+const b = 2;
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/**
+ * This function handles the case where something wraps and the continuation line starts with a
+ * character that looks like a list marker — like `await a
+ *
+ * - B` or some em-dash — prefix.
+ */
+const a = 1;
+
+/**
+ * - This is a real list item
+ * - Another real list item
+ */
+const b = 2;
+
+===================== End =====================

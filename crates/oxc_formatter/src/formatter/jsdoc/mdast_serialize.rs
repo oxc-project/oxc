@@ -72,8 +72,23 @@ fn needs_mdast_parsing(text: &str) -> bool {
                 // Check trigger character after whitespace
                 if i + spaces < len {
                     match bytes[i + spaces] {
-                        b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' => return true,
-                        b'+' if i + spaces + 1 < len && bytes[i + spaces + 1] == b' ' => {
+                        b'#' | b'>' | b'0'..=b'9' => return true,
+                        b'|' => {
+                            // Only trigger for table-like patterns: need at least 2 `|` on the line
+                            let line_start = i + spaces;
+                            let mut pipe_count = 0;
+                            let mut j = line_start;
+                            while j < len && bytes[j] != b'\n' {
+                                if bytes[j] == b'|' {
+                                    pipe_count += 1;
+                                    if pipe_count >= 2 {
+                                        return true;
+                                    }
+                                }
+                                j += 1;
+                            }
+                        }
+                        b'-' | b'+' if i + spaces + 1 < len && bytes[i + spaces + 1] == b' ' => {
                             return true;
                         }
                         _ => {}
@@ -272,14 +287,19 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
         {
             let number = &trimmed[..dash_pos];
             if number.chars().all(|c| c.is_ascii_digit()) {
-                let rest = trimmed[dash_pos + 1..].trim_start();
-                if !rest.is_empty() {
-                    result.push_str(&line[..leading]);
-                    result.push_str(number);
-                    result.push_str(". ");
-                    result.push_str(rest);
-                    changed = true;
-                    continue;
+                // Only treat as a list marker if dash is followed by whitespace or pipe
+                // (matching upstream regex `^(\d+)[-][\s|]+`)
+                let after_dash = trimmed.as_bytes().get(dash_pos + 1).copied();
+                if matches!(after_dash, Some(b' ' | b'\t' | b'|')) {
+                    let rest = trimmed[dash_pos + 1..].trim_start();
+                    if !rest.is_empty() {
+                        result.push_str(&line[..leading]);
+                        result.push_str(number);
+                        result.push_str(". ");
+                        result.push_str(rest);
+                        changed = true;
+                        continue;
+                    }
                 }
             }
         }
@@ -1203,29 +1223,39 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             out.push('`');
         }
         Node::Link(link) => {
-            // Check if this is a GFM autolink (bare URL converted to link).
-            // If the link text equals the URL, emit just the URL.
             let link_text = {
                 let mut t = String::new();
                 for child in &link.children {
+                    // When a child is a GFM autolink (Link where text == url) nested
+                    // inside this explicit link, emit just the URL text to avoid
+                    // double-wrapping like `[[url](url)](url)`.
+                    if let Node::Link(inner) = child {
+                        let inner_text = {
+                            let mut it = String::new();
+                            for ic in &inner.children {
+                                collect_inline_recursive(ic, &mut it);
+                            }
+                            it
+                        };
+                        if inner_text == inner.url && inner.title.is_none() {
+                            t.push_str(&inner.url);
+                            continue;
+                        }
+                    }
                     collect_inline_recursive(child, &mut t);
                 }
                 t
             };
-            if link_text == link.url && link.title.is_none() {
-                out.push_str(&link.url);
-            } else {
-                out.push('[');
-                out.push_str(&link_text);
-                out.push_str("](");
-                out.push_str(&link.url);
-                if let Some(title) = &link.title {
-                    out.push_str(" \"");
-                    out.push_str(title);
-                    out.push('"');
-                }
-                out.push(')');
+            out.push('[');
+            out.push_str(&link_text);
+            out.push_str("](");
+            out.push_str(&link.url);
+            if let Some(title) = &link.title {
+                out.push_str(" \"");
+                out.push_str(title);
+                out.push('"');
             }
+            out.push(')');
         }
         Node::LinkReference(link_ref) => {
             out.push('[');

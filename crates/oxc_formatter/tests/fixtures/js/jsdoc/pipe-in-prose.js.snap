@@ -1,0 +1,44 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * The |splineCurve| option controls curve interpolation.
+ */
+const a = 1;
+
+/**
+ * | Name | Value |
+ * | ---- | ----- |
+ * | foo  | 1     |
+ */
+const b = 2;
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/** The |splineCurve| option controls curve interpolation. */
+const a = 1;
+
+/**
+ * | Name | Value |
+ * | ---- | ----- |
+ * | foo  | 1     |
+ */
+const b = 2;
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/** The |splineCurve| option controls curve interpolation. */
+const a = 1;
+
+/**
+ * | Name | Value |
+ * | ---- | ----- |
+ * | foo  | 1     |
+ */
+const b = 2;
+
+===================== End =====================

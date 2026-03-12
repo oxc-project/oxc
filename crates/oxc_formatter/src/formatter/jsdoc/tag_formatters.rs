@@ -753,7 +753,44 @@ impl JsdocFormatter<'_, '_> {
         } else if should_capitalize && is_named_generic_tag(normalized_kind) {
             // Named tags: first word is the "name" (don't capitalize), rest is description.
             // Upstream comment-parser separates name/description; we do it inline.
-            if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
+            // Special case: if text starts with `{`, the "name" extends to the matching `}`
+            // (it's a type expression like `{CustomEvent<{ id: string }>}`).
+            if desc_text.starts_with('{') {
+                // Find the matching closing brace
+                let mut depth = 0;
+                let mut end = 0;
+                for (i, ch) in desc_text.char_indices() {
+                    match ch {
+                        '{' => depth += 1,
+                        '}' => {
+                            depth -= 1;
+                            if depth == 0 {
+                                end = i + 1;
+                                break;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                if end > 0 && end < desc_text.len() {
+                    let name_part = &desc_text[..end];
+                    let desc_part = desc_text[end..].trim_start();
+                    if desc_part.is_empty() {
+                        Cow::Borrowed(desc_text)
+                    } else {
+                        let capitalized = capitalize_first(desc_part);
+                        let mut s =
+                            String::with_capacity(name_part.len() + 1 + capitalized.len());
+                        s.push_str(name_part);
+                        s.push(' ');
+                        s.push_str(&capitalized);
+                        Cow::Owned(s)
+                    }
+                } else {
+                    // No matching brace or entire text is the name — no capitalization
+                    Cow::Borrowed(desc_text)
+                }
+            } else if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
                 let name_part = &desc_text[..space_idx];
                 let desc_part = desc_text[space_idx..].trim_start();
                 if desc_part.is_empty() {
@@ -797,6 +834,25 @@ impl JsdocFormatter<'_, '_> {
                 desc.remove(0);
             }
             self.push_indented_desc("", desc);
+            return;
+        }
+
+        // @remarks and @privateRemarks always force description to next line
+        // (matching upstream stringify.ts:151)
+        if matches!(normalized_kind, "remarks" | "privateRemarks") {
+            self.content_lines.push(tag_line);
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let desc = wrap_text(
+                &desc_text,
+                indent_width,
+                0,
+                false,
+                Some(self.format_options),
+                Some(self.external_callbacks),
+                Some(self.allocator),
+            );
+            self.push_indented_desc(indent, desc);
             return;
         }
 

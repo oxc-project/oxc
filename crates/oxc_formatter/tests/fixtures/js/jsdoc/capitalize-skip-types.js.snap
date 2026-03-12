@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * @fires {CustomEvent<{ id: string }>}
+ */
+function foo() {}
+
+/**
+ * @fires myEvent some description here
+ */
+function bar() {}
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/** @fires {CustomEvent<{ id: string }>} */
+function foo() {}
+
+/** @fires myEvent Some description here */
+function bar() {}
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/** @fires {CustomEvent<{ id: string }>} */
+function foo() {}
+
+/** @fires myEvent Some description here */
+function bar() {}
+
+===================== End =====================

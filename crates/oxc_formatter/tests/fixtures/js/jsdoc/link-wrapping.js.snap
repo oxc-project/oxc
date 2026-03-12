@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * Returns a promise that resolves with the value from {@link Storage.getItem}.
+ */
+const a = 1;
+
+/**
+ * This uses the {@link SomeVeryLongClassName} to handle the operation properly.
+ */
+const b = 2;
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/** Returns a promise that resolves with the value from {@link Storage.getItem}. */
+const a = 1;
+
+/** This uses the {@link SomeVeryLongClassName} to handle the operation properly. */
+const b = 2;
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/** Returns a promise that resolves with the value from {@link Storage.getItem}. */
+const a = 1;
+
+/** This uses the {@link SomeVeryLongClassName} to handle the operation properly. */
+const b = 2;
+
+===================== End =====================

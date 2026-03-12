@@ -190,6 +190,26 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
     tokens
 }
 
+/// Compute the display width of a `{@link ...}` token as rendered text only,
+/// excluding the `{@link }` wrapper syntax. This matches upstream's more lenient
+/// wrapping behavior where `{@link Foo}` counts as width 3 ("Foo"), not 12.
+/// For non-link tokens, returns the full `str_width`.
+fn link_rendered_width(token: &str) -> usize {
+    if !token.starts_with("{@link") || !token.ends_with('}') {
+        return str_width(token);
+    }
+    let inner = &token[1..token.len() - 1]; // strip { and }
+    if let Some(space_pos) = inner.find(' ') {
+        let text = inner[space_pos..].trim();
+        // If there's a | separator, the display text is after it
+        if let Some(pipe_pos) = text.find('|') {
+            return str_width(text[pipe_pos + 1..].trim());
+        }
+        return str_width(text);
+    }
+    str_width(token)
+}
+
 /// Wrap a single paragraph of plain text to the given max width with optional indent for
 /// continuation lines.
 ///
@@ -225,7 +245,7 @@ pub fn wrap_paragraph(
     let mut is_first_line = true;
 
     for word in words {
-        let word_width = str_width(word);
+        let word_width = link_rendered_width(word);
         let capacity = if is_first_line { first_line_max } else { effective_max };
 
         if current_line.is_empty() {

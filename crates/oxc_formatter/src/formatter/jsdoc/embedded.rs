@@ -141,12 +141,12 @@ pub(super) fn format_embedded_js(
         }
     }
 
-    // Try JSX first (most @example code in React projects uses JSX),
-    // then TSX (for TypeScript code with JSX).
-    if let Some(result) = try_format(code, SourceType::jsx()) {
+    // Try TSX first — it's a superset of JSX and correctly handles TypeScript
+    // generics like `getItem<number>(...)` that JSX would mangle into comparisons.
+    if let Some(result) = try_format(code, SourceType::tsx()) {
         return Some(result);
     }
-    if let Some(result) = try_format(code, SourceType::tsx()) {
+    if let Some(result) = try_format(code, SourceType::jsx()) {
         return Some(result);
     }
 

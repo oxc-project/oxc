@@ -224,6 +224,11 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 {
                     // Always blank line between consecutive @example tags
                     true
+                } else if prev_normalized_kind.is_some_and(|prev| {
+                    prev == normalized_kind && matches!(prev, "typedef" | "callback")
+                }) {
+                    // Always blank line between consecutive @typedef or @callback tags
+                    true
                 } else if self.options.separate_tag_groups {
                     // Blank line between different tag kinds
                     prev_normalized_kind.is_some_and(|prev| prev != normalized_kind)
@@ -258,7 +263,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 kind_end < source_text.len() && source_text.as_bytes()[kind_end] == b'{'
             };
 
-            if normalized_kind == "example" || normalized_kind == "remarks" {
+            if normalized_kind == "example" {
                 self.format_example_tag(normalized_kind, tag);
             } else if is_type_name_comment_tag(normalized_kind) {
                 self.format_type_name_comment_tag(
@@ -605,12 +610,14 @@ pub(super) fn is_named_generic_tag(kind: &str) -> bool {
             | "augments"
             | "author"
             | "callback"
+            | "categoryDescription"
             | "class"
             | "constant"
             | "external"
             | "fires"
             | "flow"
             | "function"
+            | "groupDescription"
             | "ignore"
             | "member"
             | "memberof"
@@ -722,6 +729,17 @@ pub(super) fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<
     if !matches!(first_byte, b'{' | b'[' | b'"' | b'\'') {
         // Doesn't start with JSON-like syntax; return unchanged
         return Cow::Borrowed(trimmed);
+    }
+
+    // For values starting with a quote, verify the quote is matched.
+    // Unmatched quotes like `'circle;` should be preserved as-is.
+    if matches!(first_byte, b'"' | b'\'') {
+        let quote = first_byte;
+        // Check if there's a matching closing quote
+        let has_closing = trimmed.len() > 1 && trimmed.as_bytes().last() == Some(&quote);
+        if !has_closing {
+            return Cow::Borrowed(trimmed);
+        }
     }
 
     // Determine target and source quote characters based on quote style.
@@ -844,16 +862,75 @@ pub(super) fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<
 
 /// Strip an existing "Default is `...`" or "Default is ..." suffix from a description.
 /// The plugin always recomputes this from the `[name=value]` syntax.
+///
+/// Handles cases where "Default is" may be split across lines (e.g., "Default\nis `X`")
+/// by searching a whitespace-normalized version of the text and mapping the position
+/// back to the original.
 pub(super) fn strip_default_is_suffix(desc: &str) -> Cow<'_, str> {
-    // Look for "Default is " (case insensitive matching for "default is")
+    // First try the fast path: "Default is " on a single line
     if let Some(pos) = desc.find("Default is ") {
         let before = desc[..pos].trim_end();
-        // Remove trailing period before "Default is"
         let before = before.strip_suffix('.').unwrap_or(before);
-        Cow::Borrowed(before.trim_end())
-    } else {
-        Cow::Borrowed(desc)
+        return Cow::Borrowed(before.trim_end());
     }
+
+    // Handle "Default is" at end of string (no value follows)
+    if desc.trim_end().ends_with("Default is") {
+        let trimmed = desc.trim_end();
+        let before = trimmed[..trimmed.len() - "Default is".len()].trim_end();
+        let before = before.strip_suffix('.').unwrap_or(before);
+        return Cow::Borrowed(before.trim_end());
+    }
+
+    // Slow path: "Default" and "is" may be split across lines.
+    // Build a mapping from normalized (whitespace-collapsed) positions back to
+    // original positions, then search the normalized text.
+    // We only need to find "Default is " or "Default is\n" in the collapsed form.
+    let bytes = desc.as_bytes();
+    let mut norm_pos_to_orig: Vec<usize> = Vec::with_capacity(desc.len());
+    let mut prev_was_ws = false;
+    for (i, &b) in bytes.iter().enumerate() {
+        let is_ws = b == b' ' || b == b'\n' || b == b'\r' || b == b'\t';
+        if is_ws {
+            if !prev_was_ws {
+                // Emit a single space for the first whitespace char in a run
+                norm_pos_to_orig.push(i);
+            }
+            prev_was_ws = true;
+        } else {
+            norm_pos_to_orig.push(i);
+            prev_was_ws = false;
+        }
+    }
+
+    // Build the normalized string
+    let normalized: String = {
+        let mut s = String::with_capacity(norm_pos_to_orig.len());
+        let mut prev_ws = false;
+        for &b in bytes {
+            let is_ws = b == b' ' || b == b'\n' || b == b'\r' || b == b'\t';
+            if is_ws {
+                if !prev_ws {
+                    s.push(' ');
+                }
+                prev_ws = true;
+            } else {
+                s.push(b as char);
+                prev_ws = false;
+            }
+        }
+        s
+    };
+
+    if let Some(norm_pos) = normalized.find("Default is ") {
+        // Map back to original position
+        let orig_pos = norm_pos_to_orig[norm_pos];
+        let before = desc[..orig_pos].trim_end();
+        let before = before.strip_suffix('.').unwrap_or(before);
+        return Cow::Borrowed(before.trim_end());
+    }
+
+    Cow::Borrowed(desc)
 }
 
 /// Format a JSDoc comment. Returns `Some(formatted)` if the comment was modified,

@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * @typedef {Object} Foo
+ * @property {string} name
+ *
+ * @typedef {Object} Bar
+ * @property {number} value
+ *
+ * @typedef {string} Baz
+ */
+const a = 1;
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/**
+ * @typedef {Object} Foo
+ * @property {string} name
+ *
+ * @typedef {Object} Bar
+ * @property {number} value
+ *
+ * @typedef {string} Baz
+ */
+const a = 1;
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/**
+ * @typedef {Object} Foo
+ * @property {string} name
+ *
+ * @typedef {Object} Bar
+ * @property {number} value
+ *
+ * @typedef {string} Baz
+ */
+const a = 1;
+
+===================== End =====================
