@@ -832,9 +832,11 @@ impl JsdocFormatter<'_, '_> {
         // their description as-is at stringify.ts:132-136.
         let skip_wrapping = should_skip_description_formatting(normalized_kind) || is_unknown;
 
-        // Unknown tags: if description was originally on a new line, keep it
-        // there (upstream preserves original line structure).
-        if is_unknown && desc_starts_on_new_line {
+        // Unknown tags and skip-wrapping tags (TAGS_PEV_FORMATE_DESCRIPTION):
+        // if description was originally on a new line, keep it there.
+        // Upstream preserves original line structure at stringify.ts:132-136,173.
+        let skip_formatting = should_skip_description_formatting(normalized_kind);
+        if (is_unknown || skip_formatting) && desc_starts_on_new_line {
             self.content_lines.push(tag_line);
             for line in desc_text.split('\n') {
                 if line.is_empty() {
