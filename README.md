@@ -39,28 +39,23 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 
 <sub>\* Oxidation is the chemical process that creates rust</sub>
 
-## Lint or Format a Codebase
-
-- **Lint**: [Oxlint](https://oxc.rs/docs/guide/usage/linter) — `npx oxlint@latest`
-- **Format**: [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) — `npx oxfmt@latest`
-
-## Build Tooling on Top of Oxc
-
-- Parse JavaScript and TypeScript: [Parser](https://oxc.rs/docs/guide/usage/parser)
-- Transform TypeScript, JSX, and modern JavaScript: [Transformer](https://oxc.rs/docs/guide/usage/transformer)
-- Minify JavaScript for production builds: [Minifier](https://oxc.rs/docs/guide/usage/minifier)
-- Resolve modules for JavaScript and TypeScript: [Resolver](https://oxc.rs/docs/guide/usage/resolver)
-
-## Contribute or Learn
-
-- [Contribute](https://oxc.rs/docs/contribute/introduction)
-- [Learn](https://oxc.rs/docs/learn/parser_in_rust/intro)
-
 ## 🙋 Who's using Oxc?
 
 [Rolldown] and [Nuxt] use Oxc for parsing. [Rolldown] also uses Oxc for transformation and minification. [Nova], [swc-node], and [knip] use [oxc_resolver][docs-resolver-url] for module resolution. [Preact], [Shopify], [ByteDance], and [Shopee] use oxlint for linting.
 
 [See more projects using Oxc →](https://oxc.rs/docs/guide/projects.html)
+
+## 🔧 Lint or Format a Codebase
+
+- **Lint**: [Oxlint](https://oxc.rs/docs/guide/usage/linter) — `npx oxlint@latest`
+- **Format**: [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) — `npx oxfmt@latest`
+
+## 🧰 Build Tooling on Top of Oxc
+
+- Parse JavaScript and TypeScript: [Parser](https://oxc.rs/docs/guide/usage/parser)
+- Transform TypeScript, JSX, and modern JavaScript: [Transformer](https://oxc.rs/docs/guide/usage/transformer)
+- Minify JavaScript for production builds: [Minifier](https://oxc.rs/docs/guide/usage/minifier)
+- Resolve modules for JavaScript and TypeScript: [Resolver](https://oxc.rs/docs/guide/usage/resolver)
 
 ## ✍️ Contribute
 
@@ -74,7 +69,7 @@ If you are unable to contribute by code, you can still participate by:
 - Join us on [Discord][discord-url]
 - [Follow me on X](https://x.com/boshen_c) and post about this project
 
-## Other Resources
+## 📚 Other Resources
 
 - [Troubleshooting](https://oxc.rs/docs/guide/troubleshooting)
 - [Benchmarks](https://oxc.rs/docs/guide/benchmarks)
