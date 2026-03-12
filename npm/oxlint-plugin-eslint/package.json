@@ -1,0 +1,34 @@
+{
+  "name": "oxlint-plugin-eslint",
+  "version": "1.54.0",
+  "description": "ESLint's built-in rules as an Oxlint plugin",
+  "keywords": [
+    "eslint",
+    "linter",
+    "oxlint",
+    "plugin"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/linter/js-plugins",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxlint-plugin-eslint"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.js",
+    "rules",
+    "common",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

@@ -22,7 +22,7 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// characters, or does not contain a newline. Whitespace is defined as ASCII
 /// whitespace.
 ///
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::is_meaningful_jsx_text;
 ///
 /// assert_eq!(is_meaningful_jsx_text("     \t\r   "), true);
@@ -383,7 +383,7 @@ impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
 /// An iterator adaptor that allows a lookahead of three tokens
 ///
 /// # Examples
-/// ```
+/// ```text
 /// use oxc_formatter::utils::jsx::JsxChildrenIterator;
 ///
 /// let buffer = vec![1, 2, 3, 4];

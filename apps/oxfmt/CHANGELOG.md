@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.39.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 4ea67de oxlint,oxfmt: Skip `vite.config.ts` exports `defineConfig(fn)` (#20260) (leaysgur)
+- 11a2b45 oxfmt: Skip `vite.config.ts` w/o `.fmt` field in auto-discovery (#20254) (leaysgur)
+
+## [0.38.0] - 2026-03-11
+
+### 🚀 Features
+
+- 95943aa oxfmt: Support `vite.config.*` `.fmt` field (#20197) (leaysgur)
+- 172fc07 oxfmt: .js/.ts config file support (#20135) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e483569 oxfmt: Avoid double-escaping in css-in-js (#20211) (leaysgur)
+
+## [0.37.0] - 2026-03-09
+
+### 🚀 Features
+
+- ee26215 oxfmt: Support css-in-js substitution (#20019) (leaysgur)
+- 0f0ff51 oxfmt: Display default settings was used message in cli stats (#19939) (leaysgur)
+- 88815b8 oxfmt: Reintroduce stats line for write mode (#19938) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 92f4490 oxfmt: Apply `is_ignored_dir` for glob paths too (#20056) (leaysgur)
+- 114f974 oxfmt/lsp: Prefer language_id over file extension when formatting (#19977) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
 ## [0.36.0] - 2026-03-02
 
 ### 🚀 Features

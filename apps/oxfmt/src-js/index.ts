@@ -1,3 +1,6 @@
+// napi-JS `oxfmt` API entry point
+// See also `format()` function in `./src/main_napi.rs`
+
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import {
   resolvePlugins,
@@ -6,18 +9,22 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./libs/apis";
-
-// napi-JS `oxfmt` API entry point
-// See also `format()` function in `./src/main_napi.rs`
-
 // Types are auto-generated from the JSON Schema.
 // See `config.generated.ts` for the full list of generated types.
 import type {
+  Oxfmtrc,
   FormatConfig,
   SortImportsConfig,
   SortPackageJsonConfig,
   SortTailwindcssConfig,
 } from "./config.generated";
+
+/**
+ * Define an oxfmt configuration with type inference.
+ */
+export function defineConfig<T extends Oxfmtrc>(config: T): T {
+  return config;
+}
 
 /**
  * Configuration options for the `format()` API.

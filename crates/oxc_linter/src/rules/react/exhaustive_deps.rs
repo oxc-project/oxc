@@ -11,8 +11,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
         ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference,
-        VariableDeclarationKind, VariableDeclarator,
+        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeQuery,
+        TSTypeReference, VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
@@ -1344,6 +1344,10 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 
     fn visit_ts_type_reference(&mut self, _it: &TSTypeReference<'a>) {
+        // noop
+    }
+
+    fn visit_ts_type_query(&mut self, _it: &TSTypeQuery<'a>) {
         // noop
     }
 
@@ -2819,6 +2823,20 @@ fn test() {
             })();
           }, [obj]);
         }",
+        r#"import { useEffect, useState } from "react";
+
+export const useTest = () => {
+    const [state] = useState<Record<"a", string>>({
+        a: "a",
+    });
+
+    useEffect(() => {
+        const a = "a" as keyof typeof state;
+        console.log(a);
+    }, []);
+
+    console.log(state);
+}"#,
     ];
 
     let fail = vec![

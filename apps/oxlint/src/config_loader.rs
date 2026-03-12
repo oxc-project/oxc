@@ -12,10 +12,13 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::{
+    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+};
 
 #[cfg(feature = "napi")]
 use crate::js_config;
+use crate::js_config::JsConfigResult;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub enum DiscoveredConfig {
@@ -273,7 +276,7 @@ impl<'a> ConfigLoader<'a> {
     pub fn load_js_configs(
         &self,
         paths: &[PathBuf],
-    ) -> Result<Vec<Oxlintrc>, Vec<ConfigLoadError>> {
+    ) -> Result<Vec<JsConfigResult>, Vec<ConfigLoadError>> {
         if paths.is_empty() {
             return Ok(Vec::new());
         }
@@ -292,7 +295,7 @@ impl<'a> ConfigLoader<'a> {
             paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
 
         match js_config_loader(paths_as_strings) {
-            Ok(results) => Ok(results.into_iter().map(|c| c.config).collect()),
+            Ok(results) => Ok(results),
             Err(diagnostics) => {
                 Err(diagnostics.into_iter().map(ConfigLoadError::Diagnostic).collect())
             }
@@ -365,8 +368,8 @@ impl<'a> ConfigLoader<'a> {
         }
 
         match self.load_js_configs(&js_configs) {
-            Ok(mut loaded_js_configs) => {
-                configs.append(&mut loaded_js_configs);
+            Ok(loaded_js_configs) => {
+                configs.extend(loaded_js_configs.into_iter().filter_map(|c| c.config));
             }
             Err(mut js_errors) => {
                 errors.append(&mut js_errors);
@@ -477,7 +480,11 @@ impl<'a> ConfigLoader<'a> {
         }
 
         if ts_exists {
-            return self.load_root_js_config(&ts_path).map(Some);
+            let config = self.load_root_js_config(&ts_path)?;
+            // `None` is only returned for vite.config.ts without `.lint` field,
+            // so `oxlint.config.ts` always returns `Some` here.
+            debug_assert!(config.is_some(), "oxlint.config.ts should always return a config");
+            return Ok(config);
         }
 
         if json_exists {
@@ -485,6 +492,13 @@ impl<'a> ConfigLoader<'a> {
         }
         if jsonc_exists {
             return Oxlintrc::from_file(&jsonc_path).map(Some);
+        }
+
+        // Fallback: check for vite.config.ts with .lint field (lowest priority)
+        // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
+        let vite_config_path = dir.join(VITE_CONFIG_NAME);
+        if vite_config_path.is_file() {
+            return self.load_root_js_config(&vite_config_path);
         }
 
         Ok(None)
@@ -496,11 +510,7 @@ impl<'a> ConfigLoader<'a> {
         config_path: Option<&PathBuf>,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
         if let Some(config_path) = config_path {
-            let full_path = cwd.join(config_path);
-            if is_js_config_path(&full_path) {
-                return self.load_root_js_config(&full_path);
-            }
-            return Oxlintrc::from_file(&full_path);
+            return self.load_explicit_config(cwd, config_path);
         }
 
         match self.try_load_config_from_dir(cwd)? {
@@ -527,11 +537,7 @@ impl<'a> ConfigLoader<'a> {
     ) -> Result<Oxlintrc, OxcDiagnostic> {
         // If an explicit config path is provided, use it directly
         if let Some(config_path) = config_path {
-            let full_path = cwd.join(config_path);
-            if is_js_config_path(&full_path) {
-                return self.load_root_js_config(&full_path);
-            }
-            return Oxlintrc::from_file(&full_path);
+            return self.load_explicit_config(cwd, config_path);
         }
 
         // Search up the directory tree for a config file
@@ -548,9 +554,30 @@ impl<'a> ConfigLoader<'a> {
         Ok(Oxlintrc::default())
     }
 
-    fn load_root_js_config(&self, path: &Path) -> Result<Oxlintrc, OxcDiagnostic> {
+    /// Load an explicitly specified config file (via `--config`).
+    /// For JS/TS configs, `None` from JS side (e.g., vite.config.ts without `.lint`) is an error.
+    fn load_explicit_config(
+        &self,
+        cwd: &Path,
+        config_path: &Path,
+    ) -> Result<Oxlintrc, OxcDiagnostic> {
+        let full_path = cwd.join(config_path);
+        if is_js_config_path(&full_path) {
+            return self.load_root_js_config(&full_path)?.ok_or_else(|| {
+                OxcDiagnostic::error(format!(
+                    "Expected a `lint` field in the default export of {}",
+                    full_path.display()
+                ))
+            });
+        }
+        Oxlintrc::from_file(&full_path)
+    }
+
+    /// Load a single JS/TS config file. Returns `Ok(None)` when JS side signals "skip"
+    /// (e.g., vite.config.ts without `.lint` field).
+    fn load_root_js_config(&self, path: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         match self.load_js_configs(&[path.to_path_buf()]) {
-            Ok(mut configs) => Ok(configs.pop().unwrap_or_default()),
+            Ok(mut results) => Ok(results.pop().and_then(|r| r.config)),
             Err(errors) => {
                 if let Some(first) = errors.into_iter().next() {
                     match first {
@@ -785,7 +812,7 @@ mod test {
         if let Some(config_dir) = path.parent() {
             config.set_config_dir(config_dir);
         }
-        JsConfigResult { path, config }
+        JsConfigResult { path, config: Some(config) }
     }
 
     #[test]
@@ -1032,9 +1059,9 @@ mod test {
                 .into_iter()
                 .map(|path| {
                     let path = PathBuf::from(path);
-                    let mut config = make_js_config(path.clone(), None, None).config;
+                    let mut config = make_js_config(path.clone(), None, None).config.unwrap();
                     config.options.deny_warnings = Some(true);
-                    JsConfigResult { path, config }
+                    JsConfigResult { path, config: Some(config) }
                 })
                 .collect())
         });
@@ -1062,14 +1089,14 @@ mod test {
                 .into_iter()
                 .map(|path| {
                     let path = PathBuf::from(path);
-                    let mut config = make_js_config(path.clone(), None, None).config;
+                    let mut config = make_js_config(path.clone(), None, None).config.unwrap();
                     config.extends_configs = vec![
                         serde_json::from_value(
                             serde_json::json!({ "options": { "typeAware": true } }),
                         )
                         .unwrap(),
                     ];
-                    JsConfigResult { path, config }
+                    JsConfigResult { path, config: Some(config) }
                 })
                 .collect())
         });
@@ -1097,14 +1124,14 @@ mod test {
                 .into_iter()
                 .map(|path| {
                     let path = PathBuf::from(path);
-                    let mut config = make_js_config(path.clone(), None, None).config;
+                    let mut config = make_js_config(path.clone(), None, None).config.unwrap();
                     config.extends_configs = vec![
                         serde_json::from_value(
                             serde_json::json!({ "options": { "typeCheck": true } }),
                         )
                         .unwrap(),
                     ];
-                    JsConfigResult { path, config }
+                    JsConfigResult { path, config: Some(config) }
                 })
                 .collect())
         });

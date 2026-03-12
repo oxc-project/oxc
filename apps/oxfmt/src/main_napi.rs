@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::sync::Arc;
 
 use napi_derive::napi;
 
@@ -10,7 +11,8 @@ use crate::{
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsInitExternalFormatterCb, JsSortTailwindClassesCb, utils,
+        JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
+        create_js_config_loader, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -21,10 +23,11 @@ use crate::{
 ///
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
-/// 2. `init_external_formatter_cb`: Callback to initialize external formatter
-/// 3. `format_file_cb`: Callback to format files
-/// 4. `format_embedded_cb`: Callback to format embedded code in templates
-/// 5. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
+/// 2. `load_js_config_cb`: Callback to load JS/TS config files
+/// 3. `init_external_formatter_cb`: Callback to initialize external formatter
+/// 4. `format_file_cb`: Callback to format files
+/// 5. `format_embedded_cb`: Callback to format embedded code in templates
+/// 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
 ///
 /// Returns a tuple of `[mode, exitCode]`:
 /// - `mode`: If main logic will run in JS side, use this to indicate which mode
@@ -34,6 +37,7 @@ use crate::{
 #[napi]
 pub async fn run_cli(
     args: Vec<String>,
+    #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
@@ -87,18 +91,24 @@ pub async fn run_cli(
         format_embedded_doc_cb,
         sort_tailwindcss_classes_cb,
     );
+    let js_config_loader = create_js_config_loader(load_js_config_cb);
 
     utils::init_tracing();
     let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(external_formatter.clone()).await;
+            run_lsp(js_config_loader, external_formatter.clone()).await;
 
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
             init_miette();
 
-            let result = StdinRunner::new(command, external_formatter.clone()).run();
+            let result = StdinRunner::new(
+                command,
+                Arc::clone(&js_config_loader),
+                external_formatter.clone(),
+            )
+            .run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
@@ -108,6 +118,7 @@ pub async fn run_cli(
 
             let result = FormatRunner::new(command)
                 .with_external_formatter(Some(external_formatter.clone()))
+                .with_js_config_loader(Arc::clone(&js_config_loader))
                 .run();
 
             ("cli".to_string(), Some(result.exit_code()))

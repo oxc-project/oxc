@@ -2,6 +2,9 @@ import fs from "node:fs";
 import { join as pathJoin, relative as pathRelative, dirname } from "node:path";
 import { defineConfig } from "tsdown";
 import { parseSync, Visitor } from "oxc-parser";
+// oxlint-disable-next-line typescript/ban-ts-comment
+// @ts-ignore - file is generated and not checked in to git
+import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";
 
 import type { Plugin } from "rolldown";
 
@@ -29,7 +32,7 @@ const commonConfig = defineConfig({
   deps: {
     // tsdown warns about final bundled modules by `unbundle` + `deps.neverBundle`.
     // But we know what we are doing, just suppress the warnings.
-    onlyAllowBundle: false,
+    onlyBundle: false,
   },
 });
 
@@ -64,6 +67,25 @@ const pluginsPkgConfig = defineConfig({
   minify: minifyConfig,
   define: definedGlobals,
 });
+
+// Base config for `oxlint-plugin-eslint` package
+const pluginEslintPkgConfig = defineConfig({
+  ...commonConfig,
+  outDir: "dist-pkg-plugin-eslint",
+  minify: minifyConfig,
+  // `build.ts` deletes the directory before TSDown runs.
+  // This allows generating the ESM and CommonJS builds in the same directory.
+  clean: false,
+  dts: false,
+});
+
+// Build entries for `oxlint-plugin-eslint` rule files.
+// Each rule is a separate CJS file, lazy-loaded on demand.
+const pluginEslintRulesEntries: Record<string, string> = {};
+for (const ruleName of ruleNames) {
+  pluginEslintRulesEntries[`rules/${ruleName}`] =
+    `src-js/generated/plugin-eslint/rules/${ruleName}.cjs`;
+}
 
 // Plugins.
 // Only remove debug assertions in release build.
@@ -107,6 +129,31 @@ export default defineConfig([
     ...pluginsPkgConfig,
     format: "commonjs",
     dts: false,
+  },
+
+  // `oxlint-plugin-eslint` package
+  {
+    ...pluginEslintPkgConfig,
+    entry: { index: "src-js/plugin-eslint/index.ts" },
+    format: "esm",
+    banner: {
+      js: [
+        "/**",
+        " * ESLint's rules code copied from https://github.com/eslint/eslint",
+        " *",
+        " * License: MIT",
+        " * https://github.com/eslint/eslint/blob/a0d1a3772679d3d74bb860fc65b5b58678acd452/LICENSE",
+        " */",
+      ].join("\n"),
+    },
+  },
+  {
+    ...pluginEslintPkgConfig,
+    entry: pluginEslintRulesEntries,
+    format: "commonjs",
+    outputOptions: {
+      chunkFileNames: "common/[name].cjs",
+    },
   },
 ]);
 

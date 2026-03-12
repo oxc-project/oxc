@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.36.0",
+  "version": "0.39.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -29,6 +29,7 @@
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "degit": "^2.8.4",
+    "diff": "^8.0.3",
     "execa": "^9.6.0",
     "json-schema-to-typescript": "catalog:",
     "tsdown": "catalog:",

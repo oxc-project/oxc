@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.54.0] - 2026-03-12
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 📚 Documentation
+
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+
 ## [1.51.0] - 2026-03-02
 
 ### 🚀 Features

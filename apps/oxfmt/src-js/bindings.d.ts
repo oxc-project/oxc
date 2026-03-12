@@ -57,13 +57,14 @@ export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmt
  *
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
- * 2. `init_external_formatter_cb`: Callback to initialize external formatter
- * 3. `format_file_cb`: Callback to format files
- * 4. `format_embedded_cb`: Callback to format embedded code in templates
- * 5. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
+ * 2. `load_js_config_cb`: Callback to load JS/TS config files
+ * 3. `init_external_formatter_cb`: Callback to initialize external formatter
+ * 4. `format_file_cb`: Callback to format files
+ * 5. `format_embedded_cb`: Callback to format embedded code in templates
+ * 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
  *
  * Returns a tuple of `[mode, exitCode]`:
  * - `mode`: If main logic will run in JS side, use this to indicate which mode
  * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
-export declare function runCli(args: Array<string>, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<[string, number | undefined | null]>
+export declare function runCli(args: Array<string>, loadJsConfigCb: (path: string) => Promise<any>, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatFileCb: (options: Record<string, any>, code: string) => Promise<string>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, texts: string[]) => Promise<string[] | null>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<[string, number | undefined | null]>
