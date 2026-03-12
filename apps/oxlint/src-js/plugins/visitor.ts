@@ -489,9 +489,11 @@ export function finalizeCompiledVisitor(): VisitorState {
 
   // Reset `visitPropsCache`.
   // Setting these properties to `null` is not necessary for correctness, but it allows them to be garbage collected.
+  // `specificity` is only an SMI (stored inline), and is overwritten in `addVisitorToCompiled`, so no need to reset it.
   for (let i = visitPropsCacheNextIndex - 1; i >= 0; i--) {
-    visitPropsCache[i].fn = null;
-    visitPropsCache[i].selectorStr = null;
+    const visitProp = visitPropsCache[i];
+    visitProp.fn = null;
+    visitProp.selectorStr = null;
   }
   visitPropsCacheNextIndex = 0;
 
