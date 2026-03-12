@@ -26,8 +26,7 @@ exit code: 1
 
 --- STDERR ---------
 Failed to load configuration file.
-<cwd>/vite.config.ts
-Expected a \`fmt\` field in the default export.
+Expected a \`fmt\` field in the default export of <cwd>/vite.config.ts
 --------------------"
 `;
 
