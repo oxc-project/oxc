@@ -18,6 +18,7 @@ struct Ctx {
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
+    property_write_side_effects: bool,
     unknown_global_side_effects: bool,
 }
 
@@ -32,6 +33,7 @@ impl Default for Ctx {
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
+            property_write_side_effects: true,
             unknown_global_side_effects: true,
         }
     }
@@ -54,6 +56,10 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         self.property_read_side_effects
+    }
+
+    fn property_write_side_effects(&self) -> bool {
+        self.property_write_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {
@@ -1165,4 +1171,56 @@ fn test_assignment_targets() {
     test_assign_target("a.#b = 1", false);
     test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
     test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
+}
+
+#[test]
+fn test_property_write_side_effects_support() {
+    // With property_write_side_effects: true (default), all writes have side effects
+    let write_ctx = Ctx { property_write_side_effects: true, ..Default::default() };
+    test_with_ctx("a.b = 1", &write_ctx, true);
+    test_with_ctx("a.b += 1", &write_ctx, true);
+    test_with_ctx("a.b++", &write_ctx, true);
+
+    // With property_write_side_effects: false, simple assignment is side-effect-free
+    let no_write_ctx = Ctx {
+        property_write_side_effects: false,
+        property_read_side_effects: PropertyReadSideEffects::All,
+        ..Default::default()
+    };
+    test_with_ctx("a.b = 1", &no_write_ctx, false); // simple assign, no read
+    test_with_ctx("a['b'] = 1", &no_write_ctx, false);
+    test_with_ctx("a.#b = 1", &no_write_ctx, false);
+
+    // Compound assignments have an implicit read — still side-effectful when reads have side effects
+    test_with_ctx("a.b += 1", &no_write_ctx, true);
+    test_with_ctx("a.b -= 1", &no_write_ctx, true);
+    test_with_ctx("a.b &&= 1", &no_write_ctx, true);
+    test_with_ctx("a['b'] += 1", &no_write_ctx, true);
+    test_with_ctx("a.#b += 1", &no_write_ctx, true);
+
+    // Update expressions have an implicit read
+    test_with_ctx("a.b++", &no_write_ctx, false);
+    test_with_ctx("a.b--", &no_write_ctx, false);
+    test_with_ctx("++a.b", &no_write_ctx, false);
+    test_with_ctx("a['b']++", &no_write_ctx, false);
+    test_with_ctx("a.#b++", &no_write_ctx, false);
+
+    // Compound assignments and updates always have side effects due to implicit coercions
+    // (ToPrimitive/ToNumeric), even with both write and read side effects off
+    let no_side_effects_ctx = Ctx {
+        property_write_side_effects: false,
+        property_read_side_effects: PropertyReadSideEffects::None,
+        ..Default::default()
+    };
+    test_with_ctx("a.b = 1", &no_side_effects_ctx, false); // simple assign is free
+    test_with_ctx("a.b += 1", &no_side_effects_ctx, true); // compound: ToNumeric coercion
+    test_with_ctx("a.b++", &no_side_effects_ctx, false); // update: ToNumeric coercion
+    test_with_ctx("a['b'] += 1", &no_side_effects_ctx, true);
+    test_with_ctx("a['b']++", &no_side_effects_ctx, false);
+    test_with_ctx("a.#b += 1", &no_side_effects_ctx, true);
+    test_with_ctx("a.#b++", &no_side_effects_ctx, false);
+
+    // Sub-expression side effects still propagate
+    test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);
+    test_with_ctx("a[foo()] = 1", &no_side_effects_ctx, true);
 }

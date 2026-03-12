@@ -65,6 +65,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::CallExpression(e) => e.may_have_side_effects(ctx),
             Expression::NewExpression(e) => e.may_have_side_effects(ctx),
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
+            Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
+            Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
     }
@@ -873,4 +875,60 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
     }
 
     false
+}
+
+impl<'a> MayHaveSideEffects<'a> for AssignmentExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // Only simple assignments (`=`) benefit from property_write_side_effects: false.
+        // Compound assignments (`+=`, `-=`, etc.) always have side effects because:
+        // 1. They perform an implicit property read (GetValue) which can invoke getters/proxies
+        // 2. The operation itself performs ToPrimitive/ToNumeric coercion which can invoke
+        //    user code (valueOf/toString) or throw (e.g. Symbol)
+        if self.operator != AssignmentOperator::Assign {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression writes are considered free.
+        // Other writes (to variables, destructuring targets) still have side effects.
+        match &self.left {
+            AssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+                    || e.expression.may_have_side_effects(ctx)
+                    || self.right.may_have_side_effects(ctx)
+            }
+            AssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+            }
+            _ => true,
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.property_write_side_effects() {
+            return true;
+        }
+        // When property_write_side_effects is false, member expression updates
+        // (e.g. obj.prop++, obj[key]--) are treated like property writes.
+        // The update operation (ToNumeric + PutValue) is considered side-effect-free,
+        // but the object/key evaluation may still have side effects.
+        match &self.argument {
+            SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                e.object.may_have_side_effects(ctx)
+            }
+            _ => true,
+        }
+    }
 }

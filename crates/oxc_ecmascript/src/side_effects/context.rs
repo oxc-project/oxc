@@ -33,6 +33,13 @@ pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
     /// <https://rollupjs.org/configuration-options/#treeshake-propertyreadsideeffects>
     fn property_read_side_effects(&self) -> PropertyReadSideEffects;
 
+    /// Whether property write accesses have side effects.
+    ///
+    /// <https://rolldown.rs/reference/InputOptions.treeshake#propertywritesideeffects>
+    fn property_write_side_effects(&self) -> bool {
+        true
+    }
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
