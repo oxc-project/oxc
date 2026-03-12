@@ -54,19 +54,18 @@ pub fn run(
         .unwrap_or_default();
 
     // Use `block_in_place()` to avoid nested async runtime access
-    let plugin_extensions: FxHashMap<String, String> =
-        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, plugins)) {
-            Ok(mappings) => parse_plugin_extensions(mappings),
-            Err(err) => {
-                external_formatter.cleanup();
-                return ApiFormatResult {
-                    code: source_text,
-                    errors: vec![OxcError::new(format!(
-                        "Failed to setup external formatter: {err}"
-                    ))],
-                };
-            }
-        };
+    let plugin_extensions: FxHashMap<String, String> = match tokio::task::block_in_place(|| {
+        external_formatter.init(num_of_threads, plugins)
+    }) {
+        Ok(mappings) => parse_plugin_extensions(mappings),
+        Err(err) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
+            };
+        }
+    };
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
     let Some(kind) = classify_file_kind(Arc::from(filepath), &plugin_extensions) else {
