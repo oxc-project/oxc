@@ -1,4 +1,4 @@
-use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
+use std::{collections::HashMap, env, io::BufWriter, path::PathBuf, sync::Arc, sync::mpsc, time::Instant};
 
 use oxc_diagnostics::DiagnosticService;
 
@@ -103,25 +103,26 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
-            self.external_formatter
-                .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
+        let plugin_extensions = {
+            let plugins = root_config_resolver.get_plugins();
+            match tokio::task::block_in_place(|| {
+                self.external_formatter
+                    .as_ref()
+                    .expect("External formatter must be set when `napi` feature is enabled")
+                    .init(num_of_threads, plugins)
+            }) {
+                Ok(mappings) => Arc::new(parse_plugin_extensions(mappings)),
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to setup external formatter.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
-        }
+        };
+        #[cfg(not(feature = "napi"))]
+        let plugin_extensions = Arc::new(HashMap::new());
 
         // Resolve ignore paths early to validate before walk starts
         let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
@@ -177,6 +178,7 @@ impl WalkRunner {
             editorconfig_path.as_deref(),
             #[cfg(feature = "napi")]
             self.js_config_loader.as_ref(),
+            plugin_extensions,
             &tx_entry,
             &tx_error,
         ) {
@@ -292,5 +294,45 @@ impl WalkRunner {
                 CliRunResult::FormatSucceeded
             }
         }
+    }
+}
+
+/// Parse extension-to-parser mappings returned by the JS init callback.
+///
+/// Each entry is a `"ext:parserName"` string (e.g. `"gjs:ember-template-tag"`).
+/// Invalid entries are silently ignored.
+pub fn parse_plugin_extensions(mappings: Vec<String>) -> HashMap<String, String> {
+    mappings
+        .into_iter()
+        .filter_map(|s| {
+            let mut parts = s.splitn(2, ':');
+            let ext = parts.next().filter(|s| !s.is_empty())?.to_string();
+            let parser = parts.next().filter(|s| !s.is_empty())?.to_string();
+            Some((ext, parser))
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_plugin_extensions() {
+        let mappings = vec![
+            "gjs:ember-template-tag".to_string(),
+            "gts:ember-template-tag".to_string(),
+            "astro:astro".to_string(),
+            "invalid-no-colon".to_string(),
+            ":missing-ext".to_string(),
+            "missing-parser:".to_string(),
+        ];
+        let result = parse_plugin_extensions(mappings);
+        assert_eq!(result.get("gjs").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("gts").map(String::as_str), Some("ember-template-tag"));
+        assert_eq!(result.get("astro").map(String::as_str), Some("astro"));
+        assert!(!result.contains_key("invalid-no-colon"));
+        // Entries with empty ext or parser are filtered out
+        assert_eq!(result.len(), 3);
     }
 }

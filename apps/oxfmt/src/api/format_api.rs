@@ -4,6 +4,7 @@ use serde_json::Value;
 
 use oxc_napi::OxcError;
 
+use crate::cli::parse_plugin_extensions;
 use crate::core::{
     ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
     JsInitExternalFormatterCb, JsSortTailwindClassesCb, SourceFormatter, classify_file_kind,
@@ -43,21 +44,30 @@ pub fn run(
         sort_tailwind_classes_cb,
     );
 
+    // Extract plugins from the raw options so they can be passed to the init callback.
+    let plugins: Vec<String> = options
+        .as_ref()
+        .and_then(|v| v.get("plugins"))
+        .and_then(|p| serde_json::from_value(p.clone()).ok())
+        .unwrap_or_default();
+
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
-        Err(err) => {
-            external_formatter.cleanup();
-            return ApiFormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
-            };
-        }
-    }
+    let plugin_extensions =
+        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads, plugins)) {
+            Ok(mappings) => parse_plugin_extensions(mappings),
+            Err(err) => {
+                external_formatter.cleanup();
+                return ApiFormatResult {
+                    code: source_text,
+                    errors: vec![OxcError::new(format!(
+                        "Failed to setup external formatter: {err}"
+                    ))],
+                };
+            }
+        };
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+    let Some(kind) = classify_file_kind(Arc::from(filepath), &plugin_extensions) else {
         external_formatter.cleanup();
         return ApiFormatResult {
             code: source_text,

@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
@@ -121,6 +122,7 @@ impl ScopedWalker {
         detect_nested: bool,
         editorconfig_path: Option<&Path>,
         #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
+        plugin_extensions: Arc<HashMap<String, String>>,
         sender: &mpsc::Sender<FormatStrategy>,
         tx_error: &DiagnosticSender,
     ) -> Result<bool, String> {
@@ -216,7 +218,7 @@ impl ScopedWalker {
                 }
 
                 // Not a formatting target (e.g. unsupported extension) — skip silently
-                let Some(kind) = classify_file_kind(Arc::from(file.as_path())) else {
+                let Some(kind) = classify_file_kind(Arc::from(file.as_path()), &plugin_extensions) else {
                     continue;
                 };
                 let strategy = match file_config.resolve(kind) {
@@ -290,6 +292,7 @@ impl ScopedWalker {
             &directly_processed,
             config_ancestors.as_ref(),
             &child_scope_map,
+            plugin_extensions,
             sender,
             tx_error,
         );
@@ -482,6 +485,7 @@ fn walk_and_stream(
     directly_processed: &Arc<FxHashSet<PathBuf>>,
     config_ancestors: Option<&Arc<FxHashSet<PathBuf>>>,
     child_scope_map: &Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
+    plugin_extensions: Arc<HashMap<String, String>>,
     sender: &mpsc::Sender<FormatStrategy>,
     tx_error: &DiagnosticSender,
 ) {
@@ -542,6 +546,7 @@ fn walk_and_stream(
         glob_matcher: glob_matcher.cloned(),
         child_scope_map: Arc::clone(child_scope_map),
         directly_processed: Arc::clone(directly_processed),
+        plugin_extensions,
     };
 
     let num_of_threads = rayon::current_num_threads();
@@ -588,6 +593,7 @@ struct WalkVisitorBuilder {
     child_scope_map: Arc<FxHashMap<PathBuf, Arc<ConfigResolver>>>,
     /// Files already processed as direct file targets (for dedup with walk results).
     directly_processed: Arc<FxHashSet<PathBuf>>,
+    plugin_extensions: Arc<HashMap<String, String>>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
@@ -601,6 +607,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkVisitorBuilder {
             child_scope_map: Arc::clone(&self.child_scope_map),
             directly_processed: Arc::clone(&self.directly_processed),
             scope_cache: FxHashMap::default(),
+            plugin_extensions: Arc::clone(&self.plugin_extensions),
         })
     }
 }
@@ -615,6 +622,7 @@ struct WalkVisitor {
     directly_processed: Arc<FxHashSet<PathBuf>>,
     /// Cache: parent dir → (resolved config, parent_ignored flag).
     scope_cache: FxHashMap<PathBuf, (Arc<ConfigResolver>, bool)>,
+    plugin_extensions: Arc<HashMap<String, String>>,
 }
 
 impl WalkVisitor {
@@ -691,11 +699,11 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
-                    // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins
                     // Everything else: Ignored
                     // Not a formatting target (e.g. unsupported extension) — skip silently
                     let path: Arc<Path> = Arc::from(path);
-                    let Some(kind) = classify_file_kind(Arc::clone(&path)) else {
+                    let Some(kind) = classify_file_kind(Arc::clone(&path), &self.plugin_extensions) else {
                         return ignore::WalkState::Continue;
                     };
                     let strategy = match resolver.resolve(kind) {

@@ -390,6 +390,17 @@ impl ConfigResolver {
         Ok(())
     }
 
+    /// Return the list of Prettier plugins declared in the config.
+    ///
+    /// These are used to initialize the external formatter and discover
+    /// which file extensions each plugin supports.
+    pub fn get_plugins(&self) -> Vec<String> {
+        self.raw_config
+            .get("plugins")
+            .and_then(|p| serde_json::from_value(p.clone()).ok())
+            .unwrap_or_default()
+    }
+
     /// Resolve options for a pre-classified file and build a [`FormatStrategy`].
     ///
     /// Returns `Err` only when the merged config (after override application) fails validation.

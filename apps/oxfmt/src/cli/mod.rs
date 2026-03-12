@@ -17,4 +17,4 @@ pub use init::{init_miette, init_rayon};
 pub use result::CliRunResult;
 #[cfg(feature = "napi")]
 pub use stdin_runner::StdinRunner;
-pub use walk_runner::WalkRunner;
+pub use walk_runner::{WalkRunner, parse_plugin_extensions};

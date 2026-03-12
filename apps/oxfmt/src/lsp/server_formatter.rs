@@ -65,8 +65,7 @@ impl ServerFormatterBuilder {
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
-            // TODO: Plugins support
+        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads, vec![])) {
             Ok(_) => {}
             Err(err) => {
                 error!("Failed to setup external formatter.\n{err}\n");
@@ -354,7 +353,7 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let Some(kind) = classify_file_kind(Arc::from(path), &std::collections::HashMap::new()) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
