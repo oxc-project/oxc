@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.54.0] - 2026-03-12
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
 ## [1.52.0] - 2026-03-09
 
 ### 🚀 Features
