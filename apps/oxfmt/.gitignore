@@ -1,4 +1,4 @@
 /node_modules/
 /dist/
-/conformance/fixtures/prettier/
+/conformance/fixtures/
 *.node
