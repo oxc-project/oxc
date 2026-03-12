@@ -34,6 +34,12 @@ describe("vite_config", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  it("skip: auto-discovered vite.config.ts with function export uses defaults", async () => {
+    const cwd = join(fixturesDir, "skip_fn_export");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   it("priority: oxfmt.config.ts takes precedence over vite.config.ts", async () => {
     // `oxfmt.config.ts` has `semi: false`, `vite.config.ts` has `semi: true`
     // oxfmt.config.ts should win, so `const a = 1;` (with semicolon) should be flagged

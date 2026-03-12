@@ -9,6 +9,8 @@ interface JsConfigResult {
   config: unknown; // Will be validated as Oxlintrc on Rust side, `null` means "skip this config"
 }
 
+const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
+
 const VITE_CONFIG_NAME = "vite.config.ts";
 const VITE_OXLINT_CONFIG_FIELD = "lint";
 
@@ -57,7 +59,7 @@ function validateConfigExtends(root: object): void {
       }
       for (let i = 0; i < maybeExtends.length; i++) {
         const item = maybeExtends[i];
-        if (typeof item !== "object" || item === null || Array.isArray(item)) {
+        if (!isObject(item)) {
           throw new Error(
             `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
           );
@@ -106,25 +108,32 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file has no default export.`);
         }
 
-        if (typeof config !== "object" || config === null || Array.isArray(config)) {
-          throw new Error(`Configuration file must have a default export that is an object.`);
-        }
-
         // Vite config: extract `.lint` field, skip `defineConfig()` validation
         if (pathBasename(path) === VITE_CONFIG_NAME) {
+          // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
+          // but we don't know the arguments to call the function.
+          // Treat non-object exports as "no config" and skip.
+          if (!isObject(config)) {
+            return { path, config: null };
+          }
+
           const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
           // NOTE: return `null` if `.lint` is missing which signals "skip" this
           if (lintConfig === undefined) {
             return { path, config: null };
           }
 
-          if (typeof lintConfig !== "object" || lintConfig === null || Array.isArray(lintConfig)) {
+          if (!isObject(lintConfig)) {
             throw new Error(
               `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
             );
           }
           validateConfigExtends(lintConfig as object);
           return { path, config: lintConfig };
+        }
+
+        if (!isObject(config)) {
+          throw new Error(`Configuration file must have a default export that is an object.`);
         }
 
         if (!isDefineConfig(config)) {
