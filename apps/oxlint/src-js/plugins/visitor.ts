@@ -576,7 +576,7 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     }
 
     let merger = mergers[numVisitFns];
-    if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns, false);
 
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
@@ -604,20 +604,45 @@ type Merger = (...visitFns: VisitFn[]) => VisitFn;
 /**
  * Create a merger function that merges `fnCount` functions.
  *
+ * Generated code for `fnCount: 3`, `isCfg: false` (AST node visit function merger):
+ * ```js
+ * function(v0, v1, v2) {
+ *   return (n) => {
+ *     v0(n);
+ *     v1(n);
+ *     v2(n);
+ *   }
+ * }
+ * ```
+ *
+ * Generated code for `fnCount: 2`, `isCfg: true` (CFG event handler merger):
+ * ```js
+ * function(v0, v1) {
+ *   return (...a) => {
+ *     v0(...a);
+ *     v1(...a);
+ *   }
+ * }
+ * ```
+ *
  * @param fnCount - Number of functions to be merged
+ * @param isCfg - `true` if creating a merger for CFG event handlers
  * @returns Function to merge `fnCount` functions
  */
-function createMerger(fnCount: number): Merger {
+function createMerger(fnCount: number, isCfg: false): Merger;
+function createMerger(fnCount: number, isCfg: true): CfgMerger;
+function createMerger(fnCount: number, isCfg: boolean): Merger | CfgMerger {
+  const visitArgs = isCfg ? "...a" : "n";
   const args = [];
-  let body = "return node=>{";
-  for (let i = 1; i <= fnCount; i++) {
-    args.push(`visit${i}`);
-    body += `visit${i}(node);`;
+  let body = `return (${visitArgs})=>{`;
+  for (let i = 0; i < fnCount; i++) {
+    args.push(`v${i}`);
+    body += `v${i}(${visitArgs});`;
   }
   body += "}";
   args.push(body);
   // oxlint-disable-next-line typescript-eslint/no-implied-eval
-  return new Function(...args) as Merger;
+  return new Function(...args) as Merger | CfgMerger;
 }
 
 // Pre-defined mergers for merging up to 5 functions
@@ -688,7 +713,7 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
     }
 
     let merger = cfgMergers[numVisitFns];
-    if (merger === null) merger = cfgMergers[numVisitFns] = createCfgMerger(numVisitFns);
+    if (merger === null) merger = cfgMergers[numVisitFns] = createMerger(numVisitFns, true);
 
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
@@ -712,25 +737,6 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
 }
 
 type CfgMerger = (...visitFns: CfgVisitFn[]) => CfgVisitFn;
-
-/**
- * Create a CFG merger function that merges `fnCount` functions.
- *
- * @param fnCount - Number of functions to be merged
- * @returns Function to merge `fnCount` functions
- */
-function createCfgMerger(fnCount: number): CfgMerger {
-  const args = [];
-  let body = "return (...args)=>{";
-  for (let i = 1; i <= fnCount; i++) {
-    args.push(`visit${i}`);
-    body += `visit${i}(...args);`;
-  }
-  body += "}";
-  args.push(body);
-  // oxlint-disable-next-line typescript-eslint/no-implied-eval
-  return new Function(...args) as CfgMerger;
-}
 
 // Pre-defined CFG mergers for merging up to 5 functions
 const cfgMergers: (CfgMerger | null)[] = [
