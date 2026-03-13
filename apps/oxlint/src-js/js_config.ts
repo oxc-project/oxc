@@ -96,12 +96,30 @@ function validateConfigExtends(root: object): void {
 export async function loadJsConfigs(paths: string[]): Promise<string> {
   try {
     const cacheKey = DateNow();
-    const results = await Promise.allSettled(
-      paths.map(async (path): Promise<JsConfigResult> => {
-        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
+
+    // NOTE: Import all config files with stdout suppressed.
+    // This is necessary because some config files may contain `console.log()` statements for debugging,
+    // and we don't want those logs to interfere with the LSP protocol stream (which uses stdout for communication).
+    // Without this, LSP message frames can get corrupted, leading to parsing errors and broken LSP functionality.
+    // As a side effect, this will also suppress any logs for CLI usage,
+    // but it's a trade-off and keep our CLI output clean and focused on errors and results.
+    // Suppression is done outside `Promise.allSettled` to avoid re-entrancy issues
+    // (overlapping imports restoring stdout in the wrong order).
+    const origStdoutWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = () => true;
+    const modules = await Promise.allSettled(
+      paths.map((path) => {
         const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
-        const module = await import(fileUrl.href);
-        const config = module.default;
+        return import(fileUrl.href);
+      }),
+    );
+    process.stdout.write = origStdoutWrite;
+
+    const results = await Promise.allSettled(
+      paths.map(async (path, i): Promise<JsConfigResult> => {
+        const moduleResult = modules[i];
+        if (moduleResult.status === "rejected") throw moduleResult.reason;
+        const config = moduleResult.value.default;
 
         if (config === undefined) {
           throw new Error(`Configuration file has no default export.`);
