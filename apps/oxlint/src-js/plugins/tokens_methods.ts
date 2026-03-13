@@ -1488,7 +1488,11 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
  * @param startIndex - Starting index for the search
  * @returns Index of first token with `start >= offset`
  */
-function firstTokenAtOrAfter(tokens: TokenOrComment[], offset: number, startIndex: number): number {
+export function firstTokenAtOrAfter(
+  tokens: TokenOrComment[],
+  offset: number,
+  startIndex: number,
+): number {
   for (let endIndex = tokens.length; startIndex < endIndex; ) {
     const mid = (startIndex + endIndex) >> 1;
     if (tokens[mid].start < offset) {
