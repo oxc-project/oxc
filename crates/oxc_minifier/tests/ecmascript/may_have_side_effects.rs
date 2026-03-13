@@ -310,10 +310,11 @@ fn closure_compiler_tests() {
     test("new Object(...true)", true);
 
     // OBJECT_SPREAD
-    // These could all invoke getters.
+    // Spreading unknown identifiers could invoke getters.
     test("({...x})", true);
-    test("({...{}})", true);
-    test("({...{a:1}})", true);
+    // Spreading object literals is side-effect-free if the properties are.
+    test("({...{}})", false);
+    test("({...{a:1}})", false);
     test("({...{a:i++}})", true);
     test("({...{a:f()}})", true);
     test("({...f()})", true);
@@ -711,6 +712,11 @@ fn test_object_expression() {
     test("({...`foo${foo}`})", true);
     test("({...`foo${foo()}`})", true);
     test("({...foo()})", true);
+    // Spreading object literals
+    test("({...{}})", false);
+    test("({...{a: 1}})", false);
+    test("({...{a: foo()}})", true);
+    test("({...{[foo()]: 1}})", true);
 }
 
 #[test]
