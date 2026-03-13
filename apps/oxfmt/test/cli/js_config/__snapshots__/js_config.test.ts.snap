@@ -27,6 +27,7 @@ exit code: 1
 --- STDERR ---------
 Failed to load configuration file.
 <cwd>/oxfmt.config.ts
+Error: Configuration file must have a default export that is an object.
 Ensure the file has a valid default export of a JSON-serializable configuration object.
 --------------------"
 `;
@@ -41,6 +42,7 @@ exit code: 1
 --- STDERR ---------
 Failed to load configuration file.
 <cwd>/oxfmt.config.ts
+Error: Configuration file has no default export.
 Ensure the file has a valid default export of a JSON-serializable configuration object.
 --------------------"
 `;

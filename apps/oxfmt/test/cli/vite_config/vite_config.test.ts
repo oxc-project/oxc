@@ -25,6 +25,15 @@ describe("vite_config", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  it("skip: parent config is found when vite.config.ts fails to load", async () => {
+    // child/ has vite.config.ts that imports a non-existent module → load error → skipped
+    // parent has .oxfmtrc.json with semi: false
+    // So `const a = 1;` (with semicolon) should be flagged as mismatch
+    const cwd = join(fixturesDir, "error_finds_parent", "child");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   it("skip: parent config is found when vite.config.ts without fmt is skipped", async () => {
     // child/ has vite.config.ts without .fmt → skipped
     // parent has .oxfmtrc.json with semi: false

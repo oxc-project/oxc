@@ -6,6 +6,8 @@ use editorconfig_parser::{
 };
 use fast_glob::glob_match;
 use serde_json::Value;
+#[cfg(feature = "napi")]
+use tracing::debug;
 use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
@@ -301,20 +303,24 @@ impl ConfigResolver {
                 // For `vite.config.ts`
                 #[cfg(feature = "napi")]
                 if is_vite_plus_config(&path) {
-                    if let Some(raw_config) = load_js_config(
+                    match load_js_config(
                         js_config_loader
                             .expect("JS config loader must be set when `napi` feature is enabled"),
                         &path,
-                    )? {
-                        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-                        return Ok(Self::new(
-                            raw_config,
-                            path.parent().map(Path::to_path_buf),
-                            editorconfig,
-                        ));
+                    ) {
+                        // Load successful and `.fmt` field found -> Use it as config
+                        Ok(Some(raw_config)) => {
+                            let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+                            let config_dir = path.parent().map(Path::to_path_buf);
+                            return Ok(Self::new(raw_config, config_dir, editorconfig));
+                        }
+                        // Load successful but no `.fmt` field
+                        // -> Skip and continue searching, otherwise `load_config_at()` would treat as an error
+                        Ok(None) => debug!("No `.fmt` field in {}, skipping", path.display()),
+                        // Load failed (e.g., syntax error, missing dependencies)
+                        // -> Skip and continue searching, as the config file is likely not intended for Oxfmt
+                        Err(err) => debug!("Failed to load {}: {err}, skipping", path.display()),
                     }
-                    // `load_js_config()` returns `None` if `.fmt` is missing.
-                    // Skip it and continue, otherwise `load_config_at()` would treat as an error.
                     continue;
                 }
 
@@ -492,9 +498,9 @@ fn load_js_config(
     js_config_loader: &JsConfigLoaderCb,
     path: &Path,
 ) -> Result<Option<Value>, String> {
-    let value = js_config_loader(path.to_string_lossy().into_owned()).map_err(|_| {
+    let value = js_config_loader(path.to_string_lossy().into_owned()).map_err(|err| {
         format!(
-            "{}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
+            "{}\n{err}\nEnsure the file has a valid default export of a JSON-serializable configuration object.",
             path.display()
         )
     })?;
