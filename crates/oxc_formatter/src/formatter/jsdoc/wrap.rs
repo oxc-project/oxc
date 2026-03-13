@@ -203,23 +203,10 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
     tokens
 }
 
-/// Compute the display width of a `{@link ...}` token as rendered text only,
-/// excluding the `{@link }` wrapper syntax. This matches upstream's more lenient
-/// wrapping behavior where `{@link Foo}` counts as width 3 ("Foo"), not 12.
-/// For non-link tokens, returns the full `str_width`.
+/// Compute the width of a token for wrapping purposes.
+/// Uses the full character width of the token, including `{@link ...}` syntax,
+/// since the output retains the full syntax and must fit within printWidth.
 fn link_rendered_width(token: &str) -> usize {
-    if !token.starts_with("{@link") || !token.ends_with('}') {
-        return str_width(token);
-    }
-    let inner = &token[1..token.len() - 1]; // strip { and }
-    if let Some(space_pos) = inner.find(' ') {
-        let text = inner[space_pos..].trim();
-        // If there's a | separator, the display text is after it
-        if let Some(pipe_pos) = text.find('|') {
-            return str_width(text[pipe_pos + 1..].trim());
-        }
-        return str_width(text);
-    }
     str_width(token)
 }
 
@@ -549,6 +536,24 @@ mod tests {
         assert_eq!(
             result,
             "- Consider caching this for the lifetime of the component, or possibly being\n  able to share this cache between any `ScrollMap` view."
+        );
+    }
+
+    #[test]
+    fn test_wrap_link_uses_full_width() {
+        // {@link type} is 12 chars, not 4 — wrapping must account for the full syntax
+        let result = wrap_text(
+            "The `string` values within a renderer are always associated with the {@link type} of that renderer. To switch types, call {@link child} with a different `type` argument.",
+            97,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
+        assert_eq!(
+            result,
+            "The `string` values within a renderer are always associated with the {@link type} of that\nrenderer. To switch types, call {@link child} with a different `type` argument."
         );
     }
 }
