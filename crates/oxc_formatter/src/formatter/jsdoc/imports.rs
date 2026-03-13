@@ -116,10 +116,7 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
     // Sort named imports within each group by original import name (case-insensitive)
     for import in &mut groups {
         import.named_imports.sort_by(|a, b| {
-            cmp_ascii_case_insensitive(
-                import_specifier_sort_key(a),
-                import_specifier_sort_key(b),
-            )
+            cmp_ascii_case_insensitive(import_specifier_sort_key(a), import_specifier_sort_key(b))
         });
     }
 

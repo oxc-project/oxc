@@ -271,6 +271,11 @@ impl JsdocFormatter<'_, '_> {
 
         if let Some(tp) = &type_part {
             let raw_type = tp.parsed();
+            // Check multiline on raw type BEFORE trim() strips leading newlines.
+            // `parsed()` calls `.trim()` which collapses `{\n\tfoo\n}` to `foo`.
+            // Using raw() preserves the original structure for this check.
+            let raw_inner = &tp.raw()[1..tp.raw().len() - 1];
+            let raw_was_multiline = raw_inner.contains('\n');
             if !raw_type.is_empty() {
                 let (type_to_normalize, type_optional) = strip_optional_type_suffix(raw_type);
                 is_type_optional = type_optional;
@@ -285,9 +290,17 @@ impl JsdocFormatter<'_, '_> {
                 // This matches upstream where comment-parser strips `*` prefixes but
                 // preserves newlines before passing to formatType().
                 if !preserve_quotes {
-                    let was_multiline = type_to_normalize.contains('\n');
+                    let was_multiline = raw_was_multiline || type_to_normalize.contains('\n');
+                    // Use the untrimmed raw_inner for star-stripping when the type was
+                    // multiline — parsed()/trim() may have collapsed the newlines.
+                    let multiline_source = if raw_was_multiline && !type_to_normalize.contains('\n')
+                    {
+                        raw_inner
+                    } else {
+                        type_to_normalize
+                    };
                     let formatter_input = if was_multiline {
-                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize))
+                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source))
                     } else {
                         Cow::Borrowed(normalized_type_str.as_ref())
                     };
@@ -302,7 +315,7 @@ impl JsdocFormatter<'_, '_> {
                         // but oxfmt's collapses short types — so we restore it.
                         if was_multiline && !formatted.contains('\n') {
                             normalized_type_str =
-                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize));
+                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source));
                         } else {
                             normalized_type_str = Cow::Owned(formatted);
                         }
@@ -310,7 +323,7 @@ impl JsdocFormatter<'_, '_> {
                         // Formatter failed (parse error) but type was multi-line;
                         // use the star-stripped version with newlines preserved.
                         normalized_type_str =
-                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(type_to_normalize));
+                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source));
                     }
                 }
             }
@@ -390,8 +403,7 @@ impl JsdocFormatter<'_, '_> {
             }
             if !desc_raw.is_empty() {
                 let indent = self.continuation_indent();
-                let indent_width =
-                    self.wrap_width.saturating_sub(self.continuation_indent_width());
+                let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
                 let desc = wrap_text(
                     desc_raw,
                     indent_width,
@@ -440,8 +452,7 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
             let indent = self.continuation_indent();
-            let indent_width =
-                self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
             let desc = wrap_text(
                 desc_raw,
                 indent_width,
@@ -467,8 +478,7 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
             let indent = self.continuation_indent();
-            let indent_width =
-                self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
             let mut desc = wrap_text(
                 desc_raw,
                 indent_width,
@@ -583,8 +593,7 @@ impl JsdocFormatter<'_, '_> {
             // This matches upstream's approach of passing the entire description through
             // formatDescription with a tagStringLength parameter that controls first-line offset.
             let indent = self.continuation_indent();
-            let indent_width =
-                self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
 
             // When description is just a dash with text on the next line
             // (e.g., @param {Type} name -\n  description), output the tag + dash
@@ -611,8 +620,7 @@ impl JsdocFormatter<'_, '_> {
             // inline so it wraps naturally with the description text.
             let full_desc = {
                 let mut s = if has_remaining {
-                    let mut s =
-                        String::with_capacity(first_text.len() + 1 + remaining_desc.len());
+                    let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
                     s.push_str(&first_text);
                     s.push('\n');
                     s.push_str(&remaining_desc);
@@ -970,8 +978,7 @@ impl JsdocFormatter<'_, '_> {
                 self.push_indented_desc("", desc);
             } else {
                 let indent = self.continuation_indent();
-                let indent_width =
-                    self.wrap_width.saturating_sub(self.continuation_indent_width());
+                let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
                 let mut desc = wrap_text(
                     &desc_text,
                     indent_width,

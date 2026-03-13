@@ -137,7 +137,10 @@ pub fn parse_jsdoc(
                 square_brace_depth = (square_brace_depth - 1).max(0);
             }
 
-            '@' if can_parse && at_line_start && !is_indented_code_block(line_seen_star, spaces_after_star) => {
+            '@' if can_parse
+                && at_line_start
+                && !is_indented_code_block(line_seen_star, spaces_after_star) =>
+            {
                 let part = &source_text[start..end];
                 let span = Span::new(
                     jsdoc_span_start + u32::try_from(start).unwrap_or_default(),

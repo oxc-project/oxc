@@ -67,8 +67,8 @@ const a = 1;
  * - A method with 10 overload signatures. Wow!
  *
  *   - Only the implementation signature has a doc comment. TypeDoc automatically
- *     copies the comment from the implementation signature to each of the visible
- *     signatures if they don't have one.
+ *       copies the comment from the implementation signature to each of the
+ *       visible signatures if they don't have one.
  *
  * A promise with a `cancel` method.
  */
@@ -109,7 +109,7 @@ const a = 1;
  * - A method with 10 overload signatures. Wow!
  *
  *   - Only the implementation signature has a doc comment. TypeDoc automatically copies the comment
- *     from the implementation signature to each of the visible signatures if they don't have one.
+ *       from the implementation signature to each of the visible signatures if they don't have one.
  *
  * A promise with a `cancel` method.
  */

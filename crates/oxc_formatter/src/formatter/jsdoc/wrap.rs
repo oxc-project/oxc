@@ -115,9 +115,7 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
                 if left_align {
                     row.push(':');
                 }
-                let dashes = w
-                    - usize::from(left_align)
-                    - usize::from(right_align);
+                let dashes = w - usize::from(left_align) - usize::from(right_align);
                 for _ in 0..dashes {
                     row.push('-');
                 }
@@ -452,7 +450,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- This is a very long list item that\n  should be wrapped to the next line\n  with proper indent"
+            "- This is a very long list item that\n    should be wrapped to the next line\n    with proper indent"
         );
     }
 
@@ -518,7 +516,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- Consider caching this for the lifetime of the component, or possibly being\n  able to share this cache between any `ScrollMap` view."
+            "- Consider caching this for the lifetime of the component, or possibly being\n    able to share this cache between any `ScrollMap` view."
         );
     }
 
@@ -536,7 +534,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- Consider caching this for the lifetime of the component, or possibly being\n  able to share this cache between any `ScrollMap` view."
+            "- Consider caching this for the lifetime of the component, or possibly being\n    able to share this cache between any `ScrollMap` view."
         );
     }
 
@@ -560,26 +558,26 @@ mod tests {
 
     #[test]
     fn test_spread_list_preserves_blank_lines() {
-        let result = wrap_text(
-            "- item one\n\n- item two\n\n- item three",
-            80,
-            0,
-            false,
-            None,
-            None,
-            None,
-        );
+        let result =
+            wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false, None, None, None);
         assert_eq!(result, "- item one\n\n- item two\n\n- item three");
     }
 
     #[test]
     fn test_wrap_indented_code_block_in_description() {
         // 4-space indented code block should be preserved
-        let input = "The options object:\n\n    const result = process(options);\n    console.log(result);";
+        let input =
+            "The options object:\n\n    const result = process(options);\n    console.log(result);";
         // Simulate @param {object} options: tag_str_len=22, indent_width=78
         let result = wrap_text(input, 78, 22, false, None, None, None);
         // The indented code block should be preserved with 4-space indent
-        assert!(result.contains("    const result = process(options);"), "Code block lost 4-space indent. Got:\n{result}");
-        assert!(result.contains("    console.log(result);"), "Second code line lost 4-space indent. Got:\n{result}");
+        assert!(
+            result.contains("    const result = process(options);"),
+            "Code block lost 4-space indent. Got:\n{result}"
+        );
+        assert!(
+            result.contains("    console.log(result);"),
+            "Second code line lost 4-space indent. Got:\n{result}"
+        );
     }
 }

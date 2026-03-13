@@ -953,7 +953,7 @@ fn serialize_pipe_prefixed_paragraph(
     if raw_lines.is_empty()
         || !raw_lines.iter().any(|line| {
             let trimmed = line.trim_start();
-            trimmed.starts_with('|') && trimmed[1..].contains('|')
+            trimmed.starts_with('|') && trimmed.ends_with('|') && trimmed.len() > 2
         })
     {
         return false;
@@ -977,13 +977,13 @@ fn serialize_pipe_prefixed_paragraph(
 
         let is_table = {
             let trimmed = raw_lines[index].trim_start();
-            trimmed.starts_with('|') && trimmed[1..].contains('|')
+            trimmed.starts_with('|') && trimmed.ends_with('|') && trimmed.len() > 2
         };
         if is_table {
             let start = index;
             while index < raw_lines.len() && {
                 let t = raw_lines[index].trim_start();
-                t.starts_with('|') && t[1..].contains('|')
+                t.starts_with('|') && t.ends_with('|') && t.len() > 2
             } {
                 index += 1;
             }
@@ -1003,10 +1003,12 @@ fn serialize_pipe_prefixed_paragraph(
             }
         } else {
             let start = index;
-            while index < raw_lines.len() && !{
-                let t = raw_lines[index].trim_start();
-                t.starts_with('|') && t[1..].contains('|')
-            } {
+            while index < raw_lines.len()
+                && !{
+                    let t = raw_lines[index].trim_start();
+                    t.starts_with('|') && t.ends_with('|') && t.len() > 2
+                }
+            {
                 index += 1;
             }
 
@@ -1181,7 +1183,7 @@ fn serialize_node_for_list_item(
         let inline_text = collect_inline_text_from_children(&para.children);
         let mut buf = LineBuffer::new();
         if is_first_child {
-            wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
+            wrap_paragraph(&inline_text, opts.max_width, 0, marker_width * 2, &mut buf);
         } else {
             wrap_paragraph(&inline_text, opts.max_width, 0, 0, &mut buf);
         }
@@ -1314,6 +1316,10 @@ fn collect_inline_text_from_children(children: &[Node]) -> String {
 }
 
 fn collect_inline_recursive(node: &Node, out: &mut String) {
+    collect_inline_impl(node, out, false);
+}
+
+fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
     match node {
         Node::Text(text) => {
             out.push_str(&text.value);
@@ -1321,14 +1327,14 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         Node::Emphasis(emp) => {
             out.push('_');
             for child in &emp.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
             out.push('_');
         }
         Node::Strong(strong) => {
             out.push_str("**");
             for child in &strong.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
             out.push_str("**");
         }
@@ -1337,35 +1343,36 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             out.push_str(&code.value);
             out.push('`');
         }
+        Node::Link(link) if inside_link => {
+            // Nested link (e.g. GFM autolink inside explicit link text) —
+            // just emit the text content to avoid double-encoding.
+            for child in &link.children {
+                collect_inline_impl(child, out, true);
+            }
+        }
         Node::Link(link) => {
             let link_text = {
                 let mut t = String::new();
                 for child in &link.children {
-                    collect_inline_recursive(child, &mut t);
+                    collect_inline_impl(child, &mut t, true);
                 }
                 t
             };
-            // GFM autolink: bare URL parsed into a Link node where text == url.
-            // Emit just the bare URL, not [url](url).
-            if link_text == link.url && link.title.is_none() {
-                out.push_str(&link.url);
-            } else {
-                out.push('[');
-                out.push_str(&link_text);
-                out.push_str("](");
-                out.push_str(&link.url);
-                if let Some(title) = &link.title {
-                    out.push_str(" \"");
-                    out.push_str(title);
-                    out.push('"');
-                }
-                out.push(')');
+            out.push('[');
+            out.push_str(&link_text);
+            out.push_str("](");
+            out.push_str(&link.url);
+            if let Some(title) = &link.title {
+                out.push_str(" \"");
+                out.push_str(title);
+                out.push('"');
             }
+            out.push(')');
         }
         Node::LinkReference(link_ref) => {
             out.push('[');
             for child in &link_ref.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
             out.push(']');
             let label = link_ref.label.as_deref().unwrap_or(&link_ref.identifier);
@@ -1416,7 +1423,7 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         Node::Delete(del) => {
             out.push_str("~~");
             for child in &del.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
             out.push_str("~~");
         }
@@ -1431,17 +1438,17 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
         // For parent nodes, recurse into children
         Node::Paragraph(para) => {
             for child in &para.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
         }
         Node::Heading(h) => {
             for child in &h.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
         }
         Node::TableCell(cell) => {
             for child in &cell.children {
-                collect_inline_recursive(child, out);
+                collect_inline_impl(child, out, inside_link);
             }
         }
         _ => {

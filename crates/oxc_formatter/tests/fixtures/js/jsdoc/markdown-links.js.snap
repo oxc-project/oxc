@@ -16,7 +16,7 @@ const b = 2;
 -------------------------------
 { jsdoc: true, printWidth: 80 }
 -------------------------------
-/** See https://example.com for details. */
+/** See [https://example.com](https://example.com) for details. */
 const a = 1;
 
 /** Visit [docs](https://example.com/docs) for more info. */
@@ -25,7 +25,7 @@ const b = 2;
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
-/** See https://example.com for details. */
+/** See [https://example.com](https://example.com) for details. */
 const a = 1;
 
 /** Visit [docs](https://example.com/docs) for more info. */

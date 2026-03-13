@@ -214,6 +214,11 @@ impl<'a> JSDocTagTypePart<'a> {
         Self { raw: part_content, span }
     }
 
+    /// Returns the raw type string including `{` and `}`.
+    pub fn raw(&self) -> &'a str {
+        self.raw
+    }
+
     /// Returns the type content without `{` and `}`.
     pub fn parsed(&self) -> &'a str {
         // +1 for `{`, -1 for `}`
