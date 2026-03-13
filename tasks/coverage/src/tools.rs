@@ -1026,13 +1026,16 @@ fn run_estree_typescript_impl(
 }
 
 fn parse_estree_json_blocks<'a>(content: &'a str, section_key: &str) -> Vec<&'a str> {
-    let prefix = format!(":{section_key}:\n```json\n");
     content
         .split("__ESTREE_TEST__")
         .skip(1)
         .filter_map(|section| {
-            let json = section.strip_prefix(&prefix)?;
-            json.strip_suffix("\n```\n").or_else(|| json.strip_suffix("\n```"))
+            let (key, json) = section
+                .strip_prefix(':')
+                .and_then(|s| s.split_once(":\n```json\n"))
+                .and_then(|(key, rest)| rest.strip_suffix("\n```\n").map(|json| (key, json)))
+                .expect(r"each TS snapshot section must have the form '__ESTREE_TEST__:<key>:\n```json\n<JSON>\n```\n'");
+            if key == section_key { Some(json) } else { None }
         })
         .collect()
 }
