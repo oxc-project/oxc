@@ -571,17 +571,12 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
     });
 
     // Get or create merger for merging `numVisitFns` functions
-    let merger: Merger | null;
-    if (mergers.length <= numVisitFns) {
-      while (mergers.length < numVisitFns) {
-        mergers.push(null);
-      }
-      merger = createMerger(numVisitFns);
-      mergers.push(merger);
-    } else {
-      merger = mergers[numVisitFns];
-      if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    while (mergers.length <= numVisitFns) {
+      mergers.push(null);
     }
+
+    let merger = mergers[numVisitFns];
+    if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
 
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
@@ -688,17 +683,12 @@ function mergeCfgVisitFns(visitProps: CfgVisitProp[]): CfgVisitFn {
     // No need to sort in order of specificity, because each rule can only have 1 handler for each CFG event
 
     // Get or create merger for merging `numVisitFns` functions
-    let merger: CfgMerger | null;
-    if (cfgMergers.length <= numVisitFns) {
-      while (cfgMergers.length < numVisitFns) {
-        cfgMergers.push(null);
-      }
-      merger = createCfgMerger(numVisitFns);
-      cfgMergers.push(merger);
-    } else {
-      merger = cfgMergers[numVisitFns];
-      if (merger === null) merger = cfgMergers[numVisitFns] = createCfgMerger(numVisitFns);
+    while (cfgMergers.length <= numVisitFns) {
+      cfgMergers.push(null);
     }
+
+    let merger = cfgMergers[numVisitFns];
+    if (merger === null) merger = cfgMergers[numVisitFns] = createCfgMerger(numVisitFns);
 
     // Merge functions.
     // Reuse a temporary array to avoid creating a new array for each merge.
