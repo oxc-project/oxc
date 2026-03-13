@@ -97,7 +97,7 @@ const restPropsHandler = {};
 /**
  * @internal
  *
- *   Turn a Svelte component into a custom element.
+ * Turn a Svelte component into a custom element.
  */
 function createCustomElement() {}
 
@@ -165,7 +165,7 @@ const restPropsHandler = {};
 /**
  * @internal
  *
- *   Turn a Svelte component into a custom element.
+ * Turn a Svelte component into a custom element.
  */
 function createCustomElement() {}
 

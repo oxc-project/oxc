@@ -66,9 +66,8 @@ function renderDiv() {}
 function a(name) {}
 
 /**
- * @param {string} [name="default"] - Optional param with default
- *
- *   Default is `"default"`
+ * @param {string} [name="default"] - Optional param with default. Default is
+ *   `"default"`
  */
 function b(name) {}
 
@@ -93,7 +92,7 @@ function seeUrl() {}
 /**
  * @internal
  *
- *   This function is internal and should not be used directly.
+ * This function is internal and should not be used directly.
  */
 function internalFunction() {}
 
@@ -136,7 +135,7 @@ function seeUrl() {}
 /**
  * @internal
  *
- *   This function is internal and should not be used directly.
+ * This function is internal and should not be used directly.
  */
 function internalFunction() {}
 

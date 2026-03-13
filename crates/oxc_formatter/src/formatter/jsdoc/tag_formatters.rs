@@ -373,8 +373,46 @@ impl JsdocFormatter<'_, '_> {
             tag_line.push_str(name_str);
         }
 
-        let desc_raw = comment_part.parsed_preserving_whitespace();
-        let desc_raw = desc_raw.trim();
+        // Multi-line type: push each line of the tag separately, then handle
+        // name + description on subsequent lines.
+        if tag_line.contains('\n') {
+            let desc_raw = comment_part.parsed_preserving_whitespace();
+            let desc_raw = desc_raw.trim();
+            let desc_normalized = normalize_markdown_emphasis(desc_raw);
+            let desc_raw = desc_normalized.trim();
+
+            let mut lines_iter = tag_line.split('\n');
+            if let Some(first) = lines_iter.next() {
+                self.content_lines.push(first);
+            }
+            for line in lines_iter {
+                self.content_lines.push(line);
+            }
+            if !desc_raw.is_empty() {
+                let indent = self.continuation_indent();
+                let indent_width =
+                    self.wrap_width.saturating_sub(self.continuation_indent_width());
+                let desc = wrap_text(
+                    desc_raw,
+                    indent_width,
+                    0,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                self.push_indented_desc(indent, desc);
+            }
+            return;
+        }
+
+        let desc_ws_raw = comment_part.parsed_preserving_whitespace();
+        // Detect blank line between tag+type+name and description
+        let has_desc_blank_line = {
+            let t = desc_ws_raw.trim_start_matches(' ');
+            t.starts_with("\n\n") || t.starts_with("\n \n")
+        };
+        let desc_raw = desc_ws_raw.trim();
         let desc_normalized = normalize_markdown_emphasis(desc_raw);
         let desc_raw = desc_normalized.trim();
 
@@ -393,6 +431,27 @@ impl JsdocFormatter<'_, '_> {
 
         if desc_raw.is_empty() && default_value.is_none() {
             self.content_lines.push(tag_line);
+            return;
+        }
+
+        // If there's a blank line between tag+type+name and description,
+        // output them separately with a blank line in between.
+        if has_desc_blank_line && !desc_raw.is_empty() {
+            self.content_lines.push(tag_line);
+            self.content_lines.push_empty();
+            let indent = self.continuation_indent();
+            let indent_width =
+                self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let desc = wrap_text(
+                desc_raw,
+                indent_width,
+                0,
+                false,
+                Some(self.format_options),
+                Some(self.external_callbacks),
+                Some(self.allocator),
+            );
+            self.push_indented_desc(indent, desc);
             return;
         }
 
@@ -548,15 +607,31 @@ impl JsdocFormatter<'_, '_> {
                 return;
             }
 
-            // Build full description text (first line + remaining)
-            let full_desc = if has_remaining {
-                let mut s = String::with_capacity(first_text.len() + 1 + remaining_desc.len());
-                s.push_str(&first_text);
-                s.push('\n');
-                s.push_str(&remaining_desc);
+            // Build full description text (first line + remaining), appending default suffix
+            // inline so it wraps naturally with the description text.
+            let full_desc = {
+                let mut s = if has_remaining {
+                    let mut s =
+                        String::with_capacity(first_text.len() + 1 + remaining_desc.len());
+                    s.push_str(&first_text);
+                    s.push('\n');
+                    s.push_str(&remaining_desc);
+                    s
+                } else {
+                    String::from(first_text.as_ref())
+                };
+                if let Some(dv) = default_value_for_desc {
+                    let last = s.as_bytes().last().copied().unwrap_or(b' ');
+                    if matches!(last, b'.' | b'!' | b'?') {
+                        s.push(' ');
+                    } else {
+                        s.push_str(". ");
+                    }
+                    s.push_str("Default is `");
+                    s.push_str(dv);
+                    s.push('`');
+                }
                 s
-            } else {
-                String::from(first_text.as_ref())
             };
 
             let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
@@ -613,18 +688,7 @@ impl JsdocFormatter<'_, '_> {
                 }
             }
 
-            // Add default value as a separate paragraph
-            if let Some(dv) = default_value_for_desc {
-                // Add blank line separator when there's preceding description text
-                if !first_text.is_empty() {
-                    self.content_lines.push_empty();
-                }
-                let s = self.content_lines.begin_line();
-                s.push_str(indent);
-                s.push_str("Default is `");
-                s.push_str(dv);
-                s.push('`');
-            }
+            // Default value is now appended inline in full_desc above
         }
     }
 
@@ -835,9 +899,14 @@ impl JsdocFormatter<'_, '_> {
 
         let quote_style = self.quote_style();
 
-        // For @default/@defaultValue, format JSON-like values
+        // For @default/@defaultValue, format JSON-like values (single-line only;
+        // multi-line values preserve internal indentation as-is)
         let desc_text: Cow<'_, str> = if matches!(normalized_kind, "default" | "defaultValue") {
-            format_default_value(desc_text, quote_style)
+            if raw_ws_desc.contains('\n') {
+                Cow::Borrowed(desc_text)
+            } else {
+                format_default_value(desc_text, quote_style)
+            }
         } else if should_capitalize
             && is_named_generic_tag(normalized_kind)
             && !has_leading_blank_line
@@ -874,26 +943,50 @@ impl JsdocFormatter<'_, '_> {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
             let skip_fmt = should_skip_description_formatting(normalized_kind);
-            let indent = if skip_fmt { "" } else { self.continuation_indent() };
-            let indent_width = if skip_fmt {
-                self.wrap_width
+            if skip_fmt && raw_ws_desc.contains('\n') {
+                // Multi-line skip-formatting: preserve raw line structure exactly.
+                // wrap_text would collapse lines via markdown parsing, so output directly.
+                for line in raw_ws_desc.split('\n') {
+                    if line.trim().is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        self.content_lines.push(line);
+                    }
+                }
+            } else if skip_fmt {
+                // Single-line skip-formatting: wrap at full width, no continuation indent.
+                let mut desc = wrap_text(
+                    raw_ws_desc,
+                    self.wrap_width,
+                    0,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                if desc.starts_with('\n') {
+                    desc.remove(0);
+                }
+                self.push_indented_desc("", desc);
             } else {
-                self.wrap_width.saturating_sub(self.continuation_indent_width())
-            };
-            let mut desc = wrap_text(
-                &desc_text,
-                indent_width,
-                0,
-                false,
-                Some(self.format_options),
-                Some(self.external_callbacks),
-                Some(self.allocator),
-            );
-            // Skip leading blank line from wrap_text since we already added one
-            if desc.starts_with('\n') {
-                desc.remove(0);
+                let indent = self.continuation_indent();
+                let indent_width =
+                    self.wrap_width.saturating_sub(self.continuation_indent_width());
+                let mut desc = wrap_text(
+                    &desc_text,
+                    indent_width,
+                    0,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                // Skip leading blank line from wrap_text since we already added one
+                if desc.starts_with('\n') {
+                    desc.remove(0);
+                }
+                self.push_indented_desc(indent, desc);
             }
-            self.push_indented_desc(indent, desc);
             return;
         }
 

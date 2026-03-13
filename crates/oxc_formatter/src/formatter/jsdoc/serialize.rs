@@ -529,6 +529,7 @@ pub(super) fn should_skip_description_formatting(tag_kind: &str) -> bool {
             | "defaultValue"
             | "deprecated"
             | "import"
+            | "internal"
             | "memberof"
             | "module"
             | "see"

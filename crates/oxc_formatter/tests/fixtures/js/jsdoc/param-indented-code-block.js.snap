@@ -63,7 +63,8 @@ const bar = "hello";
 /**
  * @default
  *
- * Some default value description that should not get continuation indent.
+ * Some default value description that should not get
+ * continuation indent.
  */
 const baz = 42;
 
@@ -96,7 +97,8 @@ const bar = "hello";
 /**
  * @default
  *
- * Some default value description that should not get continuation indent.
+ * Some default value description that should not get
+ * continuation indent.
  */
 const baz = 42;
 

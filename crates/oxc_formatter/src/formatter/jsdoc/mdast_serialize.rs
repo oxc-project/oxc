@@ -948,7 +948,14 @@ fn serialize_pipe_prefixed_paragraph(
 
     let raw = &opts.source[position.start.offset..position.end.offset];
     let raw_lines: Vec<&str> = raw.lines().collect();
-    if raw_lines.is_empty() || !raw_lines.iter().any(|line| line.trim_start().starts_with('|')) {
+    // A table row needs at least 2 pipes: |cell| — a single | in prose (e.g. `|splineCurve|`)
+    // is not a table.
+    if raw_lines.is_empty()
+        || !raw_lines.iter().any(|line| {
+            let trimmed = line.trim_start();
+            trimmed.starts_with('|') && trimmed[1..].contains('|')
+        })
+    {
         return false;
     }
 
@@ -968,9 +975,16 @@ fn serialize_pipe_prefixed_paragraph(
             lines.push_empty();
         }
 
-        if raw_lines[index].trim_start().starts_with('|') {
+        let is_table = {
+            let trimmed = raw_lines[index].trim_start();
+            trimmed.starts_with('|') && trimmed[1..].contains('|')
+        };
+        if is_table {
             let start = index;
-            while index < raw_lines.len() && raw_lines[index].trim_start().starts_with('|') {
+            while index < raw_lines.len() && {
+                let t = raw_lines[index].trim_start();
+                t.starts_with('|') && t[1..].contains('|')
+            } {
                 index += 1;
             }
 
@@ -989,7 +1003,10 @@ fn serialize_pipe_prefixed_paragraph(
             }
         } else {
             let start = index;
-            while index < raw_lines.len() && !raw_lines[index].trim_start().starts_with('|') {
+            while index < raw_lines.len() && !{
+                let t = raw_lines[index].trim_start();
+                t.starts_with('|') && t[1..].contains('|')
+            } {
                 index += 1;
             }
 
@@ -1324,22 +1341,6 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             let link_text = {
                 let mut t = String::new();
                 for child in &link.children {
-                    // When a child is a GFM autolink (Link where text == url) nested
-                    // inside this explicit link, emit just the URL text to avoid
-                    // double-wrapping like `[[url](url)](url)`.
-                    if let Node::Link(inner) = child {
-                        let inner_text = {
-                            let mut it = String::new();
-                            for ic in &inner.children {
-                                collect_inline_recursive(ic, &mut it);
-                            }
-                            it
-                        };
-                        if inner_text == inner.url && inner.title.is_none() {
-                            t.push_str(&inner.url);
-                            continue;
-                        }
-                    }
                     collect_inline_recursive(child, &mut t);
                 }
                 t
