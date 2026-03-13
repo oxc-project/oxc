@@ -788,7 +788,7 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
                 };
             }
 
-            let ParserReturn { mut program, tokens, .. } = ret;
+            let ParserReturn { program, tokens, .. } = ret;
             let span_converter = Utf8ToUtf16::new(source_text);
 
             let oxc_tokens_json = to_estree_tokens_pretty_json(
@@ -798,8 +798,6 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
                 &span_converter,
                 ESTreeTokenOptions::new(false),
             );
-
-            span_converter.convert_program_with_ascending_order_checks(&mut program);
 
             let token_path = workspace_root()
                 .join("estree-conformance/tests/test262-tokens")
@@ -896,7 +894,7 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
                 };
             }
 
-            let ParserReturn { mut program, tokens, .. } = ret;
+            let ParserReturn { program, tokens, .. } = ret;
             let span_converter = Utf8ToUtf16::new(source_text);
 
             let oxc_tokens_json = to_estree_tokens_pretty_json(
@@ -906,8 +904,6 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
                 &span_converter,
                 ESTreeTokenOptions::new(false),
             );
-
-            span_converter.convert_program_with_ascending_order_checks(&mut program);
 
             let token_path = workspace_root().join(f.path.with_extension("tokens.json"));
             let expected_tokens_json = fs::read_to_string(&token_path).unwrap_or_default();
@@ -1072,7 +1068,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                     };
                 }
 
-                let ParserReturn { mut program, tokens, .. } = ret;
+                let ParserReturn { program, tokens, .. } = ret;
                 let span_converter = Utf8ToUtf16::new(source_text);
 
                 let oxc_tokens_json = to_estree_tokens_pretty_json(
@@ -1082,8 +1078,6 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                     &span_converter,
                     ESTreeTokenOptions::new(true),
                 );
-
-                span_converter.convert_program_with_ascending_order_checks(&mut program);
 
                 if oxc_tokens_json != *expected_tokens {
                     return CoverageResult {
