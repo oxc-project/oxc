@@ -1,22 +1,21 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::LintContext,
-    rule::Rule,
-    utils::{
-        get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_ignore_case,
-        parse_jsx_value,
-    },
+    globals::VALID_ARIA_ROLES,
+    rule::{DefaultRuleConfig, Rule},
+    utils::{get_element_type, get_implicit_role, has_jsx_prop_ignore_case},
 };
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
@@ -30,19 +29,52 @@ fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDi
 #[derive(Debug, Default, Clone)]
 pub struct NoRedundantRoles(Box<NoRedundantRolesConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(default)]
-pub struct NoRedundantRolesConfig {
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(transparent)]
+pub struct NoRedundantRolesConfig(
     /// A map of element names to arrays of roles that are allowed to be redundant.
     /// For example, `{ "nav": ["navigation"] }` allows `<nav role="navigation">`.
-    allowed_redundant_roles: FxHashMap<String, Vec<String>>,
-}
+    FxHashMap<String, Vec<String>>,
+);
 
 impl Default for NoRedundantRolesConfig {
     fn default() -> Self {
         let mut allowed = FxHashMap::default();
         allowed.insert("nav".into(), vec!["navigation".into()]);
-        Self { allowed_redundant_roles: allowed }
+        Self(allowed)
+    }
+}
+
+impl NoRedundantRolesConfig {
+    fn extend(&mut self, other: Self) {
+        self.0.extend(other.0);
+    }
+
+    fn is_allowed(&self, element: &str, role: &str) -> bool {
+        self.0.get(element).is_some_and(|allowed_roles| allowed_roles.iter().any(|r| r == role))
+    }
+
+    fn normalize(self) -> Self {
+        let allowed_redundant_roles = self
+            .0
+            .into_iter()
+            .filter_map(|(element, roles)| {
+                let element = element.trim().cow_to_ascii_lowercase().into_owned();
+                if element.is_empty() {
+                    return None;
+                }
+
+                let roles = roles
+                    .into_iter()
+                    .map(|role| role.trim().cow_to_ascii_lowercase().into_owned())
+                    .filter(|role| !role.is_empty())
+                    .collect();
+
+                Some((element, roles))
+            })
+            .collect();
+
+        Self(allowed_redundant_roles)
     }
 }
 
@@ -104,129 +136,14 @@ declare_oxc_lint!(
     config = NoRedundantRolesConfig,
 );
 
-/// Check if a JSX attribute has a truthy literal value.
-///
-/// Valueless attributes (e.g., `<select multiple>`) are treated as `true`.
-fn is_truthy_prop(item: &JSXAttributeItem<'_>) -> bool {
-    match get_prop_value(item) {
-        // Valueless attribute: <select multiple> → true
-        None => true,
-        Some(JSXAttributeValue::StringLiteral(s)) => !s.value.is_empty(),
-        Some(JSXAttributeValue::ExpressionContainer(container)) => match &container.expression {
-            JSXExpression::BooleanLiteral(b) => b.value,
-            JSXExpression::NumericLiteral(n) => n.value != 0.0 && !n.value.is_nan(),
-            JSXExpression::StringLiteral(s) => !s.value.is_empty(),
-            _ => false,
-        },
-        _ => false,
-    }
-}
-
-fn get_implicit_role<'a>(
-    node: &'a JSXOpeningElement<'a>,
-    element_type: &str,
-) -> Option<&'static str> {
-    let implicit_role = match element_type {
-        "a" | "area" | "link" => match has_jsx_prop_ignore_case(node, "href") {
-            Some(_) => "link",
-            None => return None,
-        },
-        "article" => "article",
-        "aside" => "complementary",
-        "body" => "document",
-        "button" => "button",
-        "datalist" => "listbox",
-        "details" => "group",
-        "dialog" => "dialog",
-        "form" => "form",
-        "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "heading",
-        "hr" => "separator",
-        "img" => {
-            // <img alt=""> → no implicit role (per ESLint)
-            if has_jsx_prop_ignore_case(node, "alt")
-                .and_then(get_string_literal_prop_value)
-                .is_some_and(str::is_empty)
-            {
-                return None;
-            }
-            // <img src="foo.svg"> → no implicit role (WebKit SVG workaround)
-            if has_jsx_prop_ignore_case(node, "src")
-                .and_then(get_string_literal_prop_value)
-                .is_some_and(|s| s.contains(".svg"))
-            {
-                return None;
-            }
-            "img"
-        }
-        "input" => has_jsx_prop_ignore_case(node, "type").map_or("textbox", |input_type| {
-            match get_string_literal_prop_value(input_type) {
-                Some("button" | "image" | "reset" | "submit") => "button",
-                Some("checkbox") => "checkbox",
-                Some("radio") => "radio",
-                Some("range") => "slider",
-                _ => "textbox",
-            }
-        }),
-        "li" => "listitem",
-        "menu" => {
-            // <menu type="toolbar"> → "toolbar", otherwise no implicit role
-            return has_jsx_prop_ignore_case(node, "type").and_then(|v| {
-                get_string_literal_prop_value(v).and_then(|v| {
-                    if v.eq_ignore_ascii_case("toolbar") { Some("toolbar") } else { None }
-                })
-            });
-        }
-        "menuitem" => {
-            return has_jsx_prop_ignore_case(node, "type").and_then(|v| {
-                match get_string_literal_prop_value(v) {
-                    Some("checkbox") => Some("menuitemcheckbox"),
-                    Some("command") => Some("menuitem"),
-                    Some("radio") => Some("menuitemradio"),
-                    _ => None,
-                }
-            });
-        }
-        "meter" | "progress" => "progressbar",
-        "nav" => "navigation",
-        "ol" | "ul" => "list",
-        "option" => "option",
-        "output" => "status",
-        "section" => "region",
-        "select" => {
-            // <select multiple> or <select size={2+}> → "listbox"
-            // otherwise → "combobox"
-            if has_jsx_prop_ignore_case(node, "multiple").is_some_and(is_truthy_prop) {
-                return Some("listbox");
-            }
-            if has_jsx_prop_ignore_case(node, "size")
-                .and_then(get_prop_value)
-                .is_some_and(|v| parse_jsx_value(v).is_ok_and(|n| n > 1.0))
-            {
-                return Some("listbox");
-            }
-            "combobox"
-        }
-        "tbody" | "tfoot" | "thead" => "rowgroup",
-        "textarea" => "textbox",
-        _ => return None,
-    };
-
-    Some(implicit_role)
-}
-
 impl Rule for NoRedundantRoles {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let user_config =
+            serde_json::from_value::<DefaultRuleConfig<NoRedundantRolesConfig>>(value)
+                .map(DefaultRuleConfig::into_inner)?
+                .normalize();
         let mut config = NoRedundantRolesConfig::default();
-
-        if let Some(obj) = value.get(0).and_then(serde_json::Value::as_object) {
-            for (element, roles) in obj {
-                if let Some(arr) = roles.as_array() {
-                    let role_list: Vec<String> =
-                        arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
-                    config.allowed_redundant_roles.insert(element.clone(), role_list);
-                }
-            }
-        }
+        config.extend(user_config);
 
         Ok(Self(Box::new(config)))
     }
@@ -251,24 +168,31 @@ impl Rule for NoRedundantRoles {
             return;
         };
 
-        let explicit_role = role_values.value.trim().cow_to_ascii_lowercase();
+        let role_tokens: Vec<&str> = role_values.value.split_whitespace().collect();
+        let Some(explicit_role) = role_tokens
+            .iter()
+            .map(|role| role.cow_to_ascii_lowercase())
+            .find(|role| VALID_ARIA_ROLES.contains(role.as_ref()))
+        else {
+            return;
+        };
 
         if explicit_role != implicit_role {
             return;
         }
 
-        if self
-            .allowed_redundant_roles
-            .get(&*component)
-            .is_some_and(|allowed_roles| allowed_roles.iter().any(|r| r == &explicit_role))
-        {
+        if self.is_allowed(&component, &explicit_role) {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            no_redundant_roles_diagnostic(attr.span, &component, &explicit_role),
-            |fixer| fixer.delete_range(attr.span),
-        );
+        if role_tokens.len() == 1 {
+            ctx.diagnostic_with_fix(
+                no_redundant_roles_diagnostic(attr.span, &component, &explicit_role),
+                |fixer| fixer.delete_range(attr.span),
+            );
+        } else {
+            ctx.diagnostic(no_redundant_roles_diagnostic(attr.span, &component, &explicit_role));
+        }
     }
 }
 
@@ -304,6 +228,7 @@ fn test() {
         // Config-based exceptions
         ("<ul role='list' />", Some(json!([{ "ul": ["list"] }])), None),
         ("<ol role='list' />", Some(json!([{ "ol": ["list"] }])), None),
+        ("<ul role='LIST' />", Some(json!([{ "ul": [" List "] }])), None),
         // select: role that doesn't match implicit role
         ("<select role='menu'><option>1</option><option>2</option></select>", None, None),
         ("<select role='menu' size={2}><option>1</option><option>2</option></select>", None, None),
@@ -312,6 +237,8 @@ fn test() {
         ("<img src='example.svg' role='img' />", None, None),
         // img: empty alt has no implicit role
         ("<img alt='' role='presentation' />", None, None),
+        // The first supported token is not redundant.
+        ("<button role='presentation button' />", None, None),
     ];
 
     let fail = vec![
@@ -326,6 +253,8 @@ fn test() {
         ("<body role='document' />", None, None),
         // Case insensitive: DOCUMENT matches implicit "document"
         ("<body role='DOCUMENT' />", None, None),
+        // The first supported token is redundant, even with fallback tokens.
+        ("<button role='button presentation' />", None, None),
         ("<Button role='button' />", None, Some(settings())),
         // Expanded implicit role detection
         ("<article role='article' />", None, None),

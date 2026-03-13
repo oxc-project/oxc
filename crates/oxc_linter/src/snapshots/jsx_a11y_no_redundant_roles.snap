@@ -75,6 +75,13 @@ assertion_line: 444
 
   ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
+ 1 │ <button role='button presentation' />
+   ·         ──────────────────────────
+   ╰────
+  help: Remove the redundant role `button` from the element `button`.
+
+  ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
+   ╭─[no_redundant_roles.tsx:1:9]
  1 │ <Button role='button' />
    ·         ─────────────
    ╰────
