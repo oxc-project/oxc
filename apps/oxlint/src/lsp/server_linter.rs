@@ -42,7 +42,7 @@ use crate::{
         },
         lsp_file_system::LspFileSystem,
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-        utils::normalize_path,
+        utils::{normalize_path, range_overlaps},
     },
 };
 
@@ -605,8 +605,7 @@ impl Tool for ServerLinter {
             return vec![];
         }
 
-        let actions =
-            actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
+        let actions = actions.into_iter().filter(|r| range_overlaps(*range, r.range));
 
         // `context.only` is a special case here. ESLint behavior is if `source.fixAll` is the first element in `context.only`,
         // then only return fix all code action, and ignore other code actions, even if they are requested.
@@ -874,10 +873,6 @@ impl ServerLinter {
         }
         false
     }
-}
-
-fn range_overlaps(a: Range, b: Range) -> bool {
-    a.start <= b.end && a.end >= b.start
 }
 
 #[cfg(test)]
