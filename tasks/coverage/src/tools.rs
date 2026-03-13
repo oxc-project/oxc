@@ -754,64 +754,6 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         .collect()
 }
 
-pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
-    files
-        .par_iter()
-        .map(|f| {
-            let source_type = SourceType::default().with_module(true).with_jsx(true);
-            let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, &f.code, source_type).parse();
-            let is_parse_error = ret.panicked || !ret.errors.is_empty();
-
-            if is_parse_error {
-                let error =
-                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
-                let result = if f.should_fail {
-                    TestResult::CorrectError(error, ret.panicked)
-                } else {
-                    TestResult::ParseError(error, ret.panicked)
-                };
-                return CoverageResult { path: f.path.clone(), should_fail: f.should_fail, result };
-            }
-
-            if f.should_fail {
-                return CoverageResult {
-                    path: f.path.clone(),
-                    should_fail: true,
-                    result: TestResult::IncorrectlyPassed,
-                };
-            }
-
-            let mut program = ret.program;
-            Utf8ToUtf16::new(&f.code).convert_program_with_ascending_order_checks(&mut program);
-
-            let acorn_json_path = workspace_root().join(&f.path).with_extension("json");
-            let acorn_json = match fs::read_to_string(&acorn_json_path) {
-                Ok(acorn_json) => acorn_json,
-                Err(error) => {
-                    return CoverageResult {
-                        path: f.path.clone(),
-                        should_fail: false,
-                        result: TestResult::GenericError(
-                            "Error reading Acorn JSON",
-                            error.to_string(),
-                        ),
-                    };
-                }
-            };
-            let oxc_json = program.to_pretty_estree_js_json(false);
-
-            let result = if oxc_json == acorn_json {
-                TestResult::Passed
-            } else {
-                TestResult::Mismatch("Mismatch", oxc_json, acorn_json)
-            };
-
-            CoverageResult { path: f.path.clone(), should_fail: false, result }
-        })
-        .collect()
-}
-
 pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
     files
         .par_iter()
@@ -869,6 +811,64 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
                 TestResult::Passed
             } else {
                 TestResult::Mismatch("Token mismatch", oxc_tokens_json, expected_tokens_json)
+            };
+
+            CoverageResult { path: f.path.clone(), should_fail: false, result }
+        })
+        .collect()
+}
+
+pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
+    files
+        .par_iter()
+        .map(|f| {
+            let source_type = SourceType::default().with_module(true).with_jsx(true);
+            let allocator = Allocator::new();
+            let ret = Parser::new(&allocator, &f.code, source_type).parse();
+            let is_parse_error = ret.panicked || !ret.errors.is_empty();
+
+            if is_parse_error {
+                let error =
+                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
+                let result = if f.should_fail {
+                    TestResult::CorrectError(error, ret.panicked)
+                } else {
+                    TestResult::ParseError(error, ret.panicked)
+                };
+                return CoverageResult { path: f.path.clone(), should_fail: f.should_fail, result };
+            }
+
+            if f.should_fail {
+                return CoverageResult {
+                    path: f.path.clone(),
+                    should_fail: true,
+                    result: TestResult::IncorrectlyPassed,
+                };
+            }
+
+            let mut program = ret.program;
+            Utf8ToUtf16::new(&f.code).convert_program_with_ascending_order_checks(&mut program);
+
+            let acorn_json_path = workspace_root().join(&f.path).with_extension("json");
+            let acorn_json = match fs::read_to_string(&acorn_json_path) {
+                Ok(acorn_json) => acorn_json,
+                Err(error) => {
+                    return CoverageResult {
+                        path: f.path.clone(),
+                        should_fail: false,
+                        result: TestResult::GenericError(
+                            "Error reading Acorn JSON",
+                            error.to_string(),
+                        ),
+                    };
+                }
+            };
+            let oxc_json = program.to_pretty_estree_js_json(false);
+
+            let result = if oxc_json == acorn_json {
+                TestResult::Passed
+            } else {
+                TestResult::Mismatch("Mismatch", oxc_json, acorn_json)
             };
 
             CoverageResult { path: f.path.clone(), should_fail: false, result }
