@@ -1,25 +1,25 @@
-// Fix 24: No unconditional blank line between description and first tag.
-// Upstream (prettier-plugin-jsdoc) does NOT add a blank line here by default.
+// Upstream (prettier-plugin-jsdoc) unconditionally adds a blank line
+// between description and first tag.
 
 /**
  * This is a description.
  * @param {string} name - The name
  */
-function noBlankLine(name) {}
+function addBlankLine(name) {}
 
 /**
  * Description text here.
  * @see https://example.com
  */
-function noBlankBeforeSee() {}
+function addBlankBeforeSee() {}
 
 /**
  * Some description.
  * @deprecated Use something else
  */
-function noBlankBeforeDeprecated() {}
+function addBlankBeforeDeprecated() {}
 
-// When the original HAS a blank line, it should be preserved:
+// When the original already has a blank line, it stays:
 /**
  * Description with blank line.
  *

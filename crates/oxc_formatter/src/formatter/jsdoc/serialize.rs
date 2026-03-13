@@ -221,18 +221,11 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 && !should_skip_capitalize(normalized_kind)
                 && is_known_tag(normalized_kind);
 
-            // Only preserve original blank line between description and first tag
-            // (upstream does NOT add a blank line here by default)
+            // Add blank line between description and first tag
+            // (upstream unconditionally adds this blank line)
             if is_first_tag && !self.content_lines.is_empty() && !self.content_lines.last_is_empty()
             {
-                // Check if original source had a blank `*` line between desc and this tag
-                if has_blank_star_line_between(
-                    source_text,
-                    jsdoc_span.start as usize,
-                    tag.kind.span.start as usize,
-                ) {
-                    self.content_lines.push_empty();
-                }
+                self.content_lines.push_empty();
             }
 
             // Add blank lines between tag groups
@@ -308,10 +301,9 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     has_no_space_before_type,
                 );
             } else if is_type_comment_tag(normalized_kind) {
-                // For @type/@satisfies, the text after {type} is a "name" in
-                // comment-parser's model (TAGS_NAMELESS does not include "type"
-                // or "satisfies"), so it should NOT be capitalized. Only
-                // @returns/@yields/@throws/etc. have true descriptions.
+                // For @type/@satisfies, skip capitalization — the text after {type}
+                // is a "name" in comment-parser's model and upstream does not
+                // capitalize it.
                 let capitalize =
                     should_capitalize && !matches!(normalized_kind, "type" | "satisfies");
                 self.format_type_comment_tag(
