@@ -102,22 +102,32 @@ pub fn parse_jsdoc(
             // affect `can_parse` — otherwise a stray `{` in inline code
             // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
             // recognized, causing them to merge into the description.
-            '"' if backtick_count == 0 => in_double_quotes = !in_double_quotes,
-            '\'' if backtick_count == 0 => in_single_quotes = !in_single_quotes,
+            '"' if backtick_count == 0 && !in_single_quotes => {
+                in_double_quotes = !in_double_quotes;
+            }
+            '\'' if backtick_count == 0 && !in_double_quotes => {
+                in_single_quotes = !in_single_quotes;
+            }
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
             }
-            '{' if backtick_count == 0 => curly_brace_depth += 1,
-            '}' if backtick_count == 0 => {
+            '{' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                curly_brace_depth += 1;
+            }
+            '}' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 curly_brace_depth = (curly_brace_depth - 1).max(0);
             }
-            '(' if backtick_count == 0 => brace_depth += 1,
-            ')' if backtick_count == 0 => {
+            '(' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                brace_depth += 1;
+            }
+            ')' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 brace_depth = (brace_depth - 1).max(0);
             }
-            '[' if backtick_count == 0 => square_brace_depth += 1,
-            ']' if backtick_count == 0 => {
+            '[' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
+                square_brace_depth += 1;
+            }
+            ']' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 square_brace_depth = (square_brace_depth - 1).max(0);
             }
 
@@ -268,5 +278,15 @@ mod tests {
         let src = " \n * @example\n * ```\n * const x = 1;\n * ```\n * @returns {void}";
         let kinds = tag_kinds(src);
         assert_eq!(kinds, vec!["example", "returns"]);
+    }
+
+    #[test]
+    fn braces_inside_quotes_do_not_prevent_tag_split() {
+        // Braces inside quoted strings in description text should not affect
+        // curly_brace_depth tracking. This caused @param to be merged into the
+        // description when the description contained unbalanced braces in quotes.
+        let src = " \n * \"props\" of the form \"{ [key: string]: { type?: \"String\" | \"Object\" }\"\n * @param {null} node\n * @returns {never}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
     }
 }
