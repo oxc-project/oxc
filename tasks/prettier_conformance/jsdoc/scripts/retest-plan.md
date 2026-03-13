@@ -35,30 +35,31 @@ The migration tool also handles: `.prettierignore` → `ignorePatterns`, `pretti
 2. `git clone --depth 1 <url> /tmp/jsdoc-retest/<name>`
 3. `cd /tmp/jsdoc-retest/<name>`
 4. Install deps: `pnpm install` if pnpm-lock.yaml exists, else `npm install`
-5. `npm install prettier prettier-plugin-jsdoc@latest`
+5. Upgrade Prettier to latest and install jsdoc plugin: `npm install prettier@latest prettier-plugin-jsdoc@latest`
+6. Verify version: `npx prettier --version` (record in results)
 
 ### Step A: Prettier Baseline
-6. Create `.prettierrc`: `{"printWidth": 80, "plugins": ["prettier-plugin-jsdoc"]}`
-7. Run `npx prettier --write '**/*.{js,ts,jsx,tsx}'` (excluding node_modules/dist/build)
-8. `git add -A && git commit -m "prettier baseline"`
+7. Create `.prettierrc`: `{"printWidth": 80, "plugins": ["prettier-plugin-jsdoc"]}`
+8. Run `npx prettier --write '**/*.{js,ts,jsx,tsx}'` (excluding node_modules/dist/build)
+9. `git add -A && git commit -m "prettier baseline"`
 
 ### Step B: oxfmt Non-JSDoc Baseline
-9. Run `node .../oxfmt/dist/cli.js --migrate prettier` to generate `.oxfmtrc.json` from the repo's Prettier config
-   - If no Prettier config exists, create `{"printWidth": 80, "sortPackageJson": false}`
-10. Add `"jsdoc": false` to the generated `.oxfmtrc.json`
-11. Run `node .../oxfmt/dist/cli.js --write`
-12. `git add -A && git commit -m "oxfmt no-jsdoc baseline"`
+10. Run `node .../oxfmt/dist/cli.js --migrate prettier` to generate `.oxfmtrc.json` from the repo's Prettier config
+    - If no Prettier config exists, create `{"printWidth": 80, "sortPackageJson": false}`
+11. Add `"jsdoc": false` to the generated `.oxfmtrc.json`
+12. Run `node .../oxfmt/dist/cli.js --write`
+13. `git add -A && git commit -m "oxfmt no-jsdoc baseline"`
 
 ### Step C: oxfmt With JSDoc
-13. Change `"jsdoc": false` → `"jsdoc": true` in `.oxfmtrc.json`
-14. Run `node .../oxfmt/dist/cli.js --write`
-15. `git diff --stat` — shows ONLY JSDoc-related differences
-16. `git diff` — capture actual diffs if any exist
+14. Change `"jsdoc": false` → `"jsdoc": true` in `.oxfmtrc.json`
+15. Run `node .../oxfmt/dist/cli.js --write`
+16. `git diff --stat` — shows ONLY JSDoc-related differences
+17. `git diff` — capture actual diffs if any exist
 
 ### Data Collection
-17. JSDoc tags count: `grep -r '^\s*\*\s*@' --include='*.js' --include='*.ts' --include='*.tsx' --include='*.jsx' . | grep -v node_modules | wc -l`
-18. JSDoc diffs: file count from step 15
-19. Save diffs to `tasks/prettier_conformance/jsdoc/diffs/<name>.md` (in this repo) with format:
+18. JSDoc tags count: `grep -r '^\s*\*\s*@' --include='*.js' --include='*.ts' --include='*.tsx' --include='*.jsx' . | grep -v node_modules | wc -l`
+19. JSDoc diffs: file count from step 16
+20. Save diffs to `tasks/prettier_conformance/jsdoc/diffs/<name>.md` (in this repo) with format:
     ```markdown
     # JSDoc Diffs: <name>
 
@@ -76,12 +77,12 @@ The migration tool also handles: `.prettierignore` → `ignorePatterns`, `pretti
     These will be used later to investigate and fix remaining issues.
 
 ### Performance Testing
-20. Reset to step B state: `git checkout .`
-21. Copy the migrated `.oxfmtrc.json` to two variants:
+21. Reset to step B state: `git checkout .`
+22. Copy the migrated `.oxfmtrc.json` to two variants:
     - `no-jsdoc.json`: same config with `"jsdoc": false`
     - `with-jsdoc.json`: same config with `"jsdoc": true`
-22. `hyperfine --warmup 3` comparing both configs with `--check -c <config>`
-23. Record: files, time without/with JSDoc, overhead
+23. `hyperfine --warmup 3` comparing both configs with `--check -c <config>`
+24. Record: files, time without/with JSDoc, overhead
 
 ## Repositories
 
@@ -103,8 +104,9 @@ Launch 5 agents in parallel, one per repository. Each follows the full steps and
 
 ## Expected Output
 
-1. Updated correctness + performance tables ready for GitHub comment
-2. Per-repo diff files at `tasks/prettier_conformance/jsdoc/diffs/<name>.md` containing any remaining JSDoc formatting differences (file path + unified diff per file), to be investigated and fixed later
+1. Prettier version used (recorded from step 6)
+2. Updated correctness + performance tables ready for GitHub comment
+3. Per-repo diff files at `tasks/prettier_conformance/jsdoc/diffs/<name>.md` containing any remaining JSDoc formatting differences (file path + unified diff per file), to be investigated and fixed later
 
 ## Results (2026-03-12)
 
