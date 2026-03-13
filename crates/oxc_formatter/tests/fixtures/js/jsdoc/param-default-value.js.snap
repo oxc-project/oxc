@@ -27,7 +27,7 @@ function parseNumber(x, int) {}
 -------------------------------
 /**
  * @typedef {Int8Array | Uint8Array} TypedArray A union type representing all
- * possible TypedArrays.
+ *   possible TypedArrays.
  */
 
 /**

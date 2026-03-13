@@ -1103,8 +1103,8 @@ fn serialize_list(
                 // Nested lists don't get a blank line before them — they attach
                 // directly to their parent item, matching upstream behavior.
                 if is_block_node(item_child)
-                    && !matches!(item_child, Node::List(_))
                     && !lines.last_is_empty()
+                    && (!matches!(item_child, Node::List(_)) || item.spread)
                 {
                     lines.push_empty();
                 }

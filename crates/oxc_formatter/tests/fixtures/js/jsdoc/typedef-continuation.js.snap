@@ -20,7 +20,7 @@ const b = 2;
 -------------------------------
 /**
  * @typedef {Int8Array | Uint8Array | Float32Array} TypedArray A union type
- * representing all possible TypedArrays.
+ *   representing all possible TypedArrays.
  */
 const a = 1;
 
@@ -35,7 +35,7 @@ const b = 2;
 --------------------------------
 /**
  * @typedef {Int8Array | Uint8Array | Float32Array} TypedArray A union type representing all
- * possible TypedArrays.
+ *   possible TypedArrays.
  */
 const a = 1;
 

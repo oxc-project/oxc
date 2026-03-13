@@ -571,4 +571,15 @@ mod tests {
         );
         assert_eq!(result, "- item one\n\n- item two\n\n- item three");
     }
+
+    #[test]
+    fn test_wrap_indented_code_block_in_description() {
+        // 4-space indented code block should be preserved
+        let input = "The options object:\n\n    const result = process(options);\n    console.log(result);";
+        // Simulate @param {object} options: tag_str_len=22, indent_width=78
+        let result = wrap_text(input, 78, 22, false, None, None, None);
+        // The indented code block should be preserved with 4-space indent
+        assert!(result.contains("    const result = process(options);"), "Code block lost 4-space indent. Got:\n{result}");
+        assert!(result.contains("    console.log(result);"), "Second code line lost 4-space indent. Got:\n{result}");
+    }
 }

@@ -52,6 +52,12 @@ pub fn parse_jsdoc(
     // (e.g. `@vue/shared`) appearing mid-line in tag descriptions.
     let mut at_line_start = true;
 
+    // Track indentation after the `*` prefix to detect 4-space indented code blocks.
+    // When a line has 4+ spaces of content indent (after `* `), `@` on that line
+    // should not be treated as a tag marker — it's inside an indented code block.
+    let mut line_seen_star = false;
+    let mut spaces_after_star: u32 = 0;
+
     // This flag tells us if we have already found the main comment block.
     // The first part before any @tags is considered the comment. Everything after is a tag.
     let mut comment_found = false;
@@ -131,7 +137,7 @@ pub fn parse_jsdoc(
                 square_brace_depth = (square_brace_depth - 1).max(0);
             }
 
-            '@' if can_parse && at_line_start => {
+            '@' if can_parse && at_line_start && !is_indented_code_block(line_seen_star, spaces_after_star) => {
                 let part = &source_text[start..end];
                 let span = Span::new(
                     jsdoc_span_start + u32::try_from(start).unwrap_or_default(),
@@ -158,8 +164,19 @@ pub fn parse_jsdoc(
         // - Everything else sets to false
         if ch == '\n' {
             at_line_start = true;
-        } else if at_line_start && !matches!(ch, ' ' | '\t' | '\r' | '*') {
-            at_line_start = false;
+            line_seen_star = false;
+            spaces_after_star = 0;
+        } else if at_line_start {
+            if ch == '*' {
+                line_seen_star = true;
+                spaces_after_star = 0;
+            } else if matches!(ch, ' ' | '\t' | '\r') {
+                if line_seen_star {
+                    spaces_after_star += 1;
+                }
+            } else {
+                at_line_start = false;
+            }
         }
 
         // Move the `end` pointer forward by the character's length
@@ -182,6 +199,16 @@ pub fn parse_jsdoc(
     }
 
     (comment.unwrap_or(JSDocCommentPart::new("", Span::empty(jsdoc_span_start))), tags)
+}
+
+/// Check if the current line position represents a 4-space indented code block.
+/// In CommonMark, 4+ spaces of indent from the content margin indicate an indented
+/// code block. In JSDoc, the content margin is after `* ` (star + one conventional space),
+/// so we need 5+ spaces after `*` (1 conventional + 4 for code block).
+/// If no `*` was seen on this line, this returns false (conservative).
+fn is_indented_code_block(line_seen_star: bool, spaces_after_star: u32) -> bool {
+    // 5 = 1 conventional space after `*` + 4 for indented code block
+    line_seen_star && spaces_after_star >= 5
 }
 
 /// tag_content: Starts with `@`, may be multiline
@@ -288,5 +315,24 @@ mod tests {
         let src = " \n * \"props\" of the form \"{ [key: string]: { type?: \"String\" | \"Object\" }\"\n * @param {null} node\n * @returns {never}";
         let kinds = tag_kinds(src);
         assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn indented_code_block_at_sign_does_not_split_tag() {
+        // `@` inside a 4-space indented code block (after `* `) should NOT be
+        // treated as a tag marker. 5 spaces after `*` = 1 conventional + 4 for code block.
+        let src = " \n * @deprecated\n *     @myDecorator\n *     class Foo {}\n * @type {string}";
+        let kinds = tag_kinds(src);
+        // @myDecorator is inside a code block, so only @deprecated and @type are real tags
+        assert_eq!(kinds, vec!["deprecated", "type"]);
+    }
+
+    #[test]
+    fn normal_indent_at_sign_still_splits() {
+        // `@` with less than 4-space indent (3 spaces after conventional) should still split
+        let src = " \n * @deprecated\n *    @type {string}";
+        let kinds = tag_kinds(src);
+        // 4 spaces after `*` = 1 conventional + 3 indent → NOT an indented code block
+        assert_eq!(kinds, vec!["deprecated", "type"]);
     }
 }

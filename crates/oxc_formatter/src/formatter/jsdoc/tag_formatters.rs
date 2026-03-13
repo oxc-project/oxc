@@ -10,11 +10,44 @@ use super::{
         strip_optional_type_suffix,
     },
     serialize::{
-        JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag, join_iter,
+        JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag,
         should_skip_description_formatting, strip_default_is_suffix,
     },
     wrap::{str_width, wrap_text},
 };
+
+/// Strip the minimum common leading whitespace from all non-empty lines,
+/// preserving relative indentation. `base_indent` is the indent of context
+/// not included in `text` (e.g. 0 when there's inline text on the tag line).
+/// The minimum indent is clamped to at most `base_indent`, so that relative
+/// indentation (e.g. 4-space code blocks) is preserved.
+fn dedent_lines(text: &str, base_indent: usize) -> String {
+    let min_indent = text
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| line.len() - line.trim_start().len())
+        .chain(std::iter::once(base_indent))
+        .min()
+        .unwrap_or(0);
+
+    let mut result = String::with_capacity(text.len());
+    for (i, line) in text.lines().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        if line.trim().is_empty() {
+            // Keep empty lines empty
+        } else if min_indent > 0 && line.len() >= min_indent {
+            result.push_str(&line[min_indent..]);
+        } else if min_indent == 0 {
+            // No common indent to strip — preserve original whitespace
+            result.push_str(line);
+        } else {
+            result.push_str(line.trim_start());
+        }
+    }
+    result
+}
 
 impl JsdocFormatter<'_, '_> {
     pub(super) fn format_example_tag(
@@ -374,16 +407,9 @@ impl JsdocFormatter<'_, '_> {
         if first_text_line.starts_with("```") {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
-            let indent = if matches!(normalized_kind, "typedef" | "callback") {
-                ""
-            } else {
-                self.continuation_indent()
-            };
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
+            let indent = self.continuation_indent();
+            let indent_width =
+                self.wrap_width.saturating_sub(self.continuation_indent_width());
             let mut desc = wrap_text(
                 desc_raw,
                 indent_width,
@@ -438,10 +464,13 @@ impl JsdocFormatter<'_, '_> {
 
         // Check if the description has extra content beyond the first text line
         // (subsequent lines with text, tables, code blocks, etc.)
-        // Strip the common leading whitespace from continuation lines — this is
-        // just the original JSDoc formatting indent, not semantic content.
+        // Strip the common leading whitespace from continuation lines while
+        // preserving relative indentation (e.g. 4-space indented code blocks).
+        // When first_text is non-empty, the base indent is 0 (inline with tag),
+        // so continuation line indentation is preserved relative to that.
         let remaining_desc = if let Some(rest) = rest_of_desc {
-            join_iter(rest.lines().map(str::trim), "\n")
+            let base = if first_text_line.is_empty() { usize::MAX } else { 0 };
+            dedent_lines(rest, base)
         } else {
             String::new()
         };
@@ -494,16 +523,9 @@ impl JsdocFormatter<'_, '_> {
             // Multi-line: pass full description through wrap_text with tag_string_length.
             // This matches upstream's approach of passing the entire description through
             // formatDescription with a tagStringLength parameter that controls first-line offset.
-            let indent = if matches!(normalized_kind, "typedef" | "callback") {
-                ""
-            } else {
-                self.continuation_indent()
-            };
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
+            let indent = self.continuation_indent();
+            let indent_width =
+                self.wrap_width.saturating_sub(self.continuation_indent_width());
 
             // When description is just a dash with text on the next line
             // (e.g., @param {Type} name -\n  description), output the tag + dash
@@ -851,8 +873,13 @@ impl JsdocFormatter<'_, '_> {
         if has_leading_blank_line {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
-            let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let skip_fmt = should_skip_description_formatting(normalized_kind);
+            let indent = if skip_fmt { "" } else { self.continuation_indent() };
+            let indent_width = if skip_fmt {
+                self.wrap_width
+            } else {
+                self.wrap_width.saturating_sub(self.continuation_indent_width())
+            };
             let mut desc = wrap_text(
                 &desc_text,
                 indent_width,
