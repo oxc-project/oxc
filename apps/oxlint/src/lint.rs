@@ -1860,4 +1860,15 @@ mod suppression {
             .with_backup_file(true)
             .test(&["--prune-suppressions"]);
     }
+
+    #[test]
+    fn test_suppression_ts_create_file() {
+        SuppressionTester::new()
+            .with_cwd("suppression_tsgo")
+            .with_setup_file(true)
+            .with_expected_file(true)
+            .with_backup_file(true)
+            .test(&["--suppress-all", "--type-aware"]);
+        //.test(&["--suppress-all", "--type-aware", "--fix", "--fix-suggestions"]);
+    }
 }

@@ -32,7 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{Filename, SuppressionFile, SuppressionManager, SuppressionSender},
+    suppression::{Filename, RuleName, SuppressionFile, SuppressionManager, SuppressionSender},
     utils::read_to_arena_str,
 };
 
@@ -597,6 +597,16 @@ impl Runtime {
         let file_exists = suppression_manager.exists_suppression_file();
         let concurrent_tracking_map = suppression_manager.concurrent_map();
         let ignore_suppression = suppression_manager.ignore();
+        let ignore_tsgo_lint_rules = Arc::new(FxHashSet::from_iter(
+            self.linter
+                .config
+                .rules()
+                .iter()
+                .filter(|(rule, _)| rule.is_tsgolint_rule())
+                .map(|(rule, _)| RuleName::new("typescript-eslint", rule.name())),
+        ));
+
+        println!("IGNORED {:?}", ignore_tsgo_lint_rules);
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -713,10 +723,20 @@ impl Runtime {
                             if let Some(suppression_detected) = runtime_suppression_tracking {
                                 let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
+                                let prune_predicate = |rule_key: &RuleName| {
+                                    println!(
+                                        "TO be pruned {:?}, and result is {:?}",
+                                        rule_key,
+                                        !ignore_tsgo_lint_rules.contains(rule_key)
+                                    );
+                                    !ignore_tsgo_lint_rules.contains(rule_key)
+                                };
+
                                 let diffs = SuppressionManager::diff_filename(
                                     &suppression_file,
                                     &suppression_detected,
                                     &filename,
+                                    prune_predicate,
                                 );
 
                                 if !diffs.is_empty() && !is_updating_suppression_file {

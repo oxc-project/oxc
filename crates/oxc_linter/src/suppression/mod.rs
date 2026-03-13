@@ -6,7 +6,7 @@ use std::{
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::Message;
+use crate::{Message, tsgolint::Rule};
 
 mod tracking;
 
@@ -177,10 +177,18 @@ impl SuppressionManager {
         }
     }
 
+    pub fn pruned_rule(filename: &Filename, rule_name: Vec<RuleName>) -> Vec<SuppressionDiff> {
+        rule_name
+            .into_iter()
+            .map(|rule| SuppressionDiff::PrunedRuled { file: filename.clone(), rule })
+            .collect()
+    }
+
     pub fn diff_filename(
         suppression_file_state: &SuppressionFile<'_>,
         runtime_suppression: &FxHashMap<RuleName, DiagnosticCounts>,
         filename: &Filename,
+        prune_predicate_fn: impl Fn(&RuleName) -> bool,
     ) -> Vec<SuppressionDiff> {
         let static_suppression = match suppression_file_state.suppression_state() {
             SuppressionFileState::Ignored => return vec![],
@@ -208,10 +216,12 @@ impl SuppressionManager {
         let existing_violations = static_suppression_keys.intersection(&runtime_suppression_keys);
 
         for rule_key in pruned_rules {
-            diff.push(SuppressionDiff::PrunedRuled {
-                file: filename.clone(),
-                rule: (*rule_key).clone(),
-            });
+            if prune_predicate_fn(*rule_key) {
+                diff.push(SuppressionDiff::PrunedRuled {
+                    file: filename.clone(),
+                    rule: (*rule_key).clone(),
+                });
+            }
         }
 
         for rule_key in new_violations {

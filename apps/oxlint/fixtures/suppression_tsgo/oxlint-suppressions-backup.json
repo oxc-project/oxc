@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "index.js": {
+      "eslint/no-debugger": {
+        "count": 1
+      }
+    },
+    "ts/index.ts": {
+      "typescript-eslint/array-type": {
+        "count": 3
+      }
+    },
+    "ts/copy.ts": {
+      "typescript-eslint/await-thenable": {
+        "count": 1
+      },
+      "eslint/no-debugger": {
+        "count": 1
+      },
+      "typescript-eslint/array-type": {
+        "count": 3
+      }
+    }
+  }
+}
