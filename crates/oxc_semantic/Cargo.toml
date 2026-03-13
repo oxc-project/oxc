@@ -24,7 +24,6 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true, optional = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
@@ -36,7 +35,6 @@ itertools = { workspace = true }
 memchr = { workspace = true }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
-smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }

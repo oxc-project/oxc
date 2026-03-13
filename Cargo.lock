@@ -2304,7 +2304,6 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_cfg",
- "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_index",
@@ -2315,7 +2314,6 @@ dependencies = [
  "rustc-hash",
  "self_cell",
  "serde_json",
- "smallvec",
 ]
 
 [[package]]
