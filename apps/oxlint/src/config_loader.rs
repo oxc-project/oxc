@@ -5,6 +5,7 @@ use std::{
 };
 
 use ignore::DirEntry;
+use tracing::debug;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
@@ -496,9 +497,15 @@ impl<'a> ConfigLoader<'a> {
 
         // Fallback: check for vite.config.ts with .lint field (lowest priority)
         // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
+        // If loading fails (e.g. unresolvable dependencies), skip rather than aborting config discovery.
         let vite_config_path = dir.join(VITE_CONFIG_NAME);
         if vite_config_path.is_file() {
-            return self.load_root_js_config(&vite_config_path);
+            match self.load_root_js_config(&vite_config_path) {
+                Ok(config) => return Ok(config),
+                Err(err) => {
+                    debug!("Failed to load {}: {err}, skipping", vite_config_path.display());
+                }
+            }
         }
 
         Ok(None)
