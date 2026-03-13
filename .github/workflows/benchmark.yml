@@ -73,7 +73,6 @@ jobs:
         with:
           cache-key: benchmark-${{ matrix.feature }}
           save-cache: ${{ github.ref_name == 'main' }}
-          tools: cargo-codspeed
 
       - name: Build benchmark
         env:
