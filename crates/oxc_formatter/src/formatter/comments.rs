@@ -140,35 +140,6 @@ pub struct Comments<'a> {
 }
 
 impl<'a> Comments<'a> {
-    #[inline]
-    const fn is_end_of_line_comment_gap_byte(byte: u8) -> bool {
-        matches!(byte, b'\t' | b' ' | b'=' | b':')
-    }
-
-    #[inline]
-    const fn is_trailing_suppression_gap_byte(byte: u8) -> bool {
-        Self::is_end_of_line_comment_gap_byte(byte) || matches!(byte, b',' | b';')
-    }
-
-    fn end_of_line_comments_after_with(
-        &self,
-        mut pos: u32,
-        is_allowed_gap_byte: impl Fn(u8) -> bool + Copy,
-    ) -> &'a [Comment] {
-        let comments = self.comments_after(pos);
-        for (index, comment) in comments.iter().enumerate() {
-            if self.source_text.all_bytes_match(pos, comment.span.start, is_allowed_gap_byte) {
-                if comment.is_line() || comment.followed_by_newline() {
-                    return &comments[..=index];
-                }
-                pos = comment.span.end;
-            } else {
-                break;
-            }
-        }
-        &[]
-    }
-
     pub fn new(source_text: SourceText<'a>, comments: &'a [Comment]) -> Self {
         Comments {
             source_text,
@@ -223,8 +194,21 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns end-of-line comments that are after the given position (excluding printed ones).
-    pub fn end_of_line_comments_after(&self, pos: u32) -> &'a [Comment] {
-        self.end_of_line_comments_after_with(pos, Self::is_end_of_line_comment_gap_byte)
+    pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
+        let comments = self.comments_after(pos);
+        for (index, comment) in comments.iter().enumerate() {
+            if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
+                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
+            }) {
+                if comment.is_line() || comment.followed_by_newline() {
+                    return &comments[..=index];
+                }
+                pos = comment.span.end;
+            } else {
+                break;
+            }
+        }
+        &[]
     }
 
     /// Returns comments that start after the given position (excluding printed ones).
@@ -412,7 +396,7 @@ impl<'a> Comments<'a> {
     /// `statement(); /* prettier-ignore */`
     /// `value, // prettier-ignore`
     pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
-        self.end_of_line_comments_after_with(pos, Self::is_trailing_suppression_gap_byte)
+        self.end_of_line_comments_after(pos)
             .iter()
             .any(|comment| self.is_suppression_comment(comment))
     }

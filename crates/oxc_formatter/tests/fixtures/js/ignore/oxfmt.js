@@ -69,6 +69,10 @@ const items = [
   {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
 ];
 
+foo(  {a:1,b:2},  // prettier-ignore
+  {c:3,d:4}
+);
+
 function demo() {
   return   {a:1,b:2}; // prettier-ignore
 }
