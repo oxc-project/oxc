@@ -2,6 +2,7 @@ import { defineConfig } from "tsdown";
 // oxlint-disable-next-line typescript/ban-ts-comment
 // @ts-ignore - file is generated and not checked in to git
 import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";
+import inlineSearchPlugin from "./tsdown_plugins/inline_search.ts";
 import replaceGlobalsPlugin from "./tsdown_plugins/replace_globals.ts";
 import replaceAssertsPlugin from "./tsdown_plugins/replace_asserts.ts";
 
@@ -86,7 +87,7 @@ for (const ruleName of ruleNames) {
 
 // Plugins.
 // Only remove debug assertions in release build.
-const plugins = [replaceGlobalsPlugin];
+const plugins = [inlineSearchPlugin, replaceGlobalsPlugin];
 if (!DEBUG) plugins.push(replaceAssertsPlugin);
 
 // All build configs

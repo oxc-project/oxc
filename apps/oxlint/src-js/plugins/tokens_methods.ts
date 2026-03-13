@@ -1483,6 +1483,29 @@ export function isSpaceBetweenTokens(first: NodeOrToken, second: NodeOrToken): b
  *
  * Returns `tokens.length` if all tokens have `start` < `offset`.
  *
+ * IMPORTANT
+ * ---------
+ *
+ * This function is inlined into all call sites by a TSDown plugin, to avoid the overhead of function calls
+ * (see `tsdown_plugins/inline_search.ts`).
+ *
+ * For the plugin to work, the following conditions must be met:
+ *
+ * 1. All call sites must follow this pattern:
+ *   * `const result = firstTokenAtOrAfter(a, b, c);` or `let result = firstTokenAtOrAfter(a, b, c);`
+ *   * `result` can be any variable name.
+ *   * `a`, `b`, and `c` can be any variables, or literals (e.g. `0`).
+ *   * Optionally, the call expression can be the left side of a binary expression
+ *     e.g. `const result = firstTokenAtOrAfter(a, b, c) - 1;`.
+ *
+ * 2. If renaming this function, the TSDown plugin must be updated to match.
+ *
+ * 3. The function body is inlined except for the final `return` statement.
+ *    If altering this function's body, ensure it does not define any vars at top-level of the function,
+ *    as they could conflict with other vars in the call site's scope.
+ *
+ * If any calls cannot be inlined, it will produce an error at build time.
+ *
  * @param tokens - Sorted array of tokens/comments
  * @param offset - Source offset to search for
  * @param startIndex - Starting index for the search
