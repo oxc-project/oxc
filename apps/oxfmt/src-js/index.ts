@@ -1,5 +1,4 @@
 // napi-JS `oxfmt` API entry point
-// See also `format()` function in `./src/main_napi.rs`
 
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import {
@@ -10,7 +9,6 @@ import {
   sortTailwindClasses,
 } from "./libs/apis";
 // Types are auto-generated from the JSON Schema.
-// See `config.generated.ts` for the full list of generated types.
 import type {
   Oxfmtrc,
   FormatConfig,
@@ -19,18 +17,21 @@ import type {
   SortTailwindcssConfig,
 } from "./config.generated";
 
-/**
- * Define an oxfmt configuration with type inference.
- */
-export function defineConfig<T extends Oxfmtrc>(config: T): T {
-  return config;
-}
+// --- Type exports ---
+// Only exports top level types for now
+
+// The same naming convention as `oxlint` for consistency
+export type OxfmtConfig = Oxfmtrc;
+export type { FormatConfig } from "./config.generated";
+
+// Backward-compatible type aliases using `Options` suffix.
 
 /**
  * Configuration options for the `format()` API.
  *
  * Based on `FormatConfig` generated from the JSON Schema,
  * with additional deprecated aliases for backward compatibility.
+ * @deprecated Use `FormatConfig` instead.
  */
 export type FormatOptions = FormatConfig & {
   /** @deprecated Use `sortImports` instead. */
@@ -40,18 +41,28 @@ export type FormatOptions = FormatConfig & {
   /** @deprecated Use `sortTailwindcss` instead. */
   experimentalTailwindcss?: SortTailwindcssConfig;
 };
-
-// Backward-compatible type aliases using `Options` suffix.
+/** @deprecated Use `FormatConfig["sortImports"]` instead. */
 export type SortImportsOptions = SortImportsConfig;
+/** @deprecated Use `FormatConfig["sortPackageJson"]` instead. */
 export type SortPackageJsonOptions = SortPackageJsonConfig;
+/** @deprecated Use `FormatConfig["sortTailwindcss"]` instead. */
 export type SortTailwindcssOptions = SortTailwindcssConfig;
-/** @deprecated Use `SortTailwindcssOptions` instead. */
+/** @deprecated Use `FormatConfig["sortTailwindcss"]` instead. */
 export type TailwindcssOptions = SortTailwindcssConfig;
+
+// --- Function exports ---
+
+/**
+ * Define an oxfmt configuration with type inference.
+ */
+export function defineConfig<T extends OxfmtConfig>(config: T): T {
+  return config;
+}
 
 /**
  * Format the given source text according to the specified options.
  */
-export async function format(fileName: string, sourceText: string, options?: FormatOptions) {
+export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 
