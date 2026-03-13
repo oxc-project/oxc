@@ -1,14 +1,16 @@
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
-use oxc_ast::ast::*;
-use oxc_semantic::ScopeFlags;
-use oxc_span::SPAN;
+use oxc_allocator::{CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_ast::{NONE, ast::*};
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_span::{Atom, SPAN};
+use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{
     common::computed_key::{create_computed_key_temp_var, key_needs_temp_var},
     context::TraverseCtx,
     utils::ast_builder::{
-        create_class_constructor, create_this_property_access, create_this_property_assignment,
+        create_class_constructor, create_class_method, create_this_private_field_expression,
+        create_this_property_access, create_this_property_assignment,
     },
 };
 
@@ -204,6 +206,191 @@ impl<'a> TypeScript<'a> {
         } else if let Some(element) = computed_key_assignment_static_block {
             class.body.body.insert(0, element);
         }
+    }
+
+    /// Lower `accessor` properties to private backing fields + get/set pairs.
+    ///
+    /// Corresponds to TypeScript's `classFields.ts` `transformAutoAccessor`.
+    ///
+    /// `accessor prop: T = val` becomes:
+    /// ```js
+    /// #prop_accessor_storage = val;
+    /// get prop() { return this.#prop_accessor_storage; }
+    /// set prop(value) { this.#prop_accessor_storage = value; }
+    /// ```
+    pub(super) fn lower_accessor_properties(class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !class
+            .body
+            .body
+            .iter()
+            .any(|e| matches!(e, ClassElement::AccessorProperty(p) if !p.r#type.is_abstract()))
+        {
+            return;
+        }
+
+        let class_scope_id = class.scope_id();
+        let mut new_body = ctx.ast.vec_with_capacity(class.body.body.len() * 3);
+
+        for element in class.body.body.drain(..) {
+            let ClassElement::AccessorProperty(accessor) = element else {
+                new_body.push(element);
+                continue;
+            };
+            if accessor.r#type.is_abstract() {
+                new_body.push(ClassElement::AccessorProperty(accessor));
+                continue;
+            }
+
+            let mut accessor = accessor.unbox();
+            let is_static = accessor.r#static;
+            let computed = accessor.computed;
+
+            // Get the name for the backing field: `<name>_accessor_storage`
+            let name = match &accessor.key {
+                PropertyKey::StaticIdentifier(id) => &id.name,
+                PropertyKey::PrivateIdentifier(id) => &id.name,
+                _ => {
+                    // Computed keys: fall back to keeping the accessor as-is
+                    new_body.push(ClassElement::AccessorProperty(ctx.ast.alloc(accessor)));
+                    continue;
+                }
+            };
+            let storage_name = ctx.ast.atom(&format!("{name}_accessor_storage"));
+
+            // Transfer decorators to the getter so legacy decorator transform can process them.
+            let decorators = std::mem::replace(&mut accessor.decorators, ctx.ast.vec());
+
+            let getter_key = accessor.key.clone_in(ctx.ast.allocator);
+            let setter_key = accessor.key.clone_in(ctx.ast.allocator);
+
+            // 1. Private backing field: `#<name>_accessor_storage = <value>`
+            new_body.push(ctx.ast.class_element_property_definition(
+                SPAN,
+                PropertyDefinitionType::PropertyDefinition,
+                ctx.ast.vec(),
+                ctx.ast.property_key_private_identifier(SPAN, storage_name),
+                NONE,
+                accessor.value.take(),
+                false,
+                is_static,
+                false,
+                false,
+                false,
+                false,
+                false,
+                None,
+            ));
+
+            // 2. Getter: `get <name>() { return this.#<name>_accessor_storage; }`
+            new_body.push(Self::create_accessor_method(
+                decorators,
+                getter_key,
+                MethodDefinitionKind::Get,
+                computed,
+                is_static,
+                storage_name,
+                class_scope_id,
+                ctx,
+            ));
+
+            // 3. Setter: `set <name>(value) { this.#<name>_accessor_storage = value; }`
+            new_body.push(Self::create_accessor_method(
+                ctx.ast.vec(),
+                setter_key,
+                MethodDefinitionKind::Set,
+                computed,
+                is_static,
+                storage_name,
+                class_scope_id,
+                ctx,
+            ));
+        }
+
+        class.body.body = new_body;
+    }
+
+    /// Create a getter or setter method for an accessor property.
+    fn create_accessor_method(
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        kind: MethodDefinitionKind,
+        computed: bool,
+        is_static: bool,
+        storage_name: Atom<'a>,
+        class_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> ClassElement<'a> {
+        let is_getter = kind == MethodDefinitionKind::Get;
+        let scope_flags = ScopeFlags::Function
+            | ScopeFlags::StrictMode
+            | if is_getter { ScopeFlags::GetAccessor } else { ScopeFlags::SetAccessor };
+        let scope_id = ctx.create_child_scope(class_scope_id, scope_flags);
+
+        let (params, body_stmt) = if is_getter {
+            // `return this.#<storage_name>;`
+            let params = ctx.ast.alloc_formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec(),
+                NONE,
+            );
+            let stmt = ctx.ast.statement_return(
+                SPAN,
+                Some(create_this_private_field_expression(storage_name, ctx)),
+            );
+            (params, stmt)
+        } else {
+            // `this.#<storage_name> = value;`
+            let value_binding = ctx.generate_binding(
+                Atom::from("value").into(),
+                scope_id,
+                SymbolFlags::FunctionScopedVariable,
+            );
+            let param = ctx.ast.formal_parameter(
+                SPAN,
+                ctx.ast.vec(),
+                value_binding.create_binding_pattern(ctx),
+                NONE,
+                NONE,
+                false,
+                None,
+                false,
+                false,
+            );
+            let params = ctx.ast.alloc_formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                ctx.ast.vec1(param),
+                NONE,
+            );
+            let assign = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                AssignmentTarget::from(SimpleAssignmentTarget::from(
+                    ctx.ast.member_expression_private_field_expression(
+                        SPAN,
+                        ctx.ast.expression_this(SPAN),
+                        ctx.ast.private_identifier(SPAN, storage_name),
+                        false,
+                    ),
+                )),
+                value_binding.create_read_expression(ctx),
+            );
+            let stmt = ctx.ast.statement_expression(SPAN, assign);
+            (params, stmt)
+        };
+
+        create_class_method(
+            decorators,
+            key,
+            kind,
+            params,
+            ctx.ast.vec1(body_stmt),
+            computed,
+            is_static,
+            scope_id,
+            ctx,
+        )
     }
 
     pub(super) fn transform_class_on_exit(

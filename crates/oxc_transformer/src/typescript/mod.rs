@@ -50,12 +50,17 @@ pub struct TypeScript<'a> {
     // Options
     source_type_is_typescript_definition: bool,
     is_class_properties_plugin_enabled: bool,
+    is_legacy_decorator_enabled: bool,
     set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
+    pub fn new(
+        options: &TypeScriptOptions,
+        state: &TransformState<'a>,
+        is_legacy_decorator_enabled: bool,
+    ) -> Self {
         Self {
             annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(),
@@ -64,6 +69,7 @@ impl<'a> TypeScript<'a> {
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             source_type_is_typescript_definition: state.source_type.is_typescript_definition(),
             is_class_properties_plugin_enabled: state.is_class_properties_plugin_enabled,
+            is_legacy_decorator_enabled,
             set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
@@ -117,6 +123,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_class(class, ctx);
+
+        // Lower `accessor` properties to private backing fields + get/set pairs.
+        // This corresponds to TypeScript's `classFields.ts` `transformAutoAccessor`.
+        // Only runs when legacy decorators are enabled (`experimentalDecorators: true`).
+        // Must run before `enter_class_body` so that es2022 class-properties can
+        // transform the newly created private backing fields.
+        if self.is_legacy_decorator_enabled {
+            Self::lower_accessor_properties(class, ctx);
+        }
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.

@@ -195,13 +195,38 @@ pub fn create_class_constructor_with_params<'a>(
     scope_id: ScopeId,
     ctx: &TraverseCtx<'a>,
 ) -> ClassElement<'a> {
-    ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
-        SPAN,
-        MethodDefinitionType::MethodDefinition,
+    create_class_method(
         ctx.ast.vec(),
         PropertyKey::StaticIdentifier(
             ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
         ),
+        MethodDefinitionKind::Constructor,
+        params,
+        stmts,
+        false,
+        false,
+        scope_id,
+        ctx,
+    )
+}
+
+/// Create a `MethodDefinition` class element wrapping a function expression.
+pub fn create_class_method<'a>(
+    decorators: ArenaVec<'a, Decorator<'a>>,
+    key: PropertyKey<'a>,
+    kind: MethodDefinitionKind,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    stmts: ArenaVec<'a, Statement<'a>>,
+    computed: bool,
+    is_static: bool,
+    scope_id: ScopeId,
+    ctx: &TraverseCtx<'a>,
+) -> ClassElement<'a> {
+    ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
+        SPAN,
+        MethodDefinitionType::MethodDefinition,
+        decorators,
+        key,
         ctx.ast.alloc_function_with_scope_id(
             SPAN,
             FunctionType::FunctionExpression,
@@ -216,11 +241,24 @@ pub fn create_class_constructor_with_params<'a>(
             Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
             scope_id,
         ),
-        MethodDefinitionKind::Constructor,
-        false,
-        false,
+        kind,
+        computed,
+        is_static,
         false,
         false,
         None,
+    ))
+}
+
+/// Create `this.#name` private field expression.
+pub fn create_this_private_field_expression<'a>(
+    name: Atom<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    Expression::from(ctx.ast.member_expression_private_field_expression(
+        SPAN,
+        ctx.ast.expression_this(SPAN),
+        ctx.ast.private_identifier(SPAN, name),
+        false,
     ))
 }
