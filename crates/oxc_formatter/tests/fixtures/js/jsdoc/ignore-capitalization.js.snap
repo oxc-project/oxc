@@ -27,14 +27,14 @@ function anotherHelper() {}
 /**
  * @ignore
  *
- * `@hidden` and `@ignore` mark a reflection as not being documented.
+ *   `@hidden` and `@ignore` mark a reflection as not being documented.
  */
 function internalHelper() {}
 
 /**
  * @ignore
  *
- * Some description after blank line
+ *   Some description after blank line
  */
 function anotherHelper() {}
 
@@ -46,14 +46,14 @@ function anotherHelper() {}
 /**
  * @ignore
  *
- * `@hidden` and `@ignore` mark a reflection as not being documented.
+ *   `@hidden` and `@ignore` mark a reflection as not being documented.
  */
 function internalHelper() {}
 
 /**
  * @ignore
  *
- * Some description after blank line
+ *   Some description after blank line
  */
 function anotherHelper() {}
 

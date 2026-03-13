@@ -847,14 +847,15 @@ impl JsdocFormatter<'_, '_> {
 
         // If there was a blank line between the tag and the description,
         // preserve the separation: output the tag alone, a blank line, then
-        // the description as a separate paragraph (no continuation indent —
-        // the blank line makes this a new top-level block, not a tag continuation).
+        // the description as a continuation-indented paragraph.
         if has_leading_blank_line {
             self.content_lines.push(tag_line);
             self.content_lines.push_empty();
+            let indent = self.continuation_indent();
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
             let mut desc = wrap_text(
                 &desc_text,
-                self.wrap_width,
+                indent_width,
                 0,
                 false,
                 Some(self.format_options),
@@ -865,7 +866,7 @@ impl JsdocFormatter<'_, '_> {
             if desc.starts_with('\n') {
                 desc.remove(0);
             }
-            self.push_indented_desc("", desc);
+            self.push_indented_desc(indent, desc);
             return;
         }
 

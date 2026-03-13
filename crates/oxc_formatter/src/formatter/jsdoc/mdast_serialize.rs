@@ -1039,11 +1039,19 @@ fn serialize_list(
 ) {
     let ind = super::wrap::indent_str(indent);
     let mut counter = list.start.unwrap_or(1);
+    let mut first_item = true;
 
     for child in &list.children {
         let Node::ListItem(item) = child else {
             continue;
         };
+
+        // When `list.spread` is true (items separated by blank lines in the
+        // source), add a blank line between items to preserve the loose style.
+        if list.spread && !first_item {
+            lines.push_empty();
+        }
+        first_item = false;
 
         // Build marker
         let (marker, marker_width) = if list.ordered {
@@ -1058,9 +1066,6 @@ fn serialize_list(
         } else {
             (Cow::Borrowed("- "), 2)
         };
-
-        // The upstream plugin does NOT add blank lines between list items.
-        // Blank lines appear only within an item's children (between paragraphs).
 
         // Serialize each child of the ListItem
         let mut first_child = true;

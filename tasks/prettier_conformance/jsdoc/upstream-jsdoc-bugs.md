@@ -97,3 +97,42 @@ types). A formatter should normalize these.
 **Root cause**: The plugin does not normalize whitespace inside `{...}` type expressions.
 
 **Found in**: svelte (nodes.js)
+
+## 4. `{@link}` placeholder width off-by-one causes lines to exceed printWidth
+
+**Severity**: Low — lines exceed printWidth by 1 character
+
+When wrapping description text containing `{@link ...}` tags, the plugin replaces them with
+underscore placeholders for width calculation. The placeholder collapses the space between the
+tag name and the link content (`{@link Converter}` → `{@link_________}`), making it 1 character
+shorter than the original token. Lines that barely fit with the placeholder exceed printWidth by 1
+after the original `{@link}` tag is restored.
+
+**Root cause**: In `descriptionFormatter.ts`, the replacement regex
+`/{@(link|linkcode|linkplain)[\s](([^{}])*)}/g` strips the space between the tag keyword and the
+content, replacing it with underscores that start immediately after the tag name. The placeholder
+is `{@<tag><underscores>}` (1 char shorter than original `{@<tag> <content>}`).
+
+**Example** (from typedoc `src/lib/application.ts`):
+
+```js
+// prettier-plugin-jsdoc output (81 chars including " * " prefix, exceeds printWidth=80):
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter} and
+ * the {@link Renderer}. ...
+ */
+
+// oxfmt output (correctly stays within printWidth=80):
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter}
+ * and the {@link Renderer}. ...
+ */
+```
+
+**Width breakdown**:
+- `{@link Converter}` is 17 characters
+- Placeholder `{@link_________}` is 16 characters (space removed)
+- Line with placeholder: 77 chars → fits in 80
+- After restoration: 78 chars + ` * ` prefix = 81 → exceeds 80
+
+**Found in**: typedoc (application.ts, converter.ts, renderer.ts, and ~15 other files)

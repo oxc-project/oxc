@@ -498,10 +498,11 @@ mod tests {
     }
 
     #[test]
-    fn test_numbered_list_removes_blank_lines() {
+    fn test_numbered_spread_list_preserves_blank_lines() {
+        // Spread lists (items separated by blank lines) preserve the blank lines
         let result =
             wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
-        assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
+        assert_eq!(result, "1. Thing 1\n\n2. Thing 2\n\n3. Thing 3");
     }
 
     #[test]
@@ -555,5 +556,19 @@ mod tests {
             result,
             "The `string` values within a renderer are always associated with the {@link type} of that\nrenderer. To switch types, call {@link child} with a different `type` argument."
         );
+    }
+
+    #[test]
+    fn test_spread_list_preserves_blank_lines() {
+        let result = wrap_text(
+            "- item one\n\n- item two\n\n- item three",
+            80,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
+        assert_eq!(result, "- item one\n\n- item two\n\n- item three");
     }
 }

@@ -17,6 +17,26 @@ const b = 2;
  */
 const c = 3;
 
+// Full-width wrapping: {@link} counts as full token width, not just display text.
+// "the {@link Converter} and" should NOT fit on one line at printWidth=80 because
+// {@link Converter} is 17 chars, not 9.
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter} and the {@link Renderer}. When running TypeDoc, first the {@link Converter} is invoked which generates a {@link ProjectReflection} from the passed in source files.
+ */
+const d = 4;
+
+// Multiple {@link} tags wrapping at tag boundary
+/**
+ * Triggered when the converter has created a parameter reflection. The listener will be given {@link Context}, {@link Models.ParameterReflection} and a `ts.Node?`
+ */
+const e = 5;
+
+// {@link} with pipe separator
+/**
+ * If canceled, a {@link CancellablePromise | `CancellablePromise`} should throw an `Cancellation` object.
+ */
+const f = 6;
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -34,6 +54,32 @@ const b = 2;
  */
 const c = 3;
 
+// Full-width wrapping: {@link} counts as full token width, not just display text.
+// "the {@link Converter} and" should NOT fit on one line at printWidth=80 because
+// {@link Converter} is 17 chars, not 9.
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter}
+ * and the {@link Renderer}. When running TypeDoc, first the {@link Converter}
+ * is invoked which generates a {@link ProjectReflection} from the passed in
+ * source files.
+ */
+const d = 4;
+
+// Multiple {@link} tags wrapping at tag boundary
+/**
+ * Triggered when the converter has created a parameter reflection. The listener
+ * will be given {@link Context}, {@link Models.ParameterReflection} and a
+ * `ts.Node?`
+ */
+const e = 5;
+
+// {@link} with pipe separator
+/**
+ * If canceled, a {@link CancellablePromise | `CancellablePromise`} should throw
+ * an `Cancellation` object.
+ */
+const f = 6;
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -48,5 +94,29 @@ const b = 2;
  * renderer. To switch types, call {@link child} with a different `type` argument.
  */
 const c = 3;
+
+// Full-width wrapping: {@link} counts as full token width, not just display text.
+// "the {@link Converter} and" should NOT fit on one line at printWidth=80 because
+// {@link Converter} is 17 chars, not 9.
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter} and the
+ * {@link Renderer}. When running TypeDoc, first the {@link Converter} is invoked which generates a
+ * {@link ProjectReflection} from the passed in source files.
+ */
+const d = 4;
+
+// Multiple {@link} tags wrapping at tag boundary
+/**
+ * Triggered when the converter has created a parameter reflection. The listener will be given
+ * {@link Context}, {@link Models.ParameterReflection} and a `ts.Node?`
+ */
+const e = 5;
+
+// {@link} with pipe separator
+/**
+ * If canceled, a {@link CancellablePromise | `CancellablePromise`} should throw an `Cancellation`
+ * object.
+ */
+const f = 6;
 
 ===================== End =====================
