@@ -1,0 +1,99 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Fix 24: No unconditional blank line between description and first tag.
+// Upstream (prettier-plugin-jsdoc) does NOT add a blank line here by default.
+
+/**
+ * This is a description.
+ * @param {string} name - The name
+ */
+function noBlankLine(name) {}
+
+/**
+ * Description text here.
+ * @see https://example.com
+ */
+function noBlankBeforeSee() {}
+
+/**
+ * Some description.
+ * @deprecated Use something else
+ */
+function noBlankBeforeDeprecated() {}
+
+// When the original HAS a blank line, it should be preserved:
+/**
+ * Description with blank line.
+ *
+ * @param {string} x - Value
+ */
+function preservedBlankLine(x) {}
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+// Fix 24: No unconditional blank line between description and first tag.
+// Upstream (prettier-plugin-jsdoc) does NOT add a blank line here by default.
+
+/**
+ * This is a description.
+ * @param {string} name - The name
+ */
+function noBlankLine(name) {}
+
+/**
+ * Description text here.
+ * @see https://example.com
+ */
+function noBlankBeforeSee() {}
+
+/**
+ * Some description.
+ * @deprecated Use something else
+ */
+function noBlankBeforeDeprecated() {}
+
+// When the original HAS a blank line, it should be preserved:
+/**
+ * Description with blank line.
+ *
+ * @param {string} x - Value
+ */
+function preservedBlankLine(x) {}
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+// Fix 24: No unconditional blank line between description and first tag.
+// Upstream (prettier-plugin-jsdoc) does NOT add a blank line here by default.
+
+/**
+ * This is a description.
+ * @param {string} name - The name
+ */
+function noBlankLine(name) {}
+
+/**
+ * Description text here.
+ * @see https://example.com
+ */
+function noBlankBeforeSee() {}
+
+/**
+ * Some description.
+ * @deprecated Use something else
+ */
+function noBlankBeforeDeprecated() {}
+
+// When the original HAS a blank line, it should be preserved:
+/**
+ * Description with blank line.
+ *
+ * @param {string} x - Value
+ */
+function preservedBlankLine(x) {}
+
+===================== End =====================

@@ -113,12 +113,7 @@ function quoteTypes(quote) {}
 /** @type {ProxyHandler<{ props: Record<string, unknown> }>} */
 let handler;
 
-/**
- * @type {ProxyHandler<{
- *   props: Record<string, unknown>;
- *   handler: (event: CustomEvent<string>) => void;
- * }>}
- */
+/** @type {ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>} */
 let handler2;
 
 /** @param {AST.Fragment['nodes']} nodes */
@@ -193,12 +188,7 @@ function quoteTypes(quote) {}
 /** @type {ProxyHandler<{ props: Record<string, unknown> }>} */
 let handler;
 
-/**
- * @type {ProxyHandler<{
- *   props: Record<string, unknown>;
- *   handler: (event: CustomEvent<string>) => void;
- * }>}
- */
+/** @type {ProxyHandler<{ props: Record<string, unknown>; handler: (event: CustomEvent<string>) => void }>} */
 let handler2;
 
 /** @param {AST.Fragment['nodes']} nodes */

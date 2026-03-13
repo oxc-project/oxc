@@ -155,6 +155,16 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             effective_tags.push((tag, normalized_kind));
         }
 
+        // Skip formatting inline @type cast comments (e.g. `/** @type {X} */`).
+        // These are used as inline type assertions and should not be reflowed.
+        if merged_desc.is_empty()
+            && effective_tags.len() == 1
+            && effective_tags[0].1 == "type"
+            && !content.contains('\n')
+        {
+            return None;
+        }
+
         // Format and emit the merged description
         if !merged_desc.is_empty() {
             let desc = format_description_mdast(
@@ -211,10 +221,18 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 && !should_skip_capitalize(normalized_kind)
                 && is_known_tag(normalized_kind);
 
-            // Add blank line between description and first tag
+            // Only preserve original blank line between description and first tag
+            // (upstream does NOT add a blank line here by default)
             if is_first_tag && !self.content_lines.is_empty() && !self.content_lines.last_is_empty()
             {
-                self.content_lines.push_empty();
+                // Check if original source had a blank `*` line between desc and this tag
+                if has_blank_star_line_between(
+                    source_text,
+                    jsdoc_span.start as usize,
+                    tag.kind.span.start as usize,
+                ) {
+                    self.content_lines.push_empty();
+                }
             }
 
             // Add blank lines between tag groups
@@ -497,7 +515,14 @@ pub(super) fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> S
 fn should_skip_capitalize(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
-        "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
+        "borrows"
+            | "default"
+            | "defaultValue"
+            | "deprecated"
+            | "import"
+            | "memberof"
+            | "module"
+            | "see"
     )
 }
 
@@ -507,7 +532,14 @@ fn should_skip_capitalize(tag_kind: &str) -> bool {
 pub(super) fn should_skip_description_formatting(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
-        "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
+        "borrows"
+            | "default"
+            | "defaultValue"
+            | "deprecated"
+            | "import"
+            | "memberof"
+            | "module"
+            | "see"
     )
 }
 
@@ -1050,7 +1082,7 @@ mod tests {
         // Tags that SHOULD capitalize (not in TAGS_PEV_FORMAT_DESCRIPTION)
         assert!(!should_skip_capitalize("param"));
         assert!(!should_skip_capitalize("returns"));
-        assert!(!should_skip_capitalize("deprecated"));
+        assert!(should_skip_capitalize("deprecated"));
         assert!(!should_skip_capitalize("function"));
         assert!(!should_skip_capitalize("typedef"));
         assert!(!should_skip_capitalize("class"));

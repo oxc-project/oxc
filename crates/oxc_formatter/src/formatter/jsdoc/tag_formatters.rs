@@ -547,7 +547,11 @@ impl JsdocFormatter<'_, '_> {
             let first_word_w = full_desc.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w >= self.wrap_width {
                 // Tag prefix + first word don't fit → description starts on new line
-                self.content_lines.push(tag_line);
+                let mut line = tag_line;
+                if has_dash {
+                    line.push_str(" -");
+                }
+                self.content_lines.push(line);
                 let desc = wrap_text(
                     &full_desc,
                     indent_width,

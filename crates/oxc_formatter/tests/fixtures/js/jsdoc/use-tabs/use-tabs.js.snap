@@ -19,7 +19,7 @@ function withExample() {}
 { jsdoc: true, printWidth: 80, useTabs: true }
 ----------------------------------------------
 /**
- * @param {string | number | boolean | null | undefined | object | symbol} value
+ * @param {string | number | boolean | null | undefined | object | symbol} value -
  *   The value
  */
 function longUnion(value) {}
