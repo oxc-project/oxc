@@ -97,17 +97,19 @@ declare_oxc_lint!(
     ///
     /// Redundant roles can lead to confusion and verbosity in the codebase.
     ///
-    /// ### Configuration
+    /// ### Options
     ///
-    /// This rule accepts a configuration object mapping element names to arrays
-    /// of roles that are allowed to be explicitly set even though they match
-    /// the element's implicit role.
+    /// The options are provided as an object keyed by HTML element name;
+    /// the value is an array of implicit ARIA roles that are allowed on
+    /// the specified element.
     ///
-    /// By default, `{ "nav": ["navigation"] }` is allowed.
+    /// The default options allow an implicit role of `navigation` on a
+    /// `nav` element as is
+    /// [advised by W3](https://www.w3.org/WAI/GL/wiki/Using_HTML5_nav_element#Example:The_.3Cnav.3E_element).
     ///
     /// ```json
     /// {
-    ///   "jsx-a11y/no-redundant-roles": ["error", { "nav": ["navigation"], "ul": ["list"] }]
+    ///   "jsx-a11y/no-redundant-roles": ["error", { "nav": ["navigation"] }]
     /// }
     /// ```
     ///
@@ -115,19 +117,18 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// <button role="button"></button>
+    /// <button role="button" />
     /// <body role="document"></body>
-    /// <h1 role="heading"></h1>
-    /// <article role="article"></article>
+    /// <img role="img" src="foo.jpg" />
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// <nav></nav>
-    /// // `nav` with `navigation` is allowed by default config
-    /// <nav role="navigation"></nav>
+    /// <div />
     /// <button></button>
     /// <body></body>
+    /// <button role="presentation" />
+    /// <MyComponent role="main" />
     /// ```
     NoRedundantRoles,
     jsx_a11y,
