@@ -198,7 +198,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b'=' | b':')
+                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
             }) {
                 if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
@@ -394,6 +394,7 @@ impl<'a> Comments<'a> {
     /// This supports patterns like:
     /// `statement(); // prettier-ignore`
     /// `statement(); /* prettier-ignore */`
+    /// `value, // prettier-ignore`
     pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
         self.end_of_line_comments_after(pos)
             .iter()
