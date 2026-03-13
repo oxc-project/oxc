@@ -623,8 +623,8 @@ function mergeVisitFns(visitProps: VisitProp[]): VisitFn {
  * The merged function is statically defined and does not contain a loop, to hopefully allow
  * JS engine to heavily optimize it.
  *
- * `cfgMergers` contains pre-defined functions to merge up to 5 CFG visit functions.
- * Merger functions for merging more than 5 visit functions are created dynamically on demand.
+ * `cfgMergers` contains pre-defined functions to merge up to 3 CFG visit functions.
+ * Merger functions for merging more than 3 visit functions are created dynamically on demand.
  *
  * @param visitProps - Array of `CfgVisitProp` objects
  * @returns Function which calls all CFG visit functions in turn
@@ -745,7 +745,10 @@ const mergers: (Merger | null)[] = [
     },
 ];
 
-// Pre-defined CFG mergers for merging up to 5 functions
+// Pre-defined CFG mergers for merging up to 3 functions.
+//
+// CFG event handlers are rarely used, so we only pre-define mergers for up to 3 functions,
+// unlike the AST node visit fns, where we pre-define 5.
 const cfgMergers: (CfgMerger | null)[] = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
@@ -759,26 +762,5 @@ const cfgMergers: (CfgMerger | null)[] = [
       visit1(...args);
       visit2(...args);
       visit3(...args);
-    },
-  (visit1: CfgVisitFn, visit2: CfgVisitFn, visit3: CfgVisitFn, visit4: CfgVisitFn) =>
-    (...args: unknown[]) => {
-      visit1(...args);
-      visit2(...args);
-      visit3(...args);
-      visit4(...args);
-    },
-  (
-    visit1: CfgVisitFn,
-    visit2: CfgVisitFn,
-    visit3: CfgVisitFn,
-    visit4: CfgVisitFn,
-    visit5: CfgVisitFn,
-  ) =>
-    (...args: unknown[]) => {
-      visit1(...args);
-      visit2(...args);
-      visit3(...args);
-      visit4(...args);
-      visit5(...args);
     },
 ];
