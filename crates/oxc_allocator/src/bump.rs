@@ -461,7 +461,7 @@ pub(crate) fn round_down_to(n: usize, divisor: usize) -> usize {
 pub(crate) fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
-    ptr.wrapping_sub(ptr as usize & (divisor - 1))
+    unsafe { ptr.sub(ptr as usize & (divisor - 1)) }
 }
 
 // After this point, we try to hit page boundaries instead of powers of 2
@@ -1395,56 +1395,31 @@ impl Bump {
     /// Panics if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        self.try_alloc_layout(layout).unwrap_or_else(|_| oom())
+        self.alloc_layout_branchless(layout)
     }
 
     /// Attempts to allocate space for an object with the given `Layout` or else returns
     /// an `Err`.
-    ///
-    /// The returned pointer points at uninitialized memory, and should be
-    /// initialized with
-    /// [`std::ptr::write`](https://doc.rust-lang.org/std/ptr/fn.write.html).
-    ///
-    /// # Errors
-    ///
-    /// Errors if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn try_alloc_layout(&self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        if let Some(p) = self.try_alloc_layout_fast(layout) {
-            Ok(p)
-        } else {
-            self.alloc_layout_slow(layout).ok_or(AllocErr)
-        }
+        Ok(self.alloc_layout_branchless(layout))
     }
 
+    /// UNSOUND: Branchless allocation - assumes chunk always has enough room.
+    /// No bounds checks, no slow path.
     #[inline(always)]
-    fn try_alloc_layout_fast(&self, layout: Layout) -> Option<NonNull<u8>> {
-        // We don't need to check for ZSTs here since they will automatically
-        // be handled properly: the pointer will be bumped by zero bytes,
-        // modulo alignment. This keeps the fast path optimized for non-ZSTs,
-        // which are much more common.
+    fn alloc_layout_branchless(&self, layout: Layout) -> NonNull<u8> {
         unsafe {
             let footer = self.current_chunk_footer.get();
             let footer = footer.as_ref();
             let ptr = footer.ptr.get().as_ptr();
-            let start = footer.data.as_ptr();
-            debug_assert!(start <= ptr);
-            debug_assert!(ptr as *const u8 <= footer as *const _ as *const u8);
 
-            if (ptr as usize) < layout.size() {
-                return None;
-            }
-
-            let ptr = ptr.wrapping_sub(layout.size());
+            let ptr = ptr.sub(layout.size());
             let aligned_ptr = round_mut_ptr_down_to(ptr, layout.align());
 
-            if aligned_ptr >= start {
-                let aligned_ptr = NonNull::new_unchecked(aligned_ptr);
-                footer.ptr.set(aligned_ptr);
-                Some(aligned_ptr)
-            } else {
-                None
-            }
+            let aligned_ptr = NonNull::new_unchecked(aligned_ptr);
+            footer.ptr.set(aligned_ptr);
+            aligned_ptr
         }
     }
 
@@ -1471,6 +1446,7 @@ impl Bump {
     /// parent bump set because there isn't enough room in our current chunk.
     #[inline(never)]
     #[cold]
+    #[expect(dead_code)]
     fn alloc_layout_slow(&self, layout: Layout) -> Option<NonNull<u8>> {
         unsafe {
             let size = layout.size();
@@ -1806,12 +1782,10 @@ impl Bump {
             // Try to allocate the delta size within this same block so we can
             // reuse the currently allocated space.
             let delta = new_size - old_size;
-            if let Some(p) =
-                self.try_alloc_layout_fast(layout_from_size_align(delta, old_layout.align())?)
-            {
-                ptr::copy(ptr.as_ptr(), p.as_ptr(), old_size);
-                return Ok(p);
-            }
+            let p =
+                self.alloc_layout_branchless(layout_from_size_align(delta, old_layout.align())?);
+            ptr::copy(ptr.as_ptr(), p.as_ptr(), old_size);
+            return Ok(p);
         }
 
         // Fallback: do a fresh allocation and copy the existing data into it.
@@ -1897,7 +1871,7 @@ fn oom() -> ! {
 unsafe impl<'a> crate::bumpalo_alloc::Alloc for &'a Bump {
     #[inline(always)]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        self.try_alloc_layout(layout)
+        Ok(self.alloc_layout_branchless(layout))
     }
 
     #[inline]
@@ -1928,13 +1902,12 @@ unsafe impl<'a> crate::bumpalo_alloc::Alloc for &'a Bump {
 }
 
 unsafe impl<'a> Allocator for &'a Bump {
-    #[inline]
+    #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
-        self.try_alloc_layout(layout)
-            .map(|p| unsafe {
-                NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), layout.size()))
-            })
-            .map_err(|_| AllocError)
+        let p = self.alloc_layout_branchless(layout);
+        Ok(unsafe {
+            NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), layout.size()))
+        })
     }
 
     #[inline]

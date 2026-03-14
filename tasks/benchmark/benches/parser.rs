@@ -1,12 +1,17 @@
 use oxc_allocator::Allocator;
-use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json, update_tokens};
-use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+// use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_benchmark::{BenchmarkId, Criterion, /* black_box, */ criterion_group, criterion_main,};
+// use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json, update_tokens};
+use oxc_parser::{ParseOptions, Parser /* ParserReturn, config::RuntimeParserConfig */};
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("parser");
+
+    // Pre-allocate with enough capacity for the largest AST (cal.com.tsx needs ~16 MB).
+    // This ensures the allocator never needs to grow during the benchmark.
+    #[expect(clippy::items_after_statements)]
+    const PRE_ALLOC_CAPACITY: usize = 20 * 1024 * 1024; // 20 MB
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
@@ -17,7 +22,7 @@ fn bench_parser(criterion: &mut Criterion) {
             // Do not include initializing allocator in benchmark.
             // User code would likely reuse the same allocator over and over to parse multiple files,
             // so we do the same here.
-            let mut allocator = Allocator::default();
+            let mut allocator = Allocator::with_capacity(PRE_ALLOC_CAPACITY);
 
             b.iter(|| {
                 Parser::new(&allocator, source_text, source_type)
@@ -34,6 +39,7 @@ fn bench_parser(criterion: &mut Criterion) {
     group.finish();
 }
 
+/*
 fn bench_parser_tokens(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("parser_tokens");
 
@@ -205,13 +211,7 @@ fn bench_estree_tokens_raw(criterion: &mut Criterion) {
 
     group.finish();
 }
+*/
 
-criterion_group!(
-    parser,
-    bench_parser,
-    bench_parser_tokens,
-    bench_estree,
-    bench_estree_tokens,
-    bench_estree_tokens_raw
-);
+criterion_group!(parser, bench_parser,);
 criterion_main!(parser);
