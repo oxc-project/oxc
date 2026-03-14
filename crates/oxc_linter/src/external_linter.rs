@@ -1,13 +1,13 @@
 use std::{fmt::Debug, sync::Arc};
 
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
+use serde::{Deserialize, Serialize};
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_span::Span;
 
 use crate::{
-    config::{OxlintEnv, OxlintGlobals},
+    config::OxlintGlobals,
     context::ContextHost,
     fixer::{CompositeFix, Fix, MergeFixesError},
 };
@@ -272,32 +272,16 @@ impl Debug for ExternalLinter {
     }
 }
 
-/// Struct for serializing globals and envs to send to JS plugins.
+/// Struct for serializing globals to send to JS plugins.
 ///
-/// Serializes as `{ "globals": { "React": "readonly" }, "envs": { "browser": true } }`.
-/// `envs` only includes the environments that are enabled, so all properties are `true`.
+/// Serializes as `{ "globals": { "React": "readonly", "Foo": "off" }}`.
 #[derive(Serialize)]
-pub struct GlobalsAndEnvs<'c> {
+pub struct Globals<'c> {
     globals: &'c OxlintGlobals,
-    envs: EnabledEnvs<'c>,
 }
 
-impl<'c> GlobalsAndEnvs<'c> {
+impl<'c> Globals<'c> {
     pub fn new(ctx_host: &'c ContextHost<'_>) -> Self {
-        Self { globals: ctx_host.globals(), envs: EnabledEnvs(ctx_host.env()) }
-    }
-}
-
-struct EnabledEnvs<'c>(&'c OxlintEnv);
-
-impl Serialize for EnabledEnvs<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-
-        for env_name in self.0.iter() {
-            map.serialize_entry(env_name, &true)?;
-        }
-
-        map.end()
+        Self { globals: ctx_host.globals() }
     }
 }

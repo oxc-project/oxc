@@ -93,7 +93,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    external_linter::GlobalsAndEnvs,
+    external_linter::Globals,
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
@@ -666,7 +666,7 @@ impl Linter {
             None => "{}".to_string(),
         };
 
-        let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
+        let globals_and_envs = Globals::new(ctx_host);
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
             let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
             ctx_host

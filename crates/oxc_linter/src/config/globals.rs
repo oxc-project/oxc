@@ -50,6 +50,10 @@ impl OxlintGlobals {
         self.0.get(name).is_some_and(|value| *value != GlobalValue::Off)
     }
 
+    pub(crate) fn insert(&mut self, name: String, value: GlobalValue) {
+        self.0.insert(name, value);
+    }
+
     pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
         for (env, supported) in self.0.clone() {
             globals_to_override.0.insert(env, supported);
