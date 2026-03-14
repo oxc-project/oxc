@@ -28,3 +28,14 @@ const bar = "hello";
  * continuation indent.
  */
 const baz = 42;
+
+// Fix G: @param code block with excess indent (6 spaces = continuation + code indent)
+// The code block should be normalized to exactly continuation_indent + 4 spaces
+/**
+ * @param paramA This is a **parameter** pointing to an interface.
+ *
+ *       const value = new BaseClass("test");
+ *       functionWithArguments("arg", 0, value);
+ * @returns This is the return value of the function.
+ */
+function qux(paramA) {}

@@ -54,10 +54,10 @@ const y = 2;
 function z(x) {}
 
 // @type name should NOT be capitalized (it's a name, not description)
-const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
-/** @type {string | null} last Part of the filename */
+const current_role = /** @type {ARIARoleDefinitionKey} Current_role */ (c_r);
+/** @type {string | null} Last Part of the filename */
 const file_basename = undefined;
-/** @type {Element} node */
+/** @type {Element} Node */
 const el = null;
 
 --------------------------------
@@ -79,10 +79,10 @@ const y = 2;
 function z(x) {}
 
 // @type name should NOT be capitalized (it's a name, not description)
-const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
-/** @type {string | null} last Part of the filename */
+const current_role = /** @type {ARIARoleDefinitionKey} Current_role */ (c_r);
+/** @type {string | null} Last Part of the filename */
 const file_basename = undefined;
-/** @type {Element} node */
+/** @type {Element} Node */
 const el = null;
 
 ===================== End =====================

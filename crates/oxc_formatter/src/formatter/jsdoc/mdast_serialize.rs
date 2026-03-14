@@ -6,6 +6,7 @@ use oxc_allocator::Allocator;
 
 use crate::{ExternalCallbacks, FormatOptions};
 
+use super::embedded::{format_embedded_js, is_js_ts_lang};
 use super::line_buffer::LineBuffer;
 use super::wrap::{
     format_table_block, wrap_paragraph, wrap_plain_paragraphs, wrap_plain_paragraphs_balance,
@@ -30,12 +31,20 @@ fn needs_mdast_parsing(text: &str) -> bool {
             // Emphasis/strong (*) and underscore (_): only trigger when they
             // could be markdown emphasis (adjacent to non-space), not when
             // used as arithmetic (`2 * 3`) or separators.
+            // Also trigger for `* ` at line starts which could be list markers.
             b'*' | b'_' => {
                 let next = if i + 1 < len { bytes[i + 1] } else { b' ' };
                 let prev = if i > 0 { bytes[i - 1] } else { b' ' };
                 // Emphasis: `*word` or `word*` (adjacent to non-space on at
                 // least one side). `2 * 3` (spaces on both sides) is arithmetic.
                 if !next.is_ascii_whitespace() || !prev.is_ascii_whitespace() {
+                    return true;
+                }
+                // `* ` at line start: could be an unordered list marker
+                if bytes[i] == b'*'
+                    && next == b' '
+                    && (i == 0 || prev == b'\n')
+                {
                     return true;
                 }
             }
@@ -135,7 +144,7 @@ fn needs_mdast_parsing(text: &str) -> bool {
                         }
                         // Unordered list markers: only at block start to avoid
                         // false positives from wrapped text like "min\n+ spacing"
-                        b'-' | b'+'
+                        b'-' | b'+' | b'*'
                             if is_block_start
                                 && i + spaces + 1 < len
                                 && bytes[i + spaces + 1] == b' ' =>
@@ -235,6 +244,7 @@ pub fn format_description_mdast(
     }
 
     let text = normalize_legacy_ordered_list_markers(text);
+    let text = convert_star_list_markers(&text);
     let text = escape_false_list_markers(&text);
 
     // Protect JSDoc inline tags from markdown parsing (GFM autolink would mangle URLs)
@@ -245,7 +255,7 @@ pub fn format_description_mdast(
     // paragraph text instead of the markdown crate's table node.
     let parse_opts = ParseOptions {
         constructs: Constructs {
-            gfm_autolink_literal: true,
+            gfm_autolink_literal: false,
             gfm_footnote_definition: true,
             gfm_label_start_footnote: true,
             gfm_strikethrough: true,
@@ -294,13 +304,9 @@ struct SerializeOptions<'a> {
     prefer_code_fences: bool,
     line_wrapping_style: crate::LineWrappingStyle,
     source: &'a str,
-    // These fields are currently unused because description code blocks are
-    // preserved verbatim (not formatted). Kept for future re-enablement.
-    #[expect(dead_code)]
     format_options: Option<&'a FormatOptions>,
     #[expect(dead_code)]
     external_callbacks: Option<&'a ExternalCallbacks>,
-    #[expect(dead_code)]
     allocator: Option<&'a Allocator>,
 }
 
@@ -362,6 +368,37 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
     if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
 }
 
+/// Convert `* ` list markers at the start of lines to `- ` to prevent the markdown
+/// parser from treating them as emphasis markers. In CommonMark, `* text` after a
+/// paragraph is emphasis (italic), not a list item. Converting to `- ` makes the
+/// markdown parser correctly recognize these as unordered list items.
+fn convert_star_list_markers(text: &str) -> Cow<'_, str> {
+    if !text.contains("* ") {
+        return Cow::Borrowed(text);
+    }
+
+    let mut result = String::with_capacity(text.len());
+    let mut changed = false;
+
+    for (i, line) in text.lines().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        let trimmed = line.trim_start();
+        if let Some(after_star) = trimmed.strip_prefix("* ") {
+            let leading = line.len() - trimmed.len();
+            result.push_str(&line[..leading]);
+            result.push_str("- ");
+            result.push_str(after_star);
+            changed = true;
+        } else {
+            result.push_str(line);
+        }
+    }
+
+    if changed { Cow::Owned(result) } else { Cow::Borrowed(text) }
+}
+
 /// Escape `+ ` at the start of continuation lines (lines preceded by a non-empty line)
 /// to prevent the markdown parser from treating them as unordered list markers.
 /// This handles cases like `min\n+ spacing` in JSDoc where `+` is an arithmetic operator.
@@ -384,7 +421,23 @@ fn escape_false_list_markers(text: &str) -> Cow<'_, str> {
         // Only escape `+ ` when:
         // 1. Line starts with `+ ` (after indent)
         // 2. Previous line is non-empty (it's a continuation, not a new block)
-        if trimmed.starts_with("+ ") && i > 0 && !lines[i - 1].trim().is_empty() {
+        // 3. Previous line is NOT a list item (so we don't escape real list sequences)
+        let prev_is_list_item = i > 0 && {
+            let prev = lines[i - 1].trim_start();
+            prev.starts_with("+ ")
+                || prev.starts_with("- ")
+                || prev.starts_with("* ")
+                || prev
+                    .strip_prefix(|c: char| c.is_ascii_digit())
+                    .is_some_and(|r| {
+                        r.trim_start_matches(|c: char| c.is_ascii_digit()).starts_with(". ")
+                    })
+        };
+        if trimmed.starts_with("+ ")
+            && i > 0
+            && !lines[i - 1].trim().is_empty()
+            && !prev_is_list_item
+        {
             let leading = line.len() - trimmed.len();
             result.push_str(&line[..leading]);
             result.push_str("\\+ ");
@@ -1058,19 +1111,11 @@ fn serialize_list(
 ) {
     let ind = super::wrap::indent_str(indent);
     let mut counter = list.start.unwrap_or(1);
-    let mut first_item = true;
 
     for child in &list.children {
         let Node::ListItem(item) = child else {
             continue;
         };
-
-        // When `list.spread` is true (items separated by blank lines in the
-        // source), add a blank line between items to preserve the loose style.
-        if list.spread && !first_item {
-            lines.push_empty();
-        }
-        first_item = false;
 
         // Build marker
         let (marker, marker_width) = if list.ordered {
@@ -1119,12 +1164,9 @@ fn serialize_list(
                 first_child = false;
             } else {
                 // Subsequent children: indented by marker width, with blank line separation.
-                // Nested lists don't get a blank line before them — they attach
-                // directly to their parent item, matching upstream behavior.
-                if is_block_node(item_child)
-                    && !lines.last_is_empty()
-                    && (!matches!(item_child, Node::List(_)) || item.spread)
-                {
+                // Always add a blank line before nested lists and other block-level nodes
+                // when they follow the first child of the list item (matching upstream behavior).
+                if is_block_node(item_child) && !lines.last_is_empty() {
                     lines.push_empty();
                 }
 
@@ -1183,7 +1225,7 @@ fn serialize_node_for_list_item(
         let inline_text = collect_inline_text_from_children(&para.children);
         let mut buf = LineBuffer::new();
         if is_first_child {
-            wrap_paragraph(&inline_text, opts.max_width, 0, marker_width * 2, &mut buf);
+            wrap_paragraph(&inline_text, opts.max_width, 0, marker_width, &mut buf);
         } else {
             wrap_paragraph(&inline_text, opts.max_width, 0, 0, &mut buf);
         }
@@ -1229,7 +1271,17 @@ fn serialize_code(
         }
         lines.push("```");
     } else {
-        // No language: indented code block (4-space prefix)
+        // No language: indented code block (4-space prefix).
+        // Strip common leading whitespace from the code value first — the markdown
+        // parser may leave residual indent when the source had more than 4 spaces
+        // (e.g. continuation indent + code indent). Re-adding exactly 4 spaces
+        // normalizes the output.
+        let min_indent = formatted_value
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| l.len() - l.trim_start().len())
+            .min()
+            .unwrap_or(0);
         for line in formatted_value.lines() {
             if line.is_empty() {
                 lines.push_empty();
@@ -1237,23 +1289,40 @@ fn serialize_code(
                 {
                     let s = lines.begin_line();
                     s.push_str("    ");
-                    s.push_str(line);
+                    if min_indent > 0 && line.len() >= min_indent {
+                        s.push_str(&line[min_indent..]);
+                    } else {
+                        s.push_str(line);
+                    }
                 }
             }
         }
     }
 }
 
-/// Return the code value as-is.
-/// prettier-plugin-jsdoc preserves code block content in descriptions verbatim
-/// (no reformatting). Only `@example` code blocks are formatted (handled separately
-/// in `tag_formatters.rs`).
+/// Format code block content in JSDoc descriptions.
+/// For JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or
+/// indented code blocks), the code is formatted through Prettier's parser via
+/// `format_embedded_js`. For non-JS/TS fenced code (css, html, etc.), the code
+/// is preserved verbatim.
 fn format_code_value<'a>(
     code: &'a str,
-    _lang: Option<&str>,
-    _width: usize,
-    _opts: &SerializeOptions<'_>,
+    lang: Option<&str>,
+    width: usize,
+    opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
+    if let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) {
+        // For fenced code with an explicit non-JS/TS lang, preserve verbatim
+        if let Some(l) = lang
+            && !is_js_ts_lang(l)
+        {
+            return Cow::Borrowed(code);
+        }
+        // Fenced JS/TS, fenced with no lang, or indented code: try formatting
+        if let Some(formatted) = format_embedded_js(code, width, format_options, allocator) {
+            return Cow::Owned(formatted);
+        }
+    }
     Cow::Borrowed(code)
 }
 

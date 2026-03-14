@@ -60,13 +60,16 @@ The plugin parses `@example` content as JSON and re-serializes it, adding quotes
 // our output:     { testArr: [1, 2] }
 ```
 
-### Lowercase after typedef name
+### Lowercase after typedef name and type spacing
 
 **Fixture:** `main/011-bad-defined-name`
 
-The plugin lowercases the first word after a typedef name, misidentifying the sentence boundary.
+The plugin has two bugs with `@typedef{type}` (no space before brace):
+
+1. **Capitalization**: It lowercases the first word after the name, misidentifying the sentence boundary.
+2. **Type spacing**: It inserts a space before the brace (`@typedef {type}`), not preserving the original `@typedef{type}` format.
 
 ```
-// plugin output (wrong):  @typedef{...} name a description
-// our output (correct):   @typedef{...} name A description
+// plugin output (wrong):  @typedef {import("...").InitialOptions} name a description
+// our output (correct):   @typedef{import('...').InitialOptions} name A description
 ```

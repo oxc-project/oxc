@@ -125,9 +125,9 @@ function attach() {}
  *
  * ```ts
  * const dispatch = createEventDispatcher<{
- *  loaded: null;
- *  change: string;
- *  optional: number | null;
+ *   loaded: null;
+ *   change: string;
+ *   optional: number | null;
  * }>();
  * ```
  *
@@ -192,9 +192,9 @@ function attach() {}
  *
  * ```ts
  * const dispatch = createEventDispatcher<{
- *  loaded: null;
- *  change: string;
- *  optional: number | null;
+ *   loaded: null;
+ *   change: string;
+ *   optional: number | null;
  * }>();
  * ```
  *

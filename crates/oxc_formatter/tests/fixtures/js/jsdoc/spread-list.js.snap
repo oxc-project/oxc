@@ -51,9 +51,7 @@ const c = 3;
  * Features:
  *
  * - Complex method signatures
- *
  * - Static methods
- *
  * - A method with 10 overload signatures
  */
 const a = 1;
@@ -67,8 +65,8 @@ const a = 1;
  * - A method with 10 overload signatures. Wow!
  *
  *   - Only the implementation signature has a doc comment. TypeDoc automatically
- *       copies the comment from the implementation signature to each of the
- *       visible signatures if they don't have one.
+ *     copies the comment from the implementation signature to each of the visible
+ *     signatures if they don't have one.
  *
  * A promise with a `cancel` method.
  */
@@ -93,9 +91,7 @@ const c = 3;
  * Features:
  *
  * - Complex method signatures
- *
  * - Static methods
- *
  * - A method with 10 overload signatures
  */
 const a = 1;
@@ -109,7 +105,7 @@ const a = 1;
  * - A method with 10 overload signatures. Wow!
  *
  *   - Only the implementation signature has a doc comment. TypeDoc automatically copies the comment
- *       from the implementation signature to each of the visible signatures if they don't have one.
+ *     from the implementation signature to each of the visible signatures if they don't have one.
  *
  * A promise with a `cancel` method.
  */

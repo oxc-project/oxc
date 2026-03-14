@@ -136,3 +136,59 @@ is `{@<tag><underscores>}` (1 char shorter than original `{@<tag> <content>}`).
 - After restoration: 78 chars + ` * ` prefix = 81 → exceeds 80
 
 **Found in**: typedoc (application.ts, converter.ts, renderer.ts, and ~15 other files)
+
+## 5. `{@includeCode}` tag split across lines during wrapping
+
+**Severity**: Medium — breaks inline tag syntax
+
+When wrapping long description lines, the plugin breaks `{@includeCode file#region}` tags across
+lines, unlike `{@link}` tags which it correctly keeps atomic. This corrupts the tag syntax.
+
+**Example** (from typedoc `src/test/converter/exports/duplicateRegion.ts`):
+
+```js
+// prettier-plugin-jsdoc output (tag broken across lines):
+/**
+ * {@includeCode
+ * duplicateRegion.ts#region}
+ */
+
+// oxfmt output (tag kept atomic):
+/**
+ * {@includeCode duplicateRegion.ts#region}
+ */
+```
+
+**Root cause**: The plugin's link-protection regex only handles `{@link}`, `{@linkcode}`, and
+`{@linkplain}` tags. `{@includeCode}` is not protected, so the markdown wrapping logic treats
+its content as normal text and breaks it at word boundaries.
+
+**Found in**: typedoc (duplicateRegion.ts, invalidLineRanges.ts, missingRegion.ts)
+
+## 6. `@default` content not wrapped at printWidth
+
+**Severity**: Low — lines exceed printWidth
+
+When `@default` tag has a blank line followed by prose, the plugin doesn't wrap the prose even
+when it exceeds printWidth. The prose line is preserved as-is.
+
+**Example** (from typedoc `src/test/converter/inheritance/inherit-doc.ts`):
+
+```js
+// prettier-plugin-jsdoc output (83 chars, exceeds printWidth=80):
+/**
+ * @default
+ *
+ * This part of the commentary will not be inherited (this is an abuse of this tag)
+ */
+
+// oxfmt output (correctly wraps at 80):
+/**
+ * @default
+ *
+ * This part of the commentary will not be inherited (this is an abuse of this
+ * tag)
+ */
+```
+
+**Found in**: typedoc (inherit-doc.ts)

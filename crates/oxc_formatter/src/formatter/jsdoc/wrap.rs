@@ -450,7 +450,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- This is a very long list item that\n    should be wrapped to the next line\n    with proper indent"
+            "- This is a very long list item that\n  should be wrapped to the next line\n  with proper indent"
         );
     }
 
@@ -496,11 +496,12 @@ mod tests {
     }
 
     #[test]
-    fn test_numbered_spread_list_preserves_blank_lines() {
-        // Spread lists (items separated by blank lines) preserve the blank lines
+    fn test_numbered_spread_list_collapses_blank_lines() {
+        // Upstream prettier-plugin-jsdoc removes blank lines between list items
+        // even when the source has them (spread lists).
         let result =
             wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
-        assert_eq!(result, "1. Thing 1\n\n2. Thing 2\n\n3. Thing 3");
+        assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
     #[test]
@@ -516,7 +517,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- Consider caching this for the lifetime of the component, or possibly being\n    able to share this cache between any `ScrollMap` view."
+            "- Consider caching this for the lifetime of the component, or possibly being\n  able to share this cache between any `ScrollMap` view."
         );
     }
 
@@ -534,7 +535,7 @@ mod tests {
         );
         assert_eq!(
             result,
-            "- Consider caching this for the lifetime of the component, or possibly being\n    able to share this cache between any `ScrollMap` view."
+            "- Consider caching this for the lifetime of the component, or possibly being\n  able to share this cache between any `ScrollMap` view."
         );
     }
 
@@ -557,10 +558,12 @@ mod tests {
     }
 
     #[test]
-    fn test_spread_list_preserves_blank_lines() {
+    fn test_spread_list_collapses_blank_lines() {
+        // Upstream prettier-plugin-jsdoc removes blank lines between list items
+        // even when the source has them (spread lists).
         let result =
             wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false, None, None, None);
-        assert_eq!(result, "- item one\n\n- item two\n\n- item three");
+        assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
     #[test]

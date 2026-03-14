@@ -3,5 +3,5 @@
 
 /**
  * @typedef{import('@jest/types/build/Config').InitialOptions} name A
- * description
+ *   description
  */

@@ -58,15 +58,40 @@ impl LineBuffer {
         self.buf.len()
     }
 
-    /// Check whether content written after `from_byte` contains a blank line (`\n\n`).
-    pub(super) fn has_blank_line_since(&self, from_byte: usize) -> bool {
-        self.buf[from_byte..].contains("\n\n")
-    }
-
     /// Count how many `\n` separators exist in content written after `from_byte`.
     pub(super) fn line_count_since(&self, from_byte: usize) -> usize {
         // Each \n before from_byte is a prior separator; count new ones.
         self.buf[from_byte..].bytes().filter(|&b| b == b'\n').count()
+    }
+
+    /// Check if the last non-empty line ends a block-level element (list item
+    /// or code block). Used to decide whether a trailing blank line is needed
+    /// before the next tag.
+    pub(super) fn last_line_is_block_end(&self) -> bool {
+        // Walk backwards from end to find the last non-empty line.
+        let last = self.buf.rsplit('\n').find(|l| !l.is_empty()).unwrap_or("");
+        let trimmed = last.trim_start();
+        // List item markers: `- `, `+ `, `* `, or `1. ` etc.
+        if trimmed.starts_with("- ")
+            || trimmed.starts_with("+ ")
+            || trimmed.starts_with("* ")
+            || trimmed.starts_with("```")
+        {
+            return true;
+        }
+        // Ordered list: digit(s) followed by `. `
+        if let Some(rest) = trimmed.strip_prefix(|c: char| c.is_ascii_digit()) {
+            let rest = rest.trim_start_matches(|c: char| c.is_ascii_digit());
+            if rest.starts_with(". ") {
+                return true;
+            }
+        }
+        // Indented code block (4+ spaces) — already handled by checking if last
+        // line content starts with 4 spaces
+        if last.starts_with("    ") {
+            return true;
+        }
+        false
     }
 
     pub(super) fn into_string(self) -> String {

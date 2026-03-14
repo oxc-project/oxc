@@ -157,10 +157,12 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Skip formatting inline @type cast comments (e.g. `/** @type {X} */`).
         // These are used as inline type assertions and should not be reflowed.
+        // Only skip when the @type tag has NO description (pure cast).
         if merged_desc.is_empty()
             && effective_tags.len() == 1
             && effective_tags[0].1 == "type"
             && !content.contains('\n')
+            && effective_tags[0].0.comment().parsed().trim().is_empty()
         {
             return None;
         }
@@ -195,7 +197,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Format tags
         let mut prev_normalized_kind: Option<&str> = None;
-        let mut prev_tag_kind_start: Option<u32> = None;
+
         let mut first_non_import_tag_emitted = false;
         for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
             // Skip successfully parsed @import tags — they are handled via merged import_lines.
@@ -257,20 +259,9 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                         })
                 };
 
-                // Preserve original blank lines between tags: if the source had a
-                // blank `*` line between the previous tag and this tag, force a
-                // separator. We check the source from the previous tag's `@` to
-                // this tag's `@` because the parser includes inter-tag whitespace
-                // in the previous tag's body span.
-                let should_separate = should_separate
-                    || prev_tag_kind_start.is_some_and(|prev_start| {
-                        prev_start < tag.kind.span.start
-                            && has_blank_star_line_between(
-                                source_text,
-                                prev_start as usize,
-                                tag.kind.span.start as usize,
-                            )
-                    });
+                // Note: upstream does NOT preserve source blank lines between tags.
+                // Blank lines between tags are controlled solely by the options
+                // (separate_tag_groups, separate_returns_from_param, etc.).
 
                 if should_separate && !self.content_lines.last_is_empty() {
                     self.content_lines.push_empty();
@@ -279,7 +270,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             first_non_import_tag_emitted = true;
             prev_normalized_kind = Some(normalized_kind);
-            prev_tag_kind_start = Some(tag.kind.span.start);
+
 
             // Track content before formatting this tag
             let lines_before = self.content_lines.byte_len();
@@ -301,33 +292,31 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                     has_no_space_before_type,
                 );
             } else if is_type_comment_tag(normalized_kind) {
-                // For @type/@satisfies, skip capitalization — the text after {type}
-                // is a "name" in comment-parser's model and upstream does not
-                // capitalize it.
-                let capitalize =
-                    should_capitalize && !matches!(normalized_kind, "type" | "satisfies");
                 self.format_type_comment_tag(
                     normalized_kind,
                     tag,
-                    capitalize,
+                    should_capitalize,
                     has_no_space_before_type,
                 );
             } else {
                 self.format_generic_tag(normalized_kind, tag, should_capitalize);
             }
 
-            // If this tag has multi-paragraph content (blank lines within, or is an @example tag
-            // with multi-line code) and the next tag is of a different kind, add a trailing
-            // blank line for separation.
-            let tag_content_has_blank_lines = self.content_lines.has_blank_line_since(lines_before);
-            // line_count_since counts \n separators added since the snapshot; ≥2 means multi-line.
+            // Add a trailing blank line before the next tag when:
+            // 1. This is a multi-line @example tag followed by a different kind
+            // 2. This tag's description ends with a list or code block
             let tag_newline_count = self.content_lines.line_count_since(lines_before);
-            let is_example_multiline = normalized_kind == "example" && tag_newline_count > 1;
-            if (tag_content_has_blank_lines || is_example_multiline)
-                && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
-                && next_kind != normalized_kind
-                && !self.content_lines.last_is_empty()
-            {
+            let needs_trailing_blank = if normalized_kind == "example" && tag_newline_count > 1 {
+                // Multi-line @example: blank line before different tag kind
+                effective_tags
+                    .get(tag_idx + 1)
+                    .is_some_and(|&(_, next_kind)| next_kind != normalized_kind)
+            } else {
+                // Other tags: blank line if description ends with a block element
+                effective_tags.get(tag_idx + 1).is_some()
+                    && self.content_lines.last_line_is_block_end()
+            };
+            if needs_trailing_blank && !self.content_lines.last_is_empty() {
                 self.content_lines.push_empty();
             }
         }
@@ -736,27 +725,6 @@ fn sort_tags_by_groups<'a>(
     groups.into_iter().flatten().collect()
 }
 
-/// Check if the source text between two tag `@` positions contains a blank JSDoc line.
-/// The range `[start..end]` spans from the previous tag's `@` to the current tag's `@`.
-/// We skip the first line (previous tag's `@` line) and last line (` * ` prefix before
-/// the current `@`), and check intermediate lines for blank `*`-only lines.
-fn has_blank_star_line_between(source_text: &str, start: usize, end: usize) -> bool {
-    if start >= end || end > source_text.len() {
-        return false;
-    }
-    let between = &source_text[start..end];
-    let lines: Vec<&str> = between.lines().collect();
-    // Need at least 3 lines: first (prev tag), blank line, last (` * ` prefix)
-    if lines.len() < 3 {
-        return false;
-    }
-    // Check intermediate lines (skip first and last)
-    lines[1..lines.len() - 1].iter().any(|line| {
-        let trimmed = line.trim();
-        trimmed == "*"
-    })
-}
-
 /// Check if a tag has meaningful content.
 fn tag_has_content(tag: &oxc_jsdoc::parser::JSDocTag<'_>) -> bool {
     let comment = tag.comment().parsed();
@@ -793,15 +761,48 @@ pub(super) fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<
         return Cow::Borrowed(trimmed);
     }
 
-    // For values starting with a quote, verify the quote is matched.
-    // Unmatched quotes like `'circle;` should be preserved as-is.
+    // For values starting with a quote, find the matching close and convert just
+    // the quoted portion. The rest (description after the value) is kept as-is.
+    // e.g. `'i am a value' i am the description` → `"i am a value" i am the description`
     if matches!(first_byte, b'"' | b'\'') {
         let quote = first_byte;
-        // Check if there's a matching closing quote
-        let has_closing = trimmed.len() > 1 && trimmed.as_bytes().last() == Some(&quote);
-        if !has_closing {
-            return Cow::Borrowed(trimmed);
+        let bytes = trimmed.as_bytes();
+        // Find matching closing quote (skip first char)
+        let mut i = 1;
+        while i < bytes.len() {
+            if bytes[i] == b'\\' {
+                i += 2; // skip escape
+                continue;
+            }
+            if bytes[i] == quote {
+                // Found closing quote at position i
+                let inner = &trimmed[1..i];
+                let rest = &trimmed[i + 1..];
+                let (target, _other) = match quote_style {
+                    QuoteStyle::Double => ('"', '\''),
+                    QuoteStyle::Single => ('\'', '"'),
+                };
+                // If already using target quotes and no inner conversions needed, skip
+                if quote == target as u8 {
+                    return Cow::Borrowed(trimmed);
+                }
+                let mut result = String::with_capacity(trimmed.len());
+                result.push(target);
+                // Escape target quotes within inner, unescape other quotes
+                for ch in inner.chars() {
+                    if ch == target {
+                        result.push('\\');
+                    }
+                    result.push(ch);
+                }
+                result.push(target);
+                result.push_str(rest);
+                return Cow::Owned(result);
+            }
+            i += 1;
         }
+        // No matching close quote found — return as-is
+        return Cow::Borrowed(trimmed);
     }
 
     // Determine target and source quote characters based on quote style.
@@ -1118,6 +1119,10 @@ mod tests {
         // Types that would actually change
         assert_eq!(fmt_type("string|number"), Some("string | number".to_string()));
         assert_eq!(fmt_type(""), None);
+        // Quote conversion: single → double (default QuoteStyle::Double)
+        let result = fmt_type("import('eslint').Linter.Config");
+        println!("Result: {:?}", result);
+        assert_eq!(result, Some("import(\"eslint\").Linter.Config".to_string()));
     }
 
     fn fmt_type_width(type_str: &str, width: u16) -> Option<String> {

@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
+
 use super::{
     embedded::{
         format_embedded_js, format_type_via_formatter, is_js_ts_lang, update_template_depth,
@@ -15,6 +17,16 @@ use super::{
     },
     wrap::{str_width, wrap_text},
 };
+
+/// Replace standalone JSDoc `*` type syntax with `any` in a multiline type string.
+///
+/// After JSDoc `*` line prefixes have been stripped (via `strip_jsdoc_stars_preserve_newlines`),
+/// remaining `*` characters represent the JSDoc "any" type (e.g., `"profileImageLink": *,`).
+/// This replaces them so the TS parser can handle the type expression.
+/// Matches the upstream behavior of `type.replace(/\*/g, " any ")` in `convertToModernType()`.
+fn replace_jsdoc_star_type(s: &str) -> Cow<'_, str> {
+    s.cow_replace('*', " any ")
+}
 
 /// Strip the minimum common leading whitespace from all non-empty lines,
 /// preserving relative indentation. `base_indent` is the indent of context
@@ -299,8 +311,16 @@ impl JsdocFormatter<'_, '_> {
                     } else {
                         type_to_normalize
                     };
-                    let formatter_input = if was_multiline {
-                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source))
+                    // For multiline types, build a formatter input that preserves
+                    // newlines but converts JSDoc-specific syntax (`*` → `any`) so
+                    // the TS parser can handle it. For single-line types, use the
+                    // normalized string directly.
+                    let formatter_input: Cow<'_, str> = if was_multiline {
+                        // Strip JSDoc `*` line prefixes while preserving newlines,
+                        // then replace standalone `*` type syntax with `any`.
+                        let star_stripped =
+                            strip_jsdoc_stars_preserve_newlines(multiline_source);
+                        Cow::Owned(replace_jsdoc_star_type(&star_stripped).into_owned())
                     } else {
                         Cow::Borrowed(normalized_type_str.as_ref())
                     };
@@ -309,21 +329,20 @@ impl JsdocFormatter<'_, '_> {
                         &self.type_format_options,
                         self.allocator,
                     ) {
-                        // If the original type was multi-line but the formatter
-                        // collapsed it to single-line, keep the multi-line version.
-                        // Prettier's TS formatter preserves multi-line structure,
-                        // but oxfmt's collapses short types — so we restore it.
-                        if was_multiline && !formatted.contains('\n') {
-                            normalized_type_str =
-                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source));
-                        } else {
-                            normalized_type_str = Cow::Owned(formatted);
-                        }
+                        // Always use the formatted result. The TS formatter respects
+                        // print width, so multi-line types stay multi-line and short
+                        // types that fit on one line are correctly collapsed.
+                        normalized_type_str = Cow::Owned(formatted);
                     } else if was_multiline {
                         // Formatter failed (parse error) but type was multi-line;
                         // use the star-stripped version with newlines preserved.
-                        normalized_type_str =
-                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(multiline_source));
+                        // For types that are only "multiline" due to JSDoc formatting
+                        // (e.g., `() => a.b` on its own line), the normalized
+                        // single-line version is already correct.
+                        if formatter_input.contains('\n') {
+                            normalized_type_str = Cow::Owned(formatter_input.into_owned());
+                        }
+                        // Otherwise keep normalized_type_str (single-line, already correct)
                     }
                 }
             }
@@ -792,14 +811,55 @@ impl JsdocFormatter<'_, '_> {
         let desc_text: Cow<'_, str> =
             if should_capitalize { capitalize_first(desc_text) } else { Cow::Borrowed(desc_text) };
 
-        // For multi-line tag lines (multi-line types), check if desc fits on the
-        // last line rather than computing width of the entire multi-line string.
-        let last_line_width = if tag_line.contains('\n') {
-            str_width(tag_line.rsplit('\n').next().unwrap_or(&tag_line))
-        } else {
-            str_width(&tag_line)
-        };
-        let prefix_len = last_line_width + 1; // last line of tag_line + " "
+        // When the type is multi-line, push each type line, then handle the
+        // description. Single-token descriptions (no spaces) are kept inline
+        // on the last type line — matching upstream where comment-parser treats
+        // short trailing text as a "name" field that stays on the tag line.
+        // Multi-word descriptions go to a new indented line.
+        if tag_line.contains('\n') {
+            let last_line_width = tag_line.rsplit('\n').next().map_or(0, str_width);
+            let desc_is_single_token = !desc_text.contains(' ');
+            let desc_fits_on_last_line =
+                desc_is_single_token
+                    && last_line_width + 1 + str_width(&desc_text) <= self.wrap_width;
+
+            if desc_fits_on_last_line {
+                // Append single-token description to the last line of the tag
+                let mut lines: Vec<&str> = tag_line.split('\n').collect();
+                if let Some(last) = lines.last_mut() {
+                    let combined =
+                        self.allocator.alloc_concat_strs_array([last, " ", &desc_text]);
+                    for line in &lines[..lines.len() - 1] {
+                        self.content_lines.push(*line);
+                    }
+                    self.content_lines.push(combined);
+                }
+            } else {
+                let indent = self.continuation_indent();
+                let indent_width =
+                    self.wrap_width.saturating_sub(self.continuation_indent_width());
+                let mut lines_iter = tag_line.split('\n');
+                if let Some(first) = lines_iter.next() {
+                    self.content_lines.push(first);
+                }
+                for line in lines_iter {
+                    self.content_lines.push(line);
+                }
+                let desc = wrap_text(
+                    &desc_text,
+                    indent_width,
+                    0,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                self.push_indented_desc(indent, desc);
+            }
+            return;
+        }
+
+        let prefix_len = str_width(&tag_line) + 1; // tag_line + " "
         let one_liner_len = prefix_len + str_width(&desc_text);
         if one_liner_len <= self.wrap_width {
             let s = self.content_lines.begin_line();
@@ -1078,7 +1138,8 @@ impl JsdocFormatter<'_, '_> {
             return;
         }
 
-        if prefix_len + str_width(&desc_text) <= self.wrap_width || skip_wrapping {
+        let fits_on_one_line = prefix_len + str_width(&desc_text) <= self.wrap_width;
+        if fits_on_one_line || skip_wrapping {
             // Fits on one line, or tag skips description formatting (no wrapping).
             // Tags in TAGS_PEV_FORMATE_DESCRIPTION (e.g. @see) and unknown tags
             // keep their description on one line regardless of length.
@@ -1098,6 +1159,46 @@ impl JsdocFormatter<'_, '_> {
                         self.content_lines.push_empty();
                     } else {
                         self.content_lines.push(line);
+                    }
+                }
+            } else if skip_wrapping && !fits_on_one_line {
+                // Skip-wrapping tag (e.g. @deprecated) with a long single-line
+                // description: wrap the raw text to respect print width, using
+                // continuation indent for wrapped lines.
+                let indent = self.continuation_indent();
+                let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                    0
+                } else {
+                    self.continuation_indent_width()
+                });
+                let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
+                    0
+                } else {
+                    self.continuation_indent_width()
+                });
+                let desc = wrap_text(
+                    raw_ws_desc,
+                    indent_width,
+                    tag_str_len,
+                    false,
+                    Some(self.format_options),
+                    Some(self.external_callbacks),
+                    Some(self.allocator),
+                );
+                let mut iter = desc.split('\n');
+                if let Some(first) = iter.next() {
+                    let s = self.content_lines.begin_line();
+                    s.push_str(&tag_line);
+                    s.push(' ');
+                    s.push_str(first);
+                }
+                for line in iter {
+                    if line.is_empty() {
+                        self.content_lines.push_empty();
+                    } else {
+                        let s = self.content_lines.begin_line();
+                        s.push_str(indent);
+                        s.push_str(line);
                     }
                 }
             } else {
