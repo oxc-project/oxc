@@ -5,7 +5,9 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{
+    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+};
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, JsConfigLoaderCb,
@@ -257,17 +259,14 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(
-        &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
-    ) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
-        let (result, source_text) = if uri.scheme().as_str() == "file" {
-            let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
+        let (result, source_text) = if document.uri.scheme().as_str() == "file" {
+            let Some(path) = document.uri.to_file_path() else {
+                return Err("Invalid file URI".to_string());
+            };
 
-            let source_text = if let Some(c) = content {
+            let source_text = if let Some(c) = document.text.as_deref() {
                 c
             } else {
                 file_content = utils::read_to_string(&path)
@@ -275,16 +274,20 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text, language_id) else {
+            let Some(result) = self.format_file(&path, source_text, &document.language_id) else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
             (result, source_text)
         } else {
-            let source_text =
-                content.ok_or_else(|| "In-memory formatting requires content".to_string())?;
+            let source_text = document
+                .text
+                .as_deref()
+                .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
-            let Some(result) = self.format_in_memory(uri, source_text, language_id) else {
+            let Some(result) =
+                self.format_in_memory(&document.uri, source_text, &document.language_id)
+            else {
                 return Ok(vec![]); // currently not supported
             };
             (result, source_text)

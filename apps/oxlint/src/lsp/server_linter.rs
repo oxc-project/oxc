@@ -24,8 +24,8 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, Tool, ToolBuilder,
-    ToolRestartChanges,
+    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
+    ToolBuilder, ToolRestartChanges,
 };
 
 use crate::{
@@ -664,43 +664,28 @@ impl Tool for ServerLinter {
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
-    fn run_diagnostic(
-        &self,
-        uri: &Uri,
-        _language_id: &oxc_language_server::LanguageId,
-        content: Option<&str>,
-    ) -> DiagnosticResult {
-        Ok(vec![(uri.clone(), self.run_file(uri, content)?)])
+    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+        Ok(vec![(document.uri.clone(), self.run_file(&document.uri, document.text.as_deref())?)])
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnType`, an empty vector is returned
-    fn run_diagnostic_on_change(
-        &self,
-        uri: &Uri,
-        language_id: &oxc_language_server::LanguageId,
-        content: Option<&str>,
-    ) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
         if self.run != Run::OnType {
             return Ok(vec![]);
         }
-        self.run_diagnostic(uri, language_id, content)
+        self.run_diagnostic(document)
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnSave`, an empty vector is returned
-    fn run_diagnostic_on_save(
-        &self,
-        uri: &Uri,
-        language_id: &oxc_language_server::LanguageId,
-        content: Option<&str>,
-    ) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
         if self.run != Run::OnSave {
             return Ok(vec![]);
         }
-        self.run_diagnostic(uri, language_id, content)
+        self.run_diagnostic(document)
     }
 
     fn remove_uri_cache(&self, uri: &Uri) {
