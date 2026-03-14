@@ -141,6 +141,7 @@ pub use crate::rules::eslint::no_unused_labels::NoUnusedLabels as EslintNoUnused
 pub use crate::rules::eslint::no_unused_private_class_members::NoUnusedPrivateClassMembers as EslintNoUnusedPrivateClassMembers;
 pub use crate::rules::eslint::no_unused_vars::NoUnusedVars as EslintNoUnusedVars;
 pub use crate::rules::eslint::no_use_before_define::NoUseBeforeDefine as EslintNoUseBeforeDefine;
+pub use crate::rules::eslint::no_useless_assignment::NoUselessAssignment as EslintNoUselessAssignment;
 pub use crate::rules::eslint::no_useless_backreference::NoUselessBackreference as EslintNoUselessBackreference;
 pub use crate::rules::eslint::no_useless_call::NoUselessCall as EslintNoUselessCall;
 pub use crate::rules::eslint::no_useless_catch::NoUselessCatch as EslintNoUselessCatch;
@@ -881,6 +882,7 @@ pub enum RuleEnum {
     EslintNoUnusedPrivateClassMembers(EslintNoUnusedPrivateClassMembers),
     EslintNoUnusedVars(EslintNoUnusedVars),
     EslintNoUseBeforeDefine(EslintNoUseBeforeDefine),
+    EslintNoUselessAssignment(EslintNoUselessAssignment),
     EslintNoUselessBackreference(EslintNoUselessBackreference),
     EslintNoUselessCall(EslintNoUselessCall),
     EslintNoUselessCatch(EslintNoUselessCatch),
@@ -1585,7 +1587,8 @@ const ESLINT_NO_UNUSED_LABELS_ID: usize = ESLINT_NO_UNUSED_EXPRESSIONS_ID + 1usi
 const ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID: usize = ESLINT_NO_UNUSED_LABELS_ID + 1usize;
 const ESLINT_NO_UNUSED_VARS_ID: usize = ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID + 1usize;
 const ESLINT_NO_USE_BEFORE_DEFINE_ID: usize = ESLINT_NO_UNUSED_VARS_ID + 1usize;
-const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = ESLINT_NO_USE_BEFORE_DEFINE_ID + 1usize;
+const ESLINT_NO_USELESS_ASSIGNMENT_ID: usize = ESLINT_NO_USE_BEFORE_DEFINE_ID + 1usize;
+const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = ESLINT_NO_USELESS_ASSIGNMENT_ID + 1usize;
 const ESLINT_NO_USELESS_CALL_ID: usize = ESLINT_NO_USELESS_BACKREFERENCE_ID + 1usize;
 const ESLINT_NO_USELESS_CATCH_ID: usize = ESLINT_NO_USELESS_CALL_ID + 1usize;
 const ESLINT_NO_USELESS_COMPUTED_KEY_ID: usize = ESLINT_NO_USELESS_CATCH_ID + 1usize;
@@ -2372,6 +2375,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(_) => ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID,
             Self::EslintNoUnusedVars(_) => ESLINT_NO_UNUSED_VARS_ID,
             Self::EslintNoUseBeforeDefine(_) => ESLINT_NO_USE_BEFORE_DEFINE_ID,
+            Self::EslintNoUselessAssignment(_) => ESLINT_NO_USELESS_ASSIGNMENT_ID,
             Self::EslintNoUselessBackreference(_) => ESLINT_NO_USELESS_BACKREFERENCE_ID,
             Self::EslintNoUselessCall(_) => ESLINT_NO_USELESS_CALL_ID,
             Self::EslintNoUselessCatch(_) => ESLINT_NO_USELESS_CATCH_ID,
@@ -3181,6 +3185,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::NAME,
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::NAME,
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::NAME,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::NAME,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::NAME,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::NAME,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::NAME,
@@ -3984,6 +3989,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::CATEGORY,
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::CATEGORY,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::CATEGORY,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::CATEGORY,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::CATEGORY,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::CATEGORY,
@@ -4826,6 +4832,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::FIX,
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::FIX,
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::FIX,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::FIX,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::FIX,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::FIX,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::FIX,
@@ -5652,6 +5659,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::documentation(),
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::documentation(),
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::documentation(),
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::documentation(),
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::documentation(),
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::documentation(),
@@ -6873,6 +6881,10 @@ impl RuleEnum {
                 .or_else(|| EslintNoUnusedVars::schema(generator)),
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::config_schema(generator)
                 .or_else(|| EslintNoUseBeforeDefine::schema(generator)),
+            Self::EslintNoUselessAssignment(_) => {
+                EslintNoUselessAssignment::config_schema(generator)
+                    .or_else(|| EslintNoUselessAssignment::schema(generator))
+            }
             Self::EslintNoUselessBackreference(_) => {
                 EslintNoUselessBackreference::config_schema(generator)
                     .or_else(|| EslintNoUselessBackreference::schema(generator))
@@ -8610,6 +8622,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(_) => "eslint",
             Self::EslintNoUnusedVars(_) => "eslint",
             Self::EslintNoUseBeforeDefine(_) => "eslint",
+            Self::EslintNoUselessAssignment(_) => "eslint",
             Self::EslintNoUselessBackreference(_) => "eslint",
             Self::EslintNoUselessCall(_) => "eslint",
             Self::EslintNoUselessCatch(_) => "eslint",
@@ -9643,6 +9656,9 @@ impl RuleEnum {
             }
             Self::EslintNoUseBeforeDefine(_) => Ok(Self::EslintNoUseBeforeDefine(
                 EslintNoUseBeforeDefine::from_configuration(value)?,
+            )),
+            Self::EslintNoUselessAssignment(_) => Ok(Self::EslintNoUselessAssignment(
+                EslintNoUselessAssignment::from_configuration(value)?,
             )),
             Self::EslintNoUselessBackreference(_) => Ok(Self::EslintNoUselessBackreference(
                 EslintNoUselessBackreference::from_configuration(value)?,
@@ -11561,6 +11577,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.to_configuration(),
             Self::EslintNoUnusedVars(rule) => rule.to_configuration(),
             Self::EslintNoUseBeforeDefine(rule) => rule.to_configuration(),
+            Self::EslintNoUselessAssignment(rule) => rule.to_configuration(),
             Self::EslintNoUselessBackreference(rule) => rule.to_configuration(),
             Self::EslintNoUselessCall(rule) => rule.to_configuration(),
             Self::EslintNoUselessCatch(rule) => rule.to_configuration(),
@@ -12268,6 +12285,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run(node, ctx),
             Self::EslintNoUnusedVars(rule) => rule.run(node, ctx),
             Self::EslintNoUseBeforeDefine(rule) => rule.run(node, ctx),
+            Self::EslintNoUselessAssignment(rule) => rule.run(node, ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run(node, ctx),
             Self::EslintNoUselessCall(rule) => rule.run(node, ctx),
             Self::EslintNoUselessCatch(rule) => rule.run(node, ctx),
@@ -12971,6 +12989,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_once(ctx),
             Self::EslintNoUnusedVars(rule) => rule.run_once(ctx),
             Self::EslintNoUseBeforeDefine(rule) => rule.run_once(ctx),
+            Self::EslintNoUselessAssignment(rule) => rule.run_once(ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run_once(ctx),
             Self::EslintNoUselessCall(rule) => rule.run_once(ctx),
             Self::EslintNoUselessCatch(rule) => rule.run_once(ctx),
@@ -13678,6 +13697,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnusedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUseBeforeDefine(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUselessAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessCall(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14477,6 +14497,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.should_run(ctx),
             Self::EslintNoUnusedVars(rule) => rule.should_run(ctx),
             Self::EslintNoUseBeforeDefine(rule) => rule.should_run(ctx),
+            Self::EslintNoUselessAssignment(rule) => rule.should_run(ctx),
             Self::EslintNoUselessBackreference(rule) => rule.should_run(ctx),
             Self::EslintNoUselessCall(rule) => rule.should_run(ctx),
             Self::EslintNoUselessCatch(rule) => rule.should_run(ctx),
@@ -15206,6 +15227,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::IS_TSGOLINT_RULE,
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::IS_TSGOLINT_RULE,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::IS_TSGOLINT_RULE,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::IS_TSGOLINT_RULE,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::IS_TSGOLINT_RULE,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::IS_TSGOLINT_RULE,
@@ -16186,6 +16208,7 @@ impl RuleEnum {
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::HAS_CONFIG,
             Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::HAS_CONFIG,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::HAS_CONFIG,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::HAS_CONFIG,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::HAS_CONFIG,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::HAS_CONFIG,
@@ -17049,6 +17072,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.types_info(),
             Self::EslintNoUnusedVars(rule) => rule.types_info(),
             Self::EslintNoUseBeforeDefine(rule) => rule.types_info(),
+            Self::EslintNoUselessAssignment(rule) => rule.types_info(),
             Self::EslintNoUselessBackreference(rule) => rule.types_info(),
             Self::EslintNoUselessCall(rule) => rule.types_info(),
             Self::EslintNoUselessCatch(rule) => rule.types_info(),
@@ -17752,6 +17776,7 @@ impl RuleEnum {
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_info(),
             Self::EslintNoUnusedVars(rule) => rule.run_info(),
             Self::EslintNoUseBeforeDefine(rule) => rule.run_info(),
+            Self::EslintNoUselessAssignment(rule) => rule.run_info(),
             Self::EslintNoUselessBackreference(rule) => rule.run_info(),
             Self::EslintNoUselessCall(rule) => rule.run_info(),
             Self::EslintNoUselessCatch(rule) => rule.run_info(),
@@ -18477,6 +18502,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnusedPrivateClassMembers(EslintNoUnusedPrivateClassMembers::default()),
         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
         RuleEnum::EslintNoUseBeforeDefine(EslintNoUseBeforeDefine::default()),
+        RuleEnum::EslintNoUselessAssignment(EslintNoUselessAssignment::default()),
         RuleEnum::EslintNoUselessBackreference(EslintNoUselessBackreference::default()),
         RuleEnum::EslintNoUselessCall(EslintNoUselessCall::default()),
         RuleEnum::EslintNoUselessCatch(EslintNoUselessCatch::default()),
