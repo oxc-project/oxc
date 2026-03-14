@@ -14,7 +14,8 @@ Mode Options:
 Output Options:
         --write              Format and write files in place (default)
         --check              Check if files are formatted, also show statistics
-        --list-different     List files that would be changed
+        --list-different     List only selected files that would be changed
+        --list-files         List all files selected for processing
 
 Config Options
     -c, --config=PATH        Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js,
