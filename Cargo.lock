@@ -2572,6 +2572,7 @@ dependencies = [
  "napi-derive",
  "oxc-miette",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_diagnostics",

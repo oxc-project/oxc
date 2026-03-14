@@ -14,8 +14,11 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn};
-use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_ast::{
+    ast::{Comment, CommentKind, Program},
+    ast_kind::AST_TYPE_MAX,
+};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
@@ -477,6 +480,14 @@ impl Linter {
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
         let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_bump_slice_mut();
 
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        if let Some(hashbang) = &program.hashbang {
+            program
+                .comments
+                .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
+        }
+
         self.convert_and_call_external_linter(
             external_rules,
             path,
@@ -525,6 +536,26 @@ impl Linter {
         // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
         let new_source_text = js_allocator.alloc_str(original_source_text);
 
+        // If file has a hashbang, add it to comments.
+        // It will be converted to a `Shebang` comment on JS side.
+        // Clear the original `Vec<Comment>` to avoid cloning it again below.
+        let comments = if let Some(hashbang) = &original_program.hashbang {
+            let mut comments_with_hashbang =
+                ArenaVec::with_capacity_in(original_program.comments.len() + 1, &js_allocator);
+            comments_with_hashbang.push(Comment::new(
+                hashbang.span.start,
+                hashbang.span.end,
+                CommentKind::Line,
+            ));
+            comments_with_hashbang.extend(original_program.comments.iter().copied());
+
+            original_program.comments.clear();
+
+            Some(comments_with_hashbang)
+        } else {
+            None
+        };
+
         // Clone `Program` into fixed-size allocator.
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
@@ -533,6 +564,11 @@ impl Linter {
             program.source_text = new_source_text;
             js_allocator.alloc(program)
         };
+
+        // If added hashbang comment, set comments to the new `Vec<Comment>` including hashbang comment
+        if let Some(comments) = comments {
+            program.comments = comments;
+        }
 
         // Clone tokens into fixed-size allocator
         let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());

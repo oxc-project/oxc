@@ -2,7 +2,7 @@
  * Comment class, object pooling, and deserialization.
  */
 
-import { ast, buffer, initAst, sourceText } from "./source_code.ts";
+import { buffer, initSourceText, sourceText } from "./source_code.ts";
 import {
   COMMENTS_OFFSET,
   COMMENTS_LEN_OFFSET,
@@ -85,48 +85,34 @@ Object.defineProperty(Comment.prototype, "loc", { enumerable: true });
  * Initialize comments for current file.
  *
  * Deserializes comments from the buffer using object pooling.
- * If the program has a hashbang, prepends a `Shebang` comment.
+ * If the program has a hashbang, sets first comment to a `Shebang` comment.
  */
 export function initComments(): void {
   debugAssert(comments === null, "Comments already initialized");
 
-  if (ast === null) initAst();
-  debugAssertIsNonNull(ast);
+  if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
   const { uint32 } = buffer;
   const programPos32 = uint32[DATA_POINTER_POS_32] >> 2;
-  let pos = uint32[programPos32 + (COMMENTS_OFFSET >> 2)];
+  const commentsPos = uint32[programPos32 + (COMMENTS_OFFSET >> 2)];
   const commentsLen = uint32[programPos32 + (COMMENTS_LEN_OFFSET >> 2)];
 
-  // Determine total number of comments (including shebang if present)
-  const { hashbang } = ast;
-  let index = +(hashbang !== null);
-  const totalLen = commentsLen + index;
-
   // Grow cache if needed (one-time cost as cache warms up)
-  while (cachedComments.length < totalLen) {
+  while (cachedComments.length < commentsLen) {
     cachedComments.push(new Comment());
   }
 
-  // If there's a hashbang, populate slot 0 with `Shebang` comment
-  if (index !== 0) {
-    debugAssertIsNonNull(hashbang);
-
-    const comment = cachedComments[0];
-    comment.type = "Shebang";
-    comment.value = hashbang.value;
-    comment.range[0] = comment.start = hashbang.start;
-    comment.range[1] = comment.end = hashbang.end;
-  }
-
   // Deserialize comments from buffer
-  while (index < totalLen) {
-    const comment = cachedComments[index++];
+  for (let i = 0; i < commentsLen; i++) {
+    const comment = cachedComments[i];
 
-    const start = uint32[pos >> 2];
-    const end = uint32[(pos + 4) >> 2];
+    const pos = commentsPos + i * COMMENT_SIZE,
+      pos32 = pos >> 2;
+
+    const start = uint32[pos32];
+    const end = uint32[pos32 + 1];
     const isBlock = buffer[pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
 
     comment.type = isBlock ? "Block" : "Line";
@@ -135,8 +121,13 @@ export function initComments(): void {
     comment.value = sourceText.slice(start + 2, end - (+isBlock << 1));
     comment.range[0] = comment.start = start;
     comment.range[1] = comment.end = end;
+  }
 
-    pos += COMMENT_SIZE;
+  // Set first comment as `Shebang` if file has hashbang.
+  // Rust side adds hashbang comment to start of comments `Vec` as a `Line` comment.
+  if (commentsLen > 0) {
+    const firstComment = cachedComments[0];
+    if (firstComment.start === 0 && sourceText.startsWith("#!")) firstComment.type = "Shebang";
   }
 
   // Use `slice` rather than copying comments one-by-one into a new array.
@@ -145,11 +136,11 @@ export function initComments(): void {
   //
   // If the comments array from previous file is longer than the current one,
   // reuse it and truncate it to avoid the memcpy entirely.
-  if (previousComments.length >= totalLen) {
-    previousComments.length = totalLen;
+  if (previousComments.length >= commentsLen) {
+    previousComments.length = commentsLen;
     comments = previousComments;
   } else {
-    comments = previousComments = cachedComments.slice(0, totalLen);
+    comments = previousComments = cachedComments.slice(0, commentsLen);
   }
 
   // Check `comments` have valid ranges and are in ascending order
