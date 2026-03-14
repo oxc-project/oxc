@@ -295,12 +295,48 @@ fn is_pure_call(name: &str) -> bool {
 
 #[rustfmt::skip]
 fn is_pure_constructor(name: &str) -> bool {
-    matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
+    matches!(name, "ArrayBuffer" | "Date"
             | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
             | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String"
             | "Int8Array" | "Uint8Array" | "Uint8ClampedArray" | "Int16Array" | "Uint16Array"
             | "Int32Array" | "Uint32Array" | "Float32Array" | "Float64Array"
             | "BigInt64Array" | "BigUint64Array")
+}
+
+/// Whether a collection constructor (`Map`, `Set`, `WeakMap`, `WeakSet`) call is pure.
+///
+/// These constructors iterate their argument via `Symbol.iterator`, which can have side effects
+/// when the argument is a variable reference (custom iterators, proxies, etc.).
+/// Only provably safe arguments are considered pure:
+/// - No arguments: `new Set()`, `new Map()`
+/// - `null` or `undefined`: `new Set(null)`, `new Map(undefined)`
+/// - Array literals: `new Set([1,2,3])`, `new Map([[k,v]])`
+///
+/// Following esbuild and Rollup behavior.
+/// See <https://github.com/oxc-project/oxc/issues/XXXX>
+fn is_pure_collection_constructor(name: &str, args: &[Argument<'_>]) -> bool {
+    if !matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap") {
+        return false;
+    }
+    match args.first() {
+        // No arguments: always pure
+        None => true,
+        Some(arg) => match arg.as_expression() {
+            Some(Expression::NullLiteral(_)) => true,
+            Some(Expression::Identifier(id)) if id.name == "undefined" => true,
+            Some(Expression::ArrayExpression(arr)) => {
+                // For Map/WeakMap, each element must also be an array literal (key-value pair)
+                if matches!(name, "Map" | "WeakMap") {
+                    arr.elements
+                        .iter()
+                        .all(|el| matches!(el, ArrayExpressionElement::ArrayExpression(_)))
+                } else {
+                    true
+                }
+            }
+            _ => false,
+        },
+    }
 }
 
 /// Whether the name matches any known global constructors.
@@ -998,7 +1034,9 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
             && let name = ident.name.as_str()
-            && (is_pure_constructor(name) || (name == "RegExp" && is_valid_regexp(&self.arguments)))
+            && (is_pure_constructor(name)
+                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                || is_pure_collection_constructor(name, &self.arguments))
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
