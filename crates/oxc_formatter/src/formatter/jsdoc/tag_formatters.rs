@@ -834,8 +834,36 @@ impl JsdocFormatter<'_, '_> {
             return;
         }
 
+        // For @type and @satisfies, upstream comment-parser splits the text
+        // after the type into name (first word, NOT capitalized) and description
+        // (remaining words, capitalized). e.g., `@type {T} should be single line`
+        // → name="should" (unchanged), desc="be single line" → "Be single line".
         let desc_text: Cow<'_, str> =
-            if should_capitalize { capitalize_first(desc_text) } else { Cow::Borrowed(desc_text) };
+            if should_capitalize && matches!(normalized_kind, "type" | "satisfies") {
+                if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
+                    let name_part = &desc_text[..space_idx];
+                    let desc_part = desc_text[space_idx..].trim_start();
+                    if desc_part.is_empty() {
+                        // Only a name, no description to capitalize
+                        Cow::Borrowed(desc_text)
+                    } else {
+                        let capitalized = capitalize_first(desc_part);
+                        let mut s =
+                            String::with_capacity(name_part.len() + 1 + capitalized.len());
+                        s.push_str(name_part);
+                        s.push(' ');
+                        s.push_str(&capitalized);
+                        Cow::Owned(s)
+                    }
+                } else {
+                    // Single word (name only), no capitalization
+                    Cow::Borrowed(desc_text)
+                }
+            } else if should_capitalize {
+                capitalize_first(desc_text)
+            } else {
+                Cow::Borrowed(desc_text)
+            };
 
         // When the type is multi-line, push each type line, then handle the
         // description. Single-token descriptions (no spaces) are kept inline
