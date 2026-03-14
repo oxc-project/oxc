@@ -84,7 +84,7 @@ index 4215cc0..0bc2afe 100644
  				for (const c_r of value.split(regex_whitespaces)) {
 -					const current_role = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 +					const current_role = /** @type {ARIARoleDefinitionKey} Current_role */ (c_r);
- 
+
  					if (current_role && is_abstract_role(current_role)) {
  						w.a11y_no_abstract_role(attribute, current_role);
 ```
@@ -143,11 +143,11 @@ index 67389d0..eb24d81 100644
 @@ -53,7 +53,7 @@ class PreprocessResult {
  	 */
  	dependencies = [];
- 
+
 -	/** @type {string | null} last Part of the filename, as used for `sources` in sourcemaps */
 +	/** @type {string | null} Last Part of the filename, as used for `sources` in sourcemaps */
  	file_basename = /** @type {any} */ (undefined);
- 
+
  	/** @type {ReturnType<typeof getLocator>} */
 ```
 
@@ -220,7 +220,7 @@ index d9e2e34..73e5c03 100644
 +++ b/packages/svelte/src/internal/client/dom/hydration.js
 @@ -22,7 +22,9 @@ export function set_hydrating(value) {
  }
- 
+
  /**
 - * The node that is currently being hydrated. This starts out as the first node inside the opening<!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
 + * The node that is currently being hydrated. This starts out as the first node inside the
@@ -349,4 +349,3 @@ index eee4a92..665506e 100644
   * ```
   *
 ```
-

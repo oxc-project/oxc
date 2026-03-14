@@ -59,33 +59,11 @@ index 21e7738..010ddcd 100644
   *
 ```
 
-## `packages/common/src/Store.ts`
-
-```diff
-diff --git a/packages/common/src/Store.ts b/packages/common/src/Store.ts
-index d602b7f..0ec3fe3 100644
---- a/packages/common/src/Store.ts
-+++ b/packages/common/src/Store.ts
-@@ -2,9 +2,9 @@ import { Eq, eqStrict } from "./Eq.js";
- import { Ref } from "./Ref.js";
- 
- /**
-- * A store for managing state with change notifications. Extends {@link Ref} with
-- * subscriptions. Provides methods to get, set, and modify state, and to notify
-- * listeners when the state changes.
-+ * A store for managing state with change notifications. Extends {@link Ref}
-+ * with subscriptions. Provides methods to get, set, and modify state, and to
-+ * notify listeners when the state changes.
-  */
- export interface Store<T> extends Ref<T> {
-   /**
-```
-
 ## `packages/common/src/Task.ts`
 
 ```diff
 diff --git a/packages/common/src/Task.ts b/packages/common/src/Task.ts
-index 83e0c5c..8246250 100644
+index 83e0c5c..1cbaa70 100644
 --- a/packages/common/src/Task.ts
 +++ b/packages/common/src/Task.ts
 @@ -13,9 +13,10 @@ import { NonNegativeInt, PositiveInt } from "./Type.js";
@@ -113,36 +91,15 @@ index 83e0c5c..8246250 100644
     *
     * ### Example
     *
-@@ -682,7 +683,8 @@ export const createSemaphore = (maxConcurrent: PositiveInt): Semaphore => {
- /**
-  * A mutex (mutual exclusion) that ensures only one Task runs at a time.
-  *
-- * This is a specialized version of a {@link Semaphore} with a permit count of 1.
-+ * This is a specialized version of a {@link Semaphore} with a permit count of
-+ * 1.
-  *
-  * @see {@link createMutex} to create a mutex instance.
-  */
 ```
 
 ## `packages/common/src/Time.ts`
 
 ```diff
 diff --git a/packages/common/src/Time.ts b/packages/common/src/Time.ts
-index bab423d..18dd11c 100644
+index bab423d..c3b2f05 100644
 --- a/packages/common/src/Time.ts
 +++ b/packages/common/src/Time.ts
-@@ -34,8 +34,8 @@ export const createTime = (): Time => {
- };
- 
- /**
-- * Creates a {@link Time} that returns a monotonically increasing number based on
-- * a queueMicrotask.
-+ * Creates a {@link Time} that returns a monotonically increasing number based
-+ * on a queueMicrotask.
-  */
- export const createTestTime = (): Time => {
-   let now = 0;
 @@ -121,8 +121,8 @@ export type Duration = DurationString | NonNegativeInt;
  /**
   * Converts a duration to milliseconds.
@@ -160,20 +117,9 @@ index bab423d..18dd11c 100644
 
 ```diff
 diff --git a/packages/common/src/Type.ts b/packages/common/src/Type.ts
-index 97e7b8b..f61f568 100644
+index 97e7b8b..7a6e3f5 100644
 --- a/packages/common/src/Type.ts
 +++ b/packages/common/src/Type.ts
-@@ -3119,8 +3119,8 @@ export const formatObjectError = <Error extends TypeError>(
-   });
- 
- /**
-- * ObjectWithRecordType extends {@link Type} with additional `props` and `record`
-- * properties for reflection.
-+ * ObjectWithRecordType extends {@link Type} with additional `props` and
-+ * `record` properties for reflection.
-  */
- export interface ObjectWithRecordType<
-   Props extends Record<string, AnyType>,
 @@ -3249,9 +3249,9 @@ export function union(...args: ReadonlyArray<any>): any {
     * 2. Enhance tagged union support:
     *
@@ -186,17 +132,6 @@ index 97e7b8b..f61f568 100644
     */
  
    const members = args.map((arg) => (isType(arg) ? arg : literal(arg)));
-@@ -3939,8 +3939,8 @@ export const partial = <Props extends Record<string, AnyType>>(
- };
- 
- /**
-- * Converts each “nullable” property (a union that includes {@link Null}) into an
-- * {@link optional} property. This means consumers can omit the property
-+ * Converts each “nullable” property (a union that includes {@link Null}) into
-+ * an {@link optional} property. This means consumers can omit the property
-  * entirely, or set it to `null`, or set it to the non-null member of the
-  * union.
-  *
 ```
 
 ## `packages/common/src/local-first/Db.ts`
@@ -223,7 +158,7 @@ index 8b3fe8f..847dc14 100644
 
 ```diff
 diff --git a/packages/common/src/local-first/Evolu.ts b/packages/common/src/local-first/Evolu.ts
-index ec43b5a..f28284a 100644
+index ec43b5a..21e3cfb 100644
 --- a/packages/common/src/local-first/Evolu.ts
 +++ b/packages/common/src/local-first/Evolu.ts
 @@ -280,8 +280,8 @@ export interface Evolu<S extends EvoluSchema = EvoluSchema> extends Disposable {
@@ -248,19 +183,7 @@ index ec43b5a..f28284a 100644
     *
     * The first argument is the table name, and the second is an object
     * containing the row data including the required `id` field. An optional
-@@ -454,7 +454,10 @@ export interface Evolu<S extends EvoluSchema = EvoluSchema> extends Disposable {
-   readonly useOwner: (owner: SyncOwner) => UnuseOwner;
- }
- 
--/** Function returned by {@link Evolu#useOwner} to stop using an {@link SyncOwner}. */
-+/**
-+ * Function returned by {@link Evolu#useOwner} to stop using an
-+ * {@link SyncOwner}.
-+ */
- export type UnuseOwner = () => void;
- 
- /** Represents errors that can occur in Evolu. */
-@@ -491,9 +494,9 @@ const evoluInstances = createInstances<SimpleName, InternalEvoluInstance>();
+@@ -491,9 +491,9 @@ const evoluInstances = createInstances<SimpleName, InternalEvoluInstance>();
  let tabId: Id | null = null;
  
  /**
@@ -279,7 +202,7 @@ index ec43b5a..f28284a 100644
 
 ```diff
 diff --git a/packages/common/src/local-first/Owner.ts b/packages/common/src/local-first/Owner.ts
-index 013cf1b..e719dba 100644
+index 013cf1b..bf28efa 100644
 --- a/packages/common/src/local-first/Owner.ts
 +++ b/packages/common/src/local-first/Owner.ts
 @@ -34,8 +34,8 @@ export interface ReadonlyOwner {
@@ -293,7 +216,17 @@ index 013cf1b..e719dba 100644
   *
   * Owners can also provide real data deletion, while individual changes in
   * local-first/distributed systems can only be soft deleted, entire owners can
-@@ -227,7 +227,8 @@ export const createShardOwner = (secret: OwnerSecret): ShardOwner => {
+@@ -211,8 +211,7 @@ export const createAppOwner = (secret: OwnerSecret): AppOwner => ({
+  * conditionally synced.
+  *
+  * Can be created from {@link OwnerSecret} via {@link createShardOwner} or
+- * deterministically derived from {@link AppOwner} using
+- * {@link deriveShardOwner}.
++ * deterministically derived from {@link AppOwner} using {@link deriveShardOwner}.
+  */
+ export interface ShardOwner extends Owner {
+   readonly type: "ShardOwner";
+@@ -227,7 +226,8 @@ export const createShardOwner = (secret: OwnerSecret): ShardOwner => {
  };
  
  /**
@@ -303,20 +236,7 @@ index 013cf1b..e719dba 100644
   *
   * **Advantages of derived owners:**
   *
-@@ -274,9 +275,9 @@ export const createSharedOwner = (secret: OwnerSecret): SharedOwner => ({
- });
- 
- /**
-- * Read-only version of a {@link SharedOwner} for data sharing. Contains only the
-- * {@link OwnerId} and {@link EncryptionKey} needed for others to read the shared
-- * data without write access.
-+ * Read-only version of a {@link SharedOwner} for data sharing. Contains only
-+ * the {@link OwnerId} and {@link EncryptionKey} needed for others to read the
-+ * shared data without write access.
-  */
- export interface SharedReadonlyOwner extends ReadonlyOwner {
-   readonly type: "SharedReadonlyOwner";
-@@ -303,10 +304,11 @@ export type OwnerTransport = OwnerWebSocketTransport;
+@@ -303,10 +303,11 @@ export type OwnerTransport = OwnerWebSocketTransport;
   *
   * ### Authentication via URL
   *
@@ -434,5 +354,6 @@ index 0695125..163eb7f 100644
   *
   * The `promise` option allows preloading queries before rendering, which can be
   * useful for complex queries that might take noticeable time even with local
+
 ```
 

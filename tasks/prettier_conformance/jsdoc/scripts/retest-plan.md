@@ -285,3 +285,34 @@ After implementing 7 fixes (Fix 2: tabs→spaces, Fix 3: @default indent, Fix 4:
 ### Bugs Found
 
 See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-15, round 2)
+
+After implementing Fix 8 (capitalization skip types), Fix 6 (blank line preservation between unknown tags), Fix 13 ({@link} wrapping tolerance), plus test coverage for Fix 1, 4, 5, 7, 9, 11, 12 (all already implemented). 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 1 |
+| ---------- | ---------- | ---------------- | -------------------- |
+| evolu      | 134        | 13               | -1                   |
+| wxt        | 1,218      | 4                | -1                   |
+| typedoc    | 792        | 14               | -9                   |
+| Chart.js   | 1,276      | 4                | 0                    |
+| svelte     | 4,130      | 14               | 0                    |
+| **Total**  | **7,550**  | **49**           | **-11**              |
+
+### Remaining Diff Categories (all design differences)
+
+1. **`{@link}` wrapping** (~11 files across evolu, typedoc, chartjs): oxfmt keeps `{@link Foo}` atomic. Design difference.
+2. **Tabs→spaces in code blocks** (svelte 9 files): Fix 2 normalizes tab indentation to spaces. Design difference.
+3. **`@type` description capitalization** (svelte 3, typedoc 1): oxfmt capitalizes per conformance tests. Design difference.
+4. **`{@includeCode}` placement** (typedoc 3 files): Each `{@includeCode}` on own line. Design difference.
+5. **Sub-list indent normalization** (evolu 2, typedoc 2): 4-space vs 6-space. Design difference / improvement.
+6. **`@example` code reformatting** (wxt 2 files): JS formatting of example code. Design difference.
+7. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+8. **`@param` after `@example` extra indent** (wxt 1 file): Not reproduced in unit tests.
+9. **`@default`/`@example` spacing** (typedoc 2 files): Minor blank line and wrapping differences.
+
+### Bugs Found
+
+See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.

@@ -1,6 +1,6 @@
 # JSDoc Diffs: Chart.js
 
-Date: 2026-03-14
+Date: 2026-03-15
 Prettier version: 3.8.1
 JSDoc tags: 1276
 Files with diffs: 4

@@ -1,9 +1,9 @@
 # JSDoc Diffs: wxt
 
-Date: 2026-03-14 (post-fix retest)
+Date: 2026-03-15 (post-fix retest)
 Prettier version: 3.8.1
 JSDoc tags: 1218
-Files with diffs: 5
+Files with diffs: 4
 
 ## `packages/unocss/src/index.ts`
 
@@ -21,25 +21,6 @@ Files with diffs: 5
     *
     * @default [ ]
     */
-```
-
-## `packages/wxt/src/core/utils/building/__tests__/group-entrypoints.test.ts`
-
-```diff
-@@ -185,10 +185,7 @@ describe('groupEntrypoints', () => {
-     expect(actual).toEqual([[background]]);
-   });
-
--  it.todo(
--    'should group ESM compatible sandbox scripts with sandbox pages',
--    () => {
--      // Main world content scripts
--    },
--  );
-+  it.todo('should group ESM compatible sandbox scripts with sandbox pages', () => {
-+    // Main world content scripts
-+  });
- });
 ```
 
 ## `packages/wxt/src/core/utils/building/detect-dev-changes.ts`
