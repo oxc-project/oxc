@@ -2156,6 +2156,7 @@ name = "oxc_napi"
 version = "0.118.0"
 dependencies = [
  "napi",
+ "napi-build",
  "napi-derive",
  "oxc_ast",
  "oxc_ast_visit",
