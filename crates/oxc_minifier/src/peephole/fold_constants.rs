@@ -748,7 +748,8 @@ impl<'a> PeepholeOptimizations {
             let quasi = &mut t.quasis[idx];
             let escaped = Self::escape_string_for_template_literal(&str);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
+            quasi.value.raw =
+                ctx.ast.atom_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
