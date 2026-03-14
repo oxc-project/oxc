@@ -825,8 +825,12 @@ impl<'a> Codegen<'a> {
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
+            let n = num as u128;
+            // Compute hex string length without allocating: "0x" prefix + hex digits
+            let hex_len =
+                if n == 0 { 3 } else { 2 + ((u128::BITS - n.leading_zeros() + 3) / 4) as usize };
+            if hex_len < best_candidate.len() {
+                let hex_candidate = format!("0x{n:x}");
                 is_hex = true;
                 best_candidate = hex_candidate.into();
             }
