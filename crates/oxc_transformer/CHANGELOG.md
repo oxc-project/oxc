@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 1ff5c1d transformer/typescript: Rewrite extensions in dynamic `import()` expressions (#20121) (Sverre Johansen)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features

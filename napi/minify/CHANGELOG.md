@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+
 ## [0.117.0] - 2026-03-09
 
 ### 🐛 Bug Fixes
