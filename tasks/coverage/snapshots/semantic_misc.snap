@@ -1,6 +1,11 @@
 semantic_misc Summary:
-AST Parsed     : 64/64 (100.00%)
-Positive Passed: 51/64 (79.69%)
+AST Parsed     : 65/65 (100.00%)
+Positive Passed: 51/65 (78.46%)
+semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
+Unresolved references mismatch:
+after transform: ["Pick", "Record"]
+rebuilt        : []
+
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
