@@ -689,6 +689,7 @@ pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPrefe
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
+pub use crate::rules::vitest::valid_expect::ValidExpect as VitestValidExpect;
 pub use crate::rules::vitest::warn_todo::WarnTodo as VitestWarnTodo;
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
@@ -1395,6 +1396,7 @@ pub enum RuleEnum {
     VitestRequireLocalTestContextForConcurrentSnapshots(
         VitestRequireLocalTestContextForConcurrentSnapshots,
     ),
+    VitestValidExpect(VitestValidExpect),
     VitestWarnTodo(VitestWarnTodo),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeHandleCallbackErr(NodeHandleCallbackErr),
@@ -3787,6 +3789,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::NAME
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::NAME,
@@ -4630,6 +4633,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::CATEGORY
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::CATEGORY,
@@ -5432,6 +5436,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::FIX
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FIX,
@@ -6428,6 +6433,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::documentation()
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::documentation(),
@@ -8376,6 +8382,8 @@ impl RuleEnum {
                         VitestRequireLocalTestContextForConcurrentSnapshots::schema(generator)
                     })
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::config_schema(generator)
+                .or_else(|| VitestValidExpect::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
                 .or_else(|| VitestWarnTodo::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
@@ -9120,6 +9128,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
+            Self::VitestValidExpect(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeHandleCallbackErr(_) => "node",
@@ -11320,6 +11329,9 @@ impl RuleEnum {
                     VitestRequireLocalTestContextForConcurrentSnapshots::from_configuration(value)?,
                 ))
             }
+            Self::VitestValidExpect(_) => {
+                Ok(Self::VitestValidExpect(VitestValidExpect::from_configuration(value)?))
+            }
             Self::VitestWarnTodo(_) => {
                 Ok(Self::VitestWarnTodo(VitestWarnTodo::from_configuration(value)?))
             }
@@ -12075,6 +12087,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.to_configuration()
             }
+            Self::VitestValidExpect(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeHandleCallbackErr(rule) => rule.to_configuration(),
@@ -12778,6 +12791,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestValidExpect(rule) => rule.run(node, ctx),
             Self::VitestWarnTodo(rule) => rule.run(node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run(node, ctx),
@@ -13481,6 +13495,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestValidExpect(rule) => rule.run_once(ctx),
             Self::VitestWarnTodo(rule) => rule.run_once(ctx),
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_once(ctx),
@@ -14284,6 +14299,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::VitestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeHandleCallbackErr(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14987,6 +15003,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestValidExpect(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeHandleCallbackErr(rule) => rule.should_run(ctx),
@@ -15982,6 +15999,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::IS_TSGOLINT_RULE
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
@@ -16854,6 +16872,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
             }
+            Self::VitestValidExpect(_) => VitestValidExpect::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
@@ -17559,6 +17578,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
+            Self::VitestValidExpect(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeHandleCallbackErr(rule) => rule.types_info(),
@@ -18262,6 +18282,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
+            Self::VitestValidExpect(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeHandleCallbackErr(rule) => rule.run_info(),
@@ -19083,6 +19104,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
             VitestRequireLocalTestContextForConcurrentSnapshots::default(),
         ),
+        RuleEnum::VitestValidExpect(VitestValidExpect::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeHandleCallbackErr(NodeHandleCallbackErr::default()),
