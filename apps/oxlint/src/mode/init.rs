@@ -22,7 +22,7 @@ pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
         oxlintrc_for_print
     };
 
-    if fs::write(DEFAULT_OXLINTRC_NAME, configuration).is_ok() {
+    if fs::write(cwd.join(DEFAULT_OXLINTRC_NAME), configuration).is_ok() {
         print_and_flush_stdout(stdout, "Configuration file created\n");
         return CliRunResult::ConfigFileInitSucceeded;
     }
