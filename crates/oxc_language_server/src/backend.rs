@@ -722,7 +722,7 @@ impl LanguageServer for Backend {
         };
 
         let code_actions =
-            worker.get_code_actions_or_commands(uri, &params.range, params.context.only).await;
+            worker.get_code_actions_or_commands(uri, &params.range, &params.context).await;
 
         if code_actions.is_empty() {
             return Ok(None);

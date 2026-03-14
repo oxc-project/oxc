@@ -1,3 +1,4 @@
+mod css;
 mod graphql;
 
 use oxc_allocator::{Allocator, StringBuilder};
@@ -17,7 +18,7 @@ pub(super) fn try_format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     match get_tag_name(&tagged.tag) {
-        Some("css" | "styled") => try_embed_css(tagged, f),
+        Some("css" | "styled") => css::format_css_doc(tagged.quasi(), f),
         Some("gql" | "graphql") => graphql::format_graphql_doc(tagged.quasi(), f),
         Some("html") => try_embed_html(tagged, f),
         Some("md" | "markdown") => try_embed_markdown(tagged, f),
@@ -60,17 +61,10 @@ pub(super) fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    // TODO: Support expressions in the css-in-js
-    if !template_literal.is_no_substitution_template() {
-        return false;
-    }
-
     if !is_in_css_jsx(template_literal) {
         return false;
     }
-
-    let template_content = template_literal.quasis()[0].value.raw.as_str();
-    format_embedded_template(f, "styled-jsx", template_content)
+    css::format_css_doc(template_literal, f)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
@@ -108,18 +102,17 @@ pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    // TODO: Support expressions in the css-in-js and html-in-js
-    // Also need to split html or css path with using `.raw` for css, `.cooked` for html
-    if !template_literal.is_no_substitution_template() {
-        return false;
+    match get_angular_component_language(template_literal) {
+        Some("angular-template") => {
+            if !template_literal.is_no_substitution_template() {
+                return false;
+            }
+            let template_content = template_literal.quasis()[0].value.raw.as_str();
+            format_embedded_template(f, "angular-template", template_content)
+        }
+        Some("angular-styles") => css::format_css_doc(template_literal, f),
+        _ => false,
     }
-
-    let Some(language) = get_angular_component_language(template_literal) else {
-        return false;
-    };
-
-    let template_content = template_literal.quasis()[0].value.raw.as_str();
-    format_embedded_template(f, language, template_content)
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
@@ -166,18 +159,6 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
 }
 
 // ---
-
-fn try_embed_css<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &mut Formatter<'_, 'a>,
-) -> bool {
-    // TODO: Remove this check and use placeholder approach for expressions
-    if !tagged.quasi.is_no_substitution_template() {
-        return false;
-    }
-    let template_content = tagged.quasi.quasis[0].value.raw.as_str();
-    format_embedded_template(f, "tagged-css", template_content)
-}
 
 fn try_embed_html<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,

@@ -16,7 +16,7 @@ alias f := fix
 # Initialize the project by installing all necessary tools
 init:
   # Rust related init
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.9.1 -y
+  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.10.0 -y
   # Node.js related init
   pnpm install
 
@@ -154,10 +154,16 @@ watch-oxlint *args='':
   just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # oxlint release build for node.js
-# After building, you can run the built version of oxlint with
-# `node apps/oxlint/dist/cli.js`
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
 oxlint-node:
   pnpm -C apps/oxlint run build
+
+# oxlint dev build, for testing with Node.js locally.
+# This uses a non-release Rust build without the `allocator` feature (no mimalloc) and sets DEBUG options for the JS bundle,
+# which mainly affects build time, performance, and debug assertions rather than available linting functionality.
+# After building, you can run oxlint with `node <oxc-root>/apps/oxlint/dist/cli.js`
+oxlint-node-dev:
+  pnpm -C apps/oxlint run build-dev
 
 watch-oxlint-node *args='':
   just watch 'pnpm run -C apps/oxlint build-dev && node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
@@ -203,8 +209,15 @@ watch-oxfmt *args='':
   just watch 'cargo run -p oxfmt -- {{args}}'
 
 # Build oxfmt in release build
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
 oxfmt-node:
   pnpm -C apps/oxfmt run build
+
+# oxfmt dev build, for testing with Node.js locally.
+# This builds faster than the release build and may differ in performance or behavior.
+# After building, you can run oxfmt with `node <oxc-root>/apps/oxfmt/dist/cli.js`
+oxfmt-node-dev:
+  pnpm -C apps/oxfmt run build-dev
 
 watch-oxfmt-node *args='':
   just watch 'pnpm run -C apps/oxfmt build-dev && node apps/oxfmt/dist/cli.js {{args}}'

@@ -82,7 +82,11 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise_with_context(call_expr, ctx).is_none_or(|v| v == "withResolvers") {
+        let Some(method_name) = is_promise_with_context(call_expr, ctx) else {
+            return;
+        };
+
+        if !matches!(method_name.as_str(), "then" | "catch" | "finally") {
             return;
         }
 
@@ -114,6 +118,12 @@ fn test() {
         ("async function hi() { await thing() }", None),
         ("async function hi() { await thing().then() }", None),
         ("async function hi() { await thing().catch() }", None),
+        ("const x = Promise.resolve(42)", None),
+        ("const x = Promise.reject(error)", None),
+        ("const x = Promise.all(values)", None),
+        ("const x = Promise.allSettled(values)", None),
+        ("const x = Promise.any(values)", None),
+        ("const x = Promise.race(values)", None),
         ("a = async () => (await something())", None),
         (
             "a = async () => {

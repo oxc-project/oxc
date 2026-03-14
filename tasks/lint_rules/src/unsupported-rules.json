@@ -78,6 +78,8 @@
     "react/jsx-curly-newline": "Stylistic rule from eslint-plugin-react. Should use Oxfmt for stylistic rules, or use JS Plugins to enable this rule.",
     "react/jsx-child-element-spacing": "Stylistic rule from eslint-plugin-react. Should use Oxfmt for stylistic rules, or use JS Plugins to enable this rule.",
     "react/jsx-one-expression-per-line": "Stylistic rule from eslint-plugin-react. Should use Oxfmt for stylistic rules, or use JS Plugins to enable this rule.",
+    "react/jsx-sort-props": "Stylistic rule from eslint-plugin-react. Should use Oxfmt for stylistic rules, or use JS Plugins to enable this rule.",
+    "react/no-adjacent-inline-elements": "Stylistic rule from eslint-plugin-react. Should use Oxfmt for stylistic rules, or use JS Plugins to enable this rule.",
 
     "react/config": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
     "react/error-boundaries": "React Compiler rules will not be implemented in oxlint for now, as they require integration with the react compiler itself. These rules can be used via JS Plugins if desired.",
@@ -119,6 +121,8 @@
     "react/sort-default-props": "`defaultProps` is removed entirely in React 19, this rule is no longer relevant. Also stylistic.",
     "react/sort-prop-types": "PropTypes are ignored in React 19, and this rule is only relevant if you use the PropTypes package. Also stylistic.",
     "react/static-property-placement": "This rule only applies to legacy class components, which are not widely used in modern React.",
+    "react/require-optimization": "This rule only applies to legacy class components, which are not widely used in modern React.",
+    "react/prefer-read-only-props": "This rule is niche and primarily applies to legacy class components, which are not widely used in modern React.",
 
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
     "typescript/no-type-alias": "Deprecated, replaced by `typescript-eslint/consistent-type-definitions` rule.",

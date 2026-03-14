@@ -14,6 +14,11 @@ const sources = [
     repo: "prettier/prettier/tests/format",
     version: pkg.dependencies.prettier,
   },
+  {
+    name: "vue-vben-admin",
+    repo: "vbenjs/vue-vben-admin/packages",
+    version: "main",
+  },
   // {
   //   name: "plugin-svelte",
   //   repo: "sveltejs/prettier-plugin-svelte/tests",

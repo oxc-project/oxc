@@ -11,7 +11,8 @@ import {
 import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js";
 
 import visitorKeys from "../generated/keys.ts";
-import * as commentMethods from "./comments.ts";
+import { resetComments } from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
 import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
@@ -19,14 +20,15 @@ import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
 import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
-import * as tokenMethods from "./tokens.ts";
+import * as tokenMethods from "./tokens_methods.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
+import type { Comment } from "./comments.ts";
 import type { Ranged } from "./location.ts";
-import type { Token } from "./tokens.ts";
-import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
+import type { Token } from "./tokens.ts";
+import type { BufferWithArrays, Node } from "./types.ts";
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
@@ -137,6 +139,7 @@ export function resetSourceAndAst(): void {
   resetLines();
   resetScopeManager();
   resetTokens();
+  resetComments();
 }
 
 /**

@@ -64,7 +64,7 @@ pub fn apply_all_fix_code_action(
     }
 
     Some(CodeAction {
-        title: "quick fix".to_string(),
+        title: "fix all safe fixable oxlint issues".to_string(),
         kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
         is_preferred: Some(true),
         edit: Some(WorkspaceEdit {

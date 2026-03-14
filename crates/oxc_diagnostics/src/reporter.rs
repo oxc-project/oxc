@@ -11,7 +11,7 @@ use crate::{Error, Severity};
 /// receive diagnostics.
 ///
 /// ## Example
-/// ```
+/// ```rust,ignore
 /// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
 ///
 /// #[derive(Default)]

@@ -11,4 +11,11 @@ describe("vcs_dirs", () => {
     const snapshot = await runAndSnapshot(fixturesDir, testCases);
     expect(snapshot).toMatchSnapshot();
   });
+
+  it("should ignore VCS directories when expanding globs", async () => {
+    const testCases = [["--check", "**/*.js"]];
+
+    const snapshot = await runAndSnapshot(fixturesDir, testCases);
+    expect(snapshot).toMatchSnapshot();
+  });
 });

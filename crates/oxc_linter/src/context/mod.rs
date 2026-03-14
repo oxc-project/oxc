@@ -260,10 +260,29 @@ impl<'a> LintContext<'a> {
     /// Checks if a given variable named is defined as a global variable in the current environment.
     ///
     /// Example:
-    /// - `env_contains_var("Date")` returns `true` because it is a global builtin in all environments.
-    /// - `env_contains_var("HTMLElement")` returns `true` only if the `browser` environment is enabled.
-    /// - `env_contains_var("globalThis")` returns `true` only if the `es2020` environment or higher is enabled.
-    pub fn env_contains_var(&self, var: &str) -> bool {
+    /// - `is_global_defined("Date")` returns `true` because it is a global builtin in all environments.
+    /// - `is_global_defined("HTMLElement")` returns `true` only if the `browser` environment is enabled.
+    /// - `is_global_defined("globalThis")` returns `true` only if the `es2020` environment or higher is enabled.
+    /// - `is_global_defined("myGlobalVar")` returns `true` only if it is defined in the `globals` section as a non "off" value.
+    pub fn is_global_defined(&self, var: &str) -> bool {
+        if !self.scoping().root_unresolved_references().contains_key(var) {
+            return false;
+        }
+        if self.globals().is_enabled(var) {
+            return true;
+        }
+        self.env_contains_var(var)
+    }
+
+    pub fn is_ecma_script_global(&self, var: &str) -> bool {
+        if !self.scoping().root_unresolved_references().contains_key(var) {
+            return false;
+        }
+
+        GLOBALS["es2026"].contains_key(var) || GLOBALS["builtin"].contains_key(var)
+    }
+
+    fn env_contains_var(&self, var: &str) -> bool {
         if GLOBALS["builtin"].contains_key(var) {
             return true;
         }

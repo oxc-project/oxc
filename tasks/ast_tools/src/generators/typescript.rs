@@ -477,13 +477,14 @@ fn amend_oxlint_types(code: &str) -> String {
         }
     }
 
-    let mut code = SPAN_REGEX.replace(code, SpanReplacer).into_owned();
+    let code = SPAN_REGEX.replace(code, SpanReplacer).into_owned();
 
-    // Add `comments` and `tokens` fields to `Program`
-    #[expect(clippy::items_after_statements)]
-    const HASHBANG_FIELD: &str = "hashbang: Hashbang | null;";
-    let index = code.find(HASHBANG_FIELD).unwrap();
-    code.insert_str(index + HASHBANG_FIELD.len(), "comments: Comment[]; tokens: Token[];");
+    // Replace `hashbang` field in `Program` with `comments` and `tokens` fields
+    let old_len = code.len();
+    #[expect(clippy::disallowed_methods, reason = "always results in replacement")]
+    let code =
+        code.replacen("hashbang: Hashbang | null;", "comments: Comment[]; tokens: Token[];", 1);
+    assert!(code.len() != old_len); // Check replacement was made
 
     // Make `parent` fields non-optional
     #[expect(clippy::disallowed_methods)]
@@ -491,10 +492,11 @@ fn amend_oxlint_types(code: &str) -> String {
 
     #[rustfmt::skip]
     code.insert_str(0, "
-        import { Span } from '../plugins/location.ts';
-        import { Token } from '../plugins/tokens.ts';
-        import { Comment } from '../plugins/types.ts';
-        export { Span, Comment, Token };
+        import type { Comment } from '../plugins/comments.ts';
+        import type { Span } from '../plugins/location.ts';
+        import type { Token } from '../plugins/tokens.ts';
+
+        export type { Comment, Span, Token };
 
     ");
 

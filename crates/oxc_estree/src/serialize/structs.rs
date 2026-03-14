@@ -186,7 +186,7 @@ pub(super) enum StructState {
 /// The only method it's legal to call on a `FlatStructSerializer` is `serialize_struct`.
 ///
 /// # Example
-/// ```
+/// ```rust,ignore
 /// struct SomeNode {
 ///     // We want to flatten `Span` as if its fields were on `SomeNode`
 ///     span: Span,

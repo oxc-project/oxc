@@ -4,7 +4,9 @@ use std::sync::{Arc, OnceLock};
 use ignore::gitignore::Gitignore;
 use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
-use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
+use tower_lsp_server::ls_types::{
+    CodeActionContext, CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
+};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
@@ -40,7 +42,7 @@ use crate::{
         },
         lsp_file_system::LspFileSystem,
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-        utils::normalize_path,
+        utils::{normalize_path, range_overlaps},
     },
 };
 
@@ -151,20 +153,25 @@ impl ServerLinterBuilder {
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
-        let lint_options = LintOptions {
-            fix: fix_kind,
-            report_unused_directive: match options.unused_disable_directives {
-                UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
-                UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
-                UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
-            },
-            ..Default::default()
-        };
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
-
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+
+        let lint_options = LintOptions {
+            fix: fix_kind,
+            report_unused_directive: match options.unused_disable_directives {
+                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
+                Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
+                None => match config_store.report_unused_disable_directives() {
+                    Some(severity) if severity.is_warn_deny() => Some(severity),
+                    _ => None,
+                },
+            },
+            ..Default::default()
+        };
+
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
@@ -487,6 +494,7 @@ impl Tool for ServerLinter {
                     "**/.oxlintrc.json".to_string(),
                     "**/.oxlintrc.jsonc".to_string(),
                     "**/oxlint.config.ts".to_string(),
+                    "**/vite.config.ts".to_string(),
                 ]
             }
             Some(v) => vec![v.to_string()],
@@ -561,7 +569,7 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let actions = self.get_code_actions_for_uri(&uri);
+        let actions = self.get_code_actions_for_uri(&uri, Some(CodeActionTriggerKind::INVOKED));
 
         let Some(actions) = actions else {
             return Ok(None);
@@ -585,9 +593,9 @@ impl Tool for ServerLinter {
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<&Vec<CodeActionKind>>,
+        context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
-        let actions = self.get_code_actions_for_uri(uri);
+        let actions = self.get_code_actions_for_uri(uri, context.trigger_kind);
 
         let Some(actions) = actions else {
             return vec![];
@@ -597,26 +605,58 @@ impl Tool for ServerLinter {
             return vec![];
         }
 
-        let actions =
-            actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
-        // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
-        let is_source_fix_all = only_code_action_kinds.is_some_and(|only| {
-            only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
-                || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
-        });
+        let actions = actions.into_iter().filter(|r| range_overlaps(*range, r.range));
 
-        if is_source_fix_all {
-            return apply_all_fix_code_action(actions, uri.clone())
-                .map_or(vec![], |code_actions| {
-                    vec![CodeActionOrCommand::CodeAction(code_actions)]
-                });
-        }
+        // `context.only` is a special case here. ESLint behavior is if `source.fixAll` is the first element in `context.only`,
+        // then only return fix all code action, and ignore other code actions, even if they are requested.
+        // https://github.com/microsoft/vscode-eslint/blob/1572a25c619861a812c6593c9b130ee52361bcf0/server/src/eslintServer.ts#L587-L589
+        // This works for zed editor too, it sends always with this layout: `"only": ["quickfix", "source.fixAll.oxc", "source.fixAll"]`
+        // https://github.com/oxc-project/oxc-zed/issues/133#issuecomment-4007046920
+        // To align more with the official LSP specs, we implement it a bit differently:
+        // If no `context.only` is applied, only return the quick fix code actions.
+        // If it is provided, we should loop over it and return the actions in the same order.
+        // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext
+        let applying_kinds = match &context.only {
+            Some(only) => {
+                // `source.fixAll` and `source.fixAll.oxc` should behave the same, filter duplicate out
+                let mut seen = FxHashSet::default();
+                only.iter()
+                    .filter_map(|kind| {
+                        if kind == &CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
+                            || kind == &CodeActionKind::SOURCE_FIX_ALL
+                        {
+                            if seen.contains(&CodeActionKind::SOURCE_FIX_ALL) {
+                                None
+                            } else {
+                                seen.insert(CodeActionKind::SOURCE_FIX_ALL);
+                                Some(CodeActionKind::SOURCE_FIX_ALL)
+                            }
+                        } else {
+                            Some(kind.clone())
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            }
+            // if `only` is not provided, only return quickfixes
+            None => vec![CodeActionKind::QUICKFIX],
+        };
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
-        for action in actions {
-            let fix_actions = apply_fix_code_actions(action, uri);
-            code_actions_vec.extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
+        for kind in applying_kinds {
+            // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
+            if kind == CodeActionKind::SOURCE_FIX_ALL {
+                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                    continue;
+                };
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
+            } else if kind == CodeActionKind::QUICKFIX {
+                for action in actions.clone() {
+                    let fix_actions = apply_fix_code_actions(action, uri);
+                    code_actions_vec
+                        .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
+                }
+            }
         }
 
         code_actions_vec
@@ -692,12 +732,22 @@ impl ServerLinter {
         }
     }
 
-    fn get_code_actions_for_uri(&self, uri: &Uri) -> Option<Vec<LinterCodeAction>> {
+    fn get_code_actions_for_uri(
+        &self,
+        uri: &Uri,
+        trigger_kind: Option<CodeActionTriggerKind>,
+    ) -> Option<Vec<LinterCodeAction>> {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
             cached_code_actions.clone()
-        } else {
+        }
+        // only run linting and generate code actions when the code action is explicitly invoked,
+        // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
+        // It is most likely that the client already sent a request, where we run the lint process and cache the code actions.
+        else if trigger_kind == Some(CodeActionTriggerKind::INVOKED) {
             let _ = self.run_file(uri, None);
             self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
+        } else {
+            None
         }
     }
 
@@ -838,10 +888,6 @@ impl ServerLinter {
         }
         false
     }
-}
-
-fn range_overlaps(a: Range, b: Range) -> bool {
-    a.start <= b.end && a.end >= b.start
 }
 
 #[cfg(test)]
@@ -1055,10 +1101,11 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -1071,10 +1118,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
         }
 
         #[test]
@@ -1096,12 +1144,13 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
-            assert_eq!(patterns.len(), 4);
+            // The `.oxlintrc.json` extends `./lint.json` -> 5 watchers (json, jsonc, ts, vite, lint.json)
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "lint.json".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
+            assert_eq!(patterns[4], "lint.json".to_string());
         }
 
         #[test]
@@ -1129,11 +1178,12 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[3], "**/vite.config.ts".to_string());
+            assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1184,11 +1234,12 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/vite.config.ts".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
         }
     }
 }
@@ -1197,11 +1248,16 @@ mod test_watchers {
 mod test {
     use std::path::PathBuf;
 
+    use oxc_language_server::Tool;
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
+    use tower_lsp_server::ls_types::{
+        CodeActionContext, CodeActionKind, CodeActionTriggerKind, Position, Range,
+    };
 
     use crate::lsp::{
+        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1227,6 +1283,117 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[test]
+    fn test_code_action_context_only() {
+        // this directory doesn't matter because we are directly calling the linter methods, and not relying on the file system for this test.
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("quickfix.js");
+        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let code_actions =
+            linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Default Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext { only: Some(vec![CodeActionKind::QUICKFIX]), ..Default::default() },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Quickfix Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::QUICKFIX, CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            4,
+            "Quickfix & FixAll Context: Should return 4 code actions: 1 rule fix + 2 ignore actions, and 1 fix all action"
+        );
+
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![
+                    CodeActionKind::QUICKFIX,
+                    CodeActionKind::SOURCE_FIX_ALL,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+                ]),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            code_actions.len(),
+            4,
+            "Quickfix & FixAll Context: Should return 4 code actions even if both `source.fixAll` and `source.fixAll.oxc` are requested,
+            because they are the same action, we should filter out duplicates."
+        );
+    }
+
+    #[test]
+    fn test_code_action_context_trigger_kind_default() {
+        // this directory doesn't matter because we are directly calling the linter methods, and not relying on the file system for this test.
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("quickfix.js");
+        let code_actions =
+            linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
+        assert_eq!(
+            code_actions.len(),
+            0,
+            "Default Context: Should return 0 code actions before running the file"
+        );
+
+        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let code_actions =
+            linter.get_code_actions_or_commands(&uri, &range, &CodeActionContext::default());
+
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Default Context after running file: Should return 3 code actions: 1 rule fix + 2 ignore actions"
+        );
+    }
+
+    #[test]
+    fn test_code_action_context_trigger_kind_invoked() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("trigger-kind-invoked.js");
+        let code_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                trigger_kind: Some(CodeActionTriggerKind::INVOKED),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            code_actions.len(),
+            3,
+            "Invoked Context: Should return 3 code actions: 1 rule fix + 2 ignore actions, Even if the file was not linted before."
+        );
     }
 
     #[test]

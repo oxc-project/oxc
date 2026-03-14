@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.116.0",
+  "version": "0.119.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "babel",
@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build-dev": "napi build --esm --platform",
-    "build-test": "pnpm run build-dev",
+    "build-test": "pnpm run build-dev --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",

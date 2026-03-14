@@ -1,8 +1,8 @@
-commit: 34725489
+commit: c9e7428b
 
 estree_typescript_tokens Summary:
-AST Parsed     : 9767/9767 (100.00%)
-Positive Passed: 9762/9767 (99.95%)
+AST Parsed     : 9764/9764 (100.00%)
+Positive Passed: 9759/9764 (99.95%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
 A 'return' statement can only be used within a function body.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts

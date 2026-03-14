@@ -744,7 +744,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
     /// Produces an expression that results in `right` if `left` is not undefined at runtime:
     ///
-    /// ```
+    /// ```rust,ignore
     /// typeof left !== "undefined" && right
     /// ```
     ///

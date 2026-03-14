@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 78c264a parser: Fix conditional expressions with arrow-function alternates in TS (#20356) (camc314)
+
+## [0.117.0] - 2026-03-09
+
+### 🚀 Features
+
+- e8547cc parser: Report error for using declarations in ambient contexts (#19934) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7502afe parser: Correct capacity for tokens `Vec` (#19967) (overlookmotel)
+
+### ⚡ Performance
+
+- 8ba61dd parser: Make pushing tokens faster (#19960) (overlookmotel)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features

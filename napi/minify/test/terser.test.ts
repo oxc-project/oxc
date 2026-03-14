@@ -4392,7 +4392,9 @@ test("collapse_rhs_lhs", () => {
   run(code, expected);
 });
 
-test("window_access_is_impure", () => {
+// Oxc follows Rollup/Rolldown behavior: `window` is a known global,
+// so accessing it is side-effect-free.
+test.skip("window_access_is_impure", () => {
   const code = 'try{window}catch(e){console.log("PASS")}';
   const expected = ["PASS"];
   run(code, expected);

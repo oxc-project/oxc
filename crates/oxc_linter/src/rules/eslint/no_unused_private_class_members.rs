@@ -197,6 +197,13 @@ fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
                     return true;
                 }
             }
+            (AstKind::PrivateFieldExpression(_), AstKind::LogicalExpression(logical_expr)) => {
+                // Reading the left side of a logical expression can affect control flow
+                // (e.g. `this.#flag && sideEffect()`), even when used as a statement.
+                if logical_expr.left.span().contains_inclusive(curr.span()) {
+                    return true;
+                }
+            }
             _ => {
                 return false;
             }
@@ -227,6 +234,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
         | AstKind::SpreadElement(_)
         | AstKind::AssignmentPattern(_)
         | AstKind::SwitchCase(_)
+        | AstKind::SwitchStatement(_)
         | AstKind::ThrowStatement(_)
         | AstKind::WhileStatement(_)
         | AstKind::DoWhileStatement(_)
@@ -495,6 +503,7 @@ fn test() {
         r"class Foo { #x; method(val) { switch(val) { case (a ? this.#x : b): break; } } }",
         r"class Foo { #x; method() { throw a ? this.#x : new Error(); } }",
         r"class Foo { #x; method() { while (a ? this.#x : b) {} } }",
+        r"class Bug { #flag = false; foo() { this.#flag && console.log('spam'); } }",
         r"class Foo { #a; #b; #c; method() { return this.#a ? this.#b : this.#c; } }",
         // Issue #15548: Private member used in logical expression on RHS of assignment
         r"class ExampleFoo { #foo = 0; foo(foo) { foo = foo ?? this.#foo; return foo; } }",
@@ -502,6 +511,7 @@ fn test() {
         r"class ExampleBar { #bar = 0; bar(bar) { bar = ++this.#bar; return bar; } }",
         r"class Test { #url: string; constructor(url: string) { this.#url = url; } open() { return new WebSocket(this.#url); } }",
         r"export class Foo { #fetch: typeof fetch; constructor() { this.#fetch = fetch; } async bar() { return (0, this.#fetch)('https://example.com'); } }",
+        r"export class StateMachine { #state = 'idle'; step() { switch (this.#state) { case 'idle': { this.#state = 'running'; break; } case 'running': { this.#state = 'done'; break; } } } }",
     ];
 
     let fail = vec![

@@ -10,7 +10,7 @@
 /// You can use the [`Arguments`] value that `format_args!` returns in  `Format` contexts
 /// as seen below.
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::{SimpleFormatContext, format, format_args};
 /// use biome_formatter::prelude::*;
 ///
@@ -45,7 +45,7 @@ macro_rules! format_args {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
 ///
@@ -82,7 +82,7 @@ macro_rules! write {
 ///
 /// An example:
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{FormatState, VecBuffer};
 ///
@@ -126,7 +126,7 @@ macro_rules! dbg_write {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::format;
 ///
@@ -157,7 +157,7 @@ macro_rules! format {
 ///
 /// ## Examples
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///
@@ -245,7 +245,7 @@ macro_rules! format {
 ///
 /// ### Enclosing group with `should_expand: true`
 ///
-/// ```
+/// ```text
 /// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
 /// use biome_formatter::prelude::*;
 ///

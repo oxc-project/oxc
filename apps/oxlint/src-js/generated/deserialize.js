@@ -2,6 +2,7 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
 import { tokens, initTokens } from "../plugins/tokens.js";
+import { comments, initComments } from "../plugins/comments.js";
 
 let uint8,
   uint32,
@@ -9,7 +10,6 @@ let uint8,
   sourceText,
   sourceIsAscii,
   sourceStartPos,
-  astId = 0,
   parent = null,
   getLoc;
 
@@ -49,38 +49,17 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
 export function resetBuffer() {
   // Clear buffer and source text string to allow them to be garbage collected
   uint8 = uint32 = float64 = sourceText = void 0;
-  astId++;
 }
 
 function deserializeProgram(pos) {
-  let localAstId = astId,
-    end = deserializeU32(pos + 4),
+  let end = deserializeU32(pos + 4),
     program = (parent = {
       __proto__: NodeProto,
       type: "Program",
       body: null,
       sourceType: deserializeModuleKind(pos + 137),
-      hashbang: null,
       get comments() {
-        // Check AST in buffer is still the same AST (buffers are reused)
-        if (localAstId !== astId)
-          throw Error("Comments are only accessible while linting the file");
-        // Deserialize the comments.
-        // Replace this getter with the comments array, so we don't deserialize twice.
-        let comments = deserializeVecComment(pos + 24),
-          { hashbang } = this;
-        if (hashbang !== null) {
-          let start, end;
-          comments.unshift({
-            __proto__: NodeProto,
-            type: "Shebang",
-            value: hashbang.value,
-            start: (start = hashbang.start),
-            end: (end = hashbang.end),
-            range: [start, end],
-          });
-        }
-        Object.defineProperty(this, "comments", { value: comments });
+        comments === null && initComments();
         return comments;
       },
       get tokens() {
@@ -91,9 +70,8 @@ function deserializeProgram(pos) {
       end,
       range: [0, end],
       parent: null,
-    });
-  program.hashbang = deserializeOptionHashbang(pos + 48);
-  let body = (program.body = deserializeVecDirective(pos + 80));
+    }),
+    body = (program.body = deserializeVecDirective(pos + 80));
   body.push(...deserializeVecStatement(pos + 104));
   {
     let start;
@@ -1524,19 +1502,6 @@ function deserializeDirective(pos) {
   node.expression = deserializeStringLiteral(pos + 8);
   parent = previousParent;
   return node;
-}
-
-function deserializeHashbang(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Hashbang",
-    value: deserializeStr(pos + 8),
-    start: (start = deserializeU32(pos)),
-    end: (end = deserializeU32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
 }
 
 function deserializeBlockStatement(pos) {
@@ -5744,33 +5709,6 @@ function deserializeJSDocUnknownType(pos) {
   };
 }
 
-function deserializeCommentKind(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return "Line";
-    case 1:
-      return "Block";
-    case 2:
-      return "Block";
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
-  }
-}
-
-function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 12),
-    start = deserializeU32(pos),
-    end = deserializeU32(pos + 4);
-  return {
-    __proto__: NodeProto,
-    type,
-    value: sourceText.slice(start + 2, end - (type === "Line" ? 0 : 2)),
-    start,
-    end,
-    range: [start, end],
-  };
-}
-
 function deserializeAssignmentOperator(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -5949,23 +5887,6 @@ function deserializeStr(pos) {
     }
   } while (pos < end);
   return out;
-}
-
-function deserializeVecComment(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 16;
-  for (; pos !== endPos; ) {
-    arr.push(deserializeComment(pos));
-    pos += 16;
-  }
-  return arr;
-}
-
-function deserializeOptionHashbang(pos) {
-  if (uint32[(pos + 8) >> 2] === 0 && uint32[(pos + 12) >> 2] === 0) return null;
-  return deserializeHashbang(pos);
 }
 
 function deserializeVecDirective(pos) {

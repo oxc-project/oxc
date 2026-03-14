@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### ⚡ Performance
+
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🚀 Features

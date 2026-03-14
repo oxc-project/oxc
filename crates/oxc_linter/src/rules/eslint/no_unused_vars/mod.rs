@@ -11,6 +11,7 @@ mod usage;
 
 use std::ops::Deref;
 
+use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -234,28 +235,26 @@ impl NoUnusedVars {
     fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
         let is_ignored = self.is_ignored(symbol);
 
-        if is_ignored && !self.report_used_ignore_pattern {
+        if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
         // Order matters. We want to call cheap/high "yield" functions first.
         let is_used = symbol.is_exported() || symbol.has_usages(self);
 
-        match (is_used, is_ignored) {
-            (true, true) => {
+        match (is_used, *is_ignored) {
+            // used, ignored because variable name matches one of several
+            // ignore patterns. Report if used.
+            (true, Some(IgnoreReason::NamePattern)) => {
                 if self.report_used_ignore_pattern {
                     ctx.diagnostic(diagnostic::used_ignored(symbol, &self.vars_ignore_pattern));
                 }
                 return;
-            },
-            // not used but ignored, no violation
-            (false, true)
-            // used and not ignored, no violation
-            | (true, false) => {
-                return
-            },
+            }
+            // used, ignored because of other ignore reason (e.g. rest siblings)
+            (_, Some(_)) | (true, None) => return,
             // needs acceptance check and/or reporting
-            (false, false) => {}
+            (false, None) => {}
         }
 
         let declaration = symbol.declaration();

@@ -14,6 +14,7 @@ export const {
   keys: ObjectKeys,
   values: ObjectValues,
   freeze: ObjectFreeze,
+  preventExtensions: ObjectPreventExtensions,
   defineProperty: ObjectDefineProperty,
   defineProperties: ObjectDefineProperties,
   create: ObjectCreate,

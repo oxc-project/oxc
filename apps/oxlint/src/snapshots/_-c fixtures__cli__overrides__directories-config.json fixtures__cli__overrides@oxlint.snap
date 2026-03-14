@@ -1,0 +1,41 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/cli/overrides/directories-config.json fixtures/cli/overrides
+working directory: 
+----------
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/overrides/lib/index.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/overrides/lib/tests/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/overrides/src/oxlint.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/cli/overrides/src/tests/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 2 warnings and 2 errors.
+Finished in <variable>ms on 7 files with 92 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

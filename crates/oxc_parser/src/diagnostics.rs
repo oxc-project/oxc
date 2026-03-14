@@ -753,6 +753,17 @@ pub fn using_declaration_not_allowed_in_switch_bare_case(span: Span) -> OxcDiagn
 }
 
 #[cold]
+pub fn using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1545", "'using' declarations are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn await_using_declarations_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1546", "'await using' declarations are not allowed in ambient contexts.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
         .with_labels([

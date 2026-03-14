@@ -562,7 +562,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
         match get_typed_inner_expression(init) {
             // we consider these well-typed
-            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => {}
+            Expression::TSAsExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSSatisfiesExpression(_) => {}
             expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
@@ -574,6 +576,16 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
         // ignore
+    }
+
+    fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
+        // Constructor arguments are implementation details of the exported value,
+        // not part of the module boundary. Still inspect the callee so class
+        // expressions used with `new` continue to be checked.
+        self.visit_expression(&it.callee);
+        if let Some(type_arguments) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
@@ -911,6 +923,10 @@ mod test {
             (
                 "const x = (() => {}) as Foo;",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
+            ),
+            (
+                "type F = (x: number) => number; export const f = (x => x) satisfies F;",
+                None,
             ),
             (
                 "
@@ -1536,6 +1552,14 @@ mod test {
             ("function Test(): void { const _x = () => {}; } export default Test;", None),
             (
                 "function Test(): void { const _x = () => { }; } function Test2() { return (): void => { }; } export { Test2 };",
+                None,
+            ),
+            (
+                "
+            export const widgetSettingsDeserializer = new JsonInterfaceDeserializer<WidgetSettings, SupportedWidget>(
+              raw => raw.widgetSpecificationId as SupportedWidget
+            );
+            ",
                 None,
             ),
         ];

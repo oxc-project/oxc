@@ -203,7 +203,7 @@ where
             let prev_ptr_write = ptr.add(next_write - 1);
             if !same_bucket(&mut *ptr_read, &mut *prev_ptr_write) {
                 if next_read != next_write {
-                    let ptr_write = prev_ptr_write.offset(1);
+                    let ptr_write = prev_ptr_write.add(1);
                     mem::swap(&mut *ptr_read, &mut *ptr_write);
                 }
                 next_write += 1;
@@ -1157,7 +1157,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
                 let p = self.as_mut_ptr().add(index);
                 // Shift everything over to make space. (Duplicating the
                 // `index`th element into two consecutive places.)
-                ptr::copy(p, p.offset(1), len - index);
+                ptr::copy(p, p.add(1), len - index);
                 // Write it in, overwriting the first copy of the `index`th
                 // element.
                 ptr::write(p, element);
@@ -1198,7 +1198,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
                 ret = ptr::read(ptr);
 
                 // Shift everything down to fill in that spot.
-                ptr::copy(ptr.offset(1), ptr, len - index - 1);
+                ptr::copy(ptr.add(1), ptr, len - index - 1);
             }
             self.set_len(len - 1);
             ret
@@ -2066,7 +2066,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
             // Write all elements except the last one
             for _ in 1..n {
                 ptr::write(ptr, value.next());
-                ptr = ptr.offset(1);
+                ptr = ptr.add(1);
             }
 
             if n > 0 {
@@ -2541,7 +2541,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
                 Some(mem::zeroed())
             } else {
                 let old = self.ptr;
-                self.ptr = self.ptr.offset(1);
+                self.ptr = self.ptr.add(1);
 
                 Some(ptr::read(old))
             }
@@ -2577,7 +2577,7 @@ impl<'a, T: 'a> DoubleEndedIterator for IntoIter<'a, T> {
                 // Make up a value of this ZST.
                 Some(mem::zeroed())
             } else {
-                self.end = self.end.offset(-1);
+                self.end = self.end.sub(1);
 
                 Some(ptr::read(self.end))
             }

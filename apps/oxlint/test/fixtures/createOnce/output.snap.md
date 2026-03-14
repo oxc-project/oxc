@@ -81,13 +81,13 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
+  x create-once-plugin(always-run): createOnce: id: null
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options: null
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -261,13 +261,13 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: id error: Cannot access `context.id` in `createOnce`
+  x create-once-plugin(always-run): createOnce: id: null
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: options error: Cannot access `context.options` in `createOnce`
+  x create-once-plugin(always-run): createOnce: options: null
    ,-[files/2.js:1:1]
  1 | let y;
    : ^

@@ -1,4 +1,5 @@
-use schemars::{JsonSchema, schema_for};
+use schemars::JsonSchema;
+use schemars::r#gen::SchemaSettings;
 use serde_json::Value;
 
 /// Generates the JSON schema for a configuration type.
@@ -11,7 +12,14 @@ use serde_json::Value;
 /// # Panics
 /// Panics if the schema generation fails.
 pub fn generate_schema_json<T: JsonSchema>() -> String {
-    let mut schema = schema_for!(T);
+    let generator = SchemaSettings::draft07()
+        .with(|s| {
+            // `Option<T>` fields are already optional (not in `required`),
+            // so adding `null` to the type is unnecessary.
+            s.option_add_null_type = false;
+        })
+        .into_generator();
+    let mut schema = generator.into_root_schema_for::<T>();
 
     // Allow comments and trailing commas for vscode-json-languageservice
     // NOTE: This is NOT part of standard JSON Schema specification
