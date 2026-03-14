@@ -98,11 +98,8 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let ret = Codegen::new().with_options(codegen_options).with_scoping(scoping).build(&program);
 
-    let legal_comments = ret
-        .legal_comments
-        .iter()
-        .map(|c| c.span.source_text(source_text).to_string())
-        .collect();
+    let legal_comments =
+        ret.legal_comments.iter().map(|c| c.span.source_text(source_text).to_string()).collect();
 
     MinifyResult {
         code: ret.code,
