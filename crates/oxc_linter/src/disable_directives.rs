@@ -182,6 +182,11 @@ impl DisableDirectives {
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+        // Some diagnostics are point locations (start == end). Treat them as
+        // 1-byte ranges for interval lookup/overlap checks.
+        let diagnostic_end =
+            if span.start == span.end { span.end.saturating_add(1) } else { span.end };
+
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -193,7 +198,7 @@ impl DisableDirectives {
         // are still suppressed.
         let matched_intervals = self
             .intervals
-            .find(span.start, span.end)
+            .find(span.start, diagnostic_end)
             .filter(|interval| {
                 // Check if this rule should be disabled
                 let rule_matches = match &interval.val {
@@ -230,7 +235,7 @@ impl DisableDirectives {
                     }
                 } else {
                     // For regular disable directives, check if there's any overlap
-                    span.start < interval.stop && span.end > interval.start
+                    span.start < interval.stop && diagnostic_end > interval.start
                 }
             })
             .map(|interval| interval.val.clone())
@@ -377,7 +382,9 @@ impl DisableDirectivesBuilder {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some((comment_span.end, comment_span));
+                        // Start coverage at the beginning of the directive comment so
+                        // top-of-file headers can suppress file-start diagnostics.
+                        self.disable_all_start = Some((comment.span.start, comment_span));
                     }
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
@@ -493,7 +500,7 @@ impl DisableDirectivesBuilder {
                     let mut rules = vec![];
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                         self.disable_start_map.entry(rule_name.to_string()).or_insert((
-                            comment_span.end,
+                            comment.span.start,
                             name_span,
                             comment_span,
                         ));
@@ -1389,6 +1396,24 @@ function test() {
         assert!(
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
+        );
+    }
+
+    #[test]
+    fn test_disable_file_header_suppresses_file_start_diagnostic() {
+        test_directives(
+            |prefix| {
+                format!(
+                    "/* {prefix}-disable no-console */\nconsole.log('still disabled by header');\n"
+                )
+            },
+            |_, directives| {
+                // Some rules report at file start (line 1, column 0), e.g. Program-level diagnostics.
+                // A header disable should still suppress those diagnostics.
+                assert!(directives.contains("no-console", Span::new(0, 1)));
+                // Program-level diagnostics can also be reported as zero-width points.
+                assert!(directives.contains("no-console", Span::new(0, 0)));
+            },
         );
     }
 }
