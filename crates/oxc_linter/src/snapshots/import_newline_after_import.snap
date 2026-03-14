@@ -1,0 +1,327 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ ╭─▶ import { A, B, C, D } from
+ 2 │ ╰─▶ '../path/to/my/module/in/very/far/directory'
+ 3 │     // some comment
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ import path from 'path';
+ 2 │ import foo from 'foo';
+   · ──────────────────────
+ 3 │ /**
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ import path from 'path';
+ 2 │ import foo from 'foo';
+   · ──────────────────────
+ 3 │ // Some random single line comment
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ export default function() {};
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ var foo = require('foo-module');
+   · ────────────────────────────────
+ 2 │ var something = 123;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ export default function() {};
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ var a = 123;
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:4:1]
+ 3 │ 
+ 4 │ import { bar } from './bar-lib';
+   · ────────────────────────────────
+ 5 │ var b=456;
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ var foo = require('foo-module');
+   · ────────────────────────────────
+ 2 │ var a = 123;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:4:1]
+ 3 │ 
+ 4 │ var bar = require('bar-lib');
+   · ─────────────────────────────
+ 5 │ var b=456;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ var foo = require('foo-module');
+   · ────────────────────────────────
+ 2 │ var a = 123;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:4:1]
+ 3 │ 
+ 4 │ require('bar-lib');
+   · ───────────────────
+ 5 │ var b=456;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ var path = require('path');
+ 2 │ var foo = require('foo');
+   · ─────────────────────────
+ 3 │ var bar = 42;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ var assign = Object.assign || require('object-assign');
+ 2 │ var foo = require('foo');
+   · ─────────────────────────
+ 3 │ var bar = 42;
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:3:1]
+ 2 │ foo(require('b'), require('c'), require('d'));
+ 3 │ require('d');
+   · ─────────────
+ 4 │ var foo = 'bar';
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │     require('a');
+ 2 │ ╭─▶ foo(
+ 3 │ │   require('b'),
+ 4 │ │   require('c'),
+ 5 │ │   require('d')
+ 6 │ ╰─▶ );
+ 7 │     var foo = 'bar';
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ import path from 'path';
+ 2 │ import foo from 'foo';
+   · ──────────────────────
+ 3 │ var bar = 42;
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:25]
+ 1 │ import path from 'path';import foo from 'foo';var bar = 42;
+   ·                         ──────────────────────
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ @SomeDecorator(foo)
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ var foo = require('foo');
+   · ─────────────────────────
+ 2 │ @SomeDecorator(foo)
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ @SomeDecorator(foo)
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ const foo = require('foo');
+   · ───────────────────────────
+ 2 │ @SomeDecorator(foo)
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import { map } from 'rxjs/operators';
+   · ─────────────────────────────────────
+ 2 │ @Component({})
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ // some random comment
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ // some random comment
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ // some random comment
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ // some random comment
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';
+   · ──────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';export default function() {};
+   · ──────────────────────
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ const foo = require('foo');
+   · ───────────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ const foo = require('foo');
+   · ───────────────────────────
+ 2 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 1 empty line after import statement not followed by another import.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ import foo from 'foo';// some random comment
+   · ──────────────────────
+ 2 │ export default function() {};
+   ╰────
+  help: Add empty line(s) after import
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:2:1]
+ 1 │ var foo = require('foo-module');
+ 2 │ var foo = require('foo-module');
+   · ────────────────────────────────
+ 3 │ 
+   ╰────
+  help: Add empty line(s) after require
+
+  ⚠ eslint-plugin-import(newline-after-import): Expected 2 empty lines after require statement not followed by another require.
+   ╭─[newline_after_import.tsx:1:1]
+ 1 │ var foo = require('foo-module');
+   · ────────────────────────────────
+ 2 │ 
+   ╰────
+  help: Add empty line(s) after require
