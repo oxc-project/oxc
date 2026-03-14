@@ -127,8 +127,8 @@ let resetLoc: (token: Token) => void;
  * All `Token` instances always have the same V8 hidden class, keeping property access monomorphic.
  */
 class Token {
-  type: TokenType["type"] = "" as TokenType["type"]; // Overwritten later
-  value: string = "";
+  type: TokenType["type"] = null!; // Overwritten later
+  value: string = null!; // Overwritten later
   regex: RegularExpressionToken["regex"] | undefined;
   start: number = 0;
   end: number = 0;
