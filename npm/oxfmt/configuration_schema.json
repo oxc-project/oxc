@@ -4,6 +4,18 @@
   "description": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options, but not all of them.\nIn addition, some options are our own extensions.",
   "type": "object",
   "properties": {
+    "arrayWrap": {
+      "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ArrayWrapConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
+    },
     "arrowParens": {
       "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
       "allOf": [
@@ -182,6 +194,36 @@
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
+    "ArrayWrapConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ArrayWrapMode"
+        },
+        {
+          "$ref": "#/definitions/ArrayWrapThreshold"
+        }
+      ]
+    },
+    "ArrayWrapMode": {
+      "type": "string",
+      "enum": [
+        "preserve",
+        "collapse"
+      ]
+    },
+    "ArrayWrapThreshold": {
+      "type": "object",
+      "required": [
+        "minElementsToWrap"
+      ],
+      "properties": {
+        "minElementsToWrap": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
     "ArrowParensConfig": {
       "type": "string",
       "enum": [
@@ -240,6 +282,18 @@
     "FormatConfig": {
       "type": "object",
       "properties": {
+        "arrayWrap": {
+          "description": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ArrayWrapConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "How to wrap array literals.\n\n- `\"preserve\"` (default): Keep arrays as-is; only reformat when they exceed printWidth.\n- `\"collapse\"`: Collapse arrays to a single line when they fit within printWidth.\n- `{ \"minElementsToWrap\": N }`: Force one-element-per-line when element count >= threshold;\narrays below the threshold use `\"preserve\"` behavior.\n\n- Default: `\"preserve\"`"
+        },
         "arrowParens": {
           "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
           "allOf": [

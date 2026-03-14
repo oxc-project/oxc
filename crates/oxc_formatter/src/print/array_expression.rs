@@ -1,8 +1,10 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
     formatter::{Buffer, Formatter, prelude::*},
+    options::ArrayExpand,
     write,
 };
 
@@ -32,9 +34,26 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
             write!(f, format_dangling_comments(self.array.span).with_block_indent());
         } else {
             let group_id = f.group_id("array");
-            let should_expand = !self.options.is_force_flat_mode && should_break(self.array);
+            let array_expand = f.options().array_expand;
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let force_above_threshold = matches!(array_expand, ArrayExpand::ForceAboveThreshold(threshold) if self.array.elements().len() >= threshold as usize);
+
+            let preserve_below_threshold = !force_above_threshold
+                && matches!(array_expand, ArrayExpand::ForceAboveThreshold(_))
+                && elements_have_leading_newline(self.array, f);
+
+            let should_expand = !self.options.is_force_flat_mode
+                && match array_expand {
+                    ArrayExpand::Auto => should_break(self.array),
+                    ArrayExpand::Never => false,
+                    ArrayExpand::ForceAboveThreshold(_) => {
+                        force_above_threshold || preserve_below_threshold
+                    }
+                };
+
+            let force_one_per_line = force_above_threshold || preserve_below_threshold;
+            let elements = ArrayElementList::new(self.array.elements(), group_id)
+                .with_force_one_per_line(force_one_per_line);
 
             write!(
                 f,
@@ -46,6 +65,12 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
 
         write!(f, "]");
     }
+}
+
+fn elements_have_leading_newline(array: &AstNode<'_, ArrayExpression<'_>>, f: &Formatter) -> bool {
+    array.elements().first().is_some_and(|e| {
+        f.source_text().contains_newline_between(array.span.start, e.span().start)
+    })
 }
 
 /// Returns `true` for arrays containing at least two elements if:
