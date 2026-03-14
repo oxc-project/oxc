@@ -13,7 +13,7 @@ const INLINE_FUNC_NAME = "firstTokenAtOrAfter";
 const INLINE_FUNC_PATH = pathJoin(import.meta.dirname, "../src-js/plugins/tokens_methods.ts");
 
 // Files to inline the binary search function into
-const FILES = ["/src-js/plugins/tokens_methods.ts", "/src-js/plugins/comments.ts"];
+const FILES = ["/src-js/plugins/tokens_methods.ts", "/src-js/plugins/comments_methods.ts"];
 
 // Get details of the function to be inlined
 const { fnParams, returnParamIndex, fnBodySource } = extractInlinedFunction(
@@ -150,6 +150,11 @@ const plugin: Plugin = {
         },
       });
       visitor.visit(program);
+
+      // Check some calls were inlined. If there weren't, probably paths in `FILES` are wrong.
+      if (inlinedCallExprs.size === 0) {
+        throw new Error(`No \`${INLINE_FUNC_NAME}\` calls found in ${path}`);
+      }
 
       return { code: magicString };
     },

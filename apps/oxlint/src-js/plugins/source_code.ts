@@ -12,7 +12,7 @@ import { deserializeProgramOnly, resetBuffer } from "../generated/deserialize.js
 
 import visitorKeys from "../generated/keys.ts";
 import { resetComments } from "./comments.ts";
-import * as commentMethods from "./comments.ts";
+import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
 import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
