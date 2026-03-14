@@ -418,6 +418,37 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // JSDoc formatting: if enabled, try to format JSDoc comments
+        if self.is_jsdoc()
+            && !self.is_legal()
+            && let Some(jsdoc_options) = &f.options().jsdoc
+        {
+            let source: &str = &f.source_text();
+            let line_width = f.options().line_width.value() as usize;
+            // Calculate the indent of the comment by looking at the source text
+            // to account for indentation when computing available width.
+            let indent_chars = {
+                let start = self.span.start as usize;
+                let before = &source[..start];
+                // Find the last newline before the comment
+                let line_start = before.rfind('\n').map_or(0, |pos| pos + 1);
+                // Count leading whitespace on this line
+                let tab_width = f.options().indent_width.value() as usize;
+                source[line_start..start]
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .map(|c| if c == '\t' { tab_width } else { 1 })
+                    .sum::<usize>()
+            };
+            let available_width = line_width.saturating_sub(indent_chars);
+            if let Some(formatted) =
+                super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+            {
+                write!(f, [formatted]);
+                return;
+            }
+        }
+
         let content = f.source_text().text_for(&self.span);
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);

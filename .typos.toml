@@ -25,6 +25,7 @@ extend-exclude = [
   "tasks/coverage/test262",
   "tasks/coverage/typescript",
   "tasks/coverage/snapshots",
+  "tasks/prettier_conformance/jsdoc",
   "tasks/prettier_conformance/prettier",
   "tasks/prettier_conformance/snapshots",
   "tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/text/escapes/input.jsx",

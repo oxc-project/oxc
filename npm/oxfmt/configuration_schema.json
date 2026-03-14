@@ -63,6 +63,18 @@
       "type": "boolean",
       "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
+    "jsdoc": {
+      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nCan be `true` (enable with defaults), `false` (disable), or an object with options.\n\n- Default: Disabled",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsdocConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nCan be `true` (enable with defaults), `false` (disable), or an object with options.\n\n- Default: Disabled"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
       "type": "boolean",
@@ -291,6 +303,18 @@
           "type": "boolean",
           "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
         },
+        "jsdoc": {
+          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nCan be `true` (enable with defaults), `false` (disable), or an object with options.\n\n- Default: Disabled",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/JsdocConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nCan be `true` (enable with defaults), `false` (disable), or an object with options.\n\n- Default: Disabled"
+        },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
           "type": "boolean",
@@ -407,6 +431,79 @@
         "strict",
         "ignore"
       ]
+    },
+    "JsdocConfig": {
+      "description": "JSDoc configuration: either `true`/`false` or an object with fine-grained options.",
+      "type": "object",
+      "properties": {
+        "add_default_to_description": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "bracket_spacing": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "capitalize_descriptions": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "comment_line_strategy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description_tag": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "description_with_dot": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "keep_unparsable_example_indent": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "line_wrapping_style": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prefer_code_fences": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "separate_returns_from_param": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "separate_tag_groups": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "markdownDescription": "JSDoc configuration: either `true`/`false` or an object with fine-grained options."
     },
     "NewlinesBetweenMarker": {
       "description": "A marker object for overriding `newlinesBetween` at a specific group boundary.",

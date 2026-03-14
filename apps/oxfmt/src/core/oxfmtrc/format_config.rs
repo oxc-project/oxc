@@ -223,6 +223,91 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// When enabled, JSDoc comments are normalized and reformatted:
+    /// tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// Can be `true` (enable with defaults), `false` (disable), or an object with options.
+    ///
+    /// - Default: Disabled
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_jsdoc_config",
+        default
+    )]
+    pub jsdoc: Option<JsdocConfig>,
+}
+
+/// JSDoc configuration: either `true`/`false` or an object with fine-grained options.
+#[derive(Debug, Clone, Default, Serialize, JsonSchema)]
+pub struct JsdocConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
+}
+
+fn deserialize_jsdoc_config<'de, D>(deserializer: D) -> Result<Option<JsdocConfig>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    match value {
+        Some(Value::Bool(true)) => Ok(Some(JsdocConfig::default())),
+        None | Some(Value::Bool(false)) => Ok(None),
+        Some(Value::Object(map)) => {
+            let config = JsdocConfig {
+                capitalize_descriptions: map
+                    .get("capitalize_descriptions")
+                    .and_then(Value::as_bool),
+                description_with_dot: map.get("description_with_dot").and_then(Value::as_bool),
+                add_default_to_description: map
+                    .get("add_default_to_description")
+                    .and_then(Value::as_bool),
+                prefer_code_fences: map.get("prefer_code_fences").and_then(Value::as_bool),
+                line_wrapping_style: map
+                    .get("line_wrapping_style")
+                    .and_then(Value::as_str)
+                    .map(String::from),
+                comment_line_strategy: map
+                    .get("comment_line_strategy")
+                    .and_then(Value::as_str)
+                    .map(String::from),
+                separate_tag_groups: map.get("separate_tag_groups").and_then(Value::as_bool),
+                separate_returns_from_param: map
+                    .get("separate_returns_from_param")
+                    .and_then(Value::as_bool),
+                bracket_spacing: map.get("bracket_spacing").and_then(Value::as_bool),
+                description_tag: map.get("description_tag").and_then(Value::as_bool),
+                keep_unparsable_example_indent: map
+                    .get("keep_unparsable_example_indent")
+                    .and_then(Value::as_bool),
+            };
+            Ok(Some(config))
+        }
+        Some(_) => Err(serde::de::Error::custom("jsdoc must be a boolean or an object")),
+    }
 }
 
 impl FormatConfig {

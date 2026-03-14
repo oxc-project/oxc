@@ -79,7 +79,7 @@ pub fn parse_jsdoc(
             // - 2 backticks: inline code (used to escape backticks inside)
             // - 3+ backticks: code fence (for nested code blocks)
             // Opening and closing sequences must have the same number of backticks.
-            '`' => {
+            '`' if !in_single_quotes && !in_double_quotes => {
                 // Count consecutive backticks
                 let mut count: u32 = 1;
                 while chars.peek() == Some(&'`') {
@@ -96,18 +96,30 @@ pub fn parse_jsdoc(
                 }
                 // Mismatched count inside a backtick section: ignore
             }
-            '"' => in_double_quotes = !in_double_quotes,
-            '\'' => in_single_quotes = !in_single_quotes,
+            // Inside backtick-quoted sections (inline code / code fences),
+            // all bracket/quote tracking is suspended. Characters like `{`, `}`,
+            // `"`, etc. inside code literals are not syntactic and must not
+            // affect `can_parse` — otherwise a stray `{` in inline code
+            // (e.g. `` `{` ``) would prevent subsequent `@` tags from being
+            // recognized, causing them to merge into the description.
+            '"' if backtick_count == 0 => in_double_quotes = !in_double_quotes,
+            '\'' if backtick_count == 0 => in_single_quotes = !in_single_quotes,
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
             }
-            '{' => curly_brace_depth += 1,
-            '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
-            '(' => brace_depth += 1,
-            ')' => brace_depth = brace_depth.saturating_sub(1),
-            '[' => square_brace_depth += 1,
-            ']' => square_brace_depth = square_brace_depth.saturating_sub(1),
+            '{' if backtick_count == 0 => curly_brace_depth += 1,
+            '}' if backtick_count == 0 => {
+                curly_brace_depth = (curly_brace_depth - 1).max(0);
+            }
+            '(' if backtick_count == 0 => brace_depth += 1,
+            ')' if backtick_count == 0 => {
+                brace_depth = (brace_depth - 1).max(0);
+            }
+            '[' if backtick_count == 0 => square_brace_depth += 1,
+            ']' if backtick_count == 0 => {
+                square_brace_depth = (square_brace_depth - 1).max(0);
+            }
 
             '@' if can_parse && at_line_start => {
                 let part = &source_text[start..end];
@@ -197,4 +209,64 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     );
 
     JSDocTag::new(kind, body_content, body_span)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Helper: parse JSDoc and return tag kind strings.
+    fn tag_kinds(source: &str) -> Vec<String> {
+        let (_, tags) = parse_jsdoc(source, 0);
+        tags.iter().map(|t| t.kind.parsed().to_string()).collect()
+    }
+
+    #[test]
+    fn backtick_inside_quotes_does_not_prevent_tag_split() {
+        // Bug A: backtick inside single quotes toggled backtick_count,
+        // preventing @returns from being recognized as a separate tag.
+        let src = " \n * @param {\"'\" | '\"' | '`'} string_start_char desc\n * @returns {number} The index";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn extra_closing_brace_does_not_prevent_tag_split() {
+        // Bug B: extra `}` after param name decremented curly_brace_depth
+        // below 0 (i32 saturating_sub), preventing next @param recognition.
+        let src = " \n * @param {AST.SvelteElement | AST.RegularElement} node}\n * @param {{ stop: () => void }} context";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "param"]);
+    }
+
+    #[test]
+    fn normal_tags_still_split_correctly() {
+        let src = " \n * @param {string} name The name\n * @returns {boolean} True if valid";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn inline_link_does_not_split_tag() {
+        // {@link ...} should NOT start a new tag
+        let src = " \n * @param {string} name See {@link Foo} for details\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn at_sign_mid_line_does_not_split_tag() {
+        // @ in email or scoped package mid-line should not split
+        let src = " \n * @param {string} email user@example.com address\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn code_fence_does_not_prevent_tag_split() {
+        // Backtick code fence should not affect tag splitting after the fence
+        let src = " \n * @example\n * ```\n * const x = 1;\n * ```\n * @returns {void}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["example", "returns"]);
+    }
 }
