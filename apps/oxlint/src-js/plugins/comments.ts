@@ -42,6 +42,10 @@ let previousComments: Comment[] = [];
 // Comments whose `loc` property has been accessed, and therefore needs clearing on reset.
 const commentsWithLoc: Comment[] = [];
 
+// Empty comments array.
+// Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
+const emptyComments: CommentType[] = Object.freeze([]) as unknown as CommentType[];
+
 // Reset `#loc` field on a `Comment` class instance.
 let resetCommentLoc: (comment: Comment) => void;
 
@@ -90,6 +94,10 @@ Object.defineProperty(Comment.prototype, "loc", { enumerable: true });
 export function initComments(): void {
   debugAssert(comments === null, "Comments already initialized");
 
+  // We don't need to deserialize source text if there are no comments, so we could move this call to after
+  // the `commentsLen === 0` check. However, various comments methods rely on that if `initComments` has been called,
+  // then `sourceText` is initialized. Doing it eagerly here avoids having to check if `sourceText` is `null`
+  // in all those methods, which can be called quite frequently.
   if (sourceText === null) initSourceText();
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
@@ -98,6 +106,12 @@ export function initComments(): void {
   const programPos32 = uint32[DATA_POINTER_POS_32] >> 2;
   const commentsPos = uint32[programPos32 + (COMMENTS_OFFSET >> 2)];
   const commentsLen = uint32[programPos32 + (COMMENTS_LEN_OFFSET >> 2)];
+
+  // Fast path for files with no comments
+  if (commentsLen === 0) {
+    comments = emptyComments;
+    return;
+  }
 
   // Grow cache if needed (one-time cost as cache warms up)
   while (cachedComments.length < commentsLen) {
@@ -125,9 +139,9 @@ export function initComments(): void {
 
   // Set first comment as `Shebang` if file has hashbang.
   // Rust side adds hashbang comment to start of comments `Vec` as a `Line` comment.
-  if (commentsLen > 0) {
-    const firstComment = cachedComments[0];
-    if (firstComment.start === 0 && sourceText.startsWith("#!")) firstComment.type = "Shebang";
+  // `uint32[commentsPos >> 2]` is the start of the first comment.
+  if (uint32[commentsPos >> 2] === 0 && sourceText.startsWith("#!")) {
+    cachedComments[0].type = "Shebang";
   }
 
   // Use `slice` rather than copying comments one-by-one into a new array.
