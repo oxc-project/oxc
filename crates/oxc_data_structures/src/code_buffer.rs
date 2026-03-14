@@ -1,6 +1,8 @@
 //! A string builder for constructing source code.
 
-use std::{iter, ptr};
+#![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
+
+use std::ptr;
 
 use crate::assert_unchecked;
 
@@ -323,8 +325,9 @@ impl CodeBuffer {
     /// [`print_char`]: CodeBuffer::print_char
     /// [`into_string`]: CodeBuffer::into_string
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
-    #[inline]
+    #[inline(always)]
     pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
+        /*
         // By default, `self.buf.push(byte)` results in quite verbose assembly, because the default
         // branch is for the "buf is full to capacity" case.
         //
@@ -353,6 +356,13 @@ impl CodeBuffer {
         } else {
             push_slow(self, byte);
         }
+        */
+        unsafe {
+            let len = self.buf.len();
+            let ptr = self.buf.as_mut_ptr().add(len);
+            ptr.write(byte);
+            self.buf.set_len(len + 1);
+        }
     }
 
     /// Push a single Unicode character into the buffer.
@@ -375,10 +385,18 @@ impl CodeBuffer {
     ///
     /// [`print_str`]: CodeBuffer::print_str
     /// [`print_ascii_byte`]: CodeBuffer::print_ascii_byte
-    #[inline]
+    #[inline(always)]
     pub fn print_char(&mut self, ch: char) {
         let mut b = [0; 4];
-        self.buf.extend_from_slice(ch.encode_utf8(&mut b).as_bytes());
+        let encoded = ch.encode_utf8(&mut b);
+        // self.buf.extend_from_slice(encoded.as_bytes());
+        unsafe {
+            let bytes = encoded.as_bytes();
+            let len = self.buf.len();
+            self.buf.set_len(len + bytes.len());
+            let dst = self.buf.as_mut_ptr().add(len);
+            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, bytes.len());
+        }
     }
 
     /// Push a string into the buffer.
@@ -389,9 +407,16 @@ impl CodeBuffer {
     /// let mut code = CodeBuffer::new();
     /// code.print_str("function main() { console.log('Hello, world!') }");
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn print_str<S: AsRef<str>>(&mut self, s: S) {
-        self.buf.extend_from_slice(s.as_ref().as_bytes());
+        // self.buf.extend_from_slice(s.as_ref().as_bytes());
+        let bytes = s.as_ref().as_bytes();
+        unsafe {
+            let len = self.buf.len();
+            self.buf.set_len(len + bytes.len());
+            let dst = self.buf.as_mut_ptr().add(len);
+            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, bytes.len());
+        }
     }
 
     /// Push a sequence of ASCII characters into the buffer.
@@ -444,9 +469,15 @@ impl CodeBuffer {
     /// ```
     ///
     /// [`into_string`]: CodeBuffer::into_string
-    #[inline]
+    #[inline(always)]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
-        self.buf.extend_from_slice(bytes);
+        // self.buf.extend_from_slice(bytes);
+        unsafe {
+            let len = self.buf.len();
+            self.buf.set_len(len + bytes.len());
+            let dst = self.buf.as_mut_ptr().add(len);
+            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, bytes.len());
+        }
     }
 
     /// Print a series of strings into the buffer.
@@ -529,7 +560,7 @@ impl CodeBuffer {
         total_strings_len: usize,
     ) {
         // Reserve `total_strings_len` bytes for the strings to be written into
-        self.reserve(total_strings_len);
+        // self.reserve(total_strings_len);
 
         // Write each string into `buf`, without bounds checks
 
@@ -606,9 +637,12 @@ impl CodeBuffer {
     /// ```
     ///
     /// [`into_string`]: CodeBuffer::into_string
-    #[inline]
+    #[inline(always)]
     pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
-        self.buf.extend(bytes);
+        // self.buf.extend(bytes);
+        for byte in bytes {
+            unsafe { self.print_byte_unchecked(byte) };
+        }
     }
 
     /// Print `depth` levels of indentation into the buffer.
@@ -633,41 +667,29 @@ impl CodeBuffer {
     /// So we take the cost of 1 more SIMD XMM write to avoid hitting the cold path in such cases.
     ///
     /// <https://godbolt.org/z/P9x87q7nd>
-    #[inline]
+    #[inline(always)]
     pub fn print_indent(&mut self, depth: usize) {
         /// Size of chunks to write indent in.
         /// 16 is largest register size (XMM) available on all x86_64 targets,
         /// so writing 32 bytes takes 2 x XMM writes.
         const CHUNK_SIZE: usize = 32;
 
-        #[cold]
-        #[inline(never)]
-        fn write_slow(code_buffer: &mut CodeBuffer, bytes: usize) {
-            code_buffer.buf.extend(iter::repeat_n(code_buffer.indent_char as u8, bytes));
-        }
-
         let bytes = depth * self.indent_width;
+        let chunk = [self.indent_char as u8; CHUNK_SIZE];
 
-        let len = self.len();
-        let spare_capacity = self.capacity() - len;
-        if bytes > CHUNK_SIZE || spare_capacity < CHUNK_SIZE {
-            write_slow(self, bytes);
-            return;
-        }
-
-        // Write 32 bytes of the indent character into buffer.
-        // On x86_64, this is 5 SIMD instructions (32 byte copy).
-        // SAFETY: We checked there are at least 32 bytes spare capacity.
         unsafe {
-            let ptr = self.buf.as_mut_ptr().add(len).cast::<[u8; CHUNK_SIZE]>();
-            ptr.write([self.indent_char as u8; CHUNK_SIZE]);
+            let len = self.len();
+            self.buf.set_len(len + bytes);
+            let mut ptr = self.buf.as_mut_ptr().add(len);
+            let end = ptr.add(bytes);
+            loop {
+                ptr.cast::<[u8; CHUNK_SIZE]>().write(chunk);
+                ptr = ptr.add(CHUNK_SIZE);
+                if ptr >= end {
+                    break;
+                }
+            }
         }
-
-        // Update length of buffer.
-        // SAFETY: We checked there's at least 32 bytes spare capacity, and `bytes <= 32`,
-        // so `len + bytes` cannot exceed capacity.
-        // `len` cannot exceed `isize::MAX`, so `len + bytes` cannot wrap around.
-        unsafe { self.buf.set_len(len + bytes) };
     }
 
     /// Remove trailing whitespace (spaces and tabs) from the buffer.
