@@ -1809,8 +1809,10 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
+ "phf",
  "pico-args",
  "rustc-hash",
+ "syn",
 ]
 
 [[package]]
