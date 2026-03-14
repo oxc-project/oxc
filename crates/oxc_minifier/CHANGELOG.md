@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### 🚀 Features
+
+- e7163b6 ecmascript: Add known-globals to side-effect-free property reads (#20212) (Dunqing)
+- 139ab68 ecmascript: Add `property_write_side_effects` to `MayHaveSideEffectsContext` (#20217) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5c97b14 minifier: Recognize object spread of object literals as side-effect-free (#20299) (Boshen)
+- ade14d4 ecmascript: Enhance side-effect detection for classes, TypedArrays, computed members, and spread (#20213) (Dunqing)
+
 ## [0.116.0] - 2026-03-02
 
 ### 🐛 Bug Fixes
