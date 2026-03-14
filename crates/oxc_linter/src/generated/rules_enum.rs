@@ -355,6 +355,7 @@ pub use crate::rules::oxc::erasing_op::ErasingOp as OxcErasingOp;
 pub use crate::rules::oxc::misrefactored_assign_op::MisrefactoredAssignOp as OxcMisrefactoredAssignOp;
 pub use crate::rules::oxc::missing_throw::MissingThrow as OxcMissingThrow;
 pub use crate::rules::oxc::no_accumulating_spread::NoAccumulatingSpread as OxcNoAccumulatingSpread;
+pub use crate::rules::oxc::no_array_method_for_side_effect::NoArrayMethodForSideEffect as OxcNoArrayMethodForSideEffect;
 pub use crate::rules::oxc::no_async_await::NoAsyncAwait as OxcNoAsyncAwait;
 pub use crate::rules::oxc::no_async_endpoint_handlers::NoAsyncEndpointHandlers as OxcNoAsyncEndpointHandlers;
 pub use crate::rules::oxc::no_barrel_file::NoBarrelFile as OxcNoBarrelFile;
@@ -1311,6 +1312,7 @@ pub enum RuleEnum {
     OxcMisrefactoredAssignOp(OxcMisrefactoredAssignOp),
     OxcMissingThrow(OxcMissingThrow),
     OxcNoAccumulatingSpread(OxcNoAccumulatingSpread),
+    OxcNoArrayMethodForSideEffect(OxcNoArrayMethodForSideEffect),
     OxcNoAsyncAwait(OxcNoAsyncAwait),
     OxcNoAsyncEndpointHandlers(OxcNoAsyncEndpointHandlers),
     OxcNoBarrelFile(OxcNoBarrelFile),
@@ -2092,7 +2094,8 @@ const OXC_ERASING_OP_ID: usize = OXC_DOUBLE_COMPARISONS_ID + 1usize;
 const OXC_MISREFACTORED_ASSIGN_OP_ID: usize = OXC_ERASING_OP_ID + 1usize;
 const OXC_MISSING_THROW_ID: usize = OXC_MISREFACTORED_ASSIGN_OP_ID + 1usize;
 const OXC_NO_ACCUMULATING_SPREAD_ID: usize = OXC_MISSING_THROW_ID + 1usize;
-const OXC_NO_ASYNC_AWAIT_ID: usize = OXC_NO_ACCUMULATING_SPREAD_ID + 1usize;
+const OXC_NO_ARRAY_METHOD_FOR_SIDE_EFFECT_ID: usize = OXC_NO_ACCUMULATING_SPREAD_ID + 1usize;
+const OXC_NO_ASYNC_AWAIT_ID: usize = OXC_NO_ARRAY_METHOD_FOR_SIDE_EFFECT_ID + 1usize;
 const OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID: usize = OXC_NO_ASYNC_AWAIT_ID + 1usize;
 const OXC_NO_BARREL_FILE_ID: usize = OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID + 1usize;
 const OXC_NO_CONST_ENUM_ID: usize = OXC_NO_BARREL_FILE_ID + 1usize;
@@ -2902,6 +2905,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OXC_MISREFACTORED_ASSIGN_OP_ID,
             Self::OxcMissingThrow(_) => OXC_MISSING_THROW_ID,
             Self::OxcNoAccumulatingSpread(_) => OXC_NO_ACCUMULATING_SPREAD_ID,
+            Self::OxcNoArrayMethodForSideEffect(_) => OXC_NO_ARRAY_METHOD_FOR_SIDE_EFFECT_ID,
             Self::OxcNoAsyncAwait(_) => OXC_NO_ASYNC_AWAIT_ID,
             Self::OxcNoAsyncEndpointHandlers(_) => OXC_NO_ASYNC_ENDPOINT_HANDLERS_ID,
             Self::OxcNoBarrelFile(_) => OXC_NO_BARREL_FILE_ID,
@@ -3701,6 +3705,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::NAME,
             Self::OxcMissingThrow(_) => OxcMissingThrow::NAME,
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::NAME,
+            Self::OxcNoArrayMethodForSideEffect(_) => OxcNoArrayMethodForSideEffect::NAME,
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::NAME,
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::NAME,
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::NAME,
@@ -4542,6 +4547,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::CATEGORY,
             Self::OxcMissingThrow(_) => OxcMissingThrow::CATEGORY,
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::CATEGORY,
+            Self::OxcNoArrayMethodForSideEffect(_) => OxcNoArrayMethodForSideEffect::CATEGORY,
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::CATEGORY,
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::CATEGORY,
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::CATEGORY,
@@ -5346,6 +5352,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::FIX,
             Self::OxcMissingThrow(_) => OxcMissingThrow::FIX,
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::FIX,
+            Self::OxcNoArrayMethodForSideEffect(_) => OxcNoArrayMethodForSideEffect::FIX,
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::FIX,
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::FIX,
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::FIX,
@@ -6330,6 +6337,9 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::documentation(),
             Self::OxcMissingThrow(_) => OxcMissingThrow::documentation(),
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::documentation(),
+            Self::OxcNoArrayMethodForSideEffect(_) => {
+                OxcNoArrayMethodForSideEffect::documentation()
+            }
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::documentation(),
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::documentation(),
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::documentation(),
@@ -8159,6 +8169,10 @@ impl RuleEnum {
                 .or_else(|| OxcMissingThrow::schema(generator)),
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::config_schema(generator)
                 .or_else(|| OxcNoAccumulatingSpread::schema(generator)),
+            Self::OxcNoArrayMethodForSideEffect(_) => {
+                OxcNoArrayMethodForSideEffect::config_schema(generator)
+                    .or_else(|| OxcNoArrayMethodForSideEffect::schema(generator))
+            }
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::config_schema(generator)
                 .or_else(|| OxcNoAsyncAwait::schema(generator)),
             Self::OxcNoAsyncEndpointHandlers(_) => {
@@ -9038,6 +9052,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => "oxc",
             Self::OxcMissingThrow(_) => "oxc",
             Self::OxcNoAccumulatingSpread(_) => "oxc",
+            Self::OxcNoArrayMethodForSideEffect(_) => "oxc",
             Self::OxcNoAsyncAwait(_) => "oxc",
             Self::OxcNoAsyncEndpointHandlers(_) => "oxc",
             Self::OxcNoBarrelFile(_) => "oxc",
@@ -11068,6 +11083,9 @@ impl RuleEnum {
             Self::OxcNoAccumulatingSpread(_) => Ok(Self::OxcNoAccumulatingSpread(
                 OxcNoAccumulatingSpread::from_configuration(value)?,
             )),
+            Self::OxcNoArrayMethodForSideEffect(_) => Ok(Self::OxcNoArrayMethodForSideEffect(
+                OxcNoArrayMethodForSideEffect::from_configuration(value)?,
+            )),
             Self::OxcNoAsyncAwait(_) => {
                 Ok(Self::OxcNoAsyncAwait(OxcNoAsyncAwait::from_configuration(value)?))
             }
@@ -11991,6 +12009,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.to_configuration(),
             Self::OxcMissingThrow(rule) => rule.to_configuration(),
             Self::OxcNoAccumulatingSpread(rule) => rule.to_configuration(),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.to_configuration(),
             Self::OxcNoAsyncAwait(rule) => rule.to_configuration(),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.to_configuration(),
             Self::OxcNoBarrelFile(rule) => rule.to_configuration(),
@@ -12696,6 +12715,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.run(node, ctx),
             Self::OxcMissingThrow(rule) => rule.run(node, ctx),
             Self::OxcNoAccumulatingSpread(rule) => rule.run(node, ctx),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.run(node, ctx),
             Self::OxcNoAsyncAwait(rule) => rule.run(node, ctx),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.run(node, ctx),
             Self::OxcNoBarrelFile(rule) => rule.run(node, ctx),
@@ -13399,6 +13419,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_once(ctx),
             Self::OxcMissingThrow(rule) => rule.run_once(ctx),
             Self::OxcNoAccumulatingSpread(rule) => rule.run_once(ctx),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.run_once(ctx),
             Self::OxcNoAsyncAwait(rule) => rule.run_once(ctx),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.run_once(ctx),
             Self::OxcNoBarrelFile(rule) => rule.run_once(ctx),
@@ -14198,6 +14219,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcMissingThrow(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoAccumulatingSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoAsyncAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::OxcNoBarrelFile(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14905,6 +14927,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.should_run(ctx),
             Self::OxcMissingThrow(rule) => rule.should_run(ctx),
             Self::OxcNoAccumulatingSpread(rule) => rule.should_run(ctx),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.should_run(ctx),
             Self::OxcNoAsyncAwait(rule) => rule.should_run(ctx),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.should_run(ctx),
             Self::OxcNoBarrelFile(rule) => rule.should_run(ctx),
@@ -15884,6 +15907,9 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::IS_TSGOLINT_RULE,
             Self::OxcMissingThrow(_) => OxcMissingThrow::IS_TSGOLINT_RULE,
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::IS_TSGOLINT_RULE,
+            Self::OxcNoArrayMethodForSideEffect(_) => {
+                OxcNoArrayMethodForSideEffect::IS_TSGOLINT_RULE
+            }
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::IS_TSGOLINT_RULE,
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::IS_TSGOLINT_RULE,
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::IS_TSGOLINT_RULE,
@@ -16766,6 +16792,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::HAS_CONFIG,
             Self::OxcMissingThrow(_) => OxcMissingThrow::HAS_CONFIG,
             Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::HAS_CONFIG,
+            Self::OxcNoArrayMethodForSideEffect(_) => OxcNoArrayMethodForSideEffect::HAS_CONFIG,
             Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::HAS_CONFIG,
             Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::HAS_CONFIG,
             Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::HAS_CONFIG,
@@ -17477,6 +17504,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.types_info(),
             Self::OxcMissingThrow(rule) => rule.types_info(),
             Self::OxcNoAccumulatingSpread(rule) => rule.types_info(),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.types_info(),
             Self::OxcNoAsyncAwait(rule) => rule.types_info(),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.types_info(),
             Self::OxcNoBarrelFile(rule) => rule.types_info(),
@@ -18180,6 +18208,7 @@ impl RuleEnum {
             Self::OxcMisrefactoredAssignOp(rule) => rule.run_info(),
             Self::OxcMissingThrow(rule) => rule.run_info(),
             Self::OxcNoAccumulatingSpread(rule) => rule.run_info(),
+            Self::OxcNoArrayMethodForSideEffect(rule) => rule.run_info(),
             Self::OxcNoAsyncAwait(rule) => rule.run_info(),
             Self::OxcNoAsyncEndpointHandlers(rule) => rule.run_info(),
             Self::OxcNoBarrelFile(rule) => rule.run_info(),
@@ -18997,6 +19026,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::OxcMisrefactoredAssignOp(OxcMisrefactoredAssignOp::default()),
         RuleEnum::OxcMissingThrow(OxcMissingThrow::default()),
         RuleEnum::OxcNoAccumulatingSpread(OxcNoAccumulatingSpread::default()),
+        RuleEnum::OxcNoArrayMethodForSideEffect(OxcNoArrayMethodForSideEffect::default()),
         RuleEnum::OxcNoAsyncAwait(OxcNoAsyncAwait::default()),
         RuleEnum::OxcNoAsyncEndpointHandlers(OxcNoAsyncEndpointHandlers::default()),
         RuleEnum::OxcNoBarrelFile(OxcNoBarrelFile::default()),

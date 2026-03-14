@@ -622,6 +622,7 @@ pub(crate) mod oxc {
     pub mod misrefactored_assign_op;
     pub mod missing_throw;
     pub mod no_accumulating_spread;
+    pub mod no_array_method_for_side_effect;
     pub mod no_async_await;
     pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
