@@ -58,7 +58,6 @@ function deserializeProgram(pos) {
       type: "Program",
       body: null,
       sourceType: deserializeModuleKind(pos + 137),
-      hashbang: null,
       get comments() {
         comments === null && initComments();
         return comments;
@@ -71,9 +70,8 @@ function deserializeProgram(pos) {
       end,
       range: [0, end],
       parent: null,
-    });
-  program.hashbang = deserializeOptionHashbang(pos + 48);
-  let body = (program.body = deserializeVecDirective(pos + 80));
+    }),
+    body = (program.body = deserializeVecDirective(pos + 80));
   body.push(...deserializeVecStatement(pos + 104));
   {
     let start;
@@ -1504,19 +1502,6 @@ function deserializeDirective(pos) {
   node.expression = deserializeStringLiteral(pos + 8);
   parent = previousParent;
   return node;
-}
-
-function deserializeHashbang(pos) {
-  let start, end;
-  return {
-    __proto__: NodeProto,
-    type: "Hashbang",
-    value: deserializeStr(pos + 8),
-    start: (start = deserializeU32(pos)),
-    end: (end = deserializeU32(pos + 4)),
-    range: [start, end],
-    parent,
-  };
 }
 
 function deserializeBlockStatement(pos) {
@@ -5902,11 +5887,6 @@ function deserializeStr(pos) {
     }
   } while (pos < end);
   return out;
-}
-
-function deserializeOptionHashbang(pos) {
-  if (uint32[(pos + 8) >> 2] === 0 && uint32[(pos + 12) >> 2] === 0) return null;
-  return deserializeHashbang(pos);
 }
 
 function deserializeVecDirective(pos) {

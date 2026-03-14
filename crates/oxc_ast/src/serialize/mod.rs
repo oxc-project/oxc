@@ -128,7 +128,9 @@ impl Program<'_> {
         type: 'Program',
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        /* IF !LINTER */
         hashbang: null,
+        /* END_IF */
         /* IF LINTER */
         get comments() {
             if (comments === null) initComments();
@@ -145,7 +147,7 @@ impl Program<'_> {
         ...(PARENT && { parent: null }),
     };
 
-    program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
+    if (!LINTER) program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
 
     const body = program.body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));

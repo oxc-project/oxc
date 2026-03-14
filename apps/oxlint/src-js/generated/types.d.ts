@@ -11,7 +11,6 @@ export interface Program extends Span {
   type: "Program";
   body: Array<Directive | Statement>;
   sourceType: ModuleKind;
-  hashbang: Hashbang | null;
   comments: Comment[];
   tokens: Token[];
   parent: null;
