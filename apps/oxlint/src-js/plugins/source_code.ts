@@ -19,8 +19,8 @@ import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./lo
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
-import { tokens, tokensAndComments, initTokens, initTokensAndComments } from "./tokens.ts";
 import * as tokenMethods from "./tokens_methods.ts";
+import { getTokensAndComments, resetTokensAndComments } from "./tokens_and_comments.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Program } from "../generated/types.d.ts";
@@ -140,6 +140,7 @@ export function resetSourceAndAst(): void {
   resetScopeManager();
   resetTokens();
   resetComments();
+  resetTokensAndComments();
 }
 
 /**
@@ -247,12 +248,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
-    if (tokensAndComments === null) {
-      if (tokens === null) initTokens();
-      initTokensAndComments();
-    }
-    debugAssertIsNonNull(tokensAndComments);
-    return tokensAndComments;
+    return getTokensAndComments();
   },
 
   /**
