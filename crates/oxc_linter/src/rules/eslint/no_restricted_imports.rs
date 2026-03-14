@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use schemars::JsonSchema;
+
 use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
 use oxc_ast::{
@@ -165,13 +167,22 @@ impl std::ops::Deref for NoRestrictedImports {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
 pub struct NoRestrictedImportsConfig {
     paths: Vec<RestrictedPath>,
     patterns: Vec<RestrictedPattern>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(JsonSchema)]
+#[serde(untagged)]
+pub enum NoRestrictedImportsConfigJson {
+    #[expect(dead_code)]
+    OnlyStrings(Vec<CompactStr>),
+    #[expect(dead_code)]
+    ObjectConfig(NoRestrictedImportsConfig),
+}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct RestrictedPath {
     name: CompactStr,
@@ -181,7 +192,7 @@ struct RestrictedPath {
     message: Option<CompactStr>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct RestrictedPattern {
     group: Option<Vec<CompactStr>>,
@@ -197,7 +208,7 @@ struct RestrictedPattern {
 
 /// A wrapper type which implements `Serialize` and `Deserialize` for
 /// types involving `Regex`
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq, JsonSchema)]
 pub struct SerdeRegexWrapper<T>(pub T);
 
 impl std::ops::Deref for SerdeRegexWrapper<Regex> {
@@ -548,9 +559,7 @@ declare_oxc_lint!(
     NoRestrictedImports,
     eslint,
     restriction,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = NoRestrictedImportsConfigJson,
 );
 
 fn add_configuration_path_from_object(
