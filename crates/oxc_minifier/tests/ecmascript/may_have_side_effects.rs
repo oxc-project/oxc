@@ -717,6 +717,11 @@ fn test_object_expression() {
     test("({...{a: 1}})", false);
     test("({...{a: foo()}})", true);
     test("({...{[foo()]: 1}})", true);
+    // Getters are invoked when spreading
+    test("({...{get a() {}}})", true);
+    test("({...{get a() { return 1 }}})", true);
+    // Setters are NOT invoked when spreading
+    test("({...{set a(v) {}}})", false);
 }
 
 #[test]

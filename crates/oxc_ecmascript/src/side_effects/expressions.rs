@@ -650,10 +650,17 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                 } else {
                     match &e.argument {
                         Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                        Expression::ObjectExpression(obj) => obj
-                            .properties
-                            .iter()
-                            .any(|property| property.may_have_side_effects(ctx)),
+                        Expression::ObjectExpression(obj) => {
+                            obj.properties.iter().any(|property| match property {
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    p.kind == PropertyKind::Get
+                                        || p.may_have_side_effects(ctx)
+                                }
+                                ObjectPropertyKind::SpreadProperty(e) => {
+                                    e.argument.may_have_side_effects(ctx)
+                                }
+                            })
+                        }
                         Expression::StringLiteral(_) => false,
                         Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
                         _ => true,
