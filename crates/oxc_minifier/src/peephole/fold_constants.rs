@@ -411,12 +411,14 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
-                left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                left_last_quasi.value.raw = ctx.ast.atom_from_strs_array([
+                    left_last_quasi.value.raw.as_str(),
+                    right_first_quasi.value.raw.as_str(),
+                ]);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(ctx.ast.atom(&(cooked1.into_string() + cooked2.as_str())))
+                    Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
                 } else {
                     None
                 };
@@ -744,16 +746,14 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let new_raw = quasi.value.raw.into_string()
-                + &Self::escape_string_for_template_literal(&str)
-                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom(&new_raw);
+            let escaped = Self::escape_string_for_template_literal(&str);
+            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            quasi.value.raw = ctx.ast.atom_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let v =
-                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom(&v))
+                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
+                Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
             } else {
                 None
             };
