@@ -1,6 +1,6 @@
 use std::{fmt::Write, path::PathBuf};
 
-use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges};
+use oxc_language_server::{DiagnosticResult, TextDocument, Tool, ToolRestartChanges};
 use tower_lsp_server::ls_types::{
     CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, CodeDescription,
     Diagnostic, NumberOrString, Position, Range, Uri,
@@ -225,11 +225,11 @@ impl Tester<'_> {
             let linter = self.create_linter();
             let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {
-                diagnostic: linter.run_diagnostic(
-                    &uri,
-                    &oxc_language_server::LanguageId::default(),
+                diagnostic: linter.run_diagnostic(&TextDocument::new(
+                    uri.clone(),
+                    oxc_language_server::LanguageId::default(),
                     None,
-                ),
+                )),
                 actions: linter.get_code_actions_or_commands(&uri, &range, &context),
                 fix_all_action: linter
                     .get_code_actions_or_commands(&uri, &range, &fix_all_context)

@@ -14,7 +14,7 @@ use tower_lsp_server::{
 use tracing::debug;
 
 use crate::{
-    LanguageId, ToolRestartChanges,
+    TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
@@ -112,18 +112,16 @@ impl WorkspaceWorker {
     /// Common aggregator for tool-provided diagnostics.
     async fn collect_diagnostics_with<F>(
         &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
+        document: &TextDocument,
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
-        F: Fn(&Box<dyn Tool>, &Uri, &LanguageId, Option<&str>) -> DiagnosticResult,
+        F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
     {
         let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
 
         for tool in self.tools.read().await.iter() {
-            let tool_diagnostics = run(tool, uri, language_id, content);
+            let tool_diagnostics = run(tool, document);
 
             match tool_diagnostics {
                 Ok(diags) => {
@@ -153,52 +151,31 @@ impl WorkspaceWorker {
     /// Run different tools to collect diagnostics.
     pub async fn run_diagnostic(
         &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
-        self.collect_diagnostics_with(
-            uri,
-            language_id,
-            content,
-            |tool, uri, language_id, content| tool.run_diagnostic(uri, language_id, content),
-        )
-        .await
+        self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
+            .await
     }
 
     /// Run different tools to collect diagnostics on change.
     pub async fn run_diagnostic_on_change(
         &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
-        self.collect_diagnostics_with(
-            uri,
-            language_id,
-            content,
-            |tool, uri, language_id, content| {
-                tool.run_diagnostic_on_change(uri, language_id, content)
-            },
-        )
+        self.collect_diagnostics_with(document, |tool, document| {
+            tool.run_diagnostic_on_change(document)
+        })
         .await
     }
 
     /// Run different tools to collect diagnostics on save.
     pub async fn run_diagnostic_on_save(
         &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
+        document: &TextDocument,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
-        self.collect_diagnostics_with(
-            uri,
-            language_id,
-            content,
-            |tool, uri, language_id, content| {
-                tool.run_diagnostic_on_save(uri, language_id, content)
-            },
-        )
+        self.collect_diagnostics_with(document, |tool, document| {
+            tool.run_diagnostic_on_save(document)
+        })
         .await
     }
 
@@ -206,14 +183,9 @@ impl WorkspaceWorker {
     /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
     /// - If a tool error occurs, an Err is returned
-    pub async fn format_file(
-        &self,
-        uri: &Uri,
-        language_id: &LanguageId,
-        content: Option<&str>,
-    ) -> Result<Vec<TextEdit>, String> {
+    pub async fn format_file(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            let edits = tool.run_format(uri, language_id, content)?;
+            let edits = tool.run_format(document)?;
             // If no edits are made, continue to the next tool
             if edits.is_empty() {
                 continue;
@@ -387,12 +359,8 @@ impl WorkspaceWorker {
                 };
 
                 for uri in file_system.keys() {
-                    let (language_id, content) = file_system
-                        .get(&uri)
-                        .map_or_else(|| (LanguageId::default(), None), |(lang, c)| (lang, Some(c)));
-                    let Ok(mut reports) =
-                        tool.run_diagnostic(&uri, &language_id, content.as_deref())
-                    else {
+                    let document = file_system.get_document(&uri);
+                    let Ok(mut reports) = tool.run_diagnostic(&document) else {
                         // If diagnostics could not be run, skip this URI, but continue with others
                         // TODO: Should we aggregate errors instead? One by one, or all together?
                         continue;
@@ -468,7 +436,7 @@ mod tests {
     };
 
     use crate::{
-        LanguageId, ToolBuilder,
+        LanguageId, TextDocument, ToolBuilder,
         capabilities::DiagnosticMode,
         file_system::LSPFileSystem,
         tests::{FAKE_COMMAND, FakeToolBuilder},
@@ -748,8 +716,10 @@ mod tests {
 
         worker.start_worker(serde_json::Value::Null).await;
 
-        let diagnostics_no_content =
-            worker.run_diagnostic(&uri, &LanguageId::default(), None).await.unwrap();
+        let diagnostics_no_content = worker
+            .run_diagnostic(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .await
+            .unwrap();
 
         assert_eq!(diagnostics_no_content.len(), 1);
         assert_eq!(diagnostics_no_content[0].0, uri);
@@ -759,8 +729,14 @@ mod tests {
             "Fake diagnostic for content: <no content>"
         );
 
-        let diagnostics_with_content =
-            worker.run_diagnostic(&uri, &LanguageId::default(), Some("helloworld")).await.unwrap();
+        let diagnostics_with_content = worker
+            .run_diagnostic(&TextDocument::new(
+                uri.clone(),
+                LanguageId::default(),
+                Some("helloworld".to_string()),
+            ))
+            .await
+            .unwrap();
 
         assert_eq!(diagnostics_with_content.len(), 1);
         assert_eq!(diagnostics_with_content[0].0, uri);
@@ -771,22 +747,22 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic(&TextDocument::new(
+                Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap();
 
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic(
-                &Uri::from_str("file:///root/error.config").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic(&TextDocument::new(
+                Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap_err();
 
@@ -804,8 +780,10 @@ mod tests {
 
         worker.start_worker(serde_json::Value::Null).await;
 
-        let diagnostics_no_content =
-            worker.run_diagnostic_on_change(&uri, &LanguageId::default(), None).await.unwrap();
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_change(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .await
+            .unwrap();
 
         assert_eq!(diagnostics_no_content.len(), 1);
         assert_eq!(diagnostics_no_content[0].0, uri);
@@ -816,7 +794,11 @@ mod tests {
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_change(&uri, &LanguageId::default(), Some("helloworld"))
+            .run_diagnostic_on_change(&TextDocument::new(
+                uri.clone(),
+                LanguageId::default(),
+                Some("helloworld".to_string()),
+            ))
             .await
             .unwrap();
 
@@ -829,22 +811,22 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_change(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic_on_change(&TextDocument::new(
+                Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap();
 
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_change(
-                &Uri::from_str("file:///root/error.config").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic_on_change(&TextDocument::new(
+                Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap_err();
 
@@ -861,8 +843,10 @@ mod tests {
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
         worker.start_worker(serde_json::Value::Null).await;
 
-        let diagnostics_no_content =
-            worker.run_diagnostic_on_save(&uri, &LanguageId::default(), None).await.unwrap();
+        let diagnostics_no_content = worker
+            .run_diagnostic_on_save(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .await
+            .unwrap();
 
         assert_eq!(diagnostics_no_content.len(), 1);
         assert_eq!(diagnostics_no_content[0].0, uri);
@@ -873,7 +857,11 @@ mod tests {
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_save(&uri, &LanguageId::default(), Some("helloworld"))
+            .run_diagnostic_on_save(&TextDocument::new(
+                uri.clone(),
+                LanguageId::default(),
+                Some("helloworld".to_string()),
+            ))
             .await
             .unwrap();
 
@@ -886,22 +874,22 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_save(
-                &Uri::from_str("file:///root/unknown.file").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic_on_save(&TextDocument::new(
+                Uri::from_str("file:///root/unknown.file").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap();
 
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_save(
-                &Uri::from_str("file:///root/error.config").unwrap(),
-                &LanguageId::default(),
+            .run_diagnostic_on_save(&TextDocument::new(
+                Uri::from_str("file:///root/error.config").unwrap(),
+                LanguageId::default(),
                 None,
-            )
+            ))
             .await
             .unwrap_err();
 
