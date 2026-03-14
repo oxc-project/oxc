@@ -1,10 +1,11 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
-import { Span } from "../plugins/location.ts";
-import { Token } from "../plugins/tokens.ts";
-import { Comment } from "../plugins/types.ts";
-export { Span, Comment, Token };
+import type { Comment } from "../plugins/comments.ts";
+import type { Span } from "../plugins/location.ts";
+import type { Token } from "../plugins/tokens.ts";
+
+export type { Comment, Span, Token };
 
 export interface Program extends Span {
   type: "Program";

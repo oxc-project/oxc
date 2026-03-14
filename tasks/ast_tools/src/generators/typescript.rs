@@ -491,10 +491,11 @@ fn amend_oxlint_types(code: &str) -> String {
 
     #[rustfmt::skip]
     code.insert_str(0, "
-        import { Span } from '../plugins/location.ts';
-        import { Token } from '../plugins/tokens.ts';
-        import { Comment } from '../plugins/types.ts';
-        export { Span, Comment, Token };
+        import type { Comment } from '../plugins/comments.ts';
+        import type { Span } from '../plugins/location.ts';
+        import type { Token } from '../plugins/tokens.ts';
+
+        export type { Comment, Span, Token };
 
     ");
 

@@ -7,7 +7,7 @@ import { ast, initAst, initSourceText, sourceText } from "./source_code.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { NodeOrToken, Node, Comment } from "./types.ts";
+import type { NodeOrToken, Node } from "./types.ts";
 import type { Node as ESTreeNode } from "../generated/types.d.ts";
 
 /**
@@ -254,29 +254,30 @@ export function getRange(nodeOrToken: NodeOrToken): Range {
  * @param nodeOrToken - Node or token to get the location of
  * @returns Location of the node or token
  */
-// Both AST nodes and tokens handle lazy `loc` computation and caching via their respective getters
+// AST nodes, tokens, and comments handle lazy `loc` computation and caching via their respective getters
 // (AST nodes via `NodeProto` prototype getter which caches via `Object.defineProperty`,
-// tokens via `Token` class getter which caches in a private field).
-// So accessing `.loc` gives the right behavior for both, including stable object identity.
+// tokens and comments via `Token` / `Comment` class getters which cache in private fields).
+// So accessing `.loc` gives the right behavior for all 3, including stable object identity.
 export function getLoc(nodeOrToken: NodeOrToken): Location {
   return nodeOrToken.loc;
 }
 
 /**
- * Calculate the `Location` for an AST node or comment, and cache it on the node.
+ * Calculate the `Location` for an AST node, and cache it on the node.
  *
- * Used in `loc` getters on AST nodes and comments (not tokens - tokens use their own caching via `Token` class).
+ * Used in `loc` getter on AST nodes (not tokens or comments - they use their own caching
+ * via `Token` / `Comment` class private fields).
  *
- * Defines a `loc` property on the node/comment with the calculated `Location`, so accessing `loc` twice on same node
+ * Defines a `loc` property on the node with the calculated `Location`, so accessing `loc` twice on same node
  * results in the same object each time.
  *
  * For internal use only.
  *
- * @param nodeOrComment - AST node or comment
+ * @param node - AST node
  * @returns Location
  */
-export function getNodeLoc(nodeOrComment: Node | Comment): Location {
-  const loc = computeLoc(nodeOrComment.start, nodeOrComment.end);
+export function getNodeLoc(node: Node): Location {
+  const loc = computeLoc(node.start, node.end);
 
   // Define `loc` property with the calculated `Location`, so accessing `loc` twice on same node
   // results in the same object each time.
@@ -287,7 +288,7 @@ export function getNodeLoc(nodeOrComment: Node | Comment): Location {
   //
   // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
   // because the access would fall through to the getter on the prototype.
-  Object.defineProperty(nodeOrComment, "loc", { value: loc, writable: true });
+  Object.defineProperty(node, "loc", { value: loc, writable: true });
 
   return loc;
 }

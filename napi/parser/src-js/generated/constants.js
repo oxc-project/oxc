@@ -60,3 +60,28 @@ export const SOURCE_START_OFFSET = 8;
  * Byte offset of length of source text, relative to start of `Program`.
  */
 export const SOURCE_LEN_OFFSET = 16;
+
+/**
+ * Byte offset of comments `Vec` pointer, relative to start of `Program`.
+ */
+export const COMMENTS_OFFSET = 24;
+
+/**
+ * Byte offset of comments `Vec` length, relative to start of `Program`.
+ */
+export const COMMENTS_LEN_OFFSET = 32;
+
+/**
+ * Size of `Comment` struct in bytes.
+ */
+export const COMMENT_SIZE = 16;
+
+/**
+ * Byte offset of `kind` field, relative to start of `Comment` struct.
+ */
+export const COMMENT_KIND_OFFSET = 12;
+
+/**
+ * Discriminant value for `CommentKind::Line`.
+ */
+export const COMMENT_LINE_KIND = 0;

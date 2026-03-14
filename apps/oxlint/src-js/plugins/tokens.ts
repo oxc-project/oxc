@@ -2,12 +2,13 @@
  * Token types and tokens initialization / reset.
  */
 
-import { ast, buffer, initAst, initSourceText, sourceText } from "./source_code.ts";
+import { buffer, initSourceText, sourceText } from "./source_code.ts";
+import { comments, initComments } from "./comments.ts";
 import { computeLoc } from "./location.ts";
 import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Comment } from "./types.ts";
+import type { Comment } from "./comments.ts";
 import type { Location, Span } from "./location.ts";
 
 /**
@@ -93,7 +94,6 @@ export type TokenOrComment = TokenType | Comment;
 // Tokens for the current file.
 // Created lazily only when needed.
 export let tokens: TokenType[] | null = null;
-let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
 
 // Cached token objects, reused across files to reduce GC pressure.
@@ -328,14 +328,9 @@ function debugCheckValidRanges(tokens: TokenOrComment[], description: string): v
 export function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
 
-  // Get comments from AST
-  if (comments === null) {
-    if (ast === null) initAst();
-    debugAssertIsNonNull(ast);
-    comments = ast.comments;
-
-    debugCheckValidRanges(comments, "comment");
-  }
+  // Ensure comments are initialized
+  if (comments === null) initComments();
+  debugAssertIsNonNull(comments);
 
   // Fast paths for file with no comments, or file which is only comments
   const commentsLength = comments.length;
@@ -466,6 +461,5 @@ export function resetTokens() {
   tokensWithRegex.length = 0;
 
   tokens = null;
-  comments = null;
   tokensAndComments = null;
 }
