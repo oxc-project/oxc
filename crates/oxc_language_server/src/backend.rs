@@ -219,7 +219,21 @@ impl LanguageServer for Backend {
                 vec![serde_json::Value::Null; needed_configurations.len()]
             };
 
-            let known_files = self.file_system.read().await.keys();
+            // Snapshot all open-file entries in one read lock so the inner loop
+            // does not need to re-acquire the lock for every URI.
+            let known_files: Vec<(Uri, LanguageId, Option<String>)> = {
+                let fs = self.file_system.read().await;
+                fs.keys()
+                    .into_iter()
+                    .map(|uri| {
+                        let (lang, content) = fs.get(&uri).map_or_else(
+                            || (LanguageId::default(), None),
+                            |(l, c)| (l, Some(c)),
+                        );
+                        (uri, lang, content)
+                    })
+                    .collect()
+            };
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
@@ -236,19 +250,14 @@ impl LanguageServer for Backend {
                     continue;
                 }
 
-                for uri in &known_files {
+                for (uri, language_id, content) in &known_files {
                     // Check if this worker is the most specific one for this URI
                     let responsible_worker = Self::find_worker_for_uri(workers, uri);
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let (language_id, content) =
-                        self.file_system.read().await.get(uri).map_or_else(
-                            || (LanguageId::default(), None),
-                            |(lang, c)| (lang, Some(c)),
-                        );
                     let diagnostics =
-                        worker.run_diagnostic(uri, &language_id, content.as_deref()).await;
+                        worker.run_diagnostic(uri, language_id, content.as_deref()).await;
                     match diagnostics {
                         Err(err) => {
                             error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -599,12 +608,10 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let content = if let Some(text) = params.text {
-            Some(text)
-        } else {
-            self.file_system.read().await.get(&uri).map(|(_, content)| content)
-        };
-        let language_id = self.file_system.read().await.get_language_id(&uri).unwrap_or_default();
+        // Read content and language_id together from a single file-system read.
+        let fs_entry = self.file_system.read().await.get(&uri);
+        let language_id = fs_entry.as_ref().map_or_else(LanguageId::default, |(lang, _)| lang.clone());
+        let content = params.text.or_else(|| fs_entry.map(|(_, c)| c));
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_save(&uri, &language_id, content.as_deref()).await {
@@ -634,14 +641,14 @@ impl LanguageServer for Backend {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
+        // Read language_id before writing the new content so we only take one read lock.
+        let language_id = self.file_system.read().await.get_language_id(&uri).unwrap_or_default();
 
         if let Some(content) = &content {
             self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            let language_id =
-                self.file_system.read().await.get_language_id(&uri).unwrap_or_default();
             match worker.run_diagnostic_on_change(&uri, &language_id, content.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -697,8 +704,6 @@ impl LanguageServer for Backend {
                 }
             }
         }
-
-        self.file_system.write().await.set_with_language(uri, language_id, content);
     }
 
     /// It will remove the in-memory file content if the client supports dynamic formatting.
