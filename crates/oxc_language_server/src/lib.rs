@@ -1,4 +1,5 @@
 use rustc_hash::FxBuildHasher;
+use tower_lsp_server::ls_types::Uri;
 use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 
 mod backend;
@@ -16,6 +17,18 @@ pub use crate::language_id::LanguageId;
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
+
+pub struct TextDocument {
+    pub uri: Uri,
+    pub language_id: LanguageId,
+    pub text: Option<String>,
+}
+
+impl TextDocument {
+    pub fn new(uri: Uri, language_id: LanguageId, text: Option<String>) -> Self {
+        Self { uri, language_id, text }
+    }
+}
 
 /// Run the language server
 pub async fn run_server(

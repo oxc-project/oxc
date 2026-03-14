@@ -6,7 +6,7 @@ use tower_lsp_server::{
     },
 };
 
-use crate::{LanguageId, capabilities::Capabilities};
+use crate::{TextDocument, capabilities::Capabilities};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -99,12 +99,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
-    fn run_format(
-        &self,
-        _uri: &Uri,
-        _language_id: &LanguageId,
-        _content: Option<&str>,
-    ) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, _document: &TextDocument) -> Result<Vec<TextEdit>, String> {
         Ok(Vec::new())
     }
 
@@ -114,7 +109,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -125,7 +120,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_save(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
@@ -136,7 +131,7 @@ pub trait Tool: Send + Sync {
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring diagnostics should return [`Ok`] with an empty vector.
-    fn run_diagnostic_on_change(&self, _uri: &Uri, _content: Option<&str>) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, _document: &TextDocument) -> DiagnosticResult {
         Ok(Vec::new())
     }
 
