@@ -1,0 +1,7 @@
+{
+  "plugins": ["eslint"],
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error"
+  }
+}
