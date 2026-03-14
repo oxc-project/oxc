@@ -30,6 +30,7 @@ function c(x, y) {}
 /**
  * @categoryDescription Output
  * These functions provide the output.
+ *
  * @document
  */
 const a = 1;
@@ -52,6 +53,7 @@ function c(x, y) {}
 /**
  * @categoryDescription Output
  * These functions provide the output.
+ *
  * @document
  */
 const a = 1;

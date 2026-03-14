@@ -1,19 +1,10 @@
 /**
- * Some description text.
+ * Example usage:
  *
  *     const x = 1;
  *     const y = 2;
  *     console.log(x + y);
  *
- * More text after the code block.
+ * End of example.
  */
-const a = 1;
-
-/**
- * Another example:
- *
- *     function foo() {
- *       return 42;
- *     }
- */
-const b = 2;
+function foo() {}

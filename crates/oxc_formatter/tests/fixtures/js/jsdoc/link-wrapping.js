@@ -32,3 +32,22 @@ const e = 5;
  * If canceled, a {@link CancellablePromise | `CancellablePromise`} should throw an `Cancellation` object.
  */
 const f = 6;
+
+// {@link} overflow tolerance: upstream Prettier allows lines with {@link} tags
+// to slightly exceed printWidth since the tag syntax is rendering overhead.
+/**
+ * Checks if an array is non-empty and narrows its type to {@link NonEmptyArray}.
+ */
+const g = 7;
+
+// {@link} tolerance with regular word as the overflow word
+/**
+ * This class holds the two main components of TypeDoc, the {@link Converter} and the {@link Renderer}. When running TypeDoc, first the {@link Converter} is invoked.
+ */
+const h = 8;
+
+// No tolerance for non-{@link} overflow — normal wrapping still applies
+/**
+ * This function returns a value similar to SomeLongClassName and does something when called today.
+ */
+const i = 9;

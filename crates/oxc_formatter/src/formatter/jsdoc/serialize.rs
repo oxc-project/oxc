@@ -197,6 +197,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Format tags
         let mut prev_normalized_kind: Option<&str> = None;
+        let mut prev_tag_had_trailing_blank = false;
 
         let mut first_non_import_tag_emitted = false;
         for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
@@ -232,7 +233,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             // Add blank lines between tag groups
             if !is_first_tag {
-                let should_separate = if prev_normalized_kind.is_some_and(|prev| prev == "example")
+                let mut should_separate = if prev_normalized_kind.is_some_and(|prev| prev == "example")
                     && normalized_kind == "example"
                 {
                     // Always blank line between consecutive @example tags
@@ -259,9 +260,16 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                         })
                 };
 
-                // Note: upstream does NOT preserve source blank lines between tags.
-                // Blank lines between tags are controlled solely by the options
-                // (separate_tag_groups, separate_returns_from_param, etc.).
+                // For unknown tags (not in TAGS_ORDER), upstream preserves trailing
+                // blank lines from the source because their description is used as-is
+                // (stringify.ts:77: `TAGS_ORDER[tag] === undefined`). Known tags have
+                // blank lines controlled by the options above.
+                if !should_separate
+                    && prev_tag_had_trailing_blank
+                    && prev_normalized_kind.is_some_and(|prev| !is_known_tag(prev))
+                {
+                    should_separate = true;
+                }
 
                 if should_separate && !self.content_lines.last_is_empty() {
                     self.content_lines.push_empty();
@@ -270,6 +278,17 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             first_non_import_tag_emitted = true;
             prev_normalized_kind = Some(normalized_kind);
+
+            // Track whether this tag's source has a trailing blank line.
+            // For unknown tags (not in TAGS_ORDER), upstream preserves these
+            // blank lines because it uses the raw description as-is.
+            // In parsed_preserving_whitespace(), a trailing blank `*` line
+            // plus the whitespace before the next `@` produces `\n\n` at the end.
+            // Without a blank line, only a single `\n` is present.
+            prev_tag_had_trailing_blank = {
+                let raw_ws = tag.comment().parsed_preserving_whitespace();
+                raw_ws.ends_with("\n\n")
+            };
 
             // Track content before formatting this tag
             let lines_before = self.content_lines.byte_len();

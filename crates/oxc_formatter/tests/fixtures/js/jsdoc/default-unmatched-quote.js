@@ -1,14 +1,14 @@
 /**
  * @default 'circle;
  */
-const a = 1;
+const shape = undefined;
 
 /**
- * @default "hello"
+ * @default "hello
  */
-const b = 2;
+const greeting = undefined;
 
 /**
- * @default 'matched'
+ * @default 'circle'
  */
-const c = 3;
+const matched = undefined;

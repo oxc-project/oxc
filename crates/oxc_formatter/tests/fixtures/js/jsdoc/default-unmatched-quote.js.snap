@@ -5,41 +5,41 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 /**
  * @default 'circle;
  */
-const a = 1;
+const shape = undefined;
 
 /**
- * @default "hello"
+ * @default "hello
  */
-const b = 2;
+const greeting = undefined;
 
 /**
- * @default 'matched'
+ * @default 'circle'
  */
-const c = 3;
+const matched = undefined;
 
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
 -------------------------------
 /** @default 'circle; */
-const a = 1;
+const shape = undefined;
 
-/** @default "hello" */
-const b = 2;
+/** @default "hello */
+const greeting = undefined;
 
-/** @default "matched" */
-const c = 3;
+/** @default "circle" */
+const matched = undefined;
 
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
 /** @default 'circle; */
-const a = 1;
+const shape = undefined;
 
-/** @default "hello" */
-const b = 2;
+/** @default "hello */
+const greeting = undefined;
 
-/** @default "matched" */
-const c = 3;
+/** @default "circle" */
+const matched = undefined;
 
 ===================== End =====================

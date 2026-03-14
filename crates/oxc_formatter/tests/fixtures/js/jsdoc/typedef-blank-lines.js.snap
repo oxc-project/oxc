@@ -7,11 +7,12 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
  * @property {string} name
  *
  * @typedef {Object} Bar
- * @property {number} value
+ * @property {number} id
  *
- * @typedef {string} Baz
+ * @typedef {Object} Baz
+ * @property {boolean} active
  */
-const a = 1;
+const x = 1;
 
 ==================== Output ====================
 -------------------------------
@@ -22,11 +23,12 @@ const a = 1;
  * @property {string} name
  *
  * @typedef {Object} Bar
- * @property {number} value
+ * @property {number} id
  *
- * @typedef {string} Baz
+ * @typedef {Object} Baz
+ * @property {boolean} active
  */
-const a = 1;
+const x = 1;
 
 --------------------------------
 { jsdoc: true, printWidth: 100 }
@@ -36,10 +38,11 @@ const a = 1;
  * @property {string} name
  *
  * @typedef {Object} Bar
- * @property {number} value
+ * @property {number} id
  *
- * @typedef {string} Baz
+ * @typedef {Object} Baz
+ * @property {boolean} active
  */
-const a = 1;
+const x = 1;
 
 ===================== End =====================

@@ -19,6 +19,18 @@ const b = 2;
  */
 const c = 3;
 
+/**
+ * @privateRemarks
+ * Private notes about implementation.
+ * Should also not be treated as code.
+ */
+function bar() {}
+
+/**
+ * @privateRemarks This is a private remark on one line.
+ */
+function baz() {}
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -41,6 +53,18 @@ const b = 2;
  */
 const c = 3;
 
+/**
+ * @privateRemarks
+ *   Private notes about implementation. Should also not be treated as code.
+ */
+function bar() {}
+
+/**
+ * @privateRemarks
+ *   This is a private remark on one line.
+ */
+function baz() {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -61,5 +85,17 @@ const b = 2;
  *   This has a single-word body that should not get a semicolon added.
  */
 const c = 3;
+
+/**
+ * @privateRemarks
+ *   Private notes about implementation. Should also not be treated as code.
+ */
+function bar() {}
+
+/**
+ * @privateRemarks
+ *   This is a private remark on one line.
+ */
+function baz() {}
 
 ===================== End =====================

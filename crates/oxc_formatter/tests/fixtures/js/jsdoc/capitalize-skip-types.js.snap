@@ -17,6 +17,16 @@ function bar() {}
  */
 function baz() {}
 
+/**
+ * @augments {Set<string>} some description
+ */
+class Bar {}
+
+/**
+ * @augments {CustomEvent<{ id: string }>} some description here
+ */
+class Baz {}
+
 ==================== Output ====================
 -------------------------------
 { jsdoc: true, printWidth: 80 }
@@ -30,6 +40,12 @@ function bar() {}
 /** @fires myEvent Some description here */
 function baz() {}
 
+/** @augments {Set<string>} Some description */
+class Bar {}
+
+/** @augments {CustomEvent<{ id: string }>} Some description here */
+class Baz {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -41,5 +57,11 @@ function bar() {}
 
 /** @fires myEvent Some description here */
 function baz() {}
+
+/** @augments {Set<string>} Some description */
+class Bar {}
+
+/** @augments {CustomEvent<{ id: string }>} Some description here */
+class Baz {}
 
 ===================== End =====================

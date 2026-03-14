@@ -1,9 +1,5 @@
 /**
  * See [https://example.com](https://example.com) for details.
+ * Also check [docs](https://docs.example.com) for more info.
  */
-const a = 1;
-
-/**
- * Visit [docs](https://example.com/docs) for more info.
- */
-const b = 2;
+function foo() {}

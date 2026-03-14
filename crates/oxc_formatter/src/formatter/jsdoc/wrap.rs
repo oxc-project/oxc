@@ -244,6 +244,34 @@ fn link_rendered_width(token: &str) -> usize {
     str_width(token)
 }
 
+/// Compute the syntax overhead of an inline tag token like `{@link Foo}`.
+///
+/// The rendered output of `{@link Foo}` is just "Foo", so the `{@link }` wrapper
+/// adds characters that don't contribute to the visual width. Upstream Prettier's
+/// JSDoc plugin is more lenient about line breaks when the overflow is caused by
+/// inline tag syntax — it effectively allows the line to exceed `printWidth` by
+/// the amount of the tag wrapper overhead.
+///
+/// Returns 0 for non-inline-tag tokens.
+fn inline_tag_overhead(token: &str) -> usize {
+    let bytes = token.as_bytes();
+    // Must start with `{@`
+    if bytes.len() < 3 || bytes[0] != b'{' || bytes[1] != b'@' {
+        return 0;
+    }
+    // Find the space after the tag name (e.g., `{@link ` or `{@linkcode `)
+    // The overhead is the tag prefix length + 1 for the closing `}`
+    if let Some(space_pos) = token[2..].find(' ') {
+        // overhead = "{@tagname " (space_pos + 3) + "}" (1)
+        // But only if the token actually ends with `}` (possibly with trailing punctuation)
+        let core = token.trim_end_matches(|c: char| c != '}');
+        if core.ends_with('}') {
+            return space_pos + 3 + 1; // "{@tagname " + "}"
+        }
+    }
+    0
+}
+
 /// Wrap a single paragraph of plain text to the given max width with optional indent for
 /// continuation lines.
 ///
@@ -277,18 +305,32 @@ pub fn wrap_paragraph(
     let mut current_line = String::with_capacity(max_width);
     let mut current_width: usize = 0;
     let mut is_first_line = true;
+    // Count inline tags on the current line. Each tag adds ~8 chars of syntax
+    // overhead that doesn't contribute to visual width in rendered docs.
+    let mut current_line_tag_count: usize = 0;
 
-    for word in words {
+    for word in &words {
         let word_width = link_rendered_width(word);
+        let is_inline_tag = inline_tag_overhead(word) > 0;
         let capacity = if is_first_line { first_line_max } else { effective_max };
 
         if current_line.is_empty() {
             current_line.push_str(word);
             current_width = word_width;
-        } else if current_width + 1 + word_width <= capacity {
+            current_line_tag_count = usize::from(is_inline_tag);
+        } else if current_width + 1 + word_width <= capacity || {
+            // Tolerance: allow ~1 char of overflow per inline tag on the line
+            // (including the current word if it's a tag). Upstream Prettier's
+            // JSDoc plugin is more lenient about line width when the line
+            // contains `{@link ...}` tokens whose syntax overhead inflates
+            // the raw character count beyond the visual width.
+            let tag_count = current_line_tag_count + usize::from(is_inline_tag);
+            tag_count > 0 && current_width + 1 + word_width <= capacity + tag_count
+        } {
             current_line.push(' ');
             current_line.push_str(word);
             current_width += 1 + word_width;
+            current_line_tag_count += usize::from(is_inline_tag);
         } else {
             // Word doesn't fit, push current line and start new one
             if is_first_line {
@@ -303,6 +345,7 @@ pub fn wrap_paragraph(
             }
             current_line.push_str(word);
             current_width = word_width;
+            current_line_tag_count = usize::from(is_inline_tag);
         }
     }
 
@@ -590,6 +633,57 @@ mod tests {
         assert_eq!(
             result,
             "The `string` values within a renderer are always associated with the {@link type} of that\nrenderer. To switch types, call {@link child} with a different `type` argument."
+        );
+    }
+
+    #[test]
+    fn test_wrap_link_overflow_tolerance() {
+        // Upstream Prettier allows lines with {@link} tags to slightly overflow printWidth.
+        // Each inline tag contributes ~1 char of tolerance.
+
+        // 1 tag, overflow by 1: should keep on one line
+        let result = wrap_text(
+            "Checks if an array is non-empty and narrows its type to {@link NonEmptyArray}.",
+            77,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
+        assert_eq!(
+            result,
+            "Checks if an array is non-empty and narrows its type to {@link NonEmptyArray}."
+        );
+
+        // 2 tags, overflow by 2 (last word is regular): should keep on one line
+        let result = wrap_text(
+            "Creates an {@link Eq} for {@link Redacted} values based on an equality function for the underlying type.",
+            77,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
+        assert_eq!(
+            result,
+            "Creates an {@link Eq} for {@link Redacted} values based on an equality function\nfor the underlying type."
+        );
+
+        // No tags, overflow by 1: should NOT get tolerance
+        let result = wrap_text(
+            "This function returns a value similar to SomeLongClassName and does something when called today.",
+            77,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
+        assert!(
+            result.contains('\n'),
+            "Line with no {{@link}} tags should still wrap at width boundary"
         );
     }
 

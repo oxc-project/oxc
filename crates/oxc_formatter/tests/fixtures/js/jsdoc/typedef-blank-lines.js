@@ -3,8 +3,9 @@
  * @property {string} name
  *
  * @typedef {Object} Bar
- * @property {number} value
+ * @property {number} id
  *
- * @typedef {string} Baz
+ * @typedef {Object} Baz
+ * @property {boolean} active
  */
-const a = 1;
+const x = 1;

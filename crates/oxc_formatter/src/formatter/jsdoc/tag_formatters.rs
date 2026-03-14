@@ -1023,9 +1023,17 @@ impl JsdocFormatter<'_, '_> {
         {
             // Named tags: first word is the "name" (don't capitalize), rest is description.
             // Upstream comment-parser separates name/description; we do it inline.
-            if let Some(space_idx) = desc_text.find(|c: char| c.is_ascii_whitespace()) {
-                let name_part = &desc_text[..space_idx];
-                let desc_part = desc_text[space_idx..].trim_start();
+            // When the name starts with `{`, skip past the balanced closing `}` to find
+            // the real split point — the type expression may contain whitespace
+            // (e.g., `{CustomEvent<{ id: string }>}`).
+            let name_end = if desc_text.starts_with('{') {
+                find_balanced_brace_end(desc_text)
+            } else {
+                desc_text.find(|c: char| c.is_ascii_whitespace())
+            };
+            if let Some(name_end_idx) = name_end {
+                let name_part = &desc_text[..name_end_idx];
+                let desc_part = desc_text[name_end_idx..].trim_start();
                 if desc_part.is_empty() {
                     Cow::Borrowed(desc_text)
                 } else {
@@ -1041,7 +1049,7 @@ impl JsdocFormatter<'_, '_> {
                 Cow::Borrowed(desc_text)
             }
         } else if should_capitalize {
-            capitalize_first(desc_text)
+            capitalize_first_skip_type(desc_text)
         } else {
             Cow::Borrowed(desc_text)
         };
@@ -1306,5 +1314,54 @@ impl JsdocFormatter<'_, '_> {
                 }
             }
         }
+    }
+}
+
+/// Find the index just past the balanced closing `}` for a string that starts with `{`.
+/// Returns the index after the matching `}`, accounting for nested braces.
+/// Returns `None` if no balanced closing brace is found.
+fn find_balanced_brace_end(s: &str) -> Option<usize> {
+    debug_assert!(s.starts_with('{'));
+    let mut depth: u32 = 0;
+    for (i, c) in s.char_indices() {
+        match c {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i + 1); // index past the closing `}`
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Like `capitalize_first`, but skips over a leading type expression `{...}` if present.
+/// The type expression is preserved as-is and only the description after it is capitalized.
+fn capitalize_first_skip_type(s: &str) -> Cow<'_, str> {
+    if !s.starts_with('{') {
+        return capitalize_first(s);
+    }
+    if let Some(end) = find_balanced_brace_end(s) {
+        let type_part = &s[..end];
+        let rest = s[end..].trim_start();
+        if rest.is_empty() {
+            return Cow::Borrowed(s);
+        }
+        let capitalized = capitalize_first(rest);
+        if matches!(capitalized, Cow::Borrowed(_)) {
+            // Nothing changed — return original
+            return Cow::Borrowed(s);
+        }
+        let mut result = String::with_capacity(type_part.len() + 1 + capitalized.len());
+        result.push_str(type_part);
+        result.push(' ');
+        result.push_str(&capitalized);
+        Cow::Owned(result)
+    } else {
+        // No balanced brace — fall back to normal capitalize
+        capitalize_first(s)
     }
 }

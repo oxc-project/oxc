@@ -30,8 +30,7 @@ function createRedactedEq() {}
 // Fix 5: {@link} should not be split across lines
 
 /**
- * Checks if an array is non-empty and narrows its type to
- * {@link NonEmptyArray}.
+ * Checks if an array is non-empty and narrows its type to {@link NonEmptyArray}.
  *
  * Use `if (!isNonEmptyArray(arr))` for empty checks.
  */
@@ -45,8 +44,8 @@ function isNonEmptyArray(arr) {}
 function encodeChange() {}
 
 /**
- * Creates an {@link Eq} for {@link Redacted} values based on an equality
- * function for the underlying type.
+ * Creates an {@link Eq} for {@link Redacted} values based on an equality function
+ * for the underlying type.
  */
 function createRedactedEq() {}
 
@@ -69,8 +68,8 @@ function isNonEmptyArray(arr) {}
 function encodeChange() {}
 
 /**
- * Creates an {@link Eq} for {@link Redacted} values based on an equality function for the
- * underlying type.
+ * Creates an {@link Eq} for {@link Redacted} values based on an equality function for the underlying
+ * type.
  */
 function createRedactedEq() {}
 
