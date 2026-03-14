@@ -653,8 +653,7 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                         Expression::ObjectExpression(obj) => {
                             obj.properties.iter().any(|property| match property {
                                 ObjectPropertyKind::ObjectProperty(p) => {
-                                    p.kind == PropertyKind::Get
-                                        || p.may_have_side_effects(ctx)
+                                    p.kind == PropertyKind::Get || p.may_have_side_effects(ctx)
                                 }
                                 ObjectPropertyKind::SpreadProperty(e) => {
                                     e.argument.may_have_side_effects(ctx)
