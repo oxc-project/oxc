@@ -6,11 +6,13 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 ## CRITICAL (Change semantics / break code)
 
 ### Bug 10: Smart quote corruption in JSDoc types
+
 - `'"'` → `"` (curly/smart quote) inside JSDoc type annotations
 - Files: `packages/svelte/src/compiler/phases/1-parse/utils/bracket.js`
 - Status: DONE (commit 48f4f2b)
 
 ### Bug 7: Capitalization change in inline `@type` casts
+
 - `/** @type {Element} node */` → `/** @type {Element} Node */`
 - `/** @type {ARIARoleDefinitionKey} current_role */` → `Current_role`
 - `/** @type {string | null} last Part` → `Last Part`
@@ -22,6 +24,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
   Users can disable with `"jsdocCapitalizeDescription": false`. See README.md "Mid-sentence capitalization bug".
 
 ### Bug 4: Multiple `@param` tags merged onto one line
+
 - Separate `@param` tags joined into a single line, destroying tag boundaries
 - `@param {X} a @param {Y} b @param {Z} c` on one line
 - Files:
@@ -31,6 +34,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 - Status: DONE (commit f3e82ab)
 
 ### Bug 9: ProxyHandler generic type formatting produces malformed syntax
+
 - Complex `@type {ProxyHandler<{...}>}` reformatted with extra `}` on separate line
 - Produces invalid JSDoc type expressions
 - Files:
@@ -40,6 +44,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 ## HIGH (Wrong output, Prettier divergence)
 
 ### Bug 2: Single quotes changed to double quotes in JSDoc type expressions
+
 - `AST.Fragment['nodes']` → `AST.Fragment["nodes"]`
 - `Binding['kind']` → `Binding["kind"]`
 - Violates `singleQuote: true` setting inside JSDoc types
@@ -60,6 +65,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 - Status: DONE (commit 3f1d409)
 
 ### Bug 3/15/16: Multi-line types collapsed to single line
+
 - Multi-line `@typedef` with object types collapsed: `{ start: number; end: number }` on one line
 - Multi-line `@type` union types collapsed onto single line
 - Object properties inside types collapsed: `specificity: { bumped: boolean }`
@@ -80,6 +86,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
   `comment-parser` strips `*` prefixes but preserves newlines before `formatType()`.
 
 ### Bug 8: `@internal` tag merged with description
+
 - `@internal` standalone tag + blank line + description → `@internal Description`
 - Files:
   - `packages/svelte/src/internal/client/dom/elements/custom-element.js`
@@ -88,6 +95,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 ## MEDIUM (Cosmetic, Prettier incompatible)
 
 ### Bug 1/11: Tab-to-spaces conversion in JSDoc continuation lines
+
 - Union type `|` continuation lines use spaces instead of tabs in `useTabs: true` mode
 - `@example` code block indentation also converted from tabs to spaces
 - Most frequent bug across the diff
@@ -104,6 +112,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 - Status: DONE (commit d3ec754)
 
 ### Bug 17/18: Union type line-breaking differs from Prettier
+
 - Bug 17: Long `@returns` union kept on one line by Prettier but broken by oxfmt
 - Bug 18: `null |` at type start broken differently than Prettier
 - Opposite direction from Bug 3/15/16 (those collapse, these expand)
@@ -113,6 +122,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 - Status: DONE (commit d3ec754)
 
 ### Bug 6: `{@link}` tag wrapping differences
+
 - Line breaks around `{@link}` tags land at different positions
 - Space inserted: `{@link collect}ed` → `{@link collect} ed`
 - Files:
@@ -122,6 +132,7 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 - Status: DONE (commit a4b56de)
 
 ### Bug 5: `@see` URL wrapping
+
 - Long URL after `@see` broken onto next line; Prettier keeps on one line
 - Files:
   - `packages/svelte/elements.d.ts`
@@ -130,23 +141,27 @@ Config: `useTabs: true, singleQuote: true, printWidth: 100, jsdoc: {}`.
 ## LOW (Minor cosmetic)
 
 ### Bug 12: Spurious blank line inserted mid-paragraph
+
 - Empty `*` line inserted in middle of multi-line description
 - Files:
   - `packages/svelte/src/compiler/phases/nodes.js`
 - Status: DONE (commit 36bf4b1)
 
 ### Bug 13: Blank line inserted between `@template` and `@typedef`
+
 - Files:
   - `packages/svelte/src/compiler/validate-options.js`
 - Status: DONE (commit f97cba5)
 
 ### Bug 14: Import sorting inside JSDoc comment
+
 - `@import` references alphabetically reordered inside JSDoc block
 - Files:
   - `packages/svelte/src/internal/server/renderer.js`
 - Status: WON'T FIX — intentional feature in `imports.rs`, matches prettier-plugin-jsdoc behavior
 
 ### Bug 19: Double space normalized (correct behavior)
+
 - `Component |  AST` → `Component | AST` (extra space removed)
 - Files:
   - `packages/svelte/src/compiler/phases/nodes.js`

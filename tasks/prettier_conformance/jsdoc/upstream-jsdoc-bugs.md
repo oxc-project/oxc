@@ -130,10 +130,11 @@ is `{@<tag><underscores>}` (1 char shorter than original `{@<tag> <content>}`).
 ```
 
 **Width breakdown**:
+
 - `{@link Converter}` is 17 characters
 - Placeholder `{@link_________}` is 16 characters (space removed)
 - Line with placeholder: 77 chars → fits in 80
-- After restoration: 78 chars + ` * ` prefix = 81 → exceeds 80
+- After restoration: 78 chars + `*` prefix = 81 → exceeds 80
 
 **Found in**: typedoc (application.ts, converter.ts, renderer.ts, and ~15 other files)
 

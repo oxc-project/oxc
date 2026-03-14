@@ -3,7 +3,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::ExternalCallbacks;
-use crate::options::TrailingCommas;
+use crate::options::{IndentStyle, TrailingCommas};
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::serialize::truncate_trim_end;
@@ -83,8 +83,10 @@ pub(super) fn format_embedded_js(
 
     // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
     // to embedded code, and their Vec fields make cloning expensive.
+    // Always use spaces for JSDoc embedded code, regardless of parent's indent style.
     let base_options = FormatOptions {
         line_width,
+        indent_style: IndentStyle::Space,
         jsdoc: None,
         sort_imports: None,
         sort_tailwindcss: None,
@@ -126,6 +128,15 @@ pub(super) fn format_embedded_js(
             if let Some(inner) = formatted.strip_prefix('(')
                 && let Some(inner) = inner.strip_suffix(");")
             {
+                // Validate the unwrapped result: the formatter may add its own
+                // parens (e.g., `({ obj })("args")`) causing the unwrap to
+                // produce invalid code. Reject if there's content after the
+                // closing `}`, which indicates a call expression, not a pure
+                // object literal.
+                let trimmed_inner = inner.trim();
+                if !trimmed_inner.ends_with('}') {
+                    return None;
+                }
                 return Some(String::from(inner));
             }
             Some(String::from(formatted))

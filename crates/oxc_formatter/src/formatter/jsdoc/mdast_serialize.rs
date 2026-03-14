@@ -41,10 +41,7 @@ fn needs_mdast_parsing(text: &str) -> bool {
                     return true;
                 }
                 // `* ` at line start: could be an unordered list marker
-                if bytes[i] == b'*'
-                    && next == b' '
-                    && (i == 0 || prev == b'\n')
-                {
+                if bytes[i] == b'*' && next == b' ' && (i == 0 || prev == b'\n') {
                     return true;
                 }
             }
@@ -427,11 +424,9 @@ fn escape_false_list_markers(text: &str) -> Cow<'_, str> {
             prev.starts_with("+ ")
                 || prev.starts_with("- ")
                 || prev.starts_with("* ")
-                || prev
-                    .strip_prefix(|c: char| c.is_ascii_digit())
-                    .is_some_and(|r| {
-                        r.trim_start_matches(|c: char| c.is_ascii_digit()).starts_with(". ")
-                    })
+                || prev.strip_prefix(|c: char| c.is_ascii_digit()).is_some_and(|r| {
+                    r.trim_start_matches(|c: char| c.is_ascii_digit()).starts_with(". ")
+                })
         };
         if trimmed.starts_with("+ ")
             && i > 0

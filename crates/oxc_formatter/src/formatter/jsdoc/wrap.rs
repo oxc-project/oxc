@@ -143,6 +143,42 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
     lines
 }
 
+/// Find the last space in the text that's not inside a `{@link ...}` construct.
+/// Returns `None` if no such space exists. This prevents the overflow
+/// post-processing from splitting `{@link EncryptedDbChange}` into
+/// `{@link` / `EncryptedDbChange}`.
+fn find_last_breakable_space(text: &str) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let len = bytes.len();
+    let mut last_space = None;
+    let mut i = 0;
+    while i < len {
+        if bytes[i] == b'{' && i + 1 < len && bytes[i + 1] == b'@' {
+            // Skip the entire {@link ...} construct
+            let mut depth = 1;
+            i += 2;
+            while i < len && depth > 0 {
+                match bytes[i] {
+                    b'{' => depth += 1,
+                    b'}' => depth -= 1,
+                    _ => {}
+                }
+                i += 1;
+            }
+            // Skip trailing non-whitespace (punctuation attached to the link)
+            while i < len && !bytes[i].is_ascii_whitespace() {
+                i += 1;
+            }
+        } else {
+            if bytes[i] == b' ' {
+                last_space = Some(i);
+            }
+            i += 1;
+        }
+    }
+    last_space
+}
+
 /// Tokenize text into words, treating `{@link ...}` and markdown `[text](url)` as atomic tokens.
 pub fn tokenize_words(text: &str) -> Vec<&str> {
     let mut tokens = Vec::new();
@@ -276,7 +312,7 @@ pub fn wrap_paragraph(
         // to trigger an extra wrap when remaining content is exactly `maxWidth` characters.
         if !is_first_line
             && current_width == effective_max
-            && let Some(last_space) = current_line.rfind(' ')
+            && let Some(last_space) = find_last_breakable_space(&current_line)
         {
             let overflow_start = last_space + 1;
             {

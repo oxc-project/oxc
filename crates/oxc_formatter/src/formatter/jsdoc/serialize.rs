@@ -271,7 +271,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             first_non_import_tag_emitted = true;
             prev_normalized_kind = Some(normalized_kind);
 
-
             // Track content before formatting this tag
             let lines_before = self.content_lines.byte_len();
 
