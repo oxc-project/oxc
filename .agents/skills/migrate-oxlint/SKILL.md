@@ -152,7 +152,7 @@ Additional oxlint options:
 - Disable comments work: `// eslint-disable` and `// eslint-disable-next-line` comments are supported by oxlint. Use `--replace-eslint-comments` to convert them to `// oxlint-disable` if desired.
 - List available rules: Run `npx oxlint@latest --rules` to see all supported rules.
 - Schema support: Add `"$schema": "./node_modules/oxlint/configuration_schema.json"` to `.oxlintrc.json` for editor autocompletion.
-- Output formats: `default`, `stylish`, `json`, `github`, `gitlab`, `junit`, `checkstyle`, `unix`
+- Output formats: `default`, `stylish`, `json`, `github`, `gitlab`, `bitbucket`, `junit`, `checkstyle`, `unix`
 
 ## References
 
