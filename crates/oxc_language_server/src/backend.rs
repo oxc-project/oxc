@@ -674,6 +674,12 @@ impl LanguageServer for Backend {
         let content = params.text_document.text;
         let language_id = LanguageId::new(params.text_document.language_id);
 
+        self.file_system.write().await.set_with_language(
+            uri.clone(),
+            language_id.clone(),
+            content.clone(),
+        );
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic(&uri, &language_id, Some(&content)).await {
                 Err(err) => {
