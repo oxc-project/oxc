@@ -17,7 +17,7 @@ use crate::{
     LanguageId, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
-    tool::{DiagnosticResult, Tool, ToolBuilder},
+    tool::{DiagnosticResult, Tool, ToolBuilder, ToolStartInput},
 };
 
 /// A worker that manages the individual tools for a specific workspace
@@ -69,7 +69,12 @@ impl WorkspaceWorker {
         *self.tools.write().await = self
             .builders
             .iter()
-            .map(|builder| builder.build_boxed(&self.root_uri, options.clone()))
+            .map(|builder| {
+                builder.build_boxed(ToolStartInput {
+                    root_uri: &self.root_uri,
+                    options: options.clone(),
+                })
+            })
             .collect();
 
         *self.options.lock().await = Some(options);
@@ -270,8 +275,7 @@ impl WorkspaceWorker {
             tool.handle_watched_file_change(
                 builder,
                 &file_event.uri,
-                &self.root_uri,
-                options.clone(),
+                ToolStartInput { root_uri: &self.root_uri, options: options.clone() },
             )
         })
         .await
@@ -311,9 +315,11 @@ impl WorkspaceWorker {
             .handle_tool_changes(file_system, needs_diagnostic_refresh, |tool, builder| {
                 tool.handle_configuration_change(
                     builder,
-                    &self.root_uri,
                     &old_options,
-                    changed_options_json.clone(),
+                    ToolStartInput {
+                        root_uri: &self.root_uri,
+                        options: changed_options_json.clone(),
+                    },
                 )
             })
             .await;
