@@ -226,10 +226,9 @@ impl LanguageServer for Backend {
                 fs.keys()
                     .into_iter()
                     .map(|uri| {
-                        let (lang, content) = fs.get(&uri).map_or_else(
-                            || (LanguageId::default(), None),
-                            |(l, c)| (l, Some(c)),
-                        );
+                        let (lang, content) = fs
+                            .get(&uri)
+                            .map_or_else(|| (LanguageId::default(), None), |(l, c)| (l, Some(c)));
                         (uri, lang, content)
                     })
                     .collect()
@@ -610,7 +609,8 @@ impl LanguageServer for Backend {
 
         // Read content and language_id together from a single file-system read.
         let fs_entry = self.file_system.read().await.get(&uri);
-        let language_id = fs_entry.as_ref().map_or_else(LanguageId::default, |(lang, _)| lang.clone());
+        let language_id =
+            fs_entry.as_ref().map_or_else(LanguageId::default, |(lang, _)| lang.clone());
         let content = params.text.or_else(|| fs_entry.map(|(_, c)| c));
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
