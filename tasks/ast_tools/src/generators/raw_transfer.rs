@@ -200,7 +200,7 @@ fn generate_deserializers(
             // Increment `astId` counter.
             // This prevents `program.comments` being accessed after the AST is done with.
             // (see `deserializeProgram`)
-            if (COMMENTS) astId++;
+            if (LINTER) astId++;
         }}
     ");
 
@@ -272,17 +272,17 @@ fn generate_deserializers(
     }
 
     // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`,
-    // `PRESERVE_PARENS`, and `COMMENTS` consts, and running through minifier to shake out
+    // and `PRESERVE_PARENS` consts, and running through minifier to shake out
     // irrelevant code
     struct VariantGen {
         variant_paths: Vec<String>,
     }
 
-    impl VariantGenerator<7> for VariantGen {
-        const FLAG_NAMES: [&str; 7] =
-            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "COMMENTS", "LINTER"];
+    impl VariantGenerator<6> for VariantGen {
+        const FLAG_NAMES: [&str; 6] =
+            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "LINTER"];
 
-        fn variants(&mut self) -> Vec<[bool; 7]> {
+        fn variants(&mut self) -> Vec<[bool; 6]> {
             let mut variants = Vec::with_capacity(9);
 
             // Parser deserializers
@@ -298,8 +298,7 @@ fn generate_deserializers(
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true, /* comments */ false,
-                            /* linter */ false,
+                            /* preserve_parens */ true, /* linter */ false,
                         ]);
                     }
                 }
@@ -309,8 +308,7 @@ fn generate_deserializers(
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
-                /* parent */ true, /* preserve_parens */ false, /* comments */ true,
-                /* linter */ true,
+                /* parent */ true, /* preserve_parens */ false, /* linter */ true,
             ]);
 
             variants
@@ -319,7 +317,7 @@ fn generate_deserializers(
         fn pre_process_variant<'a>(
             &self,
             program: &mut Program<'a>,
-            flags: [bool; 7],
+            flags: [bool; 6],
             allocator: &'a Allocator,
         ) {
             if flags[2] {

@@ -131,7 +131,7 @@ impl Program<'_> {
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: null,
-        /* IF COMMENTS */
+        /* IF LINTER */
         get comments() {
             // Check AST in buffer is still the same AST (buffers are reused)
             if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
@@ -153,8 +153,6 @@ impl Program<'_> {
             Object.defineProperty(this, 'comments', { value: comments });
             return comments;
         },
-        /* END_IF */
-        /* IF LINTER */
         get tokens() {
             if (tokens === null) initTokens();
             return tokens;
