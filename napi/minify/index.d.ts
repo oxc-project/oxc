@@ -7,6 +7,23 @@ export interface CodegenOptions {
    * @default true
    */
   removeWhitespace?: boolean
+  /**
+   * How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
+   *
+   * * `"none"` - Do not preserve any legal comments.
+   * * `"inline"` - Preserve all legal comments inline.
+   * * `"eof"` - Move all legal comments to the end of the file.
+   * * `"linked"` - Extract legal comments and add a link comment. Requires `legalCommentsPath`.
+   * * `"external"` - Extract legal comments without linking.
+   *
+   * @default "none" (when minifying)
+   */
+  legalComments?: string
+  /**
+   * The path to use in the linked legal comments banner.
+   * Only used when `legalComments` is `"linked"`.
+   */
+  legalCommentsPath?: string
 }
 
 export interface CompressOptions {
@@ -145,6 +162,11 @@ export interface MinifyResult {
   code: string
   map?: SourceMap
   errors: Array<OxcError>
+  /**
+   * Legal comments extracted from the source code.
+   * Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
+   */
+  legalComments: Array<string>
 }
 
 /** Minify synchronously. */
