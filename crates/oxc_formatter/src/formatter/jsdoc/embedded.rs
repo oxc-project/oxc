@@ -3,7 +3,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::ExternalCallbacks;
-use crate::options::{IndentStyle, TrailingCommas};
+use crate::options::TrailingCommas;
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::serialize::truncate_trim_end;
@@ -83,10 +83,10 @@ pub(super) fn format_embedded_js(
 
     // Null out sort_imports/sort_tailwindcss — they're top-level concerns irrelevant
     // to embedded code, and their Vec fields make cloning expensive.
-    // Always use spaces for JSDoc embedded code, regardless of parent's indent style.
+    // Inherit indent_style from parent so embedded code uses tabs when useTabs=true,
+    // matching upstream prettier-plugin-jsdoc behavior.
     let base_options = FormatOptions {
         line_width,
-        indent_style: IndentStyle::Space,
         jsdoc: None,
         sort_imports: None,
         sort_tailwindcss: None,

@@ -9,3 +9,15 @@ function longUnion(value) {}
  * const y = 2;
  */
 function withExample() {}
+
+/**
+ * Description text.
+ *
+ * ```ts
+ * const store = toStore(
+ *   () => count,
+ *   (v) => (count = v),
+ * );
+ * ```
+ */
+function withFencedCodeBlock() {}

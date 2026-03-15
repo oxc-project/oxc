@@ -158,6 +158,11 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         // Skip formatting inline @type cast comments (e.g. `/** @type {X} */`).
         // These are used as inline type assertions and should not be reflowed.
         // Only skip when the @type tag has NO description (pure cast).
+        // Note: `comment().parsed()` returns the full body including the type braces,
+        // so this only matches @type tags with NO type AND no description (very rare).
+        // Inline casts with types like `/** @type {X} */` are still formatted, which
+        // may expand them to multi-line if the type is long — this is a known design
+        // difference vs prettier-plugin-jsdoc which skips inline casts entirely.
         if merged_desc.is_empty()
             && effective_tags.len() == 1
             && effective_tags[0].1 == "type"
