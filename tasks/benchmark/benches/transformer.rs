@@ -31,8 +31,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let parser_ret =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let mut program = parser_ret.program;
                 let scoping = SemanticBuilder::new()
                     .with_parser_stats(parser_ret.stats)

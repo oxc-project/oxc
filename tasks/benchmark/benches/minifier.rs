@@ -30,7 +30,11 @@ fn bench_minifier(criterion: &mut Criterion) {
                 // Create fresh AST + semantic data for each iteration
                 let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let mut program = parser_ret.program;
-                let scoping = SemanticBuilder::new().with_parser_stats(parser_ret.stats).build(&program).semantic.into_scoping();
+                let scoping = SemanticBuilder::new()
+                    .with_parser_stats(parser_ret.stats)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
 
                 // Minifier only works on esnext.
                 let transform_options = TransformOptions::from_target("esnext").unwrap();
@@ -65,7 +69,10 @@ fn bench_mangler(criterion: &mut Criterion) {
                 temp_allocator.reset();
                 let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = parser_ret.program;
-                let mut semantic = SemanticBuilder::new().with_parser_stats(parser_ret.stats).build(&program).semantic;
+                let mut semantic = SemanticBuilder::new()
+                    .with_parser_stats(parser_ret.stats)
+                    .build(&program)
+                    .semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .build_with_semantic(&mut semantic, &program);
@@ -86,7 +93,10 @@ fn bench_mangler(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = parser_ret.program;
-                let mut semantic = SemanticBuilder::new().with_parser_stats(parser_ret.stats).build(&program).semantic;
+                let mut semantic = SemanticBuilder::new()
+                    .with_parser_stats(parser_ret.stats)
+                    .build(&program)
+                    .semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .with_options(MangleOptions {
