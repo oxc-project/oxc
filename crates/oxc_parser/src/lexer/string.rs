@@ -65,6 +65,7 @@ macro_rules! handle_string_literal {
         let next_byte = byte_search! {
             lexer: $lexer,
             table: $table,
+            needles: [$delimiter, b'\r', b'\n', b'\\'],
             start: after_opening_quote,
             handle_eof: {
                 $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));

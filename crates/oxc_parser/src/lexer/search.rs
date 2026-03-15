@@ -247,6 +247,26 @@ macro_rules! safe_byte_match_table {
 }
 pub(crate) use safe_byte_match_table;
 
+// SWAR (SIMD Within A Register) byte scanning primitives.
+// Process 8 bytes at a time using u64 arithmetic.
+// Works on all platforms including WASM — no SIMD intrinsics required.
+
+/// Broadcast a byte to all 8 lanes of a u64.
+#[inline(always)]
+const fn broadcast(b: u8) -> u64 {
+    0x0101_0101_0101_0101_u64 * (b as u64)
+}
+
+/// Returns a u64 mask with the high bit set in each byte lane that equals `needle`.
+/// Uses Mycroft's null-byte detection formula applied after XOR with the needle.
+#[inline(always)]
+pub(crate) const fn has_byte(word: u64, needle: u8) -> u64 {
+    const LO: u64 = 0x0101_0101_0101_0101_u64;
+    const HI: u64 = 0x8080_8080_8080_8080_u64;
+    let diff = word ^ broadcast(needle);
+    (diff.wrapping_sub(LO)) & !diff & HI
+}
+
 /// Macro to search for first byte matching a `ByteMatchTable` or `SafeByteMatchTable`.
 ///
 /// Search processes source in batches of `SEARCH_BATCH_SIZE` bytes for speed.
@@ -469,6 +489,172 @@ macro_rules! byte_search {
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
                 // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
+                'inner: loop {
+                    // SAFETY: `$pos` is before or equal to end of source
+                    let remaining = unsafe {
+                        let remaining_len = $lexer.source.end().offset_from($pos);
+                        $pos.slice(remaining_len)
+                    };
+                    for (i, &byte) in remaining.iter().enumerate() {
+                        if $table.matches(byte) {
+                            // SAFETY: `i` is less than number of bytes remaining after `$pos`,
+                            // so `$pos + i` cannot be out of bounds
+                            $pos = unsafe { $pos.add(i) };
+                            break 'inner byte;
+                        }
+                    }
+
+                    // EOF.
+                    // Advance `lexer.source`'s position to end of file.
+                    $lexer.source.advance_to_end();
+
+                    // Avoid lint errors if `$eof_handler` contains `return` statement
+                    #[allow(
+                        unused_variables,
+                        unreachable_code,
+                        clippy::diverging_sub_expression,
+                        clippy::allow_attributes
+                    )]
+                    {
+                        let eof_ret = $eof_handler;
+                        break 'outer eof_ret;
+                    }
+                }
+            };
+
+            // Found match. Check if should continue.
+            if $should_continue {
+                // Not a match after all - continue searching.
+                // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                // See above about UTF-8 character boundaries invariant.
+                $pos = unsafe { $pos.add(1) };
+                continue;
+            }
+
+            // Match confirmed.
+            // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
+            // SAFETY: See above about UTF-8 character boundaries invariant.
+            $lexer.source.set_position($pos);
+
+            break $byte;
+        }
+    }};
+
+    // ======== SWAR variants (with `needles:` parameter) ========
+    // These use SWAR (SIMD Within A Register) for the batch search path,
+    // processing 8 bytes at a time using u64 arithmetic instead of byte-by-byte table lookups.
+    // The scalar tail path (< 32 bytes remaining) still uses the table for correctness.
+
+    // Simple version with needles.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        needles: [$($needle:expr),+ $(,)?],
+        handle_eof: $eof_handler:expr,
+    ) => {{
+        let start = $lexer.source.position();
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            needles: [$($needle),+],
+            start: start,
+            continue_if: (byte, pos) false,
+            handle_eof: $eof_handler,
+        }
+    }};
+
+    // With `continue_if` and needles.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        needles: [$($needle:expr),+ $(,)?],
+        continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
+        handle_eof: $eof_handler:expr,
+    ) => {{
+        let start = $lexer.source.position();
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            needles: [$($needle),+],
+            start: start,
+            continue_if: ($byte, $pos) $should_continue,
+            handle_eof: $eof_handler,
+        }
+    }};
+
+    // With provided `start` position and needles.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        needles: [$($needle:expr),+ $(,)?],
+        start: $start:ident,
+        handle_eof: $eof_handler:expr,
+    ) => {
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            needles: [$($needle),+],
+            start: $start,
+            continue_if: (byte, pos) false,
+            handle_eof: $eof_handler,
+        }
+    };
+
+    // SWAR implementation - with `start`, `continue_if`, and `needles`.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        needles: [$($needle:expr),+],
+        start: $start:ident,
+        continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
+        handle_eof: $eof_handler:expr,
+    ) => {{
+        #[allow(clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+        $table.use_table();
+
+        let mut $pos = $start;
+        #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+        'outer: loop {
+            let $byte = if $pos.can_read_batch_from(&$lexer.source) {
+                // SWAR batch search: process 8 bytes at a time using u64 arithmetic.
+                // Each iteration reads a u64 (8 bytes) and checks all needles in parallel
+                // using Mycroft's zero-byte detection formula.
+                //
+                // SAFETY:
+                // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
+                // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
+                // So all reads in this loop are in bounds.
+                let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
+                'inner: loop {
+                    let batch_ptr = batch.as_ptr();
+                    let mut chunk_offset = 0usize;
+                    while chunk_offset < crate::lexer::search::SEARCH_BATCH_SIZE {
+                        let word = unsafe {
+                            (batch_ptr.add(chunk_offset) as *const u64).read_unaligned()
+                        };
+                        let mask = 0u64 $(| crate::lexer::search::has_byte(word, $needle))+;
+                        if mask != 0 {
+                            #[cfg(target_endian = "little")]
+                            let byte_idx = (mask.trailing_zeros() / 8) as usize;
+                            #[cfg(target_endian = "big")]
+                            let byte_idx = (mask.leading_zeros() / 8) as usize;
+                            let total_offset = chunk_offset + byte_idx;
+                            // SAFETY: `total_offset` < SEARCH_BATCH_SIZE, cannot go out of bounds.
+                            // Also see above about UTF-8 character boundaries invariant.
+                            $pos = unsafe { $pos.add(total_offset) };
+                            break 'inner unsafe { $pos.read() };
+                        }
+                        chunk_offset += 8;
+                    }
+                    // No match in batch - search next batch.
+                    // SAFETY: Cannot go out of bounds (see above).
+                    // Also see above about UTF-8 character boundaries invariant.
+                    $pos = unsafe { $pos.add(crate::lexer::search::SEARCH_BATCH_SIZE) };
+                    continue 'outer;
+                }
+            } else {
+                // Not enough bytes remaining for a batch. Process byte-by-byte using table.
+                // Same as above, `'inner: loop {}` is not a real loop - always exits on first turn.
                 'inner: loop {
                     // SAFETY: `$pos` is before or equal to end of source
                     let remaining = unsafe {

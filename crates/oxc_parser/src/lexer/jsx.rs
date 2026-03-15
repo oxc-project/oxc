@@ -79,6 +79,7 @@ impl<C: Config> Lexer<'_, C> {
                 let next_byte = byte_search! {
                     lexer: self,
                     table: JSX_CHILD_END_TABLE,
+                    needles: [b'{', b'}', b'>', b'<'],
                     handle_eof: {
                         return Kind::Eof;
                     },

@@ -46,6 +46,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         byte_search! {
             lexer: self,
             table: TEMPLATE_LITERAL_TABLE,
+            needles: [b'$', b'`', b'\r', b'\\'],
             continue_if: (next_byte, pos) {
                 match next_byte {
                     b'$' => {
@@ -225,6 +226,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         byte_search! {
             lexer: self,
             table: TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE,
+            needles: [b'$', b'`', b'\r', b'\\', 0xEF],
             start: pos,
             continue_if: (next_byte, pos) {
                 if next_byte == b'$' {

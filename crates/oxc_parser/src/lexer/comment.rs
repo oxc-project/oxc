@@ -28,6 +28,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
+            needles: [b'\r', b'\n', 0xE2],
             continue_if: (next_byte, pos) {
                 // Match found. Decide whether to continue searching.
                 // If this is end of comment, create trivia, and advance `pos` to after line break.
@@ -94,6 +95,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         byte_search! {
             lexer: self,
             table: MULTILINE_COMMENT_START_TABLE,
+            needles: [b'*', b'\r', b'\n', 0xE2],
             continue_if: (next_byte, pos) {
                 // Match found. Decide whether to continue searching.
                 if next_byte == b'*' {
