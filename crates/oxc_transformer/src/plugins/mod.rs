@@ -1,7 +1,9 @@
+mod emotion;
 mod options;
 mod styled_components;
 mod tagged_template_transform;
 
+pub use emotion::EmotionOptions;
 pub use options::PluginsOptions;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
@@ -10,7 +12,8 @@ pub use styled_components::StyledComponentsOptions;
 use crate::{
     context::TraverseCtx,
     plugins::{
-        styled_components::StyledComponents, tagged_template_transform::TaggedTemplateTransform,
+        emotion::Emotion, styled_components::StyledComponents,
+        tagged_template_transform::TaggedTemplateTransform,
     },
     state::TransformState,
 };
@@ -18,6 +21,7 @@ use crate::{
 pub struct Plugins<'a> {
     styled_components: Option<StyledComponents<'a>>,
     tagged_template_escape: Option<TaggedTemplateTransform>,
+    emotion: Option<Emotion>,
 }
 
 impl Plugins<'_> {
@@ -29,6 +33,7 @@ impl Plugins<'_> {
             } else {
                 None
             },
+            emotion: options.emotion.map(Emotion::new),
         }
     }
 }
@@ -37,6 +42,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_program(node, ctx);
+        }
+        if let Some(emotion) = &mut self.emotion {
+            emotion.enter_program(node, ctx);
         }
     }
 
@@ -66,6 +74,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_call_expression(&mut self, node: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_call_expression(node, ctx);
+        }
+        if let Some(emotion) = &mut self.emotion {
+            emotion.enter_call_expression(node, ctx);
         }
     }
 }

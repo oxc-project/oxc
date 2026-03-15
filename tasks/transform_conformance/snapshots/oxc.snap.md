@@ -1,6 +1,6 @@
 commit: 87a048db
 
-Passed: 204/335
+Passed: 232/363
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -19,6 +19,7 @@ Passed: 204/335
 * babel-plugin-transform-react-jsx-source
 * regexp
 * plugin-tagged-template-transform
+* plugin-emotion
 
 
 # babel-plugin-transform-explicit-resource-management (2/4)
