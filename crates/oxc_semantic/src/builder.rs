@@ -202,13 +202,29 @@ impl<'a> SemanticBuilder<'a> {
     /// Provide statistics about AST to optimize memory usage of semantic analysis.
     ///
     /// Accurate statistics can greatly improve performance, especially for large ASTs.
+    ///
+    /// You can re-use the estimated stats from [`ParserReturn`] and pass them into this function:
+    ///
+    /// ```rust
+    /// # use oxc_ast::ast::Program;
+    /// # use oxc_parser::{Parser, ParserReturn};
+    /// # use oxc_semantic::SemanticBuilder;
+    /// # let source_text = "";
+    /// # let source_type = oxc_span::SourceType::default();
+    /// # let allocator = oxc_allocator::Allocator::default();
+    /// let parser_return: ParserReturn = Parser::new(&allocator, source_text, source_type).parse();
+    /// let semantic_builder = SemanticBuilder::new().with_stats(&parser_return.stats);
+    /// ```
+    ///
     /// If no stats are provided, [`SemanticBuilder::build`] will compile stats by performing
     /// a complete AST traversal.
     /// If semantic analysis has already been performed on this AST, get the existing stats with
     /// [`Semantic::stats`], and pass them in with this method, to avoid the stats collection AST pass.
+    ///
+    /// [`ParserReturn`]: https://docs.rs/oxc_parser/latest/oxc_parser/struct.ParserReturn.html
     #[must_use]
-    pub fn with_stats(mut self, stats: Stats) -> Self {
-        self.stats = Some(stats);
+    pub fn with_stats<T: Into<Stats>>(mut self, stats: T) -> Self {
+        self.stats = Some(stats.into());
         self
     }
 
@@ -216,9 +232,6 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// `excess_capacity` is provided as a fraction.
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess_capacity`.
-    ///
-    /// Has no effect if a `Stats` object is provided with [`SemanticBuilder::with_stats`],
-    /// only if `SemanticBuilder` is calculating stats itself.
     ///
     /// This is useful when you intend to modify `Semantic`, adding more `nodes`, `scopes`, `symbols`,
     /// or `references`. Allocating excess capacity for these additions at the outset prevents

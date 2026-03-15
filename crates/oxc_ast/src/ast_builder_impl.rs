@@ -57,16 +57,15 @@ pub struct AstBuilderStatsMut {
 /// references, symbols, and scopes in the arena, to avoid unnecessary reallocations and copying
 /// during semantic analysis.
 #[derive(Debug, Default)]
-#[expect(dead_code)]
 pub struct AstBuilderStats {
     /// Count of AST nodes created.
-    nodes: u32,
+    pub nodes: u32,
     /// Approximate count of AST nodes that produce references.
-    references: u32,
+    pub references: u32,
     /// Approximate count of AST nodes that produce symbols.
-    symbols: u32,
+    pub symbols: u32,
     /// Approximate count of AST nodes that produce scopes.
-    scopes: u32,
+    pub scopes: u32,
 }
 
 impl AstBuilderStatsMut {
