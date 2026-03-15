@@ -724,7 +724,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut inline_exprs = Vec::new();
+        let mut inline_exprs = Vec::with_capacity(t.expressions.len());
         let new_exprs =
             ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
                 if expr.may_have_side_effects(ctx) {
