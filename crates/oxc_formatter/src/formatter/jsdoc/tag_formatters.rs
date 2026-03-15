@@ -13,7 +13,8 @@ use super::{
     },
     serialize::{
         JsdocFormatter, format_default_value, is_known_tag, is_named_generic_tag,
-        should_skip_description_formatting, strip_default_is_suffix,
+        should_preserve_description_verbatim, should_skip_description_formatting,
+        strip_default_is_suffix,
     },
     wrap::{str_width, wrap_text},
 };
@@ -70,7 +71,6 @@ impl JsdocFormatter<'_, '_> {
         let comment_part = tag.comment();
         let raw_text = comment_part.parsed_preserving_whitespace();
         let trimmed = raw_text.trim();
-
         // Check for <caption>...</caption> at the start — keep inline with @example
         if let Some(rest) = trimmed.strip_prefix("<caption>")
             && let Some(end_pos) = rest.find("</caption>")
@@ -1214,43 +1214,55 @@ impl JsdocFormatter<'_, '_> {
                     }
                 }
             } else if skip_wrapping && !fits_on_one_line {
-                // Skip-wrapping tag (e.g. @deprecated) with a long single-line
-                // description: wrap the raw text to respect print width, using
-                // continuation indent for wrapped lines.
-                let indent = self.continuation_indent();
-                let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                    0
-                } else {
-                    self.continuation_indent_width()
-                });
-                let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
-                    0
-                } else {
-                    self.continuation_indent_width()
-                });
-                let desc = wrap_text(
-                    raw_ws_desc,
-                    indent_width,
-                    tag_str_len,
-                    false,
-                    Some(self.format_options),
-                    Some(self.external_callbacks),
-                    Some(self.allocator),
-                );
-                let mut iter = desc.split('\n');
-                if let Some(first) = iter.next() {
+                // Upstream (stringify.ts:131-136) uses the description as-is
+                // for TAGS_PEV_FORMATE_DESCRIPTION (no wrapping). But our
+                // `should_skip_description_formatting()` includes extra tags
+                // like @deprecated that upstream DOES wrap. Only truly skip
+                // wrapping for tags in upstream's list: @default, @defaultValue,
+                // @borrows, @import, @memberof, @module, @see.
+                if should_preserve_description_verbatim(normalized_kind) || is_unknown {
                     let s = self.content_lines.begin_line();
                     s.push_str(&tag_line);
                     s.push(' ');
-                    s.push_str(first);
-                }
-                for line in iter {
-                    if line.is_empty() {
-                        self.content_lines.push_empty();
+                    s.push_str(raw_ws_desc);
+                } else {
+                    // Tags like @deprecated that skip capitalization but still
+                    // wrap at printWidth.
+                    let indent = self.continuation_indent();
+                    let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
+                        0
                     } else {
+                        self.continuation_indent_width()
+                    });
+                    let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
+                        0
+                    } else {
+                        self.continuation_indent_width()
+                    });
+                    let desc = wrap_text(
+                        raw_ws_desc,
+                        indent_width,
+                        tag_str_len,
+                        false,
+                        Some(self.format_options),
+                        Some(self.external_callbacks),
+                        Some(self.allocator),
+                    );
+                    let mut iter = desc.split('\n');
+                    if let Some(first) = iter.next() {
                         let s = self.content_lines.begin_line();
-                        s.push_str(indent);
-                        s.push_str(line);
+                        s.push_str(&tag_line);
+                        s.push(' ');
+                        s.push_str(first);
+                    }
+                    for line in iter {
+                        if line.is_empty() {
+                            self.content_lines.push_empty();
+                        } else {
+                            let s = self.content_lines.begin_line();
+                            s.push_str(indent);
+                            s.push_str(line);
+                        }
                     }
                 }
             } else {

@@ -543,6 +543,17 @@ pub(super) fn should_skip_description_formatting(tag_kind: &str) -> bool {
     )
 }
 
+/// Tags whose description should be preserved verbatim (no wrapping at all).
+/// Matches upstream's `TAGS_PEV_FORMATE_DESCRIPTION` (roles.ts).
+/// Note: `should_skip_description_formatting()` is a superset that also
+/// includes @deprecated/@internal (which skip capitalization but still wrap).
+pub(super) fn should_preserve_description_verbatim(tag_kind: &str) -> bool {
+    matches!(
+        tag_kind,
+        "borrows" | "default" | "defaultValue" | "import" | "memberof" | "module" | "see"
+    )
+}
+
 /// Tags that use `type_name_comment()` pattern: `@tag {type} name description`
 /// Expects canonical (normalized) tag names.
 pub(super) fn is_type_name_comment_tag(tag_kind: &str) -> bool {

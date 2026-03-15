@@ -1,9 +1,9 @@
 # JSDoc Diffs: wxt
 
-Date: 2026-03-15 (post-fix retest)
+Date: 2026-03-15 (post-fix retest #2)
 Prettier version: 3.8.1
 JSDoc tags: 1218
-Files with diffs: 4
+Files with diffs: 4 (excluding .oxfmtrc.json)
 
 ## `packages/unocss/src/index.ts`
 
@@ -17,16 +17,35 @@ Files with diffs: 4
 +   *   {
 +   *     undefined;
 +   *   }
-+   *   ('popup', 'options');
++   *   ("popup", "options");
     *
     * @default [ ]
     */
 ```
 
+## `packages/wxt/src/core/utils/building/__tests__/group-entrypoints.test.ts`
+
+```diff
+@@ -185,10 +185,7 @@ describe("groupEntrypoints", () => {
+     expect(actual).toEqual([[background]]);
+   });
+
+-  it.todo(
+-    "should group ESM compatible sandbox scripts with sandbox pages",
+-    () => {
+-      // Main world content scripts
+-    },
+-  );
++  it.todo("should group ESM compatible sandbox scripts with sandbox pages", () => {
++    // Main world content scripts
++  });
+ });
+```
+
 ## `packages/wxt/src/core/utils/building/detect-dev-changes.ts`
 
 ```diff
-@@ -15,7 +15,7 @@ import { wxt } from '../../wxt';
+@@ -15,7 +15,7 @@ import { wxt } from "../../wxt";
   * - Do nothing
   *
   *   - CSS or JS file associated with an HTML page is changed - this is handled
@@ -35,7 +54,7 @@ Files with diffs: 4
   *   - Change isn't used by any of the entrypoints
   * - Reload Content script
   *
-@@ -24,10 +24,10 @@ import { wxt } from '../../wxt';
+@@ -24,10 +24,10 @@ import { wxt } from "../../wxt";
   * - Reload HTML file
   *
   *   - HTML file itself is saved - HMR doesn't handle this because the HTML pages
@@ -49,22 +68,6 @@ Files with diffs: 4
   * - Reload extension
   *
   *   - Background script is changed
-```
-
-## `packages/wxt/src/modules.ts`
-
-```diff
-@@ -102,8 +102,8 @@ export function addPublicAssets(wxt: Wxt, dir: string): void {
-  *   });
-  *   });
-  *
-- * @param wxt The wxt instance provided by the module's setup function.
-- * @param viteConfig A function that returns the vite config the module is
-+ *   @param wxt The wxt instance provided by the module's setup function.
-+ *   @param viteConfig A function that returns the vite config the module is
-  *   adding. Same format as `vite` in `wxt.config.ts`.
-  */
- export function addViteConfig(
 ```
 
 ## `packages/wxt/src/types.ts`
@@ -85,7 +88,7 @@ Files with diffs: 4
     *
     * @example
 -   *   { "testing": "src/utils/testing.ts" }
-+   *   { testing: 'src/utils/testing.ts' }
++   *   { testing: "src/utils/testing.ts" }
     */
    alias?: Record<string, string>;
    /** Experimental settings - use with caution. */

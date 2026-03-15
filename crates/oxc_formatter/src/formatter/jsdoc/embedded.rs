@@ -142,12 +142,27 @@ pub(super) fn format_embedded_js(
             Some(String::from(formatted))
         };
 
-        if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
-            return Some(result);
+        // If the original has quoted keys (JSON-like), reject formatting since
+        // the JS formatter removes unnecessary quotes. Upstream uses `parser: "json"`
+        // which preserves quoted keys; we don't have a JSON formatter.
+        let has_quoted_keys =
+            trimmed.contains('"') && trimmed.find('"') < trimmed.find('}');
+        if !has_quoted_keys {
+            if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
+                return Some(result);
+            }
+            if let Some(result) = try_format_obj(wrapped, SourceType::tsx()) {
+                return Some(result);
+            }
         }
-        if let Some(result) = try_format_obj(wrapped, SourceType::tsx()) {
-            return Some(result);
-        }
+
+        // Upstream (utils.ts:248-274) tries JSON for `{`-starting code and
+        // falls back to keeping the original if JSON fails — it does NOT
+        // reformat as JavaScript. Matching that: if the object-literal
+        // approach failed, return None (pass-through) instead of trying
+        // regular JS formatting, which would alter semantics (e.g., removing
+        // quotes from object keys, or reformatting pseudo-code).
+        return None;
     }
 
     // Try TSX first — it's a superset of JSX and correctly handles TypeScript

@@ -310,8 +310,42 @@ After implementing Fix 8 (capitalization skip types), Fix 6 (blank line preserva
 5. **Sub-list indent normalization** (evolu 2, typedoc 2): 4-space vs 6-space. Design difference / improvement.
 6. **`@example` code reformatting** (wxt 2 files): JS formatting of example code. Design difference.
 7. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
-8. **`@param` after `@example` extra indent** (wxt 1 file): Not reproduced in unit tests.
-9. **`@default`/`@example` spacing** (typedoc 2 files): Minor blank line and wrapping differences.
+8. **`@default`/`@example` spacing** (typedoc 2 files): Minor blank line and wrapping differences.
+
+### Bugs Found
+
+See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-15, round 3)
+
+After fixing JSDoc parser bug: `brace_depth` (parenthesis tracking) was not reset at newlines, causing code snippets with unbalanced parens in `@example` to absorb subsequent `@param` tags. The reset was originally added in commit `db3537603a` but was lost when commit `f3e82abc12` refactored the same code section. 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 2 |
+| ---------- | ---------- | ---------------- | -------------------- |
+| evolu      | 134        | 13               | -1                   |
+| wxt        | 1,218      | 4                | 0                    |
+| typedoc    | 792        | 14               | 0                    |
+| Chart.js   | 1,276      | 4                | 0                    |
+| svelte     | 4,150      | 16               | +2                   |
+| **Total**  | **7,570**  | **51**           | **+2**               |
+
+### Fixes Confirmed
+
+- **@param after @example extra indent** (wxt modules.ts): **FIXED** — `brace_depth` reset at newlines prevents unbalanced parens in @example code from absorbing subsequent tags.
+
+### Remaining Diff Categories (all design differences or upstream bugs)
+
+1. **`{@link}` wrapping** (~11 files across evolu, typedoc, chartjs): oxfmt keeps `{@link Foo}` atomic. Design difference.
+2. **Tabs→spaces in code blocks** (svelte 9 files): Fix 2 normalizes tab indentation to spaces. Design difference.
+3. **`@type` description capitalization** (svelte 3, typedoc 1): oxfmt capitalizes per conformance tests. Upstream bug (#7).
+4. **`{@includeCode}` placement** (typedoc 3 files): Each `{@includeCode}` on own line. Design difference.
+5. **Sub-list indent normalization** (evolu 2, typedoc 2, wxt 1): 4-space vs content-aligned. Design difference.
+6. **`@example` code reformatting** (wxt 2 files): JS formatting of example code. Design difference.
+7. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+8. **`@default`/`@example` spacing** (typedoc 2, wxt 1): Minor blank line and wrapping differences.
+9. **Non-JSDoc formatting** (wxt 1 file): `it.todo()` line width difference. Not JSDoc-related.
 
 ### Bugs Found
 
