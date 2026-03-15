@@ -17,7 +17,7 @@ catalog:
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.18
   rolldown: 1.0.0-rc.9
-  tsdown: 0.21.2
+  tsdown: 0.21.3
   vitest: 4.0.18
 
 onlyBuiltDependencies:
