@@ -8,7 +8,7 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Address;
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstBuilderStats, AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
@@ -212,13 +212,25 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Provide parser statistics to optimize memory usage of semantic analysis.
+    ///
+    /// The parser already tracks counts of AST nodes, scopes, symbols, and references
+    /// as it creates them. Passing these stats here avoids a redundant full AST traversal
+    /// that would otherwise be performed to collect the same information.
+    ///
+    /// These counts are available from [`ParserReturn::stats`] after parsing.
+    ///
+    /// [`ParserReturn::stats`]: https://docs.rs/oxc_parser/latest/oxc_parser/struct.ParserReturn.html#structfield.stats
+    #[must_use]
+    pub fn with_parser_stats(mut self, stats: &AstBuilderStats) -> Self {
+        self.stats = Some(Stats::from(stats));
+        self
+    }
+
     /// Request `SemanticBuilder` to allocate excess capacity for scopes, symbols, and references.
     ///
     /// `excess_capacity` is provided as a fraction.
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess_capacity`.
-    ///
-    /// Has no effect if a `Stats` object is provided with [`SemanticBuilder::with_stats`],
-    /// only if `SemanticBuilder` is calculating stats itself.
     ///
     /// This is useful when you intend to modify `Semantic`, adding more `nodes`, `scopes`, `symbols`,
     /// or `references`. Allocating excess capacity for these additions at the outset prevents
@@ -252,13 +264,11 @@ impl<'a> SemanticBuilder<'a> {
         // Avoiding this growth produces up to 30% perf boost on our benchmarks.
         //
         // If user did not provide existing `Stats`, calculate them by visiting AST.
-        #[cfg_attr(not(debug_assertions), expect(unused_variables))]
-        let (stats, check_stats) = if let Some(stats) = self.stats {
-            (stats, None)
+        let stats = if let Some(stats) = self.stats {
+            stats.increase_by(self.excess_capacity)
         } else {
             let stats = Stats::count(program);
-            let stats_with_excess = stats.increase_by(self.excess_capacity);
-            (stats_with_excess, Some(stats))
+            stats.increase_by(self.excess_capacity)
         };
         self.nodes.reserve(stats.nodes as usize);
         self.scoping.reserve(
@@ -270,9 +280,10 @@ impl<'a> SemanticBuilder<'a> {
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
 
-        // Check that estimated counts accurately (unless in release mode)
+        // Check that estimated counts are accurate (unless in release mode).
+        // Estimated counts must be >= actual counts to avoid costly reallocations.
         #[cfg(debug_assertions)]
-        if let Some(stats) = check_stats {
+        {
             #[expect(clippy::cast_possible_truncation)]
             let actual_stats = Stats::new(
                 self.nodes.len() as u32,
