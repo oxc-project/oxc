@@ -71,6 +71,9 @@ pub(super) struct Source<'a> {
     /// `SEARCH_BATCH_SIZE` bytes in one go.
     /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
     end_for_batch_search_addr: usize,
+    /// Set `true` when an invalid UTF-8 byte sequence is encountered during lexing.
+    /// Only relevant when source was created from raw bytes via `Parser::new_from_bytes`.
+    pub(super) utf8_error: bool,
     /// Marker for immutable borrow of source string
     _marker: PhantomData<&'a str>,
 }
@@ -100,7 +103,14 @@ impl<'a> Source<'a> {
         // will always test positive, and disable batch search.
         let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
 
-        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
+        Self {
+            start,
+            end,
+            ptr: start,
+            end_for_batch_search_addr,
+            utf8_error: false,
+            _marker: PhantomData,
+        }
     }
 
     /// Get entire source text as `&str`.
@@ -112,13 +122,11 @@ impl<'a> Source<'a> {
         unsafe { self.str_between_positions_unchecked(self.start(), self.end()) }
     }
 
-    /// Get remaining source text as `&str`.
+    /// Get remaining source bytes as `&[u8]`.
     #[inline]
-    pub(super) fn remaining(&self) -> &'a str {
-        // SAFETY:
-        // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
-        // `end` is pointer to end of original `&str`, so by definition on a UTF-8 char boundary.
-        unsafe { self.str_between_positions_unchecked(self.position(), self.end()) }
+    pub(super) fn remaining(&self) -> &'a [u8] {
+        // SAFETY: `ptr` is always <= `end`, both within the same allocation.
+        unsafe { slice::from_raw_parts(self.ptr, self.remaining_bytes()) }
     }
 
     /// Get number of bytes of source text remaining.
@@ -252,12 +260,15 @@ impl<'a> Source<'a> {
         unsafe { self.str_between_positions_unchecked(self.position(), pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to the end of `Source`.
+    /// Get byte slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
-    pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition<'a>) -> &'a str {
-        // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
-        // and always on a UTF-8 character boundary
-        unsafe { self.str_between_positions_unchecked(pos, self.end()) }
+    pub(super) fn bytes_from_pos_to_end(&self, pos: SourcePosition<'a>) -> &'a [u8] {
+        debug_assert!(pos.ptr >= self.start && pos.ptr <= self.end);
+        // SAFETY: `pos` is within bounds of source, and `end` is the end of source.
+        unsafe {
+            let len = self.end.offset_from_unsigned(pos.ptr);
+            slice::from_raw_parts(pos.ptr, len)
+        }
     }
 
     /// Get string slice of source between 2 `SourcePosition`s, without checks.
@@ -392,22 +403,23 @@ impl<'a> Source<'a> {
     #[expect(clippy::unnecessary_wraps)]
     #[cold] // Unicode is rare
     unsafe fn next_unicode_char(&mut self) -> Option<char> {
-        // Create a `Chars` iterator, get next char from it, and then update `self.ptr`
-        // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
-        let remaining = self.remaining();
-        // Inform compiler that next char in `Source` is non-ASCII, so it can remove some branches from
-        // `chars.next().unwrap()`. Compiler will not be aware of these invariants if this function is not inlined.
-        // SAFETY: Caller guarantees these invariants.
-        unsafe {
-            assert_unchecked!(!remaining.is_empty());
-            assert_unchecked!(!remaining.as_bytes()[0].is_ascii());
+        let remaining_len = self.remaining_bytes();
+        // SAFETY: Caller guarantees `Source` is not empty
+        unsafe { assert_unchecked!(remaining_len > 0) };
+        match decode_utf8_char_non_ascii(self.ptr, remaining_len) {
+            Ok((c, char_len)) => {
+                // SAFETY: `char_len` bytes have been validated
+                self.ptr = unsafe { self.ptr.add(char_len) };
+                Some(c)
+            }
+            Err(error_len) => {
+                self.utf8_error = true;
+                // Advance past the bad byte(s)
+                // SAFETY: `error_len` is at least 1 and <= remaining_len
+                self.ptr = unsafe { self.ptr.add(error_len) };
+                Some(char::REPLACEMENT_CHARACTER)
+            }
         }
-        let mut chars = remaining.chars();
-        let c = chars.next().unwrap();
-        self.ptr = chars.as_str().as_ptr();
-        Some(c)
     }
 
     /// Get next 2 chars of source, and advance position to after them.
@@ -437,19 +449,26 @@ impl<'a> Source<'a> {
     /// `Source` must not be empty.
     #[cold] // Unicode is rare
     unsafe fn next_2_unicode_chars(&mut self) -> Option<[char; 2]> {
-        // Create a `Chars` iterator, get next 2 chars from it, and then update `self.ptr`
-        // to match `Chars` iterator's updated pointer afterwards.
-        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
-        // to be valid as `self.ptr`.
-        let remaining = self.remaining();
-        // Inform compiler that `Source` is not empty, to remove check from `chars.next().unwrap()`.
-        // Compiler will not be aware of this invariant if this function is not inlined.
-        // SAFETY: Caller guarantees `Source` is not empty.
-        unsafe { assert_unchecked!(!remaining.is_empty()) };
-        let mut chars = remaining.chars();
-        let c1 = chars.next().unwrap();
-        let c2 = chars.next()?;
-        self.ptr = chars.as_str().as_ptr();
+        let remaining_len = self.remaining_bytes();
+        // SAFETY: Caller guarantees `Source` is not empty
+        unsafe { assert_unchecked!(remaining_len > 0) };
+
+        // Decode first char
+        let (c1, len1) = self.decode_or_replacement(self.ptr, remaining_len);
+
+        if len1 >= remaining_len {
+            // Only one char remaining
+            self.ptr = self.end;
+            return None;
+        }
+
+        // Decode second char
+        // SAFETY: `len1 < remaining_len`, so `ptr + len1` is in bounds
+        let ptr2 = unsafe { self.ptr.add(len1) };
+        let (c2, len2) = self.decode_or_replacement(ptr2, remaining_len - len1);
+
+        // SAFETY: `len1 + len2 <= remaining_len`
+        self.ptr = unsafe { self.ptr.add(len1 + len2) };
         Some([c1, c2])
     }
 
@@ -554,21 +573,16 @@ impl<'a> Source<'a> {
     #[expect(clippy::unnecessary_wraps)]
     #[cold] // Unicode is rare
     unsafe fn peek_unicode_char(&self) -> Option<char> {
-        // Create a `Chars` iterator, and get next char from it.
-        let remaining = self.remaining();
-        // Inform compiler that next char in `Source` is non-ASCII, so it can remove some branches from
-        // `chars.next().unwrap()`. Compiler will not be aware of these invariants if this function is not inlined.
-        // SAFETY: Caller guarantees these invariants.
-        unsafe {
-            assert_unchecked!(!remaining.is_empty());
-            assert_unchecked!(!remaining.as_bytes()[0].is_ascii());
+        let remaining_len = self.remaining_bytes();
+        // SAFETY: Caller guarantees `Source` is not empty
+        unsafe { assert_unchecked!(remaining_len > 0) };
+        match decode_utf8_char_non_ascii(self.ptr, remaining_len) {
+            Ok((c, _)) => Some(c),
+            // Note: We can't set `utf8_error` here because `self` is `&self`.
+            // The error will be caught when `next_char` / `next_unicode_char` is called,
+            // or in the UNI/UER byte handler.
+            Err(_) => Some(char::REPLACEMENT_CHARACTER),
         }
-        let mut chars = remaining.chars();
-        // We know that there's a byte to be consumed, so `chars.next()` must return `Some(_)`.
-        // Could just return `chars.next()` here, but making it clear to compiler that this branch
-        // always returns `Some(_)` may help it optimize the caller.
-        let c = chars.next().unwrap();
-        Some(c)
     }
 
     /// Peek next byte of source without consuming it.
@@ -824,6 +838,117 @@ impl PartialOrd for SourcePosition<'_> {
     fn ge(&self, other: &Self) -> bool {
         self.offset_from_signed(*other) >= 0
     }
+}
+
+impl Source<'_> {
+    /// Decode a character at `ptr` with `remaining_len` bytes available,
+    /// returning the char and its byte length. On error, sets `utf8_error` flag
+    /// and returns `REPLACEMENT_CHARACTER`.
+    fn decode_or_replacement(&mut self, ptr: *const u8, remaining_len: usize) -> (char, usize) {
+        // SAFETY: `ptr` is valid for `remaining_len` bytes
+        let byte = unsafe { *ptr };
+        if byte.is_ascii() {
+            return (byte as char, 1);
+        }
+        match decode_utf8_char_non_ascii(ptr, remaining_len) {
+            Ok((c, len)) => (c, len),
+            Err(error_len) => {
+                self.utf8_error = true;
+                (char::REPLACEMENT_CHARACTER, error_len)
+            }
+        }
+    }
+}
+
+/// Decode one multi-byte UTF-8 character from a raw pointer.
+///
+/// Returns `Ok((char, byte_length))` on success, or `Err(error_length)` if the bytes
+/// do not form a valid UTF-8 sequence. `error_length` is the number of bytes to skip
+/// past the invalid sequence (at least 1).
+///
+/// # Safety
+/// The first byte at `ptr` must NOT be ASCII (i.e. >= 0x80).
+/// `remaining` must be > 0.
+/// `ptr` must be valid for reading up to `remaining` bytes.
+#[cold]
+fn decode_utf8_char_non_ascii(ptr: *const u8, remaining: usize) -> Result<(char, usize), usize> {
+    debug_assert!(remaining > 0);
+
+    // SAFETY: Caller guarantees `ptr` is valid for `remaining` bytes
+    let b0 = unsafe { *ptr };
+    debug_assert!(!b0.is_ascii());
+
+    // 2-byte sequence: 110xxxxx 10xxxxxx
+    if (0xC2..=0xDF).contains(&b0) {
+        if remaining < 2 {
+            return Err(1);
+        }
+        // SAFETY: `remaining >= 2`, so `ptr.add(1)` is in bounds
+        let b1 = unsafe { *ptr.add(1) };
+        if !is_utf8_cont_byte(b1) {
+            return Err(1);
+        }
+        let code_point = (u32::from(b0 & 0x1F) << 6) | u32::from(b1 & 0x3F);
+        // SAFETY: 2-byte sequences starting with 0xC2..=0xDF always produce valid code points
+        let c = unsafe { char::from_u32_unchecked(code_point) };
+        return Ok((c, 2));
+    }
+
+    // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
+    if (0xE0..=0xEF).contains(&b0) {
+        if remaining < 3 {
+            return Err(remaining.clamp(1, 2));
+        }
+        // SAFETY: `remaining >= 3`, so `ptr.add(1)` and `ptr.add(2)` are in bounds
+        let (b1, b2) = unsafe { (*ptr.add(1), *ptr.add(2)) };
+        if !is_utf8_cont_byte(b1) {
+            return Err(1);
+        }
+        if !is_utf8_cont_byte(b2) {
+            return Err(2);
+        }
+        let code_point =
+            (u32::from(b0 & 0x0F) << 12) | (u32::from(b1 & 0x3F) << 6) | u32::from(b2 & 0x3F);
+        // Check for overlong encoding and surrogates
+        if code_point < 0x800 || (0xD800..=0xDFFF).contains(&code_point) {
+            return Err(3);
+        }
+        // SAFETY: We checked the code point is valid (not surrogate, not overlong)
+        let c = unsafe { char::from_u32_unchecked(code_point) };
+        return Ok((c, 3));
+    }
+
+    // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    if (0xF0..=0xF4).contains(&b0) {
+        if remaining < 4 {
+            return Err(remaining.clamp(1, 3));
+        }
+        // SAFETY: `remaining >= 4`, so `ptr.add(1..3)` are in bounds
+        let (b1, b2, b3) = unsafe { (*ptr.add(1), *ptr.add(2), *ptr.add(3)) };
+        if !is_utf8_cont_byte(b1) {
+            return Err(1);
+        }
+        if !is_utf8_cont_byte(b2) {
+            return Err(2);
+        }
+        if !is_utf8_cont_byte(b3) {
+            return Err(3);
+        }
+        let code_point = (u32::from(b0 & 0x07) << 18)
+            | (u32::from(b1 & 0x3F) << 12)
+            | (u32::from(b2 & 0x3F) << 6)
+            | u32::from(b3 & 0x3F);
+        // Check for overlong encoding and max code point
+        if !(0x10000..=0x10_FFFF).contains(&code_point) {
+            return Err(4);
+        }
+        // SAFETY: We checked the code point is in valid range
+        let c = unsafe { char::from_u32_unchecked(code_point) };
+        return Ok((c, 4));
+    }
+
+    // Invalid leading byte (0x80-0xBF, 0xC0-0xC1, 0xF5-0xFF)
+    Err(1)
 }
 
 /// Return if byte is a UTF-8 continuation byte.

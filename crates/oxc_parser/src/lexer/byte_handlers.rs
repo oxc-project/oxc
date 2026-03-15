@@ -671,17 +671,27 @@ ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
 #[expect(non_snake_case)]
 fn UNI<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
-    lexer.unicode_char_handler()
+    let kind = lexer.unicode_char_handler();
+    // If `peek_char` / `next_char` detected invalid UTF-8, emit diagnostic
+    if lexer.source.utf8_error {
+        lexer.source.utf8_error = false;
+        lexer.error(diagnostics::invalid_utf8(lexer.unterminated_range()));
+    }
+    kind
 }
 
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
 // + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
-// `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
-// so something has gone wrong if we get here.
+// For `Parser::new` (valid UTF-8 input), this should never be reached.
+// For `Parser::new_from_bytes` (unvalidated input), emit an "invalid UTF-8" diagnostic.
 // https://datatracker.ietf.org/doc/html/rfc3629
 //
 // Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
 #[expect(non_snake_case)]
-fn UER<C: Config>(_lexer: &mut Lexer<'_, C>) -> Kind {
-    unreachable!();
+fn UER<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // Advance past the bad byte
+    // SAFETY: We're at a non-EOF position (byte handler was called)
+    unsafe { lexer.source.next_byte_unchecked() };
+    lexer.error(diagnostics::invalid_utf8(lexer.unterminated_range()));
+    Kind::Undetermined
 }

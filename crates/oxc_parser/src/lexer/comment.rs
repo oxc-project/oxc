@@ -169,7 +169,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // cost on files which don't. So this is the fastest solution.
         let finder = self.multi_line_comment_end_finder.get_or_insert_with(|| Finder::new("*/"));
 
-        let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
+        let remaining = self.source.bytes_from_pos_to_end(pos);
         if let Some(index) = finder.find(remaining) {
             // SAFETY: `pos + index + 2` is end of `*/`, so a valid `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });

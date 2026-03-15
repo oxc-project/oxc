@@ -37,9 +37,9 @@ impl<C: Config> Lexer<'_, C> {
         // Skip opening quote
         // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
         let after_opening_quote = unsafe { self.source.position().add(1) };
-        let remaining = self.source.str_from_pos_to_end(after_opening_quote);
+        let remaining = self.source.bytes_from_pos_to_end(after_opening_quote);
 
-        let len = memchr(delimiter, remaining.as_bytes());
+        let len = memchr(delimiter, remaining);
         if let Some(len) = len {
             // SAFETY: `after_opening_quote` + `len` is position of delimiter.
             // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.

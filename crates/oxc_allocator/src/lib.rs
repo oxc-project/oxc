@@ -48,6 +48,7 @@ pub(crate) mod bump;
 pub(crate) mod bumpalo_alloc;
 mod clone_in;
 mod convert;
+pub mod file_io;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
@@ -70,6 +71,7 @@ pub use bitset::BitSet;
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
+pub use file_io::read_file_to_arena;
 pub use hash_map::HashMap;
 pub use hash_set::HashSet;
 pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};

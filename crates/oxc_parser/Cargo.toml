@@ -35,6 +35,7 @@ num-traits = { workspace = true }
 rustc-hash = { workspace = true }
 seq-macro = { workspace = true }
 
+encoding_rs = { workspace = true }
 memchr = { workspace = true }
 
 [dev-dependencies]

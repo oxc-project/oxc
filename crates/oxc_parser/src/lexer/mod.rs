@@ -186,8 +186,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         &self.errors
     }
 
-    /// Remaining string from `Source`
-    pub fn remaining(&self) -> &'a str {
+    /// Remaining bytes from `Source`
+    pub fn remaining(&self) -> &'a [u8] {
         self.source.remaining()
     }
 

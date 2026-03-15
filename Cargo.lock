@@ -2171,6 +2171,7 @@ version = "0.119.0"
 dependencies = [
  "bitflags",
  "cow-utils",
+ "encoding_rs",
  "memchr",
  "num-bigint",
  "num-traits",

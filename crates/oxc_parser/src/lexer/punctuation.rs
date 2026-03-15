@@ -34,7 +34,7 @@ impl<C: Config> Lexer<'_, C> {
                 Some(Kind::LtEq)
             }
             // `<!--` HTML comment (Annex B.1.1)
-            Some(b'!') if self.remaining().starts_with("!--") => {
+            Some(b'!') if self.remaining().starts_with(b"!--") => {
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
                         let span = Span::new(self.token.start(), self.token.start() + 4);

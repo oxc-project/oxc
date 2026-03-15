@@ -54,6 +54,11 @@ pub fn file_appears_to_be_binary() -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_utf8(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid UTF-8 byte sequence").with_label(span)
+}
+
+#[cold]
 pub fn flow(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Flow is not supported").with_label(span)
 }

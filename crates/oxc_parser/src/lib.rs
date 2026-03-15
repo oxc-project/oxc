@@ -77,6 +77,7 @@ mod jsx;
 mod ts;
 
 mod diagnostics;
+mod encoding;
 
 // Expose lexer only in benchmarks
 #[cfg(not(feature = "benchmarking"))]
@@ -260,6 +261,34 @@ impl<'a> Parser<'a> {
     /// - `source_text`: Source code to parse
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        let options = ParseOptions::default();
+        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
+    }
+
+    /// Create a new [`Parser`] from raw bytes, without requiring upfront UTF-8 validation.
+    ///
+    /// This accepts raw bytes and handles encoding detection internally:
+    /// - UTF-16 LE/BE BOM: transcodes to UTF-8 in the arena
+    /// - UTF-8 BOM: strips the BOM
+    /// - Otherwise: uses bytes as-is
+    ///
+    /// The lexer validates UTF-8 incrementally on non-ASCII bytes during lexing.
+    /// Invalid UTF-8 sequences produce diagnostic errors.
+    ///
+    /// # Parameters
+    /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
+    /// - `source_bytes`: Raw source bytes to parse (no UTF-8 validation required)
+    /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
+    pub fn new_from_bytes(
+        allocator: &'a Allocator,
+        source_bytes: &'a [u8],
+        source_type: SourceType,
+    ) -> Self {
+        let bytes = encoding::detect_encoding_and_normalize(allocator, source_bytes);
+        // SAFETY: The lexer validates UTF-8 on non-ASCII bytes as it lexes.
+        // All `&str` operations during parsing use spans from lexed tokens (validated regions).
+        // For transcoded UTF-16, bytes are already valid UTF-8.
+        let source_text = unsafe { std::str::from_utf8_unchecked(bytes) };
         let options = ParseOptions::default();
         Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
     }
@@ -971,5 +1000,65 @@ mod test {
         assert!(!ret.panicked);
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);
+    }
+
+    #[test]
+    fn new_from_bytes_valid_utf8() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = b"const x = 1;";
+        let ret = Parser::new_from_bytes(&allocator, source, source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn new_from_bytes_invalid_utf8() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // 0xFF is not valid UTF-8
+        let source: &[u8] = &[b'v', b'a', b'r', b' ', 0xFF, b';'];
+        let ret = Parser::new_from_bytes(&allocator, source, source_type).parse();
+        assert!(!ret.errors.is_empty());
+        assert!(ret.errors.iter().any(|e| e.to_string().contains("Invalid UTF-8")));
+    }
+
+    #[test]
+    fn new_from_bytes_utf8_bom() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // UTF-8 BOM followed by valid JS
+        let source: &[u8] = &[0xEF, 0xBB, 0xBF, b'v', b'a', b'r', b' ', b'x', b';'];
+        let ret = Parser::new_from_bytes(&allocator, source, source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn new_from_bytes_utf16_le() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // UTF-16 LE BOM + "var x;" encoded as UTF-16 LE
+        let source: &[u8] = &[
+            0xFF, 0xFE, // BOM
+            b'v', 0, b'a', 0, b'r', 0, b' ', 0, b'x', 0, b';', 0,
+        ];
+        let ret = Parser::new_from_bytes(&allocator, source, source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn new_from_bytes_utf16_be() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // UTF-16 BE BOM + "var x;" encoded as UTF-16 BE
+        let source: &[u8] = &[
+            0xFE, 0xFF, // BOM
+            0, b'v', 0, b'a', 0, b'r', 0, b' ', 0, b'x', 0, b';',
+        ];
+        let ret = Parser::new_from_bytes(&allocator, source, source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
     }
 }
