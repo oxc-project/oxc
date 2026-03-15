@@ -15,8 +15,6 @@ description.workspace = true
 [lints]
 workspace = true
 
-[lib]
-
 [dependencies]
 oxc_data_structures = { workspace = true, features = [
   "code_buffer",
@@ -30,3 +28,6 @@ itoa = { workspace = true, optional = true }
 [features]
 default = []
 serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma"]
+
+[lib]
+doctest = false
