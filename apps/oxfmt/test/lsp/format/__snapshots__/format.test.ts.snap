@@ -90,6 +90,18 @@ const x = 1;
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-js-semi/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-js-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-no-sort-package-json/package.json 1`] = `
 "--- URI -----------
 file://<fixture>/config-no-sort-package-json/package.json
@@ -173,6 +185,18 @@ file://<fixture>/config-sort-tailwindcss/test.vue
 <template>
   <div class="m-2 flex p-4">Hello</div>
 </template>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-vite-semi/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-vite-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
 
 --------------------"
 `;
@@ -519,6 +543,20 @@ vscode-userdata://vue
 <script>
 const x = 1;
 </script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > initializationOptions > should use custom JS/TS config path from fmt.configPath 1`] = `
+"--- URI -----------
+file://<fixture>/custom_config_path_js/semicolons-as-needed.ts
+--- BEFORE ---------
+// semicolon is on character 8-9, which will be removed
+debugger;
+
+--- AFTER ----------
+// semicolon is on character 8-9, which will be removed
+debugger
 
 --------------------"
 `;

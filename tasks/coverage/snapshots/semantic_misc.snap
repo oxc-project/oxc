@@ -1,6 +1,11 @@
 semantic_misc Summary:
-AST Parsed     : 64/64 (100.00%)
-Positive Passed: 51/64 (79.69%)
+AST Parsed     : 65/65 (100.00%)
+Positive Passed: 51/65 (78.46%)
+semantic Error: tasks/coverage/misc/pass/conditional-arrow-alternate-return-type.ts
+Unresolved references mismatch:
+after transform: ["Pick", "Record"]
+rebuilt        : []
+
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -162,7 +167,7 @@ Symbol reference IDs mismatch for "InMemoryTestWorkingCopyBackupService":
 after transform: SymbolId(19): [ReferenceId(43), ReferenceId(46), ReferenceId(165)]
 rebuilt        : SymbolId(15): [ReferenceId(91), ReferenceId(221)]
 Symbol reference IDs mismatch for "TestServiceAccessor":
-after transform: SymbolId(21): [ReferenceId(1), ReferenceId(40), ReferenceId(71), ReferenceId(155), ReferenceId(188)]
+after transform: SymbolId(21): [ReferenceId(40), ReferenceId(155), ReferenceId(1), ReferenceId(71), ReferenceId(188)]
 rebuilt        : SymbolId(17): [ReferenceId(115), ReferenceId(243)]
 Symbol reference IDs mismatch for "IWorkingCopyEditorService":
 after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22), ReferenceId(365), ReferenceId(366)]
@@ -171,7 +176,7 @@ Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): Span { start: 3208, end: 3236 }
 rebuilt        : SymbolId(46): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
-after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215), ReferenceId(392), ReferenceId(394)]
+after transform: SymbolId(39): [ReferenceId(42), ReferenceId(154), ReferenceId(74), ReferenceId(215), ReferenceId(392), ReferenceId(394)]
 rebuilt        : SymbolId(46): [ReferenceId(23), ReferenceId(82), ReferenceId(118), ReferenceId(270)]
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(144): Span { start: 0, end: 0 }

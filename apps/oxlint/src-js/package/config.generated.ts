@@ -174,43 +174,6 @@ export type CustomComponent =
  * }
  * }
  * ]
- * }
- * });
- * ```
- *
- * `oxlint.config.ts`
- *
- * ```ts
- * import { defineConfig } from "oxlint";
- *
- * export default defineConfig({
- * plugins: ["import", "typescript", "unicorn"],
- * env: {
- * "browser": true
- * },
- * globals: {
- * "foo": "readonly"
- * },
- * settings: {
- * react: {
- * version: "18.2.0"
- * },
- * custom: { option: true }
- * },
- * rules: {
- * "eqeqeq": "warn",
- * "import/no-cycle": "error",
- * "react/self-closing-comp": ["error", { "html": false }]
- * },
- * overrides: [
- * {
- * files: ["*.test.ts", "*.spec.ts"],
- * rules: {
- * "@typescript-eslint/no-explicit-any": "off"
- * }
- * }
- * ]
- * }
  * });
  * ```
  */
@@ -218,7 +181,7 @@ export interface Oxlintrc {
   /**
    * Schema URI for editor tooling.
    */
-  $schema?: string | null;
+  $schema?: string;
   categories?: RuleCategories;
   /**
    * Environments enable and disable collections of global variables.
@@ -245,7 +208,7 @@ export interface Oxlintrc {
    * Read more about JS plugins in
    * [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
    *
-   * Note: JS plugins are experimental and not subject to semver.
+   * Note: JS plugins are in alpha and not subject to semver.
    *
    * Examples:
    *
@@ -300,7 +263,7 @@ export interface Oxlintrc {
    * NOTE: Setting the `plugins` field will overwrite the base set of plugins.
    * The `plugins` array should reflect all of the plugins you want to use.
    */
-  plugins?: LintPlugins | null;
+  plugins?: LintPlugins;
   /**
    * Example
    *
@@ -403,25 +366,25 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
+   * Ensure warnings produce a non-zero exit code.
+   *
+   * Equivalent to passing `--deny-warnings` on the CLI.
+   */
+  denyWarnings?: boolean;
+  /**
+   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
+   *
+   * Equivalent to passing `--max-warnings` on the CLI.
+   */
+  maxWarnings?: number;
+  /**
    * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
    *
    * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
    * CLI flags take precedence over this value when both are set.
    * Only supported in the root configuration file.
    */
-  reportUnusedDisableDirectives?: AllowWarnDeny | null;
-  /**
-   * Ensure warnings produce a non-zero exit code.
-   *
-   * Equivalent to passing `--deny-warnings` on the CLI.
-   */
-  denyWarnings?: boolean | null;
-  /**
-   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
-   *
-   * Equivalent to passing `--max-warnings` on the CLI.
-   */
-  maxWarnings?: number | null;
+  reportUnusedDisableDirectives?: AllowWarnDeny;
   /**
    * Enable rules that require type information.
    *
@@ -429,7 +392,7 @@ export interface OxlintOptions {
    *
    * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
-  typeAware?: boolean | null;
+  typeAware?: boolean;
   /**
    * Enable experimental type checking (includes TypeScript compiler diagnostics).
    *
@@ -437,13 +400,13 @@ export interface OxlintOptions {
    *
    * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
-  typeCheck?: boolean | null;
+  typeCheck?: boolean;
 }
 export interface OxlintOverride {
   /**
    * Environments enable and disable collections of global variables.
    */
-  env?: OxlintEnv | null;
+  env?: OxlintEnv;
   /**
    * A list of glob patterns to override.
    *
@@ -454,21 +417,21 @@ export interface OxlintOverride {
   /**
    * Enabled or disabled specific global variables.
    */
-  globals?: OxlintGlobals | null;
+  globals?: OxlintGlobals;
   /**
    * JS plugins for this override, allows usage of ESLint plugins with Oxlint.
    *
    * Read more about JS plugins in
    * [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
    *
-   * Note: JS plugins are experimental and not subject to semver.
+   * Note: JS plugins are in alpha and not subject to semver.
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
    * Optionally change what plugins are enabled for this override. When
    * omitted, the base config's plugins are used.
    */
-  plugins?: LintPlugins | null;
+  plugins?: LintPlugins;
   rules?: DummyRuleMap;
 }
 /**
@@ -616,7 +579,7 @@ export interface JSXA11YPluginSettings {
    * Will be treated as an `h3`. If not set, this component will be treated
    * as a `Box`.
    */
-  polymorphicPropName?: string | null;
+  polymorphicPropName?: string;
   [k: string]: unknown;
 }
 /**
@@ -728,7 +691,7 @@ export interface ReactPluginSettings {
    * }
    * ```
    */
-  version?: string | null;
+  version?: string;
   [k: string]: unknown;
 }
 /**

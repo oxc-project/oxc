@@ -25,11 +25,13 @@ pub fn to_format_elements_for_template<'a>(
     allocator: &'a Allocator,
     group_id_builder: &UniqueGroupIdBuilder,
 ) -> Result<EmbeddedDocResult<'a>, String> {
-    let convert = |doc_json: &Value| -> Result<(Vec<FormatElement<'a>>, usize), String> {
+    let convert = |doc_json: &Value,
+                   escape_template_chars: bool|
+     -> Result<(Vec<FormatElement<'a>>, usize), String> {
         let mut ctx = FmtCtx::new(allocator, group_id_builder);
         let mut out = vec![];
         convert_doc(doc_json, &mut out, &mut ctx)?;
-        let placeholder_count = postprocess(&mut out, allocator);
+        let placeholder_count = postprocess(&mut out, allocator, escape_template_chars);
         Ok((out, placeholder_count))
     };
 
@@ -38,14 +40,14 @@ pub fn to_format_elements_for_template<'a>(
             let doc_json = doc_jsons
                 .first()
                 .ok_or_else(|| "Expected exactly one Doc JSON for CSS".to_string())?;
-            let (ir, count) = convert(doc_json)?;
+            let (ir, count) = convert(doc_json, false)?;
             Ok(EmbeddedDocResult::DocWithPlaceholders(ir, count))
         }
         "tagged-graphql" => {
             let irs = doc_jsons
                 .iter()
                 .map(|doc_json| {
-                    let (ir, _) = convert(doc_json)?;
+                    let (ir, _) = convert(doc_json, true)?;
                     Ok(ir)
                 })
                 .collect::<Result<Vec<_>, String>>()?;
@@ -350,10 +352,16 @@ fn extract_group_id(
 /// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
 /// - merge consecutive Text nodes (SCSS emits split strings like `"@"` + `"prettier-placeholder-0-id"`)
 /// - escape template characters (`\`, `` ` ``, `${`)
+///   - for css-in-js, this is not needed because values are already escaped via `.raw`
+///   - for others, `.cooked` is used, so escaping is needed
 /// - count `@prettier-placeholder-N-id` patterns
 ///
 /// Returns the placeholder count (0 for non-CSS languages).
-fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) -> usize {
+fn postprocess<'a>(
+    ir: &mut Vec<FormatElement<'a>>,
+    allocator: &'a Allocator,
+    escape_template_chars: bool,
+) -> usize {
     const PREFIX: &str = "@prettier-placeholder-";
     const SUFFIX: &str = "-id";
 
@@ -388,9 +396,9 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) ->
                 read += 1;
             }
 
-            let escaped = if read - run_start == 1 {
+            let text = if read - run_start == 1 {
                 let FormatElement::Text { text, .. } = &ir[run_start] else { unreachable!() };
-                escape_template_characters(text, allocator)
+                text
             } else {
                 let mut sb = StringBuilder::new_in(allocator);
                 for element in &ir[run_start..read] {
@@ -398,14 +406,19 @@ fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, allocator: &'a Allocator) ->
                         sb.push_str(text);
                     }
                 }
-                escape_template_characters(sb.into_str(), allocator)
+                sb.into_str()
             };
-            let width = TextWidth::from_text(escaped, IndentWidth::default());
-            ir[write] = FormatElement::Text { text: escaped, width };
+            let text = if escape_template_chars {
+                escape_template_characters(text, allocator)
+            } else {
+                text
+            };
+            let width = TextWidth::from_text(text, IndentWidth::default());
+            ir[write] = FormatElement::Text { text, width };
             write += 1;
 
             // Count placeholders
-            let mut remaining = escaped;
+            let mut remaining = text;
             while let Some(start) = remaining.find(PREFIX) {
                 let after_prefix = &remaining[start + PREFIX.len()..];
                 let digit_end = after_prefix

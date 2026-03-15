@@ -11,9 +11,10 @@ Basic Configuration
                               running via Node.js
                               * you can use comments in configuration files.
                               * tries to be compatible with ESLint v8's format
-        --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
-                              project references for import plugin. If not provided, will look for
-                              `tsconfig.json` in the current working directory.
+        --tsconfig=<./tsconfig.json>  Override the TypeScript config used for import resolution.
+                              Oxlint automatically discovers the relevant `tsconfig.json` for each
+                              file. Use this only when your project uses a non-standard tsconfig
+                              name or location.
         --init                Initialize oxlint configuration with default values
 
 Allowing / Denying Multiple Lints
@@ -37,9 +38,7 @@ Enable/Disable Plugins
         --disable-unicorn-plugin  Disable unicorn plugin, which is turned on by default
         --disable-oxc-plugin  Disable oxc unique rules, which is turned on by default
         --disable-typescript-plugin  Disable TypeScript plugin, which is turned on by default
-        --import-plugin       Enable import plugin and detect ESM problems. It should be used with
-                              the `--tsconfig` flag if your project has a tsconfig with a name other
-                              than `tsconfig.json`.
+        --import-plugin       Enable import plugin and detect ESM problems.
         --react-plugin        Enable react plugin, which is turned off by default
         --jsdoc-plugin        Enable jsdoc plugin and detect JSDoc problems
         --jest-plugin         Enable the Jest plugin and detect test problems

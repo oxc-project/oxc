@@ -704,6 +704,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         }
     }
 
+    fn enter_import_expression(
+        &mut self,
+        node: &mut ImportExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_import_expression(node, ctx);
+        }
+    }
+
     fn enter_export_all_declaration(
         &mut self,
         node: &mut ExportAllDeclaration<'a>,

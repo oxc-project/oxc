@@ -7,6 +7,7 @@ use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::{Comment, CommentKind};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
@@ -203,6 +204,15 @@ unsafe fn parse_raw_impl(
             if has_bom {
                 source_text = &source_text[BOM_LEN..];
                 program.source_text = source_text;
+            }
+
+            // If file has a hashbang, add it to comments.
+            // It will be converted to a `Shebang` comment on JS side.
+            if let Some(hashbang) = &program.hashbang {
+                program.comments.insert(
+                    0,
+                    Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line),
+                );
             }
 
             // Convert spans to UTF-16.

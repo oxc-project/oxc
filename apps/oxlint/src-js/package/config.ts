@@ -36,8 +36,6 @@ export interface OxlintConfig extends Oxlintrc {
 
 export type { OxlintOverride };
 
-const DEFINE_CONFIG_REGISTRY = new WeakSet<object>();
-
 /**
  * Define an Oxlint configuration with type inference.
  *
@@ -45,12 +43,5 @@ const DEFINE_CONFIG_REGISTRY = new WeakSet<object>();
  * @returns Config unchanged
  */
 export function defineConfig<T extends OxlintConfig>(config: T): T {
-  DEFINE_CONFIG_REGISTRY.add(config as object);
   return config;
-}
-
-export function isDefineConfig(config: unknown): boolean {
-  return (
-    typeof config === "object" && config !== null && DEFINE_CONFIG_REGISTRY.has(config as object)
-  );
 }

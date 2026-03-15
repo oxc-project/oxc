@@ -40,20 +40,20 @@ export interface Oxfmtrc {
    *
    * - Default: `"always"`
    */
-  arrowParens?: ArrowParensConfig | null;
+  arrowParens?: ArrowParensConfig;
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
    * - Default: `false`
    */
-  bracketSameLine?: boolean | null;
+  bracketSameLine?: boolean;
   /**
    * Print spaces between brackets in object literals.
    *
    * - Default: `true`
    */
-  bracketSpacing?: boolean | null;
+  bracketSpacing?: boolean;
   /**
    * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
    *
@@ -61,7 +61,7 @@ export interface Oxfmtrc {
    *
    * - Default: `"auto"`
    */
-  embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig | null;
+  embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
   /**
    * Which end of line characters to apply.
    *
@@ -70,33 +70,33 @@ export interface Oxfmtrc {
    * - Default: `"lf"`
    * - Overrides `.editorconfig.end_of_line`
    */
-  endOfLine?: EndOfLineConfig | null;
+  endOfLine?: EndOfLineConfig;
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
    * - Default: `"css"`
    */
-  htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig | null;
+  htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig;
   /**
    * Ignore files matching these glob patterns.
    * Patterns are based on the location of the Oxfmt configuration file.
    *
    * - Default: `[]`
    */
-  ignorePatterns?: string[] | null;
+  ignorePatterns?: string[];
   /**
    * Whether to insert a final newline at the end of the file.
    *
    * - Default: `true`
    * - Overrides `.editorconfig.insert_final_newline`
    */
-  insertFinalNewline?: boolean | null;
+  insertFinalNewline?: boolean;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
    */
-  jsxSingleQuote?: boolean | null;
+  jsxSingleQuote?: boolean;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *
@@ -105,14 +105,14 @@ export interface Oxfmtrc {
    *
    * - Default: `"preserve"`
    */
-  objectWrap?: ObjectWrapConfig | null;
+  objectWrap?: ObjectWrapConfig;
   /**
    * File-specific overrides.
    * When a file matches multiple overrides, the later override takes precedence (array order matters).
    *
    * - Default: `[]`
    */
-  overrides?: OxfmtOverrideConfig[] | null;
+  overrides?: OxfmtOverrideConfig[];
   /**
    * Specify the line length that the printer will wrap on.
    *
@@ -121,7 +121,7 @@ export interface Oxfmtrc {
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
    */
-  printWidth?: number | null;
+  printWidth?: number;
   /**
    * How to wrap prose.
    *
@@ -131,25 +131,25 @@ export interface Oxfmtrc {
    *
    * - Default: `"preserve"`
    */
-  proseWrap?: ProseWrapConfig | null;
+  proseWrap?: ProseWrapConfig;
   /**
    * Change when properties in objects are quoted.
    *
    * - Default: `"as-needed"`
    */
-  quoteProps?: QuotePropsConfig | null;
+  quoteProps?: QuotePropsConfig;
   /**
    * Print semicolons at the ends of statements.
    *
    * - Default: `true`
    */
-  semi?: boolean | null;
+  semi?: boolean;
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
    * - Default: `false`
    */
-  singleAttributePerLine?: boolean | null;
+  singleAttributePerLine?: boolean;
   /**
    * Use single quotes instead of double quotes.
    *
@@ -157,7 +157,7 @@ export interface Oxfmtrc {
    *
    * - Default: `false`
    */
-  singleQuote?: boolean | null;
+  singleQuote?: boolean;
   /**
    * Sort import statements.
    *
@@ -166,7 +166,7 @@ export interface Oxfmtrc {
    *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig | null;
+  sortImports?: SortImportsConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -176,7 +176,7 @@ export interface Oxfmtrc {
    *
    * - Default: `true`
    */
-  sortPackageJson?: SortPackageJsonUserConfig | null;
+  sortPackageJson?: SortPackageJsonUserConfig;
   /**
    * Sort Tailwind CSS classes.
    *
@@ -186,14 +186,14 @@ export interface Oxfmtrc {
    *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig | null;
+  sortTailwindcss?: SortTailwindcssConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
    * - Overrides `.editorconfig.indent_size`
    */
-  tabWidth?: number | null;
+  tabWidth?: number;
   /**
    * Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
    *
@@ -201,20 +201,20 @@ export interface Oxfmtrc {
    *
    * - Default: `"all"`
    */
-  trailingComma?: TrailingCommaConfig | null;
+  trailingComma?: TrailingCommaConfig;
   /**
    * Indent lines with tabs instead of spaces.
    *
    * - Default: `false`
    * - Overrides `.editorconfig.indent_style`
    */
-  useTabs?: boolean | null;
+  useTabs?: boolean;
   /**
    * Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
    *
    * - Default: `false`
    */
-  vueIndentScriptAndStyle?: boolean | null;
+  vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
 export interface ArrayWrapThreshold {
@@ -225,7 +225,7 @@ export interface OxfmtOverrideConfig {
   /**
    * Glob patterns to exclude from this override.
    */
-  excludeFiles?: string[] | null;
+  excludeFiles?: string[];
   /**
    * Glob patterns to match files for this override.
    * All patterns are relative to the Oxfmt configuration file.
@@ -254,20 +254,20 @@ export interface FormatConfig {
    *
    * - Default: `"always"`
    */
-  arrowParens?: ArrowParensConfig | null;
+  arrowParens?: ArrowParensConfig;
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
    *
    * - Default: `false`
    */
-  bracketSameLine?: boolean | null;
+  bracketSameLine?: boolean;
   /**
    * Print spaces between brackets in object literals.
    *
    * - Default: `true`
    */
-  bracketSpacing?: boolean | null;
+  bracketSpacing?: boolean;
   /**
    * Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
    *
@@ -275,7 +275,7 @@ export interface FormatConfig {
    *
    * - Default: `"auto"`
    */
-  embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig | null;
+  embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
   /**
    * Which end of line characters to apply.
    *
@@ -284,26 +284,26 @@ export interface FormatConfig {
    * - Default: `"lf"`
    * - Overrides `.editorconfig.end_of_line`
    */
-  endOfLine?: EndOfLineConfig | null;
+  endOfLine?: EndOfLineConfig;
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
    * - Default: `"css"`
    */
-  htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig | null;
+  htmlWhitespaceSensitivity?: HtmlWhitespaceSensitivityConfig;
   /**
    * Whether to insert a final newline at the end of the file.
    *
    * - Default: `true`
    * - Overrides `.editorconfig.insert_final_newline`
    */
-  insertFinalNewline?: boolean | null;
+  insertFinalNewline?: boolean;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
    * - Default: `false`
    */
-  jsxSingleQuote?: boolean | null;
+  jsxSingleQuote?: boolean;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines.
    *
@@ -312,7 +312,7 @@ export interface FormatConfig {
    *
    * - Default: `"preserve"`
    */
-  objectWrap?: ObjectWrapConfig | null;
+  objectWrap?: ObjectWrapConfig;
   /**
    * Specify the line length that the printer will wrap on.
    *
@@ -321,7 +321,7 @@ export interface FormatConfig {
    * - Default: `100`
    * - Overrides `.editorconfig.max_line_length`
    */
-  printWidth?: number | null;
+  printWidth?: number;
   /**
    * How to wrap prose.
    *
@@ -331,25 +331,25 @@ export interface FormatConfig {
    *
    * - Default: `"preserve"`
    */
-  proseWrap?: ProseWrapConfig | null;
+  proseWrap?: ProseWrapConfig;
   /**
    * Change when properties in objects are quoted.
    *
    * - Default: `"as-needed"`
    */
-  quoteProps?: QuotePropsConfig | null;
+  quoteProps?: QuotePropsConfig;
   /**
    * Print semicolons at the ends of statements.
    *
    * - Default: `true`
    */
-  semi?: boolean | null;
+  semi?: boolean;
   /**
    * Enforce single attribute per line in HTML, Vue, and JSX.
    *
    * - Default: `false`
    */
-  singleAttributePerLine?: boolean | null;
+  singleAttributePerLine?: boolean;
   /**
    * Use single quotes instead of double quotes.
    *
@@ -357,7 +357,7 @@ export interface FormatConfig {
    *
    * - Default: `false`
    */
-  singleQuote?: boolean | null;
+  singleQuote?: boolean;
   /**
    * Sort import statements.
    *
@@ -366,7 +366,7 @@ export interface FormatConfig {
    *
    * - Default: Disabled
    */
-  sortImports?: SortImportsConfig | null;
+  sortImports?: SortImportsConfig;
   /**
    * Sort `package.json` keys.
    *
@@ -376,7 +376,7 @@ export interface FormatConfig {
    *
    * - Default: `true`
    */
-  sortPackageJson?: SortPackageJsonUserConfig | null;
+  sortPackageJson?: SortPackageJsonUserConfig;
   /**
    * Sort Tailwind CSS classes.
    *
@@ -386,14 +386,14 @@ export interface FormatConfig {
    *
    * - Default: Disabled
    */
-  sortTailwindcss?: SortTailwindcssConfig | null;
+  sortTailwindcss?: SortTailwindcssConfig;
   /**
    * Specify the number of spaces per indentation-level.
    *
    * - Default: `2`
    * - Overrides `.editorconfig.indent_size`
    */
-  tabWidth?: number | null;
+  tabWidth?: number;
   /**
    * Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
    *
@@ -401,20 +401,20 @@ export interface FormatConfig {
    *
    * - Default: `"all"`
    */
-  trailingComma?: TrailingCommaConfig | null;
+  trailingComma?: TrailingCommaConfig;
   /**
    * Indent lines with tabs instead of spaces.
    *
    * - Default: `false`
    * - Overrides `.editorconfig.indent_style`
    */
-  useTabs?: boolean | null;
+  useTabs?: boolean;
   /**
    * Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
    *
    * - Default: `false`
    */
-  vueIndentScriptAndStyle?: boolean | null;
+  vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
 export interface SortImportsConfig {
@@ -432,7 +432,7 @@ export interface SortImportsConfig {
    *
    * - Default: `[]`
    */
-  customGroups?: CustomGroupItemConfig[] | null;
+  customGroups?: CustomGroupItemConfig[];
   /**
    * Specifies a list of predefined import groups for sorting.
    *
@@ -485,13 +485,13 @@ export interface SortImportsConfig {
    * Also, you can override the global `newlinesBetween` setting for specific group boundaries
    * by including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired position.
    */
-  groups?: SortGroupItemConfig[] | null;
+  groups?: SortGroupItemConfig[];
   /**
    * Specifies whether sorting should be case-sensitive.
    *
    * - Default: `true`
    */
-  ignoreCase?: boolean | null;
+  ignoreCase?: boolean;
   /**
    * Specifies a prefix for identifying internal imports.
    *
@@ -499,7 +499,7 @@ export interface SortImportsConfig {
    *
    * - Default: `["~/", "@/"]`
    */
-  internalPattern?: string[] | null;
+  internalPattern?: string[];
   /**
    * Specifies whether to add newlines between groups.
    *
@@ -507,13 +507,13 @@ export interface SortImportsConfig {
    *
    * - Default: `true`
    */
-  newlinesBetween?: boolean | null;
+  newlinesBetween?: boolean;
   /**
    * Specifies whether to sort items in ascending or descending order.
    *
    * - Default: `"asc"`
    */
-  order?: SortOrderConfig | null;
+  order?: SortOrderConfig;
   /**
    * Enables the use of comments to separate imports into logical groups.
    *
@@ -528,7 +528,7 @@ export interface SortImportsConfig {
    *
    * - Default: `false`
    */
-  partitionByComment?: boolean | null;
+  partitionByComment?: boolean;
   /**
    * Enables the empty line to separate imports into logical groups.
    *
@@ -544,7 +544,7 @@ export interface SortImportsConfig {
    *
    * - Default: `false`
    */
-  partitionByNewline?: boolean | null;
+  partitionByNewline?: boolean;
   /**
    * Specifies whether side effect imports should be sorted.
    *
@@ -552,7 +552,7 @@ export interface SortImportsConfig {
    *
    * - Default: `false`
    */
-  sortSideEffects?: boolean | null;
+  sortSideEffects?: boolean;
   [k: string]: unknown;
 }
 export interface CustomGroupItemConfig {
@@ -570,14 +570,14 @@ export interface CustomGroupItemConfig {
    *
    * Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
    */
-  modifiers?: string[] | null;
+  modifiers?: string[];
   /**
    * Selector to match the import kind.
    *
    * Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
    * `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
    */
-  selector?: string | null;
+  selector?: string;
   [k: string]: unknown;
 }
 /**
@@ -593,7 +593,7 @@ export interface SortPackageJsonConfig {
    *
    * - Default: `false`
    */
-  sortScripts?: boolean | null;
+  sortScripts?: boolean;
   [k: string]: unknown;
 }
 export interface SortTailwindcssConfig {
@@ -605,7 +605,7 @@ export interface SortTailwindcssConfig {
    * - Default: `[]`
    * - Example: `["myClassProp", ":class"]`
    */
-  attributes?: string[] | null;
+  attributes?: string[];
   /**
    * Path to your Tailwind CSS configuration file (v3).
    *
@@ -613,7 +613,7 @@ export interface SortTailwindcssConfig {
    *
    * - Default: Automatically find `"tailwind.config.js"`
    */
-  config?: string | null;
+  config?: string;
   /**
    * List of custom function names whose arguments should be sorted (exact match).
    *
@@ -622,19 +622,19 @@ export interface SortTailwindcssConfig {
    * - Default: `[]`
    * - Example: `["clsx", "cn", "cva", "tw"]`
    */
-  functions?: string[] | null;
+  functions?: string[];
   /**
    * Preserve duplicate classes.
    *
    * - Default: `false`
    */
-  preserveDuplicates?: boolean | null;
+  preserveDuplicates?: boolean;
   /**
    * Preserve whitespace around classes.
    *
    * - Default: `false`
    */
-  preserveWhitespace?: boolean | null;
+  preserveWhitespace?: boolean;
   /**
    * Path to your Tailwind CSS stylesheet (v4).
    *
@@ -642,6 +642,6 @@ export interface SortTailwindcssConfig {
    *
    * - Default: Installed Tailwind CSS's `theme.css`
    */
-  stylesheet?: string | null;
+  stylesheet?: string;
   [k: string]: unknown;
 }

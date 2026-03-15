@@ -2,12 +2,13 @@
  * Token types and tokens initialization / reset.
  */
 
-import { ast, buffer, initAst, initSourceText, sourceText } from "./source_code.ts";
+import { buffer, initSourceText, sourceText } from "./source_code.ts";
+import { comments, initComments } from "./comments.ts";
 import { computeLoc } from "./location.ts";
 import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
-import type { Comment } from "./types.ts";
+import type { Comment } from "./comments.ts";
 import type { Location, Span } from "./location.ts";
 
 /**
@@ -93,7 +94,6 @@ export type TokenOrComment = TokenType | Comment;
 // Tokens for the current file.
 // Created lazily only when needed.
 export let tokens: TokenType[] | null = null;
-let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
 
 // Cached token objects, reused across files to reduce GC pressure.
@@ -127,8 +127,8 @@ let resetLoc: (token: Token) => void;
  * All `Token` instances always have the same V8 hidden class, keeping property access monomorphic.
  */
 class Token {
-  type: TokenType["type"] = "" as TokenType["type"]; // Overwritten later
-  value: string = "";
+  type: TokenType["type"] = null!; // Overwritten later
+  value: string = null!; // Overwritten later
   regex: RegularExpressionToken["regex"] | undefined;
   start: number = 0;
   end: number = 0;
@@ -155,7 +155,9 @@ class Token {
 // Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
 Object.defineProperty(Token.prototype, "loc", { enumerable: true });
 
-let uint32: Uint32Array | null = null;
+// Typed array views over the tokens region of the buffer
+let tokensUint8: Uint8Array | null = null;
+let tokensUint32: Uint32Array | null = null;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -178,7 +180,7 @@ const TOKEN_TYPES: TokenType["type"][] = [
 ];
 
 // Details of Rust `Token` type
-const TOKEN_SIZE = 16;
+const TOKEN_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Token` in Rust
 const KIND_FIELD_OFFSET = 8;
 const IS_ESCAPED_FIELD_OFFSET = 10;
 
@@ -193,9 +195,17 @@ export function initTokens() {
   debugAssertIsNonNull(sourceText);
 
   debugAssertIsNonNull(buffer);
-  uint32 = buffer.uint32;
 
+  const { uint32 } = buffer;
+  const tokensPos = uint32[TOKENS_OFFSET_POS_32];
   const tokensLen = uint32[TOKENS_LEN_POS_32];
+
+  // Create typed array views over just the tokens region of the buffer.
+  // These are zero-copy views over the same underlying `ArrayBuffer`.
+  const arrayBuffer = buffer.buffer,
+    absolutePos = buffer.byteOffset + tokensPos;
+  tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
+  tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
 
   // Grow cache if needed (one-time cost as cache warms up)
   while (cachedTokens.length < tokensLen) {
@@ -203,10 +213,12 @@ export function initTokens() {
   }
 
   // Deserialize into cached token objects
-  const pos = uint32[TOKENS_OFFSET_POS_32];
   for (let i = 0; i < tokensLen; i++) {
-    deserializeTokenInto(cachedTokens[i], pos + i * TOKEN_SIZE);
+    deserializeTokenInto(cachedTokens[i], i);
   }
+
+  tokensUint8 = null;
+  tokensUint32 = null;
 
   // Use `slice` rather than copying tokens one-by-one into a new array.
   // V8 implements `slice` with a single `memcpy` of the backing store, which is faster
@@ -222,32 +234,30 @@ export function initTokens() {
     tokens = (previousTokens = cachedTokens.slice(0, tokensLen)) as TokenType[];
   }
 
-  uint32 = null;
-
   // Check `tokens` have valid ranges and are in ascending order
   debugCheckValidRanges(tokens, "token");
 }
 
 /**
- * Deserialize a token from buffer at position `pos` into an existing token object.
+ * Deserialize token `i` from buffer into an existing token object.
  * @param token - Token object to mutate
- * @param pos - Position in buffer containing Rust `Token` type
+ * @param index - Token index
  */
-function deserializeTokenInto(token: Token, pos: number): void {
-  const pos32 = pos >> 2;
-  const start = uint32![pos32],
-    end = uint32![pos32 + 1];
+function deserializeTokenInto(token: Token, index: number): void {
+  const pos32 = index << 2;
+  const start = tokensUint32![pos32],
+    end = tokensUint32![pos32 + 1];
 
-  let value = sourceText!.slice(start, end);
+  const pos = pos32 << (TOKEN_SIZE_SHIFT - 2);
+  const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
 
-  const kind = buffer![pos + KIND_FIELD_OFFSET];
+  // Get `value` as slice of source text `start..end`.
+  // Slice `start + 1..end` for private identifiers, to strip leading `#`.
+  let value = sourceText!.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
-    // Strip leading `#` from private identifiers
-    if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
-
     // Unescape if `escaped` flag is set
-    if (buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    if (tokensUint8![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
@@ -318,14 +328,9 @@ function debugCheckValidRanges(tokens: TokenOrComment[], description: string): v
 export function initTokensAndComments() {
   debugAssertIsNonNull(tokens);
 
-  // Get comments from AST
-  if (comments === null) {
-    if (ast === null) initAst();
-    debugAssertIsNonNull(ast);
-    comments = ast.comments;
-
-    debugCheckValidRanges(comments, "comment");
-  }
+  // Ensure comments are initialized
+  if (comments === null) initComments();
+  debugAssertIsNonNull(comments);
 
   // Fast paths for file with no comments, or file which is only comments
   const commentsLength = comments.length;
@@ -456,6 +461,5 @@ export function resetTokens() {
   tokensWithRegex.length = 0;
 
   tokens = null;
-  comments = null;
   tokensAndComments = null;
 }

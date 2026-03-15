@@ -1,6 +1,6 @@
-commit: de54b9b2
+commit: 87a048db
 
-Passed: 698/1163
+Passed: 690/1165
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -966,7 +966,7 @@ rebuilt        : ["o"]
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (27/40)
+# babel-plugin-transform-object-rest-spread (28/40)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -1033,47 +1033,6 @@ rebuilt        : ["_ref3", "babelHelpers", "d"]
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch
-
-* object-rest/parameters-object-rest-used-in-default/input.js
-Symbol reference IDs mismatch for "R":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(3): []
-Symbol reference IDs mismatch for "Y":
-after transform: SymbolId(2): [ReferenceId(1)]
-rebuilt        : SymbolId(6): []
-Symbol reference IDs mismatch for "R":
-after transform: SymbolId(6): [ReferenceId(2)]
-rebuilt        : SymbolId(10): []
-Symbol reference IDs mismatch for "R":
-after transform: SymbolId(7): [ReferenceId(3)]
-rebuilt        : SymbolId(16): []
-Symbol reference IDs mismatch for "R":
-after transform: SymbolId(13): [ReferenceId(6)]
-rebuilt        : SymbolId(20): []
-Symbol reference IDs mismatch for "R":
-after transform: SymbolId(15): [ReferenceId(7)]
-rebuilt        : SymbolId(23): []
-Reference symbol mismatch for "R":
-after transform: SymbolId(0) "R"
-rebuilt        : <None>
-Reference symbol mismatch for "Y":
-after transform: SymbolId(2) "Y"
-rebuilt        : <None>
-Reference symbol mismatch for "R":
-after transform: SymbolId(6) "R"
-rebuilt        : <None>
-Reference symbol mismatch for "R":
-after transform: SymbolId(7) "R"
-rebuilt        : <None>
-Reference symbol mismatch for "R":
-after transform: SymbolId(13) "R"
-rebuilt        : <None>
-Reference symbol mismatch for "R":
-after transform: SymbolId(15) "R"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["b", "babelHelpers", "f", "q"]
-rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
 x Output mismatch
@@ -2468,7 +2427,16 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-preset-react (6/9)
+# babel-preset-react (4/10)
+* preset-options/development/input.js
+react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* preset-options/development-no-source-self/input.js
+x Output mismatch
+
+* preset-options/development-runtime-automatic/input.js
+react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
 * preset-options/pure/input.js
 x Output mismatch
 
@@ -2572,8 +2540,32 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (7/8)
-* cross-platform/within-ts-module-block/input.ts
+# babel-plugin-transform-react-jsx-development (0/9)
+* cross-platform/auto-import-dev/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/classic-runtime/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/fragments/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-fragments-with-key/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-nonstatic-children/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/handle-static-children/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/no-source-self/input.js
 x Output mismatch
+
+* cross-platform/within-derived-classes-constructor/input.js
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* cross-platform/within-ts-module-block/input.ts
+transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 

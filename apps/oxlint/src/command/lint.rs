@@ -123,8 +123,11 @@ pub struct BasicOptions {
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin.
-    /// If not provided, will look for `tsconfig.json` in the current working directory.
+    /// Override the TypeScript config used for import resolution.
+    /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
+    /// Use this only when your project uses a non-standard tsconfig name or location.
+    ///
+    /// NOTE: Type checking and Type aware rules will still use the tsconfig discovered automatically, and will not be affected by this option.
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
@@ -291,8 +294,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable import plugin and detect ESM problems.
-    /// It should be used with the `--tsconfig` flag if your project has a
-    /// tsconfig with a name other than `tsconfig.json`.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 

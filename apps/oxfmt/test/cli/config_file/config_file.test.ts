@@ -13,15 +13,16 @@ describe("config_file", () => {
     ];
     for (const { name, cwd } of testCases) {
       // oxlint-disable no-await-in-loop
-      const snapshot = await runAndSnapshot(cwd, [["--check", "!*.{json,jsonc}"]]);
+      const snapshot = await runAndSnapshot(cwd, [["--check", "!*.{json,jsonc,ts}"]]);
       expect(snapshot).toMatchSnapshot(name);
     }
   });
 
   it("explicit config", async () => {
     const testCases = [
-      ["--check", "!*.{json,jsonc}", "--config", "./fmt.json"],
-      ["--check", "!*.{json,jsonc}", "--config", "./fmt.jsonc"],
+      ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.json"],
+      ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.jsonc"],
+      ["--check", "!*.{json,jsonc,ts}", "--config", "./fmt.config.ts"],
       ["--check", "--config", "NOT_EXISTS.json"],
     ];
 
