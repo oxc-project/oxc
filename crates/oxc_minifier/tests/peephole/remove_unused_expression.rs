@@ -352,6 +352,24 @@ fn no_side_effects() {
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+
+    // Empty functions with simple parameters are also side-effect-free
+    check("function f() {}");
+    check("function f(a) {}");
+    check("function f(a, b, c) {}");
+    check("async function f() {}");
+    check("function* f() {}");
+    check("const f = function() {}");
+    check("const f = () => {}");
+    check("export function f() {}");
+}
+
+#[test]
+fn no_side_effects_empty_function_negative() {
+    // Non-empty body with side effects — should NOT be removed
+    test_same("function f() { x() }\nf()");
+    // Destructuring parameter with side-effectful default
+    test_same("function f({ a } = x()) {}\nf()");
 }
 
 #[test]

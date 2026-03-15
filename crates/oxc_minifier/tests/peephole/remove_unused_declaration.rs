@@ -61,7 +61,8 @@ fn remove_unused_function_declaration() {
     let options = CompressOptions::smallest();
     test_options("function foo() {}", "", &options);
     test_same_options("function foo() { bar } foo()", &options);
-    test_same_options("export function foo() {} foo()", &options);
+    // Empty exported function: call is removed but declaration is kept
+    test_options("export function foo() {} foo()", "export function foo() {}", &options);
     test_same_options("function foo() { bar } eval('foo()')", &options);
 }
 

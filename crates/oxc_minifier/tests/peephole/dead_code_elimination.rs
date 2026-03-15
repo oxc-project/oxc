@@ -195,6 +195,7 @@ fn dce_var_hoisting() {
           function KEEP() { FOO }
         } f()",
     );
+    // KEEP() is an empty function, so calling it has no side effects and is removed.
     test(
         "function f() {
           KEEP();
@@ -206,9 +207,7 @@ fn dce_var_hoisting() {
           REMOVE;
         } f()",
         "function f() {
-          KEEP();
           return function g() {}
-          function KEEP() {}
         } f()",
     );
 }
