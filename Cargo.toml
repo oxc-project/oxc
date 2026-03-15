@@ -190,6 +190,8 @@ futures = "0.3.31" # Async utilities
 handlebars = "6.4.0" # Template engine
 hashbrown = { version = "0.16.1", default-features = false } # Fast hash map
 humansize = "2.1.3" # Human-readable sizes
+icu_collator = "2.1.1" # Unicode locale-aware collation
+icu_locale = "2.1.1" # Unicode locale parsing
 icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
