@@ -38,20 +38,20 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
 
             let force_above_threshold = matches!(array_expand, ArrayExpand::ForceAboveThreshold(threshold) if self.array.elements().len() >= threshold as usize);
 
-            let preserve_below_threshold = !force_above_threshold
-                && matches!(array_expand, ArrayExpand::ForceAboveThreshold(_))
+            let preserve_multiline = !force_above_threshold
+                && matches!(array_expand, ArrayExpand::Auto | ArrayExpand::ForceAboveThreshold(_))
                 && elements_have_leading_newline(self.array, f);
 
             let should_expand = !self.options.is_force_flat_mode
                 && match array_expand {
-                    ArrayExpand::Auto => should_break(self.array),
+                    ArrayExpand::Auto => should_break(self.array) || preserve_multiline,
                     ArrayExpand::Never => false,
                     ArrayExpand::ForceAboveThreshold(_) => {
-                        force_above_threshold || preserve_below_threshold
+                        force_above_threshold || preserve_multiline
                     }
                 };
 
-            let force_one_per_line = force_above_threshold || preserve_below_threshold;
+            let force_one_per_line = force_above_threshold || preserve_multiline;
             let elements = ArrayElementList::new(self.array.elements(), group_id)
                 .with_force_one_per_line(force_one_per_line);
 

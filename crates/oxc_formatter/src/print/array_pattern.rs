@@ -35,14 +35,14 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
 
             let force_above_threshold = matches!(f.options().array_expand, ArrayExpand::ForceAboveThreshold(threshold) if element_count >= threshold as usize);
 
-            let preserve_below_threshold = !force_above_threshold
-                && matches!(f.options().array_expand, ArrayExpand::ForceAboveThreshold(_))
+            let preserve_multiline = !force_above_threshold
+                && matches!(f.options().array_expand, ArrayExpand::Auto | ArrayExpand::ForceAboveThreshold(_))
                 && self.elements.first().and_then(|e| e.as_ref()).is_some_and(|e| {
                     f.source_text()
                         .contains_newline_between(self.span().start, e.span().start)
                 });
 
-            let should_expand = force_above_threshold || preserve_below_threshold;
+            let should_expand = force_above_threshold || preserve_multiline;
 
             write!(
                 f,

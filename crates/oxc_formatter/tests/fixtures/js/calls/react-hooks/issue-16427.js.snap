@@ -51,7 +51,9 @@ useImperativeHandle(
 -------------------
 { printWidth: 100 }
 -------------------
-useImperativeHandle(ref, () => ({ getIsPending: () => isPending }), [isPending]);
+useImperativeHandle(ref, () => ({ getIsPending: () => isPending }), [
+  isPending,
+]);
 
 useImperativeHandle(ref, () => {
   return !editor.getInstanceState().isCoarsePointer;
