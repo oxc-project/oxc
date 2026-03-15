@@ -425,19 +425,25 @@ impl<'a> Format<'a> for Comment {
         {
             let source: &str = &f.source_text();
             let line_width = f.options().line_width.value() as usize;
-            // Calculate the indent of the comment by looking at the source text
-            // to account for indentation when computing available width.
+            // Calculate indent by counting whitespace immediately before the comment,
+            // walking backward and stopping at the first non-whitespace character.
+            // This matches upstream prettier-plugin-jsdoc's `getIndentationWidth()`:
+            //   for (let i = comment.loc.start.column - 1; i >= 0; i--) {
+            //     if (c === " ") spaces++; else if (c === "\t") tabs++; else break;
+            //   }
+            // For standalone comments (start of line), this equals the full indent.
+            // For inline comments (mid-expression, e.g. `? /** @type */`), this only
+            // counts the adjacent whitespace, giving more room for the comment content
+            // and preventing unnecessary type wrapping.
             let indent_chars = {
                 let start = self.span.start as usize;
                 let before = &source[..start];
-                // Find the last newline before the comment
-                let line_start = before.rfind('\n').map_or(0, |pos| pos + 1);
-                // Count leading whitespace on this line
                 let tab_width = f.options().indent_width.value() as usize;
-                source[line_start..start]
-                    .chars()
-                    .take_while(|c| c.is_whitespace())
-                    .map(|c| if c == '\t' { tab_width } else { 1 })
+                before
+                    .bytes()
+                    .rev()
+                    .take_while(|&b| b == b' ' || b == b'\t')
+                    .map(|b| if b == b'\t' { tab_width } else { 1 })
                     .sum::<usize>()
             };
             let available_width = line_width.saturating_sub(indent_chars);

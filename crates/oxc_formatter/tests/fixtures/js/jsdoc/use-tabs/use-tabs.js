@@ -21,3 +21,14 @@ function withExample() {}
  * ```
  */
 function withFencedCodeBlock() {}
+
+// Inline @type cast mid-expression: width should be measured from adjacent
+// whitespace, not leading indent, to prevent unnecessary type wrapping.
+function inlineCast() {
+	const init =
+		fn.type === "VariableDeclarator"
+			? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (
+					fn.init
+				)
+			: fn;
+}
