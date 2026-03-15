@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, cell::Cell};
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
 use oxc_span::{Atom, Ident, SPAN, Span};
@@ -26,18 +26,76 @@ impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
     }
 }
 
+/// Mutable counters for AST builder activity, using interior mutability.
+#[derive(Debug, Default)]
+pub struct AstBuilderStats {
+    nodes: Cell<usize>,
+    references: Cell<usize>,
+    symbols: Cell<usize>,
+    scopes: Cell<usize>,
+}
+
+impl AstBuilderStats {
+    /// Create a new zeroed stats container.
+    #[inline]
+    pub const fn new() -> Self {
+        Self {
+            nodes: Cell::new(0),
+            references: Cell::new(0),
+            symbols: Cell::new(0),
+            scopes: Cell::new(0),
+        }
+    }
+
+    #[inline]
+    pub fn record(&self, nodes: usize, references: usize, symbols: usize, scopes: usize) {
+        self.nodes.set(self.nodes.get().saturating_add(nodes));
+        self.references.set(self.references.get().saturating_add(references));
+        self.symbols.set(self.symbols.get().saturating_add(symbols));
+        self.scopes.set(self.scopes.get().saturating_add(scopes));
+    }
+
+    #[inline]
+    pub fn nodes(&self) -> usize {
+        self.nodes.get()
+    }
+
+    #[inline]
+    pub fn references(&self) -> usize {
+        self.references.get()
+    }
+
+    #[inline]
+    pub fn symbols(&self) -> usize {
+        self.symbols.get()
+    }
+
+    #[inline]
+    pub fn scopes(&self) -> usize {
+        self.scopes.get()
+    }
+}
+
 /// AST builder for creating AST nodes.
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
+    stats: &'a AstBuilderStats,
 }
 
 impl<'a> AstBuilder<'a> {
     /// Create a new AST builder that will allocate nodes in the given allocator.
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
+        let stats: &'a AstBuilderStats = allocator.alloc(AstBuilderStats::new());
+        Self { allocator, stats }
+    }
+
+    /// Return AST builder stats.
+    #[inline]
+    pub fn stats(self) -> &'a AstBuilderStats {
+        self.stats
     }
 
     /// Create [`CommentNodeId`] for an AST node.

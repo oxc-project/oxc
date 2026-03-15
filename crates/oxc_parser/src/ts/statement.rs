@@ -71,11 +71,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string();
+                self.ast.stats().record(0usize, 0usize, 1usize, 0usize);
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
-                Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
+                Expression::StringLiteral(literal) => {
+                    self.ast.stats().record(0usize, 0usize, 1usize, 0usize);
+                    TSEnumMemberName::ComputedString(literal)
+                }
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
+                    self.ast.stats().record(0usize, 0usize, 1usize, 0usize);
                     TSEnumMemberName::ComputedTemplateString(template)
                 }
                 Expression::NumericLiteral(literal) => {
@@ -101,6 +106,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
+                self.ast.stats().record(0usize, 0usize, 1usize, 0usize);
                 TSEnumMemberName::Identifier(self.alloc(ident_name))
             }
         }
