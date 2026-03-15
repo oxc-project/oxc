@@ -3,7 +3,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFile, TestFiles};
 use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
@@ -31,9 +31,11 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let ParserReturn { mut program, .. } =
+                let parser_ret =
                     Parser::new(&allocator, source_text, source_type).parse();
+                let mut program = parser_ret.program;
                 let scoping = SemanticBuilder::new()
+                    .with_parser_stats(parser_ret.stats)
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
                     .build(&program)
