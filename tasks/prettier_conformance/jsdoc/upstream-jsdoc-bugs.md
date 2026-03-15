@@ -222,3 +222,84 @@ is applied to the `description` field but not the `name` field (`stringify.ts:99
 ```
 
 **Found in**: conformance tests (comment-line-strategy 001-004)
+
+## 8. `@description` tag content split to new line
+
+**Severity**: Low — cosmetic
+
+The plugin splits inline `@description` content to a new line with a blank separator, even when
+the content would fit on the same line.
+
+**Example** (from conformance tests):
+
+```js
+// Input:
+/** @description This is a description tag */
+
+// prettier-plugin-jsdoc output (unnecessary split):
+/**
+ * @description
+ *
+ * This is a description tag
+ */
+
+// oxfmt output (keeps inline):
+/** @description This is a description tag */
+```
+
+**Found in**: conformance tests (description-tag/002-existing-desc-tag)
+
+## 9. JSON key quoting in `@example`
+
+**Severity**: Low — cosmetic
+
+The plugin parses `@example` content as JSON and re-serializes it, adding quotes around
+unquoted object keys. This changes the semantics of the example code.
+
+**Example** (from conformance tests):
+
+```js
+// Input:
+/**
+ * @example { testArr: [1, 2] }
+ */
+
+// prettier-plugin-jsdoc output (adds quotes):
+/**
+ * @example { "testArr": [1, 2] }
+ */
+
+// oxfmt output (preserves original):
+/**
+ * @example { testArr: [1, 2] }
+ */
+```
+
+**Found in**: conformance tests (keep-unparseable-indent/001-json-example, 004-indent-stripped)
+
+## 10. Lowercase after `@typedef` name and missing type spacing
+
+**Severity**: Medium — incorrect capitalization and spacing
+
+The plugin has two bugs with `@typedef{type}` (no space before brace):
+
+1. It lowercases the first word after the name, misidentifying the sentence boundary.
+2. It inserts a space before the brace (`@typedef {type}`), not preserving the original
+   no-space format.
+
+**Example** (from conformance tests):
+
+```js
+// Input:
+/** @typedef{import('...').InitialOptions} name A description */
+
+// prettier-plugin-jsdoc output (wrong):
+/** @typedef {import("...").InitialOptions} name a description */
+// Adds space before {, lowercases "A" to "a"
+
+// oxfmt output (correct):
+/** @typedef{import('...').InitialOptions} name A description */
+// Preserves no-space and correct capitalization
+```
+
+**Found in**: conformance tests (main/011-bad-defined-name)
