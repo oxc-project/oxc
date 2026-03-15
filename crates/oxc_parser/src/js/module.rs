@@ -927,7 +927,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
                 ImportOrExportSpecifier::Import(self.ast.import_specifier(
                     self.end_span(specifier_span),
-                    property_name.unwrap_or_else(|| name.clone()),
+                    property_name.unwrap_or_else(|| {
+                        // Cloning creates a new AST node not tracked by the builder,
+                        // so record the node in stats manually.
+                        self.ast.stats_mut().record_node();
+                        name.clone()
+                    }),
                     self.ast.binding_identifier(name.span(), name.name()),
                     kind,
                 ))
@@ -940,9 +945,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let exported = match property_name {
-                    Some(property_name) => property_name,
-                    None => name.clone(),
+                let exported = if let Some(property_name) = property_name {
+                    property_name
+                } else {
+                    // Cloning creates a new AST node not tracked by the builder,
+                    // so record the node in stats manually.
+                    self.ast.stats_mut().record_node();
+                    name.clone()
                 };
                 ImportOrExportSpecifier::Export(self.ast.export_specifier(
                     self.end_span(specifier_span),
