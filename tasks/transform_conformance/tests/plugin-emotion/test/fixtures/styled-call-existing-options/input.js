@@ -1,2 +1,6 @@
 import styled from '@emotion/styled';
-const Box = styled('div', { shouldForwardProp: prop => prop !== 'color' })({ padding: 10 });
+const Box = styled('div', {
+  target: 'custom-target',
+  label: 'CustomLabel',
+  shouldForwardProp: prop => prop !== 'color'
+})({ padding: 10 });

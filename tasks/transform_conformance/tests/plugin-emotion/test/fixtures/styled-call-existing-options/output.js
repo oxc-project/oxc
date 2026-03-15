@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 const Box = /* @__PURE__ */ styled("div", {
+  target: "custom-target",
+  label: "CustomLabel",
   shouldForwardProp: (prop) => prop !== "color",
-  target: "e16mgibd1",
-  label: "Box"
 })({ padding: 10 });

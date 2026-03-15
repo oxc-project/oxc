@@ -1,7 +1,7 @@
 use super::{EmotionOptions, StyledComponentsOptions};
 
-#[derive(Default, Debug, Clone)]
 /// Plugin-specific transform options.
+#[derive(Default, Debug, Clone)]
 pub struct PluginsOptions {
     /// Options for `styled-components` transform.
     pub styled_components: Option<StyledComponentsOptions>,

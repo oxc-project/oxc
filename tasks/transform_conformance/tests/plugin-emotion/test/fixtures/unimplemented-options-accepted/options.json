@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    [
+      "emotion",
+      {
+        "autoLabel": false,
+        "sourceMap": false,
+        "importMap": {
+          "@emotion/react": {
+            "css": {
+              "canonicalImport": ["@emotion/react", "css"]
+            }
+          }
+        },
+        "cssPropOptimization": false
+      }
+    ]
+  ]
+}

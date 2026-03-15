@@ -13,7 +13,7 @@
 //!
 //! ### Options:
 //! **✅ Fully Supported:**
-//! - `autoLabel`: Controls when labels are added (`dev-only`, `always`, `never`)
+//! - `autoLabel`: Controls whether labels are added (`true` by default)
 //! - `labelFormat`: Format string for labels with `[local]`, `[filename]`, `[dirname]`
 //!
 //! **❌ Not Yet Implemented:**
@@ -21,6 +21,7 @@
 //! - `importMap`: Custom import path mapping
 //! - `cssPropOptimization`: JSX css prop transformation
 //! - Tagged template literal transpilation and CSS minification
+//! - Namespace import support (`import * as emotion from '@emotion/react'`)
 //!
 //! ## Example
 //!
@@ -48,7 +49,10 @@
 //! - SWC plugin: <https://github.com/nicksrandall/emotion-swc-plugin>
 //! - Documentation: <https://emotion.sh/docs/babel>
 
-use std::hash::{Hash, Hasher};
+use std::{
+    borrow::Cow,
+    hash::{Hash, Hasher},
+};
 
 use rustc_hash::FxHasher;
 use serde::Deserialize;
@@ -61,6 +65,8 @@ use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
+use super::{base36_encode, default_as_true};
+
 fn default_label_format() -> String {
     String::from("[local]")
 }
@@ -68,12 +74,15 @@ fn default_label_format() -> String {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct EmotionOptions {
-    /// Controls when auto-generated labels are added to `css` and `styled` calls.
+    /// Controls whether auto-generated labels are added to `css` and `styled` calls.
     ///
-    /// - `dev-only` (default): Labels added in development, stripped in production
-    /// - `always`: Labels always added
-    /// - `never`: Labels never added
-    pub auto_label: AutoLabel,
+    /// Defaults to `true`.
+    ///
+    /// NOTE: For backwards compatibility, legacy string values are also accepted:
+    /// - `"always"` / `"dev-only"` => `true`
+    /// - `"never"` => `false`
+    #[serde(default = "default_as_true", deserialize_with = "deserialize_auto_label")]
+    pub auto_label: bool,
 
     /// Format string for generated labels.
     ///
@@ -86,36 +95,62 @@ pub struct EmotionOptions {
     #[serde(default = "default_label_format")]
     pub label_format: String,
 
-    /// Whether to inject source maps into emotion calls.
+    /// NOT IMPLEMENTED YET.
     ///
-    /// **Note: This feature is not yet implemented in oxc.**
-    ///
-    /// Default: `true`
+    /// This option is accepted for config compatibility, but currently ignored.
     #[serde(default = "default_as_true")]
     pub source_map: bool,
-}
 
-const fn default_as_true() -> bool {
-    true
+    /// NOT IMPLEMENTED YET.
+    ///
+    /// This option is accepted for config compatibility, but currently ignored.
+    #[serde(default)]
+    pub import_map: Option<serde_json::Value>,
+
+    /// NOT IMPLEMENTED YET.
+    ///
+    /// This option is accepted for config compatibility, but currently ignored.
+    #[serde(default = "default_as_true")]
+    pub css_prop_optimization: bool,
 }
 
 impl Default for EmotionOptions {
     fn default() -> Self {
         Self {
-            auto_label: AutoLabel::default(),
+            auto_label: default_as_true(),
             label_format: default_label_format(),
-            source_map: true,
+            source_map: default_as_true(),
+            import_map: None,
+            css_prop_optimization: default_as_true(),
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Deserialize, PartialEq, Eq)]
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum AutoLabelValue {
+    Bool(bool),
+    Legacy(AutoLabelLegacy),
+}
+
+#[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum AutoLabel {
-    #[default]
+enum AutoLabelLegacy {
     DevOnly,
     Always,
     Never,
+}
+
+fn deserialize_auto_label<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = AutoLabelValue::deserialize(deserializer)?;
+    Ok(match value {
+        AutoLabelValue::Bool(value) => value,
+        AutoLabelValue::Legacy(AutoLabelLegacy::Never) => false,
+        AutoLabelValue::Legacy(AutoLabelLegacy::Always | AutoLabelLegacy::DevOnly) => true,
+    })
 }
 
 /// What kind of emotion expression an import binding represents.
@@ -132,8 +167,8 @@ struct EmotionBinding {
     kind: EmotionExprKind,
 }
 
-pub struct Emotion {
-    pub options: EmotionOptions,
+pub struct Emotion<'a> {
+    options: EmotionOptions,
 
     /// All tracked emotion import bindings
     bindings: Vec<EmotionBinding>,
@@ -142,12 +177,12 @@ pub struct Emotion {
     /// Cached file hash prefix for target class names (`e<hash>`)
     target_prefix: Option<String>,
     /// Cached filename (without extension)
-    cached_filename: Option<String>,
+    cached_filename: Option<Atom<'a>>,
     /// Cached dirname
-    cached_dirname: Option<String>,
+    cached_dirname: Option<Atom<'a>>,
 }
 
-impl Emotion {
+impl Emotion<'_> {
     pub fn new(options: EmotionOptions) -> Self {
         Self {
             options,
@@ -160,16 +195,16 @@ impl Emotion {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Emotion {
+impl<'a> Traverse<'a, TransformState<'a>> for Emotion<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.collect_emotion_bindings(program, ctx);
+        self.collect_emotion_bindings(program);
 
         self.cached_filename = ctx
             .state
             .source_path
             .file_stem()
             .and_then(|s| s.to_str())
-            .map(String::from);
+            .map(|s| ctx.ast.atom(s));
 
         self.cached_dirname = ctx
             .state
@@ -177,7 +212,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Emotion {
             .parent()
             .and_then(|p| p.file_name())
             .and_then(|s| s.to_str())
-            .map(String::from);
+            .map(|s| ctx.ast.atom(s));
     }
 
     fn enter_call_expression(&mut self, call: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -210,23 +245,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for Emotion {
         {
             call.pure = true;
             self.transform_styled_call_call(inner_call, ctx);
-            return;
-        }
-
-        // `emotionCss.css(...)` — namespace member call
-        if let Expression::StaticMemberExpression(member) = &call.callee
-            && let Expression::Identifier(ident) = &member.object
-            && Self::is_namespace_css_member(&member.property.name)
-        {
-            let _ = ident; // used for future namespace binding checks
-            self.transform_css_call(call, ctx);
         }
     }
 }
 
-impl<'a> Emotion {
+impl<'a> Emotion<'a> {
     /// Scan import declarations and collect emotion bindings.
-    fn collect_emotion_bindings(&mut self, program: &Program<'_>, _ctx: &mut TraverseCtx<'_>) {
+    fn collect_emotion_bindings(&mut self, program: &Program<'_>) {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = statement else { continue };
             let Some(specifiers) = &import.specifiers else { continue };
@@ -239,33 +264,26 @@ impl<'a> Emotion {
                 match specifier {
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
                         if let Some(kind) = package_config.default_export {
-                            self.bindings.push(EmotionBinding {
-                                symbol_id: s.local.symbol_id(),
-                                kind,
-                            });
+                            self.bindings
+                                .push(EmotionBinding { symbol_id: s.local.symbol_id(), kind });
                         }
                     }
                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                         let imported_name = s.imported.name();
                         if imported_name == "default" {
                             if let Some(kind) = package_config.default_export {
-                                self.bindings.push(EmotionBinding {
-                                    symbol_id: s.local.symbol_id(),
-                                    kind,
-                                });
+                                self.bindings
+                                    .push(EmotionBinding { symbol_id: s.local.symbol_id(), kind });
                             }
                         } else if let Some(kind) =
                             package_config.get_named_export(imported_name.as_str())
                         {
-                            self.bindings.push(EmotionBinding {
-                                symbol_id: s.local.symbol_id(),
-                                kind,
-                            });
+                            self.bindings
+                                .push(EmotionBinding { symbol_id: s.local.symbol_id(), kind });
                         }
                     }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                        // Namespace imports are tracked per-package, not per-binding.
-                        // We handle them specially in `get_namespace_member_kind`.
+                        // TODO: Namespace imports are not yet supported.
                     }
                 }
             }
@@ -280,15 +298,7 @@ impl<'a> Emotion {
     ) -> Option<EmotionExprKind> {
         let reference_id = ident.reference_id();
         let ref_symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
-        self.bindings
-            .iter()
-            .find(|b| b.symbol_id == ref_symbol_id)
-            .map(|b| b.kind)
-    }
-
-    /// Check if a member property name matches a known css-kind export.
-    fn is_namespace_css_member(property: &str) -> bool {
-        matches!(property, "css" | "keyframes")
+        self.bindings.iter().find(|b| b.symbol_id == ref_symbol_id).map(|b| b.kind)
     }
 
     /// Transform a `css(...)` or `keyframes(...)` call:
@@ -302,9 +312,9 @@ impl<'a> Emotion {
         call.pure = true;
 
         if self.should_add_label()
-            && let Some(label) = self.get_label(ctx)
+            && let Some(label) = Self::get_context_name(ctx)
         {
-            let label_str = ctx.ast.atom(&format!(";label:{label};"));
+            let label_str = self.format_label(&label, ctx);
             let label_arg =
                 Argument::from(ctx.ast.expression_string_literal(SPAN, label_str, None));
             call.arguments.push(label_arg);
@@ -331,7 +341,6 @@ impl<'a> Emotion {
         inner_args.push(tag_arg);
         inner_args.push(opts_arg);
 
-        // Take the callee (styled.div) and extract the `styled` identifier
         let old_callee = call.callee.take_in(ctx.ast);
         let Expression::StaticMemberExpression(member) = old_callee else { return };
         let styled_expr = member.unbox().object;
@@ -347,27 +356,26 @@ impl<'a> Emotion {
         inner_call: &mut CallExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let opts_arg = self.create_styled_options_arg(ctx);
-
         if inner_call.arguments.len() >= 2 {
-            // There's already a second argument (existing options).
-            // If it's an object literal, merge our properties into it.
             if let Some(Argument::ObjectExpression(obj)) = inner_call.arguments.get_mut(1) {
-                let target = self.get_target_class_name(ctx);
-                obj.properties.push(Self::create_object_property("target", target, ctx));
+                if !Self::has_static_property(&obj.properties, "target") {
+                    let target = self.get_target_class_name(ctx);
+                    obj.properties.push(Self::create_object_property("target", target, ctx));
+                }
 
                 if self.should_add_label()
-                    && let Some(label) = self.get_label(ctx)
+                    && !Self::has_static_property(&obj.properties, "label")
+                    && let Some(label) = Self::get_context_name(ctx)
                 {
-                    let label_atom = ctx.ast.atom(&label);
-                    obj.properties
-                        .push(Self::create_object_property("label", label_atom, ctx));
+                    let label_atom = self.format_label_atom(&label, ctx);
+                    obj.properties.push(Self::create_object_property("label", label_atom, ctx));
                 }
             } else {
-                // Non-object second arg — push as third arg instead
+                let opts_arg = self.create_styled_options_arg(ctx);
                 inner_call.arguments.push(opts_arg);
             }
         } else {
+            let opts_arg = self.create_styled_options_arg(ctx);
             inner_call.arguments.push(opts_arg);
         }
     }
@@ -380,9 +388,9 @@ impl<'a> Emotion {
         properties.push(Self::create_object_property("target", target, ctx));
 
         if self.should_add_label()
-            && let Some(label) = self.get_label(ctx)
+            && let Some(label) = Self::get_context_name(ctx)
         {
-            let label_atom = ctx.ast.atom(&label);
+            let label_atom = self.format_label_atom(&label, ctx);
             properties.push(Self::create_object_property("label", label_atom, ctx));
         }
 
@@ -390,28 +398,49 @@ impl<'a> Emotion {
     }
 
     fn should_add_label(&self) -> bool {
-        // For now, treat `dev-only` same as `always` since we don't have
-        // production mode detection at transform time. The user controls this
-        // via the option directly.
-        self.options.auto_label != AutoLabel::Never
+        self.options.auto_label
     }
 
-    /// Generate a label string by interpolating the `labelFormat` template.
-    fn get_label(&self, ctx: &TraverseCtx<'a>) -> Option<String> {
-        let local_name = Self::get_context_name(ctx)?;
-        let sanitized_local = sanitize_label_part(&local_name);
+    /// Build the `;label:<formatted>;` string for css calls.
+    fn format_label(&self, local_name: &Atom<'a>, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        let sanitized = sanitize_label_part(local_name);
 
+        if self.options.label_format == "[local]" {
+            return ctx.ast.atom_from_strs_array([";label:", &sanitized, ";"]);
+        }
+
+        let formatted = self.interpolate_label_format(&sanitized);
+        ctx.ast.atom_from_strs_array([";label:", &formatted, ";"])
+    }
+
+    /// Build just the label value (e.g. `"MyComp"`) for styled options objects.
+    fn format_label_atom(&self, local_name: &Atom<'a>, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        let sanitized = sanitize_label_part(local_name);
+
+        if self.options.label_format == "[local]" {
+            return ctx.ast.atom(&sanitized);
+        }
+
+        let formatted = self.interpolate_label_format(&sanitized);
+        ctx.ast.atom(&formatted)
+    }
+
+    /// Interpolate the `labelFormat` template with `[local]`, `[filename]`, `[dirname]`.
+    ///
+    /// Not called for the default `"[local]"` format — that case is short-circuited
+    /// in the callers above.
+    fn interpolate_label_format(&self, sanitized_local: &str) -> String {
         let format = &self.options.label_format;
         let mut result = String::with_capacity(format.len() + sanitized_local.len());
-        let mut chars = format.as_str();
+        let mut remaining = format.as_str();
 
-        while let Some(bracket_pos) = chars.find('[') {
-            result.push_str(&chars[..bracket_pos]);
-            let rest = &chars[bracket_pos..];
+        while let Some(bracket_pos) = remaining.find('[') {
+            result.push_str(&remaining[..bracket_pos]);
+            let rest = &remaining[bracket_pos..];
             if let Some(end_pos) = rest.find(']') {
                 let placeholder = &rest[1..end_pos];
                 match placeholder {
-                    "local" => result.push_str(&sanitized_local),
+                    "local" => result.push_str(sanitized_local),
                     "filename" => {
                         if let Some(filename) = &self.cached_filename {
                             result.push_str(&sanitize_label_part(filename));
@@ -428,20 +457,20 @@ impl<'a> Emotion {
                         result.push(']');
                     }
                 }
-                chars = &rest[end_pos + 1..];
+                remaining = &rest[end_pos + 1..];
             } else {
                 result.push_str(rest);
-                chars = "";
+                remaining = "";
             }
         }
-        result.push_str(chars);
+        result.push_str(remaining);
 
-        if result.is_empty() { None } else { Some(result) }
+        result
     }
 
     /// Infer the context name from the enclosing variable declarator, assignment,
     /// object property, or class field.
-    fn get_context_name(ctx: &TraverseCtx<'_>) -> Option<String> {
+    fn get_context_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
         let mut assignment_name = None;
 
         for ancestor in ctx.ancestors() {
@@ -449,31 +478,31 @@ impl<'a> Emotion {
                 Ancestor::AssignmentExpressionRight(assignment) => {
                     assignment_name = match assignment.left() {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                            Some(ident.name.to_string())
+                            Some(ident.name.into())
                         }
                         AssignmentTarget::StaticMemberExpression(member) => {
-                            Some(member.property.name.to_string())
+                            Some(member.property.name.into())
                         }
                         _ => return None,
                     };
                 }
                 Ancestor::VariableDeclaratorInit(declarator) => {
                     return if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
-                        Some(ident.name.to_string())
+                        Some(ident.name.into())
                     } else {
                         None
                     };
                 }
                 Ancestor::ObjectPropertyValue(property) => {
                     return match property.key() {
-                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.to_string()),
-                        PropertyKey::StringLiteral(s) => Some(s.value.to_string()),
+                        PropertyKey::StaticIdentifier(ident) => Some(ident.name.into()),
+                        PropertyKey::StringLiteral(s) => Some(s.value),
                         _ => None,
                     };
                 }
                 Ancestor::PropertyDefinitionValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name.to_string())
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -506,16 +535,15 @@ impl<'a> Emotion {
         ctx.ast.atom_from_strs_array([prefix, count])
     }
 
-    /// Compute a stable hash of the file for target class name generation.
-    fn get_file_hash(state: &TransformState<'_>) -> String {
+    fn get_file_hash(state: &TransformState<'_>) -> impl std::fmt::Display {
         let mut hasher = FxHasher::default();
         if state.source_path.is_absolute() {
             state.source_path.hash(&mut hasher);
         } else {
             state.source_text.hash(&mut hasher);
         }
-        #[expect(clippy::cast_possible_truncation)]
-        base36_encode(hasher.finish() as u32)
+
+        base36_encode(hasher.finish())
     }
 
     /// Create `{ key: "value" }` as an `ObjectPropertyKind`.
@@ -536,6 +564,14 @@ impl<'a> Emotion {
             false,
         )
     }
+
+    fn has_static_property(properties: &[ObjectPropertyKind<'a>], name: &str) -> bool {
+        properties.iter().any(|property| {
+            matches!(property, ObjectPropertyKind::ObjectProperty(property)
+                if matches!(&property.key, PropertyKey::StaticIdentifier(ident) if ident.name == name)
+            )
+        })
+    }
 }
 
 /// Known emotion packages and their export configurations.
@@ -551,10 +587,9 @@ impl EmotionPackage {
                 default_export: Some(EmotionExprKind::Css),
                 named_exports: &[("css", EmotionExprKind::Css)],
             }),
-            "@emotion/styled" => Some(Self {
-                default_export: Some(EmotionExprKind::Styled),
-                named_exports: &[],
-            }),
+            "@emotion/styled" => {
+                Some(Self { default_export: Some(EmotionExprKind::Styled), named_exports: &[] })
+            }
             "@emotion/react" => Some(Self {
                 default_export: None,
                 named_exports: &[
@@ -571,31 +606,24 @@ impl EmotionPackage {
     }
 
     fn get_named_export(&self, name: &str) -> Option<EmotionExprKind> {
-        self.named_exports
-            .iter()
-            .find(|(n, _)| *n == name)
-            .map(|(_, kind)| *kind)
+        self.named_exports.iter().find(|(n, _)| *n == name).map(|(_, kind)| *kind)
     }
-}
-
-fn base36_encode(mut num: u32) -> String {
-    const CHARS: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
-    if num == 0 {
-        return String::from("0");
-    }
-    let mut result = Vec::new();
-    while num > 0 {
-        result.push(CHARS[(num % 36) as usize]);
-        num /= 36;
-    }
-    result.reverse();
-    // SAFETY: All bytes are ASCII alphanumeric
-    unsafe { String::from_utf8_unchecked(result) }
 }
 
 /// Replace characters that are invalid in CSS class names with hyphens,
-/// and collapse whitespace runs into a single hyphen.
-fn sanitize_label_part(input: &str) -> String {
+/// and collapse consecutive invalid character runs into a single hyphen.
+///
+/// Returns `Cow::Borrowed` when no replacement is needed (common case for
+/// JS identifiers), avoiding a heap allocation.
+fn sanitize_label_part(input: &str) -> Cow<'_, str> {
+    let needs_sanitization = input.bytes().any(|b| {
+        !(b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    });
+
+    if !needs_sanitization {
+        return Cow::Borrowed(input);
+    }
+
     let mut result = String::with_capacity(input.len());
     let mut last_was_invalid = false;
 
@@ -609,7 +637,7 @@ fn sanitize_label_part(input: &str) -> String {
         }
     }
 
-    result
+    Cow::Owned(result)
 }
 
 #[cfg(test)]

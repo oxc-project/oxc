@@ -1,5 +1,5 @@
 {
   "plugins": [
-    ["emotion", { "autoLabel": "always" }]
+    ["emotion", { "autoLabel": true }]
   ]
 }
