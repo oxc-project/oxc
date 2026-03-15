@@ -74,7 +74,7 @@ pub use generated::ast_kind;
 
 pub use crate::{
     ast::comment::{Comment, CommentContent, CommentKind, CommentPosition},
-    ast_builder_impl::{AstBuilder, NONE},
+    ast_builder_impl::{AstBuilder, AstBuilderStats, NONE},
     ast_kind::{AstKind, AstType},
     ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind},
     trivia::{
