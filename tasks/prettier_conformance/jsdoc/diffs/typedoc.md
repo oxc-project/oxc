@@ -1,6 +1,6 @@
 # JSDoc Diffs: typedoc
 
-Date: 2026-03-15 (round 4)
+Date: 2026-03-15 (round 5)
 Prettier version: 3.8.1
 JSDoc tags: 792
 Files with diffs: 13
@@ -60,11 +60,11 @@ Files with diffs: 13
 + * {@link Renderer} is a subclass of {@link EventDispatcher} and triggers a
 + * series of events while a project is being processed. You can listen to these
 + * events to control the flow or manipulate the output.
-  *
-  *   - {@link Renderer.EVENT_BEGIN_PAGE}<br> Triggered before a document will be
+ *
+ *   - {@link Renderer.EVENT_BEGIN_PAGE}<br> Triggered before a document will be
 - *       rendered. The listener receives an instance of {@link PageEvent}.
 + *     rendered. The listener receives an instance of {@link PageEvent}.
-  *   - {@link Renderer.EVENT_END_PAGE}<br> Triggered after a document has been
+ *   - {@link Renderer.EVENT_END_PAGE}<br> Triggered after a document has been
 - *       rendered, just before it is written to disc. The listener receives an
 - *       instance of {@link PageEvent}.
 + *     rendered, just before it is written to disc. The listener receives an
@@ -85,7 +85,7 @@ Files with diffs: 13
 
 ```diff
 @@ -29,7 +29,7 @@ import "./comment2";
-  * @deprecated
+ * @deprecated
 - * @type {Data<object>} will Also be removed
 + * @type {Data<object>} Will Also be removed
 ```
@@ -94,22 +94,22 @@ Files with diffs: 13
 
 ```diff
 @@ -11,6 +11,7 @@ export function exportedFunction(): void {}
-  *       functionWithArguments("arg", 0, value);
+ *       functionWithArguments("arg", 0, value);
 + *
-  * @returns This is the return value of the function.
+ * @returns This is the return value of the function.
 ```
 
 ## `src/test/converter/inheritance/inherit-doc.ts`
 
 ```diff
 @@ -40,8 +40,8 @@ export interface InterfaceTarget<T> {
-  * @default
-  *
+ * @default
+ *
 - * This part of the commentary will not be inherited (this is an abuse of this tag)
 - *
 + * This part of the commentary will not be inherited (this is an abuse of this
 + * tag)
-  * @typeParam T - Type of arguments
+ * @typeParam T - Type of arguments
 ```
 
 ## `src/test/converter2/behavior/includeTag/duplicateRegion.ts`

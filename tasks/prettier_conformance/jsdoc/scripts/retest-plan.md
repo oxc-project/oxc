@@ -382,6 +382,51 @@ After fixing 3 bugs: @default verbatim preservation (`should_preserve_descriptio
 7. **Multi-line @param type collapsed** (svelte renderer.js): Multi-line `{{ ... }}` type still being collapsed and merging two @param tags. BUG.
 8. **@param indent after @example** (wxt modules.ts): Tags after @example get extra indent. Design difference (upstream indents them too).
 
-### Bugs Found
+### Bugs Found (round 4)
+
+See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-15, round 5)
+
+After fixing brace_depth reset at newlines (commit b76a6fe75e) to prevent apostrophe-induced tag merge. 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 4 |
+| ---------- | ---------- | ---------------- | -------------------- |
+| evolu      | 134        | 13               | 0                    |
+| wxt        | 1,183      | 1                | -1                   |
+| typedoc    | 792        | 13               | 0                    |
+| Chart.js   | 1,276      | 4                | 0                    |
+| svelte     | 4,150      | 16               | -1                   |
+| **Total**  | **7,535**  | **47**           | **-2**               |
+
+### Fixes Confirmed
+
+- **brace_depth reset** (wxt modules.ts): @param after @example extra indent is now **FIXED** — previously the apostrophe in example code incremented brace_depth, absorbing subsequent tags.
+
+### Remaining Diff Categories (all design differences or upstream bugs)
+
+1. **`{@link}` wrapping** (~14 files across evolu, typedoc, chartjs): oxfmt keeps `{@link Foo}` atomic. Design difference.
+2. **Tabs→spaces in code blocks** (svelte 10 files): Normalizes tab indentation to spaces in @example code blocks. Design difference.
+3. **`@type` description capitalization** (svelte 3, typedoc 1): oxfmt capitalizes per conformance tests. Upstream bug (#7).
+4. **`{@includeCode}` placement** (typedoc ~3 files): Each `{@includeCode}` on own line. Design difference.
+5. **Sub-list indent normalization** (evolu 2, wxt 1, typedoc 2): 4-space vs content-aligned. Design difference / improvement.
+6. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+7. **Description placement after long types** (chartjs 1 file): Different wrapping of description after inline object types.
+8. **Inline @type union line-break** (svelte 1 file): Different reformatting of multi-line inline @type cast.
+9. **Double-space normalization** (svelte 1 file): Collapses double space to single space in @returns.
+
+### Performance
+
+| Repository | Without JSDoc | With JSDoc | Overhead        |
+| ---------- | ------------- | ---------- | --------------- |
+| evolu      | 502ms         | 566ms      | ~4% (noise)     |
+| wxt        | 1.87s         | 2.19s      | ~1% CPU (noise) |
+| typedoc    | 1.24s         | 1.09s      | ~0% (noise)     |
+| Chart.js   | 1.22s         | 1.95s      | ~60%            |
+| svelte     | 240ms         | 248ms      | ~3% (noise)     |
+
+### Bugs Found (round 5)
 
 See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.

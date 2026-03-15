@@ -1,9 +1,9 @@
 # JSDoc Diffs: wxt
 
-Date: 2026-03-15 (round 4)
+Date: 2026-03-15 (round 5)
 Prettier version: 3.8.1
-JSDoc tags: 1218
-Files with diffs: 2
+JSDoc tags: 1183
+Files with diffs: 1
 
 ## `packages/wxt/src/core/utils/building/detect-dev-changes.ts`
 
@@ -28,18 +28,15 @@ Files with diffs: 2
 - *       to change to an extension reload
 + *     reloading the whole extension. Not sure about firefox, this might need to
 + *     change to an extension reload
-```
-
-## `packages/wxt/src/modules.ts`
-
-```diff
-@@ -102,8 +102,8 @@ export function addPublicAssets(wxt: Wxt, dir: string): void {
-  *   });
-  *   });
+  * - Reload extension
   *
-- * @param wxt The wxt instance provided by the module's setup function.
-- * @param viteConfig A function that returns the vite config the module is
-+ *   @param wxt The wxt instance provided by the module's setup function.
-+ *   @param viteConfig A function that returns the vite config the module is
-  *   adding. Same format as `vite` in `wxt.config.ts`.
+  *   - Background script is changed
 ```
+
+### Diff Analysis
+
+**Category: Indentation normalization in nested markdown lists**
+
+oxfmt reduces over-indentation (6 spaces to 4 spaces) in nested list item continuation lines within JSDoc block comments. Also re-wraps one long line that was previously split.
+
+Previously seen diff in `packages/wxt/src/modules.ts` (round 4) is now gone -- that @param indentation issue has been fixed.
