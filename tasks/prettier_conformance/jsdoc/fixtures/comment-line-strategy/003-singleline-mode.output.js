@@ -1,4 +1,4 @@
-/** @type {import("eslint").Linter.Config} should Be single */
+/** @type {import("eslint").Linter.Config} Should be single */
 const config = {
   // ...
 };
