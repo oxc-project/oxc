@@ -238,7 +238,8 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             // Add blank lines between tag groups
             if !is_first_tag {
-                let mut should_separate = if prev_normalized_kind.is_some_and(|prev| prev == "example")
+                let mut should_separate = if prev_normalized_kind
+                    .is_some_and(|prev| prev == "example")
                     && normalized_kind == "example"
                 {
                     // Always blank line between consecutive @example tags

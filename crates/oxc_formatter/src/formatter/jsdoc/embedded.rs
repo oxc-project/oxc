@@ -145,8 +145,7 @@ pub(super) fn format_embedded_js(
         // If the original has quoted keys (JSON-like), reject formatting since
         // the JS formatter removes unnecessary quotes. Upstream uses `parser: "json"`
         // which preserves quoted keys; we don't have a JSON formatter.
-        let has_quoted_keys =
-            trimmed.contains('"') && trimmed.find('"') < trimmed.find('}');
+        let has_quoted_keys = trimmed.contains('"') && trimmed.find('"') < trimmed.find('}');
         if !has_quoted_keys {
             if let Some(result) = try_format_obj(wrapped, SourceType::jsx()) {
                 return Some(result);

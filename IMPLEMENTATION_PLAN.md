@@ -6,6 +6,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 ## Stages
 
 ### Stage 1: Fix tag routing bugs (@remarks, @example)
+
 - **Goal**: Fix `@remarks` being formatted as code (Fix 1) and `@example` mangling TypeScript generics (Fix 2)
 - **Depends on**: none
 - **Parallel**: yes
@@ -17,6 +18,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 - **Status**: Not Started
 
 ### Stage 2: Fix markdown parsing false positives
+
 - **Goal**: Fix legacy list marker false positives (Fix 3), wrapped-line list markers (Fix 4), pipe in prose (Fix 10)
 - **Depends on**: none
 - **Parallel**: yes
@@ -29,6 +31,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 - **Status**: Not Started
 
 ### Stage 3: Fix tag formatting (blank lines, description placement, capitalization)
+
 - **Goal**: Fix `@typedef` blank lines (Fix 7), block tag description placement (Fix 6), capitalization inside types (Fix 8)
 - **Depends on**: Stage 1 (Fix 6 depends on @remarks routing being correct)
 - **Parallel**: no
@@ -41,6 +44,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 - **Status**: Not Started
 
 ### Stage 4: Fix code block, default values, and links
+
 - **Goal**: Fix code block destruction (Fix 5), default value duplication (Fix 9), unmatched quote (Fix 11), link simplification (Fix 12)
 - **Depends on**: none
 - **Parallel**: yes
@@ -54,6 +58,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 - **Status**: Not Started
 
 ### Stage 5: Fix `{@link}` wrapping tolerance (cosmetic)
+
 - **Goal**: Adjust `{@link}` width calculation to match upstream (Fix 13)
 - **Depends on**: Stages 1-4
 - **Parallel**: no
@@ -64,6 +69,7 @@ Diff files at `tasks/prettier_conformance/jsdoc/diffs/`.
 - **Status**: Not Started
 
 ### Stage 6: End-to-end verification
+
 - **Goal**: Full retest against 5 real-world repos + Prettier conformance
 - **Depends on**: Stages 1-5
 - **Parallel**: no

@@ -6,7 +6,7 @@
 
 ## `packages/svelte/src/action/public.d.ts`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/action/public.d.ts b/packages/svelte/src/action/public.d.ts
 index 608d815..7a68c67 100644
 --- a/packages/svelte/src/action/public.d.ts
@@ -25,11 +25,11 @@ index 608d815..7a68c67 100644
   * };
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/ambient.d.ts`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/ambient.d.ts b/packages/svelte/src/ambient.d.ts
 index a3300c9..c43a57b 100644
 --- a/packages/svelte/src/ambient.d.ts
@@ -80,7 +80,7 @@ index a3300c9..c43a57b 100644
   * });
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/compiler/phases/2-analyze/index.js`
 
@@ -101,7 +101,7 @@ index 8813308..4bade3c 100644
 +					 * 	| ESTree.ArrowFunctionExpression}
 +					 */ (fn.init)
  				: fn;
- 
+
  		trace_references(
 ```
 
@@ -118,14 +118,14 @@ index b49ffae..2ba6bd3 100644
  					const current_role =
 -						/** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 +						/** @type {ARIARoleDefinitionKey} Current_role */ (c_r);
- 
+
  					if (current_role && is_abstract_role(current_role)) {
  						w.a11y_no_abstract_role(attribute, current_role);
 ```
 
 ## `packages/svelte/src/compiler/phases/3-transform/client/visitors/RegularElement.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/compiler/phases/3-transform/client/visitors/RegularElement.js b/packages/svelte/src/compiler/phases/3-transform/client/visitors/RegularElement.js
 index 3e9346c..34d648e 100644
 --- a/packages/svelte/src/compiler/phases/3-transform/client/visitors/RegularElement.js
@@ -147,7 +147,7 @@ index 3e9346c..34d648e 100644
   * });
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/compiler/phases/nodes.js`
 
@@ -176,7 +176,7 @@ index 9069268..95e1dae 100644
 +++ b/packages/svelte/src/compiler/preprocess/index.js
 @@ -57,7 +57,7 @@ class PreprocessResult {
  	dependencies = [];
- 
+
  	/**
 -	 * @type {string | null} last Part of the filename, as used for `sources` in
 +	 * @type {string | null} Last Part of the filename, as used for `sources` in
@@ -187,7 +187,7 @@ index 9069268..95e1dae 100644
 
 ## `packages/svelte/src/index-client.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/index-client.js b/packages/svelte/src/index-client.js
 index 11cfcea..002dcc2 100644
 --- a/packages/svelte/src/index-client.js
@@ -205,7 +205,7 @@ index 11cfcea..002dcc2 100644
   * }>();
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/index.d.ts`
 
@@ -264,7 +264,7 @@ index 0b276e5..d25e045 100644
 --- a/packages/svelte/src/internal/client/dom/hydration.js
 +++ b/packages/svelte/src/internal/client/dom/hydration.js
 @@ -24,7 +24,8 @@ export function set_hydrating(value) {
- 
+
  /**
   * The node that is currently being hydrated. This starts out as the first node
 - * inside the opening<!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
@@ -277,7 +277,7 @@ index 0b276e5..d25e045 100644
 
 ## `packages/svelte/src/internal/client/runtime.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/internal/client/runtime.js b/packages/svelte/src/internal/client/runtime.js
 index 72a67d2..26a94da 100644
 --- a/packages/svelte/src/internal/client/runtime.js
@@ -297,11 +297,11 @@ index 72a67d2..26a94da 100644
   * });
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/reactivity/create-subscriber.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/reactivity/create-subscriber.js b/packages/svelte/src/reactivity/create-subscriber.js
 index f71f7d2..8318a21 100644
 --- a/packages/svelte/src/reactivity/create-subscriber.js
@@ -352,11 +352,11 @@ index f71f7d2..8318a21 100644
   * }
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/store/index-client.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/store/index-client.js b/packages/svelte/src/store/index-client.js
 index 7b0d291..dad87de 100644
 --- a/packages/svelte/src/store/index-client.js
@@ -372,11 +372,11 @@ index 7b0d291..dad87de 100644
   * );
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/store/index-server.js`
 
-```diff
+````diff
 diff --git a/packages/svelte/src/store/index-server.js b/packages/svelte/src/store/index-server.js
 index 7987a3e..e56fa2d 100644
 --- a/packages/svelte/src/store/index-server.js
@@ -392,7 +392,7 @@ index 7987a3e..e56fa2d 100644
   * );
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/utils.js`
 
@@ -403,7 +403,7 @@ index d9478aa..19d6f92 100644
 +++ b/packages/svelte/src/utils.js
 @@ -188,9 +188,9 @@ export function is_boolean_attribute(name) {
  }
- 
+
  /**
 - * @type {Record<string, string>} List of attribute names that should be
 - *   aliased to their property names because they behave differently between
@@ -415,4 +415,3 @@ index d9478aa..19d6f92 100644
  const ATTRIBUTE_ALIASES = {
  	// no `class: 'className'` because we handle that separately
 ```
-

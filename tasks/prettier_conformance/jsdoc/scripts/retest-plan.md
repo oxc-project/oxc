@@ -253,7 +253,7 @@ After implementing 7 fixes (Fix 2: tabs→spaces, Fix 3: @default indent, Fix 4:
 | ---------- | ---------- | ---------------- | ----------------- |
 | evolu      | 134        | 14               | 0                 |
 | wxt        | 1,218      | 5                | +1                |
-| typedoc    | 792        | 23               | 0                |
+| typedoc    | 792        | 23               | 0                 |
 | Chart.js   | 1,276      | 4                | -1                |
 | svelte     | 4,130      | 14               | +4                |
 | **Total**  | **7,550**  | **60**           | **+4**            |
@@ -293,13 +293,13 @@ After implementing Fix 8 (capitalization skip types), Fix 6 (blank line preserva
 ### Correctness
 
 | Repository | JSDoc Tags | Files with Diffs | Change from round 1 |
-| ---------- | ---------- | ---------------- | -------------------- |
-| evolu      | 134        | 13               | -1                   |
-| wxt        | 1,218      | 4                | -1                   |
-| typedoc    | 792        | 14               | -9                   |
-| Chart.js   | 1,276      | 4                | 0                    |
-| svelte     | 4,130      | 14               | 0                    |
-| **Total**  | **7,550**  | **49**           | **-11**              |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | -1                  |
+| wxt        | 1,218      | 4                | -1                  |
+| typedoc    | 792        | 14               | -9                  |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,130      | 14               | 0                   |
+| **Total**  | **7,550**  | **49**           | **-11**             |
 
 ### Remaining Diff Categories (all design differences)
 
@@ -323,13 +323,13 @@ After fixing JSDoc parser bug: `brace_depth` (parenthesis tracking) was not rese
 ### Correctness
 
 | Repository | JSDoc Tags | Files with Diffs | Change from round 2 |
-| ---------- | ---------- | ---------------- | -------------------- |
-| evolu      | 134        | 13               | -1                   |
-| wxt        | 1,218      | 4                | 0                    |
-| typedoc    | 792        | 14               | 0                    |
-| Chart.js   | 1,276      | 4                | 0                    |
-| svelte     | 4,150      | 16               | +2                   |
-| **Total**  | **7,570**  | **51**           | **+2**               |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | -1                  |
+| wxt        | 1,218      | 4                | 0                   |
+| typedoc    | 792        | 14               | 0                   |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,150      | 16               | +2                  |
+| **Total**  | **7,570**  | **51**           | **+2**              |
 
 ### Fixes Confirmed
 
@@ -358,13 +358,13 @@ After fixing 3 bugs: @default verbatim preservation (`should_preserve_descriptio
 ### Correctness
 
 | Repository | JSDoc Tags | Files with Diffs | Change from round 3 |
-| ---------- | ---------- | ---------------- | -------------------- |
-| evolu      | 134        | 13               | 0                    |
-| wxt        | 1,218      | 2                | -2                   |
-| typedoc    | 792        | 13               | -1                   |
-| Chart.js   | 1,276      | 4                | 0                    |
-| svelte     | 4,149      | 17               | +1                   |
-| **Total**  | **7,569**  | **49**           | **-2**               |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | 0                   |
+| wxt        | 1,218      | 2                | -2                  |
+| typedoc    | 792        | 13               | -1                  |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,149      | 17               | +1                  |
+| **Total**  | **7,569**  | **49**           | **-2**              |
 
 ### Fixes Confirmed
 
@@ -393,13 +393,13 @@ After fixing brace_depth reset at newlines (commit b76a6fe75e) to prevent apostr
 ### Correctness
 
 | Repository | JSDoc Tags | Files with Diffs | Change from round 4 |
-| ---------- | ---------- | ---------------- | -------------------- |
-| evolu      | 134        | 13               | 0                    |
-| wxt        | 1,183      | 1                | -1                   |
-| typedoc    | 792        | 13               | 0                    |
-| Chart.js   | 1,276      | 4                | 0                    |
-| svelte     | 4,150      | 16               | -1                   |
-| **Total**  | **7,535**  | **47**           | **-2**               |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | 0                   |
+| wxt        | 1,183      | 1                | -1                  |
+| typedoc    | 792        | 13               | 0                   |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,150      | 16               | -1                  |
+| **Total**  | **7,535**  | **47**           | **-2**              |
 
 ### Fixes Confirmed
 
