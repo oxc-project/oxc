@@ -193,3 +193,32 @@ when it exceeds printWidth. The prose line is preserved as-is.
 ```
 
 **Found in**: typedoc (inherit-doc.ts)
+
+## 7. `@type` name/description split causes inconsistent capitalization
+
+**Severity**: Low — cosmetic, inconsistent behavior
+
+For `@type` tags, comment-parser arbitrarily splits the text after the type into a `name` field
+(first word) and `description` field (remaining words). The plugin capitalizes descriptions but
+not names, producing inconsistent results where only the second word gets capitalized.
+
+**Root cause**: comment-parser's generic tag parsing always extracts the first word as `name`,
+even for `@type` where the entire text is semantically a description. The plugin's `capitalizer()`
+is applied to the `description` field but not the `name` field (`stringify.ts:99`).
+
+**Example** (from conformance tests):
+
+```js
+// Input:
+/** @type {import('eslint').Linter.Config} should be single line */
+
+// prettier-plugin-jsdoc output (inconsistent capitalization):
+/** @type {import("eslint").Linter.Config} should Be single line */
+// "should" (name) stays lowercase, "be" (description) is capitalized
+
+// oxfmt output (consistent capitalization):
+/** @type {import("eslint").Linter.Config} Should be single line */
+// Entire text capitalized as description
+```
+
+**Found in**: conformance tests (comment-line-strategy 001-004)
