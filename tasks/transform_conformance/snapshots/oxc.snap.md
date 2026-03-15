@@ -1,6 +1,6 @@
 commit: 87a048db
 
-Passed: 204/336
+Passed: 204/337
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -555,7 +555,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (6/87)
+# legacy-decorators (6/88)
 * oxc/class-without-name-with-decorated_class/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["dec"]
