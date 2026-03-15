@@ -66,11 +66,15 @@ export async function format(fileName: string, sourceText: string, options?: For
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 
+  // Capture plugins from options so `resolvePlugins` can use them without needing
+  // a config file (the NAPI path receives options directly, not via .oxfmtrc).
+  const plugins = (options?.plugins as string[] | undefined) ?? [];
+
   return napiFormat(
     fileName,
     sourceText,
     options ?? {},
-    resolvePlugins,
+    (numThreads: number) => resolvePlugins(numThreads, plugins),
     (options, code) => formatFile({ options, code }),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
@@ -92,7 +96,7 @@ export async function jsTextToDoc(
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
-    resolvePlugins,
+    (numThreads: number) => resolvePlugins(numThreads, []),
     (_options, _code) => Promise.reject(/* Unreachable */),
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, texts) => formatEmbeddedDoc({ options, texts }),
