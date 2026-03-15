@@ -1,46 +1,9 @@
 # JSDoc Diffs: wxt
 
-Date: 2026-03-15 (post-fix retest #2)
+Date: 2026-03-15 (round 4)
 Prettier version: 3.8.1
 JSDoc tags: 1218
-Files with diffs: 4 (excluding .oxfmtrc.json)
-
-## `packages/unocss/src/index.ts`
-
-```diff
-@@ -52,8 +52,10 @@ export interface UnoCSSOptions<Theme extends object = object> {
-    * it from specific builds.
-    *
-    * @example
--   *   {undefined} ('popup',
--   *   'options');
-+   *   {
-+   *     undefined;
-+   *   }
-+   *   ("popup", "options");
-    *
-    * @default [ ]
-    */
-```
-
-## `packages/wxt/src/core/utils/building/__tests__/group-entrypoints.test.ts`
-
-```diff
-@@ -185,10 +185,7 @@ describe("groupEntrypoints", () => {
-     expect(actual).toEqual([[background]]);
-   });
-
--  it.todo(
--    "should group ESM compatible sandbox scripts with sandbox pages",
--    () => {
--      // Main world content scripts
--    },
--  );
-+  it.todo("should group ESM compatible sandbox scripts with sandbox pages", () => {
-+    // Main world content scripts
-+  });
- });
-```
+Files with diffs: 2
 
 ## `packages/wxt/src/core/utils/building/detect-dev-changes.ts`
 
@@ -65,31 +28,18 @@ Files with diffs: 4 (excluding .oxfmtrc.json)
 - *       to change to an extension reload
 + *     reloading the whole extension. Not sure about firefox, this might need to
 + *     change to an extension reload
-  * - Reload extension
-  *
-  *   - Background script is changed
 ```
 
-## `packages/wxt/src/types.ts`
+## `packages/wxt/src/modules.ts`
 
 ```diff
-@@ -70,7 +70,8 @@ export interface InlineConfig {
-    * @example
-    *   {{browser}} -mv{{manifestVersion}}
-    *
--   * @default <span v-pre>`"{{browser}}-mv{{manifestVersion}}{{modeSuffix}}"`</span>
-+   * @default <span
-+   *   v-pre>`"{{browser}}-mv{{manifestVersion}}{{modeSuffix}}"`</span>
-    */
-   outDirTemplate?: string;
-   /**
-@@ -342,7 +343,7 @@ export interface InlineConfig {
-    * root directory or an absolute path.
-    *
-    * @example
--   *   { "testing": "src/utils/testing.ts" }
-+   *   { testing: "src/utils/testing.ts" }
-    */
-   alias?: Record<string, string>;
-   /** Experimental settings - use with caution. */
+@@ -102,8 +102,8 @@ export function addPublicAssets(wxt: Wxt, dir: string): void {
+  *   });
+  *   });
+  *
+- * @param wxt The wxt instance provided by the module's setup function.
+- * @param viteConfig A function that returns the vite config the module is
++ *   @param wxt The wxt instance provided by the module's setup function.
++ *   @param viteConfig A function that returns the vite config the module is
+  *   adding. Same format as `vite` in `wxt.config.ts`.
 ```

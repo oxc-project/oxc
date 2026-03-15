@@ -350,3 +350,38 @@ After fixing JSDoc parser bug: `brace_depth` (parenthesis tracking) was not rese
 ### Bugs Found
 
 See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-15, round 4)
+
+After fixing 3 bugs: @default verbatim preservation (`should_preserve_description_verbatim()`), brace-starting @example code pass-through (JSON-like detection + `return None` for `{`-starting code), inline @type skip for non-formatting-needed types. 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 3 |
+| ---------- | ---------- | ---------------- | -------------------- |
+| evolu      | 134        | 13               | 0                    |
+| wxt        | 1,218      | 2                | -2                   |
+| typedoc    | 792        | 13               | -1                   |
+| Chart.js   | 1,276      | 4                | 0                    |
+| svelte     | 4,149      | 17               | +1                   |
+| **Total**  | **7,569**  | **49**           | **-2**               |
+
+### Fixes Confirmed
+
+- **@default verbatim preservation** (wxt types.ts): `@default` values no longer wrapped at printWidth. Fixed via `should_preserve_description_verbatim()`.
+- **Brace-starting @example code** (wxt unocss/index.ts, types.ts): `{undefined}('popup', 'options')` pseudo-code preserved as-is. JSON-like `{ "testing": "..." }` preserved with quoted keys. Fixed via JSON detection + `return None` for `{`-starting code.
+
+### Remaining Diff Categories (all design differences or upstream bugs)
+
+1. **`{@link}` wrapping** (~11 files across evolu, typedoc, chartjs, svelte): oxfmt keeps `{@link Foo}` atomic. Design difference.
+2. **Tabs→spaces in code blocks** (svelte 9 files): Normalizes tab indentation to spaces in @example code blocks. Design difference.
+3. **`@type` description capitalization** (svelte 3, typedoc 1): oxfmt capitalizes per conformance tests. Upstream bug.
+4. **`{@includeCode}` placement** (typedoc 3 files): Each `{@includeCode}` on own line. Design difference.
+5. **Sub-list indent normalization** (evolu 2, wxt 1): 4-space vs content-aligned. Design difference.
+6. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+7. **Multi-line @param type collapsed** (svelte renderer.js): Multi-line `{{ ... }}` type still being collapsed and merging two @param tags. BUG.
+8. **@param indent after @example** (wxt modules.ts): Tags after @example get extra indent. Design difference (upstream indents them too).
+
+### Bugs Found
+
+See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.

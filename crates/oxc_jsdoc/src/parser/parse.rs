@@ -117,6 +117,12 @@ pub fn parse_jsdoc(
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
+                // Reset paren depth at newlines. Unbalanced parens caused by
+                // apostrophes in prose (e.g., "doesn't") falsely setting
+                // `in_single_quotes` which blocks `)` from decrementing depth.
+                // Inside `{...}` type annotations, `curly_brace_depth > 0`
+                // already prevents tag recognition regardless of brace_depth.
+                brace_depth = 0;
             }
             '{' if backtick_count == 0 && !in_double_quotes && !in_single_quotes => {
                 curly_brace_depth += 1;
