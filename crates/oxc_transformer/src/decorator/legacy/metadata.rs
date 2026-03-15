@@ -180,7 +180,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         let should_transform = !(class.is_expression() || class.declare);
 
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
-            ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
+            ClassElement::MethodDefinition(method)
+                if method.kind.is_constructor() && method.value.body.is_some() =>
+            {
+                Some(method)
+            }
             _ => None,
         });
 
