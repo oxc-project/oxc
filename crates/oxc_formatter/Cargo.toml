@@ -16,8 +16,6 @@ description.workspace = true
 [lints]
 workspace = true
 
-[lib]
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -48,3 +46,6 @@ oxc_span = { workspace = true }
 [features]
 default = []
 detect_code_removal = ["dep:oxc_semantic"]
+
+[lib]
+doctest = false
