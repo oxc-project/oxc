@@ -22,7 +22,21 @@ export async function loadJsConfig(path: string): Promise<object | null> {
   // Bypass Node.js module cache to allow reloading changed config files (used for LSP)
   const fileUrl = pathToFileURL(path);
   fileUrl.searchParams.set("cache", Date.now().toString());
-  const { default: config } = await import(fileUrl.href);
+
+  // NOTE: Suppress stdout during `import()`.
+  // This is necessary because some config files may contain `console.log()` statements for debugging,
+  // and we don't want those logs to interfere with the LSP protocol stream (which uses stdout for communication).
+  // Without this, LSP message frames can get corrupted, leading to parsing errors and broken LSP functionality.
+  // As a side effect, this will also suppress any logs for CLI usage,
+  // but it's a trade-off and keep our CLI output clean and focused on errors and results.
+  const origStdoutWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = () => true;
+  let config: unknown;
+  try {
+    ({ default: config } = await import(fileUrl.href));
+  } finally {
+    process.stdout.write = origStdoutWrite;
+  }
 
   if (config === undefined) throw new Error("Configuration file has no default export.");
 
