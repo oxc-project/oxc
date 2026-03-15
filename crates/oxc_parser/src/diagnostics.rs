@@ -491,6 +491,11 @@ pub fn new_dynamic_import(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn new_super(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'new super()' is not allowed").with_label(span)
+}
+
+#[cold]
 pub fn private_name_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Classes can't have an element named '#constructor'").with_label(span)
 }
