@@ -557,12 +557,7 @@ impl DisableDirectivesBuilder {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::Single {
-                    rule_name: rule_name.clone(),
-                    name_span,
-                    comment_span,
-                    is_next_line: false,
-                },
+                DisabledRule::Single { rule_name, name_span, comment_span, is_next_line: false },
             );
         }
 
