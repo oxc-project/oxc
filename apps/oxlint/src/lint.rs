@@ -1435,7 +1435,7 @@ mod test {
     #[test]
     fn test_tsgolint_disable_directives() {
         // Test that disable directives work with type-aware rules
-        let args = &["--type-aware", "test.ts"];
+        let args = &["--type-aware"];
         Tester::new()
             .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
             .test_and_snapshot(args);
