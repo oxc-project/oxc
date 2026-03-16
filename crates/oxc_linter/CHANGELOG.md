@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.56.0] - 2026-03-16
+
+### 🚀 Features
+
+- 7a2a7d0 linter: Implement `n/handle-callback-err` rule (#19616) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 6eb5b01 linter/prefer-await-to-then: Ignore Promise static methods (#20347) (camc314)
+- 3ad7f53 linter/explicit-module-boundary-types: False positive with satisfies expr (#20309) (camc314)
+- f547401 linter/no-unused-private-class-members: Treat switch discriminants as read (#20307) (camc314)
+
+### ⚡ Performance
+
+- e4f7248 linter: Remove unnecessary clone of owned String in drain loop (#20388) (Boshen)
+- 4a67f1d linter: Eliminate Vec allocation in disable directive matching (#20387) (Boshen)
+- b0125c5 linter/plugins: Deserialize comments without AST (#20364) (overlookmotel)
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
+### 📚 Documentation
+
+- 24490b5 linter: Improve formatting for 80ish rules' docs. (#20411) (connorshea)
+
 ## [1.55.0] - 2026-03-12
 
 ### 📚 Documentation

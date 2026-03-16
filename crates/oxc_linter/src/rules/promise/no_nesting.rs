@@ -21,7 +21,7 @@ pub struct NoNesting;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow nested then() or catch() statements.
+    /// Disallow nested `then()` or `catch()` statements.
     ///
     /// ### Why is this bad?
     ///

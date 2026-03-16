@@ -81,7 +81,7 @@ impl Deref for JsxKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce `key` prop for elements in array
+    /// Enforce `key` prop for elements in array.
     ///
     /// ### Why is this bad?
     ///

@@ -30,6 +30,12 @@ void (async () => {
   // @ts-expect-error: `_handle` is an internal API
   if (!process.stdin.isTTY) process.stdin._handle?.setBlocking?.(true);
 
+  // LSP uses stdout for communication, so write logs to stderr to avoid breaking the protocol.
+  // Since LSP is handled on the Rust side, we have to check the flag here. (`runCli()` starts the server and waits)
+  // Also, for Oxfmt, this only actually affects loading JS/TS config files.
+  // The call to Prettier is currently done via `child_process`, so it won't break LSP.
+  if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
+
   // Call the Rust CLI first, to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
   const [mode, exitCode] = await runCli(

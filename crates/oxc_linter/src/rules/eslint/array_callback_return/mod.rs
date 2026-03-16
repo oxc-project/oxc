@@ -131,7 +131,7 @@ pub struct ArrayCallbackReturn {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce return statements in callbacks of array methods
+    /// Enforce return statements in callbacks of array methods.
     ///
     /// ### Why is this bad?
     ///

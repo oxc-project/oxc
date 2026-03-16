@@ -28,7 +28,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The void operator is useful when you want to execute an expression while evaluating to undefined. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
+    /// The void operator is useful when you want to execute an expression while evaluating to `undefined`. However, it can be confusing when used in places where the return value is meaningful, particularly in arrow functions and conditional expressions.
     ///
     /// ### Examples
     ///

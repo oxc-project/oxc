@@ -6,8 +6,6 @@ use editorconfig_parser::{
 };
 use fast_glob::glob_match;
 use serde_json::Value;
-#[cfg(feature = "napi")]
-use tracing::debug;
 use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
@@ -270,9 +268,15 @@ impl ConfigResolver {
 
         #[cfg(feature = "napi")]
         if is_js_config_file(path) {
-            let loader = js_config_loader
-                .expect("JS config loader must be set when `napi` feature is enabled");
-            let raw_config = load_js_config(loader, path)?.ok_or_else(|| {
+            // Load successful and `.fmt` field found -> Use it as config
+            // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
+            let raw_config = load_js_config(
+                js_config_loader
+                    .expect("JS config loader must be set when `napi` feature is enabled"),
+                path,
+            )?
+            // Load successful but no `.fmt` field -> Error (explicitly specified config must have it)
+            .ok_or_else(|| {
                 format!("Expected a `fmt` field in the default export of {}", path.display())
             })?;
 
@@ -303,24 +307,18 @@ impl ConfigResolver {
                 // For `vite.config.ts`
                 #[cfg(feature = "napi")]
                 if is_vite_plus_config(&path) {
-                    match load_js_config(
+                    // Load successful and `.fmt` field found -> Use it as config
+                    // Load failed (e.g. syntax error, missing dependencies) -> Propagate error
+                    if let Some(raw_config) = load_js_config(
                         js_config_loader
                             .expect("JS config loader must be set when `napi` feature is enabled"),
                         &path,
-                    ) {
-                        // Load successful and `.fmt` field found -> Use it as config
-                        Ok(Some(raw_config)) => {
-                            let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
-                            let config_dir = path.parent().map(Path::to_path_buf);
-                            return Ok(Self::new(raw_config, config_dir, editorconfig));
-                        }
-                        // Load successful but no `.fmt` field
-                        // -> Skip and continue searching, otherwise `load_config_at()` would treat as an error
-                        Ok(None) => debug!("No `.fmt` field in {}, skipping", path.display()),
-                        // Load failed (e.g., syntax error, missing dependencies)
-                        // -> Skip and continue searching, as the config file is likely not intended for Oxfmt
-                        Err(err) => debug!("Failed to load {}: {err}, skipping", path.display()),
+                    )? {
+                        let editorconfig = load_editorconfig(cwd, editorconfig_path)?;
+                        let config_dir = path.parent().map(Path::to_path_buf);
+                        return Ok(Self::new(raw_config, config_dir, editorconfig));
                     }
+                    // Load successful but no `.fmt` field found -> Skip this file and continue searching.
                     continue;
                 }
 

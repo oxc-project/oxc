@@ -12,7 +12,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When you know that a value cannot be null or undefined, you can use either a non-null assertion (`!`) or a type assertion (`as Type`). The non-null assertion is more concise and clearly communicates the intent that you're asserting the value is not null/undefined.
+    /// When you know that a value cannot be `null` or `undefined`, you can use either a non-null assertion (`!`) or a type assertion (`as Type`). The non-null assertion is more concise and clearly communicates the intent that you're asserting the value is not `null`/`undefined`.
     ///
     /// ### Examples
     ///

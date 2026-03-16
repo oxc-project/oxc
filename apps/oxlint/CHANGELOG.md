@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.56.0] - 2026-03-16
+
+### 🚀 Features
+
+- c95951f linter/plugins: Implement `sourceCode.markVariableAsUsed` (#20357) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+- a4b61f7 linter: Remove `defineConfig` check (#20308) (camc314)
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
+### ⚡ Performance
+
+- 618a598 linter/plugins: Add fast path for files with no comments (#20366) (overlookmotel)
+- b0125c5 linter/plugins: Deserialize comments without AST (#20364) (overlookmotel)
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+- bf442f8 linter/plugins: Cheaper `Token` creation (#20360) (overlookmotel)
+- 7946eba linter/plugins: Avoid arguments spread and temp array when merging (#20318) (overlookmotel)
+- fc7cf8a linter/plugins: Pre-define less CFG merger functions (#20317) (overlookmotel)
+- 3b9eb28 linter/plugins: Streamline getting/creating visit fn mergers (#20319) (overlookmotel)
+- f04e850 linter/plugins: Inline binary search functions into call sites (#20312) (overlookmotel)
+- fe24afe linter/plugins: Apply replace globals TSDown plugin to JS files (#20305) (overlookmotel)
+- 77cdacc linter/plugins: Use array buffer views for tokens (#20301) (overlookmotel)
+- 910c941 linter/plugins: Reorder branches in `getTokenByRangeStart` (#20296) (overlookmotel)
+- af7674c linter/tokens: Avoid extra token value allocation (#20013) (camc314)
+
+### 📚 Documentation
+
+- 3383523 linter: Improve `--tsconfig` flag docs (#20342) (camc314)
+
 ## [1.55.0] - 2026-03-12
 
 ### 🐛 Bug Fixes

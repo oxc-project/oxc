@@ -20,7 +20,7 @@ pub struct NoUnusedPrivateClassMembers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unused private class members
+    /// Disallow unused private class members.
     ///
     /// ### Why is this bad?
     ///

@@ -44,7 +44,7 @@ impl Default for PreferImportInMockConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces using a dynamic import() in `vi.mock()`, which improves type information and IntelliSense for the mocked module.
+    /// This rule enforces using a dynamic `import()` in `vi.mock()`, which improves type information and IntelliSense for the mocked module.
     ///
     /// ### Why is this bad?
     ///

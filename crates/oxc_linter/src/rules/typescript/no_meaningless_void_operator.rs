@@ -17,11 +17,11 @@ pub struct NoMeaninglessVoidOperatorConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows the void operator when its argument is already of type void or undefined.
+    /// This rule disallows the void operator when its argument is already of type void or `undefined`.
     ///
     /// ### Why is this bad?
     ///
-    /// The void operator is useful when you want to execute an expression and force it to evaluate to undefined. However, using void on expressions that are already of type void or undefined is meaningless and adds unnecessary complexity to the code.
+    /// The void operator is useful when you want to execute an expression and force it to evaluate to `undefined`. However, using void on expressions that are already of type void or `undefined` is meaningless and adds unnecessary complexity to the code.
     ///
     /// ### Examples
     ///

@@ -962,6 +962,36 @@ fn test_new_expressions() {
     test("new BigUint64Array", false);
     // DataView requires an ArrayBuffer argument; calling without one throws
     test("new DataView", true);
+
+    // Collection constructors iterate their argument via Symbol.iterator,
+    // so they are only pure with no args, null, undefined, or array literals.
+    // null/undefined — pure
+    test("new Set(null)", false);
+    test("new Map(null)", false);
+    test("new WeakSet(null)", false);
+    test("new WeakMap(null)", false);
+    test("new Set(undefined)", false);
+    test("new Map(undefined)", false);
+    // Array literal — pure
+    test("new Set([])", false);
+    test("new Set([1, 2, 3])", false);
+    test("new Map([])", false);
+    test("new Map([[1, 2], [3, 4]])", false);
+    test("new WeakSet([])", false);
+    test("new WeakMap([])", false);
+    test("new WeakMap([[{}, 1]])", false);
+    // Variable reference — NOT pure (could have custom Symbol.iterator)
+    test("new Set(x)", true);
+    test("new Map(x)", true);
+    test("new WeakSet(x)", true);
+    test("new WeakMap(x)", true);
+    // Non-array literals — NOT pure
+    test("new Set(false)", true);
+    test("new Map({})", true);
+    // Map with non-array entries — NOT pure
+    test("new Map([x])", true);
+    test("new Map([x, []])", true);
+    test("new Map([[], x])", true);
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
