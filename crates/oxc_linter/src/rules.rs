@@ -705,6 +705,7 @@ pub(crate) mod vitest {
     pub mod consistent_test_filename;
     pub mod consistent_test_it;
     pub mod consistent_vitest_vi;
+    pub mod expect_expect;
     pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
@@ -753,6 +754,7 @@ pub(crate) mod vue {
 
 pub(crate) mod shared {
     pub mod consistent_test_it;
+    pub mod expect_expect;
     pub mod valid_title;
 }
 
