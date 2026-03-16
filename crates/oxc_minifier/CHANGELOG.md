@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
+### ⚡ Performance
+
+- 30a2b0f minifier: Use atom_from_strs_array for template literal concat (#20386) (Boshen)
+- 690ce17 minifier: Use Vec::with_capacity for inline template expressions (#20389) (Boshen)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🚀 Features
