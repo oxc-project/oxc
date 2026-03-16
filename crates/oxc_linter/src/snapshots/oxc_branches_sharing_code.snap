@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
    ╭─[branches_sharing_code.tsx:2:9]
  1 │ 

@@ -96,46 +96,46 @@ fn test() {
         r#"it("foo", function () {})"#,
         "it('foo', () => {}); function myTest() { if ('bar') {} }",
         r#"function myFunc(str: string) {
-			    return str;
-			  }
-			  describe("myTest", () => {
-			     it("convert shortened equal filter", () => {
-			      expect(
-			      myFunc("5")
-			      ).toEqual("5");
-			     });
-			    });"#,
+                return str;
+              }
+              describe("myTest", () => {
+                 it("convert shortened equal filter", () => {
+                  expect(
+                  myFunc("5")
+                  ).toEqual("5");
+                 });
+                });"#,
         r#"describe("shows error", () => {
-			     if (1 === 2) {
-			      myFunc();
-			     }
-			     expect(true).toBe(false);
-			    });"#,
+                 if (1 === 2) {
+                  myFunc();
+                 }
+                 expect(true).toBe(false);
+                });"#,
     ];
 
     let fail = vec![
         r#"describe("shows error", () => {
-			    if(true) {
-			     test("shows error", () => {
-			      expect(true).toBe(true);
-			     })
-			    }
-			   })"#,
+                if(true) {
+                 test("shows error", () => {
+                  expect(true).toBe(true);
+                 })
+                }
+               })"#,
         r#"
-			   describe("shows error", () => {
-			    if(true) {
-			     it("shows error", () => {
-			      expect(true).toBe(true);
-			      })
-			     }
-			   })"#,
+               describe("shows error", () => {
+                if(true) {
+                 it("shows error", () => {
+                  expect(true).toBe(true);
+                  })
+                 }
+               })"#,
         r#"describe("errors", () => {
-			    if (Math.random() > 0) {
-			     test("test2", () => {
-			     expect(true).toBeTruthy();
-			    });
-			    }
-			   });"#,
+                if (Math.random() > 0) {
+                 test("test2", () => {
+                 expect(true).toBeTruthy();
+                });
+                }
+               });"#,
     ];
 
     Tester::new(NoConditionalTests::NAME, NoConditionalTests::PLUGIN, pass, fail)

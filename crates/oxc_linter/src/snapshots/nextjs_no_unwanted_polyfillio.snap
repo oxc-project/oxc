@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): Using polyfill.io is a security risk due to a supply chain attack in 2024.
    ╭─[no_unwanted_polyfillio.tsx:6:33]
  5 │                         <h1>Hello title</h1>

@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### ⚡ Performance
+
+- e7595d1 mangler: Use BitSet for exported symbols set (#19023) (sapphi-red)
+- 69a8d85 mangler: Use BitSet for keep_names symbols set (#19028) (sapphi-red)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+- 9af52c6 mangler: Turn off `scope_tree_child_ids` for `SemanticBuilder` (#18122) (Dunqing)
+
 ## [0.107.0] - 2026-01-05
 
 ### 🚀 Features

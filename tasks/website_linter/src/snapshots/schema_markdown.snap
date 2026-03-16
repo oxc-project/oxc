@@ -10,13 +10,7 @@ search: false
 
 This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 
-Usage: `oxlint -c oxlintrc.json --import-plugin`
-
-::: danger NOTE
-
-Only the `.json` format is supported. You can use comments in configuration files.
-
-:::
+Usage: `oxlint -c oxlintrc.json`
 
 Example
 
@@ -36,7 +30,14 @@ Example
   "globals": {
     "foo": "readonly"
   },
-  "settings": {},
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    },
+    "custom": {
+      "option": true
+    }
+  },
   "rules": {
     "eqeqeq": "warn",
     "import/no-cycle": "error",
@@ -59,6 +60,41 @@ Example
     }
   ]
 }
+```
+
+`oxlint.config.ts`
+
+```ts
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+plugins: ["import", "typescript", "unicorn"],
+env: {
+"browser": true
+},
+globals: {
+"foo": "readonly"
+},
+settings: {
+react: {
+version: "18.2.0"
+},
+custom: { option: true }
+},
+rules: {
+"eqeqeq": "warn",
+"import/no-cycle": "error",
+"react/self-closing-comp": ["error", { "html": false }]
+},
+overrides: [
+{
+files: ["*.test.ts", "*.spec.ts"],
+rules: {
+"@typescript-eslint/no-explicit-any": "off"
+}
+}
+]
+});
 ```
 
 
@@ -214,8 +250,36 @@ JS plugins, allows usage of ESLint plugins with Oxlint.
 Read more about JS plugins in
 [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
-Note: JS plugins are experimental and not subject to semver.
-They are not supported in the language server (and thus editor integrations) at present.
+Note: JS plugins are in alpha and not subject to semver.
+
+Examples:
+
+Basic usage with a local plugin path.
+
+```json
+{
+"jsPlugins": ["./custom-plugin.js"],
+"rules": {
+"custom/rule-name": "warn"
+}
+}
+```
+
+Using a built-in Rust plugin alongside a JS plugin with the same name
+by giving the JS plugin an alias.
+
+```json
+{
+"plugins": ["import"],
+"jsPlugins": [
+{ "name": "import-js", "specifier": "eslint-plugin-import" }
+],
+"rules": {
+"import/no-cycle": "error",
+"import-js/no-unresolved": "warn"
+}
+}
+```
 
 
 ### jsPlugins[n]
@@ -259,6 +323,69 @@ type: `string`
 
 
 Path or package name of the plugin
+
+
+## options
+
+type: `object`
+
+
+Options for the linter.
+
+
+### options.denyWarnings
+
+type: `boolean`
+
+
+Ensure warnings produce a non-zero exit code.
+
+Equivalent to passing `--deny-warnings` on the CLI.
+
+
+### options.maxWarnings
+
+type: `integer`
+
+
+Specify a warning threshold. Exits with an error status if warnings exceed this value.
+
+Equivalent to passing `--max-warnings` on the CLI.
+
+
+### options.reportUnusedDisableDirectives
+
+
+
+Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+
+Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+CLI flags take precedence over this value when both are set.
+Only supported in the root configuration file.
+
+
+### options.typeAware
+
+type: `boolean`
+
+
+Enable rules that require type information.
+
+Equivalent to passing `--type-aware` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
+
+
+### options.typeCheck
+
+type: `boolean`
+
+
+Enable experimental type checking (includes TypeScript compiler diagnostics).
+
+Equivalent to passing `--type-check` on the CLI.
+
+Note that this requires the `oxlint-tsgolint` package to be installed.
 
 
 ## overrides
@@ -311,8 +438,7 @@ JS plugins for this override, allows usage of ESLint plugins with Oxlint.
 Read more about JS plugins in
 [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
-Note: JS plugins are experimental and not subject to semver.
-They are not supported in the language server (and thus editor integrations) at present.
+Note: JS plugins are in alpha and not subject to semver.
 
 
 ##### overrides[n].jsPlugins[n]
@@ -640,6 +766,27 @@ type: `object`
 Configure React plugin rules.
 
 Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
+
+
+#### settings.react.componentWrapperFunctions
+
+type: `string[]`
+
+default: `[]`
+
+Functions that wrap React components and should be treated as HOCs.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"componentWrapperFunctions": ["observer", "withRouter"]
+}
+}
+}
+```
 
 
 #### settings.react.formComponents

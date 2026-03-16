@@ -141,135 +141,260 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            "
-			enum E {
-			  A,
-			  B,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 1,
-			  B,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 1,
-			  B = 2,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'B',
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'B',
-			  C,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'B',
-			  C = 2,
-			  D = 1 + 1,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 3,
-			  B = 2,
-			  C,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'B',
-			  C = 2,
-			  D = foo(),
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = '',
-			  B = 0,
-			}
-			    ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 0,
-			  B = -0,
-			  C = NaN,
-			}
-			    ",
-            None,
-        ),
+        "
+            enum E {
+              A,
+              B,
+            }
+        ",
+        "
+            enum E {
+              A = 1,
+              B,
+            }
+        ",
+        "
+            enum E {
+              A = 1,
+              B = 2,
+            }
+        ",
+        "
+            enum E {
+              A = -1,
+              B = -2,
+            }
+        ",
+        "
+            enum E {
+              A = +1,
+              B = +2,
+            }
+        ",
+        "
+            enum E {
+              A = +1,
+              B = -1,
+            }
+        ",
+        "
+            enum E {
+              A = 1,
+              B = -1,
+            }
+        ",
+        "
+            enum E {
+              A = -0,
+              B = +0,
+            }
+        ",
+        "
+            enum E {
+              A = -0,
+              B = 0,
+            }
+        ",
+        "
+            enum E {
+              A = 1,
+              B = '1',
+            }
+        ",
+        "
+            enum E {
+              A = -1,
+              B = '-1',
+            }
+        ",
+        "
+            enum E {
+              A = 'A',
+              B = 'B',
+            }
+        ",
+        "
+            enum E {
+              A = 'A',
+              B = 'B',
+              C,
+            }
+        ",
+        "
+            enum E {
+              A = 'A',
+              B = 'B',
+              C = 2,
+              D = 1 + 1,
+            }
+        ",
+        "
+            enum E {
+              A = 3,
+              B = 2,
+              C,
+            }
+        ",
+        "
+            enum E {
+              A = 'A',
+              B = 'B',
+              C = 2,
+              D = foo(),
+            }
+        ",
+        "
+            enum E {
+              A = '',
+              B = 0,
+            }
+        ",
+        "
+            enum E {
+              A = 0,
+              B = -0,
+              C = NaN,
+            }
+        ",
+        "
+            enum E {
+              A = NaN,
+              B = NaN,
+            }
+        ",
+        "
+            enum E {
+              A = NaN,
+              B = -NaN,
+            }
+        ",
+        "
+            enum E {
+              A = 'NaN',
+              B = NaN,
+            }
+        ",
+        "
+            enum E {
+              A = -+-0,
+              B = +-+0,
+            }
+        ",
+        "
+            enum E {
+              A = -'',
+              B = 0,
+            }
+        ",
+        "
+            enum E {
+              A = Infinity,
+              B = Infinity,
+            }
+        ",
+        "
+            const A = 'A';
+            enum E {
+              A = 'A',
+              B = `${A}`,
+            }
+        ",
     ];
 
     let fail = vec![
-        (
-            "
-			enum E {
-			  A = 1,
-			  B = 1,
-			}
-			      ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'A',
-			}
-			      ",
-            None,
-        ),
-        (
-            "
-			enum E {
-			  A = 'A',
-			  B = 'A',
-			  C = 1,
-			  D = 1,
-			}
-			      ",
-            None,
-        ),
+        "
+            enum E {
+              A = 1,
+              B = 1,
+            }
+        ",
+        // "
+        //     enum E {
+        //       A = -1,
+        //       B = -1,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = +1,
+        //       B = +1,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = +0,
+        //       B = 0,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = -0,
+        //       B = -0,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = +'0',
+        //       B = 0,
+        //     }
+        // ",
+        "
+            enum E {
+              A = 0x10,
+              B = 16,
+            }
+        ",
+        // "
+        //     enum E {
+        //       A = +'1e2',
+        //       B = 100,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = +'',
+        //       B = 0,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = -+1,
+        //       B = +-1,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = -`0`,
+        //       B = -0,
+        //     }
+        // ",
+        "
+            enum E {
+              A = 'A',
+              B = 'A',
+            }
+        ",
+        "
+            enum E {
+              A = 'A',
+              B = 'A',
+              C = 1,
+              D = 1,
+            }
+        ",
+        // TODO: Fix the following cases where there is a raw template literal.
+        // "
+        //     enum E {
+        //       A = 'A',
+        //       B = `A`,
+        //     }
+        // ",
+        // "
+        //     enum E {
+        //       A = `A`,
+        //       B = `A`,
+        //     }
+        // ",
     ];
 
     Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)

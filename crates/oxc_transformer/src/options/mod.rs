@@ -66,6 +66,7 @@ pub struct TransformOptions {
     /// Plugins
     pub plugins: PluginsOptions,
 
+    /// Helper loading configuration for generated runtime helpers.
     pub helper_loader: HelperLoaderOptions,
 }
 

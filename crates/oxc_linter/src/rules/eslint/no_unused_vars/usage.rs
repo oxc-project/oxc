@@ -258,7 +258,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::AssignmentTargetPropertyProperty(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
-                    return options.is_ignored_assignment_target(self, &assignment.left);
+                    return options.is_ignored_assignment_target(self, &assignment.left).is_some();
                 }
                 // Needs to be checked separately from AssignmentTarget due to
                 // weird heritage bug for object assignment patterns.
@@ -267,14 +267,14 @@ impl<'a> Symbol<'_, 'a> {
                 // expression instead of the top-level AssignmentTarget
                 AstKind::ObjectAssignmentTarget(obj) => {
                     match options.search_obj_assignment_target(self, obj) {
-                        FoundStatus::Ignored => return true,
+                        FoundStatus::Ignored(_) => return true,
                         FoundStatus::NotIgnored => return false,
                         FoundStatus::NotFound => {}
                     }
                 }
                 AstKind::ArrayAssignmentTarget(arr) => {
                     match options.search_array_assignment_target(self, arr) {
-                        FoundStatus::Ignored => return true,
+                        FoundStatus::Ignored(_) => return true,
                         FoundStatus::NotIgnored => return false,
                         FoundStatus::NotFound => {}
                     }
@@ -466,7 +466,7 @@ impl<'a> Symbol<'_, 'a> {
                                 //   cancel = cancel?.();  // `cancel` is used
                                 // }
                                 // ```
-                                if self.get_parent_variable_scope(self.get_ref_scope(reference))
+                                if self.get_parent_variable_scope(Symbol::get_ref_scope(reference))
                                     != self.get_parent_variable_scope(self.scope_id())
                                 {
                                     return false;
@@ -831,8 +831,8 @@ impl<'a> Symbol<'_, 'a> {
 
     /// Get the [`ScopeId`] where a [`Reference`] is located.
     #[inline]
-    fn get_ref_scope(&self, reference: &Reference) -> ScopeId {
-        self.nodes().get_node(reference.node_id()).scope_id()
+    fn get_ref_scope(reference: &Reference) -> ScopeId {
+        reference.scope_id()
     }
 
     /// Get the [`Span`] covering the [`AstNode`] containing a [`Reference`].

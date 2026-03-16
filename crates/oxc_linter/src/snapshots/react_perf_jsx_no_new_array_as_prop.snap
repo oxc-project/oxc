@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
    ╭─[jsx_no_new_array_as_prop.tsx:1:32]
  1 │ const Foo = () => (<Item list={[]} />)

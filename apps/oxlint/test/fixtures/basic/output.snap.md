@@ -17,11 +17,9 @@
   help: Remove the debugger statement
 
 Found 1 warning and 1 error.
-Finished in Xms on 1 file with 91 rules using X threads.
+Finished in Xms on 1 file with 94 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

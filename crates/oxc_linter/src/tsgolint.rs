@@ -1,7 +1,9 @@
 use std::{
+    borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write, stderr},
+    iter, mem,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
@@ -648,6 +650,8 @@ struct TsGoLintDiagnosticPayload {
     pub fixes: Vec<Fix>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub suggestions: Vec<Suggestion>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub labeled_ranges: Vec<LabeledRange>,
 }
 
 /// Represents the error payload from `tsgolint`.
@@ -675,6 +679,7 @@ pub struct TsGoLintRuleDiagnostic {
     pub message: RuleMessage,
     pub fixes: Vec<Fix>,
     pub suggestions: Vec<Suggestion>,
+    pub labeled_ranges: Vec<LabeledRange>,
     pub file_path: PathBuf,
 }
 
@@ -702,11 +707,24 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
-            .with_label(val.span)
             .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, "typescript", val.rule))
             .with_error_code("typescript-eslint", val.rule);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
+        }
+        if val.labeled_ranges.is_empty() {
+            d = d.with_label(val.span);
+        } else {
+            let labels = val
+                .labeled_ranges
+                .into_iter()
+                .map(|lr| Span::new(lr.range.pos, lr.range.end).label(lr.label));
+            d = d.with_labels(labels);
+            // If the main span is empty, don't add it as a label since it doesn't have any meaning (means tsgolint sent nothing).
+            // Just use the labeled ranges that were passed instead.
+            if !val.span.is_unspanned() {
+                d = d.and_label(val.span.primary());
+            }
         }
         d
     }
@@ -730,60 +748,42 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
-        use std::{borrow::Cow, mem};
-
-        let mut fixes =
-            Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
-
-        if !val.fixes.is_empty() {
-            let fix_vec = mem::take(&mut val.fixes);
-            let fix_vec = fix_vec
+        let fix = if val.fixes.is_empty() {
+            None
+        } else {
+            let fix_vec = mem::take(&mut val.fixes)
                 .into_iter()
                 .map(|fix| crate::fixer::Fix {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
+                    kind: FixKind::Fix,
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
-        }
+            Some(CompositeFix::merge_fixes(fix_vec, source_text))
+        };
 
-        let suggestions = mem::take(&mut val.suggestions);
-        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
-            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
+        let suggestions = mem::take(&mut val.suggestions).into_iter().map(|suggestion| {
             let fix_vec = suggestion
                 .fixes
                 .into_iter()
-                .enumerate()
-                .map(|(i, fix)| {
-                    // Don't clone the message description on last turn of loop
-                    let message = if i < last_fix_index {
-                        suggestion.message.description.clone()
-                    } else {
-                        mem::take(&mut suggestion.message.description)
-                    };
-
-                    crate::fixer::Fix {
-                        content: Cow::Owned(fix.text),
-                        span: Span::new(fix.range.pos, fix.range.end),
-                        message: Some(Cow::Owned(message)),
-                    }
+                .map(|fix| crate::fixer::Fix {
+                    content: Cow::Owned(fix.text),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: None,
+                    kind: FixKind::Suggestion,
                 })
                 .collect();
 
             CompositeFix::merge_fixes(fix_vec, source_text)
-        }));
+                .with_message(suggestion.message.description)
+        });
 
-        let possible_fix = if fixes.is_empty() {
-            PossibleFixes::None
-        } else if fixes.len() == 1 {
-            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-        } else {
-            PossibleFixes::Multiple(fixes)
-        };
+        #[expect(clippy::from_iter_instead_of_collect)]
+        let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
-        Self::new(val.into(), possible_fix)
+        Self::new(val.into(), possible_fixes)
     }
 }
 
@@ -811,6 +811,12 @@ pub struct Fix {
 pub struct Suggestion {
     pub message: RuleMessage,
     pub fixes: Vec<Fix>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LabeledRange {
+    pub label: String,
+    pub range: Range,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -1053,7 +1059,10 @@ fn should_skip_diagnostic(
     path: &Path,
     tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
 ) -> bool {
-    let span = tsgolint_diagnostic.span;
+    let span = tsgolint_diagnostic
+        .labeled_ranges
+        .first()
+        .map_or(tsgolint_diagnostic.span, |range| Span::new(range.range.pos, range.range.end));
 
     if let Some(directives) = disable_directives_map.get(path) {
         directives.contains(&tsgolint_diagnostic.rule, span)
@@ -1122,6 +1131,7 @@ fn parse_single_message(
                     message: diagnostic_payload.message,
                     fixes: diagnostic_payload.fixes,
                     suggestions: diagnostic_payload.suggestions,
+                    labeled_ranges: diagnostic_payload.labeled_ranges,
                     file_path: PathBuf::from(
                         diagnostic_payload
                             .file_path
@@ -1216,8 +1226,8 @@ mod test {
     use oxc_span::Span;
 
     use crate::{
-        fixer::{Message, PossibleFixes},
-        tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
+        fixer::{FixKind, Message, PossibleFixes},
+        tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
 
     #[test]
@@ -1232,6 +1242,7 @@ mod test {
             },
             fixes: vec![],
             suggestions: vec![],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1266,6 +1277,7 @@ mod test {
                 Fix { text: "hello".into(), range: Range { pos: 5, end: 10 } },
             ],
             suggestions: vec![],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1278,6 +1290,7 @@ mod test {
                 content: "fixedhello".into(),
                 span: Span::new(0, 10),
                 message: None,
+                kind: FixKind::Fix
             })
         );
     }
@@ -1314,6 +1327,7 @@ mod test {
                     ],
                 },
             ],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1326,11 +1340,13 @@ mod test {
                     content: "hello".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: FixKind::Suggestion
                 },
                 crate::fixer::Fix {
                     content: "helloworld".into(),
                     span: Span::new(0, 10),
                     message: Some("Suggestion 2".into()),
+                    kind: FixKind::Suggestion
                 },
             ])
         );
@@ -1355,6 +1371,7 @@ mod test {
                 },
                 fixes: vec![Fix { text: "Suggestion 1".into(), range: Range { pos: 0, end: 5 } }],
             }],
+            labeled_ranges: vec![],
             file_path: "some/file/path".into(),
         };
 
@@ -1364,14 +1381,48 @@ mod test {
         assert_eq!(
             message.fixes,
             PossibleFixes::Multiple(vec![
-                crate::fixer::Fix { content: "fixed".into(), span: Span::new(0, 5), message: None },
+                crate::fixer::Fix {
+                    content: "fixed".into(),
+                    span: Span::new(0, 5),
+                    message: None,
+                    kind: FixKind::Fix
+                },
                 crate::fixer::Fix {
                     content: "Suggestion 1".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: FixKind::Suggestion,
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_labeled_ranges() {
+        let diagnostic = TsGoLintRuleDiagnostic {
+            span: Span::new(0, 10),
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![],
+            suggestions: vec![],
+            labeled_ranges: vec![
+                LabeledRange { label: "Label 1".into(), range: Range { pos: 0, end: 5 } },
+                LabeledRange { label: "Label 2".into(), range: Range { pos: 5, end: 10 } },
+            ],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert!(message.error.labels.is_some());
+        let labels = message.error.labels.as_ref().unwrap();
+        assert_eq!(labels.len(), 3);
+        assert_eq!(labels[0], LabeledSpan::new(Some("Label 1".into()), 0, 5));
+        assert_eq!(labels[1], LabeledSpan::new(Some("Label 2".into()), 5, 5));
     }
 
     #[test]
@@ -1446,6 +1497,42 @@ mod test {
         let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json_with_fixes).unwrap();
         assert_eq!(payload.fixes.len(), 1);
         assert_eq!(payload.suggestions.len(), 0);
+    }
+
+    #[test]
+    fn test_diagnostic_payload_deserialize_with_labeled_ranges() {
+        use super::TsGoLintDiagnosticPayload;
+
+        let json = r#"{
+            "kind": 0,
+            "range": {"pos": 0, "end": 10},
+            "rule": "some_rule",
+            "message": {
+                "id": "some_id",
+                "description": "Some description",
+                "help": null
+            },
+            "labeled_ranges": [
+                {
+                    "label": "Label 1",
+                    "range": {"pos": 0, "end": 5}
+                },
+                {
+                    "label": "Label 2",
+                    "range": {"pos": 5, "end": 10}
+                }
+            ],
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
+        assert_eq!(payload.labeled_ranges.len(), 2);
+        assert_eq!(payload.labeled_ranges[0].label, "Label 1");
+        assert_eq!(payload.labeled_ranges[0].range.pos, 0);
+        assert_eq!(payload.labeled_ranges[0].range.end, 5);
+        assert_eq!(payload.labeled_ranges[1].label, "Label 2");
+        assert_eq!(payload.labeled_ranges[1].range.pos, 5);
+        assert_eq!(payload.labeled_ranges[1].range.end, 10);
     }
 
     #[test]

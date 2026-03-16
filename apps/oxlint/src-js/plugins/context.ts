@@ -26,12 +26,13 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
+import { ast, initAst, fileIsJsx, SOURCE_CODE } from "./source_code.ts";
 import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import { envs, globals, initGlobals } from "./globals.ts";
+import { version as packageVersion } from "../../package.json" with { type: "json" };
 
 import type { Globals, Envs } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
@@ -41,12 +42,21 @@ import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
 import type { ModuleKind, Program } from "../generated/types.d.ts";
 
-// Cached current working directory
-let cwd: string | null = null;
-
 // Absolute path of file being linted.
 // When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 export let filePath: string | null = null;
+
+// Current working directory for file being linted.
+// Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
+export let cwd: string | null = null;
+
+/**
+ * Set CWD. Used when switching workspaces.
+ * @param cwdInput - CWD
+ */
+export function setCwd(cwdInput: string) {
+  cwd = cwdInput;
+}
 
 /**
  * Set up context for linting a file.
@@ -82,13 +92,12 @@ const PARSER = Object.freeze({
   /**
    * Parser name.
    */
-  name: "oxc",
+  name: "oxlint",
 
   /**
    * Parser version.
    */
-  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
-  version: "0.0.0",
+  version: packageVersion,
 
   /**
    * Parse code into an AST.
@@ -132,8 +141,64 @@ const PARSER = Object.freeze({
   supportedEcmaVersions: SUPPORTED_ECMA_VERSIONS,
 });
 
+// In conformance build, setting properties of this object to `true` or `false` overrides the defaults
+export const ecmaFeaturesOverride: {
+  globalReturn: boolean | null;
+  impliedStrict: boolean | null;
+} = {
+  globalReturn: null,
+  impliedStrict: null,
+};
+
+// Singleton object for ECMA features.
+const ECMA_FEATURES = Object.freeze({
+  /**
+   * `true` if file was parsed as JSX.
+   */
+  get jsx(): boolean {
+    return fileIsJsx();
+  },
+
+  /**
+   * `true` if file was parsed with top-level `return` statements allowed.
+   */
+  get globalReturn(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.globalReturn` config
+    if (CONFORMANCE) {
+      const { globalReturn } = ecmaFeaturesOverride;
+      if (globalReturn !== null) return globalReturn;
+    }
+
+    return ast.sourceType === "commonjs";
+  },
+
+  /**
+   * `true` if file was parsed as strict mode code.
+   */
+  get impliedStrict(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.impliedStrict` config
+    if (CONFORMANCE) {
+      const { impliedStrict } = ecmaFeaturesOverride;
+      if (impliedStrict !== null) return impliedStrict;
+    }
+
+    return ast.sourceType === "module";
+  },
+});
+
 // Singleton object for parser options.
-// TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
+// TODO: `sourceType` and `ecmaFeatures` are the only property ESLint provides.
+// But does TS-ESLint provide any further properties?
 const PARSER_OPTIONS = Object.freeze({
   /**
    * Source type of the file being linted.
@@ -141,12 +206,16 @@ const PARSER_OPTIONS = Object.freeze({
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
     return ast.sourceType;
   },
+
+  /**
+   * ECMA features.
+   */
+  ecmaFeatures: ECMA_FEATURES,
 });
 
 // Singleton object for language options.
@@ -157,7 +226,6 @@ const LANGUAGE_OPTIONS = {
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
@@ -206,7 +274,7 @@ const LANGUAGE_OPTIONS = {
 // In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
 // This is to allow changing the ECMAScript version in conformance tests.
 // Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
-let ecmaVersion = ECMA_VERSION;
+export let ecmaVersion = ECMA_VERSION;
 
 export function setEcmaVersion(version: number): void {
   if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
@@ -252,7 +320,7 @@ export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 // However, we still want to discourage using these deprecated methods/getters in rules, because such rules
 // will not work in ESLint 10 in compatibility mode.
 //
-// TODO: When we write a rule tester, throw an error in the tester if the rule uses deprecated methods/getters.
+// TODO: Throw an error in `RuleTester` if the rule uses deprecated methods/getters.
 // We'll need to offer an option to opt out of these errors, for rules which delegate to another rule whose code
 // the author doesn't control.
 const FILE_CONTEXT = Object.freeze({
@@ -305,7 +373,7 @@ const FILE_CONTEXT = Object.freeze({
   get cwd(): string {
     // Note: If we change this implementation, also change `getCwd` method below
     if (filePath === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    debugAssertIsNonNull(cwd, "`cwd` should not be null");
     return cwd;
   },
 
@@ -316,7 +384,7 @@ const FILE_CONTEXT = Object.freeze({
    */
   getCwd(): string {
     if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    debugAssertIsNonNull(cwd, "`cwd` should not be null");
     return cwd;
   },
 
@@ -386,9 +454,9 @@ const FILE_CONTEXT = Object.freeze({
    * The path to the parser used to parse this file.
    * @deprecated No longer supported.
    */
-  get parserPath(): string {
-    // TODO: Implement this?
-    throw new Error("`context.parserPath` is unsupported at present (and deprecated)");
+  get parserPath(): string | undefined {
+    if (filePath === null) throw new Error("Cannot access `context.parserPath` in `createOnce`");
+    return undefined;
   },
 });
 
@@ -406,10 +474,12 @@ export interface Context extends FileContext {
   /**
    * Rule ID, in form `<plugin>/<rule>`.
    */
+  // Note: This is `null` during `createOnce` call, but we keep the type simple to make it easier for the user.
   id: string;
   /**
    * Rule options for this rule on this file.
    */
+  // Note: This is `null` during `createOnce` call, but we keep the type simple to make it easier for the user.
   options: Readonly<Options>;
   /**
    * Report an error/warning.
@@ -422,7 +492,7 @@ export interface Context extends FileContext {
  * @param ruleDetails - `RuleDetails` object
  * @returns `Context` object
  */
-export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
+export function createContext(ruleDetails: RuleDetails): Context {
   // Create `Context` object for rule.
   //
   // All properties are enumerable, to support a pattern which some ESLint plugins use:
@@ -440,35 +510,54 @@ export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
   // }
   // ```
   //
-  // Object is frozen to prevent user mutating it.
+  // ESLint freezes the `Context` object, but we can't as we need to alter `id` and `options` properties.
+  // We get as close as we can by making `id` and `options` properties `writable: false`, and preventing user adding
+  // new properties with `Object.preventExtensions`.
   //
-  // IMPORTANT: Methods/getters must not use `this`, to support wrapped context objects
+  // `id` and `options` properties are `configurable` so we can alter them with `Object.defineProperty`.
+  // In any case, `Context` objects are specific to each rule, so if a rule does mutate the context object,
+  // that won't affect anyone other than themselves. Options objects are frozen, so user can't mutate them.
+  //
+  // IMPORTANT: `report` must not use `this`, to support wrapped context objects
   // or e.g. `const { report } = context; report(diagnostic);`.
   // https://github.com/oxc-project/oxc/issues/15325
-  return Object.freeze({
-    // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
-    __proto__: FILE_CONTEXT,
-    // Rule ID, in form `<plugin>/<rule>`
-    get id(): string {
-      // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
-      // allow it here either. It's probably not very useful anyway - a rule should know what its own name is!
-      if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
-      return ruleDetails.fullName;
-    },
-    // Getter for rule options for this rule on this file
-    get options(): Readonly<Options> {
-      if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
-      debugAssertIsNonNull(ruleDetails.options);
-      return ruleDetails.options;
-    },
-    /**
-     * Report error.
-     * @param diagnostic - Diagnostic object
-     * @throws {TypeError} If `diagnostic` is invalid
-     */
-    report(this: void, diagnostic: Diagnostic): void {
-      // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
-      report(diagnostic, ruleDetails);
-    },
-  } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
+  return Object.preventExtensions(
+    Object.create(FILE_CONTEXT, {
+      // Rule ID, in form `<plugin>/<rule>`.
+      // Initially `null` during `createOnce`, set to full rule name after `createOnce` is called.
+      id: {
+        value: null!,
+        enumerable: true,
+        configurable: true,
+      },
+      // Rule options for this rule on this file.
+      // Initially `null` during `createOnce`, set to options object before linting a file in `lintFileImpl`.
+      options: {
+        value: null!,
+        enumerable: true,
+        configurable: true,
+      },
+      report: {
+        /**
+         * Report error.
+         *
+         * Normally called with a single `Diagnostic` object.
+         *
+         * Can also be called with legacy positional forms:
+         * - `context.report(node, message, data?, fix?)`
+         * - `context.report(node, loc, message, data?, fix?)`
+         * These legacy forms are not included in type def for this method, as they are deprecated,
+         * but some plugins still use them, so we support them.
+         *
+         * @param diagnostic - Diagnostic object
+         * @throws {TypeError} If `diagnostic` is invalid
+         */
+        value(this: void, diagnostic: Diagnostic, ...extraArgs: unknown[]): void {
+          // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
+          report(diagnostic, extraArgs, ruleDetails);
+        },
+        enumerable: true,
+      },
+    }),
+  );
 }

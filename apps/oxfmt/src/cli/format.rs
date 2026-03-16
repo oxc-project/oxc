@@ -9,16 +9,17 @@ use super::{
     service::{FormatService, SuccessResult},
     walk::Walk,
 };
-use crate::core::{
-    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
-};
+#[cfg(feature = "napi")]
+use crate::core::JsConfigLoaderCb;
+use crate::core::{ConfigResolver, SourceFormatter, resolve_editorconfig_path, utils};
 
-#[derive(Debug)]
 pub struct FormatRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
     external_formatter: Option<crate::core::ExternalFormatter>,
+    #[cfg(feature = "napi")]
+    js_config_loader: Option<JsConfigLoaderCb>,
 }
 
 impl FormatRunner {
@@ -32,6 +33,8 @@ impl FormatRunner {
             cwd: env::current_dir().expect("Failed to get current working directory"),
             #[cfg(feature = "napi")]
             external_formatter: None,
+            #[cfg(feature = "napi")]
+            js_config_loader: None,
         }
     }
 
@@ -42,6 +45,13 @@ impl FormatRunner {
         external_formatter: Option<crate::core::ExternalFormatter>,
     ) -> Self {
         self.external_formatter = external_formatter;
+        self
+    }
+
+    #[cfg(feature = "napi")]
+    #[must_use]
+    pub fn with_js_config_loader(mut self, js_config_loader: JsConfigLoaderCb) -> Self {
+        self.js_config_loader = Some(js_config_loader);
         self
     }
 
@@ -68,13 +78,14 @@ impl FormatRunner {
         // Find and load config file
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
-        // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_options.config.as_deref());
+        // - else, search nearest config file from cwd upwards
         let editorconfig_path = resolve_editorconfig_path(&cwd);
-        let mut config_resolver = match ConfigResolver::from_config_paths(
+        let mut config_resolver = match ConfigResolver::from_config(
             &cwd,
-            oxfmtrc_path.as_deref(),
+            config_options.config.as_deref(),
             editorconfig_path.as_deref(),
+            #[cfg(feature = "napi")]
+            self.js_config_loader.as_ref(),
         ) {
             Ok(r) => r,
             Err(err) => {
@@ -120,7 +131,7 @@ impl FormatRunner {
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
-            oxfmtrc_path.as_deref(),
+            config_resolver.config_dir(),
             &ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,
@@ -160,6 +171,7 @@ impl FormatRunner {
         #[cfg(feature = "napi")]
         let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
 
+        let no_config = config_resolver.config_dir().is_none() && editorconfig_path.is_none();
         let format_mode_clone = format_mode.clone();
 
         // Spawn a thread to run formatting service with streaming entries
@@ -193,21 +205,30 @@ impl FormatRunner {
 
         // Count the processed files
         let total_target_files_count = changed_paths.len() + unchanged_count + error_count;
-        let print_stats = |stdout| {
-            let elapsed_ms = start_time.elapsed().as_millis();
+        let print_stats = |stdout, stderr| {
             utils::print_and_flush(
                 stdout,
                 &format!(
-                    "Finished in {elapsed_ms}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                    "Finished in {}ms on {total_target_files_count} files using {num_of_threads} threads.\n",
+                    start_time.elapsed().as_millis()
                 ),
             );
+            // Config stats: only show when no config is found
+            if no_config {
+                #[cfg(feature = "napi")]
+                let hint = "No config found, using defaults. Please add a config file or try `oxfmt --init` if needed.\n";
+                #[cfg(not(feature = "napi"))]
+                let hint =
+                    "No config found, using defaults. Please add `.oxfmtrc.json` if needed.\n";
+                utils::print_and_flush(stderr, hint);
+            }
         };
 
         // Check if no files were found
         if total_target_files_count == 0 {
             if runtime_options.no_error_on_unmatched_pattern {
                 utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 return CliRunResult::None;
             }
 
@@ -231,7 +252,7 @@ impl FormatRunner {
             // `--check` outputs friendly summary
             (OutputMode::Check, 0) => {
                 utils::print_and_flush(stdout, "All matched files use the correct format.\n");
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 CliRunResult::FormatSucceeded
             }
             (OutputMode::Check, changed_count) => {
@@ -242,16 +263,17 @@ impl FormatRunner {
                         "Format issues found in above {changed_count} files. Run without `--check` to fix.\n",
                     ),
                 );
-                print_stats(stdout);
+                print_stats(stdout, stderr);
                 CliRunResult::FormatMismatch
             }
-            // Default (write) does not output anything
+            // Default (write) outputs only stats
             (OutputMode::Write, changed_count) => {
                 // Each changed file is also NOT printed
                 debug_assert_eq!(
                     changed_count, 0,
                     "In write mode, changed_count should not be counted"
                 );
+                print_stats(stdout, stderr);
                 CliRunResult::FormatSucceeded
             }
         }

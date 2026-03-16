@@ -57,7 +57,6 @@ declare_oxc_lint!(
     NoMixedEnums(tsgolint),
     typescript,
     pedantic,
-    pending,
 );
 
 impl Rule for NoMixedEnums {}

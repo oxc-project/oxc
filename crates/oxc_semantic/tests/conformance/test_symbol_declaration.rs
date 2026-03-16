@@ -101,6 +101,7 @@ impl ConformanceTest for SymbolDeclarationTest {
             // =========================== TYPESCRIPT ===========================
             AstKind::TSImportEqualsDeclaration(import) => check_binding(symbol_id, &import.id),
             AstKind::TSTypeParameter(decl) => check_binding(symbol_id, &decl.name),
+            AstKind::TSMappedType(decl) => check_binding(symbol_id, &decl.key),
             AstKind::TSModuleDeclaration(decl) => match &decl.id {
                 TSModuleDeclarationName::Identifier(id) => check_binding(symbol_id, id),
                 TSModuleDeclarationName::StringLiteral(_) => {

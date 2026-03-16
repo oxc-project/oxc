@@ -27,6 +27,8 @@ fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg).with_help(help).with_label(span)
 }
 
+// Generally we should prefer the string-only syntax for compatibility with the original ESLint rule,
+// but we originally implemented the rule with only the object syntax, so we support both now.
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(untagged)]
 pub enum JsxFragments {
@@ -104,12 +106,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxFragments {
-    // Generally we should prefer the string-only syntax for compatibility with the original ESLint rule,
-    // but we originally implemented the rule with only the object syntax, so we support both now.
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

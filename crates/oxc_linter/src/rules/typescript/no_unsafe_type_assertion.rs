@@ -44,7 +44,6 @@ declare_oxc_lint!(
     NoUnsafeTypeAssertion(tsgolint),
     typescript,
     suspicious,
-    pending,
 );
 
 impl Rule for NoUnsafeTypeAssertion {}

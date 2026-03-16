@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
  1 │ const foo = height < 50 ? height : 50;

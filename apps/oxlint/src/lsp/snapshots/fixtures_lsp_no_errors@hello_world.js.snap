@@ -8,3 +8,6 @@ Linted file: fixtures/lsp/no_errors/hello_world.js
 File URI: file://<variable>/fixtures/lsp/no_errors/hello_world.js
 
 ########### Code Actions/Commands
+
+########### Fix All Action
+None

@@ -210,6 +210,12 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     });
 
+    let has_config = if config.is_some() {
+        quote! { const HAS_CONFIG: bool = true; }
+    } else {
+        quote! { const HAS_CONFIG: bool = false; }
+    };
+
     #[cfg(not(feature = "ruledocs"))]
     let config_schema: Option<proc_macro2::TokenStream> = {
         let _ = config;
@@ -244,6 +250,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #fix
 
             #docs
+
+            #has_config
 
             #config_schema
         }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(Math.max(100, x), 0)

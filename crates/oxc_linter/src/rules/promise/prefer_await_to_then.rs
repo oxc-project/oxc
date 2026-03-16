@@ -13,7 +13,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_promise,
+    utils::is_promise_with_context,
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -28,7 +28,7 @@ impl std::ops::Deref for PreferAwaitToThen {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAwaitToThenConfig {
     /// If true, enforces the rule even after an `await` or `yield` expression.
     strict: bool,
@@ -37,7 +37,7 @@ pub struct PreferAwaitToThenConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values
+    /// Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.
     ///
     /// ### Why is this bad?
     ///
@@ -74,9 +74,7 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -84,7 +82,11 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise(call_expr).is_none_or(|v| v == "withResolvers") {
+        let Some(method_name) = is_promise_with_context(call_expr, ctx) else {
+            return;
+        };
+
+        if !matches!(method_name.as_str(), "then" | "catch" | "finally") {
             return;
         }
 
@@ -116,6 +118,12 @@ fn test() {
         ("async function hi() { await thing() }", None),
         ("async function hi() { await thing().then() }", None),
         ("async function hi() { await thing().catch() }", None),
+        ("const x = Promise.resolve(42)", None),
+        ("const x = Promise.reject(error)", None),
+        ("const x = Promise.all(values)", None),
+        ("const x = Promise.allSettled(values)", None),
+        ("const x = Promise.any(values)", None),
+        ("const x = Promise.race(values)", None),
         ("a = async () => (await something())", None),
         (
             "a = async () => {
@@ -136,6 +144,13 @@ fn test() {
         (
             "function isThenable(obj) {
                 return obj && typeof obj.then === 'function';
+            }",
+            None,
+        ),
+        (
+            "function foo() {
+                const globalExceptionFilter = new GlobalExceptionFilter();
+                globalExceptionFilter.catch(error, host);
             }",
             None,
         ),

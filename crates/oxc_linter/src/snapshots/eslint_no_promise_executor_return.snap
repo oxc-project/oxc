@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-promise-executor-return): Return statement should not be used in Promise executor.
    ╭─[no_promise_executor_return.tsx:1:42]
  1 │ new Promise(function (resolve, reject) { return 1; })

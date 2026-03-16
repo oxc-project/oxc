@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to parse oxlint configuration file.
+Failed to build configuration from <fixture>/.oxlintrc.json.
 
   x Failed to load JS plugin: ./plugin.ts
   |   Error: Whoops!
@@ -12,6 +12,4 @@ Failed to parse oxlint configuration file.
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

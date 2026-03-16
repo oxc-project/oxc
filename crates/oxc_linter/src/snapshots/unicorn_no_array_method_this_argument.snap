@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
    ╭─[no_array_method_this_argument.tsx:1:13]
  1 │ array.every(() => {}, thisArgument)

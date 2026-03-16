@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named `import` block.
    ╭─[no_empty_named_blocks.tsx:1:1]
  1 │ import {} from 'mod'

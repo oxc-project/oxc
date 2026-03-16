@@ -285,38 +285,161 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "foo.addEventListener('click', () => {})",
-        "foo.removeEventListener('click', onClick)",
-        "foo.onclick",
-        "foo[onclick] = () => {}",
-        r#"foo["onclick"] = () => {}"#,
-        "foo.onunknown = () => {}",
-        "foo.setCallBack = () => {console.log('foo')}",
-        "setCallBack = () => {console.log('foo')}",
-        "foo.onclick.bar = () => {}",
-        "foo['x'] = true;",
+        ("foo.addEventListener('click', () => {})", None),
+        ("foo.removeEventListener('click', onClick)", None),
+        ("foo.onclick", None),
+        ("foo[onclick] = () => {}", None),
+        (r#"foo["onclick"] = () => {}"#, None),
+        ("foo.onunknown = () => {}", None),
+        ("foo.setCallBack = () => {console.log('foo')}", None),
+        ("setCallBack = () => {console.log('foo')}", None),
+        ("foo.onclick.bar = () => {}", None),
+        ("foo['x'] = true;", None),
+        // TODO: Uncomment these tests after we introduce support for the excludedPackages option.
+        // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/0bf85e0df741255ac2d347eefc57daf4362ff0a0/docs/rules/prefer-add-event-listener.md#excludedpackages
+        // (
+        //     "const Koa = require('koa');
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "const sax = require('sax');
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import Koa from 'koa';
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import sax from 'sax';
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "import {sax as foo} from 'sax';
+        //     const parser = foo.parser();
+        //     parser.onerror = () => {};",
+        //     None,
+        // ),
+        // (
+        //     "const foo = require('foo');
+        //     foo.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "import foo from 'foo';
+        //     foo.onclick = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
     ];
 
     let fail = vec![
-        "foo.onclick = () => {}",
-        "foo.onclick = 1",
-        "foo.bar.onclick = onClick",
-        "const bar = null; foo.onclick = bar;",
-        "foo.onkeydown = () => {}",
-        "foo.ondragend = () => {}",
-        "foo.onclick = null",
-        "foo.onclick = undefined",
-        "window.onbeforeunload = null",
-        "window.onbeforeunload = undefined",
-        "window.onbeforeunload = foo",
-        "window.onbeforeunload = () => 'foo'",
-        "myWorker.port.onmessage = function(e) {}",
-        "((foo)).onclick = ((0, listener))",
-        "window.onload = window.onunload = function() {};",
-        "window.onunload ??= function() {};",
-        "window.onunload ||= function() {};",
-        "window.onunload += function() {};",
-        "(el as HTMLElement).onmouseenter = onAnchorMouseEnter;",
+        ("foo.onclick = () => {}", None),
+        ("foo.onclick = 1", None),
+        ("foo.bar.onclick = onClick", None),
+        ("const bar = null; foo.onclick = bar;", None),
+        ("foo.onkeydown = () => {}", None),
+        ("foo.ondragend = () => {}", None),
+        (
+            "foo.onclick = function (e) {
+                console.log(e);
+            }",
+            None,
+        ),
+        ("foo.onclick = null", None),
+        ("foo.onclick = undefined", None),
+        ("window.onbeforeunload = null", None),
+        ("window.onbeforeunload = undefined", None),
+        ("window.onbeforeunload = foo", None),
+        ("window.onbeforeunload = () => 'foo'", None),
+        (
+            "window.onbeforeunload = () => {
+                return bar;
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                return 'bar';
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                return;
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = function () {
+                (() => {
+                    return 'foo';
+                })();
+            }",
+            None,
+        ),
+        (
+            "window.onbeforeunload = e => {
+                console.log(e);
+            }",
+            None,
+        ),
+        (
+            "const foo = require('foo');
+            foo.onerror = () => {};",
+            None,
+        ),
+        (
+            "import foo from 'foo';
+            foo.onerror = () => {};",
+            None,
+        ),
+        (
+            "foo.onerror = () => {};
+            function bar() {
+                const koa = require('koa');
+                koa.onerror = () => {};
+            }",
+            None,
+        ),
+        // (
+        //     "const Koa = require('koa');
+        //     const app = new Koa();
+        //     app.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "import {Koa as Foo} from 'koa';
+        //     const app = new Foo();
+        //     app.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        // (
+        //     "const sax = require('sax');
+        //     const parser = sax.parser();
+        //     parser.onerror = () => {};",
+        //     Some(serde_json::json!(excludeFooOptions)),
+        // ),
+        ("myWorker.port.onmessage = function(e) {}", None),
+        ("((foo)).onclick = ((0, listener))", None),
+        ("window.onload = window.onunload = function() {};", None),
+        ("window.onunload ??= function() {};", None),
+        ("window.onunload ||= function() {};", None),
+        ("window.onunload += function() {};", None),
+        ("foo.onclick = true", None),
+        ("foo.onclick = 'bar'", None),
+        ("foo.onclick = `bar`", None),
+        ("foo.onclick = {}", None),
+        ("foo.onclick = []", None),
+        ("foo.onclick = void 0", None),
+        ("foo.onclick = new Handler()", None),
+        ("(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
     ];
 
     // TODO: Implement autofix and use these tests.

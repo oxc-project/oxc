@@ -24,66 +24,17 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-pub struct PeepholeOptimizations {
-    max_iterations: Option<u8>,
-    /// Walk the ast in a fixed point loop until no changes are made.
-    /// `prev_function_changed`, `functions_changed` and `current_function` track changes
-    /// in top level and each function. No minification code are run if the function is not changed
-    /// in the previous walk.
-    iteration: u8,
-    changed: bool,
-    /// When true, only run dead code elimination passes (subset of full peephole optimizations).
-    dce: bool,
-}
+/// Stateless peephole optimizer. The `dce` flag and `changed` state are stored in `MinifierState`.
+pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn new(max_iterations: Option<u8>) -> Self {
-        Self { max_iterations, iteration: 0, changed: false, dce: false }
-    }
-
-    pub fn new_dce(max_iterations: Option<u8>) -> Self {
-        Self { max_iterations, iteration: 0, changed: false, dce: true }
-    }
-
-    fn run_once(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
+    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
-    }
-
-    pub fn run_in_loop(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) -> u8 {
-        loop {
-            self.changed = false;
-            self.run_once(program, ctx);
-            if !self.changed {
-                break;
-            }
-            if let Some(max_iterations) = self.max_iterations {
-                if self.iteration >= max_iterations {
-                    break;
-                }
-            } else if self.iteration > 10 {
-                debug_assert!(false, "Ran loop more than 10 times.");
-                break;
-            }
-            self.iteration += 1;
-        }
-        self.iteration
     }
 
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
@@ -121,7 +72,7 @@ impl<'a> PeepholeOptimizations {
     /// which would change the semantics.
     pub fn member_object_may_be_mutated(
         assignment_target: &AssignmentTarget<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let object = match assignment_target {
             AssignmentTarget::ComputedMemberExpression(member_expr) => &member_expr.object,
@@ -139,7 +90,7 @@ impl<'a> PeepholeOptimizations {
     /// or if the expression is not a simple identifier/this reference.
     pub fn is_expression_that_reference_may_change(
         expr: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(id) => {
@@ -156,15 +107,14 @@ impl<'a> PeepholeOptimizations {
     }
 }
 
-impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
+impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.changed = ctx.state.changed;
-        if self.changed {
+        if ctx.state.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
             let refs_before =
                 ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
@@ -175,25 +125,22 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
         }
         // Only check class_symbols_stack in full optimization mode (not DCE mode)
-        debug_assert!(self.dce || ctx.state.class_symbols_stack.is_exhausted());
+        debug_assert!(ctx.state.dce || ctx.state.class_symbols_stack.is_exhausted());
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
         Self::minimize_statements(stmts, ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::keep_track_of_pure_functions(stmt, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
-        if self.dce {
+        if ctx.state.dce {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
                 Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
@@ -256,19 +203,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_for_statement(stmt, ctx);
         Self::minimize_for_statement(stmt, ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_return_statement(stmt, ctx);
     }
 
@@ -277,10 +222,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_variable_declaration(decl, ctx);
     }
 
@@ -289,13 +233,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         decl: &mut VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ctx = &mut Ctx::new(ctx);
         Self::init_symbol_value(decl, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = &mut Ctx::new(ctx);
-        if self.dce {
+        if ctx.state.dce {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
@@ -412,38 +354,34 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
         if expr.operator.is_not() {
-            let ctx = &mut Ctx::new(ctx);
             Self::minimize_expression_in_boolean_context(&mut expr.argument, ctx);
         }
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_call_expression(e, ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_new_expression(e, ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_object_property(prop, ctx);
     }
 
@@ -452,10 +390,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         node: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_assignment_target_property(node, ctx);
     }
 
@@ -464,18 +401,16 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_assignment_target_property_property(prop, ctx);
     }
 
     fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_binding_property(prop, ctx);
     }
 
@@ -484,10 +419,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_method_definition(prop, ctx);
     }
 
@@ -496,10 +430,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_property_definition(prop, ctx);
     }
 
@@ -508,10 +441,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::substitute_accessor_property(prop, ctx);
     }
 
@@ -520,36 +452,33 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = Ctx::new(ctx);
-        Self::convert_to_dotted_properties(expr, &ctx);
+        Self::convert_to_dotted_properties(expr, ctx);
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
         ctx.state.class_symbols_stack.push_class_scope();
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = &mut Ctx::new(ctx);
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
         ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        let ctx = Ctx::new(ctx);
-        Self::substitute_catch_clause(catch, &ctx);
+        Self::substitute_catch_clause(catch, ctx);
     }
 
     fn exit_private_field_expression(
@@ -557,10 +486,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         node: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name);
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name.into());
     }
 
     fn exit_private_in_expression(
@@ -568,10 +497,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         node: &mut PrivateInExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.dce {
+        if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name);
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name.into());
     }
 }
 

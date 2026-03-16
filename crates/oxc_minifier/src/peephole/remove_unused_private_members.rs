@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -10,7 +10,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This function uses the private member usage collected during the main traverse
     /// to remove unused private fields and methods from the class body.
-    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.current_scope_flags().contains_direct_eval() {
             return;
         }
@@ -21,11 +21,8 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return true;
                 };
-                if ctx
-                    .state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
-                {
+                let name: Atom = private_id.name.into();
+                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
                 prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
@@ -34,19 +31,15 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return true;
                 };
-                ctx.state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
+                let name: Atom = private_id.name.into();
+                ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return true;
                 };
-                if ctx
-                    .state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&private_id.name)
-                {
+                let name: Atom = private_id.name.into();
+                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
                 accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
@@ -67,19 +60,19 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.into())
             }
             ClassElement::MethodDefinition(method) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.into())
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return None;
                 };
-                Some(private_id.name)
+                Some(private_id.name.into())
             }
             ClassElement::StaticBlock(_) => None,
             ClassElement::TSIndexSignature(_) => {

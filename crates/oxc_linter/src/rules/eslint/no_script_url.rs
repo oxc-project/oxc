@@ -18,7 +18,7 @@ pub struct NoScriptUrl;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow javascript: urls
+    /// Disallow `javascript:` URLs.
     ///
     /// ### Why is this bad?
     ///
@@ -29,10 +29,8 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-script-url: "error"*/
-    ///
     /// location.href = "javascript:void(0)";
     ///
     /// location.href = `javascript:void(0)`;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
    ╭─[index.js:1:8]
  1 │ import baz from "./named-exports"

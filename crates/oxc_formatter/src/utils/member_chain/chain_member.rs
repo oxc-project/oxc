@@ -84,7 +84,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                 );
 
                 // `A.b /* comment */ (c)` -> `A.b(/* comment */ c)`
-                if !matches!(member.parent, AstNodes::CallExpression(call) if call.type_arguments.is_none() && !call.optional)
+                if !matches!(member.parent(), AstNodes::CallExpression(call) if call.type_arguments.is_none() && !call.optional)
                 {
                     member.format_trailing_comments(f);
                 }

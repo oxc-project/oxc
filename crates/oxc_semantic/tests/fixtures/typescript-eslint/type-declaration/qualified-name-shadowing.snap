@@ -1,0 +1,99 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 2,
+                "name": "T",
+                "node": "TSTypeParameter(T)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 0,
+                    "name": "T",
+                    "node_id": 11,
+                    "scope_id": 2
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(TsModuleBlock)",
+        "id": 1,
+        "node": "TSModuleDeclaration(Database)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 1,
+            "name": "Table",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 3,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 4,
+            "name": "Database",
+            "node": "TSTypeParameter(Database)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 2,
+                "name": "Database",
+                "node_id": 23,
+                "scope_id": 3
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(NamespaceModule)",
+        "id": 0,
+        "name": "Database",
+        "node": "TSModuleDeclaration(Database)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "Database",
+            "node_id": 19,
+            "scope_id": 3
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Test",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

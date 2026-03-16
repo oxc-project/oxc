@@ -19,42 +19,41 @@ impl RuleEntry<'_> {
 }
 
 /// Parses `crates/oxc_linter/src/rules.rs` to extract all lint rule declarations into a list
-/// of `RuleEntry`.
-pub fn get_all_rules(contents: &str) -> std::io::Result<Vec<RuleEntry<'_>>> {
-    let start_marker = "oxc_macros::declare_all_lint_rules!";
-    let start = contents.find(start_marker).ok_or_else(|| {
-        std::io::Error::other("could not find declare_all_lint_rules macro invocation")
-    })?;
-
-    let body = &contents[start..];
-
-    // Collect (module path, struct name) pairs. Do NOT deduplicate by struct name because
-    // different plugins may have rules with the same struct name.
+/// of `RuleEntry` by scanning the module declarations.
+pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
     let mut rule_entries = Vec::new();
-    for line in body.lines().skip(1) {
-        let line = line.trim();
-        if line.contains('}') {
-            break;
-        }
-        if line.is_empty() || line.starts_with("//") {
-            continue;
-        }
-        if !line.ends_with(',') {
-            continue;
-        }
-        let path = &line[..line.len() - 1];
-        let parts = path.split("::").collect::<Vec<_>>();
-        if parts.len() != 2 {
-            continue;
-        }
-        let Some(plugin_module_name) = parts.first() else { continue };
-        let Some(rule_module_name) = parts.get(1) else { continue };
-        rule_entries.push(RuleEntry { plugin_module_name, rule_module_name });
-    }
-    // Sort deterministically
-    rule_entries.sort_unstable();
+    let mut current_plugin: Option<&str> = None;
 
-    Ok(rule_entries)
+    for line in contents.lines() {
+        let line = line.trim();
+
+        // Detect plugin module start: `pub(crate) mod eslint {` or `pub(crate) mod typescript {`
+        if line.starts_with("pub(crate) mod ") && line.ends_with(" {") {
+            let module_name =
+                line.strip_prefix("pub(crate) mod ").and_then(|s| s.strip_suffix(" {"));
+            current_plugin = module_name;
+            continue;
+        }
+
+        // Detect end of plugin module
+        if line == "}" {
+            current_plugin = None;
+            continue;
+        }
+
+        // Inside a plugin module, detect rule module: `pub mod no_debugger;`
+        if let Some(plugin) = current_plugin
+            && line.starts_with("pub mod ")
+            && line.ends_with(';')
+            && let Some(rule_name) = line.strip_prefix("pub mod ").and_then(|s| s.strip_suffix(';'))
+        {
+            rule_entries
+                .push(RuleEntry { plugin_module_name: plugin, rule_module_name: rule_name });
+        }
+    }
+
+    // Preserve declaration order - do not sort
+    rule_entries
 }
 
 /// Given a rule entry, attempt to find its corresponding source file path

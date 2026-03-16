@@ -1,0 +1,21 @@
+{
+  "experimentalTailwindcss": {},
+  "overrides": [
+    {
+      "files": ["use-clsx.tsx"],
+      "options": {
+        "experimentalTailwindcss": {
+          "functions": ["clsx"]
+        }
+      }
+    },
+    {
+      "files": ["use-cn.tsx"],
+      "options": {
+        "experimentalTailwindcss": {
+          "functions": ["cn"]
+        }
+      }
+    }
+  ]
+}

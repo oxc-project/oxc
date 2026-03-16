@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-script-url): Unexpected `javascript:` url
    ╭─[no_script_url.tsx:1:9]
  1 │ var a = 'javascript:void(0);';

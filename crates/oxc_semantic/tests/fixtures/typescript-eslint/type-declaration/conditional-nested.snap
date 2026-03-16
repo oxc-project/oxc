@@ -9,7 +9,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode | TsConditional)",
+            "flags": "ScopeFlags(TsConditional)",
             "id": 2,
             "node": "TSConditionalType",
             "symbols": [
@@ -23,7 +23,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "flags": "ReferenceFlags(Type)",
                     "id": 2,
                     "name": "U",
-                    "node_id": 16
+                    "node_id": 16,
+                    "scope_id": 2
                   }
                 ]
               }
@@ -31,7 +32,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
           },
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode | TsConditional)",
+            "flags": "ScopeFlags(TsConditional)",
             "id": 3,
             "node": "TSConditionalType",
             "symbols": [
@@ -45,14 +46,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "flags": "ReferenceFlags(Type)",
                     "id": 5,
                     "name": "U",
-                    "node_id": 27
+                    "node_id": 27,
+                    "scope_id": 3
                   }
                 ]
               }
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
@@ -66,20 +68,22 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
-                "node_id": 8
+                "node_id": 8,
+                "scope_id": 1
               },
               {
                 "flags": "ReferenceFlags(Type)",
                 "id": 3,
                 "name": "T",
-                "node_id": 19
+                "node_id": 19,
+                "scope_id": 1
               }
             ]
           }
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

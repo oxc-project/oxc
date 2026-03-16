@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(consistent-test-filename): The 1.spec.ts is a test file but his name is not allowed
   help: Rename the file that match the pattern .*\.test\.[tj]sx?$
 

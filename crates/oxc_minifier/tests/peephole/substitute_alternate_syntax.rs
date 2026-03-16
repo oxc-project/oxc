@@ -228,13 +228,20 @@ fn test_fold_new_expressions() {
     test("new Function('a', 'b', 'console.log(a, b)')", "Function('a', 'b', 'console.log(a, b)')");
     test_same("var Function; new Function()");
 
-    test("new RegExp()", "");
-    test("new RegExp('a')", "");
-    test("new RegExp(0)", "");
-    test("new RegExp(null)", "");
-    test("x = new RegExp('a', 'g')", "x = RegExp('a', 'g')");
-    test_same("new RegExp(foo)");
+    // RegExp is validated using the regex parser to determine if it's pure.
+    // Valid patterns can be removed, invalid patterns must be kept.
+    // https://github.com/oxc-project/oxc/issues/18050
+    test("new RegExp()", ""); // Valid: empty pattern
+    test("new RegExp('a')", ""); // Valid: simple pattern
+    test("new RegExp(0)", "RegExp(0)"); // Can't validate non-string literal
+    test("new RegExp(null)", "RegExp(null)"); // Can't validate non-string literal
+    test("x = new RegExp('a', 'g')", "x = /* @__PURE__ */ RegExp('a', 'g')"); // Valid pattern, marked as pure
+    test_same("new RegExp(foo)"); // Can't validate variable
+    // RegExp literal is always valid
     test("new RegExp(/foo/)", "");
+    // Invalid patterns and flags must not be removed (they throw SyntaxError at runtime)
+    test_same("RegExp('[')");
+    test_same("RegExp('a', 'xyz')");
 }
 
 #[test]
@@ -704,7 +711,7 @@ fn test_fold_string_constructor() {
     // Don't fold the existence check to preserve behavior
     test_same("var a = String?.('hello')");
 
-    test_same("var s = Symbol(), a = String(s);");
+    test("var s = Symbol(), a = String(s);", "var a = String(Symbol());");
 
     test_same("var a = String('hello', bar());");
     test_same("var a = String({valueOf: function() { return 1; }});");
@@ -722,7 +729,7 @@ fn test_fold_number_constructor() {
 fn test_fold_big_int_constructor() {
     test("var x = BigInt(1n)", "var x = 1n");
     test_same("BigInt()");
-    test_same("BigInt(1)");
+    test("BigInt(1)", "");
 }
 
 #[test]
@@ -793,19 +800,19 @@ fn test_object_callee_indirect_call() {
 fn test_rewrite_arguments_copy_loop() {
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -817,11 +824,11 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -896,7 +903,7 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { { let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) } }",
-        "function _() { { let _; var r = [...arguments]; console.log(r) } }",
+        "function _() { { let _; console.log([...arguments]) } }",
     );
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, e) }",

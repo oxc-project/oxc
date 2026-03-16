@@ -377,5 +377,7 @@ fn test() {
         ("function a() { const b = () => { Promise.resolve(null); }; return b; }", None),
     ];
 
-    Tester::new(CatchOrReturn::NAME, CatchOrReturn::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(CatchOrReturn::NAME, CatchOrReturn::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .test_and_snapshot();
 }

@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": []
@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 3,
             "node": "BlockStatement",
             "symbols": [
@@ -30,7 +30,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
                     "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "e",
-                    "node_id": 8
+                    "node_id": 8,
+                    "scope_id": 3
                   }
                 ]
               },
@@ -44,13 +45,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode | CatchClause)",
+        "flags": "ScopeFlags(CatchClause)",
         "id": 2,
         "node": "CatchClause",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:61]
  1 │ import * as names from './named-exports'; console.log(names.c)

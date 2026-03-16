@@ -3,7 +3,7 @@
 
 # stdout
 ```
-  x error-plugin(error): Visited nodes:
+  x cfg-plugin(cfg): Visited nodes:
   | * onCodePathStart                     Program
   | * onCodePathSegmentStart              Program
   | * onCodePathSegmentEnd                Literal
@@ -21,11 +21,9 @@
    `----
 
 Found 0 warnings and 1 error.
-Finished in Xms on 1 file with 1 rules using X threads.
+Finished in Xms on 1 file with 2 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

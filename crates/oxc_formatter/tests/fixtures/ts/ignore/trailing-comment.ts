@@ -1,0 +1,9 @@
+const config: Record<string, number> = {  retries:10,timeout:5000}; // prettier-ignore
+const data: number[] = [ 1,2,3 ]; /* prettier-ignore */
+
+function demo(): { a: number } {
+  return   {a:1} as const; // prettier-ignore
+}
+
+type Complex = {a:1,b:2,c:3}; // prettier-ignore
+interface Cfg {a:number;b:string;} // prettier-ignore

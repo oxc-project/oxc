@@ -16,19 +16,20 @@ concurrency:
 
 jobs:
   release:
+    if: github.repository == 'oxc-project/oxc'
     name: Release crates
     runs-on: ubuntu-latest
     permissions:
       contents: write # For git tag push
       id-token: write # Required for OIDC token exchange
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
         with:
           cache-key: warm
           tools: cargo-release-oxc

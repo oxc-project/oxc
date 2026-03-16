@@ -7,7 +7,7 @@ use std::{
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 use std::mem::offset_of;
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 
 use oxc_data_structures::assert_unchecked;
 
@@ -253,7 +253,7 @@ impl Allocator {
     /// [`Vec::new_in`]: crate::Vec::new_in
     /// [`HashMap::new_in`]: crate::HashMap::new_in
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because it's a small function
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
@@ -268,7 +268,7 @@ impl Allocator {
     ///
     /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because it's a small function
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
@@ -506,7 +506,7 @@ impl Allocator {
     /// }
     /// ```
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because it's a small function
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
@@ -536,7 +536,7 @@ impl Allocator {
     ///
     /// [`used_bytes`]: Allocator::used_bytes
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because it's a small function
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn capacity(&self) -> usize {
@@ -613,10 +613,10 @@ impl Allocator {
         bytes
     }
 
-    /// Get inner [`bumpalo::Bump`].
+    /// Get inner [`Bump`].
     ///
     /// This method is not public. We don't want to expose `Bump` to user.
-    /// The fact that we're using `bumpalo` is an internal implementation detail.
+    /// The inner `Bump` is an internal implementation detail.
     //
     // `#[inline(always)]` because it's a no-op
     #[expect(clippy::inline_always)]
@@ -625,7 +625,7 @@ impl Allocator {
         &self.bump
     }
 
-    /// Create [`Allocator`] from a [`bumpalo::Bump`].
+    /// Create [`Allocator`] from a [`Bump`].
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
     //

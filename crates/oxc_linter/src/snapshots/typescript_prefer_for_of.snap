@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
    ╭─[prefer_for_of.tsx:1:6]
  1 │ for (var a = 0; a < obj.arr.length; a++) { console.log(obj.arr[a]); }

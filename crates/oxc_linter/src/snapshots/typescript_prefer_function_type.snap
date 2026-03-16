@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:17]
  1 │ interface Foo { (): string; }

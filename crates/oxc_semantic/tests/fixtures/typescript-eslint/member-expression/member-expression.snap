@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/member-expressi
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,31 +19,36 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/member-expressi
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
-            "node_id": 7
+            "node_id": 7,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "x",
-            "node_id": 14
+            "node_id": 14,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "x",
-            "node_id": 21
+            "node_id": 21,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "x",
-            "node_id": 28
+            "node_id": 28,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "x",
-            "node_id": 35
+            "node_id": 35,
+            "scope_id": 0
           }
         ]
       }

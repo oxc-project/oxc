@@ -5,6 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*},
+    parentheses::NeedsParentheses,
     print::FormatWrite,
     utils::typescript::is_object_like_type,
     write,
@@ -37,7 +38,13 @@ fn format_intersection_types<'a>(
             if !(is_prev_object_like || is_object_like)
                 || f.comments().has_leading_own_line_comment(item.span().start)
             {
-                write!(f, soft_line_indent_or_space(item));
+                let content = format_with(|f| {
+                    if item.needs_parentheses(f) {
+                        write!(f, format_leading_comments(item.span()));
+                    }
+                    write!(f, item);
+                });
+                write!(f, soft_line_indent_or_space(&content));
             } else {
                 write!(f, space());
 

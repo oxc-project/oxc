@@ -3,7 +3,6 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
-import { TAILWIND_OPTION_MAPPING } from "../../libs/prettier";
 import { Options } from "prettier";
 
 /**
@@ -60,18 +59,17 @@ export async function runMigratePrettier() {
   // NOTE: Some options unsupported by Oxfmt may still be valid when invoking Prettier.
   // However, to avoid inconsistency, we do not enable options that affect Oxfmt.
   const oxfmtrc = await createBlankOxfmtrcFile(cwd);
+
+  let hasSortPackageJsonPlugin = false;
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
-    // Oxfmt does not support this
-    if (key === "overrides") {
-      console.error(`  - "overrides" is not supported, skipping...`);
-      continue;
-    }
     // Handle plugins - check for prettier-plugin-tailwindcss and warn about others
     if (key === "plugins" && Array.isArray(value)) {
       for (const plugin of (value as Options["plugins"])!) {
         if (plugin === "prettier-plugin-tailwindcss") {
           // Migrate `prettier-plugin-tailwindcss` options
           migrateTailwindOptions(prettierConfig!, oxfmtrc);
+        } else if (plugin === "prettier-plugin-packagejson") {
+          hasSortPackageJsonPlugin = true;
         } else if (typeof plugin === "string") {
           console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
         } else {
@@ -109,6 +107,14 @@ export async function runMigratePrettier() {
     );
     oxfmtrc.printWidth = 80;
   }
+  // `sortPackageJson` is enabled by default in Oxfmt, but Prettier does not have this.
+  // Only enable if `prettier-plugin-packagejson` is used.
+  if (hasSortPackageJsonPlugin) {
+    oxfmtrc.sortPackageJson = {};
+    console.error(`  - Migrated "prettier-plugin-packagejson" to "sortPackageJson"`);
+  } else {
+    oxfmtrc.sortPackageJson = false;
+  }
   // `embeddedLanguageFormatting` is not fully supported for JS-in-XXX yet.
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
     console.error(`  - "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
@@ -122,6 +128,16 @@ export async function runMigratePrettier() {
   // Keep ignorePatterns at the bottom
   delete oxfmtrc.ignorePatterns;
   oxfmtrc.ignorePatterns = ignores;
+
+  // TODO: Oxfmt now supports `overrides`,
+  // but `overrides` field is not included in `resolveConfig()` result.
+  // Automatic migration requires manual config file parsing.
+  // See: https://github.com/oxc-project/oxc/issues/18215
+  if ("overrides" in oxfmtrc) {
+    console.warn(
+      `  - "overrides" cannot be migrated automatically. See: https://github.com/oxc-project/oxc/issues/18215`,
+    );
+  }
 
   const jsonStr = JSON.stringify(oxfmtrc, null, 2);
 
@@ -158,8 +174,17 @@ async function resolvePrettierIgnore(cwd: string) {
 
 // ---
 
+const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+  config: "tailwindConfig",
+  stylesheet: "tailwindStylesheet",
+  functions: "tailwindFunctions",
+  attributes: "tailwindAttributes",
+  preserveWhitespace: "tailwindPreserveWhitespace",
+  preserveDuplicates: "tailwindPreserveDuplicates",
+};
+
 /**
- * Migrate prettier-plugin-tailwindcss options to Oxfmt's experimentalTailwindcss format.
+ * Migrate prettier-plugin-tailwindcss options to Oxfmt's sortTailwindcss format.
  *
  * Prettier format:
  * ```json
@@ -173,7 +198,7 @@ async function resolvePrettierIgnore(cwd: string) {
  * Oxfmt format:
  * ```json
  * {
- *   "experimentalTailwindcss": {
+ *   "sortTailwindcss": {
  *     "config": "./tailwind.config.js",
  *     "functions": ["clsx", "cn"]
  *   }
@@ -206,7 +231,7 @@ function migrateTailwindOptions(
     }
   }
 
-  // Only add experimentalTailwindcss if plugin is used or options are present
-  oxfmtrc.experimentalTailwindcss = tailwindOptions;
-  console.log("Migrated prettier-plugin-tailwindcss options to experimentalTailwindcss");
+  // Only add sortTailwindcss if plugin is used or options are present
+  oxfmtrc.sortTailwindcss = tailwindOptions;
+  console.log("Migrated prettier-plugin-tailwindcss options to sortTailwindcss");
 }

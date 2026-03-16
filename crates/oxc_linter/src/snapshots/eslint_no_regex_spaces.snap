@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:12]
  1 │ var foo = /  /;

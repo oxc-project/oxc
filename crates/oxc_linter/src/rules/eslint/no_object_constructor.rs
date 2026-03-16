@@ -17,7 +17,7 @@ pub struct NoObjectConstructor;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow calls to the Object constructor without an argument
+    /// Disallow calls to the Object constructor without an argument.
     ///
     /// ### Why is this bad?
     ///

@@ -7,20 +7,19 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
-
-const SCOPE: &str = "eslint-plugin-react-refresh";
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn export_all_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This rule can't verify that `export *` only exports components.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn named_export_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn anonymous_components_diagnostic(span: Span) -> OxcDiagnostic {
@@ -28,28 +27,24 @@ fn anonymous_components_diagnostic(span: Span) -> OxcDiagnostic {
         "Fast refresh can't handle anonymous components. Add a name to your export.",
     )
     .with_label(span)
-    .with_error_code_scope(SCOPE)
 }
 
 fn local_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your component(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file has exports. Move your component(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn react_context_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct OnlyExportComponents(Box<OnlyExportComponentsConfig>);
 
 impl std::ops::Deref for OnlyExportComponents {
@@ -60,23 +55,13 @@ impl std::ops::Deref for OnlyExportComponents {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct OnlyExportComponentsConfig {
-    allow_export_names: FxHashSet<String>,
-    allow_constant_export: bool,
-    custom_hocs: Vec<String>,
-    check_js: bool,
-}
-
-// NOTE: Ensure this is always kept in sync with OnlyExportComponentsConfig
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(default)]
-struct OnlyExportComponentsOptionsJson {
     /// Treat specific named exports as HMR-safe (useful for frameworks that hot-replace
     /// certain exports). For example, in Remix:
     /// `{ "allowExportNames": ["meta", "links", "headers", "loader", "action"] }`
-    #[serde(rename = "allowExportNames")]
-    allow_export_names: Option<Vec<String>>,
+    allow_export_names: FxHashSet<String>,
     /// Allow exporting primitive constants (string/number/boolean/template literal)
     /// alongside component exports without triggering a violation. Recommended when your
     /// bundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`
@@ -87,16 +72,15 @@ struct OnlyExportComponentsOptionsJson {
     /// export const VERSION = "3";
     /// export const Foo = () => null;
     /// ```
-    #[serde(rename = "allowConstantExport")]
-    allow_constant_export: Option<bool>,
+    allow_constant_export: bool,
     /// If you export components wrapped in custom higher-order components, list their
     /// identifiers here to avoid false positives.
     #[serde(rename = "customHOCs")]
-    custom_hocs: Option<Vec<String>>,
+    custom_hocs: Vec<String>,
     /// Check `.js` files that contain JSX (in addition to `.tsx`/`.jsx`). To reduce
     /// false positives, only files that import React are checked when this is enabled.
     #[serde(rename = "checkJS")]
-    check_js: Option<bool>,
+    check_js: bool,
 }
 
 declare_oxc_lint!(
@@ -106,7 +90,9 @@ declare_oxc_lint!(
     /// that Fast Refresh (a.k.a. hot reloading) can safely preserve component state.
     /// Concretely, it validates the shape of your module’s exports and common entrypoints
     /// (e.g. `createRoot(...).render(<App />)`) to match what integrations like
-    /// `react-refresh` expect. The rule name is `react-refresh/only-export-components`.
+    /// `react-refresh` expect.
+    ///
+    /// This rule is based on the rule from `eslint-plugin-react-refresh`.
     ///
     /// ### Why is this bad?
     ///
@@ -176,32 +162,14 @@ declare_oxc_lint!(
     OnlyExportComponents,
     react,
     restriction,
-    config = OnlyExportComponentsOptionsJson,
+    config = OnlyExportComponentsConfig,
 );
 
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];
 
 impl Rule for OnlyExportComponents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|first| {
-                serde_json::from_value::<OnlyExportComponentsOptionsJson>(first.clone()).ok()
-            })
-            .map(|config| OnlyExportComponentsConfig {
-                allow_export_names: config
-                    .allow_export_names
-                    .unwrap_or_default()
-                    .into_iter()
-                    .collect(),
-                allow_constant_export: config.allow_constant_export.unwrap_or_default(),
-                custom_hocs: config.custom_hocs.unwrap_or_default(),
-                check_js: config.check_js.unwrap_or_default(),
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
@@ -752,11 +720,6 @@ fn test() {
         ("export type * from './module';", None),
         ("type foo = string; export const Foo = () => null; export type { foo };", None),
         ("export type foo = string; export const Foo = () => null;", None),
-        // ("export const foo = () => {}; export const Bar = () => {};", None),
-        // (
-        //     "export const foo = () => {}; export const Bar = () => {};",
-        //     Some(serde_json::json!([{ "checkJS": true }])),
-        // ),
         (
             "export const foo = 4; export const Bar = () => {};",
             Some(serde_json::json!([{ "allowConstantExport": true }])),
@@ -853,4 +816,55 @@ fn test() {
 
     Tester::new(OnlyExportComponents::NAME, OnlyExportComponents::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+// The tests in the main test method all use tsx file paths, this set of tests uses `.js` to
+// ensure the checkJS option works fine.
+#[test]
+fn test_js_file_extension() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // Passes because there is no import of React
+        ("export default () => {};", Some(serde_json::json!([{ "checkJS": true }]))),
+        // Passes with an import of React
+        (
+            "import React from 'react'; export function Foo() {};",
+            Some(serde_json::json!([{ "checkJS": true }])),
+        ),
+        // Also passes both cases when checkJS is false.
+        ("export default () => {};", Some(serde_json::json!([{ "checkJS": false }]))),
+        (
+            "import React from 'react'; export function Foo() {};",
+            Some(serde_json::json!([{ "checkJS": false }])),
+        ),
+        // And with no config, as checkJS defaults to false.
+        ("export default () => {};", None),
+        ("import React from 'react'; export function Foo() {};", None),
+    ];
+
+    // Copied tests from the fail array in the main test set, but with
+    // `import React from 'react';` added.
+    let fail = vec![
+        (
+            "import React from 'react'; export default () => {};",
+            Some(serde_json::json!([{ "checkJS": true }])),
+        ),
+        (
+            "import React from 'react'; export * from './foo';",
+            Some(serde_json::json!([{ "checkJS": true }])),
+        ),
+        (
+            "import React from 'react'; export default memo(() => {});",
+            Some(serde_json::json!([{ "checkJS": true }])),
+        ),
+        (
+            "import React from 'react'; export default function () {};",
+            Some(serde_json::json!([{ "checkJS": true }])),
+        ),
+    ];
+
+    Tester::new(OnlyExportComponents::NAME, OnlyExportComponents::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
+        .test();
 }

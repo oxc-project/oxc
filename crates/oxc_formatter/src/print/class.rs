@@ -125,7 +125,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
 
         if let Some(body) = &value.body() {
             write!(f, body);
+        } else {
+            let comments = f.context().comments().comments_before(self.span.end);
+            write!(f, FormatTrailingComments::Comments(comments));
         }
+
         if self.r#type().is_abstract()
             || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
         {
@@ -162,34 +166,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, [self.decorators()]);
-
-        if let Some(accessibility) = self.accessibility() {
-            write!(f, [accessibility.as_str(), space()]);
-        }
-        if self.r#static {
-            write!(f, ["static", space()]);
-        }
-        if self.r#type.is_abstract() {
-            write!(f, ["abstract", space()]);
-        }
-        if self.r#override {
-            write!(f, ["override", space()]);
-        }
-        write!(f, ["accessor", space()]);
-        if self.computed {
-            write!(f, "[");
-        }
-        write!(f, self.key());
-        if self.computed {
-            write!(f, "]");
-        }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation);
-        }
-        if let Some(value) = &self.value() {
-            write!(f, [space(), "=", space(), value]);
-        }
+        AssignmentLike::AccessorProperty(self).fmt(f);
     }
 }
 
@@ -201,7 +178,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
         if self.readonly {
             write!(f, ["readonly", space()]);
         }
-        let is_class = matches!(self.parent, AstNodes::ClassBody(_));
+        let is_class = matches!(self.parent(), AstNodes::ClassBody(_));
         write!(
             f,
             [
@@ -291,7 +268,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
         // to ensure proper placement relative to the export keyword
         if self.is_expression()
             || !matches!(
-                self.parent,
+                self.parent(),
                 AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
             )
         {
@@ -498,7 +475,7 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
         return true;
     }
 
-    if (!class.is_expression() || !matches!(class.parent, AstNodes::AssignmentExpression(_)))
+    if (!class.is_expression() || !matches!(class.parent(), AstNodes::AssignmentExpression(_)))
         && class
             .super_class
             .as_ref()
@@ -609,7 +586,10 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
             && match f.options().semicolons {
                 Semicolons::Always => true,
                 Semicolons::AsNeeded => self.needs_semicolon(),
-            };
+            }
+            // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
+            // because the suppressed source text already includes the original semicolon.
+            && !f.comments().is_suppressed(self.element.span().start);
 
         if needs_semi {
             write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);

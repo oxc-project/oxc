@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.24.0",
+  "version": "0.41.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -11,21 +11,27 @@
     "build-dev": "pnpm run build-napi && pnpm run build-js",
     "build-test": "pnpm run build-napi-test && pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
-    "build-napi-test": "pnpm run build-napi",
+    "build-napi-test": "pnpm run build-napi --profile coverage",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "vitest --dir test run"
+    "test": "vitest --dir test run",
+    "conformance": "node conformance/run.ts",
+    "download-fixtures": "node conformance/download-fixtures.js",
+    "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {
-    "prettier": "3.8.0",
-    "prettier-plugin-tailwindcss": "0.7.2",
-    "tinypool": "2.0.0"
+    "prettier": "3.8.1",
+    "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
+    "tinypool": "2.1.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
+    "degit": "^2.8.4",
+    "diff": "^8.0.3",
     "execa": "^9.6.0",
+    "json-schema-to-typescript": "catalog:",
     "tsdown": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",
@@ -35,14 +41,22 @@
     "binaryName": "oxfmt",
     "packageName": "@oxfmt/binding",
     "targets": [
-      "win32-x64",
-      "win32-arm64",
-      "linux-x64-gnu",
-      "linux-arm64-gnu",
-      "linux-x64-musl",
-      "linux-arm64-musl",
-      "darwin-x64",
-      "darwin-arm64"
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
     ]
   },
   "engines": {

@@ -7,7 +7,8 @@ use std::{
 };
 
 use allocator_api2::alloc::Allocator;
-use bumpalo::Bump;
+
+use crate::bump::Bump;
 
 /// Trait describing an allocator.
 ///
@@ -81,7 +82,7 @@ pub trait Alloc {
     ) -> NonNull<u8>;
 }
 
-/// Implement [`Alloc`] for [`bumpalo::Bump`].
+/// Implement [`Alloc`] for [`Bump`].
 ///
 /// All methods except `alloc` delegate to [`Bump`]'s impl of `allocator_api2`'s [`Allocator`] trait.
 impl Alloc for Bump {
@@ -114,7 +115,7 @@ impl Alloc for Bump {
     #[inline(always)]
     unsafe fn dealloc(&self, ptr: NonNull<u8>, layout: Layout) {
         // SAFETY: Safety requirements of `Allocator::deallocate` are the same as for this method
-        unsafe { self.deallocate(ptr, layout) }
+        unsafe { Allocator::deallocate(&self, ptr, layout) }
     }
 
     /// Grow an existing allocation to new [`Layout`].

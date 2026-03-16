@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeAll(() => {})

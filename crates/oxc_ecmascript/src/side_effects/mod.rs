@@ -4,6 +4,7 @@ mod pure_function;
 mod statements;
 
 pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects};
+pub use expressions::is_valid_regexp;
 pub use pure_function::is_pure_function;
 
 /// Returns true if subtree changes application state.

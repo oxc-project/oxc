@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -26,11 +27,17 @@ fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
 pub struct MaxDependencies(Box<MaxDependenciesConfig>);
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxDependenciesConfig {
-    /// Maximum number of dependencies allowed in a module.
+    /// Maximum number of dependencies allowed in a file.
     max: usize,
     /// Whether to ignore type imports when counting dependencies.
+    ///
+    /// ```ts
+    /// // Neither of these count as dependencies if `ignoreTypeImports` is true:
+    /// import type { Foo } from './foo';
+    /// import { type Foo } from './foo';
+    /// ```
     ignore_type_imports: bool,
 }
 
@@ -51,7 +58,7 @@ impl Default for MaxDependenciesConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Forbid modules to have too many dependencies (import or require statements).
+    /// Forbid modules to have too many dependencies (`import` statements only).
     ///
     /// ### Why is this bad?
     ///
@@ -59,9 +66,13 @@ declare_oxc_lint!(
     /// and usually indicates the module is doing too much and/or should be broken up into
     /// smaller modules.
     ///
+    /// **NOTE**: This rule only counts `import` statements, and does not count dependencies from
+    /// CommonJS `require()` statements. This is a difference from the original
+    /// eslint-import-plugin rule.
+    ///
     /// ### Examples
     ///
-    /// Given `{"max": 2}`
+    /// Given `{ "max": 2 }`
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -82,6 +93,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxDependencies {
+    // TODO(breaking change): Remove support for the `["error", 3]`-style configuration
+    // option, as it is not actually supported in the original rule.
+    // Only the object configuration option should be supported in the future.
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         if let Some(max) = value
             .get(0)
@@ -91,36 +105,43 @@ impl Rule for MaxDependencies {
         {
             Ok(Self(Box::new(MaxDependenciesConfig { max, ignore_type_imports: false })))
         } else {
-            Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .unwrap_or_default()
-                .into_inner())
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
         }
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        let mut module_count = module_record.import_entries.len();
+        let mut dependency_sources = FxHashSet::default();
+        let mut module_count = 0;
+        let mut first_exceeding_span = None;
 
-        let Some(entry) = module_record.import_entries.get(self.max) else {
-            return;
-        };
+        for entry in &module_record.import_entries {
+            if self.ignore_type_imports && entry.is_type {
+                continue;
+            }
 
-        if self.ignore_type_imports {
-            let type_imports =
-                module_record.import_entries.iter().filter(|entry| entry.is_type).count();
-
-            module_count -= type_imports;
+            if dependency_sources.insert(entry.module_request.name()) {
+                module_count += 1;
+                if module_count > self.max && first_exceeding_span.is_none() {
+                    first_exceeding_span = Some(entry.module_request.span);
+                }
+            }
         }
 
         if module_count <= self.max {
             return;
         }
 
+        let Some(span) = first_exceeding_span else {
+            return;
+        };
+
         let error = format!(
             "File has too many dependencies ({}). Maximum allowed is {}.",
             module_count, self.max,
         );
-        ctx.diagnostic(max_dependencies_diagnostic(error, entry.module_request.span));
+        ctx.diagnostic(max_dependencies_diagnostic(error, span));
     }
 }
 
@@ -156,13 +177,13 @@ fn test() {
         //      const a = require('./foo.js');
         //      const b = require('./bar.js');
         //     ",
-        //     Some(json!([{"max": 2}])),
+        //     Some(json!([{ "max": 2 }])),
         // ),
         (
             r"
                 import {x, y, z} from './foo';
             ",
-            None,
+            Some(json!([{ "max": 1 }])),
         ),
         (
             r"
@@ -174,9 +195,41 @@ fn test() {
         (
             r"
             import type { x } from './foo';
+            import { type z } from './foo';
+            import { y } from './foo';
+            ",
+            Some(json!([{ "max": 1, "ignoreTypeImports": true }])),
+        ),
+        (
+            r"
+            import { type x } from './foo';
+            import { type y } from './foo';
+            ",
+            Some(json!([{ "max": 1, "ignoreTypeImports": true }])),
+        ),
+        (
+            r"
+            import type { x } from './foo';
             import type { y } from './foo';
             ",
             Some(json!([2])),
+        ),
+        (
+            r"
+            import { w } from './foo';
+            // This should only count as one dependency, because it's 3 named imports from the same place.
+            import { x, y, z } from './bar';
+            ",
+            Some(json!([{ "max": 2 }])),
+        ),
+        (
+            r"
+            import { w } from './foo';
+            // This should not count, because both are type imports
+            import { type x, type y } from './bar';
+            import { z } from './baz';
+            ",
+            Some(json!([{ "max": 2, "ignoreTypeImports": true }])),
         ),
     ];
 
@@ -184,23 +237,23 @@ fn test() {
         (
             r"
             import { x } from './foo';
-            import { y } from './foo';
-            import { z } from './bar';
+            import { y } from './bar';
+            import { z } from './baz';
             ",
             Some(json!([1])),
         ),
         (
             r"
             import { x } from './foo';
-            import { y } from './foo';
-            import { z } from './bar';
+            import { y } from './bar';
+            import { z } from './baz';
             ",
             Some(json!([{ "max": 1 }])),
         ),
         (
             r"
             import { x } from './foo';
-            import { y } from './foo';
+            import { y } from './bar';
             import { z } from './baz';
             ",
             Some(json!([{ "max": 2 }])),
@@ -216,17 +269,50 @@ fn test() {
         (
             r"
             import type { x } from './foo';
-            import type { y } from './foo';
+            import type { y } from './bar';
             ",
             Some(json!([{ "max": 1 }])),
         ),
         (
             r"
             import type { x } from './foo';
-            import type { y } from './foo';
+            import type { y } from './bar';
             import type { z } from './baz';
             ",
             Some(json!([{ "max": 2, "ignoreTypeImports": false }])),
+        ),
+        (
+            r"
+            import type { x } from './foo';
+            import { type y } from './bar';
+            import { type z } from './baz';
+            ",
+            Some(json!([{ "max": 2, "ignoreTypeImports": false }])),
+        ),
+        (
+            r"
+            import { x } from './foo';
+            import { y } from './bar';
+            import { z } from './baz.json' with { type: 'json' };
+            ",
+            Some(json!([{ "max": 2 }])),
+        ),
+        (
+            r"
+            import { w } from './foo';
+            // This should still count, because only one is a type import
+            import { type x, y } from './bar';
+            import { z } from './baz';
+            ",
+            Some(json!([{ "max": 2, "ignoreTypeImports": true }])),
+        ),
+        (
+            r"
+            import { definePlugin } from '@oxlint/plugins';
+            import { fsSync } from 'node:fs';
+            import { path } from 'node:path';
+            ",
+            Some(json!([{ "max": 2 }])),
         ),
     ];
 

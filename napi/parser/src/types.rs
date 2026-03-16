@@ -12,7 +12,7 @@ pub struct ParserOptions {
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    #[napi(ts_type = "'script' | 'module' | 'commonjs' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
 
     /// Return an AST which includes TypeScript-related properties, or excludes them.
@@ -30,6 +30,14 @@ pub struct ParserOptions {
     /// @default false
     #[napi(ts_type = "boolean")]
     pub range: Option<bool>,
+
+    /// Controls whether parser should return tokens.
+    ///
+    /// This option is not stable yet, and only available with experimental raw transfer.
+    ///
+    /// @default false
+    #[napi(skip_typescript, js_name = "experimentalTokens")]
+    pub tokens: Option<bool>,
 
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///

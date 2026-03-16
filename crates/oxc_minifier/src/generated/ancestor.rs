@@ -1,0 +1,18571 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
+
+#![expect(
+    clippy::cast_ptr_alignment,
+    clippy::elidable_lifetime_names,
+    clippy::ptr_as_ptr,
+    clippy::ref_option,
+    clippy::undocumented_unsafe_blocks
+)]
+#![allow(clippy::redundant_pub_crate)]
+
+use std::{cell::Cell, marker::PhantomData, mem::offset_of};
+
+use oxc_allocator::{Address, Box, GetAddress, Vec};
+use oxc_ast::ast::*;
+use oxc_syntax::{node::NodeId, scope::ScopeId};
+
+/// Type of [`Ancestor`].
+/// Used in [`crate::TraverseCtx::retag_stack`].
+#[repr(u16)]
+#[derive(Clone, Copy)]
+pub(crate) enum AncestorType {
+    None = 0,
+    ProgramHashbang = 1,
+    ProgramDirectives = 2,
+    ProgramBody = 3,
+    ArrayExpressionElements = 4,
+    ObjectExpressionProperties = 5,
+    ObjectPropertyKey = 6,
+    ObjectPropertyValue = 7,
+    TemplateLiteralQuasis = 8,
+    TemplateLiteralExpressions = 9,
+    TaggedTemplateExpressionTag = 10,
+    TaggedTemplateExpressionTypeArguments = 11,
+    TaggedTemplateExpressionQuasi = 12,
+    ComputedMemberExpressionObject = 13,
+    ComputedMemberExpressionExpression = 14,
+    StaticMemberExpressionObject = 15,
+    StaticMemberExpressionProperty = 16,
+    PrivateFieldExpressionObject = 17,
+    PrivateFieldExpressionField = 18,
+    CallExpressionCallee = 19,
+    CallExpressionTypeArguments = 20,
+    CallExpressionArguments = 21,
+    NewExpressionCallee = 22,
+    NewExpressionTypeArguments = 23,
+    NewExpressionArguments = 24,
+    MetaPropertyMeta = 25,
+    MetaPropertyProperty = 26,
+    SpreadElementArgument = 27,
+    UpdateExpressionArgument = 28,
+    UnaryExpressionArgument = 29,
+    BinaryExpressionLeft = 30,
+    BinaryExpressionRight = 31,
+    PrivateInExpressionLeft = 32,
+    PrivateInExpressionRight = 33,
+    LogicalExpressionLeft = 34,
+    LogicalExpressionRight = 35,
+    ConditionalExpressionTest = 36,
+    ConditionalExpressionConsequent = 37,
+    ConditionalExpressionAlternate = 38,
+    AssignmentExpressionLeft = 39,
+    AssignmentExpressionRight = 40,
+    ArrayAssignmentTargetElements = 41,
+    ArrayAssignmentTargetRest = 42,
+    ObjectAssignmentTargetProperties = 43,
+    ObjectAssignmentTargetRest = 44,
+    AssignmentTargetRestTarget = 45,
+    AssignmentTargetWithDefaultBinding = 46,
+    AssignmentTargetWithDefaultInit = 47,
+    AssignmentTargetPropertyIdentifierBinding = 48,
+    AssignmentTargetPropertyIdentifierInit = 49,
+    AssignmentTargetPropertyPropertyName = 50,
+    AssignmentTargetPropertyPropertyBinding = 51,
+    SequenceExpressionExpressions = 52,
+    AwaitExpressionArgument = 53,
+    ChainExpressionExpression = 54,
+    ParenthesizedExpressionExpression = 55,
+    DirectiveExpression = 56,
+    BlockStatementBody = 57,
+    VariableDeclarationDeclarations = 58,
+    VariableDeclaratorId = 59,
+    VariableDeclaratorTypeAnnotation = 60,
+    VariableDeclaratorInit = 61,
+    ExpressionStatementExpression = 62,
+    IfStatementTest = 63,
+    IfStatementConsequent = 64,
+    IfStatementAlternate = 65,
+    DoWhileStatementBody = 66,
+    DoWhileStatementTest = 67,
+    WhileStatementTest = 68,
+    WhileStatementBody = 69,
+    ForStatementInit = 70,
+    ForStatementTest = 71,
+    ForStatementUpdate = 72,
+    ForStatementBody = 73,
+    ForInStatementLeft = 74,
+    ForInStatementRight = 75,
+    ForInStatementBody = 76,
+    ForOfStatementLeft = 77,
+    ForOfStatementRight = 78,
+    ForOfStatementBody = 79,
+    ContinueStatementLabel = 80,
+    BreakStatementLabel = 81,
+    ReturnStatementArgument = 82,
+    WithStatementObject = 83,
+    WithStatementBody = 84,
+    SwitchStatementDiscriminant = 85,
+    SwitchStatementCases = 86,
+    SwitchCaseTest = 87,
+    SwitchCaseConsequent = 88,
+    LabeledStatementLabel = 89,
+    LabeledStatementBody = 90,
+    ThrowStatementArgument = 91,
+    TryStatementBlock = 92,
+    TryStatementHandler = 93,
+    TryStatementFinalizer = 94,
+    CatchClauseParam = 95,
+    CatchClauseBody = 96,
+    CatchParameterPattern = 97,
+    CatchParameterTypeAnnotation = 98,
+    AssignmentPatternLeft = 99,
+    AssignmentPatternRight = 100,
+    ObjectPatternProperties = 101,
+    ObjectPatternRest = 102,
+    BindingPropertyKey = 103,
+    BindingPropertyValue = 104,
+    ArrayPatternElements = 105,
+    ArrayPatternRest = 106,
+    BindingRestElementArgument = 107,
+    FunctionId = 108,
+    FunctionTypeParameters = 109,
+    FunctionThisParam = 110,
+    FunctionParams = 111,
+    FunctionReturnType = 112,
+    FunctionBody = 113,
+    FormalParametersItems = 114,
+    FormalParametersRest = 115,
+    FormalParameterDecorators = 116,
+    FormalParameterPattern = 117,
+    FormalParameterTypeAnnotation = 118,
+    FormalParameterInitializer = 119,
+    FormalParameterRestDecorators = 120,
+    FormalParameterRestRest = 121,
+    FormalParameterRestTypeAnnotation = 122,
+    FunctionBodyDirectives = 123,
+    FunctionBodyStatements = 124,
+    ArrowFunctionExpressionTypeParameters = 125,
+    ArrowFunctionExpressionParams = 126,
+    ArrowFunctionExpressionReturnType = 127,
+    ArrowFunctionExpressionBody = 128,
+    YieldExpressionArgument = 129,
+    ClassDecorators = 130,
+    ClassId = 131,
+    ClassTypeParameters = 132,
+    ClassSuperClass = 133,
+    ClassSuperTypeArguments = 134,
+    ClassImplements = 135,
+    ClassBody = 136,
+    ClassBodyBody = 137,
+    MethodDefinitionDecorators = 138,
+    MethodDefinitionKey = 139,
+    MethodDefinitionValue = 140,
+    PropertyDefinitionDecorators = 141,
+    PropertyDefinitionKey = 142,
+    PropertyDefinitionTypeAnnotation = 143,
+    PropertyDefinitionValue = 144,
+    StaticBlockBody = 145,
+    AccessorPropertyDecorators = 146,
+    AccessorPropertyKey = 147,
+    AccessorPropertyTypeAnnotation = 148,
+    AccessorPropertyValue = 149,
+    ImportExpressionSource = 150,
+    ImportExpressionOptions = 151,
+    ImportDeclarationSpecifiers = 152,
+    ImportDeclarationSource = 153,
+    ImportDeclarationWithClause = 154,
+    ImportSpecifierImported = 155,
+    ImportSpecifierLocal = 156,
+    ImportDefaultSpecifierLocal = 157,
+    ImportNamespaceSpecifierLocal = 158,
+    WithClauseWithEntries = 159,
+    ImportAttributeKey = 160,
+    ImportAttributeValue = 161,
+    ExportNamedDeclarationDeclaration = 162,
+    ExportNamedDeclarationSpecifiers = 163,
+    ExportNamedDeclarationSource = 164,
+    ExportNamedDeclarationWithClause = 165,
+    ExportDefaultDeclarationDeclaration = 166,
+    ExportAllDeclarationExported = 167,
+    ExportAllDeclarationSource = 168,
+    ExportAllDeclarationWithClause = 169,
+    ExportSpecifierLocal = 170,
+    ExportSpecifierExported = 171,
+    V8IntrinsicExpressionName = 172,
+    V8IntrinsicExpressionArguments = 173,
+    JSXElementOpeningElement = 174,
+    JSXElementChildren = 175,
+    JSXElementClosingElement = 176,
+    JSXOpeningElementName = 177,
+    JSXOpeningElementTypeArguments = 178,
+    JSXOpeningElementAttributes = 179,
+    JSXClosingElementName = 180,
+    JSXFragmentOpeningFragment = 181,
+    JSXFragmentChildren = 182,
+    JSXFragmentClosingFragment = 183,
+    JSXNamespacedNameNamespace = 184,
+    JSXNamespacedNameName = 185,
+    JSXMemberExpressionObject = 186,
+    JSXMemberExpressionProperty = 187,
+    JSXExpressionContainerExpression = 188,
+    JSXAttributeName = 189,
+    JSXAttributeValue = 190,
+    JSXSpreadAttributeArgument = 191,
+    JSXSpreadChildExpression = 192,
+    TSThisParameterTypeAnnotation = 193,
+    TSEnumDeclarationId = 194,
+    TSEnumDeclarationBody = 195,
+    TSEnumBodyMembers = 196,
+    TSEnumMemberId = 197,
+    TSEnumMemberInitializer = 198,
+    TSTypeAnnotationTypeAnnotation = 199,
+    TSLiteralTypeLiteral = 200,
+    TSConditionalTypeCheckType = 201,
+    TSConditionalTypeExtendsType = 202,
+    TSConditionalTypeTrueType = 203,
+    TSConditionalTypeFalseType = 204,
+    TSUnionTypeTypes = 205,
+    TSIntersectionTypeTypes = 206,
+    TSParenthesizedTypeTypeAnnotation = 207,
+    TSTypeOperatorTypeAnnotation = 208,
+    TSArrayTypeElementType = 209,
+    TSIndexedAccessTypeObjectType = 210,
+    TSIndexedAccessTypeIndexType = 211,
+    TSTupleTypeElementTypes = 212,
+    TSNamedTupleMemberLabel = 213,
+    TSNamedTupleMemberElementType = 214,
+    TSOptionalTypeTypeAnnotation = 215,
+    TSRestTypeTypeAnnotation = 216,
+    TSTypeReferenceTypeName = 217,
+    TSTypeReferenceTypeArguments = 218,
+    TSQualifiedNameLeft = 219,
+    TSQualifiedNameRight = 220,
+    TSTypeParameterInstantiationParams = 221,
+    TSTypeParameterName = 222,
+    TSTypeParameterConstraint = 223,
+    TSTypeParameterDefault = 224,
+    TSTypeParameterDeclarationParams = 225,
+    TSTypeAliasDeclarationId = 226,
+    TSTypeAliasDeclarationTypeParameters = 227,
+    TSTypeAliasDeclarationTypeAnnotation = 228,
+    TSClassImplementsExpression = 229,
+    TSClassImplementsTypeArguments = 230,
+    TSInterfaceDeclarationId = 231,
+    TSInterfaceDeclarationTypeParameters = 232,
+    TSInterfaceDeclarationExtends = 233,
+    TSInterfaceDeclarationBody = 234,
+    TSInterfaceBodyBody = 235,
+    TSPropertySignatureKey = 236,
+    TSPropertySignatureTypeAnnotation = 237,
+    TSIndexSignatureParameters = 238,
+    TSIndexSignatureTypeAnnotation = 239,
+    TSCallSignatureDeclarationTypeParameters = 240,
+    TSCallSignatureDeclarationThisParam = 241,
+    TSCallSignatureDeclarationParams = 242,
+    TSCallSignatureDeclarationReturnType = 243,
+    TSMethodSignatureKey = 244,
+    TSMethodSignatureTypeParameters = 245,
+    TSMethodSignatureThisParam = 246,
+    TSMethodSignatureParams = 247,
+    TSMethodSignatureReturnType = 248,
+    TSConstructSignatureDeclarationTypeParameters = 249,
+    TSConstructSignatureDeclarationParams = 250,
+    TSConstructSignatureDeclarationReturnType = 251,
+    TSIndexSignatureNameTypeAnnotation = 252,
+    TSInterfaceHeritageExpression = 253,
+    TSInterfaceHeritageTypeArguments = 254,
+    TSTypePredicateParameterName = 255,
+    TSTypePredicateTypeAnnotation = 256,
+    TSModuleDeclarationId = 257,
+    TSModuleDeclarationBody = 258,
+    TSGlobalDeclarationBody = 259,
+    TSModuleBlockDirectives = 260,
+    TSModuleBlockBody = 261,
+    TSTypeLiteralMembers = 262,
+    TSInferTypeTypeParameter = 263,
+    TSTypeQueryExprName = 264,
+    TSTypeQueryTypeArguments = 265,
+    TSImportTypeSource = 266,
+    TSImportTypeOptions = 267,
+    TSImportTypeQualifier = 268,
+    TSImportTypeTypeArguments = 269,
+    TSImportTypeQualifiedNameLeft = 270,
+    TSImportTypeQualifiedNameRight = 271,
+    TSFunctionTypeTypeParameters = 272,
+    TSFunctionTypeThisParam = 273,
+    TSFunctionTypeParams = 274,
+    TSFunctionTypeReturnType = 275,
+    TSConstructorTypeTypeParameters = 276,
+    TSConstructorTypeParams = 277,
+    TSConstructorTypeReturnType = 278,
+    TSMappedTypeKey = 279,
+    TSMappedTypeConstraint = 280,
+    TSMappedTypeNameType = 281,
+    TSMappedTypeTypeAnnotation = 282,
+    TSTemplateLiteralTypeQuasis = 283,
+    TSTemplateLiteralTypeTypes = 284,
+    TSAsExpressionExpression = 285,
+    TSAsExpressionTypeAnnotation = 286,
+    TSSatisfiesExpressionExpression = 287,
+    TSSatisfiesExpressionTypeAnnotation = 288,
+    TSTypeAssertionTypeAnnotation = 289,
+    TSTypeAssertionExpression = 290,
+    TSImportEqualsDeclarationId = 291,
+    TSImportEqualsDeclarationModuleReference = 292,
+    TSExternalModuleReferenceExpression = 293,
+    TSNonNullExpressionExpression = 294,
+    DecoratorExpression = 295,
+    TSExportAssignmentExpression = 296,
+    TSNamespaceExportDeclarationId = 297,
+    TSInstantiationExpressionExpression = 298,
+    TSInstantiationExpressionTypeArguments = 299,
+    JSDocNullableTypeTypeAnnotation = 300,
+    JSDocNonNullableTypeTypeAnnotation = 301,
+}
+
+/// Ancestor type used in AST traversal.
+///
+/// Encodes both the type of the parent, and child's location in the parent.
+/// i.e. variants for `BinaryExpressionLeft` and `BinaryExpressionRight`, not just `BinaryExpression`.
+///
+/// `'a` is lifetime of AST nodes.
+/// `'t` is lifetime of the `Ancestor` (which inherits lifetime from `&'t TraverseCtx'`).
+/// i.e. `Ancestor`s can only exist within the body of `enter_*` and `exit_*` methods
+/// and cannot "escape" from them.
+//
+// SAFETY
+// * This type must be `#[repr(u16)]`.
+// * Variant discriminants must correspond to those in `AncestorType`.
+//
+// These invariants make it possible to set the discriminant of an `Ancestor` without altering
+// the "payload" pointer with:
+// `*(ancestor as *mut _ as *mut AncestorType) = AncestorType::Program`.
+// `TraverseCtx::retag_stack` uses this technique.
+#[repr(C, u16)]
+#[derive(Clone, Copy, Debug)]
+pub enum Ancestor<'a, 't> {
+    None = AncestorType::None as u16,
+    ProgramHashbang(ProgramWithoutHashbang<'a, 't>) = AncestorType::ProgramHashbang as u16,
+    ProgramDirectives(ProgramWithoutDirectives<'a, 't>) = AncestorType::ProgramDirectives as u16,
+    ProgramBody(ProgramWithoutBody<'a, 't>) = AncestorType::ProgramBody as u16,
+    ArrayExpressionElements(ArrayExpressionWithoutElements<'a, 't>) =
+        AncestorType::ArrayExpressionElements as u16,
+    ObjectExpressionProperties(ObjectExpressionWithoutProperties<'a, 't>) =
+        AncestorType::ObjectExpressionProperties as u16,
+    ObjectPropertyKey(ObjectPropertyWithoutKey<'a, 't>) = AncestorType::ObjectPropertyKey as u16,
+    ObjectPropertyValue(ObjectPropertyWithoutValue<'a, 't>) =
+        AncestorType::ObjectPropertyValue as u16,
+    TemplateLiteralQuasis(TemplateLiteralWithoutQuasis<'a, 't>) =
+        AncestorType::TemplateLiteralQuasis as u16,
+    TemplateLiteralExpressions(TemplateLiteralWithoutExpressions<'a, 't>) =
+        AncestorType::TemplateLiteralExpressions as u16,
+    TaggedTemplateExpressionTag(TaggedTemplateExpressionWithoutTag<'a, 't>) =
+        AncestorType::TaggedTemplateExpressionTag as u16,
+    TaggedTemplateExpressionTypeArguments(TaggedTemplateExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::TaggedTemplateExpressionTypeArguments as u16,
+    TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a, 't>) =
+        AncestorType::TaggedTemplateExpressionQuasi as u16,
+    ComputedMemberExpressionObject(ComputedMemberExpressionWithoutObject<'a, 't>) =
+        AncestorType::ComputedMemberExpressionObject as u16,
+    ComputedMemberExpressionExpression(ComputedMemberExpressionWithoutExpression<'a, 't>) =
+        AncestorType::ComputedMemberExpressionExpression as u16,
+    StaticMemberExpressionObject(StaticMemberExpressionWithoutObject<'a, 't>) =
+        AncestorType::StaticMemberExpressionObject as u16,
+    StaticMemberExpressionProperty(StaticMemberExpressionWithoutProperty<'a, 't>) =
+        AncestorType::StaticMemberExpressionProperty as u16,
+    PrivateFieldExpressionObject(PrivateFieldExpressionWithoutObject<'a, 't>) =
+        AncestorType::PrivateFieldExpressionObject as u16,
+    PrivateFieldExpressionField(PrivateFieldExpressionWithoutField<'a, 't>) =
+        AncestorType::PrivateFieldExpressionField as u16,
+    CallExpressionCallee(CallExpressionWithoutCallee<'a, 't>) =
+        AncestorType::CallExpressionCallee as u16,
+    CallExpressionTypeArguments(CallExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::CallExpressionTypeArguments as u16,
+    CallExpressionArguments(CallExpressionWithoutArguments<'a, 't>) =
+        AncestorType::CallExpressionArguments as u16,
+    NewExpressionCallee(NewExpressionWithoutCallee<'a, 't>) =
+        AncestorType::NewExpressionCallee as u16,
+    NewExpressionTypeArguments(NewExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::NewExpressionTypeArguments as u16,
+    NewExpressionArguments(NewExpressionWithoutArguments<'a, 't>) =
+        AncestorType::NewExpressionArguments as u16,
+    MetaPropertyMeta(MetaPropertyWithoutMeta<'a, 't>) = AncestorType::MetaPropertyMeta as u16,
+    MetaPropertyProperty(MetaPropertyWithoutProperty<'a, 't>) =
+        AncestorType::MetaPropertyProperty as u16,
+    SpreadElementArgument(SpreadElementWithoutArgument<'a, 't>) =
+        AncestorType::SpreadElementArgument as u16,
+    UpdateExpressionArgument(UpdateExpressionWithoutArgument<'a, 't>) =
+        AncestorType::UpdateExpressionArgument as u16,
+    UnaryExpressionArgument(UnaryExpressionWithoutArgument<'a, 't>) =
+        AncestorType::UnaryExpressionArgument as u16,
+    BinaryExpressionLeft(BinaryExpressionWithoutLeft<'a, 't>) =
+        AncestorType::BinaryExpressionLeft as u16,
+    BinaryExpressionRight(BinaryExpressionWithoutRight<'a, 't>) =
+        AncestorType::BinaryExpressionRight as u16,
+    PrivateInExpressionLeft(PrivateInExpressionWithoutLeft<'a, 't>) =
+        AncestorType::PrivateInExpressionLeft as u16,
+    PrivateInExpressionRight(PrivateInExpressionWithoutRight<'a, 't>) =
+        AncestorType::PrivateInExpressionRight as u16,
+    LogicalExpressionLeft(LogicalExpressionWithoutLeft<'a, 't>) =
+        AncestorType::LogicalExpressionLeft as u16,
+    LogicalExpressionRight(LogicalExpressionWithoutRight<'a, 't>) =
+        AncestorType::LogicalExpressionRight as u16,
+    ConditionalExpressionTest(ConditionalExpressionWithoutTest<'a, 't>) =
+        AncestorType::ConditionalExpressionTest as u16,
+    ConditionalExpressionConsequent(ConditionalExpressionWithoutConsequent<'a, 't>) =
+        AncestorType::ConditionalExpressionConsequent as u16,
+    ConditionalExpressionAlternate(ConditionalExpressionWithoutAlternate<'a, 't>) =
+        AncestorType::ConditionalExpressionAlternate as u16,
+    AssignmentExpressionLeft(AssignmentExpressionWithoutLeft<'a, 't>) =
+        AncestorType::AssignmentExpressionLeft as u16,
+    AssignmentExpressionRight(AssignmentExpressionWithoutRight<'a, 't>) =
+        AncestorType::AssignmentExpressionRight as u16,
+    ArrayAssignmentTargetElements(ArrayAssignmentTargetWithoutElements<'a, 't>) =
+        AncestorType::ArrayAssignmentTargetElements as u16,
+    ArrayAssignmentTargetRest(ArrayAssignmentTargetWithoutRest<'a, 't>) =
+        AncestorType::ArrayAssignmentTargetRest as u16,
+    ObjectAssignmentTargetProperties(ObjectAssignmentTargetWithoutProperties<'a, 't>) =
+        AncestorType::ObjectAssignmentTargetProperties as u16,
+    ObjectAssignmentTargetRest(ObjectAssignmentTargetWithoutRest<'a, 't>) =
+        AncestorType::ObjectAssignmentTargetRest as u16,
+    AssignmentTargetRestTarget(AssignmentTargetRestWithoutTarget<'a, 't>) =
+        AncestorType::AssignmentTargetRestTarget as u16,
+    AssignmentTargetWithDefaultBinding(AssignmentTargetWithDefaultWithoutBinding<'a, 't>) =
+        AncestorType::AssignmentTargetWithDefaultBinding as u16,
+    AssignmentTargetWithDefaultInit(AssignmentTargetWithDefaultWithoutInit<'a, 't>) =
+        AncestorType::AssignmentTargetWithDefaultInit as u16,
+    AssignmentTargetPropertyIdentifierBinding(
+        AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't>,
+    ) = AncestorType::AssignmentTargetPropertyIdentifierBinding as u16,
+    AssignmentTargetPropertyIdentifierInit(AssignmentTargetPropertyIdentifierWithoutInit<'a, 't>) =
+        AncestorType::AssignmentTargetPropertyIdentifierInit as u16,
+    AssignmentTargetPropertyPropertyName(AssignmentTargetPropertyPropertyWithoutName<'a, 't>) =
+        AncestorType::AssignmentTargetPropertyPropertyName as u16,
+    AssignmentTargetPropertyPropertyBinding(AssignmentTargetPropertyPropertyWithoutBinding<'a, 't>) =
+        AncestorType::AssignmentTargetPropertyPropertyBinding as u16,
+    SequenceExpressionExpressions(SequenceExpressionWithoutExpressions<'a, 't>) =
+        AncestorType::SequenceExpressionExpressions as u16,
+    AwaitExpressionArgument(AwaitExpressionWithoutArgument<'a, 't>) =
+        AncestorType::AwaitExpressionArgument as u16,
+    ChainExpressionExpression(ChainExpressionWithoutExpression<'a, 't>) =
+        AncestorType::ChainExpressionExpression as u16,
+    ParenthesizedExpressionExpression(ParenthesizedExpressionWithoutExpression<'a, 't>) =
+        AncestorType::ParenthesizedExpressionExpression as u16,
+    DirectiveExpression(DirectiveWithoutExpression<'a, 't>) =
+        AncestorType::DirectiveExpression as u16,
+    BlockStatementBody(BlockStatementWithoutBody<'a, 't>) = AncestorType::BlockStatementBody as u16,
+    VariableDeclarationDeclarations(VariableDeclarationWithoutDeclarations<'a, 't>) =
+        AncestorType::VariableDeclarationDeclarations as u16,
+    VariableDeclaratorId(VariableDeclaratorWithoutId<'a, 't>) =
+        AncestorType::VariableDeclaratorId as u16,
+    VariableDeclaratorTypeAnnotation(VariableDeclaratorWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::VariableDeclaratorTypeAnnotation as u16,
+    VariableDeclaratorInit(VariableDeclaratorWithoutInit<'a, 't>) =
+        AncestorType::VariableDeclaratorInit as u16,
+    ExpressionStatementExpression(ExpressionStatementWithoutExpression<'a, 't>) =
+        AncestorType::ExpressionStatementExpression as u16,
+    IfStatementTest(IfStatementWithoutTest<'a, 't>) = AncestorType::IfStatementTest as u16,
+    IfStatementConsequent(IfStatementWithoutConsequent<'a, 't>) =
+        AncestorType::IfStatementConsequent as u16,
+    IfStatementAlternate(IfStatementWithoutAlternate<'a, 't>) =
+        AncestorType::IfStatementAlternate as u16,
+    DoWhileStatementBody(DoWhileStatementWithoutBody<'a, 't>) =
+        AncestorType::DoWhileStatementBody as u16,
+    DoWhileStatementTest(DoWhileStatementWithoutTest<'a, 't>) =
+        AncestorType::DoWhileStatementTest as u16,
+    WhileStatementTest(WhileStatementWithoutTest<'a, 't>) = AncestorType::WhileStatementTest as u16,
+    WhileStatementBody(WhileStatementWithoutBody<'a, 't>) = AncestorType::WhileStatementBody as u16,
+    ForStatementInit(ForStatementWithoutInit<'a, 't>) = AncestorType::ForStatementInit as u16,
+    ForStatementTest(ForStatementWithoutTest<'a, 't>) = AncestorType::ForStatementTest as u16,
+    ForStatementUpdate(ForStatementWithoutUpdate<'a, 't>) = AncestorType::ForStatementUpdate as u16,
+    ForStatementBody(ForStatementWithoutBody<'a, 't>) = AncestorType::ForStatementBody as u16,
+    ForInStatementLeft(ForInStatementWithoutLeft<'a, 't>) = AncestorType::ForInStatementLeft as u16,
+    ForInStatementRight(ForInStatementWithoutRight<'a, 't>) =
+        AncestorType::ForInStatementRight as u16,
+    ForInStatementBody(ForInStatementWithoutBody<'a, 't>) = AncestorType::ForInStatementBody as u16,
+    ForOfStatementLeft(ForOfStatementWithoutLeft<'a, 't>) = AncestorType::ForOfStatementLeft as u16,
+    ForOfStatementRight(ForOfStatementWithoutRight<'a, 't>) =
+        AncestorType::ForOfStatementRight as u16,
+    ForOfStatementBody(ForOfStatementWithoutBody<'a, 't>) = AncestorType::ForOfStatementBody as u16,
+    ContinueStatementLabel(ContinueStatementWithoutLabel<'a, 't>) =
+        AncestorType::ContinueStatementLabel as u16,
+    BreakStatementLabel(BreakStatementWithoutLabel<'a, 't>) =
+        AncestorType::BreakStatementLabel as u16,
+    ReturnStatementArgument(ReturnStatementWithoutArgument<'a, 't>) =
+        AncestorType::ReturnStatementArgument as u16,
+    WithStatementObject(WithStatementWithoutObject<'a, 't>) =
+        AncestorType::WithStatementObject as u16,
+    WithStatementBody(WithStatementWithoutBody<'a, 't>) = AncestorType::WithStatementBody as u16,
+    SwitchStatementDiscriminant(SwitchStatementWithoutDiscriminant<'a, 't>) =
+        AncestorType::SwitchStatementDiscriminant as u16,
+    SwitchStatementCases(SwitchStatementWithoutCases<'a, 't>) =
+        AncestorType::SwitchStatementCases as u16,
+    SwitchCaseTest(SwitchCaseWithoutTest<'a, 't>) = AncestorType::SwitchCaseTest as u16,
+    SwitchCaseConsequent(SwitchCaseWithoutConsequent<'a, 't>) =
+        AncestorType::SwitchCaseConsequent as u16,
+    LabeledStatementLabel(LabeledStatementWithoutLabel<'a, 't>) =
+        AncestorType::LabeledStatementLabel as u16,
+    LabeledStatementBody(LabeledStatementWithoutBody<'a, 't>) =
+        AncestorType::LabeledStatementBody as u16,
+    ThrowStatementArgument(ThrowStatementWithoutArgument<'a, 't>) =
+        AncestorType::ThrowStatementArgument as u16,
+    TryStatementBlock(TryStatementWithoutBlock<'a, 't>) = AncestorType::TryStatementBlock as u16,
+    TryStatementHandler(TryStatementWithoutHandler<'a, 't>) =
+        AncestorType::TryStatementHandler as u16,
+    TryStatementFinalizer(TryStatementWithoutFinalizer<'a, 't>) =
+        AncestorType::TryStatementFinalizer as u16,
+    CatchClauseParam(CatchClauseWithoutParam<'a, 't>) = AncestorType::CatchClauseParam as u16,
+    CatchClauseBody(CatchClauseWithoutBody<'a, 't>) = AncestorType::CatchClauseBody as u16,
+    CatchParameterPattern(CatchParameterWithoutPattern<'a, 't>) =
+        AncestorType::CatchParameterPattern as u16,
+    CatchParameterTypeAnnotation(CatchParameterWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::CatchParameterTypeAnnotation as u16,
+    AssignmentPatternLeft(AssignmentPatternWithoutLeft<'a, 't>) =
+        AncestorType::AssignmentPatternLeft as u16,
+    AssignmentPatternRight(AssignmentPatternWithoutRight<'a, 't>) =
+        AncestorType::AssignmentPatternRight as u16,
+    ObjectPatternProperties(ObjectPatternWithoutProperties<'a, 't>) =
+        AncestorType::ObjectPatternProperties as u16,
+    ObjectPatternRest(ObjectPatternWithoutRest<'a, 't>) = AncestorType::ObjectPatternRest as u16,
+    BindingPropertyKey(BindingPropertyWithoutKey<'a, 't>) = AncestorType::BindingPropertyKey as u16,
+    BindingPropertyValue(BindingPropertyWithoutValue<'a, 't>) =
+        AncestorType::BindingPropertyValue as u16,
+    ArrayPatternElements(ArrayPatternWithoutElements<'a, 't>) =
+        AncestorType::ArrayPatternElements as u16,
+    ArrayPatternRest(ArrayPatternWithoutRest<'a, 't>) = AncestorType::ArrayPatternRest as u16,
+    BindingRestElementArgument(BindingRestElementWithoutArgument<'a, 't>) =
+        AncestorType::BindingRestElementArgument as u16,
+    FunctionId(FunctionWithoutId<'a, 't>) = AncestorType::FunctionId as u16,
+    FunctionTypeParameters(FunctionWithoutTypeParameters<'a, 't>) =
+        AncestorType::FunctionTypeParameters as u16,
+    FunctionThisParam(FunctionWithoutThisParam<'a, 't>) = AncestorType::FunctionThisParam as u16,
+    FunctionParams(FunctionWithoutParams<'a, 't>) = AncestorType::FunctionParams as u16,
+    FunctionReturnType(FunctionWithoutReturnType<'a, 't>) = AncestorType::FunctionReturnType as u16,
+    FunctionBody(FunctionWithoutBody<'a, 't>) = AncestorType::FunctionBody as u16,
+    FormalParametersItems(FormalParametersWithoutItems<'a, 't>) =
+        AncestorType::FormalParametersItems as u16,
+    FormalParametersRest(FormalParametersWithoutRest<'a, 't>) =
+        AncestorType::FormalParametersRest as u16,
+    FormalParameterDecorators(FormalParameterWithoutDecorators<'a, 't>) =
+        AncestorType::FormalParameterDecorators as u16,
+    FormalParameterPattern(FormalParameterWithoutPattern<'a, 't>) =
+        AncestorType::FormalParameterPattern as u16,
+    FormalParameterTypeAnnotation(FormalParameterWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::FormalParameterTypeAnnotation as u16,
+    FormalParameterInitializer(FormalParameterWithoutInitializer<'a, 't>) =
+        AncestorType::FormalParameterInitializer as u16,
+    FormalParameterRestDecorators(FormalParameterRestWithoutDecorators<'a, 't>) =
+        AncestorType::FormalParameterRestDecorators as u16,
+    FormalParameterRestRest(FormalParameterRestWithoutRest<'a, 't>) =
+        AncestorType::FormalParameterRestRest as u16,
+    FormalParameterRestTypeAnnotation(FormalParameterRestWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::FormalParameterRestTypeAnnotation as u16,
+    FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a, 't>) =
+        AncestorType::FunctionBodyDirectives as u16,
+    FunctionBodyStatements(FunctionBodyWithoutStatements<'a, 't>) =
+        AncestorType::FunctionBodyStatements as u16,
+    ArrowFunctionExpressionTypeParameters(ArrowFunctionExpressionWithoutTypeParameters<'a, 't>) =
+        AncestorType::ArrowFunctionExpressionTypeParameters as u16,
+    ArrowFunctionExpressionParams(ArrowFunctionExpressionWithoutParams<'a, 't>) =
+        AncestorType::ArrowFunctionExpressionParams as u16,
+    ArrowFunctionExpressionReturnType(ArrowFunctionExpressionWithoutReturnType<'a, 't>) =
+        AncestorType::ArrowFunctionExpressionReturnType as u16,
+    ArrowFunctionExpressionBody(ArrowFunctionExpressionWithoutBody<'a, 't>) =
+        AncestorType::ArrowFunctionExpressionBody as u16,
+    YieldExpressionArgument(YieldExpressionWithoutArgument<'a, 't>) =
+        AncestorType::YieldExpressionArgument as u16,
+    ClassDecorators(ClassWithoutDecorators<'a, 't>) = AncestorType::ClassDecorators as u16,
+    ClassId(ClassWithoutId<'a, 't>) = AncestorType::ClassId as u16,
+    ClassTypeParameters(ClassWithoutTypeParameters<'a, 't>) =
+        AncestorType::ClassTypeParameters as u16,
+    ClassSuperClass(ClassWithoutSuperClass<'a, 't>) = AncestorType::ClassSuperClass as u16,
+    ClassSuperTypeArguments(ClassWithoutSuperTypeArguments<'a, 't>) =
+        AncestorType::ClassSuperTypeArguments as u16,
+    ClassImplements(ClassWithoutImplements<'a, 't>) = AncestorType::ClassImplements as u16,
+    ClassBody(ClassWithoutBody<'a, 't>) = AncestorType::ClassBody as u16,
+    ClassBodyBody(ClassBodyWithoutBody<'a, 't>) = AncestorType::ClassBodyBody as u16,
+    MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a, 't>) =
+        AncestorType::MethodDefinitionDecorators as u16,
+    MethodDefinitionKey(MethodDefinitionWithoutKey<'a, 't>) =
+        AncestorType::MethodDefinitionKey as u16,
+    MethodDefinitionValue(MethodDefinitionWithoutValue<'a, 't>) =
+        AncestorType::MethodDefinitionValue as u16,
+    PropertyDefinitionDecorators(PropertyDefinitionWithoutDecorators<'a, 't>) =
+        AncestorType::PropertyDefinitionDecorators as u16,
+    PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a, 't>) =
+        AncestorType::PropertyDefinitionKey as u16,
+    PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::PropertyDefinitionTypeAnnotation as u16,
+    PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a, 't>) =
+        AncestorType::PropertyDefinitionValue as u16,
+    StaticBlockBody(StaticBlockWithoutBody<'a, 't>) = AncestorType::StaticBlockBody as u16,
+    AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a, 't>) =
+        AncestorType::AccessorPropertyDecorators as u16,
+    AccessorPropertyKey(AccessorPropertyWithoutKey<'a, 't>) =
+        AncestorType::AccessorPropertyKey as u16,
+    AccessorPropertyTypeAnnotation(AccessorPropertyWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::AccessorPropertyTypeAnnotation as u16,
+    AccessorPropertyValue(AccessorPropertyWithoutValue<'a, 't>) =
+        AncestorType::AccessorPropertyValue as u16,
+    ImportExpressionSource(ImportExpressionWithoutSource<'a, 't>) =
+        AncestorType::ImportExpressionSource as u16,
+    ImportExpressionOptions(ImportExpressionWithoutOptions<'a, 't>) =
+        AncestorType::ImportExpressionOptions as u16,
+    ImportDeclarationSpecifiers(ImportDeclarationWithoutSpecifiers<'a, 't>) =
+        AncestorType::ImportDeclarationSpecifiers as u16,
+    ImportDeclarationSource(ImportDeclarationWithoutSource<'a, 't>) =
+        AncestorType::ImportDeclarationSource as u16,
+    ImportDeclarationWithClause(ImportDeclarationWithoutWithClause<'a, 't>) =
+        AncestorType::ImportDeclarationWithClause as u16,
+    ImportSpecifierImported(ImportSpecifierWithoutImported<'a, 't>) =
+        AncestorType::ImportSpecifierImported as u16,
+    ImportSpecifierLocal(ImportSpecifierWithoutLocal<'a, 't>) =
+        AncestorType::ImportSpecifierLocal as u16,
+    ImportDefaultSpecifierLocal(ImportDefaultSpecifierWithoutLocal<'a, 't>) =
+        AncestorType::ImportDefaultSpecifierLocal as u16,
+    ImportNamespaceSpecifierLocal(ImportNamespaceSpecifierWithoutLocal<'a, 't>) =
+        AncestorType::ImportNamespaceSpecifierLocal as u16,
+    WithClauseWithEntries(WithClauseWithoutWithEntries<'a, 't>) =
+        AncestorType::WithClauseWithEntries as u16,
+    ImportAttributeKey(ImportAttributeWithoutKey<'a, 't>) = AncestorType::ImportAttributeKey as u16,
+    ImportAttributeValue(ImportAttributeWithoutValue<'a, 't>) =
+        AncestorType::ImportAttributeValue as u16,
+    ExportNamedDeclarationDeclaration(ExportNamedDeclarationWithoutDeclaration<'a, 't>) =
+        AncestorType::ExportNamedDeclarationDeclaration as u16,
+    ExportNamedDeclarationSpecifiers(ExportNamedDeclarationWithoutSpecifiers<'a, 't>) =
+        AncestorType::ExportNamedDeclarationSpecifiers as u16,
+    ExportNamedDeclarationSource(ExportNamedDeclarationWithoutSource<'a, 't>) =
+        AncestorType::ExportNamedDeclarationSource as u16,
+    ExportNamedDeclarationWithClause(ExportNamedDeclarationWithoutWithClause<'a, 't>) =
+        AncestorType::ExportNamedDeclarationWithClause as u16,
+    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a, 't>) =
+        AncestorType::ExportDefaultDeclarationDeclaration as u16,
+    ExportAllDeclarationExported(ExportAllDeclarationWithoutExported<'a, 't>) =
+        AncestorType::ExportAllDeclarationExported as u16,
+    ExportAllDeclarationSource(ExportAllDeclarationWithoutSource<'a, 't>) =
+        AncestorType::ExportAllDeclarationSource as u16,
+    ExportAllDeclarationWithClause(ExportAllDeclarationWithoutWithClause<'a, 't>) =
+        AncestorType::ExportAllDeclarationWithClause as u16,
+    ExportSpecifierLocal(ExportSpecifierWithoutLocal<'a, 't>) =
+        AncestorType::ExportSpecifierLocal as u16,
+    ExportSpecifierExported(ExportSpecifierWithoutExported<'a, 't>) =
+        AncestorType::ExportSpecifierExported as u16,
+    V8IntrinsicExpressionName(V8IntrinsicExpressionWithoutName<'a, 't>) =
+        AncestorType::V8IntrinsicExpressionName as u16,
+    V8IntrinsicExpressionArguments(V8IntrinsicExpressionWithoutArguments<'a, 't>) =
+        AncestorType::V8IntrinsicExpressionArguments as u16,
+    JSXElementOpeningElement(JSXElementWithoutOpeningElement<'a, 't>) =
+        AncestorType::JSXElementOpeningElement as u16,
+    JSXElementChildren(JSXElementWithoutChildren<'a, 't>) = AncestorType::JSXElementChildren as u16,
+    JSXElementClosingElement(JSXElementWithoutClosingElement<'a, 't>) =
+        AncestorType::JSXElementClosingElement as u16,
+    JSXOpeningElementName(JSXOpeningElementWithoutName<'a, 't>) =
+        AncestorType::JSXOpeningElementName as u16,
+    JSXOpeningElementTypeArguments(JSXOpeningElementWithoutTypeArguments<'a, 't>) =
+        AncestorType::JSXOpeningElementTypeArguments as u16,
+    JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a, 't>) =
+        AncestorType::JSXOpeningElementAttributes as u16,
+    JSXClosingElementName(JSXClosingElementWithoutName<'a, 't>) =
+        AncestorType::JSXClosingElementName as u16,
+    JSXFragmentOpeningFragment(JSXFragmentWithoutOpeningFragment<'a, 't>) =
+        AncestorType::JSXFragmentOpeningFragment as u16,
+    JSXFragmentChildren(JSXFragmentWithoutChildren<'a, 't>) =
+        AncestorType::JSXFragmentChildren as u16,
+    JSXFragmentClosingFragment(JSXFragmentWithoutClosingFragment<'a, 't>) =
+        AncestorType::JSXFragmentClosingFragment as u16,
+    JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a, 't>) =
+        AncestorType::JSXNamespacedNameNamespace as u16,
+    JSXNamespacedNameName(JSXNamespacedNameWithoutName<'a, 't>) =
+        AncestorType::JSXNamespacedNameName as u16,
+    JSXMemberExpressionObject(JSXMemberExpressionWithoutObject<'a, 't>) =
+        AncestorType::JSXMemberExpressionObject as u16,
+    JSXMemberExpressionProperty(JSXMemberExpressionWithoutProperty<'a, 't>) =
+        AncestorType::JSXMemberExpressionProperty as u16,
+    JSXExpressionContainerExpression(JSXExpressionContainerWithoutExpression<'a, 't>) =
+        AncestorType::JSXExpressionContainerExpression as u16,
+    JSXAttributeName(JSXAttributeWithoutName<'a, 't>) = AncestorType::JSXAttributeName as u16,
+    JSXAttributeValue(JSXAttributeWithoutValue<'a, 't>) = AncestorType::JSXAttributeValue as u16,
+    JSXSpreadAttributeArgument(JSXSpreadAttributeWithoutArgument<'a, 't>) =
+        AncestorType::JSXSpreadAttributeArgument as u16,
+    JSXSpreadChildExpression(JSXSpreadChildWithoutExpression<'a, 't>) =
+        AncestorType::JSXSpreadChildExpression as u16,
+    TSThisParameterTypeAnnotation(TSThisParameterWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSThisParameterTypeAnnotation as u16,
+    TSEnumDeclarationId(TSEnumDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSEnumDeclarationId as u16,
+    TSEnumDeclarationBody(TSEnumDeclarationWithoutBody<'a, 't>) =
+        AncestorType::TSEnumDeclarationBody as u16,
+    TSEnumBodyMembers(TSEnumBodyWithoutMembers<'a, 't>) = AncestorType::TSEnumBodyMembers as u16,
+    TSEnumMemberId(TSEnumMemberWithoutId<'a, 't>) = AncestorType::TSEnumMemberId as u16,
+    TSEnumMemberInitializer(TSEnumMemberWithoutInitializer<'a, 't>) =
+        AncestorType::TSEnumMemberInitializer as u16,
+    TSTypeAnnotationTypeAnnotation(TSTypeAnnotationWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSTypeAnnotationTypeAnnotation as u16,
+    TSLiteralTypeLiteral(TSLiteralTypeWithoutLiteral<'a, 't>) =
+        AncestorType::TSLiteralTypeLiteral as u16,
+    TSConditionalTypeCheckType(TSConditionalTypeWithoutCheckType<'a, 't>) =
+        AncestorType::TSConditionalTypeCheckType as u16,
+    TSConditionalTypeExtendsType(TSConditionalTypeWithoutExtendsType<'a, 't>) =
+        AncestorType::TSConditionalTypeExtendsType as u16,
+    TSConditionalTypeTrueType(TSConditionalTypeWithoutTrueType<'a, 't>) =
+        AncestorType::TSConditionalTypeTrueType as u16,
+    TSConditionalTypeFalseType(TSConditionalTypeWithoutFalseType<'a, 't>) =
+        AncestorType::TSConditionalTypeFalseType as u16,
+    TSUnionTypeTypes(TSUnionTypeWithoutTypes<'a, 't>) = AncestorType::TSUnionTypeTypes as u16,
+    TSIntersectionTypeTypes(TSIntersectionTypeWithoutTypes<'a, 't>) =
+        AncestorType::TSIntersectionTypeTypes as u16,
+    TSParenthesizedTypeTypeAnnotation(TSParenthesizedTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSParenthesizedTypeTypeAnnotation as u16,
+    TSTypeOperatorTypeAnnotation(TSTypeOperatorWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSTypeOperatorTypeAnnotation as u16,
+    TSArrayTypeElementType(TSArrayTypeWithoutElementType<'a, 't>) =
+        AncestorType::TSArrayTypeElementType as u16,
+    TSIndexedAccessTypeObjectType(TSIndexedAccessTypeWithoutObjectType<'a, 't>) =
+        AncestorType::TSIndexedAccessTypeObjectType as u16,
+    TSIndexedAccessTypeIndexType(TSIndexedAccessTypeWithoutIndexType<'a, 't>) =
+        AncestorType::TSIndexedAccessTypeIndexType as u16,
+    TSTupleTypeElementTypes(TSTupleTypeWithoutElementTypes<'a, 't>) =
+        AncestorType::TSTupleTypeElementTypes as u16,
+    TSNamedTupleMemberLabel(TSNamedTupleMemberWithoutLabel<'a, 't>) =
+        AncestorType::TSNamedTupleMemberLabel as u16,
+    TSNamedTupleMemberElementType(TSNamedTupleMemberWithoutElementType<'a, 't>) =
+        AncestorType::TSNamedTupleMemberElementType as u16,
+    TSOptionalTypeTypeAnnotation(TSOptionalTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSOptionalTypeTypeAnnotation as u16,
+    TSRestTypeTypeAnnotation(TSRestTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSRestTypeTypeAnnotation as u16,
+    TSTypeReferenceTypeName(TSTypeReferenceWithoutTypeName<'a, 't>) =
+        AncestorType::TSTypeReferenceTypeName as u16,
+    TSTypeReferenceTypeArguments(TSTypeReferenceWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSTypeReferenceTypeArguments as u16,
+    TSQualifiedNameLeft(TSQualifiedNameWithoutLeft<'a, 't>) =
+        AncestorType::TSQualifiedNameLeft as u16,
+    TSQualifiedNameRight(TSQualifiedNameWithoutRight<'a, 't>) =
+        AncestorType::TSQualifiedNameRight as u16,
+    TSTypeParameterInstantiationParams(TSTypeParameterInstantiationWithoutParams<'a, 't>) =
+        AncestorType::TSTypeParameterInstantiationParams as u16,
+    TSTypeParameterName(TSTypeParameterWithoutName<'a, 't>) =
+        AncestorType::TSTypeParameterName as u16,
+    TSTypeParameterConstraint(TSTypeParameterWithoutConstraint<'a, 't>) =
+        AncestorType::TSTypeParameterConstraint as u16,
+    TSTypeParameterDefault(TSTypeParameterWithoutDefault<'a, 't>) =
+        AncestorType::TSTypeParameterDefault as u16,
+    TSTypeParameterDeclarationParams(TSTypeParameterDeclarationWithoutParams<'a, 't>) =
+        AncestorType::TSTypeParameterDeclarationParams as u16,
+    TSTypeAliasDeclarationId(TSTypeAliasDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSTypeAliasDeclarationId as u16,
+    TSTypeAliasDeclarationTypeParameters(TSTypeAliasDeclarationWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSTypeAliasDeclarationTypeParameters as u16,
+    TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
+    TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a, 't>) =
+        AncestorType::TSClassImplementsExpression as u16,
+    TSClassImplementsTypeArguments(TSClassImplementsWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSClassImplementsTypeArguments as u16,
+    TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationId as u16,
+    TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationTypeParameters as u16,
+    TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationExtends as u16,
+    TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationBody as u16,
+    TSInterfaceBodyBody(TSInterfaceBodyWithoutBody<'a, 't>) =
+        AncestorType::TSInterfaceBodyBody as u16,
+    TSPropertySignatureKey(TSPropertySignatureWithoutKey<'a, 't>) =
+        AncestorType::TSPropertySignatureKey as u16,
+    TSPropertySignatureTypeAnnotation(TSPropertySignatureWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSPropertySignatureTypeAnnotation as u16,
+    TSIndexSignatureParameters(TSIndexSignatureWithoutParameters<'a, 't>) =
+        AncestorType::TSIndexSignatureParameters as u16,
+    TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSIndexSignatureTypeAnnotation as u16,
+    TSCallSignatureDeclarationTypeParameters(
+        TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
+    TSCallSignatureDeclarationThisParam(TSCallSignatureDeclarationWithoutThisParam<'a, 't>) =
+        AncestorType::TSCallSignatureDeclarationThisParam as u16,
+    TSCallSignatureDeclarationParams(TSCallSignatureDeclarationWithoutParams<'a, 't>) =
+        AncestorType::TSCallSignatureDeclarationParams as u16,
+    TSCallSignatureDeclarationReturnType(TSCallSignatureDeclarationWithoutReturnType<'a, 't>) =
+        AncestorType::TSCallSignatureDeclarationReturnType as u16,
+    TSMethodSignatureKey(TSMethodSignatureWithoutKey<'a, 't>) =
+        AncestorType::TSMethodSignatureKey as u16,
+    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSMethodSignatureTypeParameters as u16,
+    TSMethodSignatureThisParam(TSMethodSignatureWithoutThisParam<'a, 't>) =
+        AncestorType::TSMethodSignatureThisParam as u16,
+    TSMethodSignatureParams(TSMethodSignatureWithoutParams<'a, 't>) =
+        AncestorType::TSMethodSignatureParams as u16,
+    TSMethodSignatureReturnType(TSMethodSignatureWithoutReturnType<'a, 't>) =
+        AncestorType::TSMethodSignatureReturnType as u16,
+    TSConstructSignatureDeclarationTypeParameters(
+        TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
+    TSConstructSignatureDeclarationParams(TSConstructSignatureDeclarationWithoutParams<'a, 't>) =
+        AncestorType::TSConstructSignatureDeclarationParams as u16,
+    TSConstructSignatureDeclarationReturnType(
+        TSConstructSignatureDeclarationWithoutReturnType<'a, 't>,
+    ) = AncestorType::TSConstructSignatureDeclarationReturnType as u16,
+    TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
+    TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a, 't>) =
+        AncestorType::TSInterfaceHeritageExpression as u16,
+    TSInterfaceHeritageTypeArguments(TSInterfaceHeritageWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSInterfaceHeritageTypeArguments as u16,
+    TSTypePredicateParameterName(TSTypePredicateWithoutParameterName<'a, 't>) =
+        AncestorType::TSTypePredicateParameterName as u16,
+    TSTypePredicateTypeAnnotation(TSTypePredicateWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSTypePredicateTypeAnnotation as u16,
+    TSModuleDeclarationId(TSModuleDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSModuleDeclarationId as u16,
+    TSModuleDeclarationBody(TSModuleDeclarationWithoutBody<'a, 't>) =
+        AncestorType::TSModuleDeclarationBody as u16,
+    TSGlobalDeclarationBody(TSGlobalDeclarationWithoutBody<'a, 't>) =
+        AncestorType::TSGlobalDeclarationBody as u16,
+    TSModuleBlockDirectives(TSModuleBlockWithoutDirectives<'a, 't>) =
+        AncestorType::TSModuleBlockDirectives as u16,
+    TSModuleBlockBody(TSModuleBlockWithoutBody<'a, 't>) = AncestorType::TSModuleBlockBody as u16,
+    TSTypeLiteralMembers(TSTypeLiteralWithoutMembers<'a, 't>) =
+        AncestorType::TSTypeLiteralMembers as u16,
+    TSInferTypeTypeParameter(TSInferTypeWithoutTypeParameter<'a, 't>) =
+        AncestorType::TSInferTypeTypeParameter as u16,
+    TSTypeQueryExprName(TSTypeQueryWithoutExprName<'a, 't>) =
+        AncestorType::TSTypeQueryExprName as u16,
+    TSTypeQueryTypeArguments(TSTypeQueryWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSTypeQueryTypeArguments as u16,
+    TSImportTypeSource(TSImportTypeWithoutSource<'a, 't>) = AncestorType::TSImportTypeSource as u16,
+    TSImportTypeOptions(TSImportTypeWithoutOptions<'a, 't>) =
+        AncestorType::TSImportTypeOptions as u16,
+    TSImportTypeQualifier(TSImportTypeWithoutQualifier<'a, 't>) =
+        AncestorType::TSImportTypeQualifier as u16,
+    TSImportTypeTypeArguments(TSImportTypeWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSImportTypeTypeArguments as u16,
+    TSImportTypeQualifiedNameLeft(TSImportTypeQualifiedNameWithoutLeft<'a, 't>) =
+        AncestorType::TSImportTypeQualifiedNameLeft as u16,
+    TSImportTypeQualifiedNameRight(TSImportTypeQualifiedNameWithoutRight<'a, 't>) =
+        AncestorType::TSImportTypeQualifiedNameRight as u16,
+    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSFunctionTypeTypeParameters as u16,
+    TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a, 't>) =
+        AncestorType::TSFunctionTypeThisParam as u16,
+    TSFunctionTypeParams(TSFunctionTypeWithoutParams<'a, 't>) =
+        AncestorType::TSFunctionTypeParams as u16,
+    TSFunctionTypeReturnType(TSFunctionTypeWithoutReturnType<'a, 't>) =
+        AncestorType::TSFunctionTypeReturnType as u16,
+    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSConstructorTypeTypeParameters as u16,
+    TSConstructorTypeParams(TSConstructorTypeWithoutParams<'a, 't>) =
+        AncestorType::TSConstructorTypeParams as u16,
+    TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a, 't>) =
+        AncestorType::TSConstructorTypeReturnType as u16,
+    TSMappedTypeKey(TSMappedTypeWithoutKey<'a, 't>) = AncestorType::TSMappedTypeKey as u16,
+    TSMappedTypeConstraint(TSMappedTypeWithoutConstraint<'a, 't>) =
+        AncestorType::TSMappedTypeConstraint as u16,
+    TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a, 't>) =
+        AncestorType::TSMappedTypeNameType as u16,
+    TSMappedTypeTypeAnnotation(TSMappedTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSMappedTypeTypeAnnotation as u16,
+    TSTemplateLiteralTypeQuasis(TSTemplateLiteralTypeWithoutQuasis<'a, 't>) =
+        AncestorType::TSTemplateLiteralTypeQuasis as u16,
+    TSTemplateLiteralTypeTypes(TSTemplateLiteralTypeWithoutTypes<'a, 't>) =
+        AncestorType::TSTemplateLiteralTypeTypes as u16,
+    TSAsExpressionExpression(TSAsExpressionWithoutExpression<'a, 't>) =
+        AncestorType::TSAsExpressionExpression as u16,
+    TSAsExpressionTypeAnnotation(TSAsExpressionWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSAsExpressionTypeAnnotation as u16,
+    TSSatisfiesExpressionExpression(TSSatisfiesExpressionWithoutExpression<'a, 't>) =
+        AncestorType::TSSatisfiesExpressionExpression as u16,
+    TSSatisfiesExpressionTypeAnnotation(TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSSatisfiesExpressionTypeAnnotation as u16,
+    TSTypeAssertionTypeAnnotation(TSTypeAssertionWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::TSTypeAssertionTypeAnnotation as u16,
+    TSTypeAssertionExpression(TSTypeAssertionWithoutExpression<'a, 't>) =
+        AncestorType::TSTypeAssertionExpression as u16,
+    TSImportEqualsDeclarationId(TSImportEqualsDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSImportEqualsDeclarationId as u16,
+    TSImportEqualsDeclarationModuleReference(
+        TSImportEqualsDeclarationWithoutModuleReference<'a, 't>,
+    ) = AncestorType::TSImportEqualsDeclarationModuleReference as u16,
+    TSExternalModuleReferenceExpression(TSExternalModuleReferenceWithoutExpression<'a, 't>) =
+        AncestorType::TSExternalModuleReferenceExpression as u16,
+    TSNonNullExpressionExpression(TSNonNullExpressionWithoutExpression<'a, 't>) =
+        AncestorType::TSNonNullExpressionExpression as u16,
+    DecoratorExpression(DecoratorWithoutExpression<'a, 't>) =
+        AncestorType::DecoratorExpression as u16,
+    TSExportAssignmentExpression(TSExportAssignmentWithoutExpression<'a, 't>) =
+        AncestorType::TSExportAssignmentExpression as u16,
+    TSNamespaceExportDeclarationId(TSNamespaceExportDeclarationWithoutId<'a, 't>) =
+        AncestorType::TSNamespaceExportDeclarationId as u16,
+    TSInstantiationExpressionExpression(TSInstantiationExpressionWithoutExpression<'a, 't>) =
+        AncestorType::TSInstantiationExpressionExpression as u16,
+    TSInstantiationExpressionTypeArguments(TSInstantiationExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSInstantiationExpressionTypeArguments as u16,
+    JSDocNullableTypeTypeAnnotation(JSDocNullableTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::JSDocNullableTypeTypeAnnotation as u16,
+    JSDocNonNullableTypeTypeAnnotation(JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't>) =
+        AncestorType::JSDocNonNullableTypeTypeAnnotation as u16,
+}
+
+impl<'a, 't> Ancestor<'a, 't> {
+    #[inline]
+    pub fn is_program(self) -> bool {
+        matches!(self, Self::ProgramHashbang(_) | Self::ProgramDirectives(_) | Self::ProgramBody(_))
+    }
+
+    #[inline]
+    pub fn is_array_expression(self) -> bool {
+        matches!(self, Self::ArrayExpressionElements(_))
+    }
+
+    #[inline]
+    pub fn is_object_expression(self) -> bool {
+        matches!(self, Self::ObjectExpressionProperties(_))
+    }
+
+    #[inline]
+    pub fn is_object_property(self) -> bool {
+        matches!(self, Self::ObjectPropertyKey(_) | Self::ObjectPropertyValue(_))
+    }
+
+    #[inline]
+    pub fn is_template_literal(self) -> bool {
+        matches!(self, Self::TemplateLiteralQuasis(_) | Self::TemplateLiteralExpressions(_))
+    }
+
+    #[inline]
+    pub fn is_tagged_template_expression(self) -> bool {
+        matches!(
+            self,
+            Self::TaggedTemplateExpressionTag(_)
+                | Self::TaggedTemplateExpressionTypeArguments(_)
+                | Self::TaggedTemplateExpressionQuasi(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_computed_member_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ComputedMemberExpressionObject(_) | Self::ComputedMemberExpressionExpression(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_static_member_expression(self) -> bool {
+        matches!(
+            self,
+            Self::StaticMemberExpressionObject(_) | Self::StaticMemberExpressionProperty(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_private_field_expression(self) -> bool {
+        matches!(self, Self::PrivateFieldExpressionObject(_) | Self::PrivateFieldExpressionField(_))
+    }
+
+    #[inline]
+    pub fn is_call_expression(self) -> bool {
+        matches!(
+            self,
+            Self::CallExpressionCallee(_)
+                | Self::CallExpressionTypeArguments(_)
+                | Self::CallExpressionArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_new_expression(self) -> bool {
+        matches!(
+            self,
+            Self::NewExpressionCallee(_)
+                | Self::NewExpressionTypeArguments(_)
+                | Self::NewExpressionArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_meta_property(self) -> bool {
+        matches!(self, Self::MetaPropertyMeta(_) | Self::MetaPropertyProperty(_))
+    }
+
+    #[inline]
+    pub fn is_spread_element(self) -> bool {
+        matches!(self, Self::SpreadElementArgument(_))
+    }
+
+    #[inline]
+    pub fn is_update_expression(self) -> bool {
+        matches!(self, Self::UpdateExpressionArgument(_))
+    }
+
+    #[inline]
+    pub fn is_unary_expression(self) -> bool {
+        matches!(self, Self::UnaryExpressionArgument(_))
+    }
+
+    #[inline]
+    pub fn is_binary_expression(self) -> bool {
+        matches!(self, Self::BinaryExpressionLeft(_) | Self::BinaryExpressionRight(_))
+    }
+
+    #[inline]
+    pub fn is_private_in_expression(self) -> bool {
+        matches!(self, Self::PrivateInExpressionLeft(_) | Self::PrivateInExpressionRight(_))
+    }
+
+    #[inline]
+    pub fn is_logical_expression(self) -> bool {
+        matches!(self, Self::LogicalExpressionLeft(_) | Self::LogicalExpressionRight(_))
+    }
+
+    #[inline]
+    pub fn is_conditional_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ConditionalExpressionTest(_)
+                | Self::ConditionalExpressionConsequent(_)
+                | Self::ConditionalExpressionAlternate(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_assignment_expression(self) -> bool {
+        matches!(self, Self::AssignmentExpressionLeft(_) | Self::AssignmentExpressionRight(_))
+    }
+
+    #[inline]
+    pub fn is_array_assignment_target(self) -> bool {
+        matches!(self, Self::ArrayAssignmentTargetElements(_) | Self::ArrayAssignmentTargetRest(_))
+    }
+
+    #[inline]
+    pub fn is_object_assignment_target(self) -> bool {
+        matches!(
+            self,
+            Self::ObjectAssignmentTargetProperties(_) | Self::ObjectAssignmentTargetRest(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_assignment_target_rest(self) -> bool {
+        matches!(self, Self::AssignmentTargetRestTarget(_))
+    }
+
+    #[inline]
+    pub fn is_assignment_target_with_default(self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentTargetWithDefaultBinding(_) | Self::AssignmentTargetWithDefaultInit(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_assignment_target_property_identifier(self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentTargetPropertyIdentifierBinding(_)
+                | Self::AssignmentTargetPropertyIdentifierInit(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_assignment_target_property_property(self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentTargetPropertyPropertyName(_)
+                | Self::AssignmentTargetPropertyPropertyBinding(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_sequence_expression(self) -> bool {
+        matches!(self, Self::SequenceExpressionExpressions(_))
+    }
+
+    #[inline]
+    pub fn is_await_expression(self) -> bool {
+        matches!(self, Self::AwaitExpressionArgument(_))
+    }
+
+    #[inline]
+    pub fn is_chain_expression(self) -> bool {
+        matches!(self, Self::ChainExpressionExpression(_))
+    }
+
+    #[inline]
+    pub fn is_parenthesized_expression(self) -> bool {
+        matches!(self, Self::ParenthesizedExpressionExpression(_))
+    }
+
+    #[inline]
+    pub fn is_directive(self) -> bool {
+        matches!(self, Self::DirectiveExpression(_))
+    }
+
+    #[inline]
+    pub fn is_block_statement(self) -> bool {
+        matches!(self, Self::BlockStatementBody(_))
+    }
+
+    #[inline]
+    pub fn is_variable_declaration(self) -> bool {
+        matches!(self, Self::VariableDeclarationDeclarations(_))
+    }
+
+    #[inline]
+    pub fn is_variable_declarator(self) -> bool {
+        matches!(
+            self,
+            Self::VariableDeclaratorId(_)
+                | Self::VariableDeclaratorTypeAnnotation(_)
+                | Self::VariableDeclaratorInit(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_expression_statement(self) -> bool {
+        matches!(self, Self::ExpressionStatementExpression(_))
+    }
+
+    #[inline]
+    pub fn is_if_statement(self) -> bool {
+        matches!(
+            self,
+            Self::IfStatementTest(_)
+                | Self::IfStatementConsequent(_)
+                | Self::IfStatementAlternate(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_do_while_statement(self) -> bool {
+        matches!(self, Self::DoWhileStatementBody(_) | Self::DoWhileStatementTest(_))
+    }
+
+    #[inline]
+    pub fn is_while_statement(self) -> bool {
+        matches!(self, Self::WhileStatementTest(_) | Self::WhileStatementBody(_))
+    }
+
+    #[inline]
+    pub fn is_for_statement(self) -> bool {
+        matches!(
+            self,
+            Self::ForStatementInit(_)
+                | Self::ForStatementTest(_)
+                | Self::ForStatementUpdate(_)
+                | Self::ForStatementBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_for_in_statement(self) -> bool {
+        matches!(
+            self,
+            Self::ForInStatementLeft(_)
+                | Self::ForInStatementRight(_)
+                | Self::ForInStatementBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_for_of_statement(self) -> bool {
+        matches!(
+            self,
+            Self::ForOfStatementLeft(_)
+                | Self::ForOfStatementRight(_)
+                | Self::ForOfStatementBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_continue_statement(self) -> bool {
+        matches!(self, Self::ContinueStatementLabel(_))
+    }
+
+    #[inline]
+    pub fn is_break_statement(self) -> bool {
+        matches!(self, Self::BreakStatementLabel(_))
+    }
+
+    #[inline]
+    pub fn is_return_statement(self) -> bool {
+        matches!(self, Self::ReturnStatementArgument(_))
+    }
+
+    #[inline]
+    pub fn is_with_statement(self) -> bool {
+        matches!(self, Self::WithStatementObject(_) | Self::WithStatementBody(_))
+    }
+
+    #[inline]
+    pub fn is_switch_statement(self) -> bool {
+        matches!(self, Self::SwitchStatementDiscriminant(_) | Self::SwitchStatementCases(_))
+    }
+
+    #[inline]
+    pub fn is_switch_case(self) -> bool {
+        matches!(self, Self::SwitchCaseTest(_) | Self::SwitchCaseConsequent(_))
+    }
+
+    #[inline]
+    pub fn is_labeled_statement(self) -> bool {
+        matches!(self, Self::LabeledStatementLabel(_) | Self::LabeledStatementBody(_))
+    }
+
+    #[inline]
+    pub fn is_throw_statement(self) -> bool {
+        matches!(self, Self::ThrowStatementArgument(_))
+    }
+
+    #[inline]
+    pub fn is_try_statement(self) -> bool {
+        matches!(
+            self,
+            Self::TryStatementBlock(_)
+                | Self::TryStatementHandler(_)
+                | Self::TryStatementFinalizer(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_catch_clause(self) -> bool {
+        matches!(self, Self::CatchClauseParam(_) | Self::CatchClauseBody(_))
+    }
+
+    #[inline]
+    pub fn is_catch_parameter(self) -> bool {
+        matches!(self, Self::CatchParameterPattern(_) | Self::CatchParameterTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_assignment_pattern(self) -> bool {
+        matches!(self, Self::AssignmentPatternLeft(_) | Self::AssignmentPatternRight(_))
+    }
+
+    #[inline]
+    pub fn is_object_pattern(self) -> bool {
+        matches!(self, Self::ObjectPatternProperties(_) | Self::ObjectPatternRest(_))
+    }
+
+    #[inline]
+    pub fn is_binding_property(self) -> bool {
+        matches!(self, Self::BindingPropertyKey(_) | Self::BindingPropertyValue(_))
+    }
+
+    #[inline]
+    pub fn is_array_pattern(self) -> bool {
+        matches!(self, Self::ArrayPatternElements(_) | Self::ArrayPatternRest(_))
+    }
+
+    #[inline]
+    pub fn is_binding_rest_element(self) -> bool {
+        matches!(self, Self::BindingRestElementArgument(_))
+    }
+
+    #[inline]
+    pub fn is_function(self) -> bool {
+        matches!(
+            self,
+            Self::FunctionId(_)
+                | Self::FunctionTypeParameters(_)
+                | Self::FunctionThisParam(_)
+                | Self::FunctionParams(_)
+                | Self::FunctionReturnType(_)
+                | Self::FunctionBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_formal_parameters(self) -> bool {
+        matches!(self, Self::FormalParametersItems(_) | Self::FormalParametersRest(_))
+    }
+
+    #[inline]
+    pub fn is_formal_parameter(self) -> bool {
+        matches!(
+            self,
+            Self::FormalParameterDecorators(_)
+                | Self::FormalParameterPattern(_)
+                | Self::FormalParameterTypeAnnotation(_)
+                | Self::FormalParameterInitializer(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_formal_parameter_rest(self) -> bool {
+        matches!(
+            self,
+            Self::FormalParameterRestDecorators(_)
+                | Self::FormalParameterRestRest(_)
+                | Self::FormalParameterRestTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_function_body(self) -> bool {
+        matches!(self, Self::FunctionBodyDirectives(_) | Self::FunctionBodyStatements(_))
+    }
+
+    #[inline]
+    pub fn is_arrow_function_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ArrowFunctionExpressionTypeParameters(_)
+                | Self::ArrowFunctionExpressionParams(_)
+                | Self::ArrowFunctionExpressionReturnType(_)
+                | Self::ArrowFunctionExpressionBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_yield_expression(self) -> bool {
+        matches!(self, Self::YieldExpressionArgument(_))
+    }
+
+    #[inline]
+    pub fn is_class(self) -> bool {
+        matches!(
+            self,
+            Self::ClassDecorators(_)
+                | Self::ClassId(_)
+                | Self::ClassTypeParameters(_)
+                | Self::ClassSuperClass(_)
+                | Self::ClassSuperTypeArguments(_)
+                | Self::ClassImplements(_)
+                | Self::ClassBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_class_body(self) -> bool {
+        matches!(self, Self::ClassBodyBody(_))
+    }
+
+    #[inline]
+    pub fn is_method_definition(self) -> bool {
+        matches!(
+            self,
+            Self::MethodDefinitionDecorators(_)
+                | Self::MethodDefinitionKey(_)
+                | Self::MethodDefinitionValue(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_property_definition(self) -> bool {
+        matches!(
+            self,
+            Self::PropertyDefinitionDecorators(_)
+                | Self::PropertyDefinitionKey(_)
+                | Self::PropertyDefinitionTypeAnnotation(_)
+                | Self::PropertyDefinitionValue(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_static_block(self) -> bool {
+        matches!(self, Self::StaticBlockBody(_))
+    }
+
+    #[inline]
+    pub fn is_accessor_property(self) -> bool {
+        matches!(
+            self,
+            Self::AccessorPropertyDecorators(_)
+                | Self::AccessorPropertyKey(_)
+                | Self::AccessorPropertyTypeAnnotation(_)
+                | Self::AccessorPropertyValue(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_import_expression(self) -> bool {
+        matches!(self, Self::ImportExpressionSource(_) | Self::ImportExpressionOptions(_))
+    }
+
+    #[inline]
+    pub fn is_import_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::ImportDeclarationSpecifiers(_)
+                | Self::ImportDeclarationSource(_)
+                | Self::ImportDeclarationWithClause(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_import_specifier(self) -> bool {
+        matches!(self, Self::ImportSpecifierImported(_) | Self::ImportSpecifierLocal(_))
+    }
+
+    #[inline]
+    pub fn is_import_default_specifier(self) -> bool {
+        matches!(self, Self::ImportDefaultSpecifierLocal(_))
+    }
+
+    #[inline]
+    pub fn is_import_namespace_specifier(self) -> bool {
+        matches!(self, Self::ImportNamespaceSpecifierLocal(_))
+    }
+
+    #[inline]
+    pub fn is_with_clause(self) -> bool {
+        matches!(self, Self::WithClauseWithEntries(_))
+    }
+
+    #[inline]
+    pub fn is_import_attribute(self) -> bool {
+        matches!(self, Self::ImportAttributeKey(_) | Self::ImportAttributeValue(_))
+    }
+
+    #[inline]
+    pub fn is_export_named_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::ExportNamedDeclarationDeclaration(_)
+                | Self::ExportNamedDeclarationSpecifiers(_)
+                | Self::ExportNamedDeclarationSource(_)
+                | Self::ExportNamedDeclarationWithClause(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_export_default_declaration(self) -> bool {
+        matches!(self, Self::ExportDefaultDeclarationDeclaration(_))
+    }
+
+    #[inline]
+    pub fn is_export_all_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::ExportAllDeclarationExported(_)
+                | Self::ExportAllDeclarationSource(_)
+                | Self::ExportAllDeclarationWithClause(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_export_specifier(self) -> bool {
+        matches!(self, Self::ExportSpecifierLocal(_) | Self::ExportSpecifierExported(_))
+    }
+
+    #[inline]
+    pub fn is_v8_intrinsic_expression(self) -> bool {
+        matches!(self, Self::V8IntrinsicExpressionName(_) | Self::V8IntrinsicExpressionArguments(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_element(self) -> bool {
+        matches!(
+            self,
+            Self::JSXElementOpeningElement(_)
+                | Self::JSXElementChildren(_)
+                | Self::JSXElementClosingElement(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_jsx_opening_element(self) -> bool {
+        matches!(
+            self,
+            Self::JSXOpeningElementName(_)
+                | Self::JSXOpeningElementTypeArguments(_)
+                | Self::JSXOpeningElementAttributes(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_jsx_closing_element(self) -> bool {
+        matches!(self, Self::JSXClosingElementName(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_fragment(self) -> bool {
+        matches!(
+            self,
+            Self::JSXFragmentOpeningFragment(_)
+                | Self::JSXFragmentChildren(_)
+                | Self::JSXFragmentClosingFragment(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_jsx_namespaced_name(self) -> bool {
+        matches!(self, Self::JSXNamespacedNameNamespace(_) | Self::JSXNamespacedNameName(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_member_expression(self) -> bool {
+        matches!(self, Self::JSXMemberExpressionObject(_) | Self::JSXMemberExpressionProperty(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_expression_container(self) -> bool {
+        matches!(self, Self::JSXExpressionContainerExpression(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_attribute(self) -> bool {
+        matches!(self, Self::JSXAttributeName(_) | Self::JSXAttributeValue(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_spread_attribute(self) -> bool {
+        matches!(self, Self::JSXSpreadAttributeArgument(_))
+    }
+
+    #[inline]
+    pub fn is_jsx_spread_child(self) -> bool {
+        matches!(self, Self::JSXSpreadChildExpression(_))
+    }
+
+    #[inline]
+    pub fn is_ts_this_parameter(self) -> bool {
+        matches!(self, Self::TSThisParameterTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_enum_declaration(self) -> bool {
+        matches!(self, Self::TSEnumDeclarationId(_) | Self::TSEnumDeclarationBody(_))
+    }
+
+    #[inline]
+    pub fn is_ts_enum_body(self) -> bool {
+        matches!(self, Self::TSEnumBodyMembers(_))
+    }
+
+    #[inline]
+    pub fn is_ts_enum_member(self) -> bool {
+        matches!(self, Self::TSEnumMemberId(_) | Self::TSEnumMemberInitializer(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_annotation(self) -> bool {
+        matches!(self, Self::TSTypeAnnotationTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_literal_type(self) -> bool {
+        matches!(self, Self::TSLiteralTypeLiteral(_))
+    }
+
+    #[inline]
+    pub fn is_ts_conditional_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSConditionalTypeCheckType(_)
+                | Self::TSConditionalTypeExtendsType(_)
+                | Self::TSConditionalTypeTrueType(_)
+                | Self::TSConditionalTypeFalseType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_union_type(self) -> bool {
+        matches!(self, Self::TSUnionTypeTypes(_))
+    }
+
+    #[inline]
+    pub fn is_ts_intersection_type(self) -> bool {
+        matches!(self, Self::TSIntersectionTypeTypes(_))
+    }
+
+    #[inline]
+    pub fn is_ts_parenthesized_type(self) -> bool {
+        matches!(self, Self::TSParenthesizedTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_operator(self) -> bool {
+        matches!(self, Self::TSTypeOperatorTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_array_type(self) -> bool {
+        matches!(self, Self::TSArrayTypeElementType(_))
+    }
+
+    #[inline]
+    pub fn is_ts_indexed_access_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSIndexedAccessTypeObjectType(_) | Self::TSIndexedAccessTypeIndexType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_tuple_type(self) -> bool {
+        matches!(self, Self::TSTupleTypeElementTypes(_))
+    }
+
+    #[inline]
+    pub fn is_ts_named_tuple_member(self) -> bool {
+        matches!(self, Self::TSNamedTupleMemberLabel(_) | Self::TSNamedTupleMemberElementType(_))
+    }
+
+    #[inline]
+    pub fn is_ts_optional_type(self) -> bool {
+        matches!(self, Self::TSOptionalTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_rest_type(self) -> bool {
+        matches!(self, Self::TSRestTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_reference(self) -> bool {
+        matches!(self, Self::TSTypeReferenceTypeName(_) | Self::TSTypeReferenceTypeArguments(_))
+    }
+
+    #[inline]
+    pub fn is_ts_qualified_name(self) -> bool {
+        matches!(self, Self::TSQualifiedNameLeft(_) | Self::TSQualifiedNameRight(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_parameter_instantiation(self) -> bool {
+        matches!(self, Self::TSTypeParameterInstantiationParams(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_parameter(self) -> bool {
+        matches!(
+            self,
+            Self::TSTypeParameterName(_)
+                | Self::TSTypeParameterConstraint(_)
+                | Self::TSTypeParameterDefault(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_type_parameter_declaration(self) -> bool {
+        matches!(self, Self::TSTypeParameterDeclarationParams(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_alias_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::TSTypeAliasDeclarationId(_)
+                | Self::TSTypeAliasDeclarationTypeParameters(_)
+                | Self::TSTypeAliasDeclarationTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_class_implements(self) -> bool {
+        matches!(
+            self,
+            Self::TSClassImplementsExpression(_) | Self::TSClassImplementsTypeArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_interface_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::TSInterfaceDeclarationId(_)
+                | Self::TSInterfaceDeclarationTypeParameters(_)
+                | Self::TSInterfaceDeclarationExtends(_)
+                | Self::TSInterfaceDeclarationBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_interface_body(self) -> bool {
+        matches!(self, Self::TSInterfaceBodyBody(_))
+    }
+
+    #[inline]
+    pub fn is_ts_property_signature(self) -> bool {
+        matches!(self, Self::TSPropertySignatureKey(_) | Self::TSPropertySignatureTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_index_signature(self) -> bool {
+        matches!(
+            self,
+            Self::TSIndexSignatureParameters(_) | Self::TSIndexSignatureTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_call_signature_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::TSCallSignatureDeclarationTypeParameters(_)
+                | Self::TSCallSignatureDeclarationThisParam(_)
+                | Self::TSCallSignatureDeclarationParams(_)
+                | Self::TSCallSignatureDeclarationReturnType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_method_signature(self) -> bool {
+        matches!(
+            self,
+            Self::TSMethodSignatureKey(_)
+                | Self::TSMethodSignatureTypeParameters(_)
+                | Self::TSMethodSignatureThisParam(_)
+                | Self::TSMethodSignatureParams(_)
+                | Self::TSMethodSignatureReturnType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_construct_signature_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::TSConstructSignatureDeclarationTypeParameters(_)
+                | Self::TSConstructSignatureDeclarationParams(_)
+                | Self::TSConstructSignatureDeclarationReturnType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_index_signature_name(self) -> bool {
+        matches!(self, Self::TSIndexSignatureNameTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_interface_heritage(self) -> bool {
+        matches!(
+            self,
+            Self::TSInterfaceHeritageExpression(_) | Self::TSInterfaceHeritageTypeArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_type_predicate(self) -> bool {
+        matches!(
+            self,
+            Self::TSTypePredicateParameterName(_) | Self::TSTypePredicateTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_module_declaration(self) -> bool {
+        matches!(self, Self::TSModuleDeclarationId(_) | Self::TSModuleDeclarationBody(_))
+    }
+
+    #[inline]
+    pub fn is_ts_global_declaration(self) -> bool {
+        matches!(self, Self::TSGlobalDeclarationBody(_))
+    }
+
+    #[inline]
+    pub fn is_ts_module_block(self) -> bool {
+        matches!(self, Self::TSModuleBlockDirectives(_) | Self::TSModuleBlockBody(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_literal(self) -> bool {
+        matches!(self, Self::TSTypeLiteralMembers(_))
+    }
+
+    #[inline]
+    pub fn is_ts_infer_type(self) -> bool {
+        matches!(self, Self::TSInferTypeTypeParameter(_))
+    }
+
+    #[inline]
+    pub fn is_ts_type_query(self) -> bool {
+        matches!(self, Self::TSTypeQueryExprName(_) | Self::TSTypeQueryTypeArguments(_))
+    }
+
+    #[inline]
+    pub fn is_ts_import_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSImportTypeSource(_)
+                | Self::TSImportTypeOptions(_)
+                | Self::TSImportTypeQualifier(_)
+                | Self::TSImportTypeTypeArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_import_type_qualified_name(self) -> bool {
+        matches!(
+            self,
+            Self::TSImportTypeQualifiedNameLeft(_) | Self::TSImportTypeQualifiedNameRight(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_function_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSFunctionTypeTypeParameters(_)
+                | Self::TSFunctionTypeThisParam(_)
+                | Self::TSFunctionTypeParams(_)
+                | Self::TSFunctionTypeReturnType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_constructor_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSConstructorTypeTypeParameters(_)
+                | Self::TSConstructorTypeParams(_)
+                | Self::TSConstructorTypeReturnType(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_mapped_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSMappedTypeKey(_)
+                | Self::TSMappedTypeConstraint(_)
+                | Self::TSMappedTypeNameType(_)
+                | Self::TSMappedTypeTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_template_literal_type(self) -> bool {
+        matches!(self, Self::TSTemplateLiteralTypeQuasis(_) | Self::TSTemplateLiteralTypeTypes(_))
+    }
+
+    #[inline]
+    pub fn is_ts_as_expression(self) -> bool {
+        matches!(self, Self::TSAsExpressionExpression(_) | Self::TSAsExpressionTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_ts_satisfies_expression(self) -> bool {
+        matches!(
+            self,
+            Self::TSSatisfiesExpressionExpression(_) | Self::TSSatisfiesExpressionTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_type_assertion(self) -> bool {
+        matches!(self, Self::TSTypeAssertionTypeAnnotation(_) | Self::TSTypeAssertionExpression(_))
+    }
+
+    #[inline]
+    pub fn is_ts_import_equals_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::TSImportEqualsDeclarationId(_)
+                | Self::TSImportEqualsDeclarationModuleReference(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_external_module_reference(self) -> bool {
+        matches!(self, Self::TSExternalModuleReferenceExpression(_))
+    }
+
+    #[inline]
+    pub fn is_ts_non_null_expression(self) -> bool {
+        matches!(self, Self::TSNonNullExpressionExpression(_))
+    }
+
+    #[inline]
+    pub fn is_decorator(self) -> bool {
+        matches!(self, Self::DecoratorExpression(_))
+    }
+
+    #[inline]
+    pub fn is_ts_export_assignment(self) -> bool {
+        matches!(self, Self::TSExportAssignmentExpression(_))
+    }
+
+    #[inline]
+    pub fn is_ts_namespace_export_declaration(self) -> bool {
+        matches!(self, Self::TSNamespaceExportDeclarationId(_))
+    }
+
+    #[inline]
+    pub fn is_ts_instantiation_expression(self) -> bool {
+        matches!(
+            self,
+            Self::TSInstantiationExpressionExpression(_)
+                | Self::TSInstantiationExpressionTypeArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_js_doc_nullable_type(self) -> bool {
+        matches!(self, Self::JSDocNullableTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_js_doc_non_nullable_type(self) -> bool {
+        matches!(self, Self::JSDocNonNullableTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_statement(self) -> bool {
+        matches!(
+            self,
+            Self::ProgramBody(_)
+                | Self::BlockStatementBody(_)
+                | Self::IfStatementConsequent(_)
+                | Self::IfStatementAlternate(_)
+                | Self::DoWhileStatementBody(_)
+                | Self::WhileStatementBody(_)
+                | Self::ForStatementBody(_)
+                | Self::ForInStatementBody(_)
+                | Self::ForOfStatementBody(_)
+                | Self::WithStatementBody(_)
+                | Self::SwitchCaseConsequent(_)
+                | Self::LabeledStatementBody(_)
+                | Self::FunctionBodyStatements(_)
+                | Self::StaticBlockBody(_)
+                | Self::TSModuleBlockBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_array_expression_element(self) -> bool {
+        matches!(self, Self::ArrayExpressionElements(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_object_property_kind(self) -> bool {
+        matches!(self, Self::ObjectExpressionProperties(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_property_key(self) -> bool {
+        matches!(
+            self,
+            Self::ObjectPropertyKey(_)
+                | Self::AssignmentTargetPropertyPropertyName(_)
+                | Self::BindingPropertyKey(_)
+                | Self::MethodDefinitionKey(_)
+                | Self::PropertyDefinitionKey(_)
+                | Self::AccessorPropertyKey(_)
+                | Self::TSPropertySignatureKey(_)
+                | Self::TSMethodSignatureKey(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ObjectPropertyValue(_)
+                | Self::TemplateLiteralExpressions(_)
+                | Self::TaggedTemplateExpressionTag(_)
+                | Self::ComputedMemberExpressionObject(_)
+                | Self::ComputedMemberExpressionExpression(_)
+                | Self::StaticMemberExpressionObject(_)
+                | Self::PrivateFieldExpressionObject(_)
+                | Self::CallExpressionCallee(_)
+                | Self::NewExpressionCallee(_)
+                | Self::SpreadElementArgument(_)
+                | Self::UnaryExpressionArgument(_)
+                | Self::BinaryExpressionLeft(_)
+                | Self::BinaryExpressionRight(_)
+                | Self::PrivateInExpressionRight(_)
+                | Self::LogicalExpressionLeft(_)
+                | Self::LogicalExpressionRight(_)
+                | Self::ConditionalExpressionTest(_)
+                | Self::ConditionalExpressionConsequent(_)
+                | Self::ConditionalExpressionAlternate(_)
+                | Self::AssignmentExpressionRight(_)
+                | Self::AssignmentTargetWithDefaultInit(_)
+                | Self::AssignmentTargetPropertyIdentifierInit(_)
+                | Self::SequenceExpressionExpressions(_)
+                | Self::AwaitExpressionArgument(_)
+                | Self::ParenthesizedExpressionExpression(_)
+                | Self::VariableDeclaratorInit(_)
+                | Self::ExpressionStatementExpression(_)
+                | Self::IfStatementTest(_)
+                | Self::DoWhileStatementTest(_)
+                | Self::WhileStatementTest(_)
+                | Self::ForStatementTest(_)
+                | Self::ForStatementUpdate(_)
+                | Self::ForInStatementRight(_)
+                | Self::ForOfStatementRight(_)
+                | Self::ReturnStatementArgument(_)
+                | Self::WithStatementObject(_)
+                | Self::SwitchStatementDiscriminant(_)
+                | Self::SwitchCaseTest(_)
+                | Self::ThrowStatementArgument(_)
+                | Self::AssignmentPatternRight(_)
+                | Self::FormalParameterInitializer(_)
+                | Self::YieldExpressionArgument(_)
+                | Self::ClassSuperClass(_)
+                | Self::PropertyDefinitionValue(_)
+                | Self::AccessorPropertyValue(_)
+                | Self::ImportExpressionSource(_)
+                | Self::ImportExpressionOptions(_)
+                | Self::JSXSpreadAttributeArgument(_)
+                | Self::JSXSpreadChildExpression(_)
+                | Self::TSEnumMemberInitializer(_)
+                | Self::TSInterfaceHeritageExpression(_)
+                | Self::TSAsExpressionExpression(_)
+                | Self::TSSatisfiesExpressionExpression(_)
+                | Self::TSTypeAssertionExpression(_)
+                | Self::TSNonNullExpressionExpression(_)
+                | Self::DecoratorExpression(_)
+                | Self::TSExportAssignmentExpression(_)
+                | Self::TSInstantiationExpressionExpression(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_argument(self) -> bool {
+        matches!(
+            self,
+            Self::CallExpressionArguments(_)
+                | Self::NewExpressionArguments(_)
+                | Self::V8IntrinsicExpressionArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_simple_assignment_target(self) -> bool {
+        matches!(self, Self::UpdateExpressionArgument(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_assignment_target(self) -> bool {
+        matches!(
+            self,
+            Self::AssignmentExpressionLeft(_)
+                | Self::AssignmentTargetRestTarget(_)
+                | Self::AssignmentTargetWithDefaultBinding(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_assignment_target_maybe_default(self) -> bool {
+        matches!(
+            self,
+            Self::ArrayAssignmentTargetElements(_)
+                | Self::AssignmentTargetPropertyPropertyBinding(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_assignment_target_property(self) -> bool {
+        matches!(self, Self::ObjectAssignmentTargetProperties(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_chain_element(self) -> bool {
+        matches!(self, Self::ChainExpressionExpression(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_binding_pattern(self) -> bool {
+        matches!(
+            self,
+            Self::VariableDeclaratorId(_)
+                | Self::CatchParameterPattern(_)
+                | Self::AssignmentPatternLeft(_)
+                | Self::BindingPropertyValue(_)
+                | Self::ArrayPatternElements(_)
+                | Self::BindingRestElementArgument(_)
+                | Self::FormalParameterPattern(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_for_statement_init(self) -> bool {
+        matches!(self, Self::ForStatementInit(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_for_statement_left(self) -> bool {
+        matches!(self, Self::ForInStatementLeft(_) | Self::ForOfStatementLeft(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_class_element(self) -> bool {
+        matches!(self, Self::ClassBodyBody(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_import_declaration_specifier(self) -> bool {
+        matches!(self, Self::ImportDeclarationSpecifiers(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_module_export_name(self) -> bool {
+        matches!(
+            self,
+            Self::ImportSpecifierImported(_)
+                | Self::ExportAllDeclarationExported(_)
+                | Self::ExportSpecifierLocal(_)
+                | Self::ExportSpecifierExported(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_import_attribute_key(self) -> bool {
+        matches!(self, Self::ImportAttributeKey(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_declaration(self) -> bool {
+        matches!(self, Self::ExportNamedDeclarationDeclaration(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_export_default_declaration_kind(self) -> bool {
+        matches!(self, Self::ExportDefaultDeclarationDeclaration(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_child(self) -> bool {
+        matches!(self, Self::JSXElementChildren(_) | Self::JSXFragmentChildren(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_element_name(self) -> bool {
+        matches!(self, Self::JSXOpeningElementName(_) | Self::JSXClosingElementName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_attribute_item(self) -> bool {
+        matches!(self, Self::JSXOpeningElementAttributes(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_member_expression_object(self) -> bool {
+        matches!(self, Self::JSXMemberExpressionObject(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_expression(self) -> bool {
+        matches!(self, Self::JSXExpressionContainerExpression(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_attribute_name(self) -> bool {
+        matches!(self, Self::JSXAttributeName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_jsx_attribute_value(self) -> bool {
+        matches!(self, Self::JSXAttributeValue(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_enum_member_name(self) -> bool {
+        matches!(self, Self::TSEnumMemberId(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_type(self) -> bool {
+        matches!(
+            self,
+            Self::TSTypeAnnotationTypeAnnotation(_)
+                | Self::TSConditionalTypeCheckType(_)
+                | Self::TSConditionalTypeExtendsType(_)
+                | Self::TSConditionalTypeTrueType(_)
+                | Self::TSConditionalTypeFalseType(_)
+                | Self::TSUnionTypeTypes(_)
+                | Self::TSIntersectionTypeTypes(_)
+                | Self::TSParenthesizedTypeTypeAnnotation(_)
+                | Self::TSTypeOperatorTypeAnnotation(_)
+                | Self::TSArrayTypeElementType(_)
+                | Self::TSIndexedAccessTypeObjectType(_)
+                | Self::TSIndexedAccessTypeIndexType(_)
+                | Self::TSOptionalTypeTypeAnnotation(_)
+                | Self::TSRestTypeTypeAnnotation(_)
+                | Self::TSTypeParameterInstantiationParams(_)
+                | Self::TSTypeParameterConstraint(_)
+                | Self::TSTypeParameterDefault(_)
+                | Self::TSTypeAliasDeclarationTypeAnnotation(_)
+                | Self::TSMappedTypeConstraint(_)
+                | Self::TSMappedTypeNameType(_)
+                | Self::TSMappedTypeTypeAnnotation(_)
+                | Self::TSTemplateLiteralTypeTypes(_)
+                | Self::TSAsExpressionTypeAnnotation(_)
+                | Self::TSSatisfiesExpressionTypeAnnotation(_)
+                | Self::TSTypeAssertionTypeAnnotation(_)
+                | Self::JSDocNullableTypeTypeAnnotation(_)
+                | Self::JSDocNonNullableTypeTypeAnnotation(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_literal(self) -> bool {
+        matches!(self, Self::TSLiteralTypeLiteral(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_tuple_element(self) -> bool {
+        matches!(self, Self::TSTupleTypeElementTypes(_) | Self::TSNamedTupleMemberElementType(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_type_name(self) -> bool {
+        matches!(
+            self,
+            Self::TSTypeReferenceTypeName(_)
+                | Self::TSQualifiedNameLeft(_)
+                | Self::TSClassImplementsExpression(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_signature(self) -> bool {
+        matches!(self, Self::TSInterfaceBodyBody(_) | Self::TSTypeLiteralMembers(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_type_predicate_name(self) -> bool {
+        matches!(self, Self::TSTypePredicateParameterName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_module_declaration_name(self) -> bool {
+        matches!(self, Self::TSModuleDeclarationId(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_module_declaration_body(self) -> bool {
+        matches!(self, Self::TSModuleDeclarationBody(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_type_query_expr_name(self) -> bool {
+        matches!(self, Self::TSTypeQueryExprName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_import_type_qualifier(self) -> bool {
+        matches!(self, Self::TSImportTypeQualifier(_) | Self::TSImportTypeQualifiedNameLeft(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_module_reference(self) -> bool {
+        matches!(self, Self::TSImportEqualsDeclarationModuleReference(_))
+    }
+}
+
+impl<'a, 't> GetAddress for Ancestor<'a, 't> {
+    /// Get memory address of node represented by `Ancestor` in the arena.
+    // Compiler should reduce this down to only a couple of assembly operations.
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::None => Address::DUMMY,
+            Self::ProgramHashbang(a) => a.address(),
+            Self::ProgramDirectives(a) => a.address(),
+            Self::ProgramBody(a) => a.address(),
+            Self::ArrayExpressionElements(a) => a.address(),
+            Self::ObjectExpressionProperties(a) => a.address(),
+            Self::ObjectPropertyKey(a) => a.address(),
+            Self::ObjectPropertyValue(a) => a.address(),
+            Self::TemplateLiteralQuasis(a) => a.address(),
+            Self::TemplateLiteralExpressions(a) => a.address(),
+            Self::TaggedTemplateExpressionTag(a) => a.address(),
+            Self::TaggedTemplateExpressionTypeArguments(a) => a.address(),
+            Self::TaggedTemplateExpressionQuasi(a) => a.address(),
+            Self::ComputedMemberExpressionObject(a) => a.address(),
+            Self::ComputedMemberExpressionExpression(a) => a.address(),
+            Self::StaticMemberExpressionObject(a) => a.address(),
+            Self::StaticMemberExpressionProperty(a) => a.address(),
+            Self::PrivateFieldExpressionObject(a) => a.address(),
+            Self::PrivateFieldExpressionField(a) => a.address(),
+            Self::CallExpressionCallee(a) => a.address(),
+            Self::CallExpressionTypeArguments(a) => a.address(),
+            Self::CallExpressionArguments(a) => a.address(),
+            Self::NewExpressionCallee(a) => a.address(),
+            Self::NewExpressionTypeArguments(a) => a.address(),
+            Self::NewExpressionArguments(a) => a.address(),
+            Self::MetaPropertyMeta(a) => a.address(),
+            Self::MetaPropertyProperty(a) => a.address(),
+            Self::SpreadElementArgument(a) => a.address(),
+            Self::UpdateExpressionArgument(a) => a.address(),
+            Self::UnaryExpressionArgument(a) => a.address(),
+            Self::BinaryExpressionLeft(a) => a.address(),
+            Self::BinaryExpressionRight(a) => a.address(),
+            Self::PrivateInExpressionLeft(a) => a.address(),
+            Self::PrivateInExpressionRight(a) => a.address(),
+            Self::LogicalExpressionLeft(a) => a.address(),
+            Self::LogicalExpressionRight(a) => a.address(),
+            Self::ConditionalExpressionTest(a) => a.address(),
+            Self::ConditionalExpressionConsequent(a) => a.address(),
+            Self::ConditionalExpressionAlternate(a) => a.address(),
+            Self::AssignmentExpressionLeft(a) => a.address(),
+            Self::AssignmentExpressionRight(a) => a.address(),
+            Self::ArrayAssignmentTargetElements(a) => a.address(),
+            Self::ArrayAssignmentTargetRest(a) => a.address(),
+            Self::ObjectAssignmentTargetProperties(a) => a.address(),
+            Self::ObjectAssignmentTargetRest(a) => a.address(),
+            Self::AssignmentTargetRestTarget(a) => a.address(),
+            Self::AssignmentTargetWithDefaultBinding(a) => a.address(),
+            Self::AssignmentTargetWithDefaultInit(a) => a.address(),
+            Self::AssignmentTargetPropertyIdentifierBinding(a) => a.address(),
+            Self::AssignmentTargetPropertyIdentifierInit(a) => a.address(),
+            Self::AssignmentTargetPropertyPropertyName(a) => a.address(),
+            Self::AssignmentTargetPropertyPropertyBinding(a) => a.address(),
+            Self::SequenceExpressionExpressions(a) => a.address(),
+            Self::AwaitExpressionArgument(a) => a.address(),
+            Self::ChainExpressionExpression(a) => a.address(),
+            Self::ParenthesizedExpressionExpression(a) => a.address(),
+            Self::DirectiveExpression(a) => a.address(),
+            Self::BlockStatementBody(a) => a.address(),
+            Self::VariableDeclarationDeclarations(a) => a.address(),
+            Self::VariableDeclaratorId(a) => a.address(),
+            Self::VariableDeclaratorTypeAnnotation(a) => a.address(),
+            Self::VariableDeclaratorInit(a) => a.address(),
+            Self::ExpressionStatementExpression(a) => a.address(),
+            Self::IfStatementTest(a) => a.address(),
+            Self::IfStatementConsequent(a) => a.address(),
+            Self::IfStatementAlternate(a) => a.address(),
+            Self::DoWhileStatementBody(a) => a.address(),
+            Self::DoWhileStatementTest(a) => a.address(),
+            Self::WhileStatementTest(a) => a.address(),
+            Self::WhileStatementBody(a) => a.address(),
+            Self::ForStatementInit(a) => a.address(),
+            Self::ForStatementTest(a) => a.address(),
+            Self::ForStatementUpdate(a) => a.address(),
+            Self::ForStatementBody(a) => a.address(),
+            Self::ForInStatementLeft(a) => a.address(),
+            Self::ForInStatementRight(a) => a.address(),
+            Self::ForInStatementBody(a) => a.address(),
+            Self::ForOfStatementLeft(a) => a.address(),
+            Self::ForOfStatementRight(a) => a.address(),
+            Self::ForOfStatementBody(a) => a.address(),
+            Self::ContinueStatementLabel(a) => a.address(),
+            Self::BreakStatementLabel(a) => a.address(),
+            Self::ReturnStatementArgument(a) => a.address(),
+            Self::WithStatementObject(a) => a.address(),
+            Self::WithStatementBody(a) => a.address(),
+            Self::SwitchStatementDiscriminant(a) => a.address(),
+            Self::SwitchStatementCases(a) => a.address(),
+            Self::SwitchCaseTest(a) => a.address(),
+            Self::SwitchCaseConsequent(a) => a.address(),
+            Self::LabeledStatementLabel(a) => a.address(),
+            Self::LabeledStatementBody(a) => a.address(),
+            Self::ThrowStatementArgument(a) => a.address(),
+            Self::TryStatementBlock(a) => a.address(),
+            Self::TryStatementHandler(a) => a.address(),
+            Self::TryStatementFinalizer(a) => a.address(),
+            Self::CatchClauseParam(a) => a.address(),
+            Self::CatchClauseBody(a) => a.address(),
+            Self::CatchParameterPattern(a) => a.address(),
+            Self::CatchParameterTypeAnnotation(a) => a.address(),
+            Self::AssignmentPatternLeft(a) => a.address(),
+            Self::AssignmentPatternRight(a) => a.address(),
+            Self::ObjectPatternProperties(a) => a.address(),
+            Self::ObjectPatternRest(a) => a.address(),
+            Self::BindingPropertyKey(a) => a.address(),
+            Self::BindingPropertyValue(a) => a.address(),
+            Self::ArrayPatternElements(a) => a.address(),
+            Self::ArrayPatternRest(a) => a.address(),
+            Self::BindingRestElementArgument(a) => a.address(),
+            Self::FunctionId(a) => a.address(),
+            Self::FunctionTypeParameters(a) => a.address(),
+            Self::FunctionThisParam(a) => a.address(),
+            Self::FunctionParams(a) => a.address(),
+            Self::FunctionReturnType(a) => a.address(),
+            Self::FunctionBody(a) => a.address(),
+            Self::FormalParametersItems(a) => a.address(),
+            Self::FormalParametersRest(a) => a.address(),
+            Self::FormalParameterDecorators(a) => a.address(),
+            Self::FormalParameterPattern(a) => a.address(),
+            Self::FormalParameterTypeAnnotation(a) => a.address(),
+            Self::FormalParameterInitializer(a) => a.address(),
+            Self::FormalParameterRestDecorators(a) => a.address(),
+            Self::FormalParameterRestRest(a) => a.address(),
+            Self::FormalParameterRestTypeAnnotation(a) => a.address(),
+            Self::FunctionBodyDirectives(a) => a.address(),
+            Self::FunctionBodyStatements(a) => a.address(),
+            Self::ArrowFunctionExpressionTypeParameters(a) => a.address(),
+            Self::ArrowFunctionExpressionParams(a) => a.address(),
+            Self::ArrowFunctionExpressionReturnType(a) => a.address(),
+            Self::ArrowFunctionExpressionBody(a) => a.address(),
+            Self::YieldExpressionArgument(a) => a.address(),
+            Self::ClassDecorators(a) => a.address(),
+            Self::ClassId(a) => a.address(),
+            Self::ClassTypeParameters(a) => a.address(),
+            Self::ClassSuperClass(a) => a.address(),
+            Self::ClassSuperTypeArguments(a) => a.address(),
+            Self::ClassImplements(a) => a.address(),
+            Self::ClassBody(a) => a.address(),
+            Self::ClassBodyBody(a) => a.address(),
+            Self::MethodDefinitionDecorators(a) => a.address(),
+            Self::MethodDefinitionKey(a) => a.address(),
+            Self::MethodDefinitionValue(a) => a.address(),
+            Self::PropertyDefinitionDecorators(a) => a.address(),
+            Self::PropertyDefinitionKey(a) => a.address(),
+            Self::PropertyDefinitionTypeAnnotation(a) => a.address(),
+            Self::PropertyDefinitionValue(a) => a.address(),
+            Self::StaticBlockBody(a) => a.address(),
+            Self::AccessorPropertyDecorators(a) => a.address(),
+            Self::AccessorPropertyKey(a) => a.address(),
+            Self::AccessorPropertyTypeAnnotation(a) => a.address(),
+            Self::AccessorPropertyValue(a) => a.address(),
+            Self::ImportExpressionSource(a) => a.address(),
+            Self::ImportExpressionOptions(a) => a.address(),
+            Self::ImportDeclarationSpecifiers(a) => a.address(),
+            Self::ImportDeclarationSource(a) => a.address(),
+            Self::ImportDeclarationWithClause(a) => a.address(),
+            Self::ImportSpecifierImported(a) => a.address(),
+            Self::ImportSpecifierLocal(a) => a.address(),
+            Self::ImportDefaultSpecifierLocal(a) => a.address(),
+            Self::ImportNamespaceSpecifierLocal(a) => a.address(),
+            Self::WithClauseWithEntries(a) => a.address(),
+            Self::ImportAttributeKey(a) => a.address(),
+            Self::ImportAttributeValue(a) => a.address(),
+            Self::ExportNamedDeclarationDeclaration(a) => a.address(),
+            Self::ExportNamedDeclarationSpecifiers(a) => a.address(),
+            Self::ExportNamedDeclarationSource(a) => a.address(),
+            Self::ExportNamedDeclarationWithClause(a) => a.address(),
+            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
+            Self::ExportAllDeclarationExported(a) => a.address(),
+            Self::ExportAllDeclarationSource(a) => a.address(),
+            Self::ExportAllDeclarationWithClause(a) => a.address(),
+            Self::ExportSpecifierLocal(a) => a.address(),
+            Self::ExportSpecifierExported(a) => a.address(),
+            Self::V8IntrinsicExpressionName(a) => a.address(),
+            Self::V8IntrinsicExpressionArguments(a) => a.address(),
+            Self::JSXElementOpeningElement(a) => a.address(),
+            Self::JSXElementChildren(a) => a.address(),
+            Self::JSXElementClosingElement(a) => a.address(),
+            Self::JSXOpeningElementName(a) => a.address(),
+            Self::JSXOpeningElementTypeArguments(a) => a.address(),
+            Self::JSXOpeningElementAttributes(a) => a.address(),
+            Self::JSXClosingElementName(a) => a.address(),
+            Self::JSXFragmentOpeningFragment(a) => a.address(),
+            Self::JSXFragmentChildren(a) => a.address(),
+            Self::JSXFragmentClosingFragment(a) => a.address(),
+            Self::JSXNamespacedNameNamespace(a) => a.address(),
+            Self::JSXNamespacedNameName(a) => a.address(),
+            Self::JSXMemberExpressionObject(a) => a.address(),
+            Self::JSXMemberExpressionProperty(a) => a.address(),
+            Self::JSXExpressionContainerExpression(a) => a.address(),
+            Self::JSXAttributeName(a) => a.address(),
+            Self::JSXAttributeValue(a) => a.address(),
+            Self::JSXSpreadAttributeArgument(a) => a.address(),
+            Self::JSXSpreadChildExpression(a) => a.address(),
+            Self::TSThisParameterTypeAnnotation(a) => a.address(),
+            Self::TSEnumDeclarationId(a) => a.address(),
+            Self::TSEnumDeclarationBody(a) => a.address(),
+            Self::TSEnumBodyMembers(a) => a.address(),
+            Self::TSEnumMemberId(a) => a.address(),
+            Self::TSEnumMemberInitializer(a) => a.address(),
+            Self::TSTypeAnnotationTypeAnnotation(a) => a.address(),
+            Self::TSLiteralTypeLiteral(a) => a.address(),
+            Self::TSConditionalTypeCheckType(a) => a.address(),
+            Self::TSConditionalTypeExtendsType(a) => a.address(),
+            Self::TSConditionalTypeTrueType(a) => a.address(),
+            Self::TSConditionalTypeFalseType(a) => a.address(),
+            Self::TSUnionTypeTypes(a) => a.address(),
+            Self::TSIntersectionTypeTypes(a) => a.address(),
+            Self::TSParenthesizedTypeTypeAnnotation(a) => a.address(),
+            Self::TSTypeOperatorTypeAnnotation(a) => a.address(),
+            Self::TSArrayTypeElementType(a) => a.address(),
+            Self::TSIndexedAccessTypeObjectType(a) => a.address(),
+            Self::TSIndexedAccessTypeIndexType(a) => a.address(),
+            Self::TSTupleTypeElementTypes(a) => a.address(),
+            Self::TSNamedTupleMemberLabel(a) => a.address(),
+            Self::TSNamedTupleMemberElementType(a) => a.address(),
+            Self::TSOptionalTypeTypeAnnotation(a) => a.address(),
+            Self::TSRestTypeTypeAnnotation(a) => a.address(),
+            Self::TSTypeReferenceTypeName(a) => a.address(),
+            Self::TSTypeReferenceTypeArguments(a) => a.address(),
+            Self::TSQualifiedNameLeft(a) => a.address(),
+            Self::TSQualifiedNameRight(a) => a.address(),
+            Self::TSTypeParameterInstantiationParams(a) => a.address(),
+            Self::TSTypeParameterName(a) => a.address(),
+            Self::TSTypeParameterConstraint(a) => a.address(),
+            Self::TSTypeParameterDefault(a) => a.address(),
+            Self::TSTypeParameterDeclarationParams(a) => a.address(),
+            Self::TSTypeAliasDeclarationId(a) => a.address(),
+            Self::TSTypeAliasDeclarationTypeParameters(a) => a.address(),
+            Self::TSTypeAliasDeclarationTypeAnnotation(a) => a.address(),
+            Self::TSClassImplementsExpression(a) => a.address(),
+            Self::TSClassImplementsTypeArguments(a) => a.address(),
+            Self::TSInterfaceDeclarationId(a) => a.address(),
+            Self::TSInterfaceDeclarationTypeParameters(a) => a.address(),
+            Self::TSInterfaceDeclarationExtends(a) => a.address(),
+            Self::TSInterfaceDeclarationBody(a) => a.address(),
+            Self::TSInterfaceBodyBody(a) => a.address(),
+            Self::TSPropertySignatureKey(a) => a.address(),
+            Self::TSPropertySignatureTypeAnnotation(a) => a.address(),
+            Self::TSIndexSignatureParameters(a) => a.address(),
+            Self::TSIndexSignatureTypeAnnotation(a) => a.address(),
+            Self::TSCallSignatureDeclarationTypeParameters(a) => a.address(),
+            Self::TSCallSignatureDeclarationThisParam(a) => a.address(),
+            Self::TSCallSignatureDeclarationParams(a) => a.address(),
+            Self::TSCallSignatureDeclarationReturnType(a) => a.address(),
+            Self::TSMethodSignatureKey(a) => a.address(),
+            Self::TSMethodSignatureTypeParameters(a) => a.address(),
+            Self::TSMethodSignatureThisParam(a) => a.address(),
+            Self::TSMethodSignatureParams(a) => a.address(),
+            Self::TSMethodSignatureReturnType(a) => a.address(),
+            Self::TSConstructSignatureDeclarationTypeParameters(a) => a.address(),
+            Self::TSConstructSignatureDeclarationParams(a) => a.address(),
+            Self::TSConstructSignatureDeclarationReturnType(a) => a.address(),
+            Self::TSIndexSignatureNameTypeAnnotation(a) => a.address(),
+            Self::TSInterfaceHeritageExpression(a) => a.address(),
+            Self::TSInterfaceHeritageTypeArguments(a) => a.address(),
+            Self::TSTypePredicateParameterName(a) => a.address(),
+            Self::TSTypePredicateTypeAnnotation(a) => a.address(),
+            Self::TSModuleDeclarationId(a) => a.address(),
+            Self::TSModuleDeclarationBody(a) => a.address(),
+            Self::TSGlobalDeclarationBody(a) => a.address(),
+            Self::TSModuleBlockDirectives(a) => a.address(),
+            Self::TSModuleBlockBody(a) => a.address(),
+            Self::TSTypeLiteralMembers(a) => a.address(),
+            Self::TSInferTypeTypeParameter(a) => a.address(),
+            Self::TSTypeQueryExprName(a) => a.address(),
+            Self::TSTypeQueryTypeArguments(a) => a.address(),
+            Self::TSImportTypeSource(a) => a.address(),
+            Self::TSImportTypeOptions(a) => a.address(),
+            Self::TSImportTypeQualifier(a) => a.address(),
+            Self::TSImportTypeTypeArguments(a) => a.address(),
+            Self::TSImportTypeQualifiedNameLeft(a) => a.address(),
+            Self::TSImportTypeQualifiedNameRight(a) => a.address(),
+            Self::TSFunctionTypeTypeParameters(a) => a.address(),
+            Self::TSFunctionTypeThisParam(a) => a.address(),
+            Self::TSFunctionTypeParams(a) => a.address(),
+            Self::TSFunctionTypeReturnType(a) => a.address(),
+            Self::TSConstructorTypeTypeParameters(a) => a.address(),
+            Self::TSConstructorTypeParams(a) => a.address(),
+            Self::TSConstructorTypeReturnType(a) => a.address(),
+            Self::TSMappedTypeKey(a) => a.address(),
+            Self::TSMappedTypeConstraint(a) => a.address(),
+            Self::TSMappedTypeNameType(a) => a.address(),
+            Self::TSMappedTypeTypeAnnotation(a) => a.address(),
+            Self::TSTemplateLiteralTypeQuasis(a) => a.address(),
+            Self::TSTemplateLiteralTypeTypes(a) => a.address(),
+            Self::TSAsExpressionExpression(a) => a.address(),
+            Self::TSAsExpressionTypeAnnotation(a) => a.address(),
+            Self::TSSatisfiesExpressionExpression(a) => a.address(),
+            Self::TSSatisfiesExpressionTypeAnnotation(a) => a.address(),
+            Self::TSTypeAssertionTypeAnnotation(a) => a.address(),
+            Self::TSTypeAssertionExpression(a) => a.address(),
+            Self::TSImportEqualsDeclarationId(a) => a.address(),
+            Self::TSImportEqualsDeclarationModuleReference(a) => a.address(),
+            Self::TSExternalModuleReferenceExpression(a) => a.address(),
+            Self::TSNonNullExpressionExpression(a) => a.address(),
+            Self::DecoratorExpression(a) => a.address(),
+            Self::TSExportAssignmentExpression(a) => a.address(),
+            Self::TSNamespaceExportDeclarationId(a) => a.address(),
+            Self::TSInstantiationExpressionExpression(a) => a.address(),
+            Self::TSInstantiationExpressionTypeArguments(a) => a.address(),
+            Self::JSDocNullableTypeTypeAnnotation(a) => a.address(),
+            Self::JSDocNonNullableTypeTypeAnnotation(a) => a.address(),
+        }
+    }
+}
+
+pub(crate) const OFFSET_PROGRAM_NODE_ID: usize = offset_of!(Program, node_id);
+pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
+pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
+pub(crate) const OFFSET_PROGRAM_SOURCE_TEXT: usize = offset_of!(Program, source_text);
+pub(crate) const OFFSET_PROGRAM_COMMENTS: usize = offset_of!(Program, comments);
+pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
+pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
+pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
+pub(crate) const OFFSET_PROGRAM_SCOPE_ID: usize = offset_of!(Program, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ProgramWithoutHashbang<'a, 't>(
+    pub(crate) *const Program<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source_type(self) -> &'t SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
+    pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutHashbang<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ProgramWithoutDirectives<'a, 't>(
+    pub(crate) *const Program<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source_type(self) -> &'t SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
+    pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ProgramWithoutBody<'a, 't>(
+    pub(crate) *const Program<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ProgramWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source_type(self) -> &'t SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
+    pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ARRAY_EXPRESSION_NODE_ID: usize = offset_of!(ArrayExpression, node_id);
+pub(crate) const OFFSET_ARRAY_EXPRESSION_SPAN: usize = offset_of!(ArrayExpression, span);
+pub(crate) const OFFSET_ARRAY_EXPRESSION_ELEMENTS: usize = offset_of!(ArrayExpression, elements);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrayExpressionWithoutElements<'a, 't>(
+    pub(crate) *const ArrayExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrayExpressionWithoutElements<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayExpressionWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_EXPRESSION_NODE_ID: usize = offset_of!(ObjectExpression, node_id);
+pub(crate) const OFFSET_OBJECT_EXPRESSION_SPAN: usize = offset_of!(ObjectExpression, span);
+pub(crate) const OFFSET_OBJECT_EXPRESSION_PROPERTIES: usize =
+    offset_of!(ObjectExpression, properties);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectExpressionWithoutProperties<'a, 't>(
+    pub(crate) *const ObjectExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectExpressionWithoutProperties<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectExpressionWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_PROPERTY_NODE_ID: usize = offset_of!(ObjectProperty, node_id);
+pub(crate) const OFFSET_OBJECT_PROPERTY_SPAN: usize = offset_of!(ObjectProperty, span);
+pub(crate) const OFFSET_OBJECT_PROPERTY_KIND: usize = offset_of!(ObjectProperty, kind);
+pub(crate) const OFFSET_OBJECT_PROPERTY_KEY: usize = offset_of!(ObjectProperty, key);
+pub(crate) const OFFSET_OBJECT_PROPERTY_VALUE: usize = offset_of!(ObjectProperty, value);
+pub(crate) const OFFSET_OBJECT_PROPERTY_METHOD: usize = offset_of!(ObjectProperty, method);
+pub(crate) const OFFSET_OBJECT_PROPERTY_SHORTHAND: usize = offset_of!(ObjectProperty, shorthand);
+pub(crate) const OFFSET_OBJECT_PROPERTY_COMPUTED: usize = offset_of!(ObjectProperty, computed);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectPropertyWithoutKey<'a, 't>(
+    pub(crate) *const ObjectProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t PropertyKind {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KIND) as *const PropertyKind) }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_VALUE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn method(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
+    }
+
+    #[inline]
+    pub fn shorthand(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectPropertyWithoutValue<'a, 't>(
+    pub(crate) *const ObjectProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t PropertyKind {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KIND) as *const PropertyKind) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn method(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
+    }
+
+    #[inline]
+    pub fn shorthand(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TEMPLATE_LITERAL_NODE_ID: usize = offset_of!(TemplateLiteral, node_id);
+pub(crate) const OFFSET_TEMPLATE_LITERAL_SPAN: usize = offset_of!(TemplateLiteral, span);
+pub(crate) const OFFSET_TEMPLATE_LITERAL_QUASIS: usize = offset_of!(TemplateLiteral, quasis);
+pub(crate) const OFFSET_TEMPLATE_LITERAL_EXPRESSIONS: usize =
+    offset_of!(TemplateLiteral, expressions);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TemplateLiteralWithoutQuasis<'a, 't>(
+    pub(crate) *const TemplateLiteral<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TemplateLiteralWithoutQuasis<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expressions(self) -> &'t Vec<'a, Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_EXPRESSIONS)
+                as *const Vec<'a, Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TemplateLiteralWithoutQuasis<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TemplateLiteralWithoutExpressions<'a, 't>(
+    pub(crate) *const TemplateLiteral<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TemplateLiteralWithoutExpressions<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn quasis(self) -> &'t Vec<'a, TemplateElement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_QUASIS)
+                as *const Vec<'a, TemplateElement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TemplateLiteralWithoutExpressions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_NODE_ID: usize =
+    offset_of!(TaggedTemplateExpression, node_id);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN: usize =
+    offset_of!(TaggedTemplateExpression, span);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG: usize =
+    offset_of!(TaggedTemplateExpression, tag);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(TaggedTemplateExpression, type_arguments);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI: usize =
+    offset_of!(TaggedTemplateExpression, quasi);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TaggedTemplateExpressionWithoutTag<'a, 't>(
+    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn quasi(self) -> &'t TemplateLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+                as *const TemplateLiteral<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTag<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TaggedTemplateExpressionWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn tag(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn quasi(self) -> &'t TemplateLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+                as *const TemplateLiteral<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TaggedTemplateExpressionWithoutQuasi<'a, 't>(
+    pub(crate) *const TaggedTemplateExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn tag(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_NODE_ID: usize =
+    offset_of!(ComputedMemberExpression, node_id);
+pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_SPAN: usize =
+    offset_of!(ComputedMemberExpression, span);
+pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_OBJECT: usize =
+    offset_of!(ComputedMemberExpression, object);
+pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_EXPRESSION: usize =
+    offset_of!(ComputedMemberExpression, expression);
+pub(crate) const OFFSET_COMPUTED_MEMBER_EXPRESSION_OPTIONAL: usize =
+    offset_of!(ComputedMemberExpression, optional);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ComputedMemberExpressionWithoutObject<'a, 't>(
+    pub(crate) *const ComputedMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ComputedMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ComputedMemberExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const ComputedMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ComputedMemberExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn object(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_OBJECT)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_NODE_ID: usize =
+    offset_of!(StaticMemberExpression, node_id);
+pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_SPAN: usize =
+    offset_of!(StaticMemberExpression, span);
+pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_OBJECT: usize =
+    offset_of!(StaticMemberExpression, object);
+pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_PROPERTY: usize =
+    offset_of!(StaticMemberExpression, property);
+pub(crate) const OFFSET_STATIC_MEMBER_EXPRESSION_OPTIONAL: usize =
+    offset_of!(StaticMemberExpression, optional);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct StaticMemberExpressionWithoutObject<'a, 't>(
+    pub(crate) *const StaticMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> StaticMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn property(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_PROPERTY)
+                as *const IdentifierName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for StaticMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct StaticMemberExpressionWithoutProperty<'a, 't>(
+    pub(crate) *const StaticMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> StaticMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn object(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_OBJECT)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for StaticMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_NODE_ID: usize =
+    offset_of!(PrivateFieldExpression, node_id);
+pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_SPAN: usize =
+    offset_of!(PrivateFieldExpression, span);
+pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_OBJECT: usize =
+    offset_of!(PrivateFieldExpression, object);
+pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_FIELD: usize =
+    offset_of!(PrivateFieldExpression, field);
+pub(crate) const OFFSET_PRIVATE_FIELD_EXPRESSION_OPTIONAL: usize =
+    offset_of!(PrivateFieldExpression, optional);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PrivateFieldExpressionWithoutObject<'a, 't>(
+    pub(crate) *const PrivateFieldExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PrivateFieldExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn field(self) -> &'t PrivateIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_FIELD)
+                as *const PrivateIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PrivateFieldExpressionWithoutField<'a, 't>(
+    pub(crate) *const PrivateFieldExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PrivateFieldExpressionWithoutField<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn object(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_OBJECT)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutField<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CALL_EXPRESSION_NODE_ID: usize = offset_of!(CallExpression, node_id);
+pub(crate) const OFFSET_CALL_EXPRESSION_SPAN: usize = offset_of!(CallExpression, span);
+pub(crate) const OFFSET_CALL_EXPRESSION_CALLEE: usize = offset_of!(CallExpression, callee);
+pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(CallExpression, type_arguments);
+pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
+pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+pub(crate) const OFFSET_CALL_EXPRESSION_PURE: usize = offset_of!(CallExpression, pure);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CallExpressionWithoutCallee<'a, 't>(
+    pub(crate) *const CallExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for CallExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CallExpressionWithoutTypeArguments<'a, 't>(
+    pub(crate) *const CallExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CallExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for CallExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CallExpressionWithoutArguments<'a, 't>(
+    pub(crate) *const CallExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_NEW_EXPRESSION_NODE_ID: usize = offset_of!(NewExpression, node_id);
+pub(crate) const OFFSET_NEW_EXPRESSION_SPAN: usize = offset_of!(NewExpression, span);
+pub(crate) const OFFSET_NEW_EXPRESSION_CALLEE: usize = offset_of!(NewExpression, callee);
+pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(NewExpression, type_arguments);
+pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
+pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, pure);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct NewExpressionWithoutCallee<'a, 't>(
+    pub(crate) *const NewExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for NewExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct NewExpressionWithoutTypeArguments<'a, 't>(
+    pub(crate) *const NewExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> NewExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for NewExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct NewExpressionWithoutArguments<'a, 't>(
+    pub(crate) *const NewExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_META_PROPERTY_NODE_ID: usize = offset_of!(MetaProperty, node_id);
+pub(crate) const OFFSET_META_PROPERTY_SPAN: usize = offset_of!(MetaProperty, span);
+pub(crate) const OFFSET_META_PROPERTY_META: usize = offset_of!(MetaProperty, meta);
+pub(crate) const OFFSET_META_PROPERTY_PROPERTY: usize = offset_of!(MetaProperty, property);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct MetaPropertyWithoutMeta<'a, 't>(
+    pub(crate) *const MetaProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> MetaPropertyWithoutMeta<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn property(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_PROPERTY)
+                as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for MetaPropertyWithoutMeta<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct MetaPropertyWithoutProperty<'a, 't>(
+    pub(crate) *const MetaProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> MetaPropertyWithoutProperty<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn meta(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_META_PROPERTY_META) as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for MetaPropertyWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_SPREAD_ELEMENT_NODE_ID: usize = offset_of!(SpreadElement, node_id);
+pub(crate) const OFFSET_SPREAD_ELEMENT_SPAN: usize = offset_of!(SpreadElement, span);
+pub(crate) const OFFSET_SPREAD_ELEMENT_ARGUMENT: usize = offset_of!(SpreadElement, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SpreadElementWithoutArgument<'a, 't>(
+    pub(crate) *const SpreadElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SpreadElementWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SPREAD_ELEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SPREAD_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for SpreadElementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_UPDATE_EXPRESSION_NODE_ID: usize = offset_of!(UpdateExpression, node_id);
+pub(crate) const OFFSET_UPDATE_EXPRESSION_SPAN: usize = offset_of!(UpdateExpression, span);
+pub(crate) const OFFSET_UPDATE_EXPRESSION_OPERATOR: usize = offset_of!(UpdateExpression, operator);
+pub(crate) const OFFSET_UPDATE_EXPRESSION_PREFIX: usize = offset_of!(UpdateExpression, prefix);
+pub(crate) const OFFSET_UPDATE_EXPRESSION_ARGUMENT: usize = offset_of!(UpdateExpression, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct UpdateExpressionWithoutArgument<'a, 't>(
+    pub(crate) *const UpdateExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> UpdateExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t UpdateOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_OPERATOR)
+                as *const UpdateOperator)
+        }
+    }
+
+    #[inline]
+    pub fn prefix(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_PREFIX) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for UpdateExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_UNARY_EXPRESSION_NODE_ID: usize = offset_of!(UnaryExpression, node_id);
+pub(crate) const OFFSET_UNARY_EXPRESSION_SPAN: usize = offset_of!(UnaryExpression, span);
+pub(crate) const OFFSET_UNARY_EXPRESSION_OPERATOR: usize = offset_of!(UnaryExpression, operator);
+pub(crate) const OFFSET_UNARY_EXPRESSION_ARGUMENT: usize = offset_of!(UnaryExpression, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct UnaryExpressionWithoutArgument<'a, 't>(
+    pub(crate) *const UnaryExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> UnaryExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_UNARY_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_UNARY_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t UnaryOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_UNARY_EXPRESSION_OPERATOR) as *const UnaryOperator)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for UnaryExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_BINARY_EXPRESSION_NODE_ID: usize = offset_of!(BinaryExpression, node_id);
+pub(crate) const OFFSET_BINARY_EXPRESSION_SPAN: usize = offset_of!(BinaryExpression, span);
+pub(crate) const OFFSET_BINARY_EXPRESSION_LEFT: usize = offset_of!(BinaryExpression, left);
+pub(crate) const OFFSET_BINARY_EXPRESSION_OPERATOR: usize = offset_of!(BinaryExpression, operator);
+pub(crate) const OFFSET_BINARY_EXPRESSION_RIGHT: usize = offset_of!(BinaryExpression, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BinaryExpressionWithoutLeft<'a, 't>(
+    pub(crate) *const BinaryExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BinaryExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t BinaryOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_OPERATOR)
+                as *const BinaryOperator)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_RIGHT) as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for BinaryExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BinaryExpressionWithoutRight<'a, 't>(
+    pub(crate) *const BinaryExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BinaryExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_LEFT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t BinaryOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_OPERATOR)
+                as *const BinaryOperator)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for BinaryExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_NODE_ID: usize =
+    offset_of!(PrivateInExpression, node_id);
+pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_SPAN: usize = offset_of!(PrivateInExpression, span);
+pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_LEFT: usize = offset_of!(PrivateInExpression, left);
+pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_RIGHT: usize = offset_of!(PrivateInExpression, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PrivateInExpressionWithoutLeft<'a, 't>(
+    pub(crate) *const PrivateInExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_RIGHT)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateInExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PrivateInExpressionWithoutRight<'a, 't>(
+    pub(crate) *const PrivateInExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t PrivateIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_LEFT)
+                as *const PrivateIdentifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateInExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_NODE_ID: usize = offset_of!(LogicalExpression, node_id);
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_SPAN: usize = offset_of!(LogicalExpression, span);
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_LEFT: usize = offset_of!(LogicalExpression, left);
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_OPERATOR: usize =
+    offset_of!(LogicalExpression, operator);
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_RIGHT: usize = offset_of!(LogicalExpression, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct LogicalExpressionWithoutLeft<'a, 't>(
+    pub(crate) *const LogicalExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> LogicalExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t LogicalOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_OPERATOR)
+                as *const LogicalOperator)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_RIGHT) as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for LogicalExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct LogicalExpressionWithoutRight<'a, 't>(
+    pub(crate) *const LogicalExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> LogicalExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_LEFT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t LogicalOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_OPERATOR)
+                as *const LogicalOperator)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for LogicalExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_NODE_ID: usize =
+    offset_of!(ConditionalExpression, node_id);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_SPAN: usize =
+    offset_of!(ConditionalExpression, span);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_TEST: usize =
+    offset_of!(ConditionalExpression, test);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT: usize =
+    offset_of!(ConditionalExpression, consequent);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_ALTERNATE: usize =
+    offset_of!(ConditionalExpression, alternate);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ConditionalExpressionWithoutTest<'a, 't>(
+    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ConditionalExpressionWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn consequent(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn alternate(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_ALTERNATE)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ConditionalExpressionWithoutConsequent<'a, 't>(
+    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ConditionalExpressionWithoutConsequent<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_TEST)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn alternate(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_ALTERNATE)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ConditionalExpressionWithoutAlternate<'a, 't>(
+    pub(crate) *const ConditionalExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ConditionalExpressionWithoutAlternate<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_TEST)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn consequent(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutAlternate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_NODE_ID: usize =
+    offset_of!(AssignmentExpression, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_SPAN: usize = offset_of!(AssignmentExpression, span);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR: usize =
+    offset_of!(AssignmentExpression, operator);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT: usize = offset_of!(AssignmentExpression, left);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_RIGHT: usize =
+    offset_of!(AssignmentExpression, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentExpressionWithoutLeft<'a, 't>(
+    pub(crate) *const AssignmentExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t AssignmentOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR)
+                as *const AssignmentOperator)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_RIGHT)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentExpressionWithoutRight<'a, 't>(
+    pub(crate) *const AssignmentExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t AssignmentOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR)
+                as *const AssignmentOperator)
+        }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t AssignmentTarget<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT)
+                as *const AssignmentTarget<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_NODE_ID: usize =
+    offset_of!(ArrayAssignmentTarget, node_id);
+pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_SPAN: usize =
+    offset_of!(ArrayAssignmentTarget, span);
+pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS: usize =
+    offset_of!(ArrayAssignmentTarget, elements);
+pub(crate) const OFFSET_ARRAY_ASSIGNMENT_TARGET_REST: usize =
+    offset_of!(ArrayAssignmentTarget, rest);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrayAssignmentTargetWithoutElements<'a, 't>(
+    pub(crate) *const ArrayAssignmentTarget<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t Option<Box<'a, AssignmentTargetRest<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
+                as *const Option<Box<'a, AssignmentTargetRest<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrayAssignmentTargetWithoutRest<'a, 't>(
+    pub(crate) *const ArrayAssignmentTarget<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrayAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn elements(self) -> &'t Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS)
+                as *const Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_ASSIGNMENT_TARGET_NODE_ID: usize =
+    offset_of!(ObjectAssignmentTarget, node_id);
+pub(crate) const OFFSET_OBJECT_ASSIGNMENT_TARGET_SPAN: usize =
+    offset_of!(ObjectAssignmentTarget, span);
+pub(crate) const OFFSET_OBJECT_ASSIGNMENT_TARGET_PROPERTIES: usize =
+    offset_of!(ObjectAssignmentTarget, properties);
+pub(crate) const OFFSET_OBJECT_ASSIGNMENT_TARGET_REST: usize =
+    offset_of!(ObjectAssignmentTarget, rest);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectAssignmentTargetWithoutProperties<'a, 't>(
+    pub(crate) *const ObjectAssignmentTarget<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectAssignmentTargetWithoutProperties<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t Option<Box<'a, AssignmentTargetRest<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
+                as *const Option<Box<'a, AssignmentTargetRest<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectAssignmentTargetWithoutRest<'a, 't>(
+    pub(crate) *const ObjectAssignmentTarget<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn properties(self) -> &'t Vec<'a, AssignmentTargetProperty<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_PROPERTIES)
+                as *const Vec<'a, AssignmentTargetProperty<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_NODE_ID: usize =
+    offset_of!(AssignmentTargetRest, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_SPAN: usize = offset_of!(AssignmentTargetRest, span);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_TARGET: usize =
+    offset_of!(AssignmentTargetRest, target);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetRestWithoutTarget<'a, 't>(
+    pub(crate) *const AssignmentTargetRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetRestWithoutTarget<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_REST_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_REST_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetRestWithoutTarget<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_NODE_ID: usize =
+    offset_of!(AssignmentTargetWithDefault, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN: usize =
+    offset_of!(AssignmentTargetWithDefault, span);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING: usize =
+    offset_of!(AssignmentTargetWithDefault, binding);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_INIT: usize =
+    offset_of!(AssignmentTargetWithDefault, init);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetWithDefaultWithoutBinding<'a, 't>(
+    pub(crate) *const AssignmentTargetWithDefault<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_INIT)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetWithDefaultWithoutInit<'a, 't>(
+    pub(crate) *const AssignmentTargetWithDefault<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetWithDefaultWithoutInit<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn binding(self) -> &'t AssignmentTarget<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING)
+                as *const AssignmentTarget<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_NODE_ID: usize =
+    offset_of!(AssignmentTargetPropertyIdentifier, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_SPAN: usize =
+    offset_of!(AssignmentTargetPropertyIdentifier, span);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_BINDING: usize =
+    offset_of!(AssignmentTargetPropertyIdentifier, binding);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_INIT: usize =
+    offset_of!(AssignmentTargetPropertyIdentifier, init);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't>(
+    pub(crate) *const AssignmentTargetPropertyIdentifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_INIT)
+                as *const Option<Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetPropertyIdentifierWithoutInit<'a, 't>(
+    pub(crate) *const AssignmentTargetPropertyIdentifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn binding(self) -> &'t IdentifierReference<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_BINDING)
+                as *const IdentifierReference<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NODE_ID: usize =
+    offset_of!(AssignmentTargetPropertyProperty, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_SPAN: usize =
+    offset_of!(AssignmentTargetPropertyProperty, span);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME: usize =
+    offset_of!(AssignmentTargetPropertyProperty, name);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING: usize =
+    offset_of!(AssignmentTargetPropertyProperty, binding);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED: usize =
+    offset_of!(AssignmentTargetPropertyProperty, computed);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetPropertyPropertyWithoutName<'a, 't>(
+    pub(crate) *const AssignmentTargetPropertyProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn binding(self) -> &'t AssignmentTargetMaybeDefault<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING)
+                as *const AssignmentTargetMaybeDefault<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentTargetPropertyPropertyWithoutBinding<'a, 't>(
+    pub(crate) *const AssignmentTargetPropertyProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
+                as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_SEQUENCE_EXPRESSION_NODE_ID: usize =
+    offset_of!(SequenceExpression, node_id);
+pub(crate) const OFFSET_SEQUENCE_EXPRESSION_SPAN: usize = offset_of!(SequenceExpression, span);
+pub(crate) const OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS: usize =
+    offset_of!(SequenceExpression, expressions);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SequenceExpressionWithoutExpressions<'a, 't>(
+    pub(crate) *const SequenceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SequenceExpressionWithoutExpressions<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SEQUENCE_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SEQUENCE_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for SequenceExpressionWithoutExpressions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_AWAIT_EXPRESSION_NODE_ID: usize = offset_of!(AwaitExpression, node_id);
+pub(crate) const OFFSET_AWAIT_EXPRESSION_SPAN: usize = offset_of!(AwaitExpression, span);
+pub(crate) const OFFSET_AWAIT_EXPRESSION_ARGUMENT: usize = offset_of!(AwaitExpression, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AwaitExpressionWithoutArgument<'a, 't>(
+    pub(crate) *const AwaitExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AwaitExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_AWAIT_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_AWAIT_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for AwaitExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CHAIN_EXPRESSION_NODE_ID: usize = offset_of!(ChainExpression, node_id);
+pub(crate) const OFFSET_CHAIN_EXPRESSION_SPAN: usize = offset_of!(ChainExpression, span);
+pub(crate) const OFFSET_CHAIN_EXPRESSION_EXPRESSION: usize =
+    offset_of!(ChainExpression, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ChainExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const ChainExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ChainExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CHAIN_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CHAIN_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ChainExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_NODE_ID: usize =
+    offset_of!(ParenthesizedExpression, node_id);
+pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_SPAN: usize =
+    offset_of!(ParenthesizedExpression, span);
+pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_EXPRESSION: usize =
+    offset_of!(ParenthesizedExpression, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ParenthesizedExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const ParenthesizedExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ParenthesizedExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PARENTHESIZED_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PARENTHESIZED_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ParenthesizedExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_DIRECTIVE_NODE_ID: usize = offset_of!(Directive, node_id);
+pub(crate) const OFFSET_DIRECTIVE_SPAN: usize = offset_of!(Directive, span);
+pub(crate) const OFFSET_DIRECTIVE_EXPRESSION: usize = offset_of!(Directive, expression);
+pub(crate) const OFFSET_DIRECTIVE_DIRECTIVE: usize = offset_of!(Directive, directive);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct DirectiveWithoutExpression<'a, 't>(
+    pub(crate) *const Directive<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> DirectiveWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn directive(self) -> &'t Atom<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DIRECTIVE_DIRECTIVE) as *const Atom<'a>) }
+    }
+}
+
+impl<'a, 't> GetAddress for DirectiveWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_BLOCK_STATEMENT_NODE_ID: usize = offset_of!(BlockStatement, node_id);
+pub(crate) const OFFSET_BLOCK_STATEMENT_SPAN: usize = offset_of!(BlockStatement, span);
+pub(crate) const OFFSET_BLOCK_STATEMENT_BODY: usize = offset_of!(BlockStatement, body);
+pub(crate) const OFFSET_BLOCK_STATEMENT_SCOPE_ID: usize = offset_of!(BlockStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BlockStatementWithoutBody<'a, 't>(
+    pub(crate) *const BlockStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BlockStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for BlockStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_VARIABLE_DECLARATION_NODE_ID: usize =
+    offset_of!(VariableDeclaration, node_id);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_SPAN: usize = offset_of!(VariableDeclaration, span);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_KIND: usize = offset_of!(VariableDeclaration, kind);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARATIONS: usize =
+    offset_of!(VariableDeclaration, declarations);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARE: usize =
+    offset_of!(VariableDeclaration, declare);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclarationWithoutDeclarations<'a, 't>(
+    pub(crate) *const VariableDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclarationWithoutDeclarations<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclarationWithoutDeclarations<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_NODE_ID: usize =
+    offset_of!(VariableDeclarator, node_id);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_SPAN: usize = offset_of!(VariableDeclarator, span);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_KIND: usize = offset_of!(VariableDeclarator, kind);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_ID: usize = offset_of!(VariableDeclarator, id);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION: usize =
+    offset_of!(VariableDeclarator, type_annotation);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_INIT: usize = offset_of!(VariableDeclarator, init);
+pub(crate) const OFFSET_VARIABLE_DECLARATOR_DEFINITE: usize =
+    offset_of!(VariableDeclarator, definite);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclaratorWithoutId<'a, 't>(
+    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_INIT)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_DEFINITE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclaratorWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclaratorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_ID)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_INIT)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_DEFINITE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclaratorWithoutInit<'a, 't>(
+    pub(crate) *const VariableDeclarator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_ID)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_DEFINITE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_EXPRESSION_STATEMENT_NODE_ID: usize =
+    offset_of!(ExpressionStatement, node_id);
+pub(crate) const OFFSET_EXPRESSION_STATEMENT_SPAN: usize = offset_of!(ExpressionStatement, span);
+pub(crate) const OFFSET_EXPRESSION_STATEMENT_EXPRESSION: usize =
+    offset_of!(ExpressionStatement, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExpressionStatementWithoutExpression<'a, 't>(
+    pub(crate) *const ExpressionStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExpressionStatementWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPRESSION_STATEMENT_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPRESSION_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ExpressionStatementWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IF_STATEMENT_NODE_ID: usize = offset_of!(IfStatement, node_id);
+pub(crate) const OFFSET_IF_STATEMENT_SPAN: usize = offset_of!(IfStatement, span);
+pub(crate) const OFFSET_IF_STATEMENT_TEST: usize = offset_of!(IfStatement, test);
+pub(crate) const OFFSET_IF_STATEMENT_CONSEQUENT: usize = offset_of!(IfStatement, consequent);
+pub(crate) const OFFSET_IF_STATEMENT_ALTERNATE: usize = offset_of!(IfStatement, alternate);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct IfStatementWithoutTest<'a, 't>(
+    pub(crate) *const IfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> IfStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn consequent(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_CONSEQUENT) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn alternate(self) -> &'t Option<Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ALTERNATE)
+                as *const Option<Statement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for IfStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct IfStatementWithoutConsequent<'a, 't>(
+    pub(crate) *const IfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> IfStatementWithoutConsequent<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_TEST) as *const Expression<'a>) }
+    }
+
+    #[inline]
+    pub fn alternate(self) -> &'t Option<Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ALTERNATE)
+                as *const Option<Statement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for IfStatementWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct IfStatementWithoutAlternate<'a, 't>(
+    pub(crate) *const IfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> IfStatementWithoutAlternate<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_TEST) as *const Expression<'a>) }
+    }
+
+    #[inline]
+    pub fn consequent(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_CONSEQUENT) as *const Statement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for IfStatementWithoutAlternate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_DO_WHILE_STATEMENT_NODE_ID: usize = offset_of!(DoWhileStatement, node_id);
+pub(crate) const OFFSET_DO_WHILE_STATEMENT_SPAN: usize = offset_of!(DoWhileStatement, span);
+pub(crate) const OFFSET_DO_WHILE_STATEMENT_BODY: usize = offset_of!(DoWhileStatement, body);
+pub(crate) const OFFSET_DO_WHILE_STATEMENT_TEST: usize = offset_of!(DoWhileStatement, test);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct DoWhileStatementWithoutBody<'a, 't>(
+    pub(crate) *const DoWhileStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> DoWhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_TEST) as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for DoWhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct DoWhileStatementWithoutTest<'a, 't>(
+    pub(crate) *const DoWhileStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> DoWhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for DoWhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_WHILE_STATEMENT_NODE_ID: usize = offset_of!(WhileStatement, node_id);
+pub(crate) const OFFSET_WHILE_STATEMENT_SPAN: usize = offset_of!(WhileStatement, span);
+pub(crate) const OFFSET_WHILE_STATEMENT_TEST: usize = offset_of!(WhileStatement, test);
+pub(crate) const OFFSET_WHILE_STATEMENT_BODY: usize = offset_of!(WhileStatement, body);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct WhileStatementWithoutTest<'a, 't>(
+    pub(crate) *const WhileStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> WhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for WhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct WhileStatementWithoutBody<'a, 't>(
+    pub(crate) *const WhileStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> WhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_TEST) as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for WhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FOR_STATEMENT_NODE_ID: usize = offset_of!(ForStatement, node_id);
+pub(crate) const OFFSET_FOR_STATEMENT_SPAN: usize = offset_of!(ForStatement, span);
+pub(crate) const OFFSET_FOR_STATEMENT_INIT: usize = offset_of!(ForStatement, init);
+pub(crate) const OFFSET_FOR_STATEMENT_TEST: usize = offset_of!(ForStatement, test);
+pub(crate) const OFFSET_FOR_STATEMENT_UPDATE: usize = offset_of!(ForStatement, update);
+pub(crate) const OFFSET_FOR_STATEMENT_BODY: usize = offset_of!(ForStatement, body);
+pub(crate) const OFFSET_FOR_STATEMENT_SCOPE_ID: usize = offset_of!(ForStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForStatementWithoutInit<'a, 't>(
+    pub(crate) *const ForStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForStatementWithoutInit<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_TEST)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn update(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_UPDATE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForStatementWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForStatementWithoutTest<'a, 't>(
+    pub(crate) *const ForStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForStatementWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<ForStatementInit<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_INIT)
+                as *const Option<ForStatementInit<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn update(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_UPDATE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForStatementWithoutUpdate<'a, 't>(
+    pub(crate) *const ForStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForStatementWithoutUpdate<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<ForStatementInit<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_INIT)
+                as *const Option<ForStatementInit<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_TEST)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForStatementWithoutUpdate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForStatementWithoutBody<'a, 't>(
+    pub(crate) *const ForStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn init(self) -> &'t Option<ForStatementInit<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_INIT)
+                as *const Option<ForStatementInit<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_TEST)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn update(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_UPDATE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FOR_IN_STATEMENT_NODE_ID: usize = offset_of!(ForInStatement, node_id);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_SPAN: usize = offset_of!(ForInStatement, span);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_LEFT: usize = offset_of!(ForInStatement, left);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_RIGHT: usize = offset_of!(ForInStatement, right);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_BODY: usize = offset_of!(ForInStatement, body);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_SCOPE_ID: usize = offset_of!(ForInStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForInStatementWithoutLeft<'a, 't>(
+    pub(crate) *const ForInStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForInStatementWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_RIGHT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForInStatementWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForInStatementWithoutRight<'a, 't>(
+    pub(crate) *const ForInStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForInStatementWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t ForStatementLeft<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_LEFT)
+                as *const ForStatementLeft<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForInStatementWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForInStatementWithoutBody<'a, 't>(
+    pub(crate) *const ForInStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForInStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t ForStatementLeft<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_LEFT)
+                as *const ForStatementLeft<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_RIGHT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForInStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FOR_OF_STATEMENT_NODE_ID: usize = offset_of!(ForOfStatement, node_id);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_SPAN: usize = offset_of!(ForOfStatement, span);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_AWAIT: usize = offset_of!(ForOfStatement, r#await);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_LEFT: usize = offset_of!(ForOfStatement, left);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_RIGHT: usize = offset_of!(ForOfStatement, right);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_BODY: usize = offset_of!(ForOfStatement, body);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_SCOPE_ID: usize = offset_of!(ForOfStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForOfStatementWithoutLeft<'a, 't>(
+    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForOfStatementWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#await(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_AWAIT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_RIGHT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForOfStatementWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForOfStatementWithoutRight<'a, 't>(
+    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForOfStatementWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#await(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_AWAIT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t ForStatementLeft<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_LEFT)
+                as *const ForStatementLeft<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForOfStatementWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ForOfStatementWithoutBody<'a, 't>(
+    pub(crate) *const ForOfStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ForOfStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#await(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_AWAIT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t ForStatementLeft<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_LEFT)
+                as *const ForStatementLeft<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_RIGHT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ForOfStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CONTINUE_STATEMENT_NODE_ID: usize = offset_of!(ContinueStatement, node_id);
+pub(crate) const OFFSET_CONTINUE_STATEMENT_SPAN: usize = offset_of!(ContinueStatement, span);
+pub(crate) const OFFSET_CONTINUE_STATEMENT_LABEL: usize = offset_of!(ContinueStatement, label);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ContinueStatementWithoutLabel<'a, 't>(
+    pub(crate) *const ContinueStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ContinueStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONTINUE_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CONTINUE_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ContinueStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_BREAK_STATEMENT_NODE_ID: usize = offset_of!(BreakStatement, node_id);
+pub(crate) const OFFSET_BREAK_STATEMENT_SPAN: usize = offset_of!(BreakStatement, span);
+pub(crate) const OFFSET_BREAK_STATEMENT_LABEL: usize = offset_of!(BreakStatement, label);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BreakStatementWithoutLabel<'a, 't>(
+    pub(crate) *const BreakStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BreakStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BREAK_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BREAK_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for BreakStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_RETURN_STATEMENT_NODE_ID: usize = offset_of!(ReturnStatement, node_id);
+pub(crate) const OFFSET_RETURN_STATEMENT_SPAN: usize = offset_of!(ReturnStatement, span);
+pub(crate) const OFFSET_RETURN_STATEMENT_ARGUMENT: usize = offset_of!(ReturnStatement, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ReturnStatementWithoutArgument<'a, 't>(
+    pub(crate) *const ReturnStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ReturnStatementWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_RETURN_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_RETURN_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ReturnStatementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_WITH_STATEMENT_NODE_ID: usize = offset_of!(WithStatement, node_id);
+pub(crate) const OFFSET_WITH_STATEMENT_SPAN: usize = offset_of!(WithStatement, span);
+pub(crate) const OFFSET_WITH_STATEMENT_OBJECT: usize = offset_of!(WithStatement, object);
+pub(crate) const OFFSET_WITH_STATEMENT_BODY: usize = offset_of!(WithStatement, body);
+pub(crate) const OFFSET_WITH_STATEMENT_SCOPE_ID: usize = offset_of!(WithStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct WithStatementWithoutObject<'a, 't>(
+    pub(crate) *const WithStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> WithStatementWithoutObject<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for WithStatementWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct WithStatementWithoutBody<'a, 't>(
+    pub(crate) *const WithStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> WithStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn object(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_OBJECT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for WithStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_SWITCH_STATEMENT_NODE_ID: usize = offset_of!(SwitchStatement, node_id);
+pub(crate) const OFFSET_SWITCH_STATEMENT_SPAN: usize = offset_of!(SwitchStatement, span);
+pub(crate) const OFFSET_SWITCH_STATEMENT_DISCRIMINANT: usize =
+    offset_of!(SwitchStatement, discriminant);
+pub(crate) const OFFSET_SWITCH_STATEMENT_CASES: usize = offset_of!(SwitchStatement, cases);
+pub(crate) const OFFSET_SWITCH_STATEMENT_SCOPE_ID: usize = offset_of!(SwitchStatement, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchStatementWithoutDiscriminant<'a, 't>(
+    pub(crate) *const SwitchStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SwitchStatementWithoutDiscriminant<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn cases(self) -> &'t Vec<'a, SwitchCase<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_CASES)
+                as *const Vec<'a, SwitchCase<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for SwitchStatementWithoutDiscriminant<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchStatementWithoutCases<'a, 't>(
+    pub(crate) *const SwitchStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SwitchStatementWithoutCases<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn discriminant(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_DISCRIMINANT)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for SwitchStatementWithoutCases<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_SWITCH_CASE_NODE_ID: usize = offset_of!(SwitchCase, node_id);
+pub(crate) const OFFSET_SWITCH_CASE_SPAN: usize = offset_of!(SwitchCase, span);
+pub(crate) const OFFSET_SWITCH_CASE_TEST: usize = offset_of!(SwitchCase, test);
+pub(crate) const OFFSET_SWITCH_CASE_CONSEQUENT: usize = offset_of!(SwitchCase, consequent);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchCaseWithoutTest<'a, 't>(
+    pub(crate) *const SwitchCase<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SwitchCaseWithoutTest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn consequent(self) -> &'t Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_CONSEQUENT)
+                as *const Vec<'a, Statement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for SwitchCaseWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct SwitchCaseWithoutConsequent<'a, 't>(
+    pub(crate) *const SwitchCase<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> SwitchCaseWithoutConsequent<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn test(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_TEST) as *const Option<Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for SwitchCaseWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_LABELED_STATEMENT_NODE_ID: usize = offset_of!(LabeledStatement, node_id);
+pub(crate) const OFFSET_LABELED_STATEMENT_SPAN: usize = offset_of!(LabeledStatement, span);
+pub(crate) const OFFSET_LABELED_STATEMENT_LABEL: usize = offset_of!(LabeledStatement, label);
+pub(crate) const OFFSET_LABELED_STATEMENT_BODY: usize = offset_of!(LabeledStatement, body);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct LabeledStatementWithoutLabel<'a, 't>(
+    pub(crate) *const LabeledStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> LabeledStatementWithoutLabel<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Statement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for LabeledStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct LabeledStatementWithoutBody<'a, 't>(
+    pub(crate) *const LabeledStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> LabeledStatementWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn label(self) -> &'t LabelIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LABELED_STATEMENT_LABEL)
+                as *const LabelIdentifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for LabeledStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_THROW_STATEMENT_NODE_ID: usize = offset_of!(ThrowStatement, node_id);
+pub(crate) const OFFSET_THROW_STATEMENT_SPAN: usize = offset_of!(ThrowStatement, span);
+pub(crate) const OFFSET_THROW_STATEMENT_ARGUMENT: usize = offset_of!(ThrowStatement, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ThrowStatementWithoutArgument<'a, 't>(
+    pub(crate) *const ThrowStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ThrowStatementWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_THROW_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_THROW_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ThrowStatementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TRY_STATEMENT_NODE_ID: usize = offset_of!(TryStatement, node_id);
+pub(crate) const OFFSET_TRY_STATEMENT_SPAN: usize = offset_of!(TryStatement, span);
+pub(crate) const OFFSET_TRY_STATEMENT_BLOCK: usize = offset_of!(TryStatement, block);
+pub(crate) const OFFSET_TRY_STATEMENT_HANDLER: usize = offset_of!(TryStatement, handler);
+pub(crate) const OFFSET_TRY_STATEMENT_FINALIZER: usize = offset_of!(TryStatement, finalizer);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TryStatementWithoutBlock<'a, 't>(
+    pub(crate) *const TryStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn handler(self) -> &'t Option<Box<'a, CatchClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_HANDLER)
+                as *const Option<Box<'a, CatchClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn finalizer(self) -> &'t Option<Box<'a, BlockStatement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALIZER)
+                as *const Option<Box<'a, BlockStatement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TryStatementWithoutBlock<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TryStatementWithoutHandler<'a, 't>(
+    pub(crate) *const TryStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn block(self) -> &'t Box<'a, BlockStatement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_BLOCK)
+                as *const Box<'a, BlockStatement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn finalizer(self) -> &'t Option<Box<'a, BlockStatement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALIZER)
+                as *const Option<Box<'a, BlockStatement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TryStatementWithoutHandler<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TryStatementWithoutFinalizer<'a, 't>(
+    pub(crate) *const TryStatement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn block(self) -> &'t Box<'a, BlockStatement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_BLOCK)
+                as *const Box<'a, BlockStatement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn handler(self) -> &'t Option<Box<'a, CatchClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_HANDLER)
+                as *const Option<Box<'a, CatchClause<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TryStatementWithoutFinalizer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CATCH_CLAUSE_NODE_ID: usize = offset_of!(CatchClause, node_id);
+pub(crate) const OFFSET_CATCH_CLAUSE_SPAN: usize = offset_of!(CatchClause, span);
+pub(crate) const OFFSET_CATCH_CLAUSE_PARAM: usize = offset_of!(CatchClause, param);
+pub(crate) const OFFSET_CATCH_CLAUSE_BODY: usize = offset_of!(CatchClause, body);
+pub(crate) const OFFSET_CATCH_CLAUSE_SCOPE_ID: usize = offset_of!(CatchClause, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CatchClauseWithoutParam<'a, 't>(
+    pub(crate) *const CatchClause<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CatchClauseWithoutParam<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, BlockStatement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_BODY)
+                as *const Box<'a, BlockStatement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for CatchClauseWithoutParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CatchClauseWithoutBody<'a, 't>(
+    pub(crate) *const CatchClause<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CatchClauseWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn param(self) -> &'t Option<CatchParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_PARAM)
+                as *const Option<CatchParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for CatchClauseWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CATCH_PARAMETER_NODE_ID: usize = offset_of!(CatchParameter, node_id);
+pub(crate) const OFFSET_CATCH_PARAMETER_SPAN: usize = offset_of!(CatchParameter, span);
+pub(crate) const OFFSET_CATCH_PARAMETER_PATTERN: usize = offset_of!(CatchParameter, pattern);
+pub(crate) const OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION: usize =
+    offset_of!(CatchParameter, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CatchParameterWithoutPattern<'a, 't>(
+    pub(crate) *const CatchParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CatchParameterWithoutPattern<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for CatchParameterWithoutPattern<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct CatchParameterWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const CatchParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> CatchParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for CatchParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ASSIGNMENT_PATTERN_NODE_ID: usize = offset_of!(AssignmentPattern, node_id);
+pub(crate) const OFFSET_ASSIGNMENT_PATTERN_SPAN: usize = offset_of!(AssignmentPattern, span);
+pub(crate) const OFFSET_ASSIGNMENT_PATTERN_LEFT: usize = offset_of!(AssignmentPattern, left);
+pub(crate) const OFFSET_ASSIGNMENT_PATTERN_RIGHT: usize = offset_of!(AssignmentPattern, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentPatternWithoutLeft<'a, 't>(
+    pub(crate) *const AssignmentPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentPatternWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_RIGHT) as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentPatternWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AssignmentPatternWithoutRight<'a, 't>(
+    pub(crate) *const AssignmentPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AssignmentPatternWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_LEFT)
+                as *const BindingPattern<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentPatternWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_OBJECT_PATTERN_NODE_ID: usize = offset_of!(ObjectPattern, node_id);
+pub(crate) const OFFSET_OBJECT_PATTERN_SPAN: usize = offset_of!(ObjectPattern, span);
+pub(crate) const OFFSET_OBJECT_PATTERN_PROPERTIES: usize = offset_of!(ObjectPattern, properties);
+pub(crate) const OFFSET_OBJECT_PATTERN_REST: usize = offset_of!(ObjectPattern, rest);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectPatternWithoutProperties<'a, 't>(
+    pub(crate) *const ObjectPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectPatternWithoutProperties<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t Option<Box<'a, BindingRestElement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_REST)
+                as *const Option<Box<'a, BindingRestElement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPatternWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ObjectPatternWithoutRest<'a, 't>(
+    pub(crate) *const ObjectPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ObjectPatternWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn properties(self) -> &'t Vec<'a, BindingProperty<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_PROPERTIES)
+                as *const Vec<'a, BindingProperty<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPatternWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_BINDING_PROPERTY_NODE_ID: usize = offset_of!(BindingProperty, node_id);
+pub(crate) const OFFSET_BINDING_PROPERTY_SPAN: usize = offset_of!(BindingProperty, span);
+pub(crate) const OFFSET_BINDING_PROPERTY_KEY: usize = offset_of!(BindingProperty, key);
+pub(crate) const OFFSET_BINDING_PROPERTY_VALUE: usize = offset_of!(BindingProperty, value);
+pub(crate) const OFFSET_BINDING_PROPERTY_SHORTHAND: usize = offset_of!(BindingProperty, shorthand);
+pub(crate) const OFFSET_BINDING_PROPERTY_COMPUTED: usize = offset_of!(BindingProperty, computed);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BindingPropertyWithoutKey<'a, 't>(
+    pub(crate) *const BindingProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BindingPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_VALUE)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn shorthand(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SHORTHAND) as *const bool) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_COMPUTED) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for BindingPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BindingPropertyWithoutValue<'a, 't>(
+    pub(crate) *const BindingProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BindingPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn shorthand(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_SHORTHAND) as *const bool) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PROPERTY_COMPUTED) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for BindingPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ARRAY_PATTERN_NODE_ID: usize = offset_of!(ArrayPattern, node_id);
+pub(crate) const OFFSET_ARRAY_PATTERN_SPAN: usize = offset_of!(ArrayPattern, span);
+pub(crate) const OFFSET_ARRAY_PATTERN_ELEMENTS: usize = offset_of!(ArrayPattern, elements);
+pub(crate) const OFFSET_ARRAY_PATTERN_REST: usize = offset_of!(ArrayPattern, rest);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrayPatternWithoutElements<'a, 't>(
+    pub(crate) *const ArrayPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrayPatternWithoutElements<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t Option<Box<'a, BindingRestElement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_REST)
+                as *const Option<Box<'a, BindingRestElement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayPatternWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrayPatternWithoutRest<'a, 't>(
+    pub(crate) *const ArrayPattern<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrayPatternWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn elements(self) -> &'t Vec<'a, Option<BindingPattern<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARRAY_PATTERN_ELEMENTS)
+                as *const Vec<'a, Option<BindingPattern<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayPatternWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_BINDING_REST_ELEMENT_NODE_ID: usize =
+    offset_of!(BindingRestElement, node_id);
+pub(crate) const OFFSET_BINDING_REST_ELEMENT_SPAN: usize = offset_of!(BindingRestElement, span);
+pub(crate) const OFFSET_BINDING_REST_ELEMENT_ARGUMENT: usize =
+    offset_of!(BindingRestElement, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct BindingRestElementWithoutArgument<'a, 't>(
+    pub(crate) *const BindingRestElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> BindingRestElementWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINDING_REST_ELEMENT_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_REST_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for BindingRestElementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FUNCTION_NODE_ID: usize = offset_of!(Function, node_id);
+pub(crate) const OFFSET_FUNCTION_SPAN: usize = offset_of!(Function, span);
+pub(crate) const OFFSET_FUNCTION_TYPE: usize = offset_of!(Function, r#type);
+pub(crate) const OFFSET_FUNCTION_ID: usize = offset_of!(Function, id);
+pub(crate) const OFFSET_FUNCTION_GENERATOR: usize = offset_of!(Function, generator);
+pub(crate) const OFFSET_FUNCTION_ASYNC: usize = offset_of!(Function, r#async);
+pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
+pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
+pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
+pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
+pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
+pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
+pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
+pub(crate) const OFFSET_FUNCTION_PURE: usize = offset_of!(Function, pure);
+pub(crate) const OFFSET_FUNCTION_PIFE: usize = offset_of!(Function, pife);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutId<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutTypeParameters<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutThisParam<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutParams<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutReturnType<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionWithoutBody<'a, 't>(
+    pub(crate) *const Function<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FORMAL_PARAMETERS_NODE_ID: usize = offset_of!(FormalParameters, node_id);
+pub(crate) const OFFSET_FORMAL_PARAMETERS_SPAN: usize = offset_of!(FormalParameters, span);
+pub(crate) const OFFSET_FORMAL_PARAMETERS_KIND: usize = offset_of!(FormalParameters, kind);
+pub(crate) const OFFSET_FORMAL_PARAMETERS_ITEMS: usize = offset_of!(FormalParameters, items);
+pub(crate) const OFFSET_FORMAL_PARAMETERS_REST: usize = offset_of!(FormalParameters, rest);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParametersWithoutItems<'a, 't>(
+    pub(crate) *const FormalParameters<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParametersWithoutItems<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t FormalParameterKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_KIND)
+                as *const FormalParameterKind)
+        }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t Option<Box<'a, FormalParameterRest<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_REST)
+                as *const Option<Box<'a, FormalParameterRest<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParametersWithoutItems<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParametersWithoutRest<'a, 't>(
+    pub(crate) *const FormalParameters<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParametersWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t FormalParameterKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_KIND)
+                as *const FormalParameterKind)
+        }
+    }
+
+    #[inline]
+    pub fn items(self) -> &'t Vec<'a, FormalParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_ITEMS)
+                as *const Vec<'a, FormalParameter<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParametersWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FORMAL_PARAMETER_NODE_ID: usize = offset_of!(FormalParameter, node_id);
+pub(crate) const OFFSET_FORMAL_PARAMETER_SPAN: usize = offset_of!(FormalParameter, span);
+pub(crate) const OFFSET_FORMAL_PARAMETER_DECORATORS: usize =
+    offset_of!(FormalParameter, decorators);
+pub(crate) const OFFSET_FORMAL_PARAMETER_PATTERN: usize = offset_of!(FormalParameter, pattern);
+pub(crate) const OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION: usize =
+    offset_of!(FormalParameter, type_annotation);
+pub(crate) const OFFSET_FORMAL_PARAMETER_INITIALIZER: usize =
+    offset_of!(FormalParameter, initializer);
+pub(crate) const OFFSET_FORMAL_PARAMETER_OPTIONAL: usize = offset_of!(FormalParameter, optional);
+pub(crate) const OFFSET_FORMAL_PARAMETER_ACCESSIBILITY: usize =
+    offset_of!(FormalParameter, accessibility);
+pub(crate) const OFFSET_FORMAL_PARAMETER_READONLY: usize = offset_of!(FormalParameter, readonly);
+pub(crate) const OFFSET_FORMAL_PARAMETER_OVERRIDE: usize = offset_of!(FormalParameter, r#override);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutDecorators<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutPattern<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutPattern<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Box<'a, Expression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_INITIALIZER)
+                as *const Option<Box<'a, Expression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutInitializer<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutInitializer<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterWithoutInitializer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_NODE_ID: usize =
+    offset_of!(FormalParameterRest, node_id);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_SPAN: usize = offset_of!(FormalParameterRest, span);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_DECORATORS: usize =
+    offset_of!(FormalParameterRest, decorators);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_REST: usize = offset_of!(FormalParameterRest, rest);
+pub(crate) const OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION: usize =
+    offset_of!(FormalParameterRest, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterRestWithoutDecorators<'a, 't>(
+    pub(crate) *const FormalParameterRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterRestWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t BindingRestElement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_REST)
+                as *const BindingRestElement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterRestWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterRestWithoutRest<'a, 't>(
+    pub(crate) *const FormalParameterRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterRestWithoutRest<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterRestWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterRestWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const FormalParameterRest<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterRestWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn rest(self) -> &'t BindingRestElement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_REST_REST)
+                as *const BindingRestElement<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParameterRestWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_FUNCTION_BODY_NODE_ID: usize = offset_of!(FunctionBody, node_id);
+pub(crate) const OFFSET_FUNCTION_BODY_SPAN: usize = offset_of!(FunctionBody, span);
+pub(crate) const OFFSET_FUNCTION_BODY_DIRECTIVES: usize = offset_of!(FunctionBody, directives);
+pub(crate) const OFFSET_FUNCTION_BODY_STATEMENTS: usize = offset_of!(FunctionBody, statements);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionBodyWithoutDirectives<'a, 't>(
+    pub(crate) *const FunctionBody<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionBodyWithoutDirectives<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn statements(self) -> &'t Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_STATEMENTS)
+                as *const Vec<'a, Statement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionBodyWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionBodyWithoutStatements<'a, 't>(
+    pub(crate) *const FunctionBody<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionBodyWithoutStatements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID: usize =
+    offset_of!(ArrowFunctionExpression, node_id);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN: usize =
+    offset_of!(ArrowFunctionExpression, span);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION: usize =
+    offset_of!(ArrowFunctionExpression, expression);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC: usize =
+    offset_of!(ArrowFunctionExpression, r#async);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS: usize =
+    offset_of!(ArrowFunctionExpression, type_parameters);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS: usize =
+    offset_of!(ArrowFunctionExpression, params);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE: usize =
+    offset_of!(ArrowFunctionExpression, return_type);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_BODY: usize =
+    offset_of!(ArrowFunctionExpression, body);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID: usize =
+    offset_of!(ArrowFunctionExpression, scope_id);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PURE: usize =
+    offset_of!(ArrowFunctionExpression, pure);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE: usize =
+    offset_of!(ArrowFunctionExpression, pife);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrowFunctionExpressionWithoutTypeParameters<'a, 't>(
+    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, FunctionBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+                as *const Box<'a, FunctionBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrowFunctionExpressionWithoutParams<'a, 't>(
+    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, FunctionBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+                as *const Box<'a, FunctionBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrowFunctionExpressionWithoutReturnType<'a, 't>(
+    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, FunctionBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+                as *const Box<'a, FunctionBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ArrowFunctionExpressionWithoutBody<'a, 't>(
+    pub(crate) *const ArrowFunctionExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_YIELD_EXPRESSION_NODE_ID: usize = offset_of!(YieldExpression, node_id);
+pub(crate) const OFFSET_YIELD_EXPRESSION_SPAN: usize = offset_of!(YieldExpression, span);
+pub(crate) const OFFSET_YIELD_EXPRESSION_DELEGATE: usize = offset_of!(YieldExpression, delegate);
+pub(crate) const OFFSET_YIELD_EXPRESSION_ARGUMENT: usize = offset_of!(YieldExpression, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct YieldExpressionWithoutArgument<'a, 't>(
+    pub(crate) *const YieldExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> YieldExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_YIELD_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_YIELD_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn delegate(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_YIELD_EXPRESSION_DELEGATE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for YieldExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CLASS_NODE_ID: usize = offset_of!(Class, node_id);
+pub(crate) const OFFSET_CLASS_SPAN: usize = offset_of!(Class, span);
+pub(crate) const OFFSET_CLASS_TYPE: usize = offset_of!(Class, r#type);
+pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
+pub(crate) const OFFSET_CLASS_ID: usize = offset_of!(Class, id);
+pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_parameters);
+pub(crate) const OFFSET_CLASS_SUPER_CLASS: usize = offset_of!(Class, super_class);
+pub(crate) const OFFSET_CLASS_SUPER_TYPE_ARGUMENTS: usize = offset_of!(Class, super_type_arguments);
+pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
+pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
+pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
+pub(crate) const OFFSET_CLASS_DECLARE: usize = offset_of!(Class, declare);
+pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutDecorators<'a, 't>(
+    pub(crate) *const Class<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutId<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
+
+impl<'a, 't> ClassWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutTypeParameters<'a, 't>(
+    pub(crate) *const Class<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutSuperClass<'a, 't>(
+    pub(crate) *const Class<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutSuperClass<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutSuperTypeArguments<'a, 't>(
+    pub(crate) *const Class<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassWithoutSuperTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutSuperTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutImplements<'a, 't>(
+    pub(crate) *const Class<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassWithoutImplements<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutImplements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassWithoutBody<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
+
+impl<'a, 't> ClassWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(self) -> &'t Vec<'a, TSClassImplements<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Vec<'a, TSClassImplements<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_CLASS_BODY_NODE_ID: usize = offset_of!(ClassBody, node_id);
+pub(crate) const OFFSET_CLASS_BODY_SPAN: usize = offset_of!(ClassBody, span);
+pub(crate) const OFFSET_CLASS_BODY_BODY: usize = offset_of!(ClassBody, body);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ClassBodyWithoutBody<'a, 't>(
+    pub(crate) *const ClassBody<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ClassBodyWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassBodyWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_METHOD_DEFINITION_NODE_ID: usize = offset_of!(MethodDefinition, node_id);
+pub(crate) const OFFSET_METHOD_DEFINITION_SPAN: usize = offset_of!(MethodDefinition, span);
+pub(crate) const OFFSET_METHOD_DEFINITION_TYPE: usize = offset_of!(MethodDefinition, r#type);
+pub(crate) const OFFSET_METHOD_DEFINITION_DECORATORS: usize =
+    offset_of!(MethodDefinition, decorators);
+pub(crate) const OFFSET_METHOD_DEFINITION_KEY: usize = offset_of!(MethodDefinition, key);
+pub(crate) const OFFSET_METHOD_DEFINITION_VALUE: usize = offset_of!(MethodDefinition, value);
+pub(crate) const OFFSET_METHOD_DEFINITION_KIND: usize = offset_of!(MethodDefinition, kind);
+pub(crate) const OFFSET_METHOD_DEFINITION_COMPUTED: usize = offset_of!(MethodDefinition, computed);
+pub(crate) const OFFSET_METHOD_DEFINITION_STATIC: usize = offset_of!(MethodDefinition, r#static);
+pub(crate) const OFFSET_METHOD_DEFINITION_OVERRIDE: usize =
+    offset_of!(MethodDefinition, r#override);
+pub(crate) const OFFSET_METHOD_DEFINITION_OPTIONAL: usize = offset_of!(MethodDefinition, optional);
+pub(crate) const OFFSET_METHOD_DEFINITION_ACCESSIBILITY: usize =
+    offset_of!(MethodDefinition, accessibility);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct MethodDefinitionWithoutDecorators<'a, 't>(
+    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t MethodDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
+                as *const MethodDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
+                as *const Box<'a, Function<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t MethodDefinitionKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
+                as *const MethodDefinitionKind)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for MethodDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct MethodDefinitionWithoutKey<'a, 't>(
+    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t MethodDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
+                as *const MethodDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
+                as *const Box<'a, Function<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t MethodDefinitionKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
+                as *const MethodDefinitionKind)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for MethodDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct MethodDefinitionWithoutValue<'a, 't>(
+    pub(crate) *const MethodDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t MethodDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
+                as *const MethodDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t MethodDefinitionKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
+                as *const MethodDefinitionKind)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for MethodDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_PROPERTY_DEFINITION_NODE_ID: usize =
+    offset_of!(PropertyDefinition, node_id);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_SPAN: usize = offset_of!(PropertyDefinition, span);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE: usize = offset_of!(PropertyDefinition, r#type);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_DECORATORS: usize =
+    offset_of!(PropertyDefinition, decorators);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_KEY: usize = offset_of!(PropertyDefinition, key);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION: usize =
+    offset_of!(PropertyDefinition, type_annotation);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_VALUE: usize = offset_of!(PropertyDefinition, value);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_COMPUTED: usize =
+    offset_of!(PropertyDefinition, computed);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_STATIC: usize =
+    offset_of!(PropertyDefinition, r#static);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_DECLARE: usize =
+    offset_of!(PropertyDefinition, declare);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_OVERRIDE: usize =
+    offset_of!(PropertyDefinition, r#override);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_OPTIONAL: usize =
+    offset_of!(PropertyDefinition, optional);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_DEFINITE: usize =
+    offset_of!(PropertyDefinition, definite);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_READONLY: usize =
+    offset_of!(PropertyDefinition, readonly);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY: usize =
+    offset_of!(PropertyDefinition, accessibility);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PropertyDefinitionWithoutDecorators<'a, 't>(
+    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PropertyDefinitionWithoutKey<'a, 't>(
+    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PropertyDefinitionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct PropertyDefinitionWithoutValue<'a, 't>(
+    pub(crate) *const PropertyDefinition<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_STATIC_BLOCK_NODE_ID: usize = offset_of!(StaticBlock, node_id);
+pub(crate) const OFFSET_STATIC_BLOCK_SPAN: usize = offset_of!(StaticBlock, span);
+pub(crate) const OFFSET_STATIC_BLOCK_BODY: usize = offset_of!(StaticBlock, body);
+pub(crate) const OFFSET_STATIC_BLOCK_SCOPE_ID: usize = offset_of!(StaticBlock, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct StaticBlockWithoutBody<'a, 't>(
+    pub(crate) *const StaticBlock<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> StaticBlockWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for StaticBlockWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_NODE_ID: usize = offset_of!(AccessorProperty, node_id);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_SPAN: usize = offset_of!(AccessorProperty, span);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorProperty, r#type);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
+    offset_of!(AccessorProperty, decorators);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProperty, key);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
+    offset_of!(AccessorProperty, type_annotation);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_COMPUTED: usize = offset_of!(AccessorProperty, computed);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorProperty, r#static);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_OVERRIDE: usize =
+    offset_of!(AccessorProperty, r#override);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_DEFINITE: usize = offset_of!(AccessorProperty, definite);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY: usize =
+    offset_of!(AccessorProperty, accessibility);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AccessorPropertyWithoutDecorators<'a, 't>(
+    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AccessorPropertyWithoutKey<'a, 't>(
+    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AccessorPropertyWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct AccessorPropertyWithoutValue<'a, 't>(
+    pub(crate) *const AccessorProperty<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#type(self) -> &'t AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_EXPRESSION_NODE_ID: usize = offset_of!(ImportExpression, node_id);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_SPAN: usize = offset_of!(ImportExpression, span);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_SOURCE: usize = offset_of!(ImportExpression, source);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_OPTIONS: usize = offset_of!(ImportExpression, options);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_PHASE: usize = offset_of!(ImportExpression, phase);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportExpressionWithoutSource<'a, 't>(
+    pub(crate) *const ImportExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn options(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_OPTIONS)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportExpressionWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportExpressionWithoutOptions<'a, 't>(
+    pub(crate) *const ImportExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportExpressionWithoutOptions<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SOURCE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportExpressionWithoutOptions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_DECLARATION_NODE_ID: usize = offset_of!(ImportDeclaration, node_id);
+pub(crate) const OFFSET_IMPORT_DECLARATION_SPAN: usize = offset_of!(ImportDeclaration, span);
+pub(crate) const OFFSET_IMPORT_DECLARATION_SPECIFIERS: usize =
+    offset_of!(ImportDeclaration, specifiers);
+pub(crate) const OFFSET_IMPORT_DECLARATION_SOURCE: usize = offset_of!(ImportDeclaration, source);
+pub(crate) const OFFSET_IMPORT_DECLARATION_PHASE: usize = offset_of!(ImportDeclaration, phase);
+pub(crate) const OFFSET_IMPORT_DECLARATION_WITH_CLAUSE: usize =
+    offset_of!(ImportDeclaration, with_clause);
+pub(crate) const OFFSET_IMPORT_DECLARATION_IMPORT_KIND: usize =
+    offset_of!(ImportDeclaration, import_kind);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportDeclarationWithoutSpecifiers<'a, 't>(
+    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SOURCE)
+                as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportDeclarationWithoutSource<'a, 't>(
+    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn specifiers(self) -> &'t Option<Vec<'a, ImportDeclarationSpecifier<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPECIFIERS)
+                as *const Option<Vec<'a, ImportDeclarationSpecifier<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportDeclarationWithoutWithClause<'a, 't>(
+    pub(crate) *const ImportDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn specifiers(self) -> &'t Option<Vec<'a, ImportDeclarationSpecifier<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPECIFIERS)
+                as *const Option<Vec<'a, ImportDeclarationSpecifier<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SOURCE)
+                as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_SPECIFIER_NODE_ID: usize = offset_of!(ImportSpecifier, node_id);
+pub(crate) const OFFSET_IMPORT_SPECIFIER_SPAN: usize = offset_of!(ImportSpecifier, span);
+pub(crate) const OFFSET_IMPORT_SPECIFIER_IMPORTED: usize = offset_of!(ImportSpecifier, imported);
+pub(crate) const OFFSET_IMPORT_SPECIFIER_LOCAL: usize = offset_of!(ImportSpecifier, local);
+pub(crate) const OFFSET_IMPORT_SPECIFIER_IMPORT_KIND: usize =
+    offset_of!(ImportSpecifier, import_kind);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportSpecifierWithoutImported<'a, 't>(
+    pub(crate) *const ImportSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportSpecifierWithoutImported<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn local(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_LOCAL)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportSpecifierWithoutImported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportSpecifierWithoutLocal<'a, 't>(
+    pub(crate) *const ImportSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn imported(self) -> &'t ModuleExportName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_IMPORTED)
+                as *const ModuleExportName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_SPECIFIER_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_NODE_ID: usize =
+    offset_of!(ImportDefaultSpecifier, node_id);
+pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_SPAN: usize =
+    offset_of!(ImportDefaultSpecifier, span);
+pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_LOCAL: usize =
+    offset_of!(ImportDefaultSpecifier, local);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportDefaultSpecifierWithoutLocal<'a, 't>(
+    pub(crate) *const ImportDefaultSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportDefaultSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DEFAULT_SPECIFIER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DEFAULT_SPECIFIER_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportDefaultSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_NODE_ID: usize =
+    offset_of!(ImportNamespaceSpecifier, node_id);
+pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_SPAN: usize =
+    offset_of!(ImportNamespaceSpecifier, span);
+pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_LOCAL: usize =
+    offset_of!(ImportNamespaceSpecifier, local);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportNamespaceSpecifierWithoutLocal<'a, 't>(
+    pub(crate) *const ImportNamespaceSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportNamespaceSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_NAMESPACE_SPECIFIER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_NAMESPACE_SPECIFIER_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportNamespaceSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_WITH_CLAUSE_NODE_ID: usize = offset_of!(WithClause, node_id);
+pub(crate) const OFFSET_WITH_CLAUSE_SPAN: usize = offset_of!(WithClause, span);
+pub(crate) const OFFSET_WITH_CLAUSE_KEYWORD: usize = offset_of!(WithClause, keyword);
+pub(crate) const OFFSET_WITH_CLAUSE_WITH_ENTRIES: usize = offset_of!(WithClause, with_entries);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct WithClauseWithoutWithEntries<'a, 't>(
+    pub(crate) *const WithClause<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> WithClauseWithoutWithEntries<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn keyword(self) -> &'t WithClauseKeyword {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_KEYWORD) as *const WithClauseKeyword)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for WithClauseWithoutWithEntries<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_IMPORT_ATTRIBUTE_NODE_ID: usize = offset_of!(ImportAttribute, node_id);
+pub(crate) const OFFSET_IMPORT_ATTRIBUTE_SPAN: usize = offset_of!(ImportAttribute, span);
+pub(crate) const OFFSET_IMPORT_ATTRIBUTE_KEY: usize = offset_of!(ImportAttribute, key);
+pub(crate) const OFFSET_IMPORT_ATTRIBUTE_VALUE: usize = offset_of!(ImportAttribute, value);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportAttributeWithoutKey<'a, 't>(
+    pub(crate) *const ImportAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportAttributeWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_VALUE) as *const StringLiteral<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportAttributeWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ImportAttributeWithoutValue<'a, 't>(
+    pub(crate) *const ImportAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ImportAttributeWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t ImportAttributeKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_KEY)
+                as *const ImportAttributeKey<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportAttributeWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_NODE_ID: usize =
+    offset_of!(ExportNamedDeclaration, node_id);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_SPAN: usize =
+    offset_of!(ExportNamedDeclaration, span);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION: usize =
+    offset_of!(ExportNamedDeclaration, declaration);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS: usize =
+    offset_of!(ExportNamedDeclaration, specifiers);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_SOURCE: usize =
+    offset_of!(ExportNamedDeclaration, source);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND: usize =
+    offset_of!(ExportNamedDeclaration, export_kind);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE: usize =
+    offset_of!(ExportNamedDeclaration, with_clause);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportNamedDeclarationWithoutDeclaration<'a, 't>(
+    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn specifiers(self) -> &'t Vec<'a, ExportSpecifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
+                as *const Vec<'a, ExportSpecifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t Option<StringLiteral<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
+                as *const Option<StringLiteral<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportNamedDeclarationWithoutSpecifiers<'a, 't>(
+    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn declaration(self) -> &'t Option<Declaration<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
+                as *const Option<Declaration<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t Option<StringLiteral<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
+                as *const Option<StringLiteral<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportNamedDeclarationWithoutSource<'a, 't>(
+    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn declaration(self) -> &'t Option<Declaration<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
+                as *const Option<Declaration<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn specifiers(self) -> &'t Vec<'a, ExportSpecifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
+                as *const Vec<'a, ExportSpecifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportNamedDeclarationWithoutWithClause<'a, 't>(
+    pub(crate) *const ExportNamedDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportNamedDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn declaration(self) -> &'t Option<Declaration<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
+                as *const Option<Declaration<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn specifiers(self) -> &'t Vec<'a, ExportSpecifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
+                as *const Vec<'a, ExportSpecifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t Option<StringLiteral<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
+                as *const Option<StringLiteral<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_NODE_ID: usize =
+    offset_of!(ExportDefaultDeclaration, node_id);
+pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN: usize =
+    offset_of!(ExportDefaultDeclaration, span);
+pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
+    offset_of!(ExportDefaultDeclaration, declaration);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
+    pub(crate) *const ExportDefaultDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_NODE_ID: usize =
+    offset_of!(ExportAllDeclaration, node_id);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_SPAN: usize = offset_of!(ExportAllDeclaration, span);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_EXPORTED: usize =
+    offset_of!(ExportAllDeclaration, exported);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_SOURCE: usize =
+    offset_of!(ExportAllDeclaration, source);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE: usize =
+    offset_of!(ExportAllDeclaration, with_clause);
+pub(crate) const OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND: usize =
+    offset_of!(ExportAllDeclaration, export_kind);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportAllDeclarationWithoutExported<'a, 't>(
+    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SOURCE)
+                as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportAllDeclarationWithoutSource<'a, 't>(
+    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn exported(self) -> &'t Option<ModuleExportName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORTED)
+                as *const Option<ModuleExportName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
+                as *const Option<Box<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportAllDeclarationWithoutWithClause<'a, 't>(
+    pub(crate) *const ExportAllDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportAllDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn exported(self) -> &'t Option<ModuleExportName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORTED)
+                as *const Option<ModuleExportName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_SOURCE)
+                as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_EXPORT_SPECIFIER_NODE_ID: usize = offset_of!(ExportSpecifier, node_id);
+pub(crate) const OFFSET_EXPORT_SPECIFIER_SPAN: usize = offset_of!(ExportSpecifier, span);
+pub(crate) const OFFSET_EXPORT_SPECIFIER_LOCAL: usize = offset_of!(ExportSpecifier, local);
+pub(crate) const OFFSET_EXPORT_SPECIFIER_EXPORTED: usize = offset_of!(ExportSpecifier, exported);
+pub(crate) const OFFSET_EXPORT_SPECIFIER_EXPORT_KIND: usize =
+    offset_of!(ExportSpecifier, export_kind);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportSpecifierWithoutLocal<'a, 't>(
+    pub(crate) *const ExportSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn exported(self) -> &'t ModuleExportName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_EXPORTED)
+                as *const ModuleExportName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportSpecifierWithoutExported<'a, 't>(
+    pub(crate) *const ExportSpecifier<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportSpecifierWithoutExported<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn local(self) -> &'t ModuleExportName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_LOCAL)
+                as *const ModuleExportName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn export_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_EXPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportSpecifierWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_V8_INTRINSIC_EXPRESSION_NODE_ID: usize =
+    offset_of!(V8IntrinsicExpression, node_id);
+pub(crate) const OFFSET_V8_INTRINSIC_EXPRESSION_SPAN: usize =
+    offset_of!(V8IntrinsicExpression, span);
+pub(crate) const OFFSET_V8_INTRINSIC_EXPRESSION_NAME: usize =
+    offset_of!(V8IntrinsicExpression, name);
+pub(crate) const OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS: usize =
+    offset_of!(V8IntrinsicExpression, arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct V8IntrinsicExpressionWithoutName<'a, 't>(
+    pub(crate) *const V8IntrinsicExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> V8IntrinsicExpressionWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for V8IntrinsicExpressionWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct V8IntrinsicExpressionWithoutArguments<'a, 't>(
+    pub(crate) *const V8IntrinsicExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> V8IntrinsicExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_V8_INTRINSIC_EXPRESSION_NAME)
+                as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for V8IntrinsicExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_ELEMENT_NODE_ID: usize = offset_of!(JSXElement, node_id);
+pub(crate) const OFFSET_JSX_ELEMENT_SPAN: usize = offset_of!(JSXElement, span);
+pub(crate) const OFFSET_JSX_ELEMENT_OPENING_ELEMENT: usize =
+    offset_of!(JSXElement, opening_element);
+pub(crate) const OFFSET_JSX_ELEMENT_CHILDREN: usize = offset_of!(JSXElement, children);
+pub(crate) const OFFSET_JSX_ELEMENT_CLOSING_ELEMENT: usize =
+    offset_of!(JSXElement, closing_element);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXElementWithoutOpeningElement<'a, 't>(
+    pub(crate) *const JSXElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXElementWithoutOpeningElement<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn closing_element(self) -> &'t Option<Box<'a, JSXClosingElement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+                as *const Option<Box<'a, JSXClosingElement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXElementWithoutOpeningElement<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXElementWithoutChildren<'a, 't>(
+    pub(crate) *const JSXElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXElementWithoutChildren<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_element(self) -> &'t Box<'a, JSXOpeningElement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
+                as *const Box<'a, JSXOpeningElement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn closing_element(self) -> &'t Option<Box<'a, JSXClosingElement<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+                as *const Option<Box<'a, JSXClosingElement<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXElementWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXElementWithoutClosingElement<'a, 't>(
+    pub(crate) *const JSXElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_element(self) -> &'t Box<'a, JSXOpeningElement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
+                as *const Box<'a, JSXOpeningElement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_NODE_ID: usize = offset_of!(JSXOpeningElement, node_id);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_SPAN: usize = offset_of!(JSXOpeningElement, span);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_NAME: usize = offset_of!(JSXOpeningElement, name);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS: usize =
+    offset_of!(JSXOpeningElement, type_arguments);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES: usize =
+    offset_of!(JSXOpeningElement, attributes);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXOpeningElementWithoutName<'a, 't>(
+    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn attributes(self) -> &'t Vec<'a, JSXAttributeItem<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+                as *const Vec<'a, JSXAttributeItem<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXOpeningElementWithoutTypeArguments<'a, 't>(
+    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXOpeningElementWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t JSXElementName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
+                as *const JSXElementName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn attributes(self) -> &'t Vec<'a, JSXAttributeItem<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+                as *const Vec<'a, JSXAttributeItem<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXOpeningElementWithoutAttributes<'a, 't>(
+    pub(crate) *const JSXOpeningElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t JSXElementName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
+                as *const JSXElementName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_NODE_ID: usize = offset_of!(JSXClosingElement, node_id);
+pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_SPAN: usize = offset_of!(JSXClosingElement, span);
+pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_NAME: usize = offset_of!(JSXClosingElement, name);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXClosingElementWithoutName<'a, 't>(
+    pub(crate) *const JSXClosingElement<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXClosingElementWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_CLOSING_ELEMENT_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_CLOSING_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXClosingElementWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_FRAGMENT_NODE_ID: usize = offset_of!(JSXFragment, node_id);
+pub(crate) const OFFSET_JSX_FRAGMENT_SPAN: usize = offset_of!(JSXFragment, span);
+pub(crate) const OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT: usize =
+    offset_of!(JSXFragment, opening_fragment);
+pub(crate) const OFFSET_JSX_FRAGMENT_CHILDREN: usize = offset_of!(JSXFragment, children);
+pub(crate) const OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT: usize =
+    offset_of!(JSXFragment, closing_fragment);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutOpeningFragment<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutOpeningFragment<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn closing_fragment(self) -> &'t JSXClosingFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
+                as *const JSXClosingFragment)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutOpeningFragment<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutChildren<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutChildren<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_fragment(self) -> &'t JSXOpeningFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+                as *const JSXOpeningFragment)
+        }
+    }
+
+    #[inline]
+    pub fn closing_fragment(self) -> &'t JSXClosingFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
+                as *const JSXClosingFragment)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutClosingFragment<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_fragment(self) -> &'t JSXOpeningFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+                as *const JSXOpeningFragment)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NODE_ID: usize = offset_of!(JSXNamespacedName, node_id);
+pub(crate) const OFFSET_JSX_NAMESPACED_NAME_SPAN: usize = offset_of!(JSXNamespacedName, span);
+pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAMESPACE: usize =
+    offset_of!(JSXNamespacedName, namespace);
+pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAME: usize = offset_of!(JSXNamespacedName, name);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXNamespacedNameWithoutNamespace<'a, 't>(
+    pub(crate) *const JSXNamespacedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXNamespacedNameWithoutNamespace<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t JSXIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NAME)
+                as *const JSXIdentifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXNamespacedNameWithoutNamespace<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXNamespacedNameWithoutName<'a, 't>(
+    pub(crate) *const JSXNamespacedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXNamespacedNameWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn namespace(self) -> &'t JSXIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NAMESPACE)
+                as *const JSXIdentifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXNamespacedNameWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_MEMBER_EXPRESSION_NODE_ID: usize =
+    offset_of!(JSXMemberExpression, node_id);
+pub(crate) const OFFSET_JSX_MEMBER_EXPRESSION_SPAN: usize = offset_of!(JSXMemberExpression, span);
+pub(crate) const OFFSET_JSX_MEMBER_EXPRESSION_OBJECT: usize =
+    offset_of!(JSXMemberExpression, object);
+pub(crate) const OFFSET_JSX_MEMBER_EXPRESSION_PROPERTY: usize =
+    offset_of!(JSXMemberExpression, property);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXMemberExpressionWithoutObject<'a, 't>(
+    pub(crate) *const JSXMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn property(self) -> &'t JSXIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_PROPERTY)
+                as *const JSXIdentifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXMemberExpressionWithoutProperty<'a, 't>(
+    pub(crate) *const JSXMemberExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn object(self) -> &'t JSXMemberExpressionObject<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_MEMBER_EXPRESSION_OBJECT)
+                as *const JSXMemberExpressionObject<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_NODE_ID: usize =
+    offset_of!(JSXExpressionContainer, node_id);
+pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_SPAN: usize =
+    offset_of!(JSXExpressionContainer, span);
+pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_EXPRESSION: usize =
+    offset_of!(JSXExpressionContainer, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXExpressionContainerWithoutExpression<'a, 't>(
+    pub(crate) *const JSXExpressionContainer<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXExpressionContainerWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_EXPRESSION_CONTAINER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_EXPRESSION_CONTAINER_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXExpressionContainerWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_ATTRIBUTE_NODE_ID: usize = offset_of!(JSXAttribute, node_id);
+pub(crate) const OFFSET_JSX_ATTRIBUTE_SPAN: usize = offset_of!(JSXAttribute, span);
+pub(crate) const OFFSET_JSX_ATTRIBUTE_NAME: usize = offset_of!(JSXAttribute, name);
+pub(crate) const OFFSET_JSX_ATTRIBUTE_VALUE: usize = offset_of!(JSXAttribute, value);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXAttributeWithoutName<'a, 't>(
+    pub(crate) *const JSXAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXAttributeWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t Option<JSXAttributeValue<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_VALUE)
+                as *const Option<JSXAttributeValue<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXAttributeWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXAttributeWithoutValue<'a, 't>(
+    pub(crate) *const JSXAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXAttributeWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t JSXAttributeName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_ATTRIBUTE_NAME) as *const JSXAttributeName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXAttributeWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_NODE_ID: usize =
+    offset_of!(JSXSpreadAttribute, node_id);
+pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_SPAN: usize = offset_of!(JSXSpreadAttribute, span);
+pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_ARGUMENT: usize =
+    offset_of!(JSXSpreadAttribute, argument);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXSpreadAttributeWithoutArgument<'a, 't>(
+    pub(crate) *const JSXSpreadAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXSpreadAttributeWithoutArgument<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_ATTRIBUTE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_ATTRIBUTE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXSpreadAttributeWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JSX_SPREAD_CHILD_NODE_ID: usize = offset_of!(JSXSpreadChild, node_id);
+pub(crate) const OFFSET_JSX_SPREAD_CHILD_SPAN: usize = offset_of!(JSXSpreadChild, span);
+pub(crate) const OFFSET_JSX_SPREAD_CHILD_EXPRESSION: usize = offset_of!(JSXSpreadChild, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXSpreadChildWithoutExpression<'a, 't>(
+    pub(crate) *const JSXSpreadChild<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXSpreadChildWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_CHILD_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_CHILD_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXSpreadChildWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_THIS_PARAMETER_NODE_ID: usize = offset_of!(TSThisParameter, node_id);
+pub(crate) const OFFSET_TS_THIS_PARAMETER_SPAN: usize = offset_of!(TSThisParameter, span);
+pub(crate) const OFFSET_TS_THIS_PARAMETER_THIS_SPAN: usize = offset_of!(TSThisParameter, this_span);
+pub(crate) const OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION: usize =
+    offset_of!(TSThisParameter, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSThisParameterWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSThisParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSThisParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn this_span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_THIS_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSThisParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_NODE_ID: usize = offset_of!(TSEnumDeclaration, node_id);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_SPAN: usize = offset_of!(TSEnumDeclaration, span);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclaration, id);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_BODY: usize = offset_of!(TSEnumDeclaration, body);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t TSEnumBody<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_BODY) as *const TSEnumBody<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumDeclarationWithoutBody<'a, 't>(
+    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_ENUM_BODY_NODE_ID: usize = offset_of!(TSEnumBody, node_id);
+pub(crate) const OFFSET_TS_ENUM_BODY_SPAN: usize = offset_of!(TSEnumBody, span);
+pub(crate) const OFFSET_TS_ENUM_BODY_MEMBERS: usize = offset_of!(TSEnumBody, members);
+pub(crate) const OFFSET_TS_ENUM_BODY_SCOPE_ID: usize = offset_of!(TSEnumBody, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumBodyWithoutMembers<'a, 't>(
+    pub(crate) *const TSEnumBody<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumBodyWithoutMembers<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumBodyWithoutMembers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_ENUM_MEMBER_NODE_ID: usize = offset_of!(TSEnumMember, node_id);
+pub(crate) const OFFSET_TS_ENUM_MEMBER_SPAN: usize = offset_of!(TSEnumMember, span);
+pub(crate) const OFFSET_TS_ENUM_MEMBER_ID: usize = offset_of!(TSEnumMember, id);
+pub(crate) const OFFSET_TS_ENUM_MEMBER_INITIALIZER: usize = offset_of!(TSEnumMember, initializer);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumMemberWithoutId<'a, 't>(
+    pub(crate) *const TSEnumMember<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumMemberWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_INITIALIZER)
+                as *const Option<Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumMemberWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumMemberWithoutInitializer<'a, 't>(
+    pub(crate) *const TSEnumMember<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumMemberWithoutInitializer<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t TSEnumMemberName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_MEMBER_ID) as *const TSEnumMemberName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumMemberWithoutInitializer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_ANNOTATION_NODE_ID: usize = offset_of!(TSTypeAnnotation, node_id);
+pub(crate) const OFFSET_TS_TYPE_ANNOTATION_SPAN: usize = offset_of!(TSTypeAnnotation, span);
+pub(crate) const OFFSET_TS_TYPE_ANNOTATION_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypeAnnotation, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAnnotationWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSTypeAnnotation<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ANNOTATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ANNOTATION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_LITERAL_TYPE_NODE_ID: usize = offset_of!(TSLiteralType, node_id);
+pub(crate) const OFFSET_TS_LITERAL_TYPE_SPAN: usize = offset_of!(TSLiteralType, span);
+pub(crate) const OFFSET_TS_LITERAL_TYPE_LITERAL: usize = offset_of!(TSLiteralType, literal);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSLiteralTypeWithoutLiteral<'a, 't>(
+    pub(crate) *const TSLiteralType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSLiteralTypeWithoutLiteral<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_LITERAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_LITERAL_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSLiteralTypeWithoutLiteral<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_NODE_ID: usize = offset_of!(TSConditionalType, node_id);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_SPAN: usize = offset_of!(TSConditionalType, span);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE: usize =
+    offset_of!(TSConditionalType, check_type);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE: usize =
+    offset_of!(TSConditionalType, extends_type);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE: usize =
+    offset_of!(TSConditionalType, true_type);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE: usize =
+    offset_of!(TSConditionalType, false_type);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID: usize =
+    offset_of!(TSConditionalType, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConditionalTypeWithoutCheckType<'a, 't>(
+    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConditionalTypeWithoutCheckType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn extends_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn true_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn false_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutCheckType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConditionalTypeWithoutExtendsType<'a, 't>(
+    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConditionalTypeWithoutExtendsType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn check_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn true_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn false_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutExtendsType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConditionalTypeWithoutTrueType<'a, 't>(
+    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConditionalTypeWithoutTrueType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn check_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn extends_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn false_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutTrueType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConditionalTypeWithoutFalseType<'a, 't>(
+    pub(crate) *const TSConditionalType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConditionalTypeWithoutFalseType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn check_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn extends_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn true_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutFalseType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_UNION_TYPE_NODE_ID: usize = offset_of!(TSUnionType, node_id);
+pub(crate) const OFFSET_TS_UNION_TYPE_SPAN: usize = offset_of!(TSUnionType, span);
+pub(crate) const OFFSET_TS_UNION_TYPE_TYPES: usize = offset_of!(TSUnionType, types);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSUnionTypeWithoutTypes<'a, 't>(
+    pub(crate) *const TSUnionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSUnionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_UNION_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_UNION_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSUnionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INTERSECTION_TYPE_NODE_ID: usize =
+    offset_of!(TSIntersectionType, node_id);
+pub(crate) const OFFSET_TS_INTERSECTION_TYPE_SPAN: usize = offset_of!(TSIntersectionType, span);
+pub(crate) const OFFSET_TS_INTERSECTION_TYPE_TYPES: usize = offset_of!(TSIntersectionType, types);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIntersectionTypeWithoutTypes<'a, 't>(
+    pub(crate) *const TSIntersectionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIntersectionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERSECTION_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERSECTION_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIntersectionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_NODE_ID: usize =
+    offset_of!(TSParenthesizedType, node_id);
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_SPAN: usize = offset_of!(TSParenthesizedType, span);
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSParenthesizedType, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSParenthesizedTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSParenthesizedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_OPERATOR_NODE_ID: usize = offset_of!(TSTypeOperator, node_id);
+pub(crate) const OFFSET_TS_TYPE_OPERATOR_SPAN: usize = offset_of!(TSTypeOperator, span);
+pub(crate) const OFFSET_TS_TYPE_OPERATOR_OPERATOR: usize = offset_of!(TSTypeOperator, operator);
+pub(crate) const OFFSET_TS_TYPE_OPERATOR_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypeOperator, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeOperatorWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSTypeOperator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_OPERATOR_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_OPERATOR_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator(self) -> &'t TSTypeOperatorOperator {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_OPERATOR_OPERATOR)
+                as *const TSTypeOperatorOperator)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_ARRAY_TYPE_NODE_ID: usize = offset_of!(TSArrayType, node_id);
+pub(crate) const OFFSET_TS_ARRAY_TYPE_SPAN: usize = offset_of!(TSArrayType, span);
+pub(crate) const OFFSET_TS_ARRAY_TYPE_ELEMENT_TYPE: usize = offset_of!(TSArrayType, element_type);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSArrayTypeWithoutElementType<'a, 't>(
+    pub(crate) *const TSArrayType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSArrayTypeWithoutElementType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ARRAY_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ARRAY_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSArrayTypeWithoutElementType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INDEXED_ACCESS_TYPE_NODE_ID: usize =
+    offset_of!(TSIndexedAccessType, node_id);
+pub(crate) const OFFSET_TS_INDEXED_ACCESS_TYPE_SPAN: usize = offset_of!(TSIndexedAccessType, span);
+pub(crate) const OFFSET_TS_INDEXED_ACCESS_TYPE_OBJECT_TYPE: usize =
+    offset_of!(TSIndexedAccessType, object_type);
+pub(crate) const OFFSET_TS_INDEXED_ACCESS_TYPE_INDEX_TYPE: usize =
+    offset_of!(TSIndexedAccessType, index_type);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexedAccessTypeWithoutObjectType<'a, 't>(
+    pub(crate) *const TSIndexedAccessType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexedAccessTypeWithoutObjectType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn index_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_INDEX_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutObjectType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexedAccessTypeWithoutIndexType<'a, 't>(
+    pub(crate) *const TSIndexedAccessType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexedAccessTypeWithoutIndexType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn object_type(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEXED_ACCESS_TYPE_OBJECT_TYPE)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutIndexType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TUPLE_TYPE_NODE_ID: usize = offset_of!(TSTupleType, node_id);
+pub(crate) const OFFSET_TS_TUPLE_TYPE_SPAN: usize = offset_of!(TSTupleType, span);
+pub(crate) const OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES: usize = offset_of!(TSTupleType, element_types);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTupleTypeWithoutElementTypes<'a, 't>(
+    pub(crate) *const TSTupleType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTupleTypeWithoutElementTypes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TUPLE_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TUPLE_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTupleTypeWithoutElementTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_NODE_ID: usize =
+    offset_of!(TSNamedTupleMember, node_id);
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN: usize = offset_of!(TSNamedTupleMember, span);
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL: usize = offset_of!(TSNamedTupleMember, label);
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE: usize =
+    offset_of!(TSNamedTupleMember, element_type);
+pub(crate) const OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL: usize =
+    offset_of!(TSNamedTupleMember, optional);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNamedTupleMemberWithoutLabel<'a, 't>(
+    pub(crate) *const TSNamedTupleMember<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNamedTupleMemberWithoutLabel<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn element_type(self) -> &'t TSTupleElement<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
+                as *const TSTupleElement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNamedTupleMemberWithoutElementType<'a, 't>(
+    pub(crate) *const TSNamedTupleMember<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn label(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL)
+                as *const IdentifierName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_OPTIONAL) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_OPTIONAL_TYPE_NODE_ID: usize = offset_of!(TSOptionalType, node_id);
+pub(crate) const OFFSET_TS_OPTIONAL_TYPE_SPAN: usize = offset_of!(TSOptionalType, span);
+pub(crate) const OFFSET_TS_OPTIONAL_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSOptionalType, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSOptionalTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSOptionalType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_OPTIONAL_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_OPTIONAL_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_REST_TYPE_NODE_ID: usize = offset_of!(TSRestType, node_id);
+pub(crate) const OFFSET_TS_REST_TYPE_SPAN: usize = offset_of!(TSRestType, span);
+pub(crate) const OFFSET_TS_REST_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSRestType, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSRestTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSRestType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSRestTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_REST_TYPE_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_REST_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSRestTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_REFERENCE_NODE_ID: usize = offset_of!(TSTypeReference, node_id);
+pub(crate) const OFFSET_TS_TYPE_REFERENCE_SPAN: usize = offset_of!(TSTypeReference, span);
+pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_NAME: usize = offset_of!(TSTypeReference, type_name);
+pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSTypeReference, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeReferenceWithoutTypeName<'a, 't>(
+    pub(crate) *const TSTypeReference<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeReferenceWithoutTypeName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeReferenceWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSTypeReference<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeReferenceWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_name(self) -> &'t TSTypeName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_TYPE_NAME)
+                as *const TSTypeName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_QUALIFIED_NAME_NODE_ID: usize = offset_of!(TSQualifiedName, node_id);
+pub(crate) const OFFSET_TS_QUALIFIED_NAME_SPAN: usize = offset_of!(TSQualifiedName, span);
+pub(crate) const OFFSET_TS_QUALIFIED_NAME_LEFT: usize = offset_of!(TSQualifiedName, left);
+pub(crate) const OFFSET_TS_QUALIFIED_NAME_RIGHT: usize = offset_of!(TSQualifiedName, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSQualifiedNameWithoutLeft<'a, 't>(
+    pub(crate) *const TSQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_RIGHT)
+                as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSQualifiedNameWithoutRight<'a, 't>(
+    pub(crate) *const TSQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t TSTypeName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_LEFT) as *const TSTypeName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_NODE_ID: usize =
+    offset_of!(TSTypeParameterInstantiation, node_id);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_SPAN: usize =
+    offset_of!(TSTypeParameterInstantiation, span);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_PARAMS: usize =
+    offset_of!(TSTypeParameterInstantiation, params);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeParameterInstantiationWithoutParams<'a, 't>(
+    pub(crate) *const TSTypeParameterInstantiation<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeParameterInstantiationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_SPAN)
+                as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterInstantiationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_NODE_ID: usize = offset_of!(TSTypeParameter, node_id);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_SPAN: usize = offset_of!(TSTypeParameter, span);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_NAME: usize = offset_of!(TSTypeParameter, name);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONSTRAINT: usize =
+    offset_of!(TSTypeParameter, constraint);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_DEFAULT: usize = offset_of!(TSTypeParameter, default);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_IN: usize = offset_of!(TSTypeParameter, r#in);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_OUT: usize = offset_of!(TSTypeParameter, out);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONST: usize = offset_of!(TSTypeParameter, r#const);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeParameterWithoutName<'a, 't>(
+    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeParameterWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONSTRAINT)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn default(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DEFAULT)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn r#in(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_IN) as *const bool) }
+    }
+
+    #[inline]
+    pub fn out(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_OUT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeParameterWithoutConstraint<'a, 't>(
+    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeParameterWithoutConstraint<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_NAME)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn default(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DEFAULT)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn r#in(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_IN) as *const bool) }
+    }
+
+    #[inline]
+    pub fn out(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_OUT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterWithoutConstraint<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeParameterWithoutDefault<'a, 't>(
+    pub(crate) *const TSTypeParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeParameterWithoutDefault<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_NAME)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONSTRAINT)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn r#in(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_IN) as *const bool) }
+    }
+
+    #[inline]
+    pub fn out(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_OUT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterWithoutDefault<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_NODE_ID: usize =
+    offset_of!(TSTypeParameterDeclaration, node_id);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN: usize =
+    offset_of!(TSTypeParameterDeclaration, span);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS: usize =
+    offset_of!(TSTypeParameterDeclaration, params);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeParameterDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSTypeParameterDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeParameterDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID: usize =
+    offset_of!(TSTypeAliasDeclaration, node_id);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN: usize =
+    offset_of!(TSTypeAliasDeclaration, span);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_ID: usize =
+    offset_of!(TSTypeAliasDeclaration, id);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSTypeAliasDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypeAliasDeclaration, type_annotation);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE: usize =
+    offset_of!(TSTypeAliasDeclaration, declare);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSTypeAliasDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAliasDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAliasDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAliasDeclarationWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_NODE_ID: usize = offset_of!(TSClassImplements, node_id);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_SPAN: usize = offset_of!(TSClassImplements, span);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION: usize =
+    offset_of!(TSClassImplements, expression);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS: usize =
+    offset_of!(TSClassImplements, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSClassImplementsWithoutExpression<'a, 't>(
+    pub(crate) *const TSClassImplements<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSClassImplementsWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSClassImplementsWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSClassImplements<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSClassImplementsWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t TSTypeName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION)
+                as *const TSTypeName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_NODE_ID: usize =
+    offset_of!(TSInterfaceDeclaration, node_id);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SPAN: usize =
+    offset_of!(TSInterfaceDeclaration, span);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_ID: usize = offset_of!(TSInterfaceDeclaration, id);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSInterfaceDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
+    offset_of!(TSInterfaceDeclaration, extends);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_BODY: usize =
+    offset_of!(TSInterfaceDeclaration, body);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
+    offset_of!(TSInterfaceDeclaration, declare);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSInterfaceDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutExtends<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Box<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutBody<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t Vec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Vec<'a, TSInterfaceHeritage<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INTERFACE_BODY_NODE_ID: usize = offset_of!(TSInterfaceBody, node_id);
+pub(crate) const OFFSET_TS_INTERFACE_BODY_SPAN: usize = offset_of!(TSInterfaceBody, span);
+pub(crate) const OFFSET_TS_INTERFACE_BODY_BODY: usize = offset_of!(TSInterfaceBody, body);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceBodyWithoutBody<'a, 't>(
+    pub(crate) *const TSInterfaceBody<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceBodyWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_BODY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_BODY_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceBodyWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_NODE_ID: usize =
+    offset_of!(TSPropertySignature, node_id);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_SPAN: usize = offset_of!(TSPropertySignature, span);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED: usize =
+    offset_of!(TSPropertySignature, computed);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_OPTIONAL: usize =
+    offset_of!(TSPropertySignature, optional);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_READONLY: usize =
+    offset_of!(TSPropertySignature, readonly);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_KEY: usize = offset_of!(TSPropertySignature, key);
+pub(crate) const OFFSET_TS_PROPERTY_SIGNATURE_TYPE_ANNOTATION: usize =
+    offset_of!(TSPropertySignature, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSPropertySignatureWithoutKey<'a, 't>(
+    pub(crate) *const TSPropertySignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSPropertySignatureWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_OPTIONAL) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_READONLY) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSPropertySignatureWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSPropertySignatureWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSPropertySignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_COMPUTED) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_OPTIONAL) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_READONLY) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_PROPERTY_SIGNATURE_KEY)
+                as *const PropertyKey<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NODE_ID: usize = offset_of!(TSIndexSignature, node_id);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_SPAN: usize = offset_of!(TSIndexSignature, span);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETERS: usize =
+    offset_of!(TSIndexSignature, parameters);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION: usize =
+    offset_of!(TSIndexSignature, type_annotation);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_READONLY: usize = offset_of!(TSIndexSignature, readonly);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_STATIC: usize = offset_of!(TSIndexSignature, r#static);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexSignatureWithoutParameters<'a, 't>(
+    pub(crate) *const TSIndexSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexSignatureWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSIndexSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn parameters(self) -> &'t Vec<'a, TSIndexSignatureName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
+                as *const Vec<'a, TSIndexSignatureName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_NODE_ID: usize =
+    offset_of!(TSCallSignatureDeclaration, node_id);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN: usize =
+    offset_of!(TSCallSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSCallSignatureDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM: usize =
+    offset_of!(TSCallSignatureDeclaration, this_param);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS: usize =
+    offset_of!(TSCallSignatureDeclaration, params);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
+    offset_of!(TSCallSignatureDeclaration, return_type);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSCallSignatureDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_NODE_ID: usize = offset_of!(TSMethodSignature, node_id);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SPAN: usize = offset_of!(TSMethodSignature, span);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KEY: usize = offset_of!(TSMethodSignature, key);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
+    offset_of!(TSMethodSignature, computed);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_OPTIONAL: usize =
+    offset_of!(TSMethodSignature, optional);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KIND: usize = offset_of!(TSMethodSignature, kind);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
+    offset_of!(TSMethodSignature, type_parameters);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM: usize =
+    offset_of!(TSMethodSignature, this_param);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_PARAMS: usize = offset_of!(TSMethodSignature, params);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE: usize =
+    offset_of!(TSMethodSignature, return_type);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID: usize =
+    offset_of!(TSMethodSignature, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutKey<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutParams<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_NODE_ID: usize =
+    offset_of!(TSConstructSignatureDeclaration, node_id);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
+    offset_of!(TSConstructSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructSignatureDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS: usize =
+    offset_of!(TSConstructSignatureDeclaration, params);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
+    offset_of!(TSConstructSignatureDeclaration, return_type);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSConstructSignatureDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_NODE_ID: usize =
+    offset_of!(TSIndexSignatureName, node_id);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_SPAN: usize =
+    offset_of!(TSIndexSignatureName, span);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_NAME: usize =
+    offset_of!(TSIndexSignatureName, name);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION: usize =
+    offset_of!(TSIndexSignatureName, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSIndexSignatureName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn name(self) -> &'t Atom<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Atom<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_NODE_ID: usize =
+    offset_of!(TSInterfaceHeritage, node_id);
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_SPAN: usize = offset_of!(TSInterfaceHeritage, span);
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION: usize =
+    offset_of!(TSInterfaceHeritage, expression);
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSInterfaceHeritage, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceHeritageWithoutExpression<'a, 't>(
+    pub(crate) *const TSInterfaceHeritage<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceHeritageWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSInterfaceHeritage<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_PREDICATE_NODE_ID: usize = offset_of!(TSTypePredicate, node_id);
+pub(crate) const OFFSET_TS_TYPE_PREDICATE_SPAN: usize = offset_of!(TSTypePredicate, span);
+pub(crate) const OFFSET_TS_TYPE_PREDICATE_PARAMETER_NAME: usize =
+    offset_of!(TSTypePredicate, parameter_name);
+pub(crate) const OFFSET_TS_TYPE_PREDICATE_ASSERTS: usize = offset_of!(TSTypePredicate, asserts);
+pub(crate) const OFFSET_TS_TYPE_PREDICATE_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypePredicate, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypePredicateWithoutParameterName<'a, 't>(
+    pub(crate) *const TSTypePredicate<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypePredicateWithoutParameterName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn asserts(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_ASSERTS) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypePredicateWithoutParameterName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypePredicateWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSTypePredicate<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypePredicateWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn parameter_name(self) -> &'t TSTypePredicateName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_PARAMETER_NAME)
+                as *const TSTypePredicateName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn asserts(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_ASSERTS) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypePredicateWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_NODE_ID: usize =
+    offset_of!(TSModuleDeclaration, node_id);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_SPAN: usize = offset_of!(TSModuleDeclaration, span);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ID: usize = offset_of!(TSModuleDeclaration, id);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_BODY: usize = offset_of!(TSModuleDeclaration, body);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_KIND: usize = offset_of!(TSModuleDeclaration, kind);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_DECLARE: usize =
+    offset_of!(TSModuleDeclaration, declare);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSModuleDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSModuleDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<TSModuleDeclarationBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_BODY)
+                as *const Option<TSModuleDeclarationBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSModuleDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_KIND)
+                as *const TSModuleDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleDeclarationWithoutBody<'a, 't>(
+    pub(crate) *const TSModuleDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t TSModuleDeclarationName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ID)
+                as *const TSModuleDeclarationName<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSModuleDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_KIND)
+                as *const TSModuleDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_NODE_ID: usize =
+    offset_of!(TSGlobalDeclaration, node_id);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_SPAN: usize = offset_of!(TSGlobalDeclaration, span);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_GLOBAL_SPAN: usize =
+    offset_of!(TSGlobalDeclaration, global_span);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_BODY: usize = offset_of!(TSGlobalDeclaration, body);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_DECLARE: usize =
+    offset_of!(TSGlobalDeclaration, declare);
+pub(crate) const OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSGlobalDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSGlobalDeclarationWithoutBody<'a, 't>(
+    pub(crate) *const TSGlobalDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSGlobalDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn global_span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_GLOBAL_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_GLOBAL_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSGlobalDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_MODULE_BLOCK_NODE_ID: usize = offset_of!(TSModuleBlock, node_id);
+pub(crate) const OFFSET_TS_MODULE_BLOCK_SPAN: usize = offset_of!(TSModuleBlock, span);
+pub(crate) const OFFSET_TS_MODULE_BLOCK_DIRECTIVES: usize = offset_of!(TSModuleBlock, directives);
+pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, body);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleBlockWithoutDirectives<'a, 't>(
+    pub(crate) *const TSModuleBlock<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleBlockWithoutDirectives<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_BODY)
+                as *const Vec<'a, Statement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleBlockWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleBlockWithoutBody<'a, 't>(
+    pub(crate) *const TSModuleBlock<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleBlockWithoutBody<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleBlockWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_LITERAL_NODE_ID: usize = offset_of!(TSTypeLiteral, node_id);
+pub(crate) const OFFSET_TS_TYPE_LITERAL_SPAN: usize = offset_of!(TSTypeLiteral, span);
+pub(crate) const OFFSET_TS_TYPE_LITERAL_MEMBERS: usize = offset_of!(TSTypeLiteral, members);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeLiteralWithoutMembers<'a, 't>(
+    pub(crate) *const TSTypeLiteral<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeLiteralWithoutMembers<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_LITERAL_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_LITERAL_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeLiteralWithoutMembers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INFER_TYPE_NODE_ID: usize = offset_of!(TSInferType, node_id);
+pub(crate) const OFFSET_TS_INFER_TYPE_SPAN: usize = offset_of!(TSInferType, span);
+pub(crate) const OFFSET_TS_INFER_TYPE_TYPE_PARAMETER: usize =
+    offset_of!(TSInferType, type_parameter);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInferTypeWithoutTypeParameter<'a, 't>(
+    pub(crate) *const TSInferType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInferTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INFER_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INFER_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInferTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_QUERY_NODE_ID: usize = offset_of!(TSTypeQuery, node_id);
+pub(crate) const OFFSET_TS_TYPE_QUERY_SPAN: usize = offset_of!(TSTypeQuery, span);
+pub(crate) const OFFSET_TS_TYPE_QUERY_EXPR_NAME: usize = offset_of!(TSTypeQuery, expr_name);
+pub(crate) const OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS: usize =
+    offset_of!(TSTypeQuery, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeQueryWithoutExprName<'a, 't>(
+    pub(crate) *const TSTypeQuery<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeQueryWithoutExprName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeQueryWithoutExprName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeQueryWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSTypeQuery<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeQueryWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expr_name(self) -> &'t TSTypeQueryExprName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_EXPR_NAME)
+                as *const TSTypeQueryExprName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_IMPORT_TYPE_NODE_ID: usize = offset_of!(TSImportType, node_id);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_SPAN: usize = offset_of!(TSImportType, span);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_SOURCE: usize = offset_of!(TSImportType, source);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_OPTIONS: usize = offset_of!(TSImportType, options);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIER: usize = offset_of!(TSImportType, qualifier);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSImportType, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeWithoutSource<'a, 't>(
+    pub(crate) *const TSImportType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeWithoutSource<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+                as *const Option<TSImportTypeQualifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeWithoutOptions<'a, 't>(
+    pub(crate) *const TSImportType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+                as *const Option<TSImportTypeQualifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutOptions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeWithoutQualifier<'a, 't>(
+    pub(crate) *const TSImportType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSImportType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SOURCE) as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+                as *const Option<TSImportTypeQualifier<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_NODE_ID: usize =
+    offset_of!(TSImportTypeQualifiedName, node_id);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN: usize =
+    offset_of!(TSImportTypeQualifiedName, span);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT: usize =
+    offset_of!(TSImportTypeQualifiedName, left);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT: usize =
+    offset_of!(TSImportTypeQualifiedName, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeQualifiedNameWithoutLeft<'a, 't>(
+    pub(crate) *const TSImportTypeQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT)
+                as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeQualifiedNameWithoutRight<'a, 't>(
+    pub(crate) *const TSImportTypeQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t TSImportTypeQualifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT)
+                as *const TSImportTypeQualifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_NODE_ID: usize = offset_of!(TSFunctionType, node_id);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_SPAN: usize = offset_of!(TSFunctionType, span);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSFunctionType, type_parameters);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_THIS_PARAM: usize = offset_of!(TSFunctionType, this_param);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_PARAMS: usize = offset_of!(TSFunctionType, params);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE: usize =
+    offset_of!(TSFunctionType, return_type);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_SCOPE_ID: usize = offset_of!(TSFunctionType, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_NODE_ID: usize = offset_of!(TSConstructorType, node_id);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SPAN: usize = offset_of!(TSConstructorType, span);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT: usize =
+    offset_of!(TSConstructorType, r#abstract);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructorType, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS: usize = offset_of!(TSConstructorType, params);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
+    offset_of!(TSConstructorType, return_type);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SCOPE_ID: usize =
+    offset_of!(TSConstructorType, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_MAPPED_TYPE_NODE_ID: usize = offset_of!(TSMappedType, node_id);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_SPAN: usize = offset_of!(TSMappedType, span);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_KEY: usize = offset_of!(TSMappedType, key);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_CONSTRAINT: usize = offset_of!(TSMappedType, constraint);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_NAME_TYPE: usize = offset_of!(TSMappedType, name_type);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSMappedType, type_annotation);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_OPTIONAL: usize = offset_of!(TSMappedType, optional);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_READONLY: usize = offset_of!(TSMappedType, readonly);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_SCOPE_ID: usize = offset_of!(TSMappedType, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMappedTypeWithoutKey<'a, 't>(
+    pub(crate) *const TSMappedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMappedTypeWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn name_type(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMappedTypeWithoutConstraint<'a, 't>(
+    pub(crate) *const TSMappedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMappedTypeWithoutConstraint<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn name_type(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutConstraint<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMappedTypeWithoutNameType<'a, 't>(
+    pub(crate) *const TSMappedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutNameType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMappedTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSMappedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn name_type(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_NODE_ID: usize =
+    offset_of!(TSTemplateLiteralType, node_id);
+pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_SPAN: usize =
+    offset_of!(TSTemplateLiteralType, span);
+pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS: usize =
+    offset_of!(TSTemplateLiteralType, quasis);
+pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_TYPES: usize =
+    offset_of!(TSTemplateLiteralType, types);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTemplateLiteralTypeWithoutQuasis<'a, 't>(
+    pub(crate) *const TSTemplateLiteralType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn types(self) -> &'t Vec<'a, TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_TYPES)
+                as *const Vec<'a, TSType<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTemplateLiteralTypeWithoutTypes<'a, 't>(
+    pub(crate) *const TSTemplateLiteralType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTemplateLiteralTypeWithoutTypes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn quasis(self) -> &'t Vec<'a, TemplateElement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS)
+                as *const Vec<'a, TemplateElement<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_AS_EXPRESSION_NODE_ID: usize = offset_of!(TSAsExpression, node_id);
+pub(crate) const OFFSET_TS_AS_EXPRESSION_SPAN: usize = offset_of!(TSAsExpression, span);
+pub(crate) const OFFSET_TS_AS_EXPRESSION_EXPRESSION: usize = offset_of!(TSAsExpression, expression);
+pub(crate) const OFFSET_TS_AS_EXPRESSION_TYPE_ANNOTATION: usize =
+    offset_of!(TSAsExpression, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSAsExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const TSAsExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSAsExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSAsExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSAsExpressionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSAsExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSAsExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSAsExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_NODE_ID: usize =
+    offset_of!(TSSatisfiesExpression, node_id);
+pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_SPAN: usize =
+    offset_of!(TSSatisfiesExpression, span);
+pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION: usize =
+    offset_of!(TSSatisfiesExpression, expression);
+pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_TYPE_ANNOTATION: usize =
+    offset_of!(TSSatisfiesExpression, type_annotation);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSSatisfiesExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const TSSatisfiesExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSSatisfiesExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSSatisfiesExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_TYPE_ASSERTION_NODE_ID: usize = offset_of!(TSTypeAssertion, node_id);
+pub(crate) const OFFSET_TS_TYPE_ASSERTION_SPAN: usize = offset_of!(TSTypeAssertion, span);
+pub(crate) const OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypeAssertion, type_annotation);
+pub(crate) const OFFSET_TS_TYPE_ASSERTION_EXPRESSION: usize =
+    offset_of!(TSTypeAssertion, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAssertionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const TSTypeAssertion<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAssertionWithoutExpression<'a, 't>(
+    pub(crate) *const TSTypeAssertion<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_NODE_ID: usize =
+    offset_of!(TSImportEqualsDeclaration, node_id);
+pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_SPAN: usize =
+    offset_of!(TSImportEqualsDeclaration, span);
+pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_ID: usize =
+    offset_of!(TSImportEqualsDeclaration, id);
+pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_MODULE_REFERENCE: usize =
+    offset_of!(TSImportEqualsDeclaration, module_reference);
+pub(crate) const OFFSET_TS_IMPORT_EQUALS_DECLARATION_IMPORT_KIND: usize =
+    offset_of!(TSImportEqualsDeclaration, import_kind);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportEqualsDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSImportEqualsDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportEqualsDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn module_reference(self) -> &'t TSModuleReference<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_MODULE_REFERENCE)
+                as *const TSModuleReference<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportEqualsDeclarationWithoutModuleReference<'a, 't>(
+    pub(crate) *const TSImportEqualsDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn import_kind(self) -> &'t ImportOrExportKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_EQUALS_DECLARATION_IMPORT_KIND)
+                as *const ImportOrExportKind)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_NODE_ID: usize =
+    offset_of!(TSExternalModuleReference, node_id);
+pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_SPAN: usize =
+    offset_of!(TSExternalModuleReference, span);
+pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_EXPRESSION: usize =
+    offset_of!(TSExternalModuleReference, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSExternalModuleReferenceWithoutExpression<'a, 't>(
+    pub(crate) *const TSExternalModuleReference<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSExternalModuleReferenceWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_REFERENCE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_REFERENCE_SPAN) as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSExternalModuleReferenceWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_NODE_ID: usize =
+    offset_of!(TSNonNullExpression, node_id);
+pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_SPAN: usize = offset_of!(TSNonNullExpression, span);
+pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION: usize =
+    offset_of!(TSNonNullExpression, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNonNullExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const TSNonNullExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNonNullExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNonNullExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_DECORATOR_NODE_ID: usize = offset_of!(Decorator, node_id);
+pub(crate) const OFFSET_DECORATOR_SPAN: usize = offset_of!(Decorator, span);
+pub(crate) const OFFSET_DECORATOR_EXPRESSION: usize = offset_of!(Decorator, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct DecoratorWithoutExpression<'a, 't>(
+    pub(crate) *const Decorator<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> DecoratorWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DECORATOR_NODE_ID) as *const Cell<NodeId>) }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DECORATOR_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for DecoratorWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_NODE_ID: usize =
+    offset_of!(TSExportAssignment, node_id);
+pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_SPAN: usize = offset_of!(TSExportAssignment, span);
+pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_EXPRESSION: usize =
+    offset_of!(TSExportAssignment, expression);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSExportAssignmentWithoutExpression<'a, 't>(
+    pub(crate) *const TSExportAssignment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSExportAssignmentWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXPORT_ASSIGNMENT_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_EXPORT_ASSIGNMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSExportAssignmentWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_NODE_ID: usize =
+    offset_of!(TSNamespaceExportDeclaration, node_id);
+pub(crate) const OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_SPAN: usize =
+    offset_of!(TSNamespaceExportDeclaration, span);
+pub(crate) const OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_ID: usize =
+    offset_of!(TSNamespaceExportDeclaration, id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNamespaceExportDeclarationWithoutId<'a, 't>(
+    pub(crate) *const TSNamespaceExportDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNamespaceExportDeclarationWithoutId<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNamespaceExportDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_NODE_ID: usize =
+    offset_of!(TSInstantiationExpression, node_id);
+pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_SPAN: usize =
+    offset_of!(TSInstantiationExpression, span);
+pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION: usize =
+    offset_of!(TSInstantiationExpression, expression);
+pub(crate) const OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(TSInstantiationExpression, type_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInstantiationExpressionWithoutExpression<'a, 't>(
+    pub(crate) *const TSInstantiationExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInstantiationExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Box<'a, TSTypeParameterInstantiation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
+                as *const Box<'a, TSTypeParameterInstantiation<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInstantiationExpressionWithoutTypeArguments<'a, 't>(
+    pub(crate) *const TSInstantiationExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInstantiationExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JS_DOC_NULLABLE_TYPE_NODE_ID: usize =
+    offset_of!(JSDocNullableType, node_id);
+pub(crate) const OFFSET_JS_DOC_NULLABLE_TYPE_SPAN: usize = offset_of!(JSDocNullableType, span);
+pub(crate) const OFFSET_JS_DOC_NULLABLE_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(JSDocNullableType, type_annotation);
+pub(crate) const OFFSET_JS_DOC_NULLABLE_TYPE_POSTFIX: usize =
+    offset_of!(JSDocNullableType, postfix);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSDocNullableTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const JSDocNullableType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn postfix(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_POSTFIX) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_NODE_ID: usize =
+    offset_of!(JSDocNonNullableType, node_id);
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_SPAN: usize =
+    offset_of!(JSDocNonNullableType, span);
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(JSDocNonNullableType, type_annotation);
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX: usize =
+    offset_of!(JSDocNonNullableType, postfix);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const JSDocNonNullableType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn postfix(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}

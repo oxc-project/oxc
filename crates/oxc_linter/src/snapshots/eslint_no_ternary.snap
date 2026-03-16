@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-ternary): Unexpected use of ternary expression
    ╭─[no_ternary.tsx:1:11]
  1 │ var foo = true ? thing : stuff;

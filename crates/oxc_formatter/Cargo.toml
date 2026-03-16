@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter"
-version = "0.24.0"
+version = "0.41.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,9 +16,6 @@ description.workspace = true
 [lints]
 workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -29,6 +26,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
+fast-glob = { workspace = true }
 natord = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
@@ -37,6 +35,7 @@ unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -47,3 +46,6 @@ oxc_span = { workspace = true }
 [features]
 default = []
 detect_code_removal = ["dep:oxc_semantic"]
+
+[lib]
+doctest = false

@@ -20,6 +20,8 @@ tags: None
 
 ########### Code Actions/Commands
 
+########### Fix All Action
+None
 ########## 
 Linted file: fixtures/lsp/invalid_syntax/invalid.vue
 ----------
@@ -38,3 +40,6 @@ source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
+
+########### Fix All Action
+None

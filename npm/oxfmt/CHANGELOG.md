@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+## [0.36.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [0.35.0] - 2026-02-23
+
+### 🚀 Features
+
+- 984dc07 oxfmt: Strip `"experimental"SortXxx` prefix (#19567) (leaysgur)
+
+## [0.34.0] - 2026-02-19
+
+### 🐛 Bug Fixes
+
+- 6c61b70 oxfmt: Fix outdated `sortImports.groups` doc comments (#19513) (leaysgur)
+
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+## [0.30.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 1b2f354 ci: Add missing riscv64/s390x napi targets for oxfmt and oxlint (#19217) (Cameron)
+
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🚀 Features
+
+- 6ee2d59 oxfmt: Use `oxc_formatter` in js-in-xxx part (#18373) (leaysgur)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+## [0.27.0] - 2026-01-26
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [0.26.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- a95b9bb oxfmt: Support oxfmtrc `overrides` config (#18068) (leaysgur)
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- cc3e74b oxfmt: Add Prettier specific fields in `Oxfmtrc` (#17981) (leaysgur)
+- 6ffe315 oxfmt: Add more `Oxfmtrc` fields description (#17979) (leaysgur)
+
 ## [0.24.0] - 2026-01-12
 
 ### 🚀 Features

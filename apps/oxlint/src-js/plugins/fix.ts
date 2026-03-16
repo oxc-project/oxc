@@ -1,8 +1,8 @@
-import { typeAssertIs } from "../utils/asserts.ts";
+import { getMessage } from "./report.ts";
 
 import type { RuleDetails } from "./load.ts";
 import type { Range, Ranged } from "./location.ts";
-import type { Diagnostic } from "./report.ts";
+import type { Diagnostic, Suggestion, SuggestionReport } from "./report.ts";
 
 // Type of `fix` function.
 // `fix` can return a single fix, an array of fixes, or any iterator that yields fixes.
@@ -16,8 +16,37 @@ export type FixFn = (
   | null
   | undefined;
 
-// Type of a fix, as returned by `fix` function.
-export type Fix = { range: Range; text: string };
+/**
+ * Fix, as returned by `fix` function.
+ *
+ * `range` offsets are relative to start of the source text.
+ * When the file has a BOM, they are relative to the start of the source text *without* the BOM.
+ *
+ * To represent a position *before* a BOM, -1 is used to mean "before the BOM".
+ * ESLint's `unicode-bom` rule produces a fix `{ range: [-1, 0], text: "" }` to remove a BOM.
+ */
+export interface Fix {
+  range: Range;
+  text: string;
+}
+
+/**
+ * Fix, in form sent to Rust.
+ *
+ * `start` and `end` are relative to start of the source text.
+ * When the file has a BOM, they are relative to the start of the source text *without* the BOM.
+ *
+ * To represent a position *before* a BOM, -1 is used to mean "before the BOM".
+ * ESLint's `unicode-bom` rule produces a fix `{ range: [-1, 0], text: "" }` to remove a BOM.
+ *
+ * This type's equivalent on Rust side is `JsFix`, which has `start` and `end` properties as `i64`s,
+ * to allow negative values.
+ */
+export interface FixReport {
+  start: number;
+  end: number;
+  text: string;
+}
 
 // Fixer, passed as argument to `fix` function passed to `Context#report()`.
 //
@@ -59,86 +88,24 @@ export type Fixer = typeof FIXER;
 /**
  * Get fixes from a `Diagnostic`.
  *
- * Returns `null` if any of:
- *
- * 1. No `fix` function was provided in `diagnostic`.
- * 2. `fix` function returns a falsy value.
- * 3. `fix` function returns an empty array/iterator.
- * 4. `fix` function returns an array/iterator containing only falsy values.
- *
- * Otherwise, returns a non-empty array of `Fix` objects.
- *
- * `Fix` objects are validated and conformed to expected shape.
- * Does not mutate the `fixes` array returned by `fix` function, but avoids cloning if possible.
- *
- * This function aims to replicate ESLint's behavior as closely as possible.
- *
- * TODO: Are prototype checks, and checks for `toJSON` methods excessive?
- * We're not handling all possible edge cases e.g. `fixes` or individual `Fix` objects being `Proxy`s or objects
- * with getters. As we're not managing to be 100% bulletproof anyway, maybe we don't need to be quite so defensive.
+ * Returns `null` if no `fix` function, or if it produces no fixes.
+ * Throws if rule is not marked as fixable but produces fixes.
  *
  * @param diagnostic - Diagnostic object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `isFixable` value
- * @returns Non-empty array of `Fix` objects, or `null` if none
+ * @returns Non-empty array of `FixReport` objects, or `null` if none
  * @throws {Error} If rule is not marked as fixable but `fix` function returns fixes,
  *   or if `fix` function returns any invalid `Fix` objects
  */
-export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[] | null {
+export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): FixReport[] | null {
   // ESLint silently ignores non-function `fix` values, so we do the same
   const { fix } = diagnostic;
   if (typeof fix !== "function") return null;
 
-  // In ESLint, `fix` is called with `this` as a clone of the `diagnostic` object.
-  // We just use the original `diagnostic` object - that should be close enough.
-  let fixes = fix.call(diagnostic, FIXER);
+  const fixes = getFixesFromFixFn(fix, diagnostic);
 
-  // ESLint ignores falsy values
-  if (!fixes) return null;
-
-  // `fixes` can be any iterator, not just an array e.g. `fix: function*() { yield fix1; yield fix2; }`
-  if (Symbol.iterator in fixes) {
-    let isCloned = false;
-
-    // Check prototype instead of using `Array.isArray()`, to ensure it is a native `Array`,
-    // not a subclass which may have overridden `toJSON()` in a way which could make `JSON.stringify()` throw
-    if (Object.getPrototypeOf(fixes) !== Array.prototype || Object.hasOwn(fixes, "toJSON")) {
-      fixes = Array.from(fixes);
-      isCloned = true;
-    }
-
-    const fixesLen = fixes.length;
-    if (fixesLen === 0) return null;
-
-    for (let i = 0; i < fixesLen; i++) {
-      const fix = fixes[i];
-
-      // ESLint ignores falsy values.
-      // Filter them out. This branch can only be taken once.
-      if (!fix) {
-        fixes = fixes.filter(Boolean);
-        if (fixes.length === 0) return null;
-        isCloned = true;
-        i--;
-        continue;
-      }
-
-      const conformedFix = validateAndConformFix(fix);
-      if (conformedFix !== fix) {
-        // Don't mutate `fixes` array
-        if (isCloned === false) {
-          fixes = fixes.slice();
-          isCloned = true;
-        }
-        fixes[i] = conformedFix;
-      }
-    }
-  } else {
-    fixes = [validateAndConformFix(fixes)];
-  }
-
-  // ESLint does not throw this error if `fix` function returns only falsy values.
-  // We've already exited if that is the case, so we're reproducing that behavior.
-  if (ruleDetails.isFixable === false) {
+  // ESLint does not throw an error if `fix` function returns only falsy values
+  if (fixes !== null && ruleDetails.isFixable === false) {
     throw new Error(
       'Fixable rules must set the `meta.fixable` property to "code" or "whitespace".',
     );
@@ -148,42 +115,126 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
 }
 
 /**
- * Validate that a `Fix` object is well-formed, and conform it to expected shape.
+ * Get suggestions from a `Diagnostic`.
  *
- * - Convert `text` to string if needed.
- * - Shorten `range` to 2 elements if it has extra elements.
- * - Remove any additional properties on the object.
+ * Returns `null` if no `suggest` array, or if it produces no suggestions
+ * (e.g. all fix functions return falsy values).
  *
- * Purpose is to ensure any input which ESLint accepts does not cause an error in `JSON.stringify()`,
+ * Throws if rule is not marked with `meta.hasSuggestions` but produces suggestions.
+ *
+ * @param diagnostic - Diagnostic object
+ * @param ruleDetails - `RuleDetails` object, containing rule-specific details
+ * @returns Non-empty array of `SuggestionReport` objects, or `null` if none
+ * @throws {Error} If rule is not marked with `meta.hasSuggestions` but produces suggestions
+ * @throws {TypeError} If a suggestion's `fix` is not a function, or message is invalid
+ */
+export function getSuggestions(
+  diagnostic: Diagnostic,
+  ruleDetails: RuleDetails,
+): SuggestionReport[] | null {
+  if (!Object.hasOwn(diagnostic, "suggest")) return null;
+  const { suggest } = diagnostic;
+  if (suggest == null) return null;
+
+  const suggestLen = suggest.length;
+  if (suggestLen === 0) return null;
+
+  const suggestions: SuggestionReport[] = [];
+  for (let i = 0; i < suggestLen; i++) {
+    const suggestion = suggest[i];
+
+    // Validate fix is a function (matches ESLint)
+    const { fix } = suggestion;
+    if (typeof fix !== "function") throw new TypeError("Suggestion without a fix function");
+
+    // Get suggestion message
+    const { message, messageId } = getMessage(
+      Object.hasOwn(suggestion, "desc") ? suggestion.desc : null,
+      suggestion,
+      ruleDetails,
+    );
+
+    // Call fix function - drop suggestion if fix function produces no fixes
+    const fixes = getFixesFromFixFn(fix, suggestion);
+    if (fixes !== null) suggestions.push({ message, messageId, fixes });
+  }
+
+  if (suggestions.length === 0) return null;
+
+  // Check rule has suggestions enabled.
+  // This check is skipped if no suggestions are produced, matching what ESLint does.
+  if (ruleDetails.hasSuggestions === false) {
+    throw new Error("Rules with suggestions must set `meta.hasSuggestions` to `true`.");
+  }
+
+  return suggestions;
+}
+
+/**
+ * Call a `FixFn` and process its return value into an array of `FixReport` objects.
+ *
+ * Returns `null` if any of:
+ *
+ * 1. `fixFn` returns a falsy value.
+ * 2. `fixFn` returns an empty array/iterator.
+ * 3. `fixFn` returns an array/iterator containing only falsy values.
+ *
+ * Otherwise, returns a non-empty array of `FixReport` objects.
+ *
+ * `Fix` objects are validated.
+ *
+ * This function aims to replicate ESLint's behavior as closely as possible.
+ *
+ * @param fixFn - Fix function to call
+ * @param thisArg - `this` value for the fix function call
+ * @returns Non-empty array of `FixReport` objects, or `null` if none
+ * @throws {Error} If `fixFn` returns any invalid `Fix` objects
+ */
+function getFixesFromFixFn(fixFn: FixFn, thisArg: Diagnostic | Suggestion): FixReport[] | null {
+  // In ESLint, `fix` is called with `this` as a clone of the `Diagnostic` or `Suggestion` object.
+  // We just use the original object - that should be close enough.
+  const fixes = fixFn.call(thisArg, FIXER);
+
+  // ESLint ignores falsy values
+  if (!fixes) return null;
+
+  // `fixes` can be any iterator, not just an array e.g. `fix: function*() { yield fix1; yield fix2; }`
+  if (Symbol.iterator in fixes) {
+    const fixReports: FixReport[] = [];
+    for (const fix of fixes) {
+      // ESLint ignores falsy values
+      if (fix) fixReports.push(validateAndConvertFix(fix));
+    }
+
+    return fixReports.length === 0 ? null : fixReports;
+  }
+
+  return [validateAndConvertFix(fixes)];
+}
+
+/**
+ * Validate that a `Fix` object is well-formed, and convert it to a `FixReport`.
+ *
+ * Check that `range` has 2 numeric elements, and convert `text` to string if needed.
+ *
+ * Purpose of validation is to ensure any input which ESLint accepts does not cause an error in `JSON.stringify()`,
  * or in deserializing on Rust side.
  *
  * @param fix - Fix object to validate, possibly malformed
- * @returns `Fix` object
+ * @returns `FixReport` object
+ * @throws {Error} If `fix` has invalid `range`
  */
-function validateAndConformFix(fix: unknown): Fix {
-  typeAssertIs<Fix>(fix);
+function validateAndConvertFix(fix: Fix): FixReport {
   const { range, text } = fix;
 
-  // These checks follow ESLint, which throws if `range` is missing or invalid
-  if (!range || typeof range[0] !== "number" || typeof range[1] !== "number") {
-    throw new Error(`Fix has invalid range: ${JSON.stringify(fix, null, 2)}`);
+  if (range != null) {
+    const start = range[0],
+      end = range[1];
+    if (typeof start === "number" && typeof end === "number") {
+      // Converting `text` to string follows ESLint, which does that implicitly.
+      return { start, end, text: String(text) };
+    }
   }
 
-  // If `fix` is already well-formed, return it as-is.
-  // Note: `ownKeys(fix).length === 2` rules out `fix` having a custom `toJSON` method.
-  const fixPrototype = Object.getPrototypeOf(fix);
-  if (
-    (fixPrototype === Object.prototype || fixPrototype === null) &&
-    Reflect.ownKeys(fix).length === 2 &&
-    Object.getPrototypeOf(range) === Array.prototype &&
-    !Object.hasOwn(range, "toJSON") &&
-    range.length === 2 &&
-    typeof text === "string"
-  ) {
-    return fix;
-  }
-
-  // Conform fix object to expected shape.
-  // Converting `text` to string follows ESLint, which does that implicitly.
-  return { range: [range[0], range[1]], text: String(text) };
+  throw new Error(`Fix has invalid range: ${JSON.stringify(fix, null, 2)}`);
 }

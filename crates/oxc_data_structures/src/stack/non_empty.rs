@@ -58,7 +58,7 @@ use super::{StackCapacity, StackCommon};
 ///    uses 1 less register, but disadvantage that [`last`] and [`last_mut`] are 2 instructions, not 1.
 ///    <https://godbolt.org/z/xnx7YP5de>
 ///
-/// 2. Stack could grow downwards, like `bumpalo` allocator does. This would probably make [`pop`] use
+/// 2. Stack could grow downwards, like a bump allocator does. This would probably make [`pop`] use
 ///    1 less register, but at the cost that: (a) the stack can never grow in place, which would incur
 ///    more memory copies when the stack grows, and (b) [`as_slice`] would have the entries in
 ///    reverse order.

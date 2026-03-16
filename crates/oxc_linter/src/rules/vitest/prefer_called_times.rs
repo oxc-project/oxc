@@ -160,21 +160,17 @@ fn test() {
     ];
 
     let fix = vec![
-        ("expect(fn).toBeCalledOnce();", "expect(fn).toBeCalledTimes(1);", None),
-        ("expect(fn).toHaveBeenCalledOnce();", "expect(fn).toHaveBeenCalledTimes(1);", None),
-        ("expect(fn).not.toBeCalledOnce();", "expect(fn).not.toBeCalledTimes(1);", None),
-        (
-            "expect(fn).not.toHaveBeenCalledOnce();",
-            "expect(fn).not.toHaveBeenCalledTimes(1);",
-            None,
-        ),
-        ("expect(fn).resolves.toBeCalledOnce();", "expect(fn).resolves.toBeCalledTimes(1);", None),
+        ("expect(fn).toBeCalledOnce();", "expect(fn).toBeCalledTimes(1);"),
+        ("expect(fn).toHaveBeenCalledOnce();", "expect(fn).toHaveBeenCalledTimes(1);"),
+        ("expect(fn).not.toBeCalledOnce();", "expect(fn).not.toBeCalledTimes(1);"),
+        ("expect(fn).not.toHaveBeenCalledOnce();", "expect(fn).not.toHaveBeenCalledTimes(1);"),
+        ("expect(fn).resolves.toBeCalledOnce();", "expect(fn).resolves.toBeCalledTimes(1);"),
         (
             "expect(fn).resolves.toHaveBeenCalledOnce();",
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
-            None,
         ),
     ];
+
     Tester::new(PreferCalledTimes::NAME, PreferCalledTimes::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)

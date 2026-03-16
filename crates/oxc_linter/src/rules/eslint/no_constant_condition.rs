@@ -58,7 +58,7 @@ pub struct NoConstantCondition {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow constant expressions in conditions
+    /// Disallow constant expressions in conditions.
     ///
     /// ### Why is this bad?
     ///

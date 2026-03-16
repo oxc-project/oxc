@@ -16,11 +16,13 @@ use crate::{
 };
 
 fn no_labels_diagnostic(message: &'static str, label_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message).with_label(label_span)
+    OxcDiagnostic::warn(message)
+        .with_help("Consider refactoring the code to eliminate the need for labels.")
+        .with_label(label_span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLabels {
     /// If set to `true`, this rule ignores labels which are sticking to loop statements.
     /// Examples of **correct** code with this option set to `true`:
@@ -120,9 +122,7 @@ declare_oxc_lint!(
 
 impl Rule for NoLabels {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

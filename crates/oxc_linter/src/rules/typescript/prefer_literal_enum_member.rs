@@ -21,7 +21,7 @@ fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferLiteralEnumMember {
     /// When set to `true`, allows bitwise expressions in enum member initializers.
     /// This includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`).
@@ -59,9 +59,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferLiteralEnumMember {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -130,234 +128,329 @@ fn test() {
     let pass = vec![
         (
             "
-        	enum ValidRegex {
-                A = /test/,
+            enum ValidRegex {
+              A = /test/,
             }
-        	    ",
+                ",
             None,
         ),
         (
             "
-        	enum ValidString {
-        	  A = 'test',
-        	}
-        	    ",
+            enum ValidString {
+              A = 'test',
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidLiteral {
-        	  A = `test`,
-        	}
-        	    ",
+            enum ValidLiteral {
+              A = `test`,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidNumber {
-        	  A = 42,
-        	}
-        	    ",
+            enum ValidNumber {
+              A = 42,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidNumber {
-        	  A = -42,
-        	}
-        	    ",
+            enum ValidNumber {
+              A = -42,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidNumber {
-        	  A = +42,
-        	}
-        	    ",
+            enum ValidNumber {
+              A = +42,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidNull {
-        	  A = null,
-        	}
-        	    ",
+            enum ValidNull {
+              A = null,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidPlain {
-        	  A,
-        	}
-        	    ",
+            enum ValidPlain {
+              A,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidQuotedKey {
-        	  'a',
-        	}
-        	    ",
+            enum ValidQuotedKey {
+              'a',
+            }
+                ",
             None,
         ),
         (
             "
-        	enum ValidQuotedKeyWithAssignment {
-        	  'a' = 1,
-        	}
-        	    ",
+            enum ValidQuotedKeyWithAssignment {
+              'a' = 1,
+            }
+                ",
             None,
         ),
         (
             "
-        	enum Foo {
-        	  A = 1 << 0,
-        	  B = 1 >> 0,
-        	  C = 1 >>> 0,
-        	  D = 1 | 0,
-        	  E = 1 & 0,
-        	  F = 1 ^ 0,
-        	  G = ~1,
-        	}
-        	      ",
+            enum Foo {
+              A = 1 << 0,
+              B = 1 >> 0,
+              C = 1 >>> 0,
+              D = 1 | 0,
+              E = 1 & 0,
+              F = 1 ^ 0,
+              G = ~1,
+            }
+                  ",
             Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
         ),
+        // TODO: Fix these to allow `|`.
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 >> 0,
+        //       C = A | B,
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 >> 0,
+        //       C = Foo.A | Foo.B,
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 >> 0,
+        //       C = Foo['A'] | B,
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 << 1,
+        //       C = 1 << 2,
+        //       D = A | B | C,
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 << 1,
+        //       C = 1 << 2,
+        //       D = Foo.A | Foo.B | Foo.C,
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 << 1,
+        //       C = 1 << 2,
+        //       D = Foo.A | (Foo.B & ~Foo.C),
+        //     }
+        //           ",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
+        // TODO: Fix
+        // (
+        //     "
+        //     enum Foo {
+        //       A = 1 << 0,
+        //       B = 1 << 1,
+        //       C = 1 << 2,
+        //       D = Foo.A | -Foo.B,
+        //     }",
+        //     Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        // ),
     ];
 
     let fail = vec![
         (
             "
-        	enum InvalidObject {
-        	  A = {},
-        	}
-        	      ",
+            enum InvalidObject {
+              A = {},
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidArray {
-        	  A = [],
-        	}
-        	      ",
+            enum InvalidArray {
+              A = [],
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidTemplateLiteral {
-        	  A = `foo ${0}`,
-        	}
-        	      ",
+            enum InvalidTemplateLiteral {
+              A = `foo ${0}`,
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidConstructor {
-        	  A = new Set(),
-        	}
-        	      ",
+            enum InvalidConstructor {
+              A = new Set(),
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidExpression {
-        	  A = 2 + 2,
-        	}
-        	      ",
+            enum InvalidExpression {
+              A = 2 + 2,
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidExpression {
-        	  A = delete 2,
-        	  B = -a,
-        	  C = void 2,
-        	  D = ~2,
-        	  E = !0,
-        	}
-        	      ",
+            enum InvalidExpression {
+              A = delete 2,
+              B = -a,
+              C = void 2,
+              D = ~2,
+              E = !0,
+            }
+                  ",
             None,
         ),
         (
             "
-        	const variable = 'Test';
-        	enum InvalidVariable {
-        	  A = 'TestStr',
-        	  B = 2,
-        	  C,
-        	  V = variable,
-        	}
-        	      ",
+            const variable = 'Test';
+            enum InvalidVariable {
+              A = 'TestStr',
+              B = 2,
+              C,
+              V = variable,
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum InvalidEnumMember {
-        	  A = 'TestStr',
-        	  B = A,
-        	}
-        	      ",
+            enum InvalidEnumMember {
+              A = 'TestStr',
+              B = A,
+            }
+                  ",
             None,
         ),
         (
             "
-        	const Valid = { A: 2 };
-        	enum InvalidObjectMember {
-        	  A = 'TestStr',
-        	  B = Valid.A,
-        	}
-        	      ",
+            const Valid = { A: 2 };
+            enum InvalidObjectMember {
+              A = 'TestStr',
+              B = Valid.A,
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum Valid {
-        	  A,
-        	}
-        	enum InvalidEnumMember {
-        	  A = 'TestStr',
-        	  B = Valid.A,
-        	}
-        	      ",
+            enum Valid {
+              A,
+            }
+            enum InvalidEnumMember {
+              A = 'TestStr',
+              B = Valid.A,
+            }
+                  ",
             None,
         ),
         (
             "
-        	const obj = { a: 1 };
-        	enum InvalidSpread {
-        	  A = 'TestStr',
-        	  B = { ...a },
-        	}
-        	      ",
+            const obj = { a: 1 };
+            enum InvalidSpread {
+              A = 'TestStr',
+              B = { ...a },
+            }
+                  ",
             None,
         ),
         (
             "
-        	enum Foo {
-        	  A = 1 << 0,
-        	  B = 1 >> 0,
-        	  C = 1 >>> 0,
-        	  D = 1 | 0,
-        	  E = 1 & 0,
-        	  F = 1 ^ 0,
-        	  G = ~1,
-        	}
-        	      ",
+            enum Foo {
+              A = 1 << 0,
+              B = 1 >> 0,
+              C = 1 >>> 0,
+              D = 1 | 0,
+              E = 1 & 0,
+              F = 1 ^ 0,
+              G = ~1,
+            }
+                  ",
             Some(serde_json::json!([{ "allowBitwiseExpressions": false }])),
         ),
         (
             "
-        	const x = 1;
-        	enum Foo {
-        	  A = x << 0,
-        	  B = x >> 0,
-        	  C = x >>> 0,
-        	  D = x | 0,
-        	  E = x & 0,
-        	  F = x ^ 0,
-        	  G = ~x,
-        	}
-        	      ",
+            const x = 1;
+            enum Foo {
+              A = x << 0,
+              B = x >> 0,
+              C = x >>> 0,
+              D = x | 0,
+              E = x & 0,
+              F = x ^ 0,
+              G = ~x,
+            }
+                  ",
             Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        ),
+        (
+            "
+            const x = 1;
+            enum Foo {
+              A = 1 << 0,
+              B = x >> Foo.A,
+              C = x >> A,
+            }
+                  ",
+            Some(serde_json::json!([{ "allowBitwiseExpressions": true }])),
+        ),
+        (
+            "
+            enum Foo {
+              A,
+              B = +A,
+            }
+                  ",
+            None,
         ),
     ];
 

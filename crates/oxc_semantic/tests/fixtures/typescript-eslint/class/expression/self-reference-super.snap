@@ -21,14 +21,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
                 "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "A",
-                "node_id": 6
+                "node_id": 6,
+                "scope_id": 1
               }
             ]
           }
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

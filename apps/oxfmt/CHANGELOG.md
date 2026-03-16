@@ -4,6 +4,202 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.41.0] - 2026-03-16
+
+### 🚀 Features
+
+- d22c443 oxfmt: Export `OxfmtConfig` type (#20275) (leaysgur)
+- a11ecff oxfmt/lsp: Respect `angular` language id as `.component.html` file (#20242) (Sysix)
+
+### 🐛 Bug Fixes
+
+- f908742 oxfmt: Revert #20326 partially (#20413) (leaysgur)
+- 68fb0d0 oxfmt: Skip vite.config.ts which fails to import (#20326) (leaysgur)
+- 88ee826 oxfmt: Handle literalline for script-in-vue (#20130) (leaysgur)
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
+## [0.40.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 96f761f oxfmt: Ensure stdin blocking mode is set for non-TTY environments (#20289) (camc314)
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+## [0.39.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- 4ea67de oxlint,oxfmt: Skip `vite.config.ts` exports `defineConfig(fn)` (#20260) (leaysgur)
+- 11a2b45 oxfmt: Skip `vite.config.ts` w/o `.fmt` field in auto-discovery (#20254) (leaysgur)
+
+## [0.38.0] - 2026-03-11
+
+### 🚀 Features
+
+- 95943aa oxfmt: Support `vite.config.*` `.fmt` field (#20197) (leaysgur)
+- 172fc07 oxfmt: .js/.ts config file support (#20135) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e483569 oxfmt: Avoid double-escaping in css-in-js (#20211) (leaysgur)
+
+## [0.37.0] - 2026-03-09
+
+### 🚀 Features
+
+- ee26215 oxfmt: Support css-in-js substitution (#20019) (leaysgur)
+- 0f0ff51 oxfmt: Display default settings was used message in cli stats (#19939) (leaysgur)
+- 88815b8 oxfmt: Reintroduce stats line for write mode (#19938) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ee0491e apps,napi: Explicitly specify libs in tsconfigs (#20071) (camc314)
+- 92f4490 oxfmt: Apply `is_ignored_dir` for glob paths too (#20056) (leaysgur)
+- 114f974 oxfmt/lsp: Prefer language_id over file extension when formatting (#19977) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- 2baa5fb napi: Unify build-test profile to coverage for cache sharing (#20090) (Boshen)
+
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 4888a99 oxfmt/lsp: Support other schemes beside `file://` and `untitled://` (#19872) (Sysix)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 8e3842d oxfmt: Avoid embedded TSFN crash by returning errors as data (take2) (#19806) (Yuji Sugiura)
+- e540585 oxfmt: Support tailwind sort for CSS/LESS/SCSS (#19803) (leaysgur)
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
+## [0.35.0] - 2026-02-23
+
+### 🚀 Features
+
+- 984dc07 oxfmt: Strip `"experimental"SortXxx` prefix (#19567) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d7b63a4 oxfmt: Update API types for `sortPackageJsonOptions` (#19569) (leaysgur)
+
+## [0.34.0] - 2026-02-19
+
+### 🚀 Features
+
+- 652c346 oxfmt/lsp: Support `untitled://` schema (#19287) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 6c61b70 oxfmt: Fix outdated `sortImports.groups` doc comments (#19513) (leaysgur)
+
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- f084ea6 oxfmt: Explicitly pass `process.env` for the forked process (#19380) (Long Ho)
+- 90ec3d2 oxfmt: Update tailwind plugin which fixes crash on non-js file (#19353) (leaysgur)
+
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🚀 Features
+
+- 91e67f3 oxfmt/lsp: Do not refer `.gitignore` (#19206) (leaysgur)
+- 23c0753 oxfmt: Better Tailwind CSS intergration (#19000) (Dunqing)
+- 87a920d ci: Add riscv64 and s390x napi targets for oxlint and oxfmt (#19039) (Boshen)
+- 8536dce oxfmt: Support glob for CLI paths (#18976) (leaysgur)
+- 6ee2d59 oxfmt: Use `oxc_formatter` in js-in-xxx part (#18373) (leaysgur)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 119348b oxfmt: Resolve relative -> absolute path for other usages (#19207) (leaysgur)
+- 5f4cf30 oxfmt: Fix relative -> absolute path resolution with refactoring (#19202) (leaysgur)
+- dc335d1 oxfmt: Temporarily disable the override for js-in-xxx (not ready yet) (#19043) (leaysgur)
+- 5ea5bda oxfmt: Handle `isSingleJsxExpressionStatementInMarkdown()` check for js-in-md (#19042) (leaysgur)
+- 9b205b3 formatter: Fallback to formatting when package.json sorting fails (#19097) (Boshen)
+- f39c96c oxfmt: Do not override `babel-ts` for now (#19030) (leaysgur)
+- ef5bfab oxfmt: Workaround Node.js ThreadsafeFunction cleanup race condition (#18980) (Boshen)
+
+### ⚡ Performance
+
+- 467724f oxfmt: Collect glob paths in parallel (#19209) (leaysgur)
+- 61e0efa oxfmt: Use RwLock instead of Mutex for TSFN handles (#18888) (Boshen)
+
+## [0.28.0] - 2026-02-02
+
+### 🚀 Features
+
+- ee30de9 oxfmt: Add config migration from biome (#18638) (Luca Fischer)
+
+### 🐛 Bug Fixes
+
+- e754b18 oxfmt/migrate-prettier: Set `experimentalSortPackagejson: false` by default (#18831) (leaysgur)
+- 34ee194 formatter: Tailwindcss sorting doesn't work for object property keys (#18773) (Dunqing)
+- 48f1e35 oxfmt: Prevent ThreadsafeFunction crash on Node.js exit (#18723) (Boshen)
+- c3d05c1 formatter,oxfmt: Handle CRLF with embedded formatting (#18686) (leaysgur)
+- ac1ff4e oxfmt: Use `empty_line` IR for empty xxx-in-js line (#18623) (leaysgur)
+- 8f76900 oxfmt: Dedent xxx-in-js templates before calling prettier (#18622) (leaysgur)
+- 6b726ef oxfmt: Trim whitespace only xxx-in-js templates (#18621) (leaysgur)
+
+## [0.27.0] - 2026-01-26
+
+### 🚀 Features
+
+- d71c15d oxfmt: Enable tailwind sort inside xxx-in-js (#18417) (leaysgur)
+- 52b5003 formatter,oxfmt: Support Angular `@Component({ template, styles })` (#18324) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 224140c oxfmt: Canonicalize `..` component in config path (#18570) (leaysgur)
+- 7e6c15b oxfmt: Increase Tailwind CSS test timeout for Windows CI (#18339) (Boshen)
+
+### ⚡ Performance
+
+- b2df8fb oxfmt: Enable tailwind plugin only for relevant parser (#18418) (leaysgur)
+
+## [0.26.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 864b4ab oxfmt: Use `format_config` for `external_options` override (#18252) (leaysgur)
+- 90ce4b7 oxfmt: Restore `customGroups` handling lost (#18243) (leaysgur)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- a95b9bb oxfmt: Support oxfmtrc `overrides` config (#18068) (leaysgur)
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- 361a8f1 oxfmt: Upgrade `prettier` to 3.8.0 (#18024) (Dunqing)
+- 873c683 oxfmt: Add more tracing logs (#18015) (Yuji Sugiura)
+- cc3e74b oxfmt: Add Prettier specific fields in `Oxfmtrc` (#17981) (leaysgur)
+- 6ffe315 oxfmt: Add more `Oxfmtrc` fields description (#17979) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+- efacb13 oxfmt: Do not wrap with `block_indent()` if `format_embedded` fails (#17975) (leaysgur)
+- 9d0f551 oxfmt: Do not panic with subdirectry and config (#17955) (leaysgur)
+- 9d96cc6 oxfmt: Use `std(out/err)._handle.setBlocking(true)` to handle `WouldBlock` error in Rust (#17950) (leaysgur)
+
 ## [0.24.0] - 2026-01-12
 
 ### 🚀 Features

@@ -1,0 +1,146 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`glob_patterns > should deduplicate files specified both directly and via glob 1`] = `
+"--------------------
+arguments: --check src/a.js src/*.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+src/{d}.js (<variable>ms)
+
+Format issues found in above 3 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 3 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should expand basic wildcard pattern 1`] = `
+"--------------------
+arguments: --check src/*.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+src/{d}.js (<variable>ms)
+
+Format issues found in above 3 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 3 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should expand brace expansion pattern 1`] = `
+"--------------------
+arguments: --check src/{a,b}.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+
+Format issues found in above 2 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 2 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check src/{a}.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should expand recursive glob pattern and exclude 1`] = `
+"--------------------
+arguments: --check **/*.js !util.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+src/{d}.js (<variable>ms)
+
+Format issues found in above 3 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 3 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should handle mix of concrete paths and glob patterns 1`] = `
+"--------------------
+arguments: --check src/c.ts src/*.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+src/c.ts (<variable>ms)
+src/{d}.js (<variable>ms)
+
+Format issues found in above 4 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 4 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should respect .gitignore for directories when expanding globs 1`] = `
+"--------------------
+arguments: --check **/*.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/a.js (<variable>ms)
+src/b.js (<variable>ms)
+src/{d}.js (<variable>ms)
+
+Format issues found in above 3 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 3 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`glob_patterns > should treat glob-like filename as concrete path when it exists on disk 1`] = `
+"--------------------
+arguments: --check src/{d}.js
+working directory: glob_patterns/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/{d}.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;

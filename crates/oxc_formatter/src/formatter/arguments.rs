@@ -60,7 +60,7 @@ impl<'ast> Format<'ast> for Argument<'_, 'ast> {
 /// You can use the `Arguments<a>` that [`format_args!]` return in `Format` context as seen below.
 /// It will call the `format` function for every of it's objects.
 ///
-/// ```rust
+/// ```text
 /// use biome_formatter::prelude::*;
 /// use biome_formatter::{format, format_args};
 ///

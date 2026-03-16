@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -13,6 +13,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        suppressed::FormatSuppressedNode,
     },
     write,
 };
@@ -143,19 +144,10 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 let arrow_expression = arrow.get_expression();
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
-                    return if f.context().comments().has_comment_before(sequence.span().start) {
-                        write!(
-                            f,
-                            [group(&format_args!(
-                                formatted_signature,
-                                group(&format_args!(indent(&format_args!(
-                                    hard_line_break(),
-                                    token("("),
-                                    soft_block_indent(&format_body),
-                                    token(")")
-                                ))))
-                            ))]
-                        );
+                    return if let Some(format_sequence) =
+                        format_sequence_with_leading_comment(sequence.span(), &format_body, f)
+                    {
+                        write!(f, [group(&format_args!(formatted_signature, format_sequence))]);
                     } else {
                         write!(
                             f,
@@ -172,6 +164,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     };
                 }
 
+                write!(f, formatted_signature);
+
                 let body_has_soft_line_break =
                     arrow_expression.is_none_or(|expression| match expression {
                         Expression::ArrowFunctionExpression(_)
@@ -186,7 +180,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     });
 
                 if body_has_soft_line_break {
-                    write!(f, [formatted_signature, space(), format_body]);
+                    write!(f, [space(), format_body]);
                 } else {
                     let should_add_parens = arrow.expression && should_add_parens(body);
 
@@ -197,29 +191,26 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                     let should_add_soft_line = is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || (matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(container)
+                        || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
                     write!(
                         f,
-                        [
-                            formatted_signature,
-                            group(&format_args!(
-                                soft_line_indent_or_space(&format_with(|f| {
-                                    if should_add_parens {
-                                        write!(f, if_group_fits_on_line(&"("));
-                                    }
+                        group(&format_args!(
+                            soft_line_indent_or_space(&format_with(|f| {
+                                if should_add_parens {
+                                    write!(f, if_group_fits_on_line(&"("));
+                                }
 
-                                    write!(f, format_body);
+                                write!(f, format_body);
 
-                                    if should_add_parens {
-                                        write!(f, if_group_fits_on_line(&")"));
-                                    }
-                                })),
-                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                should_add_soft_line.then_some(soft_line_break())
-                            ))
-                        ]
+                                if should_add_parens {
+                                    write!(f, if_group_fits_on_line(&")"));
+                                }
+                            })),
+                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                            should_add_soft_line.then_some(soft_line_break())
+                        ))
                     );
                 }
             }
@@ -394,15 +385,15 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &&'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
-        once(&self.head).chain(self.middle.iter()).chain(once(&self.tail))
+        once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
 }
 
 impl<'a> Format<'a> for ArrowChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let ArrowChain { tail, expand_signatures, .. } = self;
+        let ArrowChain { tail, expand_signatures, .. } = *self;
 
         let tail_body = tail.body();
         let is_grouped_call_arg_layout = self.options.call_argument_layout.is_some();
@@ -550,7 +541,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 }
             });
 
-            group(&join_signatures).should_expand(*expand_signatures).fmt(f);
+            group(&join_signatures).should_expand(expand_signatures).fmt(f);
         });
 
         let format_tail_body_inner = format_with(|f| {
@@ -563,16 +554,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if f.context().comments().has_comment_before(sequence.span().start) {
-                    write!(
-                        f,
-                        [group(&format_args!(indent(&format_args!(
-                            hard_line_break(),
-                            token("("),
-                            soft_block_indent(&format_tail_body),
-                            token(")")
-                        ))))]
-                    );
+                if let Some(format_sequence) =
+                    format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
+                {
+                    write!(f, format_sequence);
                 } else {
                     write!(
                         f,
@@ -603,7 +588,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let format_tail_body = format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
             let should_add_soft_line =
-                matches!(self.head.parent, AstNodes::JSXExpressionContainer(_));
+                matches!(self.head.parent(), AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
                 write!(
@@ -758,4 +743,45 @@ impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
         });
         FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f);
     }
+}
+
+/// Format a sequence expression in an arrow function body that has a leading comment.
+///
+/// When an arrow function body is a sequence expression (e.g., `() => (a, b, c)`) and has
+/// a leading comment, special formatting is needed to place the comment correctly:
+///
+/// ```js
+/// const f = () =>
+///   // comment
+///   (a, b, c);
+/// ```
+///
+/// Returns `Some(formatter)` if the sequence has a leading comment, `None` otherwise.
+/// When `None`, the caller should use normal formatting with `soft_block_indent`.
+///
+/// Handles `oxfmt-ignore` by preserving original source text when suppressed.
+fn format_sequence_with_leading_comment<'a, 'b>(
+    sequence_span: Span,
+    format_body: &'b impl Format<'a>,
+    f: &Formatter<'_, 'a>,
+) -> Option<impl Format<'a> + 'b> {
+    if !f.comments().has_comment_before(sequence_span.start) {
+        return None;
+    }
+
+    let is_suppressed = f.comments().is_suppressed(sequence_span.start);
+
+    let format_sequence = format_with(move |f| {
+        write!(f, [format_leading_comments(sequence_span), "("]);
+        if is_suppressed {
+            write!(f, FormatSuppressedNode(sequence_span));
+        } else {
+            write!(f, format_body);
+        }
+        write!(f, [")"]);
+    });
+
+    Some(format_with(move |f| {
+        write!(f, group(&indent(&format_args!(hard_line_break(), format_sequence))));
+    }))
 }

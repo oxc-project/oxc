@@ -2,17 +2,18 @@
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
-#![warn(missing_docs)]
-
-mod atom;
 mod cmp;
-mod compact_str;
+mod edit_distance;
 mod source_type;
 mod span;
 
-pub use atom::Atom;
 pub use cmp::ContentEq;
-pub use compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN};
+pub use edit_distance::{best_match, min_edit_distance};
+pub use oxc_str::ident;
+pub use oxc_str::{
+    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,
+    MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
+};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
@@ -29,8 +30,33 @@ mod generated {
 
 #[doc(hidden)]
 pub mod __internal {
-    // Used by `format_compact_str!` macro defined in `compact_str.rs`
+    // Used by `format_compact_str!` macro defined in `oxc_str`
     pub use compact_str::format_compact;
-    // Used by `format_atom!` macro defined in `atom.rs`
+    // Used by `format_atom!` and `format_ident!` macros defined in `oxc_str`
     pub use oxc_allocator::StringBuilder as ArenaStringBuilder;
+}
+
+// Additional trait implementations for types re-exported from oxc_str
+use std::ops::Index;
+
+impl ContentEq for Atom<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for Ident<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl Index<Span> for CompactStr {
+    type Output = str;
+
+    fn index(&self, index: Span) -> &Self::Output {
+        &self.as_str()[index.start as usize..index.end as usize]
+    }
 }

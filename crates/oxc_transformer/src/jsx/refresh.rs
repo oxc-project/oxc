@@ -17,13 +17,12 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{Atom, GetSpan, Ident, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
 use super::options::ReactRefreshOptions;
@@ -78,7 +77,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
     pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
             Self::Identifier(ident) => {
-                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
                 ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
@@ -86,7 +85,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 )
             }
             Self::Member((ident, property)) => {
-                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
                 let ident = ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
@@ -112,11 +111,10 @@ impl<'a> RefreshIdentifierResolver<'a> {
 ///
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/v18.3.1/packages/react-refresh/src/ReactFreshBabelPlugin.js>
-pub struct ReactRefresh<'a, 'ctx> {
+pub struct ReactRefresh<'a> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     /// Used to wrap call expression with signature.
@@ -129,18 +127,13 @@ pub struct ReactRefresh<'a, 'ctx> {
     used_in_jsx_bindings: FxHashSet<SymbolId>,
 }
 
-impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
-    pub fn new(
-        options: &ReactRefreshOptions,
-        ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
-    ) -> Self {
+impl<'a> ReactRefresh<'a> {
+    pub fn new(options: &ReactRefreshOptions, ast: AstBuilder<'a>) -> Self {
         Self {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
             refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
             emit_full_signatures: options.emit_full_signatures,
             registrations: Vec::default(),
-            ctx,
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
@@ -149,7 +142,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
@@ -263,9 +256,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
+        let span = expr.span();
         arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
         *expr = ctx.ast.expression_call(
-            SPAN,
+            span,
             binding.create_read_expression(ctx),
             NONE,
             arguments,
@@ -295,8 +289,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
         let callee = binding.create_read_expression(ctx);
-        let expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
-        let statement = ctx.ast.statement_expression(SPAN, expr);
+        let expr = ctx.ast.expression_call(func.span, callee, NONE, arguments, false);
+        let statement = ctx.ast.statement_expression(func.span, expr);
 
         // Get the address of the statement containing this `FunctionDeclaration`
         let address = match ctx.parent() {
@@ -311,7 +305,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             // `Function` is always stored in a `Box`, so has a stable memory address.
             _ => func.unstable_address(),
         };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     fn enter_call_expression(
@@ -324,9 +318,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             return;
         }
 
-        let hook_name = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name,
-            Expression::StaticMemberExpression(member) => member.property.name,
+        let hook_name: Atom = match &call_expr.callee {
+            Expression::Identifier(ident) => ident.name.into(),
+            Expression::StaticMemberExpression(member) => member.property.name.into(),
             _ => return,
         };
 
@@ -336,7 +330,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression) = match &call_expr.callee {
+            let (binding_name, is_member_expression): (Option<Ident>, _) = match &call_expr.callee {
                 Expression::Identifier(ident) => (Some(ident.name), false),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
@@ -353,7 +347,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                     ctx.scoping()
                         .find_binding(
                             ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
-                            binding_name.as_str(),
+                            binding_name,
                         )
                         .map(|symbol_id| {
                             let mut expr = ctx.create_bound_ident_expr(
@@ -380,17 +374,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         let declarator_id = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
             // TODO: if there is no LHS, consider some other heuristic.
-            declarator.id().span().source_text(self.ctx.source_text)
+            declarator.id().span().source_text(ctx.state.source_text)
         } else {
             ""
         };
 
         let args = &call_expr.arguments;
         let (args_key, mut key_len) = if hook_name == "useState" && !args.is_empty() {
-            let args_key = args[0].span().source_text(self.ctx.source_text);
+            let args_key = args[0].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else if hook_name == "useReducer" && args.len() > 1 {
-            let args_key = args[1].span().source_text(self.ctx.source_text);
+            let args_key = args[1].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else {
             ("", 2)
@@ -426,7 +420,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 }
 
 // Internal Methods
-impl<'a> ReactRefresh<'a, '_> {
+impl<'a> ReactRefresh<'a> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -485,7 +479,7 @@ impl<'a> ReactRefresh<'a, '_> {
                         format!(
                             "{}${}",
                             inferred_name,
-                            callee_span.source_text(self.ctx.source_text)
+                            callee_span.source_text(ctx.state.source_text)
                         )
                         .as_str(),
                         argument_expr,
@@ -529,7 +523,7 @@ impl<'a> ReactRefresh<'a, '_> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name, ctx);
+        let left = self.create_registration(id.name.into(), ctx);
         let right =
             ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
@@ -645,7 +639,7 @@ impl<'a> ReactRefresh<'a, '_> {
             ctx.ast.vec(),
             false,
         );
-        let binding = self.ctx.var_declarations.create_uid_var_with_init("s", init, ctx);
+        let binding = VarDeclarationsStore::create_uid_var_with_init("s", init, ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
@@ -824,6 +818,7 @@ impl<'a> ReactRefresh<'a, '_> {
     }
 
     /// Handle `export const Foo = () => {}` or `const Foo = function() {}`
+    #[expect(clippy::unused_self)]
     fn handle_function_in_variable_declarator(
         &self,
         id_binding: &BoundIdentifier<'a>,
@@ -862,7 +857,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
                 var_decl.address()
             };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     /// Convert arrow function expression to normal arrow function

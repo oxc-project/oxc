@@ -4,6 +4,7 @@
 src:
   - '.github/generated/ast_changes_watch_list.yml'
   - '.github/workflows/ci.yml'
+  - 'Cargo.lock'
   - 'Cargo.toml'
   - 'apps/oxlint/src-js/generated/constants.ts'
   - 'apps/oxlint/src-js/generated/deserialize.d.ts'
@@ -37,7 +38,10 @@ src:
   - 'crates/oxc_regular_expression/src/generated/derive_get_address.rs'
   - 'crates/oxc_span/src/**'
   - 'crates/oxc_syntax/src/**'
+  - 'crates/oxc_traverse/src/generated/ancestor.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
+  - 'crates/oxc_traverse/src/generated/traverse.rs'
+  - 'crates/oxc_traverse/src/generated/walk.rs'
   - 'napi/parser/src-js/generated/constants.js'
   - 'napi/parser/src-js/generated/deserialize/js.d.ts'
   - 'napi/parser/src-js/generated/deserialize/js.js'

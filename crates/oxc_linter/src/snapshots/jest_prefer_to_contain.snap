@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
  1 │ expect(a.includes(b)).toEqual(true);

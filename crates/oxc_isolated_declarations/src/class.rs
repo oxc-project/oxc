@@ -5,8 +5,9 @@ use oxc_span::{ContentEq, GetSpan, SPAN};
 use crate::{
     IsolatedDeclarations,
     diagnostics::{
-        accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
-        method_must_have_explicit_return_type, property_must_have_explicit_type,
+        accessor_must_have_explicit_return_type, array_inferred, computed_property_name,
+        extends_clause_expression, method_must_have_explicit_return_type,
+        property_must_have_explicit_type,
     },
 };
 
@@ -104,18 +105,15 @@ impl<'a> IsolatedDeclarations<'a> {
                 type_annotation = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
-                    // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
-                    if Self::is_need_to_infer_type_from_expression(expr) {
-                        self.transform_expression_to_ts_type(expr)
-                    } else {
-                        if let Expression::TemplateLiteral(lit) = expr {
-                            value = self
-                                .transform_template_to_string(lit)
-                                .map(Expression::StringLiteral);
-                        } else {
-                            value = Some(expr.clone_in(self.ast.allocator));
-                        }
+                    // Keep literal const initializers on readonly class properties to match TS d.ts emit.
+                    if let Some(initializer) = self.get_literal_const_initializer(expr) {
+                        value = Some(initializer);
                         None
+                    } else if Self::is_non_const_array_literal(expr) {
+                        self.error(array_inferred(expr.span()));
+                        Some(self.ast.ts_type_unknown_keyword(expr.span()))
+                    } else {
+                        self.transform_expression_to_ts_type(expr)
                     }
                 } else {
                     self.infer_type_from_expression(expr)
@@ -145,6 +143,41 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             Self::transform_accessibility(property.accessibility),
         )
+    }
+
+    fn get_literal_const_initializer(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        match expr {
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                self.transform_template_to_string(lit).map(Expression::StringLiteral)
+            }
+            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
+                Some(Expression::UnaryExpression(expr.clone_in(self.ast.allocator)))
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSAsExpression(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSTypeAssertion(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            _ => None,
+        }
+    }
+
+    fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_) => true,
+            Expression::ParenthesizedExpression(expr) => {
+                Self::is_non_const_array_literal(&expr.expression)
+            }
+            _ => false,
+        }
     }
 
     fn transform_class_method_definition(

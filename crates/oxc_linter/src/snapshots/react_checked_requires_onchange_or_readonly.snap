@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
    ╭─[checked_requires_onchange_or_readonly.tsx:1:21]
  1 │ <input type='radio' checked />

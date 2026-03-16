@@ -24,7 +24,7 @@ use crate::ast_nodes::{AstNode, AstNodes};
 /// `connect(a, b, c)(d)`
 /// ```
 pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
-    if let AstNodes::CallExpression(parent_call) = call.parent
+    if let AstNodes::CallExpression(parent_call) = call.parent()
         && parent_call.is_callee_span(call.span)
     {
         return call.arguments().len() > parent_call.arguments().len()

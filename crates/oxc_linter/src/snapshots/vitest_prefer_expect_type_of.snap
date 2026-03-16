@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof 12).toBe("number")
+   · ────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(12).toBeNumber()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof "name").toBe("string")
+   · ────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf("name").toBeString()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof true).toBe("boolean")
+   · ───────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(true).toBeBoolean()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof variable).toBe("object")
+   · ──────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(variable).toBeObject()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof fn).toBe("function")
+   · ──────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(fn).toBeFunction()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value).toEqual("string")
+   · ──────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(value).toBeString()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value).not.toBe("string")
+   · ───────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(value).not.toBeString()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value)["not"].toBe("string")
+   · ──────────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(value)["not"].toBeString()`.

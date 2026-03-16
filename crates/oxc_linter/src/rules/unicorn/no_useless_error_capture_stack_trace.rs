@@ -192,8 +192,8 @@ fn is_referencing_class(
     match expr {
         Expression::Identifier(ident) => {
             if let Some(expected_symbol) = class_id
-                && let Some(reference_id) = ident.reference_id.get()
-                && let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
             {
                 return symbol_id == expected_symbol;
             }
@@ -227,97 +227,97 @@ fn test() {
         "class MyError {constructor() {Error.captureStackTrace(this, MyError)}}",
         "class MyError extends NotABuiltinError {constructor() {Error.captureStackTrace(this, MyError)}}",
         "class MyError extends Error {
-				notConstructor() {
-					Error.captureStackTrace(this, MyError)
-				}
-			}",
+                notConstructor() {
+                    Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class MyError extends Error {
-				constructor() {
-					function foo() {
-						Error.captureStackTrace(this, MyError)
-					}
-				}
-			}",
+                constructor() {
+                    function foo() {
+                        Error.captureStackTrace(this, MyError)
+                    }
+                }
+            }",
         "class MyError extends Error {
-				constructor(MyError) {
-					Error.captureStackTrace(this, MyError)
-				}
-			}",
+                constructor(MyError) {
+                    Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class MyError extends Error {
-				static {
-					Error.captureStackTrace(this, MyError)
-					function foo() {
-						Error.captureStackTrace(this, MyError)
-					}
-				}
-			}",
+                static {
+                    Error.captureStackTrace(this, MyError)
+                    function foo() {
+                        Error.captureStackTrace(this, MyError)
+                    }
+                }
+            }",
         "class MyError extends Error {
-				constructor() {
-					class NotAErrorSubclass {
-						constructor() {
-							Error.captureStackTrace(this, new.target)
-						}
-					}
-				}
-			}",
+                constructor() {
+                    class NotAErrorSubclass {
+                        constructor() {
+                            Error.captureStackTrace(this, new.target)
+                        }
+                    }
+                }
+            }",
         "class Error {}
-			class MyError extends Error {
-				constructor() {
-					Error.captureStackTrace(this, MyError)
-				}
-			}",
+            class MyError extends Error {
+                constructor() {
+                    Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class Error {}
-			class MyError extends RangeError {
-				constructor() {
-					Error.captureStackTrace(this, MyError)
-				}
-			}",
+            class MyError extends RangeError {
+                constructor() {
+                    Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class MyError extends Error {
-				constructor(): void;
-				static {
-					Error.captureStackTrace(this, MyError)
-					function foo() {
-						Error.captureStackTrace(this, MyError)
-					}
-				}
-			}",
+                constructor(): void;
+                static {
+                    Error.captureStackTrace(this, MyError)
+                    function foo() {
+                        Error.captureStackTrace(this, MyError)
+                    }
+                }
+            }",
     ];
 
     let fail = vec![
         "class MyError extends Error {
-				constructor() {
-					const foo = () => {
-						Error.captureStackTrace(this, MyError)
-					}
-				}
-			}",
+                constructor() {
+                    const foo = () => {
+                        Error.captureStackTrace(this, MyError)
+                    }
+                }
+            }",
         "class MyError extends Error {
-				constructor() {
-					if (a) Error.captureStackTrace(this, MyError)
-				}
-			}",
+                constructor() {
+                    if (a) Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class MyError extends Error {
-				constructor() {
-					const x = () => Error.captureStackTrace(this, MyError)
-				}
-			}",
+                constructor() {
+                    const x = () => Error.captureStackTrace(this, MyError)
+                }
+            }",
         "class MyError extends Error {
-				constructor() {
-					void Error.captureStackTrace(this, MyError)
-				}
-			}",
+                constructor() {
+                    void Error.captureStackTrace(this, MyError)
+                }
+            }",
         "export default class extends Error {
-				constructor() {
-					Error.captureStackTrace(this, new.target)
-				}
-			}",
+                constructor() {
+                    Error.captureStackTrace(this, new.target)
+                }
+            }",
         "export default (
-				class extends Error {
-					constructor() {
-						Error.captureStackTrace(this, new.target)
-					}
-				}
-			)",
+                class extends Error {
+                    constructor() {
+                        Error.captureStackTrace(this, new.target)
+                    }
+                }
+            )",
     ];
 
     let fix = vec![

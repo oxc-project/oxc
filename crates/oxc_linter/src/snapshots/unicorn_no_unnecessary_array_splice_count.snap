@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
  1 │ foo.splice(1, foo.length)

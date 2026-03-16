@@ -1,4 +1,4 @@
-import type { Plugin } from "#oxlint";
+import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   // No name defined

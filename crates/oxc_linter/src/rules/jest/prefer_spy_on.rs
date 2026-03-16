@@ -75,7 +75,7 @@ declare_oxc_lint!(
     PreferSpyOn,
     jest,
     style,
-    fix
+    suggestion
 );
 
 impl Rule for PreferSpyOn {
@@ -136,7 +136,7 @@ impl PreferSpyOn {
             return;
         }
 
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             use_jest_spy_on(Span::new(call_expr.span.start, first_fn_member.span.end)),
             |fixer| {
                 let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {

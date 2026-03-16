@@ -35,28 +35,28 @@ pub struct {{pascal_rule_name}}{{#if rule_config_tuple}}{{rule_config_tuple}}{{/
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// FIXME: Briefly describe the rule's purpose.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// FIXME: Explain why violating this rule is problematic.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```{{language}}
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// FIXME: Add at least one example of code that violates the rule.
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```{{language}}
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// FIXME: Add at least one example of code that is allowed with the rule.
     /// ```
     {{pascal_rule_name}},
     {{mod_name}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
+    pending, // TODO: describe fix capabilities. Remove or set to `none` if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 {{#if rule_config}}

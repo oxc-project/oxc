@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
 [
   {
     "children": [],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -19,25 +19,29 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
             "flags": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "num",
-            "node_id": 7
+            "node_id": 7,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 1,
             "name": "num",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 2,
             "name": "num",
-            "node_id": 13
+            "node_id": 13,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 3,
             "name": "num",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           }
         ]
       },
@@ -51,25 +55,29 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "obj",
-            "node_id": 27
+            "node_id": 27,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "obj",
-            "node_id": 32
+            "node_id": 32,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "obj",
-            "node_id": 37
+            "node_id": 37,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 7,
             "name": "obj",
-            "node_id": 42
+            "node_id": 42,
+            "scope_id": 0
           }
         ]
       }

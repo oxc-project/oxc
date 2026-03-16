@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(prefer-await-to-callbacks): Prefer `async`/`await` to the callback pattern
    ╭─[prefer_await_to_callbacks.tsx:1:7]
  1 │ heart(function(err) {})

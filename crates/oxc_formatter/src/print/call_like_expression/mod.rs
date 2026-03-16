@@ -28,7 +28,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
         let is_tailwind_call = f
             .options()
-            .experimental_tailwindcss
+            .sort_tailwindcss
             .as_ref()
             .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
 
@@ -68,11 +68,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(callee)]);
 
-                    if self.arguments.is_empty() {
+                    let character = if self.optional {
+                        // For optional calls with arguments, preserve trailing comments
+                        // between the `callee` and `?.` operator.
+                        // `alert/* comment */?.('value')` → `alert /* comment */?.("value");`
+                        Some(b'?')
+                    } else if self.arguments.is_empty() {
+                        // For empty argument calls, preserve trailing comments between
+                        // the `callee` and `()`.
+                        // `call/**/()` → `call /**/();`
+                        Some(b'(')
+                    } else {
+                        None
+                    };
+                    if let Some(character) = character {
                         let callee_trailing_comments = f
                             .context()
                             .comments()
-                            .comments_before_character(self.callee.span().end, b'(');
+                            .comments_before_character(self.callee.span().end, character);
                         write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
                     }
                 }
@@ -81,7 +94,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                 // If this IS a Tailwind function call, push the Tailwind context
                 let tailwind_ctx_to_push = if is_tailwind_call {
                     f.options()
-                        .experimental_tailwindcss
+                        .sort_tailwindcss
                         .as_ref()
                         .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
                 } else {

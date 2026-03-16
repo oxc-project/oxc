@@ -26,7 +26,7 @@ pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 /// single-consumer channel.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use std::{path::PathBuf, thread};
 /// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
 ///
@@ -235,7 +235,10 @@ impl DiagnosticService {
 
     fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
         // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+        if matches!(
+            error.kind(),
+            ErrorKind::Interrupted | ErrorKind::BrokenPipe | ErrorKind::WouldBlock
+        ) {
             Ok(())
         } else {
             Err(error)

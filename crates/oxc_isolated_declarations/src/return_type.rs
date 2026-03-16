@@ -90,6 +90,7 @@ impl<'a> FunctionReturnType<'a> {
             }
             _ => None,
         } {
+            let reference_name: Atom = reference_name.into();
             let is_defined_in_current_scope = if is_value {
                 visitor.value_bindings.contains(&reference_name)
             } else {
@@ -133,13 +134,13 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         if self.scope_depth == 0 {
-            self.value_bindings.push(ident.name);
+            self.value_bindings.push(ident.name.into());
         }
     }
 
     fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
         if self.scope_depth == 0 {
-            self.type_bindings.push(decl.id.name);
+            self.type_bindings.push(decl.id.name.into());
         }
     }
 

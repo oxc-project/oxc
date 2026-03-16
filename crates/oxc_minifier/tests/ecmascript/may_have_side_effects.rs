@@ -18,6 +18,7 @@ struct Ctx {
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
+    property_write_side_effects: bool,
     unknown_global_side_effects: bool,
 }
 
@@ -32,6 +33,7 @@ impl Default for Ctx {
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
+            property_write_side_effects: true,
             unknown_global_side_effects: true,
         }
     }
@@ -56,6 +58,10 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
         self.property_read_side_effects
     }
 
+    fn property_write_side_effects(&self) -> bool {
+        self.property_write_side_effects
+    }
+
     fn unknown_global_side_effects(&self) -> bool {
         self.unknown_global_side_effects
     }
@@ -65,6 +71,20 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 fn test(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     test_with_ctx(source_text, &ctx, expected);
+}
+
+#[track_caller]
+fn test_ts(source_text: &str, expected: bool) {
+    let ctx = Ctx::default();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::tsx()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
 }
 
 #[track_caller]
@@ -207,9 +227,14 @@ fn closure_compiler_tests() {
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
     test("tempFunc = templateFunction`template`", true);
-    test("new RegExp('foobar', 'i')", false);
-    test("new RegExp('foobar', 2)", true);
-    test("new RegExp(SomethingWacky(), 'i')", true);
+    // RegExp is validated using the regex parser to determine if it's pure.
+    // Valid patterns are pure, invalid patterns have side effects (throw SyntaxError).
+    // https://github.com/oxc-project/oxc/issues/18050
+    test("new RegExp('foobar', 'i')", false); // Valid pattern and flags
+    test("new RegExp('foobar', 2)", true); // Non-string flags, can't validate
+    test("new RegExp(SomethingWacky(), 'i')", true); // Non-literal pattern, can't validate
+    test("new RegExp('[')", true); // Invalid pattern
+    test("new RegExp('a', 'xyz')", true); // Invalid flags
     // test("new Array()", false);
     // test("new Array", false);
     // test("new Array(4)", false);
@@ -234,7 +259,9 @@ fn closure_compiler_tests() {
     // test("({},[]).foo = 2;", false);
     test("delete a.b", true);
     test("Math.random();", false);
-    test("Math.random(Math);", true);
+    // `Math` is a known global, so accessing it is side-effect-free.
+    test("Math.random(Math);", false);
+    test_with_global_variables("Math.random(seed);", &["seed"], true);
     // test("[1, 1].foo;", false);
     // test("export var x = 0;", true);
     // test("export let x = 0;", true);
@@ -283,10 +310,11 @@ fn closure_compiler_tests() {
     test("new Object(...true)", true);
 
     // OBJECT_SPREAD
-    // These could all invoke getters.
+    // Spreading unknown identifiers could invoke getters.
     test("({...x})", true);
-    test("({...{}})", true);
-    test("({...{a:1}})", true);
+    // Spreading object literals is side-effect-free if the properties are.
+    test("({...{}})", false);
+    test("({...{a:1}})", false);
     test("({...{a:i++}})", true);
     test("({...{a:f()}})", true);
     test("({...f()})", true);
@@ -684,6 +712,16 @@ fn test_object_expression() {
     test("({...`foo${foo}`})", true);
     test("({...`foo${foo()}`})", true);
     test("({...foo()})", true);
+    // Spreading object literals
+    test("({...{}})", false);
+    test("({...{a: 1}})", false);
+    test("({...{a: foo()}})", true);
+    test("({...{[foo()]: 1}})", true);
+    // Getters are invoked when spreading
+    test("({...{get a() {}}})", true);
+    test("({...{get a() { return 1 }}})", true);
+    // Setters are NOT invoked when spreading
+    test("({...{set a(v) {}}})", false);
 }
 
 #[test]
@@ -738,6 +776,17 @@ fn test_class_expression() {
     test("(class { static a = foo() })", true);
     test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
+    // AccessorProperty with value
+    test("(class { accessor a = 1; })", false);
+    test("(class { accessor a = foo(); })", true);
+    test("(class { static accessor a = 1; })", false);
+    test("(class { static accessor a = foo(); })", true);
+    test("(class { #x; static { #x in {}; } })", false);
+    test("(class { #x; static { #x in foo(); } })", true);
+    // MethodDefinition with parameter decorators (TypeScript feature)
+    test_ts("(class { a(@foo x) {} })", true);
+    test_ts("(class { a(@foo x, @bar y) {} })", true);
+    test_ts("(class { a(x) {} })", false);
 }
 
 #[test]
@@ -775,9 +824,102 @@ fn test_property_access() {
     test("[...[1]][0]", false);
     test("[...'a'][0]", false);
     test("[...'a'][1]", true);
+
+    test("import.meta.url", true);
+    test("import.meta['url']", true);
+    test("import.meta[`url`]", true);
+    test_in_function("function f() { new.target.url }", true);
     test("[...'😀'][0]", false);
     test("[...'😀'][1]", true);
     test("[...a, 1][0]", true); // "...a" may have a sideeffect
+}
+
+/// Tests for known global identifiers and property reads.
+/// Ported from Rolldown's global_reference.rs / GLOBAL_IDENT set.
+#[test]
+fn test_known_global_identifiers() {
+    // Known globals (in GLOBALS["builtin"]) should be side-effect-free to access
+    test("Math", false);
+    test("Array", false);
+    test("Object", false);
+    test("JSON", false);
+    test("Reflect", false);
+    test("Symbol", false);
+    test("Promise", false);
+    test("Map", false);
+    test("Set", false);
+    test("WeakMap", false);
+    test("WeakSet", false);
+    test("parseInt", false);
+    test("parseFloat", false);
+    test("isNaN", false);
+    test("isFinite", false);
+    test("encodeURI", false);
+    test("decodeURI", false);
+    test("globalThis", false);
+
+    // Browser/node globals need to be explicitly included in the global set
+    test_with_global_variables("console", &["console"], false);
+    test_with_global_variables("document", &["document"], false);
+    test_with_global_variables("window", &["window"], false);
+    test_with_global_variables("fetch", &["fetch"], false);
+
+    // Unknown globals should have side effects when marked as global references
+    test_with_global_variables("SomeUnknownGlobal", &["SomeUnknownGlobal"], true);
+}
+
+#[test]
+fn test_known_global_property_reads() {
+    // Math properties
+    test("Math.PI", false);
+    test("Math.E", false);
+    test("Math.abs", false);
+    test("Math.floor", false);
+    test("Math.random", false);
+    test("Math.unknownProp", true);
+
+    // Object properties
+    test("Object.keys", false);
+    test("Object.create", false);
+    test("Object.assign", false);
+    test("Object.prototype", false);
+    test("Object.unknownProp", true);
+
+    // Reflect properties
+    test("Reflect.apply", false);
+    test("Reflect.get", false);
+    test("Reflect.unknownProp", true);
+
+    // Symbol properties
+    test("Symbol.iterator", false);
+    test("Symbol.asyncIterator", false);
+    test("Symbol.unknownProp", true);
+
+    // JSON properties
+    test("JSON.parse", false);
+    test("JSON.stringify", false);
+    test("JSON.unknownProp", true);
+
+    // console needs to be explicitly in the global set
+    test_with_global_variables("console.log", &["console"], false);
+    test_with_global_variables("console.error", &["console"], false);
+    test_with_global_variables("console.warn", &["console"], false);
+    test_with_global_variables("console.unknownMethod", &["console"], true);
+}
+
+#[test]
+fn test_known_global_property_deep() {
+    // 3-level chains on Object.prototype
+    test("Object.prototype.hasOwnProperty", false);
+    test("Object.prototype.isPrototypeOf", false);
+    test("Object.prototype.toString", false);
+    test("Object.prototype.valueOf", false);
+    test("Object.prototype.propertyIsEnumerable", false);
+    test("Object.prototype.unknownProp", true);
+
+    // Non-Object 3-level chains are not supported
+    test("Math.PI.toString", true);
+    test("Array.prototype.push", true);
 }
 
 // `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -797,6 +939,7 @@ fn test_new_expressions() {
     test("new EvalError", false);
     test("new RangeError", false);
     test("new ReferenceError", false);
+    // RegExp() with no arguments is valid (returns /(?:)/)
     test("new RegExp", false);
     test("new SyntaxError", false);
     test("new TypeError", false);
@@ -804,6 +947,51 @@ fn test_new_expressions() {
     test("new Number", false);
     test("new Object", false);
     test("new String", false);
+
+    // TypedArray constructors
+    test("new Int8Array", false);
+    test("new Uint8Array", false);
+    test("new Uint8ClampedArray", false);
+    test("new Int16Array", false);
+    test("new Uint16Array", false);
+    test("new Int32Array", false);
+    test("new Uint32Array", false);
+    test("new Float32Array", false);
+    test("new Float64Array", false);
+    test("new BigInt64Array", false);
+    test("new BigUint64Array", false);
+    // DataView requires an ArrayBuffer argument; calling without one throws
+    test("new DataView", true);
+
+    // Collection constructors iterate their argument via Symbol.iterator,
+    // so they are only pure with no args, null, undefined, or array literals.
+    // null/undefined — pure
+    test("new Set(null)", false);
+    test("new Map(null)", false);
+    test("new WeakSet(null)", false);
+    test("new WeakMap(null)", false);
+    test("new Set(undefined)", false);
+    test("new Map(undefined)", false);
+    // Array literal — pure
+    test("new Set([])", false);
+    test("new Set([1, 2, 3])", false);
+    test("new Map([])", false);
+    test("new Map([[1, 2], [3, 4]])", false);
+    test("new WeakSet([])", false);
+    test("new WeakMap([])", false);
+    test("new WeakMap([[{}, 1]])", false);
+    // Variable reference — NOT pure (could have custom Symbol.iterator)
+    test("new Set(x)", true);
+    test("new Map(x)", true);
+    test("new WeakSet(x)", true);
+    test("new WeakMap(x)", true);
+    // Non-array literals — NOT pure
+    test("new Set(false)", true);
+    test("new Map({})", true);
+    // Map with non-array entries — NOT pure
+    test("new Map([x])", true);
+    test("new Map([x, []])", true);
+    test("new Map([[], x])", true);
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -822,6 +1010,7 @@ fn test_call_expressions() {
     test("EvalError()", false);
     test("RangeError()", false);
     test("ReferenceError()", false);
+    // RegExp() with no arguments is valid (returns /(?:)/)
     test("RegExp()", false);
     test("SyntaxError()", false);
     test("TypeError()", false);
@@ -830,6 +1019,33 @@ fn test_call_expressions() {
     test("Object()", false);
     test("String()", false);
     test("Symbol()", false);
+    test("String({})", false);
+    test("String([1, 2, 3])", false);
+    test("String({ toString() { return 'x' } })", true);
+    test("String(obj)", true);
+    test("Number({})", false);
+    test("Number({ valueOf() { return 1 } })", true);
+    test("Number(Symbol())", true);
+    test("Number(obj)", true);
+    test("Boolean({})", false);
+    test("Boolean(obj)", false);
+    test("BigInt()", true);
+    test("BigInt(123)", false);
+    test("BigInt(123n)", false);
+    test("BigInt(true)", false);
+    test("BigInt(false)", false);
+    test("BigInt('456')", false);
+    test("BigInt('abc')", true);
+    test("BigInt(1.5)", true);
+    test("BigInt(undefined)", true);
+    test("BigInt(null)", true);
+    test("BigInt({})", true);
+    test("BigInt({ valueOf() { return 1 } })", true);
+    test("BigInt(obj)", true);
+    test("Symbol({})", false);
+    test("Symbol({ toString() { return 'x' } })", true);
+    test("Symbol(obj)", true);
+    test("Symbol(Symbol())", true);
 
     test("decodeURI()", false);
     test("decodeURIComponent()", false);
@@ -1012,10 +1228,23 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
+    // Non-literal keys: when property_read_side_effects is None,
+    // only the key expression and object are checked for side effects
+    test_with_ctx("foo[bar]", &all_ctx, true);
+    test_with_ctx("foo[bar]", &none_ctx, false);
+    test_with_ctx("foo[bar()]", &all_ctx, true);
+    test_with_ctx("foo[bar()]", &none_ctx, true); // bar() itself has side effects
     test_with_ctx("foo.#bar", &all_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
+
+    // ObjectExpression spread: when property_read_side_effects is None,
+    // spread delegates to the argument's own side effects
+    test_with_ctx("({...foo})", &all_ctx, true);
+    test_with_ctx("({...foo})", &none_ctx, false);
+    test_with_ctx("({...foo()})", &all_ctx, true);
+    test_with_ctx("({...foo()})", &none_ctx, true); // foo() itself has side effects
 }
 
 #[test]
@@ -1124,4 +1353,56 @@ fn test_assignment_targets() {
     test_assign_target("a.#b = 1", false);
     test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
     test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
+}
+
+#[test]
+fn test_property_write_side_effects_support() {
+    // With property_write_side_effects: true (default), all writes have side effects
+    let write_ctx = Ctx { property_write_side_effects: true, ..Default::default() };
+    test_with_ctx("a.b = 1", &write_ctx, true);
+    test_with_ctx("a.b += 1", &write_ctx, true);
+    test_with_ctx("a.b++", &write_ctx, true);
+
+    // With property_write_side_effects: false, simple assignment is side-effect-free
+    let no_write_ctx = Ctx {
+        property_write_side_effects: false,
+        property_read_side_effects: PropertyReadSideEffects::All,
+        ..Default::default()
+    };
+    test_with_ctx("a.b = 1", &no_write_ctx, false); // simple assign, no read
+    test_with_ctx("a['b'] = 1", &no_write_ctx, false);
+    test_with_ctx("a.#b = 1", &no_write_ctx, false);
+
+    // Compound assignments have an implicit read — still side-effectful when reads have side effects
+    test_with_ctx("a.b += 1", &no_write_ctx, true);
+    test_with_ctx("a.b -= 1", &no_write_ctx, true);
+    test_with_ctx("a.b &&= 1", &no_write_ctx, true);
+    test_with_ctx("a['b'] += 1", &no_write_ctx, true);
+    test_with_ctx("a.#b += 1", &no_write_ctx, true);
+
+    // Update expressions have an implicit read
+    test_with_ctx("a.b++", &no_write_ctx, false);
+    test_with_ctx("a.b--", &no_write_ctx, false);
+    test_with_ctx("++a.b", &no_write_ctx, false);
+    test_with_ctx("a['b']++", &no_write_ctx, false);
+    test_with_ctx("a.#b++", &no_write_ctx, false);
+
+    // Compound assignments and updates always have side effects due to implicit coercions
+    // (ToPrimitive/ToNumeric), even with both write and read side effects off
+    let no_side_effects_ctx = Ctx {
+        property_write_side_effects: false,
+        property_read_side_effects: PropertyReadSideEffects::None,
+        ..Default::default()
+    };
+    test_with_ctx("a.b = 1", &no_side_effects_ctx, false); // simple assign is free
+    test_with_ctx("a.b += 1", &no_side_effects_ctx, true); // compound: ToNumeric coercion
+    test_with_ctx("a.b++", &no_side_effects_ctx, false); // update: ToNumeric coercion
+    test_with_ctx("a['b'] += 1", &no_side_effects_ctx, true);
+    test_with_ctx("a['b']++", &no_side_effects_ctx, false);
+    test_with_ctx("a.#b += 1", &no_side_effects_ctx, true);
+    test_with_ctx("a.#b++", &no_side_effects_ctx, false);
+
+    // Sub-expression side effects still propagate
+    test_with_ctx("(foo()).b = 1", &no_side_effects_ctx, true);
+    test_with_ctx("a[foo()] = 1", &no_side_effects_ctx, true);
 }

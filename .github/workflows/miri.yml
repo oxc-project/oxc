@@ -34,24 +34,38 @@ jobs:
   miri:
     name: Miri
     runs-on: ubuntu-latest
+    env:
+      # FIXME: cargo-miri is broken on nightly-2026-02-12.
+      # https://github.com/rust-lang/miri/issues/4855
+      MIRI_TOOLCHAIN: nightly-2026-02-11
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+        uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          packages: oxc_allocator,oxc_ast,oxc_data_structures,oxc_parser,oxc_transformer
+          paths: .github/workflows/miri.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+        if: steps.filter.outputs.changed == 'true'
         with:
           cache-key: miri
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install Miri
+        if: steps.filter.outputs.changed == 'true'
         run: |
-          rustup toolchain install nightly --component miri
-          rustup override set nightly
-          cargo miri setup
+          rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
+          cargo +"${MIRI_TOOLCHAIN}" miri setup
 
       # `--lib --bins --tests` omits doctests, which Miri can't run
       # https://github.com/oxc-project/oxc/pull/11092
       - name: Test with Miri
+        if: steps.filter.outputs.changed == 'true'
         run: |
-          cargo miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
-          cargo miri test --lib --bins --tests -p oxc_parser -p oxc_transformer
+          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
+          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests -p oxc_parser -p oxc_transformer

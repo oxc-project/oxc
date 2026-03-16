@@ -4,7 +4,7 @@ use oxc_allocator::Dummy;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 /// Fatal parsing error.
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct FatalError {
     pub errors_len: usize,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
@@ -57,6 +57,20 @@ impl<'a> ParserImpl<'a> {
         self.errors.push(error);
     }
 
+    /// Defer an error that is only valid if the file is a Script (not a Module).
+    ///
+    /// For `ModuleKind::Unambiguous`, we don't know the module type until parsing is complete.
+    /// Errors like "await outside async function" are only valid if the file ends up being
+    /// a Script. If ESM syntax is found, the file becomes a Module and these errors are discarded.
+    #[cold]
+    pub(crate) fn error_on_script(&mut self, error: OxcDiagnostic) {
+        if self.source_type.is_unambiguous() {
+            self.deferred_script_errors.push(error);
+        } else {
+            self.errors.push(error);
+        }
+    }
+
     /// Count of all parser and lexer errors.
     pub(crate) fn errors_count(&self) -> usize {
         self.errors.len() + self.lexer.errors.len()
@@ -91,7 +105,7 @@ impl<'a> ParserImpl<'a> {
 // error, we detect these patterns and provide helpful guidance on how to resolve the conflict.
 //
 // Inspired by rust-lang/rust#106242
-impl ParserImpl<'_> {
+impl<C: Config> ParserImpl<'_, C> {
     /// Check if the current position looks like a merge conflict marker.
     ///
     /// Detects the following Git conflict markers:

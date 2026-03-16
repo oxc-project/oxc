@@ -120,25 +120,30 @@ fn remove_unused_class_declaration() {
 #[test]
 fn keep_in_script_mode() {
     let options = CompressOptions::smallest();
-    let source_type = SourceType::cjs();
+    let source_type = SourceType::cjs().with_script(true);
     test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
     test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
+    test_options_source_type("var x = 1; x = 2;", "", SourceType::cjs(), &options);
 
     test_options_source_type("class C {}", "class C {}", source_type, &options);
 }
 
 #[test]
 fn remove_unused_import_specifiers() {
-    let options = CompressOptions {
-        treeshake: TreeShakeOptions {
-            invalid_import_side_effects: false,
-            ..TreeShakeOptions::default()
-        },
-        ..CompressOptions::smallest()
-    };
+    let options = CompressOptions::smallest();
 
     test_options("import a from 'a'", "import 'a';", &options);
     test_options("import a from 'a'; foo()", "import 'a'; foo();", &options);
+    test_same_options(
+        "import a from 'a'",
+        &CompressOptions {
+            treeshake: TreeShakeOptions {
+                invalid_import_side_effects: true,
+                ..TreeShakeOptions::default()
+            },
+            ..CompressOptions::smallest()
+        },
+    );
 
     test_options("import { a } from 'a'", "import 'a';", &options);
     test_options("import { a, b } from 'a'", "import 'a';", &options);
@@ -196,31 +201,39 @@ fn remove_unused_import_specifiers() {
 
 #[test]
 fn remove_unused_import_source_statement() {
-    let options = CompressOptions {
-        treeshake: TreeShakeOptions {
-            invalid_import_side_effects: false,
-            ..TreeShakeOptions::default()
-        },
-        ..CompressOptions::smallest()
-    };
+    let options = CompressOptions::smallest();
 
     test_options("import source a from 'a'", "", &options);
     test_options("import source a from 'a'; if (false) { console.log(a) }", "", &options);
     test_same_options("import source a from 'a'; foo(a);", &options);
+    test_same_options(
+        "import source a from 'a'",
+        &CompressOptions {
+            treeshake: TreeShakeOptions {
+                invalid_import_side_effects: true,
+                ..TreeShakeOptions::default()
+            },
+            ..CompressOptions::smallest()
+        },
+    );
 }
 
 #[test]
 fn remove_unused_import_defer_statements() {
-    let options = CompressOptions {
-        treeshake: TreeShakeOptions {
-            invalid_import_side_effects: false,
-            ..TreeShakeOptions::default()
-        },
-        ..CompressOptions::smallest()
-    };
+    let options = CompressOptions::smallest();
 
     test_options("import defer * as a from 'a'", "", &options);
     test_options("import defer * as a from 'a'; if (false) { console.log(a.foo) }", "", &options);
     test_same_options("import defer * as a from 'a'; foo(a);", &options);
     test_same_options("import defer * as a from 'a'; foo(a.bar);", &options);
+    test_same_options(
+        "import defer * as a from 'a'",
+        &CompressOptions {
+            treeshake: TreeShakeOptions {
+                invalid_import_side_effects: true,
+                ..TreeShakeOptions::default()
+            },
+            ..CompressOptions::smallest()
+        },
+    );
 }

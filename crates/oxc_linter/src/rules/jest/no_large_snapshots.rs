@@ -76,7 +76,7 @@ declare_oxc_lint!(
     /// good as its review and as such keeping it short, sweet, and readable is
     /// important to allow for thorough reviews.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

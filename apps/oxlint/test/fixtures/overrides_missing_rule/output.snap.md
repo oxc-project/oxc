@@ -3,13 +3,11 @@
 
 # stdout
 ```
-Failed to build configuration.
+Failed to build configuration from <fixture>/.oxlintrc.json.
 
   x Rule 'missing' not found in plugin 'basic-custom-plugin'
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

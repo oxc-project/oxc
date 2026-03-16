@@ -1,0 +1,6 @@
+{
+  "rules": {
+    // `no-debugger` does not accept options; this should error when an options object is provided
+    "eslint/no-debugger": ["error", { "some": "option" }]
+  }
+}

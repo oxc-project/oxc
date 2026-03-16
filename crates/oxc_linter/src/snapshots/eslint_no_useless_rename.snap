@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-rename): Do not rename import, export, or destructured assignments to the same name
    ╭─[no_useless_rename.tsx:1:6]
  1 │ let {foo: foo} = obj;

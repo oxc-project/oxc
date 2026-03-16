@@ -1,5 +1,5 @@
 use super::PeepholeOptimizations;
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
@@ -13,7 +13,7 @@ impl<'a> PeepholeOptimizations {
     /// - Merges or removes consecutive empty cases within the switch to simplify its structure.
     /// - Eliminates the entire `switch` statement if it contains no meaningful cases or logic.
     /// - Converts the `switch` if it contains only one or two cases to `if`/`else` statements.
-    pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::try_remove_last_break_from_case(stmt, ctx);
         Self::collapse_empty_switch_cases(stmt, ctx);
         Self::remove_empty_switch(stmt, ctx);
@@ -22,7 +22,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to remove the last `break` statement from the last case of a switch statement.
-    fn try_remove_last_break_from_case(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn try_remove_last_break_from_case(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -44,7 +44,7 @@ impl<'a> PeepholeOptimizations {
     ///   non-empty case or case with side-effect-producing expressions backward to the last case.
     /// - All cases in the identified removable suffix are eliminated, except for the last case,
     ///   which is preserved and its test is removed (if applicable).
-    fn collapse_empty_switch_cases(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn collapse_empty_switch_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -100,7 +100,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Removes an empty switch statement from the given AST statement.
-    fn remove_empty_switch(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn remove_empty_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -124,7 +124,7 @@ impl<'a> PeepholeOptimizations {
     /// - One of the cases represents the `default` case, and the other defines a condition (`test`).
     /// - Both cases can be safely inlined without reordering or modifying program behavior.
     /// - Both cases are terminated properly (e.g., with a `break` statement).
-    fn fold_switch_with_two_cases(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn fold_switch_with_two_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -166,7 +166,7 @@ impl<'a> PeepholeOptimizations {
 
     fn create_if_block_from_switch_case(
         mut vec: Vec<'a, Statement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         if vec.len() == 1 && matches!(vec.first(), Some(Statement::BlockStatement(_))) {
             vec.pop().unwrap()
@@ -179,7 +179,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_switch_with_one_case(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn fold_switch_with_one_case(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
         };
@@ -239,7 +239,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_break_from_statement(stmt: &mut Statement<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn remove_break_from_statement(stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
             Statement::BreakStatement(break_stmt) => {
                 if break_stmt.label.is_none() {
@@ -263,7 +263,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>, ctx: &Ctx<'a, '_>) -> bool {
+    fn remove_last_break(stmt: &mut Vec<'a, Statement<'a>>, ctx: &TraverseCtx<'a>) -> bool {
         if stmt.is_empty() {
             return false;
         }
@@ -296,7 +296,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
             return false;
         }

@@ -1,10 +1,31 @@
-commit: f5ccf434
+commit: c9e7428b
 
 estree_typescript Summary:
-AST Parsed     : 9778/9778 (100.00%)
-Positive Passed: 9772/9778 (99.94%)
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
-`await` is only allowed within async functions and at the top levels of modules
+AST Parsed     : 9764/9764 (100.00%)
+Positive Passed: 9741/9764 (99.76%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
+A 'return' statement can only be used within a function body.
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
+Lexical declaration cannot appear in a single-statement context
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleDetectionIsolatedModulesCjsFileScope.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tripleSlashTypesReferenceWithMissingExports.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/cjsErrors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emitModuleCommonJS.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
@@ -16,3 +37,15 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEnti
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
 
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsCjsFromJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
+A 'return' statement can only be used within a function body.

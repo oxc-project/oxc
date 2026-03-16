@@ -35,13 +35,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
 
-        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
+        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
+        {
             can_avoid_parentheses(arrow, f)
         } else {
             false
         };
 
-        let this_param = get_this_param(self.parent);
+        let this_param = get_this_param(self.parent());
 
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());
@@ -53,7 +54,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::NoParameters
         } else if can_hug || {
             // `self`: FormalParameters
-            // `self.parent`: ArrowFunctionExpression/Function
+            // `self.parent()`: ArrowFunctionExpression/Function
             // `self.grand_parent()`: CallExpression
             if let AstNodes::CallExpression(call) = self.grand_parent() {
                 // Check if parent is a test call, but exclude angular test wrappers
@@ -113,7 +114,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
                 if self.optional {
                     write!(f, "?");
                 }
-                write!(f, self.type_annotation());
+
+                if let Some(type_ann) = self.type_annotation() {
+                    if f.comments().has_comment_before(type_ann.span().start) {
+                        write!(f, space());
+                    }
+                    write!(f, type_ann);
+                }
             })
             .memoized();
 
@@ -131,11 +138,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
             }
         });
 
-        let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
-            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent {
+        let is_hug_parameter = matches!(self.parent(), AstNodes::FormalParameters(params) if {
+            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent() {
                 (can_avoid_parentheses(arrow, f), None)
             } else {
-                (false, get_this_param(params.parent))
+                (false, get_this_param(params.parent()))
             };
             should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
         });
@@ -213,6 +220,7 @@ pub struct ParameterList<'a, 'b> {
     list: &'b AstNode<'a, FormalParameters<'a>>,
     this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
+    trailing_separator_override: Option<TrailingSeparator>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -254,7 +262,16 @@ impl<'a, 'b> ParameterList<'a, 'b> {
         this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
-        Self { list, this, layout: Some(layout) }
+        Self { list, this, layout: Some(layout), trailing_separator_override: None }
+    }
+
+    /// Suppresses trailing commas regardless of the `trailingComma` option.
+    /// This is used for fragment formatting like `v-for="(item, index) in items"`.
+    ///                                                    ^^^^^^^^^^^
+    #[must_use]
+    pub fn with_omit_trailing_separator(mut self) -> Self {
+        self.trailing_separator_override = Some(TrailingSeparator::Omit);
+        self
     }
 }
 
@@ -269,6 +286,8 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 // added there either.
                 let trailing_separator = if has_trailing_rest {
                     TrailingSeparator::Disallowed
+                } else if let Some(ts) = self.trailing_separator_override {
+                    ts
                 } else {
                     FormatTrailingCommas::All.trailing_separator(f.options())
                 };

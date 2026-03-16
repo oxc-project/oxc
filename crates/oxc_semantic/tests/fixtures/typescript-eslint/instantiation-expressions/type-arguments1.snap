@@ -21,7 +21,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
                 "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
-                "node_id": 11
+                "node_id": 11,
+                "scope_id": 1
               }
             ]
           }
@@ -43,14 +44,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
                 "flags": "ReferenceFlags(Type)",
                 "id": 2,
                 "name": "T",
-                "node_id": 24
+                "node_id": 24,
+                "scope_id": 2
               }
             ]
           }
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -64,7 +66,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Foo",
-            "node_id": 21
+            "node_id": 21,
+            "scope_id": 2
           }
         ]
       },
@@ -78,7 +81,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "Bar",
-            "node_id": 27
+            "node_id": 27,
+            "scope_id": 0
           }
         ]
       }

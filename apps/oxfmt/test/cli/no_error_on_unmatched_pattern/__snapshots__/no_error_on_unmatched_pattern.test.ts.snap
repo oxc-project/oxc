@@ -24,6 +24,27 @@ Expected at least one target file
 --------------------"
 `;
 
+exports[`no_error_on_unmatched_pattern > should handle unmatched glob patterns 1`] = `
+"--------------------
+arguments: --check __nonexistent__/**/*.js
+working directory: no_error_on_unmatched_pattern/fixtures
+exit code: 2
+--- STDOUT ---------
+
+--- STDERR ---------
+Expected at least one target file
+--------------------
+--------------------
+arguments: --check --no-error-on-unmatched-pattern __nonexistent__/**/*.js
+working directory: no_error_on_unmatched_pattern/fixtures
+exit code: 0
+--- STDOUT ---------
+
+--- STDERR ---------
+No files found matching the given patterns.
+--------------------"
+`;
+
 exports[`no_error_on_unmatched_pattern > should ignore ignored paths even when explicitly passed 1`] = `
 "--------------------
 arguments: --check --no-error-on-unmatched-pattern ignored-by-config/bad.js

@@ -22,7 +22,6 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
-    utils::default_true,
 };
 
 fn no_map_spread_diagnostic(
@@ -34,9 +33,9 @@ fn no_map_spread_diagnostic(
     assert!(!spans.is_empty());
     let mut spread_labels = spread.spread_spans().into_iter();
     let first_message = if spans.len() == 1 {
-        "It should be mutated in place"
+        "This spread allocates a new value on each iteration"
     } else {
-        "They should be mutated in place"
+        "These spreads allocate new values on each iteration"
     };
     let first = spread_labels.next().unwrap().label(first_message);
     let others = spread_labels.map(LabeledSpan::from);
@@ -52,26 +51,35 @@ fn no_map_spread_diagnostic(
                 "Spreading to modify object properties in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an object"), first])
-            .with_help("Consider using `Object.assign` instead"),
+            .with_help(
+                "If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading",
+            )
+            .with_note(
+                "`Object.assign` mutates the first argument. Disable this rule if copy-on-write behavior is required.",
+            ),
             // Array
             Spread::Array(_) => OxcDiagnostic::warn(
                 "Spreading to modify array elements in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an array"), first])
-            .with_help("Consider using `Array.prototype.concat` or `Array.prototype.push` instead"),
+            .with_help(
+                "If in-place mutation is acceptable, use `push` (or `concat` when semantics match) instead of spreading",
+            )
+            .with_note(
+                "`push` mutates the array. `concat` returns a new array and is not equivalent for every iterable.",
+            ),
         };
 
     diagnostic.and_labels(others).and_labels(returned_label)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMapSpreadConfig {
     /// Ignore mapped arrays that are re-read after the `map` call.
     ///
     /// Re-used arrays may rely on shallow copying behavior to avoid mutations.
     /// In these cases, `Object.assign` is not really more performant than spreads.
-    #[serde(default = "default_true")]
     ignore_rereads: bool,
     /// Ignore maps on arrays passed as parameters to a function.
     ///
@@ -97,7 +105,6 @@ pub struct NoMapSpreadConfig {
     ///     return arr.map(x => ({ ...x }));
     /// }
     /// ```
-    #[serde(default = "default_true")]
     ignore_args: bool,
     // todo: ignore_arrays?
 }
@@ -319,9 +326,7 @@ const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -124,7 +124,7 @@ declare_oxc_lint!(
     NoInstanceofBuiltins,
     unicorn,
     suspicious,
-    pending,
+    conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
 );
 
@@ -187,17 +187,45 @@ impl Rule for NoInstanceofBuiltins {
             return;
         }
 
+        let left_text = ctx.source_range(bin.left.span());
+
+        // Array.isArray() or Error.isError()
         if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
-            return;
-        }
-        if ctor_name == "Function" {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            let replacement = format!("{ctor_name}.isArray({left_text})");
+            let replacement = if ctor_name == "Error" {
+                format!("Error.isError({left_text})")
+            } else {
+                replacement
+            };
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
             return;
         }
 
+        // typeof x === 'function'
+        if ctor_name == "Function" {
+            let replacement = format!("typeof ({left_text}) === 'function'");
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
+            return;
+        }
+
+        // typeof x === 'string' / 'number' / 'boolean' / 'bigint' / 'symbol'
         if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
-            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            let typeof_type = match ctor_name {
+                "String" => "string",
+                "Number" => "number",
+                "Boolean" => "boolean",
+                "BigInt" => "bigint",
+                "Symbol" => "symbol",
+                _ => unreachable!(),
+            };
+            let replacement = format!("typeof ({left_text}) === '{typeof_type}'");
+            ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
+                fixer.replace(bin.span, replacement)
+            });
             return;
         }
 
@@ -337,35 +365,66 @@ fn test() {
         ("function foo(){return[]instanceof Array}", None),
         (
             "(
-				// comment
-				((
-					// comment
-					(
-						// comment
-						foo
-						// comment
-					)
-					// comment
-				))
-				// comment
-			)
-			// comment before instanceof
+                // comment
+                ((
+                    // comment
+                    (
+                        // comment
+                        foo
+                        // comment
+                    )
+                    // comment
+                ))
+                // comment
+            )
+            // comment before instanceof
             instanceof
-			// comment after instanceof
-			(
-				// comment
-				(
-					// comment
-					Array
-					// comment
-				)
-					// comment
-			)
-				// comment",
+            // comment after instanceof
+            (
+                // comment
+                (
+                    // comment
+                    Array
+                    // comment
+                )
+                    // comment
+            )
+                // comment",
             None,
         ),
     ];
 
+    let fix = vec![
+        // Array -> Array.isArray()
+        ("foo instanceof Array", "Array.isArray(foo)", None),
+        ("[] instanceof Array", "Array.isArray([])", None),
+        ("[1,2,3] instanceof Array === true", "Array.isArray([1,2,3]) === true", None),
+        ("arr instanceof Array", "Array.isArray(arr)", None),
+        ("obj.arr instanceof Array", "Array.isArray(obj.arr)", None),
+        // Function -> typeof x === 'function'
+        ("foo instanceof Function", "typeof (foo) === 'function'", None),
+        ("foo + bar instanceof Function", "typeof (foo + bar) === 'function'", None),
+        // String -> typeof x === 'string'
+        ("foo instanceof String", "typeof (foo) === 'string'", None),
+        ("(a ? b : c) instanceof String", "typeof ((a ? b : c)) === 'string'", None),
+        // Number -> typeof x === 'number'
+        ("foo instanceof Number", "typeof (foo) === 'number'", None),
+        ("(a in b) instanceof Number", "typeof ((a in b)) === 'number'", None),
+        // Boolean -> typeof x === 'boolean'
+        ("foo instanceof Boolean", "typeof (foo) === 'boolean'", None),
+        // BigInt -> typeof x === 'bigint'
+        ("foo instanceof BigInt", "typeof (foo) === 'bigint'", None),
+        // Symbol -> typeof x === 'symbol'
+        ("foo instanceof Symbol", "typeof (foo) === 'symbol'", None),
+        // Error -> Error.isError() when useErrorIsError is true
+        (
+            "err instanceof Error",
+            "Error.isError(err)",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+    ];
+
     Tester::new(NoInstanceofBuiltins::NAME, NoInstanceofBuiltins::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

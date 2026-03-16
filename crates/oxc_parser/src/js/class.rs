@@ -4,7 +4,7 @@ use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
@@ -14,7 +14,7 @@ use super::FunctionKind;
 type ImplementsWithKeywordSpan<'a> = (Span, Vec<'a, TSClassImplements<'a>>);
 
 /// Section 15.7 Class Definitions
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     // `start_span` points at the start of all decoractors and `class` keyword.
     pub(crate) fn parse_class_statement(
         &mut self,
@@ -146,6 +146,9 @@ impl<'a> ParserImpl<'a> {
                         ));
                     }
                     let implements_kw_span = self.cur_token().span();
+                    if !self.is_ts {
+                        self.error(diagnostics::implements_clause_in_ts(implements_kw_span));
+                    }
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
                     } else {
@@ -292,31 +295,13 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
 
-            // No modifiers except `static` and `readonly` are valid here, and they must appear in that order
+            // No modifiers except `static` and `readonly` are valid here
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::READONLY | ModifierFlags::STATIC,
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
-            if modifiers.contains_all_flags(ModifierFlags::READONLY | ModifierFlags::STATIC) {
-                // Has both `readonly` and `static` modifiers. Make sure `static` comes before `readonly`.
-                let mut has_seen_readonly_modifier = false;
-                for modifier in modifiers.iter() {
-                    match modifier.kind {
-                        ModifierKind::Readonly => has_seen_readonly_modifier = true,
-                        ModifierKind::Static => {
-                            if has_seen_readonly_modifier {
-                                self.error(diagnostics::modifier_must_precede_other_modifier(
-                                    modifier,
-                                    ModifierKind::Readonly,
-                                ));
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
 
             return ClassElement::TSIndexSignature(
                 self.parse_index_signature_declaration(span, &modifiers),
@@ -472,6 +457,10 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
+        if let Some(modifier) = modifiers.iter().find(|m| m.kind == ModifierKind::Declare) {
+            self.error(diagnostics::declare_constructor(modifier.span));
+        }
+
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             false,
@@ -675,6 +664,14 @@ impl<'a> ParserImpl<'a> {
             });
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
+        if self.ctx.has_ambient()
+            && let Some(initializer) = &initializer
+            && !(modifiers.contains(ModifierKind::Readonly) && type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
+                initializer.span(),
+            ));
+        }
         self.ast.class_element_property_definition(
             self.end_span(span),
             r#type,
@@ -710,7 +707,7 @@ impl<'a> ParserImpl<'a> {
                 function.params.parameters_count(),
             ));
         } else if self.is_ts && function.params.items.first().unwrap().initializer.is_some() {
-            self.error(diagnostics::setter_with_assignment_pattern(function.params.span));
+            self.error(diagnostics::setter_with_initializer(function.params.span));
         }
     }
 
@@ -733,6 +730,12 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::constructor_generator(span));
                 }
             }
+        }
+
+        if self.ctx.has_ambient()
+            && let Some(body) = &method.value.body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
     }
 
@@ -775,6 +778,11 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_sig) = &method.value.type_parameters {
             // class Foo { constructor<T>(param: T ) {} }
             self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
+        }
+        if method.value.body.is_some()
+            && let Some(return_type) = &method.value.return_type
+        {
+            self.error(diagnostics::constructor_return_type(return_type.span));
         }
     }
 }

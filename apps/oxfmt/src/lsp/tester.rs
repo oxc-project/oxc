@@ -26,10 +26,6 @@ impl Tester<'_> {
         Uri::from_file_path(absolute_path).expect("could not convert current dir to uri")
     }
 
-    pub fn get_watcher_patterns(&self) -> Vec<String> {
-        self.create_formatter().get_watcher_patterns(self.options.clone())
-    }
-
     pub fn handle_configuration_change(
         &self,
         new_options: serde_json::Value,

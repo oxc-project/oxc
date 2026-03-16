@@ -47,33 +47,6 @@
         "reveal": "never"
       },
       "problemMatcher": ["$tsc"]
-    },
-    {
-      "type": "shell",
-      "command": "cd ./editors/vscode && npm run watch",
-      "windows": {
-        "command": "cd ./editors/vscode; npm run watch"
-      },
-      "label": "watch",
-      "isBackground": true,
-      "group": "build",
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      }
-    },
-    {
-      "type": "shell",
-      "command": "cd ./editors/vscode && pnpm build:dev",
-      "windows": {
-        "command": "cd ./editors/vscode; pnpm build:dev"
-      },
-      "label": "pnpm build:dev",
-      "group": "build",
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
-      }
     }
   ]
 }

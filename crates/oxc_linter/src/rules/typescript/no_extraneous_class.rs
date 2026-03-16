@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoExtraneousClass {
     /// Allow classes that only have a constructor.
     allow_constructor_only: bool,
@@ -114,9 +114,7 @@ fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic 
 
 impl Rule for NoExtraneousClass {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -188,22 +186,22 @@ fn test() {
     let pass = vec![
         (
             "
-			class Foo {
-			  public prop = 1;
-			  constructor() {}
-			}
+            class Foo {
+              public prop = 1;
+              constructor() {}
+            }
             ",
             None,
         ),
         (
             "
-			export class CClass extends BaseClass {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			  constructor() {}
-			}
+            export class CClass extends BaseClass {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+              constructor() {}
+            }
             ",
             None,
         ),
@@ -212,108 +210,143 @@ fn test() {
         ("class Foo { constructor() {} }", Some(json!([{ "allowConstructorOnly": true }]))),
         (
             "
-			export class Bar {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			}
-			      ",
+            export class Bar {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+            }
+                  ",
             Some(json!([{ "allowStaticOnly": true }])),
         ),
         (
             "
-			export default class {
-			  hello() {
-			    return 'I am foo!';
-			  }
-			}
-		    ",
+            export default class {
+              hello() {
+                return 'I am foo!';
+              }
+            }
+            ",
             None,
         ),
         ("@FooDecorator class Foo {} ", Some(json!([{ "allowWithDecorator": true }]))),
         (
             "
-			@FooDecorator
-			class Foo {
-			  constructor(foo: Foo) {
-			    foo.subscribe(a => {
-			      console.log(a);
-			    });
-			  }
-			}
+            @FooDecorator
+            class Foo {
+              constructor(foo: Foo) {
+                foo.subscribe(a => {
+                  console.log(a);
+                });
+              }
+            }
             ",
             Some(json!([{ "allowWithDecorator": true }])),
         ),
         ("abstract class Foo { abstract property: string; }", None),
         ("abstract class Foo { abstract method(): string; }", None),
+        (
+            "
+            class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            class Foo {
+              accessor prop = 'bar';
+              static bar() {
+                return false;
+              }
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              abstract accessor prop: string;
+            }
+                ",
+            None,
+        ),
     ];
 
     let fail = vec![
         ("class Foo {}", None),
         (
             "
-			class Foo {
-			  public prop = 1;
-			  constructor() {
-			    class Bar {
-			      static PROP = 2;
-			    }
-			  }
-			}
-			export class Bar {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			}
-			      ",
+            class Foo {
+              public prop = 1;
+              constructor() {
+                class Bar {
+                  static PROP = 2;
+                }
+              }
+            }
+            export class Bar {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+            }
+                  ",
             None,
         ),
         ("class Foo { constructor() {} }", None),
         (
             "
-			export class AClass {
-			  public static helper(): void {}
-			  private static privateHelper(): boolean {
-			    return true;
-			  }
-			  constructor() {
-			    class nestedClass {}
-			  }
-			}
-			      ",
+            export class AClass {
+              public static helper(): void {}
+              private static privateHelper(): boolean {
+                return true;
+              }
+              constructor() {
+                class nestedClass {}
+              }
+            }
+                  ",
             None,
         ),
         ("export default class { static hello() {} }", None),
         (
             "
-			@FooDecorator
-			class Foo {}
+            @FooDecorator
+            class Foo {}
             ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         (
             "
-			@FooDecorator({
+            @FooDecorator({
               wowThisDecoratorIsQuiteLarge: true,
               itShouldNotBeIncludedIn: 'the diagnostic span',
             })
-			class Foo {}
+            class Foo {}
             ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         (
             "
-			@FooDecorator
-			class Foo {
-			  constructor(foo: Foo) {
-			    foo.subscribe(a => {
-			      console.log(a);
-			    });
-			  }
-			}
-			",
+            @FooDecorator
+            class Foo {
+              constructor(foo: Foo) {
+                foo.subscribe(a => {
+                  console.log(a);
+                });
+              }
+            }
+            ",
             Some(json!([{ "allowWithDecorator": false }])),
         ),
         ("abstract class Foo {}", None),

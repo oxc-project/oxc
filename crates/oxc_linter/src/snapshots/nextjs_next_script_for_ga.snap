@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
    ╭─[next_script_for_ga.tsx:7:21]
  6 │                             <h1>Hello title</h1>

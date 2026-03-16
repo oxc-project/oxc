@@ -1,3 +1,5 @@
+use crate::config::LexerConfig as Config;
+
 use super::{
     Kind, Lexer,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
@@ -6,7 +8,7 @@ use super::{
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
 
-impl Lexer<'_> {
+impl<C: Config> Lexer<'_, C> {
     pub(super) fn line_break_handler(&mut self) -> Kind {
         self.token.set_is_on_new_line(true);
         self.trivia_builder.handle_newline();

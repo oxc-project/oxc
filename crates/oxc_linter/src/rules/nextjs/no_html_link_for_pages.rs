@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,6 +93,36 @@ impl Rule for NoHtmlLinkForPages {
             return;
         }
 
+        // Skip if target="_blank" - these links intentionally open in new tabs
+        // and don't need client-side navigation
+        let has_target_blank = jsx_opening_element.attributes.iter().any(|attr| {
+            if let JSXAttributeItem::Attribute(attr) = attr
+                && let JSXAttributeName::Identifier(name) = &attr.name
+                && name.name == "target"
+            {
+                return attr.value.as_ref().is_some_and(|value| {
+                    matches!(value, JSXAttributeValue::StringLiteral(str_lit) if str_lit.value == "_blank")
+                });
+            }
+            false
+        });
+
+        if has_target_blank {
+            return;
+        }
+
+        // Skip if download attribute is present - these are file downloads, not navigation
+        let has_download_attr = jsx_opening_element.attributes.iter().any(|attr| {
+            matches!(attr,
+                JSXAttributeItem::Attribute(attr)
+                if matches!(&attr.name, JSXAttributeName::Identifier(name) if name.name == "download")
+            )
+        });
+
+        if has_download_attr {
+            return;
+        }
+
         // Find the href attribute
         let href_attr = jsx_opening_element.attributes.iter().find_map(|attr| {
             if let JSXAttributeItem::Attribute(attr) = attr
@@ -109,15 +139,16 @@ impl Rule for NoHtmlLinkForPages {
         };
 
         // Check if href value indicates an internal link
+        // Only check string literal hrefs - ignore expression hrefs (dynamic values)
+        // to match upstream behavior and avoid false positives
         let is_internal_link = href_attr.value.as_ref().is_some_and(|value| {
             match value {
-                // String literal href
-                oxc_ast::ast::JSXAttributeValue::StringLiteral(str_lit) => {
+                // String literal href - check if it's an internal link
+                JSXAttributeValue::StringLiteral(str_lit) => {
                     let href_value = str_lit.value.as_str();
                     is_internal_page_link(href_value)
                 }
-                // Expression href - we'll be conservative and flag it as potentially internal
-                oxc_ast::ast::JSXAttributeValue::ExpressionContainer(_) => true,
+                // Expression href (dynamic) - ignore, can't statically determine if internal
                 _ => false,
             }
         });
@@ -215,18 +246,28 @@ fn test() {
         r"<div href='/about'>Not an anchor</div>",
         // Next.js Link component (correct usage)
         r"<Link href='/about'>About</Link>",
+        // Links with target="_blank" are allowed (opens in new tab, doesn't need client-side navigation)
+        r#"<a href="/about" target="_blank">About</a>"#,
+        r#"<a target="_blank" href="/about">About</a>"#,
+        r#"<a href="/about" target="_blank" rel="noopener noreferrer">About</a>"#,
+        // Download links are allowed (file downloads, not navigation)
+        r#"<a href="/static-file.csv" download>Download CSV</a>"#,
+        r#"<a href="/report.pdf" download="report.pdf">Download Report</a>"#,
+        r#"<a download href="/data.json">Download JSON</a>"#,
+        // Dynamic hrefs (expressions) are allowed - can't statically determine if internal
+        r"<a href={dynamicLink}>Dynamic</a>",
+        r"<a href={`/user/${userId}`}>User Profile</a>",
+        r"<a href={getUrl()}>Dynamic URL</a>",
     ];
 
     let fail = vec![
-        // Internal page links
+        // Internal page links with string literals
         r"<a href='/about'>About</a>",
         r"<a href='/contact/us'>Contact Us</a>",
         r"<a href='about'>About</a>",
         r"<a href='../contact'>Contact</a>",
         r"<a href='./about'>About</a>",
-        // Dynamic hrefs (expressions)
-        r"<a href={dynamicLink}>Dynamic</a>",
-        r"<a href={`/user/${userId}`}>User Profile</a>",
+        r"<a href='/'>Home</a>",
     ];
 
     Tester::new(NoHtmlLinkForPages::NAME, NoHtmlLinkForPages::PLUGIN, pass, fail)

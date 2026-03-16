@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
@@ -18,6 +18,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn prefer_keyboard_event_key_diagnostic(span: Span, deprecated_prop: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `.key` instead of `.{deprecated_prop}`"))
         .with_help(format!("The `{deprecated_prop}` property is deprecated."))
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key")
         .with_label(span)
 }
 
@@ -27,38 +28,42 @@ pub struct PreferKeyboardEventKey;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces the use of [`KeyboardEvent#key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) over [`KeyboardEvent#keyCode`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode) which is deprecated.
+    /// Enforces the use of [`KeyboardEvent#key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
+    /// over [`KeyboardEvent#keyCode`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode),
+    /// which is deprecated.
+    ///
     /// The `.key` property is also more semantic and readable.
     ///
     /// ### Why is this bad?
     ///
-    /// The `keyCode`, `which`, and `charCode` properties are deprecated and should be avoided in favor of the `key` property.
+    /// The `keyCode`, `which`, and `charCode` properties are deprecated
+    /// and should be avoided in favor of the `key` property.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// window.addEventListener('keydown', event => {
-    /// 	if (event.keyCode === 8) {
-    /// 		console.log('Backspace was pressed');
-    /// 	}
+    ///   if (event.keyCode === 8) {
+    ///     console.log('Backspace was pressed');
+    ///   }
     /// });
     ///
     /// window.addEventListener('keydown', event => {
-    /// 	console.log(event.keyCode);
+    ///   console.log(event.keyCode);
     /// });
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// window.addEventListener('keydown', event => {
-    ///     if (event.key === 'Backspace') {
-    ///     	console.log('Backspace was pressed');
-    ///     }
+    ///   if (event.key === 'Backspace') {
+    ///     console.log('Backspace was pressed');
+    ///   }
     /// });
     ///
     /// window.addEventListener('click', event => {
-    /// 	console.log(event.key);
+    ///   console.log(event.key);
     /// });
     /// ```
     PreferKeyboardEventKey,
@@ -353,10 +358,10 @@ impl PreferKeyboardEventKey {
 
         match second_arg {
             Argument::ArrowFunctionExpression(arrow) => {
-                matches!(callback, CallbackFunction::Arrow(cb) if std::ptr::eq(*cb, arrow.as_ref()))
+                matches!(callback, CallbackFunction::Arrow(cb) if cb.unstable_address() == arrow.address())
             }
             Argument::FunctionExpression(func) => {
-                matches!(callback, CallbackFunction::Regular(cb) if std::ptr::eq(*cb, func.as_ref()))
+                matches!(callback, CallbackFunction::Regular(cb) if cb.unstable_address() == func.address())
             }
             _ => false,
         }
@@ -512,37 +517,37 @@ fn test() {
 
     let pass = vec![
         "window.addEventListener('click', e => {
-				console.log(e.key);
-			})",
+                console.log(e.key);
+            })",
         "window.addEventListener('click', () => {
-				console.log(keyCode, which, charCode);
-				console.log(window.keyCode);
-			})",
+                console.log(keyCode, which, charCode);
+                console.log(window.keyCode);
+            })",
         "foo.addEventListener('click', (e, r, fg) => {
-				function a() {
-					if (true) {
-						{
-							{
-								const e = {};
-								const { charCode } = e;
-								console.log(e.keyCode, charCode);
-							}
-						}
-					}
-				}
-			});",
+                function a() {
+                    if (true) {
+                        {
+                            {
+                                const e = {};
+                                const { charCode } = e;
+                                console.log(e.keyCode, charCode);
+                            }
+                        }
+                    }
+                }
+            });",
         "const e = {}
-			foo.addEventListener('click', function (event) {
-				function a() {
-					if (true) {
-						{
-							{
-								console.log(e.keyCode);
-							}
-						}
-					}
-				}
-			});",
+            foo.addEventListener('click', function (event) {
+                function a() {
+                    if (true) {
+                        {
+                            {
+                                console.log(e.keyCode);
+                            }
+                        }
+                    }
+                }
+            });",
         "const { keyCode } = e",
         "const { charCode } = e",
         "const {a, b, c} = event",
@@ -553,609 +558,577 @@ fn test() {
         "const { keyCode: key } = e",
         "const { keyCode: abc } = e",
         "foo.addEventListener('keydown', e => {
-				(function (abc) {
-					if (e.key === 'ArrowLeft') return true;
-					const { charCode } = abc;
-				}())
-			})",
+                (function (abc) {
+                    if (e.key === 'ArrowLeft') return true;
+                    const { charCode } = abc;
+                }())
+            })",
         "foo.addEventListener('keydown', e => {
-					if (e.key === 'ArrowLeft') return true;
-				})",
+                    if (e.key === 'ArrowLeft') return true;
+                })",
         "a.addEventListener('keyup', function (event) {
-					const key = event.key;
-				})",
+                    const key = event.key;
+                })",
         "a.addEventListener('keyup', function (event) {
-					const { key } = event;
-				})",
+                    const { key } = event;
+                })",
         "foo.addEventListener('click', e => {
-					const good = {};
-					good.keyCode = '34';
-				});",
+                    const good = {};
+                    good.keyCode = '34';
+                });",
         "foo.addEventListener('click', e => {
-					const good = {};
-					good.charCode = '34';
-				});",
+                    const good = {};
+                    good.charCode = '34';
+                });",
         "foo.addEventListener('click', e => {
-					const good = {};
-					good.which = '34';
-				});",
+                    const good = {};
+                    good.which = '34';
+                });",
         "foo.addEventListener('click', e => {
-					const {keyCode: a, charCode: b, charCode: c} = e;
-				});",
+                    const {keyCode: a, charCode: b, charCode: c} = e;
+                });",
         "add.addEventListener('keyup', event => {
-					f.addEventList('some', e => {
-						const {charCode} = e;
-						console.log(event.key)
-					})
-				})",
+                    f.addEventList('some', e => {
+                        const {charCode} = e;
+                        console.log(event.key)
+                    })
+                })",
         "foo.addEventListener('click', e => {
-					{
-						const e = {};
-						console.log(e.keyCode);
-					}
-				});",
+                    {
+                        const e = {};
+                        console.log(e.keyCode);
+                    }
+                });",
     ];
 
     let fail = vec![
         "window.addEventListener('click', e => {
-				console.log(e.keyCode);
-			})",
+                console.log(e.keyCode);
+            })",
         "window.addEventListener('click', ({keyCode}) => {
-				console.log(keyCode);
-			})",
+                console.log(keyCode);
+            })",
         "window.addEventListener('click', ({which}) => {
-				if (which === 23) {
-					console.log('Wrong!')
-				}
-			})",
+                if (which === 23) {
+                    console.log('Wrong!')
+                }
+            })",
         "window.addEventListener('click', ({which, another}) => {
-				if (which === 23) {
-					console.log('Wrong!')
-				}
-			})",
+                if (which === 23) {
+                    console.log('Wrong!')
+                }
+            })",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 27) {
-				}
-			});",
+                if (event.keyCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', event => {
-				if (event.keyCode === 65) {}
-			});",
+                if (event.keyCode === 65) {}
+            });",
         "foo.addEventListener('click', event => {
-				if (event.keyCode === 10) {}
-			});",
+                if (event.keyCode === 10) {}
+            });",
         "foo.addEventListener('click', event => {
-				if (!event.keyCode) {}
-			});",
+                if (!event.keyCode) {}
+            });",
         "foo.addEventListener('click', a => {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', (a, b, c) => {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(a, b, c) {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(b) {
-				if (b.keyCode === 27) {
-				}
-			});",
+                if (b.keyCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', e => {
-				const {keyCode, a, b} = e;
-			});",
+                const {keyCode, a, b} = e;
+            });",
         "foo.addEventListener('click', e => {
-				const {a: keyCode, a, b} = e;
-			});",
+                const {a: keyCode, a, b} = e;
+            });",
         "add.addEventListener('keyup', event => {
-				f.addEventList('some', e => {
-					const {keyCode} = event;
-					console.log(event.key)
-				})
-			})",
+                f.addEventList('some', e => {
+                    const {keyCode} = event;
+                    console.log(event.key)
+                })
+            })",
         "window.addEventListener('click', e => {
-				console.log(e.charCode);
-			})",
+                console.log(e.charCode);
+            })",
         "foo11111111.addEventListener('click', event => {
-				if (event.charCode === 27) {
-				}
-			});",
+                if (event.charCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', a => {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', (a, b, c) => {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(a, b, c) {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(b) {
-				if (b.charCode === 27) {
-				}
-			});",
+                if (b.charCode === 27) {
+                }
+            });",
         "foo.addEventListener('click', e => {
-				const {charCode, a, b} = e;
-			});",
+                const {charCode, a, b} = e;
+            });",
         "foo.addEventListener('click', e => {
-				const {a: charCode, a, b} = e;
-			});",
+                const {a: charCode, a, b} = e;
+            });",
         "window.addEventListener('click', e => {
-				console.log(e.which);
-			})",
+                console.log(e.which);
+            })",
         "foo.addEventListener('click', event => {
-				if (event.which === 27) {
-				}
-			});",
+                if (event.which === 27) {
+                }
+            });",
         "foo.addEventListener('click', a => {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
         "foo.addEventListener('click', (a, b, c) => {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(a, b, c) {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
         "foo.addEventListener('click', function(b) {
-				if (b.which === 27) {
-				}
-			});",
+                if (b.which === 27) {
+                }
+            });",
         "foo.addEventListener('click', e => {
-				const {which, a, b} = e;
-			});",
+                const {which, a, b} = e;
+            });",
         "foo.addEventListener('click', e => {
-				const {a: which, a, b} = e;
-			});",
+                const {a: which, a, b} = e;
+            });",
         "foo.addEventListener('click', function(b) {
-				if (b.which === 27) {
-				}
-				const {keyCode} = b;
-				if (keyCode === 32) return 4;
-			});",
+                if (b.which === 27) {
+                }
+                const {keyCode} = b;
+                if (keyCode === 32) return 4;
+            });",
         "foo.addEventListener('click', function(b) {
-				if (b.which > 27) {
-				}
-				const {keyCode} = b;
-				if (keyCode === 32) return 4;
-			});",
+                if (b.which > 27) {
+                }
+                const {keyCode} = b;
+                if (keyCode === 32) return 4;
+            });",
         "const e = {}
-			foo.addEventListener('click', (e, r, fg) => {
-				function a() {
-					if (true) {
-						{
-							{
-								const { charCode } = e;
-								console.log(e.keyCode, charCode);
-							}
-						}
-					}
-				}
-			});",
+            foo.addEventListener('click', (e, r, fg) => {
+                function a() {
+                    if (true) {
+                        {
+                            {
+                                const { charCode } = e;
+                                console.log(e.keyCode, charCode);
+                            }
+                        }
+                    }
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 13) {
-				}
-			});",
+                if (event.keyCode === 13) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 38) {
-				}
-			});",
+                if (event.keyCode === 38) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 40) {
-				}
-			});",
+                if (event.keyCode === 40) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 37) {
-				}
-			});",
+                if (event.keyCode === 37) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 39) {
-				}
-			});",
+                if (event.keyCode === 39) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 221) {
-				}
-			});",
+                if (event.keyCode === 221) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 186) {
-				}
-			});",
+                if (event.keyCode === 186) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 187) {
-				}
-			});",
+                if (event.keyCode === 187) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 188) {
-				}
-			});",
+                if (event.keyCode === 188) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 189) {
-				}
-			});",
+                if (event.keyCode === 189) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 190) {
-				}
-			});",
+                if (event.keyCode === 190) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 191) {
-				}
-			});",
+                if (event.keyCode === 191) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 219) {
-				}
-			});",
+                if (event.keyCode === 219) {
+                }
+            });",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 222) {
-				}
-			});",
+                if (event.keyCode === 222) {
+                }
+            });",
         "window.addEventListener('click', ({which, another}) => {
-				if (which === 23) {
-					console.log('Wrong!')
-				}
-			})",
+                if (which === 23) {
+                    console.log('Wrong!')
+                }
+            })",
         "foo123.addEventListener('click', event => {
-				if (event.keyCode === 27) {
-				}
-			});",
+                if (event.keyCode === 27) {
+                }
+            });",
     ];
 
     let fix = vec![
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 27) {
-				}
-			});",
+                if (event.keyCode === 27) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'Escape') {
-				}
-			});",
-            None,
+                if (event.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', event => {
-				if (event.keyCode === 65) {}
-			});",
+                if (event.keyCode === 65) {}
+            });",
             "foo.addEventListener('click', event => {
-				if (event.key === 'A') {}
-			});",
-            None,
+                if (event.key === 'A') {}
+            });",
         ),
         (
             "foo.addEventListener('click', event => {
-				if (event.keyCode === 10) {}
-			});",
+                if (event.keyCode === 10) {}
+            });",
             r"foo.addEventListener('click', event => {
-				if (event.key === '\n') {}
-			});",
-            None,
+                if (event.key === '\n') {}
+            });",
         ),
         (
             "foo.addEventListener('click', a => {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', a => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.keyCode === 27) {
-				}
-			});",
+                if (a.keyCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(b) {
-				if (b.keyCode === 27) {
-				}
-			});",
+                if (b.keyCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(b) {
-				if (b.key === 'Escape') {
-				}
-			});",
-            None,
+                if (b.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo11111111.addEventListener('click', event => {
-				if (event.charCode === 27) {
-				}
-			});",
+                if (event.charCode === 27) {
+                }
+            });",
             "foo11111111.addEventListener('click', event => {
-				if (event.key === 'Escape') {
-				}
-			});",
-            None,
+                if (event.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', a => {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', a => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.charCode === 27) {
-				}
-			});",
+                if (a.charCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(b) {
-				if (b.charCode === 27) {
-				}
-			});",
+                if (b.charCode === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(b) {
-				if (b.key === 'Escape') {
-				}
-			});",
-            None,
+                if (b.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', event => {
-				if (event.which === 27) {
-				}
-			});",
+                if (event.which === 27) {
+                }
+            });",
             "foo.addEventListener('click', event => {
-				if (event.key === 'Escape') {
-				}
-			});",
-            None,
+                if (event.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', a => {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
             "foo.addEventListener('click', a => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
             "foo.addEventListener('click', (a, b, c) => {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.which === 27) {
-				}
-			});",
+                if (a.which === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(a, b, c) {
-				if (a.key === 'Escape') {
-				}
-			});",
-            None,
+                if (a.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(b) {
-				if (b.which === 27) {
-				}
-			});",
+                if (b.which === 27) {
+                }
+            });",
             "foo.addEventListener('click', function(b) {
-				if (b.key === 'Escape') {
-				}
-			});",
-            None,
+                if (b.key === 'Escape') {
+                }
+            });",
         ),
         (
             "foo.addEventListener('click', function(b) {
-				if (b.which === 27) {
-				}
-				const {keyCode} = b;
-				if (keyCode === 32) return 4;
-			});",
+                if (b.which === 27) {
+                }
+                const {keyCode} = b;
+                if (keyCode === 32) return 4;
+            });",
             "foo.addEventListener('click', function(b) {
-				if (b.key === 'Escape') {
-				}
-				const {keyCode} = b;
-				if (keyCode === 32) return 4;
-			});",
-            None,
+                if (b.key === 'Escape') {
+                }
+                const {keyCode} = b;
+                if (keyCode === 32) return 4;
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 13) {
-				}
-			});",
+                if (event.keyCode === 13) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'Enter') {
-				}
-			});",
-            None,
+                if (event.key === 'Enter') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 38) {
-				}
-			});",
+                if (event.keyCode === 38) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'ArrowUp') {
-				}
-			});",
-            None,
+                if (event.key === 'ArrowUp') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 40) {
-				}
-			});",
+                if (event.keyCode === 40) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'ArrowDown') {
-				}
-			});",
-            None,
+                if (event.key === 'ArrowDown') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 37) {
-				}
-			});",
+                if (event.keyCode === 37) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'ArrowLeft') {
-				}
-			});",
-            None,
+                if (event.key === 'ArrowLeft') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 39) {
-				}
-			});",
+                if (event.keyCode === 39) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === 'ArrowRight') {
-				}
-			});",
-            None,
+                if (event.key === 'ArrowRight') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 221) {
-				}
-			});",
+                if (event.keyCode === 221) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === ']') {
-				}
-			});",
-            None,
+                if (event.key === ']') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 186) {
-				}
-			});",
+                if (event.keyCode === 186) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === ';') {
-				}
-			});",
-            None,
+                if (event.key === ';') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 187) {
-				}
-			});",
+                if (event.keyCode === 187) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '=') {
-				}
-			});",
-            None,
+                if (event.key === '=') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 188) {
-				}
-			});",
+                if (event.keyCode === 188) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === ',') {
-				}
-			});",
-            None,
+                if (event.key === ',') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 189) {
-				}
-			});",
+                if (event.keyCode === 189) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '-') {
-				}
-			});",
-            None,
+                if (event.key === '-') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 190) {
-				}
-			});",
+                if (event.keyCode === 190) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '.') {
-				}
-			});",
-            None,
+                if (event.key === '.') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 191) {
-				}
-			});",
+                if (event.keyCode === 191) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '/') {
-				}
-			});",
-            None,
+                if (event.key === '/') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 219) {
-				}
-			});",
+                if (event.keyCode === 219) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '[') {
-				}
-			});",
-            None,
+                if (event.key === '[') {
+                }
+            });",
         ),
         (
             "foo123.addEventListener('click', event => {
-				if (event.keyCode === 222) {
-				}
-			});",
+                if (event.keyCode === 222) {
+                }
+            });",
             "foo123.addEventListener('click', event => {
-				if (event.key === '\\'') {
-				}
-			});",
-            None,
+                if (event.key === '\\'') {
+                }
+            });",
         ),
     ];
     Tester::new(PreferKeyboardEventKey::NAME, PreferKeyboardEventKey::PLUGIN, pass, fail)

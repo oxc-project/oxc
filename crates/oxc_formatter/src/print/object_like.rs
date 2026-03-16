@@ -33,18 +33,18 @@ impl<'a> ObjectLike<'a, '_> {
         // const fn = ({ foo }: { foo: string }) => { ... };
         matches!(self, Self::TSTypeLiteral(node) if {
             // Check if parent is TSTypeAnnotation
-            matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
-                match &type_ann.parent {
+            matches!(node.parent(), AstNodes::TSTypeAnnotation(type_ann) if {
+                match &type_ann.parent() {
                     AstNodes::FormalParameter(param) if param.initializer.is_none() => {
-                        let AstNodes::FormalParameters(parameters) = &param.parent else {
+                        let AstNodes::FormalParameters(parameters) = &param.parent() else {
                             unreachable!()
                         };
-                        let this_param = get_this_param(parameters.parent);
+                        let this_param = get_this_param(parameters.parent());
                         should_hug_function_parameters(parameters, this_param, false, f)
 
                     }
                     AstNodes::TSThisParameter(param) => {
-                        matches!(param.parent, AstNodes::Function(func) if {
+                        matches!(param.parent(), AstNodes::Function(func) if {
                             should_hug_function_parameters(func.params(), Some(param), false, f)
                         })
                     },
@@ -78,7 +78,7 @@ impl<'a> ObjectLike<'a, '_> {
     fn is_inside_jsx_spread(&self) -> bool {
         match self {
             Self::ObjectExpression(o) => {
-                matches!(o.parent, AstNodes::JSXSpreadAttribute(_) | AstNodes::JSXSpreadChild(_))
+                matches!(o.parent(), AstNodes::JSXSpreadAttribute(_) | AstNodes::JSXSpreadChild(_))
             }
             Self::TSTypeLiteral(_) => false,
         }

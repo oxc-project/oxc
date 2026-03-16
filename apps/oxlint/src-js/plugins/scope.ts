@@ -3,10 +3,11 @@
  */
 
 import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manager";
+import { ecmaFeaturesOverride } from "./context.ts";
 import { ast, initAst } from "./source_code.ts";
 import { globals, envs, initGlobals } from "./globals.ts";
 import { ENVS } from "../generated/envs.ts";
-import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type {
   AnalyzeOptions,
@@ -15,7 +16,6 @@ import type {
 } from "@typescript-eslint/scope-manager";
 import type { Writable } from "type-fest";
 import type * as ESTree from "../generated/types.d.ts";
-import type { SetNullable } from "../utils/types.ts";
 
 export interface Scope {
   type: ScopeType;
@@ -100,12 +100,15 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
+const analyzeOptions: AnalyzeOptions = {
+  childVisitorKeys: undefined,
   globalReturn: false,
-  jsxFragmentName: null,
+  impliedStrict: false,
   jsxPragma: "React",
+  jsxFragmentName: null,
   lib: [],
-  sourceType: null,
+  sourceType: "module",
+  emitDecoratorMetadata: false,
 };
 
 /**
@@ -115,8 +118,18 @@ function initTsScopeManager() {
   if (ast === null) initAst();
   debugAssertIsNonNull(ast);
 
-  analyzeOptions.sourceType = ast.sourceType;
-  typeAssertIs<AnalyzeOptions>(analyzeOptions);
+  const { sourceType } = ast;
+  analyzeOptions.sourceType = sourceType;
+  analyzeOptions.globalReturn = sourceType === "commonjs";
+  analyzeOptions.impliedStrict = sourceType === "module";
+
+  // Override `globalReturn` and `impliedStrict` if in conformance build
+  if (CONFORMANCE) {
+    const { globalReturn, impliedStrict } = ecmaFeaturesOverride;
+    if (globalReturn !== null) analyzeOptions.globalReturn = globalReturn;
+    if (impliedStrict !== null) analyzeOptions.impliedStrict = impliedStrict;
+  }
+
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
 
@@ -215,22 +228,29 @@ function addGlobals(): void {
  * @param isWritable - `true` if the variable is writable, `false` otherwise
  */
 function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
-  // Skip vars that already exist in the scope.
-  // These could be from code declarations or previous envs.
-  // This is important because typescript-eslint's scope manager doesn't resolve references
-  // in the global scope for `sourceType: "script"`, so we mustn't overwrite local `var`
-  // declarations with globals of the same name.
-  if (globalScope.set.has(name)) return;
+  // If var already exists in the scope (from code declarations or previous envs), don't create a new one.
+  // TS-ESLint's scope manager doesn't resolve references in the global scope for `sourceType: "script"`,
+  // so we mustn't overwrite local `var` declarations with globals of the same name.
+  // But set properties on the existing variable to indicate it's a configured global.
+  let variable = globalScope.set.get(name);
+  if (variable === undefined) {
+    variable = new TSVariable(name, globalScope);
+    globalScope.set.set(name, variable);
+    globalScope.variables.push(variable);
 
-  // All globals are type + value
-  const variable = new TSVariable(name, globalScope);
-  debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
-  debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
+    // All globals are type + value
+    debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
+    debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
+  }
+
   // @ts-expect-error - not present in types
   variable.writeable = isWritable;
-
-  globalScope.set.set(name, variable);
-  globalScope.variables.push(variable);
+  // @ts-expect-error - not present in types
+  variable.eslintImplicitGlobalSetting = isWritable ? "writable" : "readonly";
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobal = false;
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobalComments = undefined;
 }
 
 /**
@@ -240,11 +260,14 @@ export function resetScopeManager() {
   tsScopeManager = null;
 }
 
-/**
- * @see https://eslint.org/docs/latest/developer-guide/scope-manager-interface#scopemanager-interface
- */
-// This is a wrapper around `@typescript-eslint/scope-manager` package's `ScopeManager` class.
-// We want to control what APIs are exposed to the user to limit breaking changes when we switch our implementation.
+// Wrapper around `@typescript-eslint/scope-manager` package's `ScopeManager` class.
+//
+// We only expose the methods and properties which ESLint lists as part of the `ScopeManager` interface:
+// https://eslint.org/docs/latest/extend/scope-manager-interface#scopemanager-interface
+// This does NOT include deprecated methods and properties.
+// In future, we'll re-implement the scope manager using scopes data from `oxc_semantic`, and remove the dependency
+// on `@typescript-eslint/scope-manager`. That will be easier with a more minimal API surface.
+// If we find real-world usage of deprecated methods/properties in ESLint plugins, we can add them to the API surface.
 //
 // Only one file is linted at a time, so we can reuse a single object for all files.
 //
@@ -384,14 +407,53 @@ export function getScope(node: ESTree.Node): Scope {
 
 /**
  * Marks as used a variable with the given name in a scope indicated by the given reference node.
- * This affects the `no-unused-vars` rule.
+ *
+ * IMPORTANT: At present marking variables as used only affects other JS plugins.
+ * It does *not* get communicated to Oxlint's rules which are implemented on Rust side e.g. `no-unused-vars`.
+ * This is a known shortcoming, and will be addressed in a future release.
+ * https://github.com/oxc-project/oxc/issues/20350
+ *
  * @param name - Variable name
- * @param refNode - Reference node
+ * @param refNode - Reference node. Defaults to `Program` node if not provided.
  * @returns `true` if a variable with the given name was found and marked as used, otherwise `false`
  */
-/* oxlint-disable no-unused-vars */
-export function markVariableAsUsed(name: string, refNode: ESTree.Node): boolean {
-  // TODO: Implement
-  throw new Error("`context.markVariableAsUsed` not implemented yet");
+export function markVariableAsUsed(name: string, refNode?: ESTree.Node): boolean {
+  // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L984-L1024
+  if (refNode === undefined) {
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+    refNode = ast;
+  }
+
+  let currentScope = getScope(refNode);
+
+  // `getScope` calls `initTsScopeManager` which calls `initAst`, so `ast` must have been initialized
+  debugAssertIsNonNull(ast);
+
+  // When in the global scope, check if there's a module/function child scope whose `block` is the Program node.
+  // In ESM, top-level `var` declarations live in the module scope, not the global scope.
+  // In CommonJS, they live in the outer function scope. If we don't step down into that child scope,
+  // we'd miss those variables.
+  if (currentScope.type === "global") {
+    const { childScopes } = currentScope;
+    if (childScopes.length !== 0) {
+      // Top-level scopes refer to a `Program` node
+      const firstChild = childScopes[0];
+      if (firstChild.block === ast) currentScope = firstChild;
+    }
+  }
+
+  for (let scope: Scope | null = currentScope; scope !== null; scope = scope.upper) {
+    const { variables } = scope;
+    for (let i = 0, len = variables.length; i < len; i++) {
+      const variable = variables[i];
+      if (variable.name === name) {
+        // @ts-expect-error - `eslintUsed` is a dynamic property not in TS-ESLint's types
+        variable.eslintUsed = true;
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
-/* oxlint-enable no-unused-vars */

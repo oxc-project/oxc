@@ -30,7 +30,7 @@ import * as c from "c";
 import d from "d";
 import a from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "a";
 import { b1, type b2, b3 as b33 } from "b";
@@ -46,7 +46,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { log } from "./log";
 import { log1p } from "./log1p";
@@ -61,7 +61,7 @@ import c from "c";
 import b from "b";
 import("a");
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import b from "b";
 import c from "c";
@@ -75,7 +75,7 @@ import internal2 from "@/internal2";
 import external from "external";
 import external2 from "@external2";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import external2 from "@external2";
 import external from "external";
@@ -96,7 +96,7 @@ import { b } from "b";
 // a
 import { a } from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 #!/usr/bin/node
 // a
@@ -115,7 +115,7 @@ import A from "a";
 
 console.log(A);
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import A from "a";
 
@@ -132,7 +132,7 @@ import { z } from "a";
 import { y } from "a";
 import { x } from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { z } from "a";
 import { y } from "a";
@@ -148,7 +148,7 @@ fn should_sort_regardless_of_quotes() {
 import b from "b";
 import a from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -161,7 +161,7 @@ import b from "b";
 import a from "a";
 "#,
         r#"{
-  "experimentalSortImports": {},
+  "sortImports": {},
   "singleQuote": true
 }"#,
         r"
@@ -179,7 +179,7 @@ fn should_sort_by_module_source_not_import_specifier() {
 import { Zoo } from "aaa";
 import { Apple } from "zzz";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { Zoo } from "aaa";
 import { Apple } from "zzz";
@@ -191,7 +191,7 @@ import { Apple } from "zzz";
 import { Named } from "./z-path";
 import { Named } from "./a-path";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { Named } from "./a-path";
 import { Named } from "./z-path";
@@ -203,7 +203,7 @@ import { Named } from "./z-path";
 import { AAA, BBB, CCC } from "./zzz";
 import { XXX, YYY, ZZZ } from "./aaa";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { XXX, YYY, ZZZ } from "./aaa";
 import { AAA, BBB, CCC } from "./zzz";
@@ -219,7 +219,7 @@ import b from "./b.css?raw";
 import a from "./a.css?";
 import c from "./c.css";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "./a.css?";
 import b from "./b.css?raw";
@@ -239,7 +239,7 @@ import c from "~/c";
 
 import b from "~/b";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import b from "~/b";
 import c from "~/c";
@@ -256,7 +256,7 @@ import c from "./c"; // C
 // b
 import b from "./b"; // B
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 // b
 import b from "./b"; // B
@@ -279,7 +279,7 @@ const a = 1;
 
 const b = 2;
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import x1 from "./x1";
 import x2 from "./x2";
@@ -302,7 +302,7 @@ import { a } from "a";
 import { b1, b2 } from "b"; // Comment
 import { c } from "c";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { a } from "a";
 import { b1, b2 } from "b"; // Comment
@@ -321,7 +321,7 @@ export type { U } from "u";
 
 import type { T1, T2 } from "t";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import type { V } from "v";
 
@@ -336,7 +336,7 @@ import type { V } from "v";
 export type { U } from "u";
 import type { T1, T2 } from "t";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import type { V } from "v";
 export type { U } from "u";
@@ -350,7 +350,7 @@ import type { V } from "v";
 const X = 1;
 import type { T1, T2 } from "t";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import type { V } from "v";
 const X = 1;
@@ -369,7 +369,7 @@ export const Y = 2;
 import f from "f";
 import e from "e";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -397,7 +397,7 @@ import { Named } from './folder';
 import { AnotherNamed } from './second-folder';
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "newlinesBetween": false
   }
@@ -423,7 +423,7 @@ import { Named } from './folder';
 import { AnotherNamed } from './second-folder';
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "newlinesBetween": false
   }
@@ -449,7 +449,7 @@ import B from "b";
 import A from "a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "newlinesBetween": false
   }
@@ -476,7 +476,7 @@ import B from "b";
 import A from "a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "newlinesBetween": false
   }
@@ -503,7 +503,7 @@ import X from "x";
 import B from "b";
 import A from "a";
 "#,
-        r#"{ "experimentalSortImports": { "partitionByComment": true } }"#,
+        r#"{ "sortImports": { "partitionByComment": true } }"#,
         r#"
 import X from "x";
 import Y from "y";
@@ -526,7 +526,7 @@ import bb from './bb'
 import e from './e'
 ",
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByComment": true
   },
   "singleQuote": true,
@@ -553,7 +553,7 @@ import C from "c";
 import B from "b";
 import A from "a";
 "#,
-        r#"{ "experimentalSortImports": { "partitionByComment": true } }"#,
+        r#"{ "sortImports": { "partitionByComment": true } }"#,
         r#"
 import C from "c";
 // Comment 1
@@ -577,7 +577,7 @@ import C from "c";
 import B from "b";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "partitionByComment": true,
     "newlinesBetween": false
@@ -602,7 +602,7 @@ import B from "b";
 import A from "a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "partitionByComment": true,
     "newlinesBetween": false
@@ -625,7 +625,7 @@ import B from "b";
 import A from "a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "partitionByComment": true,
     "newlinesBetween": false
@@ -654,7 +654,7 @@ import b from "b";
 
 import a from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 // THIS IS NOT MOVED
 
@@ -671,7 +671,7 @@ import b from "b";
 // AND ALSO THIS CAN BE MOVED
 import a from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 // AND ALSO THIS CAN BE MOVED
 import a from "a";
@@ -692,7 +692,7 @@ import { validateResponse } from "../../validateResponse";
 
 import { z } from "zod";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 // THIS IS A GENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
 
@@ -715,7 +715,7 @@ import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { z } from "zod";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "partitionByNewline": true,
     "newlinesBetween": false
   }
@@ -739,7 +739,7 @@ import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { z } from "zod";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "newlinesBetween": false
   }
         }"#,
@@ -762,7 +762,7 @@ import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 
 import { z } from "zod";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 // FIXED
 
@@ -784,7 +784,7 @@ import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import { z } from "zod";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "newlinesBetween": false,
     "partitionByNewline": true
   }
@@ -814,7 +814,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        r#"{ "experimentalSortImports": { "order": "desc" } }"#,
+        r#"{ "sortImports": { "order": "desc" } }"#,
         r#"
 import { log10 } from "./log10";
 import { log2 } from "./log2";
@@ -830,7 +830,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        r#"{ "experimentalSortImports": { "order": "asc" } }"#,
+        r#"{ "sortImports": { "order": "asc" } }"#,
         r#"
 import { log } from "./log";
 import { log1p } from "./log1p";
@@ -845,7 +845,7 @@ import { log10 } from "./log10";
 import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { log } from "./log";
 import { log1p } from "./log1p";
@@ -868,7 +868,7 @@ import "s";
 import a from "a";
 import z from "z";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "a";
 import b from "b";
@@ -884,7 +884,7 @@ import "z";
 import "x";
 import a from "a";
 "#,
-        r#"{ "experimentalSortImports": { "sortSideEffects": false } }"#,
+        r#"{ "sortImports": { "sortSideEffects": false } }"#,
         r#"
 import a from "a";
 import "z";
@@ -899,7 +899,7 @@ import "c";
 import "bb";
 import "aaa";
 "#,
-        r#"{ "experimentalSortImports": { "sortSideEffects": false } }"#,
+        r#"{ "sortImports": { "sortSideEffects": false } }"#,
         r#"
 import "c";
 import "bb";
@@ -914,7 +914,7 @@ import a from "a";
 import "z";
 import "x";
 "#,
-        r#"{ "experimentalSortImports": { "sortSideEffects": true } }"#,
+        r#"{ "sortImports": { "sortSideEffects": true } }"#,
         r#"
 import a from "a";
 import "x";
@@ -928,7 +928,7 @@ import "c";
 import "bb";
 import "aaa";
 "#,
-        r#"{ "experimentalSortImports": { "sortSideEffects": true } }"#,
+        r#"{ "sortImports": { "sortSideEffects": true } }"#,
         r#"
 import "aaa";
 import "bb";
@@ -942,7 +942,7 @@ import "./animate.css"
 import "./reset.css"
 
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import "./index.css";
 import "./animate.css";
@@ -961,7 +961,7 @@ fn should_sort_with_ignore_case_option() {
 import { A } from "a";
 import { b } from "B";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import { A } from "a";
 import { b } from "B";
@@ -973,7 +973,7 @@ import { b } from "B";
 import x from "A";
 import y from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import x from "A";
 import y from "a";
@@ -986,7 +986,7 @@ import { z } from "Z";
 import { b } from "B";
 import { a } from "a";
 "#,
-        r#"{ "experimentalSortImports": { "ignoreCase": true } }"#,
+        r#"{ "sortImports": { "ignoreCase": true } }"#,
         r#"
 import { a } from "a";
 import { b } from "B";
@@ -999,7 +999,7 @@ import { z } from "Z";
 import { a } from "a";
 import { B } from "B";
 "#,
-        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
+        r#"{ "sortImports": { "ignoreCase": false } }"#,
         r#"
 import { B } from "B";
 import { a } from "a";
@@ -1011,7 +1011,7 @@ import { a } from "a";
 import x from "a";
 import y from "A";
 "#,
-        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
+        r#"{ "sortImports": { "ignoreCase": false } }"#,
         r#"
 import y from "A";
 import x from "a";
@@ -1025,7 +1025,7 @@ import { B } from "B";
 import { a } from "a";
 import { Z } from "Z";
 "#,
-        r#"{ "experimentalSortImports": { "ignoreCase": false } }"#,
+        r#"{ "sortImports": { "ignoreCase": false } }"#,
         r#"
 import { B } from "B";
 import { Z } from "Z";
@@ -1048,14 +1048,12 @@ import c from "#c";
 import { b1, b2 } from "#b";
 import { d } from "../d";
 "##,
-        r##"{ "experimentalSortImports": { "internalPattern": ["#"] } }"##,
+        r##"{ "sortImports": { "internalPattern": ["#"] } }"##,
         r##"
 import type { T } from "a";
-
 import { a } from "a";
 
 import type { S } from "#b";
-
 import { b1, b2 } from "#b";
 import c from "#c";
 
@@ -1076,14 +1074,13 @@ fn should_sort_with_multiline_comments_attached_to_each_import() {
 import cn from "classnames"
 import type { Hello } from "pkg"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
-import type { Hello } from "pkg";
-
 /*
  * hi
  */
 import cn from "classnames";
+import type { Hello } from "pkg";
 "#,
     );
     assert_format(
@@ -1094,7 +1091,7 @@ import cn from "classnames";
 import cn from "classnames"
 import { Hello } from "pkg"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 /*
  * hi
@@ -1115,7 +1112,7 @@ import b from "b"
  */
 import a from "a"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 /*
  * for a
@@ -1141,7 +1138,7 @@ import b from "b";
 import b from "b"
 import a from "a"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import a from "a";
 /*
@@ -1164,7 +1161,7 @@ import b from "b";
 import b from "b"
 import a from "a"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 /*
  * comment
@@ -1184,7 +1181,7 @@ import b from "b";
  */
 import a from "a"
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 /*
  * multiline
@@ -1209,10 +1206,10 @@ import { e1, e2, e3 } from "../../e";
 
 import { b1, b2 } from "~/b";
 "#,
-        r#"{ "experimentalSortImports": { "newlinesBetween": false } }"#,
+        r#"{ "sortImports": { "newlinesBetween": false } }"#,
         r#"
-import type { T } from "t";
 import { a1, a2, a3 } from "a";
+import type { T } from "t";
 import { b1, b2 } from "~/b";
 import { c1, c2, c3 } from "~/c";
 import d from ".";
@@ -1232,11 +1229,10 @@ import { e1, e2, e3 } from "../../e";
 
 import { b1, b2 } from "~/b";
 "#,
-        r#"{ "experimentalSortImports": { "newlinesBetween": true } }"#,
+        r#"{ "sortImports": { "newlinesBetween": true } }"#,
         r#"
-import type { T } from "t";
-
 import { a1, a2, a3 } from "a";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1, c2, c3 } from "~/c";
@@ -1257,7 +1253,7 @@ import z from "~/z";
 
 import b from "~/b";
 "#,
-        r#"{ "experimentalSortImports": { "newlinesBetween": false } }"#,
+        r#"{ "sortImports": { "newlinesBetween": false } }"#,
         r#"
 import { A } from "a";
 import b from "~/b";
@@ -1282,7 +1278,7 @@ import {
   xyz,
 } from "a";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import {
   type Data,
@@ -1304,7 +1300,7 @@ fn issue_17788() {
         r"
 `/*`
 ",
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r"
 `/*`;
 ",
@@ -1317,7 +1313,7 @@ acc[path] = `src/${path
 .map((s) => s[0].toUpperCase() + s.slice(1))
 .join('/')}/*`;
 ",
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 acc[path] = `src/${path
   .split("/")

@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 

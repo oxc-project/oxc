@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use crate::LintContext;
 
 mod fix;
-pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
+pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -311,6 +311,11 @@ pub struct Fixer<'a> {
     // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
     fix_index: u8,
 
+    /// When `true`, boundary-adjacent fixes (e.g. `[0,5]` and `[5,10]`) are considered
+    /// overlapping, matching ESLint's `SourceCodeFixer` behavior.
+    /// When `false` (default), only truly overlapping fixes are skipped.
+    eslint_compat: bool,
+
     #[cfg(debug_assertions)]
     source_type: Option<SourceType>,
 }
@@ -327,14 +332,22 @@ impl<'a> Fixer<'a> {
             source_text,
             messages,
             fix_index: 0,
+            eslint_compat: false,
             #[cfg(debug_assertions)]
             source_type,
         }
     }
 
     #[cfg(test)]
+    #[must_use]
     pub fn with_fix_index(mut self, fix_index: u8) -> Self {
         self.fix_index = fix_index;
+        self
+    }
+
+    #[must_use]
+    pub fn with_eslint_compat(mut self, eslint_compat: bool) -> Self {
+        self.eslint_compat = eslint_compat;
         self
     }
 
@@ -353,6 +366,7 @@ impl<'a> Fixer<'a> {
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: u32 = 0;
+        let eslint_compat = self.eslint_compat;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -376,7 +390,18 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             }
-            if start < last_pos {
+
+            // Skip fixes that overlap with a previously applied fix.
+            //
+            // In standard mode, boundary-adjacent fixes (e.g. [0, 5] and [5, 10]) are not considered overlapping.
+            // In ESLint compat mode, they *are* considered overlapping (like ESLint does).
+            //
+            // Never consider the first fix overlapping, because there's no previous fix to overlap with.
+            // This extra check is required because `last_pos` is 0 initially, so a fix starting at offset 0
+            // would incorrectly be considered as overlapping when `eslint_compat` is `true`.
+            let overlaps =
+                if eslint_compat && fixed { last_pos >= start } else { last_pos > start };
+            if overlaps {
                 filtered_messages.push(m);
                 continue;
             }
@@ -424,6 +449,8 @@ mod test {
     use cow_utils::CowUtils;
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::{SourceType, Span};
+
+    use crate::FixKind;
 
     use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
 
@@ -480,23 +507,51 @@ mod test {
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
-    const INSERT_AT_END: Fix =
-        Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end"), message: None };
-    const INSERT_AT_START: Fix =
-        Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start"), message: None };
-    const INSERT_AT_MIDDLE: Fix =
-        Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *"), message: None };
-    const REPLACE_ID: Fix =
-        Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo"), message: None };
-    const REPLACE_VAR: Fix =
-        Fix { span: Span::new(0, 3), content: Cow::Borrowed("let"), message: None };
-    const REPLACE_NUM: Fix =
-        Fix { span: Span::new(13, 14), content: Cow::Borrowed("5"), message: None };
+    const INSERT_AT_END: Fix = Fix {
+        span: Span::new(19, 19),
+        content: Cow::Borrowed("// end"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_START: Fix = Fix {
+        span: Span::new(0, 0),
+        content: Cow::Borrowed("// start"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_MIDDLE: Fix = Fix {
+        span: Span::new(13, 13),
+        content: Cow::Borrowed("5 *"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_ID: Fix = Fix {
+        span: Span::new(4, 10),
+        content: Cow::Borrowed("foo"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_VAR: Fix = Fix {
+        span: Span::new(0, 3),
+        content: Cow::Borrowed("let"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_NUM: Fix = Fix {
+        span: Span::new(13, 14),
+        content: Cow::Borrowed("5"),
+        message: None,
+        kind: FixKind::None,
+    };
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix =
-        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
+    const REVERSE_RANGE: Fix = Fix {
+        span: Span::new(3, 0),
+        content: Cow::Borrowed(" "),
+        message: None,
+        kind: FixKind::None,
+    };
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
         Fixer::new(TEST_CODE, messages, Some(SourceType::default())).fix()
@@ -664,6 +719,8 @@ mod test {
         assert!(result.fixed);
     }
 
+    // In normal mode, fixes that share a boundary (end of one == start of next)
+    // are not treated as overlapping. Both fixes are applied.
     #[test]
     fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
@@ -672,6 +729,22 @@ mod test {
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
         assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
+
+    // In ESLint compat mode, fixes that share a boundary (end of one == start of next)
+    // are treated as overlapping. Only the first fix is applied.
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_in_eslint_compat_mode() {
+        let messages = vec![
+            create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+        ];
+        let result = Fixer::new(TEST_CODE, messages, Some(SourceType::default()))
+            .with_eslint_compat(true)
+            .fix();
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
+        assert_eq!(result.messages.len(), 1);
         assert!(result.fixed);
     }
 

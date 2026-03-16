@@ -11,7 +11,7 @@
 //! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
 //! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
-//! ```rust
+//! ```rust,ignore
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
@@ -22,7 +22,7 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
@@ -36,12 +36,12 @@
 //!
 //! <https://github.com/oxc-project/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
 //! ### Parsing TSX
-//! ```rust
+//! ```rust,ignore
 #![doc = include_str!("../examples/parser_tsx.rs")]
 //! ```
 //!
@@ -54,7 +54,7 @@
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
 //! the nodes can be iterated through a sequential loop.
 //!
-//! ```rust
+//! ```rust,ignore
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node
@@ -64,8 +64,7 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
-#![warn(missing_docs)]
-
+pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
@@ -86,19 +85,21 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+pub use crate::lexer::{Kind, Token};
 use crate::{
+    config::{LexerConfig, NoTokensParserConfig, ParserConfig},
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::Lexer,
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -167,6 +168,11 @@ pub struct ParserReturn<'a> {
 
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
+
+    /// Lexed tokens in source order.
+    ///
+    /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
+    pub tokens: oxc_allocator::Vec<'a, Token>,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -238,11 +244,12 @@ impl Default for ParseOptions {
 /// Recursive Descent Parser for ECMAScript and TypeScript
 ///
 /// See [`Parser::parse`] for entry function.
-pub struct Parser<'a> {
+pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
     options: ParseOptions,
+    config: C,
 }
 
 impl<'a> Parser<'a> {
@@ -254,14 +261,30 @@ impl<'a> Parser<'a> {
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options }
+        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
     }
+}
 
+impl<'a, C: ParserConfig> Parser<'a, C> {
     /// Set parse options
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
         self
+    }
+
+    /// Set parser config.
+    ///
+    /// See [`ParserConfig`] for more details.
+    #[must_use]
+    pub fn with_config<Config: ParserConfig>(self, config: Config) -> Parser<'a, Config> {
+        Parser {
+            allocator: self.allocator,
+            source_text: self.source_text,
+            source_type: self.source_type,
+            options: self.options,
+            config,
+        }
     }
 }
 
@@ -299,7 +322,7 @@ mod parser_parse {
         }
     }
 
-    impl<'a> Parser<'a> {
+    impl<'a, C: ParserConfig> Parser<'a, C> {
         /// Main entry point
         ///
         /// Returns an empty `Program` on unrecoverable error,
@@ -313,6 +336,7 @@ mod parser_parse {
                 self.source_text,
                 self.source_type,
                 self.options,
+                self.config,
                 unique,
             );
             parser.parse()
@@ -344,6 +368,7 @@ mod parser_parse {
                 self.source_text,
                 self.source_type,
                 self.options,
+                self.config,
                 unique,
             );
             parser.parse_expression()
@@ -354,10 +379,11 @@ use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, C: ParserConfig> {
+    /// Options
     options: ParseOptions,
 
-    pub(crate) lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a, C::LexerConfig>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -368,6 +394,13 @@ struct ParserImpl<'a> {
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
+
+    /// Errors that are only valid if the file is determined to be a Script (not a Module).
+    /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
+    /// until we know whether the file is ESM or Script.
+    /// If resolved to Module → discard these errors.
+    /// If resolved to Script → emit these errors.
+    deferred_script_errors: Vec<OxcDiagnostic>,
 
     fatal_error: Option<FatalError>,
 
@@ -393,25 +426,28 @@ struct ParserImpl<'a> {
     is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
     #[inline]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        config: C,
         unique: UniquePromise,
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, unique),
+            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
             source_type,
             source_text,
             errors: vec![],
+            deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
@@ -464,31 +500,44 @@ impl<'a> ParserImpl<'a> {
             is_flow_language = true;
             errors.push(error);
         }
-        let (module_record, module_record_errors) = self.module_record_builder.build();
+        let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
-            errors.extend(module_record_errors);
+            errors.append(&mut self.lexer.errors);
+            errors.append(&mut self.errors);
+            errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
-            self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
+            std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces).into_boxed_slice();
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
+            if module_record.has_module_syntax {
+                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                // but emit deferred module errors (HTML comments are invalid in ESM)
+                program.source_type = source_type.with_module(true);
+                errors.append(&mut self.lexer.deferred_module_errors);
             } else {
-                source_type.with_script(true)
-            };
+                // Resolved to Script - emit deferred script errors
+                // discard deferred module errors (HTML comments are valid in scripts)
+                program.source_type = source_type.with_script(true);
+                errors.extend(self.deferred_script_errors);
+            }
         }
+
+        let tokens = if panicked {
+            ArenaVec::new_in(self.ast.allocator)
+        } else {
+            self.lexer.finalize_tokens()
+        };
 
         ParserReturn {
             program,
             module_record,
             errors,
             irregular_whitespaces,
+            tokens,
             panicked,
             is_flow_language,
         }
@@ -516,8 +565,19 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
-        let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true);
+        self.ctx |= Context::TopLevel;
+        let (directives, mut statements) = self.parse_directives_and_statements();
+
+        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
+        // we need to reparse statements that were originally parsed with `await` as identifier.
+        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
+        // await expression with regex when ESM is detected.
+        if self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && !self.state.potential_await_reparse.is_empty()
+        {
+            self.reparse_potential_top_level_awaits(&mut statements);
+        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
@@ -532,9 +592,44 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    /// Reparse statements that may contain top-level await expressions.
+    ///
+    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
+    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
+    /// we need to reparse them with the await context enabled.
+    fn reparse_potential_top_level_awaits(
+        &mut self,
+        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
+    ) {
+        // Token stream is already complete from the first parse.
+        // Reparsing here is only to patch AST nodes, so keep the original token stream.
+        let original_tokens =
+            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+
+        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        for (stmt_index, checkpoint) in checkpoints {
+            // Rewind to the checkpoint
+            self.rewind(checkpoint);
+
+            // Parse the statement with await context enabled (TopLevel context is already set)
+            let stmt = self.context_add(Context::Await, |p| {
+                p.parse_statement_list_item(StatementContext::StatementList)
+            });
+
+            // Replace the statement if the index is valid
+            if stmt_index < statements.len() {
+                statements[stmt_index] = stmt;
+            }
+        }
+
+        if let Some(original_tokens) = original_tokens {
+            self.lexer.set_tokens(original_tokens);
+        }
+    }
+
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
@@ -755,6 +850,23 @@ mod test {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.source_type.is_script());
         }
+    }
+
+    #[test]
+    fn binary_file() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        // U+FFFD as a standalone token — file appears to be binary
+        let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
+        assert!(ret.program.is_empty());
+        assert_eq!(ret.errors.len(), 1);
+        assert_eq!(ret.errors[0].to_string(), "File appears to be binary.");
+
+        // U+FFFD inside string literals — should parse fine
+        let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
     }
 
     #[test]

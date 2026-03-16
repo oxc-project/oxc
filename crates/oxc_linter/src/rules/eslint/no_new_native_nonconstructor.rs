@@ -6,7 +6,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_native_nonconstructor_diagnostic(fn_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{fn_name}` cannot be called as a constructor.")).with_label(span)
+    OxcDiagnostic::warn(format!("`{fn_name}` cannot be called as a constructor."))
+        .with_help(format!("Remove the `new` operator to call `{fn_name}` as a function."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -57,7 +59,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
         {
             let start = expr.span.start;
             let end = start + 3;

@@ -6,7 +6,7 @@ use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
-use crate::fixer::Fix;
+use crate::{FixKind, fixer::Fix};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
@@ -114,7 +114,8 @@ impl RuleCommentRule {
             return Fix::delete(Span::new(
                 self.name_span.start - comma_before_offset,
                 self.name_span.end,
-            ));
+            ))
+            .with_kind(FixKind::Suggestion);
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -136,7 +137,8 @@ impl RuleCommentRule {
             return Fix::delete(Span::new(
                 self.name_span.start,
                 self.name_span.end + comma_after_offset,
-            ));
+            ))
+            .with_kind(FixKind::Suggestion);
         }
 
         unreachable!(
@@ -189,56 +191,52 @@ impl DisableDirectives {
         // we check if any part of the diagnostic span overlaps with the disabled interval.
         // This ensures that diagnostics starting before the disable comment (like no-empty-file)
         // are still suppressed.
-        let matched_intervals = self
-            .intervals
-            .find(span.start, span.end)
-            .filter(|interval| {
-                // Check if this rule should be disabled
-                let rule_matches = match &interval.val {
-                    DisabledRule::All { .. } => true,
-                    // `rule_name` does not contain the prefix.
-                    // - `vitest/foobar` will be just `foobar`.
-                    // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
-                    //
-                    // This enables matching rules across different plugins that share the same
-                    // rule name, such as jest<->vitest rules and eslint<->typescript rules.
-                    DisabledRule::Single { rule_name: name, .. } => {
-                        if name.contains(rule_name) {
-                            return true;
-                        }
-
+        let mut has_match = false;
+        for interval in self.intervals.find(span.start, span.end) {
+            // Check if this rule should be disabled
+            let rule_matches = match &interval.val {
+                DisabledRule::All { .. } => true,
+                // `rule_name` does not contain the prefix.
+                // - `vitest/foobar` will be just `foobar`.
+                // - `@typescript-eslint/no-var-requires` will be just `no-var-requires`
+                //
+                // This enables matching rules across different plugins that share the same
+                // rule name, such as jest<->vitest rules and eslint<->typescript rules.
+                DisabledRule::Single { rule_name: name, .. } => {
+                    if name.contains(rule_name) {
+                        true
+                    } else {
                         // Special-case mapping: `vitest/no-restricted-vi-methods` is implemented by `jest/no-restricted-jest-methods`.
-                        return name == "vitest/no-restricted-vi-methods"
-                            && rule_name == "no-restricted-jest-methods";
+                        name == "vitest/no-restricted-vi-methods"
+                            && rule_name == "no-restricted-jest-methods"
                     }
-                };
-
-                if !rule_matches {
-                    return false;
                 }
+            };
 
-                // Check if the diagnostic span is covered by this interval
-                if interval.val.is_next_line() {
-                    // For next-line directives, only check if the diagnostic starts within the interval
-                    // We intentionally only check span.start (not span.end) to avoid suppressing
-                    // diagnostics for large constructs that merely contain the disabled line
-                    #[expect(clippy::suspicious_operation_groupings)]
-                    {
-                        span.start >= interval.start && span.start < interval.stop
-                    }
-                } else {
-                    // For regular disable directives, check if there's any overlap
-                    span.start < interval.stop && span.end > interval.start
+            if !rule_matches {
+                continue;
+            }
+
+            // Check if the diagnostic span is covered by this interval
+            let span_covered = if interval.val.is_next_line() {
+                // For next-line directives, only check if the diagnostic starts within the interval
+                // We intentionally only check span.start (not span.end) to avoid suppressing
+                // diagnostics for large constructs that merely contain the disabled line
+                #[expect(clippy::suspicious_operation_groupings)]
+                {
+                    span.start >= interval.start && span.start < interval.stop
                 }
-            })
-            .map(|interval| interval.val.clone())
-            .collect::<Vec<DisabledRule>>();
+            } else {
+                // For regular disable directives, check if there's any overlap
+                span.start < interval.stop && span.end > interval.start
+            };
 
-        for disable in &matched_intervals {
-            self.mark_disable_directive_used(disable.clone());
+            if span_covered {
+                self.mark_disable_directive_used(interval.val.clone());
+                has_match = true;
+            }
         }
-
-        !matched_intervals.is_empty()
+        has_match
     }
 
     pub fn disable_rule_comments(&self) -> &[DisableRuleComment] {
@@ -559,12 +557,7 @@ impl DisableDirectivesBuilder {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::Single {
-                    rule_name: rule_name.clone(),
-                    name_span,
-                    comment_span,
-                    is_next_line: false,
-                },
+                DisabledRule::Single { rule_name, name_span, comment_span, is_next_line: false },
             );
         }
 

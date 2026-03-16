@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 30a4899 oxc: [**BREAKING**] Remove `CompilerInterface::semantic_child_scope_ids` (#18361) (Dunqing)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features

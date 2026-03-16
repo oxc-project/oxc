@@ -1,0 +1,638 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:18]
+ 1 │ 
+ 2 │             type T = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 3 │             {
+ 4 │               type T = 2;
+   ·                    ┬
+   ·                    ╰── 'T' is declared here
+ 5 │             }
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:18]
+ 1 │ 
+ 2 │             type T = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 3 │             function foo<T>(arg: T) {}
+   ·                          ┬
+   ·                          ╰── 'T' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:26]
+ 1 │ 
+ 2 │             function foo<T>() {
+   ·                          ┬
+   ·                          ╰── shadowed declaration is here
+ 3 │               return function <T>() {};
+   ·                                ┬
+   ·                                ╰── 'T' is declared here
+ 4 │             }
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:18]
+ 1 │ 
+ 2 │             type T = string;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 3 │             function foo<T extends (arg: any) => void>(arg: T) {}
+   ·                          ┬
+   ·                          ╰── 'T' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const x = 1;
+   ·                   ┬
+   ·                   ╰── shadowed declaration is here
+ 3 │             {
+ 4 │               type x = string;
+   ·                    ┬
+   ·                    ╰── 'x' is declared here
+ 5 │             }
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already a global variable.
+   ╭─[no_shadow.tsx:2:18]
+ 1 │ 
+ 2 │             type Foo = 1;
+   ·                  ───
+ 3 │                   
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the global variable.
+
+  ⚠ eslint(no-shadow): 'test' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const test = 1;
+   ·                   ──┬─
+   ·                     ╰── shadowed declaration is here
+ 3 │             type Fn = (test: string) => typeof test;
+   ·                        ──┬─
+   ·                          ╰── 'test' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'test' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already a global variable.
+   ╭─[no_shadow.tsx:2:24]
+ 1 │ 
+ 2 │             type Fn = (Foo: string) => typeof Foo;
+   ·                        ───
+ 3 │                   
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the global variable.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             interface Test {
+ 5 │               (arg: string): typeof arg;
+   ·                ─┬─
+   ·                 ╰── 'arg' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             interface Test {
+ 5 │               p1(arg: string): typeof arg;
+   ·                  ─┬─
+   ·                   ╰── 'arg' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare function test(arg: string): typeof arg;
+   ·                                   ─┬─
+   ·                                    ╰── 'arg' is declared here
+ 5 │                   
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare const test: (arg: string) => typeof arg;
+   ·                                  ─┬─
+   ·                                   ╰── 'arg' is declared here
+ 5 │                   
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare class Test {
+ 5 │               p1(arg: string): typeof arg;
+   ·                  ─┬─
+   ·                   ╰── 'arg' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare const Test: {
+ 5 │               new (arg: string): typeof arg;
+   ·                    ─┬─
+   ·                     ╰── 'arg' is declared here
+ 6 │             };
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             type Bar = new (arg: number) => typeof arg;
+   ·                             ─┬─
+   ·                              ╰── 'arg' is declared here
+ 5 │                   
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'arg' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:19]
+ 1 │ 
+ 2 │             const arg = 0;
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare namespace Lib {
+ 5 │               function test(arg: string): typeof arg;
+   ·                             ─┬─
+   ·                              ╰── 'arg' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'arg' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { foo } from './foo';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │             function doThing(foo: number) {}
+   ·                              ─┬─
+   ·                               ╰── 'foo' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import { type foo } from './foo';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │             function doThing(foo: number) {}
+   ·                              ─┬─
+   ·                               ╰── 'foo' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             import { foo } from './foo';
+   ·                      ─┬─
+   ·                       ╰── shadowed declaration is here
+ 3 │             function doThing(foo: number, bar: number) {}
+   ·                              ─┬─
+   ·                               ╰── 'foo' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:23]
+ 1 │ 
+ 2 │             interface Foo {}
+   ·                       ─┬─
+   ·                        ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare module 'bar' {
+ 5 │               export interface Foo {
+   ·                                ─┬─
+   ·                                 ╰── 'Foo' is declared here
+ 6 │                 x: string;
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare module 'baz' {
+ 5 │               export interface Foo {
+   ·                                ─┬─
+   ·                                 ╰── 'Foo' is declared here
+ 6 │                 x: string;
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import { type Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare module 'baz' {
+ 5 │               export interface Foo {
+   ·                                ─┬─
+   ·                                 ╰── 'Foo' is declared here
+ 6 │                 x: string;
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare module 'bar' {
+ 5 │               export class Foo {}
+   ·                            ─┬─
+   ·                             ╰── 'Foo' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             module bar {
+ 5 │               export interface Foo {
+   ·                                ─┬─
+   ·                                 ╰── 'Foo' is declared here
+ 6 │                 x: string;
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:17]
+ 1 │ 
+ 2 │             let x = foo((x, y) => {});
+   ·                 ┬        ┬
+   ·                 │        ╰── 'x' is declared here
+   ·                 ╰── shadowed declaration is here
+ 3 │             let y;
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'y' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:29]
+ 1 │ 
+ 2 │             let x = foo((x, y) => {});
+   ·                             ┬
+   ·                             ╰── 'y' is declared here
+ 3 │             let y;
+   ·                 ┬
+   ·                 ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'y' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:17]
+ 1 │ 
+ 2 │             let x = foo((x, y) => {});
+   ·                 ┬        ┬
+   ·                 │        ╰── 'x' is declared here
+   ·                 ╰── shadowed declaration is here
+ 3 │             let y;
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:20]
+ 2 │             {
+ 3 │               type A = 1;
+   ·                    ┬
+   ·                    ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:25]
+ 2 │             {
+ 3 │               interface A {}
+   ·                         ┬
+   ·                         ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:20]
+ 2 │             {
+ 3 │               type A = 1;
+   ·                    ┬
+   ·                    ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:25]
+ 2 │             {
+ 3 │               interface A {}
+   ·                         ┬
+   ·                         ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             interface Foo<A> {}
+   ·                           ┬
+   ·                           ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             type Foo<A> = 1;
+   ·                      ┬
+   ·                      ╰── 'A' is declared here
+ 3 │             interface A {}
+   ·                       ┬
+   ·                       ╰── shadowed declaration is here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:20]
+ 2 │             {
+ 3 │               type A = 1;
+   ·                    ┬
+   ·                    ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:3:25]
+ 2 │             {
+ 3 │               interface A {}
+   ·                         ┬
+   ·                         ╰── 'A' is declared here
+ 4 │             }
+ 5 │             type A = 1;
+   ·                  ┬
+   ·                  ╰── shadowed declaration is here
+ 6 │                   
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'args' is already a global variable.
+   ╭─[no_shadow.tsx:2:68]
+ 1 │ 
+ 2 │             function foo<T extends (...args: any[]) => any>(fn: T, args: any[]) {}
+   ·                                                                    ────
+ 3 │                   
+   ╰────
+  help: Consider renaming 'args' to avoid shadowing the global variable.
+
+  ⚠ eslint(no-shadow): 'has' is already a global variable.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             declare const has = (environment: 'dev' | 'prod' | 'test') => boolean;
+   ·                           ───
+ 3 │                   
+   ╰────
+  help: Consider renaming 'has' to avoid shadowing the global variable.
+
+  ⚠ eslint(no-shadow): 'has' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             declare const has: (environment: 'dev' | 'prod' | 'test') => boolean;
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │             const fn = (has: string) => {};
+   ·                         ─┬─
+   ·                          ╰── 'has' is declared here
+ 4 │                   
+   ╰────
+  help: Consider renaming 'has' to avoid shadowing the variable from the outer scope.

@@ -12,6 +12,9 @@ pub struct MinifierState<'a> {
 
     pub options: CompressOptions,
 
+    /// When true, only run dead code elimination passes (subset of full peephole optimizations).
+    pub dce: bool,
+
     /// The return value of function declarations that are pure
     pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
 
@@ -24,10 +27,11 @@ pub struct MinifierState<'a> {
 }
 
 impl MinifierState<'_> {
-    pub fn new(source_type: SourceType, options: CompressOptions) -> Self {
+    pub fn new(source_type: SourceType, options: CompressOptions, dce: bool) -> Self {
         Self {
             source_type,
             options,
+            dce,
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             class_symbols_stack: ClassSymbolsStack::new(),

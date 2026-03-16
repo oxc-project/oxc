@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.then(x => {}) }

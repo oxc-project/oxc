@@ -76,6 +76,8 @@ impl Generator for AstKindGenerator {
         let mut kind_variants = quote!();
         let mut span_match_arms = quote!();
         let mut address_match_arms = quote!();
+        let mut node_id_match_arms = quote!();
+        let mut set_node_id_match_arms = quote!();
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
@@ -106,6 +108,25 @@ impl Generator for AstKindGenerator {
             };
             address_match_arms.extend(quote!( Self::#type_ident(it) => #get_address, ));
 
+            let set_node_id = match type_def {
+                TypeDef::Struct(struct_def)
+                    if struct_def.fields.iter().any(|field| {
+                        field.name() == "node_id" && field.type_def(schema).as_cell().is_some()
+                    }) =>
+                {
+                    quote!(it.set_node_id(node_id))
+                }
+                _ => quote!(),
+            };
+
+            if set_node_id.is_empty() {
+                node_id_match_arms.extend(quote!( Self::#type_ident(_) => NodeId::DUMMY, ));
+                set_node_id_match_arms.extend(quote!( Self::#type_ident(_) => {}, ));
+            } else {
+                node_id_match_arms.extend(quote!( Self::#type_ident(it) => it.node_id(), ));
+                set_node_id_match_arms.extend(quote!( Self::#type_ident(it) => #set_node_id, ));
+            }
+
             let as_method_name = format_ident!("as_{}", type_def.snake_name());
             as_methods.extend(quote! {
                 ///@@line_break
@@ -125,14 +146,13 @@ impl Generator for AstKindGenerator {
         let ast_type_max = number_lit(next_index - 1);
 
         let output = quote! {
-            #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
-
             ///@@line_break
             use std::ptr;
 
             ///@@line_break
             use oxc_allocator::{Address, GetAddress, UnstableAddress};
             use oxc_span::{GetSpan, Span};
+            use oxc_syntax::node::NodeId;
 
             ///@@line_break
             use crate::ast::*;
@@ -166,6 +186,28 @@ impl Generator for AstKindGenerator {
                     ///@ `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
                     ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
                     unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
+                }
+
+                ///@@line_break
+                /// Get [`NodeId`] of an [`AstKind`].
+                #[inline]
+                pub fn node_id(&self) -> NodeId {
+                    match self {
+                        #node_id_match_arms
+                    }
+                }
+
+                ///@@line_break
+                /// Set [`NodeId`] of an [`AstKind`].
+                #[expect(
+                    clippy::inline_always,
+                    reason = "enables compile-time match elimination in semantic builder"
+                )]
+                #[inline(always)]
+                pub fn set_node_id(&self, node_id: NodeId) {
+                    match self {
+                        #set_node_id_match_arms
+                    }
                 }
             }
 

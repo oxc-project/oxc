@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -26,7 +24,7 @@ pub struct PreferDescribeFunctionTitle;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// When testing a specific function, this rule aims to enforce passing a named function to describe()
+    /// When testing a specific function, this rule aims to enforce passing a named function to `describe()`
     /// instead of an equivalent hardcoded string.
     ///
     /// ### Why is this bad?
@@ -84,8 +82,28 @@ impl PreferDescribeFunctionTitle {
             return;
         }
 
-        let mut imported_entries =
-            ctx.module_record().import_entries.iter().map(|entry| entry.local_name.name.as_ref());
+        let Some(test_vitest_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
+            return;
+        };
+
+        if test_vitest_fn.kind != JestFnKind::General(JestGeneralFnKind::Describe) {
+            return;
+        }
+
+        let is_imported_name = |name: &str| {
+            ctx.module_record()
+                .import_entries
+                .iter()
+                .any(|entry| entry.local_name.name.as_ref() == name)
+        };
+
+        let is_value_imported_name = |name: &str| {
+            ctx.module_record()
+                .import_entries
+                .iter()
+                .any(|entry| !entry.is_type && entry.local_name.name.as_ref() == name)
+        };
 
         let Some(title_arg) = call_expr.arguments.first() else {
             return;
@@ -97,9 +115,16 @@ impl PreferDescribeFunctionTitle {
                     return;
                 };
 
-                if title_expression.property.name == "name"
-                    && !imported_entries.contains(identifier.name.as_ref())
+                if title_expression.property.name != "name"
+                    || !is_imported_name(identifier.name.as_ref())
                 {
+                    return;
+                }
+
+                if !is_value_imported_name(identifier.name.as_ref()) {
+                    ctx.diagnostic(prefer_describe_function_title_diagnostic(
+                        title_expression.span,
+                    ));
                     return;
                 }
 
@@ -113,22 +138,17 @@ impl PreferDescribeFunctionTitle {
                 );
             }
             Argument::StringLiteral(string_title) => {
-                let Some(test_vitest_fn) =
-                    parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
-                else {
-                    return;
-                };
-
-                if test_vitest_fn.kind != JestFnKind::General(JestGeneralFnKind::Describe) {
-                    return;
-                }
-
-                if !imported_entries.contains(string_title.value.as_ref()) {
+                if !is_imported_name(string_title.value.as_ref()) {
                     return;
                 }
 
                 if ctx.settings().vitest.typecheck {
                     // TODO https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/src/rules/prefer-describe-function-title.ts#L85C9-L92C10
+                    return;
+                }
+
+                if !is_value_imported_name(string_title.value.as_ref()) {
+                    ctx.diagnostic(prefer_describe_function_title_diagnostic(string_title.span));
                     return;
                 }
 
@@ -238,18 +258,27 @@ fn test() {
         ),
         (
             r#"
-			        import { myFunction } from "./myFunction.js"
-			        describe(otherFunction.name, () => {})
-			      "#,
+				        import { myFunction } from "./myFunction.js"
+				        describe(otherFunction.name, () => {})
+				      "#,
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
         ),
         (
             r#"
-			        declare const myFunction: () => unknown
-			        describe("myFunction", () => {})
-			      "#,
+				        import { myFunction } from "./myFunction.js"
+				        describe(myFunction.title, () => {})
+				      "#,
+            None,
+            None,
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+				        declare const myFunction: () => unknown
+				        describe("myFunction", () => {})
+				      "#,
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
@@ -261,6 +290,32 @@ fn test() {
 			      "#,
             None,
             Some(serde_json::json!({ "settings": {  "vitest": {  "typecheck": true,  },  } })),
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+			        import { DocumentBuilder } from "./DocumentBuilder"
+			        describe("Swagger Helper", () => {
+			          beforeEach(() => {
+			            vi.spyOn(DocumentBuilder.prototype, "setTitle")
+			          })
+			        })
+			      "#,
+            None,
+            None,
+            Some(PathBuf::from("swagger.helpers.spec.ts")),
+        ),
+        (
+            r#"
+			        import { myFunction } from "./myFunction"
+			        describe("Test Suite", () => {
+			          beforeEach(() => {
+			            vi.spyOn(myFunction, "name")
+			          })
+			        })
+			      "#,
+            None,
+            None,
             Some(PathBuf::from("myFunction.test.ts")),
         ),
     ];
@@ -294,6 +349,15 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
+			      "#,
+            None,
+            None,
+            Some(PathBuf::from("button.test.ts")),
         ),
         /*
         (
@@ -354,6 +418,17 @@ fn test() {
             r#"
 			        import { myFunction } from "./myFunction"
 			        describe(myFunction, () => {})
+			      "#,
+            None,
+        ),
+        (
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
+			      "#,
+            r#"
+			        import type { Button } from "./button"
+			        describe("Button", () => {})
 			      "#,
             None,
         ),

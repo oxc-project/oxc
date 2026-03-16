@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+mod group_matcher;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
@@ -15,8 +16,7 @@ use crate::{
         tag::{LabelId, Tag},
     },
     ir_transform::sort_imports::{
-        group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
-        source_line::SourceLine,
+        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
 };
 
@@ -43,17 +43,17 @@ impl SortImportsTransform {
         }
 
         // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&options.groups);
+        let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
         // Therefore, as a preprocessing, group IR elements into line first.
         // e.g.
-        // ```
+        // ```text
         // [Text, Space, Text, Line, StartTag, Text, Text, EndTag, Line, ...]
         // ```
         // ↓↓
-        // ```
+        // ```text
         // [ [Text, Space, Text], [StartTag, Text, Text, EndTag], [...] ]
         // ```
         //
@@ -112,7 +112,7 @@ impl SortImportsTransform {
 
                 // If the linebreak falls within the body of a multiline ImportDeclaration,
                 // don't fush the line. e.g.
-                // ```
+                // ```text
                 // import React {
                 //   useState,
                 //   // this is a comment followed by a FormatElement::Line(LineMode::Hard)
@@ -160,7 +160,7 @@ impl SortImportsTransform {
         //
         // Within each chunk, we will sort import lines.
         // e.g.
-        // ```
+        // ```text
         // import C from "c"; // chunk1
         // import B from "b"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -168,7 +168,7 @@ impl SortImportsTransform {
         // import A from "a"; // chunk2
         // ```
         // ↓↓
-        // ```
+        // ```text
         // import B from "b"; // chunk1
         // import C from "c"; // chunk1
         // const THIS_IS_BOUNDARY = true;
@@ -232,7 +232,7 @@ impl SortImportsTransform {
                     // - Comments followed by an empty line → `orphan_contents` (stay at slot position)
                     //
                     // e.g.
-                    // ```
+                    // ```text
                     // // orphan (after_slot: None)
                     //
                     // // leading for A
@@ -244,7 +244,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&groups, options);
+                        chunk.into_sorted_import_units(&group_matcher, options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
@@ -262,17 +262,22 @@ impl SortImportsTransform {
                         // Insert newline when:
                         // 1. Group changes
                         // 2. Previous import was not ignored (don't insert after ignored)
-                        if options.newlines_between {
-                            let current_group_idx = sorted_import.group_idx;
-                            if let Some(prev_idx) = prev_group_idx
-                                && prev_idx != current_group_idx
-                                && !prev_was_ignored
-                            {
-                                next_elements.push(FormatElement::Line(LineMode::Empty));
-                            }
-                            prev_group_idx = Some(current_group_idx);
-                            prev_was_ignored = sorted_import.is_ignored;
+                        // 3. The boundary override (or global `newlines_between`) says to insert
+                        let current_group_idx = sorted_import.group_idx;
+                        if let Some(prev_idx) = prev_group_idx
+                            && prev_idx != current_group_idx
+                            && !prev_was_ignored
+                            && should_insert_newline_between(
+                                options.newlines_between,
+                                &options.newline_boundary_overrides,
+                                prev_idx,
+                                current_group_idx,
+                            )
+                        {
+                            next_elements.push(FormatElement::Line(LineMode::Empty));
                         }
+                        prev_group_idx = Some(current_group_idx);
+                        prev_was_ignored = sorted_import.is_ignored;
 
                         // Output leading lines and import line
                         for line in &sorted_import.leading_lines {
@@ -298,7 +303,7 @@ impl SortImportsTransform {
                     // Special care is needed for the last empty line.
                     // We should preserve it only if the next chunk is a boundary.
                     // e.g.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should be preserved because the next chunk is a boundary.
@@ -306,7 +311,7 @@ impl SortImportsTransform {
                     // const BOUNDARY = true; // chunk2
                     // ```
                     // But in this case, we should not preserve it.
-                    // ```
+                    // ```text
                     // import A from "a"; // chunk1
                     // import B from "b"; // chunk1
                     // // This empty line should NOT be preserved because the next chunk is NOT a boundary.
@@ -331,4 +336,31 @@ impl SortImportsTransform {
 
         Some(next_elements)
     }
+}
+
+/// Resolve whether a blank line should be inserted between two group indices.
+/// Checks each boundary between `prev_group_idx` and `current_group_idx`,
+/// using per-boundary overrides if available, otherwise the global `newlines_between`.
+///
+/// When groups are skipped (i.e. no imports match an intermediate group),
+/// multiple boundaries are evaluated with OR semantics.
+/// If any single boundary in the range resolves to `true`, a blank line is inserted.
+fn should_insert_newline_between(
+    global_newlines_between: bool,
+    newline_boundary_overrides: &[Option<bool>],
+    prev_group_idx: usize,
+    current_group_idx: usize,
+) -> bool {
+    if newline_boundary_overrides.is_empty() {
+        return global_newlines_between;
+    }
+
+    for idx in prev_group_idx..current_group_idx {
+        if newline_boundary_overrides.get(idx).copied().flatten().unwrap_or(global_newlines_between)
+        {
+            return true;
+        }
+    }
+
+    false
 }

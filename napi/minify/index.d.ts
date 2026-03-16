@@ -97,7 +97,7 @@ export interface MangleOptions {
   /**
    * Pass `true` to mangle names declared in the top level scope.
    *
-   * @default false
+   * @default true for modules and commonjs, otherwise false
    */
   toplevel?: boolean
   /**
