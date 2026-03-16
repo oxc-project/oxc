@@ -675,6 +675,7 @@ pub use crate::rules::unicorn::text_encoding_identifier_case::TextEncodingIdenti
 pub use crate::rules::unicorn::throw_new_error::ThrowNewError as UnicornThrowNewError;
 pub use crate::rules::vitest::consistent_each_for::ConsistentEachFor as VitestConsistentEachFor;
 pub use crate::rules::vitest::consistent_test_filename::ConsistentTestFilename as VitestConsistentTestFilename;
+pub use crate::rules::vitest::consistent_test_it::ConsistentTestIt as VitestConsistentTestIt;
 pub use crate::rules::vitest::consistent_vitest_vi::ConsistentVitestVi as VitestConsistentVitestVi;
 pub use crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop as VitestHoistedApisOnTop;
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
@@ -1380,6 +1381,7 @@ pub enum RuleEnum {
     PromiseValidParams(PromiseValidParams),
     VitestConsistentEachFor(VitestConsistentEachFor),
     VitestConsistentTestFilename(VitestConsistentTestFilename),
+    VitestConsistentTestIt(VitestConsistentTestIt),
     VitestConsistentVitestVi(VitestConsistentVitestVi),
     VitestHoistedApisOnTop(VitestHoistedApisOnTop),
     VitestNoConditionalTests(VitestNoConditionalTests),
@@ -2164,7 +2166,8 @@ const PROMISE_SPEC_ONLY_ID: usize = PROMISE_PREFER_CATCH_ID + 1usize;
 const PROMISE_VALID_PARAMS_ID: usize = PROMISE_SPEC_ONLY_ID + 1usize;
 const VITEST_CONSISTENT_EACH_FOR_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
 const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = VITEST_CONSISTENT_EACH_FOR_ID + 1usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_IT_ID + 1usize;
 const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1usize;
 const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_HOISTED_APIS_ON_TOP_ID + 1usize;
 const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
@@ -2975,6 +2978,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PROMISE_VALID_PARAMS_ID,
             Self::VitestConsistentEachFor(_) => VITEST_CONSISTENT_EACH_FOR_ID,
             Self::VitestConsistentTestFilename(_) => VITEST_CONSISTENT_TEST_FILENAME_ID,
+            Self::VitestConsistentTestIt(_) => VITEST_CONSISTENT_TEST_IT_ID,
             Self::VitestConsistentVitestVi(_) => VITEST_CONSISTENT_VITEST_VI_ID,
             Self::VitestHoistedApisOnTop(_) => VITEST_HOISTED_APIS_ON_TOP_ID,
             Self::VitestNoConditionalTests(_) => VITEST_NO_CONDITIONAL_TESTS_ID,
@@ -3775,6 +3779,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::NAME,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::NAME,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::NAME,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::NAME,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::NAME,
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::NAME,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
@@ -4617,6 +4622,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::CATEGORY,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::CATEGORY,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::CATEGORY,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::CATEGORY,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::CATEGORY,
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::CATEGORY,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
@@ -5422,6 +5428,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::FIX,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::FIX,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::FIX,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::FIX,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::FIX,
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::FIX,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
@@ -6415,6 +6422,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::documentation(),
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::documentation(),
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::documentation(),
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::documentation(),
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::documentation(),
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::documentation(),
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::documentation(),
@@ -8348,6 +8356,8 @@ impl RuleEnum {
                 VitestConsistentTestFilename::config_schema(generator)
                     .or_else(|| VitestConsistentTestFilename::schema(generator))
             }
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::config_schema(generator)
+                .or_else(|| VitestConsistentTestIt::schema(generator)),
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::config_schema(generator)
                 .or_else(|| VitestConsistentVitestVi::schema(generator)),
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::config_schema(generator)
@@ -9116,6 +9126,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => "promise",
             Self::VitestConsistentEachFor(_) => "vitest",
             Self::VitestConsistentTestFilename(_) => "vitest",
+            Self::VitestConsistentTestIt(_) => "vitest",
             Self::VitestConsistentVitestVi(_) => "vitest",
             Self::VitestHoistedApisOnTop(_) => "vitest",
             Self::VitestNoConditionalTests(_) => "vitest",
@@ -11285,6 +11296,9 @@ impl RuleEnum {
             Self::VitestConsistentTestFilename(_) => Ok(Self::VitestConsistentTestFilename(
                 VitestConsistentTestFilename::from_configuration(value)?,
             )),
+            Self::VitestConsistentTestIt(_) => {
+                Ok(Self::VitestConsistentTestIt(VitestConsistentTestIt::from_configuration(value)?))
+            }
             Self::VitestConsistentVitestVi(_) => Ok(Self::VitestConsistentVitestVi(
                 VitestConsistentVitestVi::from_configuration(value)?,
             )),
@@ -12073,6 +12087,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.to_configuration(),
             Self::VitestConsistentEachFor(rule) => rule.to_configuration(),
             Self::VitestConsistentTestFilename(rule) => rule.to_configuration(),
+            Self::VitestConsistentTestIt(rule) => rule.to_configuration(),
             Self::VitestConsistentVitestVi(rule) => rule.to_configuration(),
             Self::VitestHoistedApisOnTop(rule) => rule.to_configuration(),
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
@@ -12779,6 +12794,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.run(node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run(node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run(node, ctx),
+            Self::VitestConsistentTestIt(rule) => rule.run(node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run(node, ctx),
             Self::VitestHoistedApisOnTop(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
@@ -13483,6 +13499,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.run_once(ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_once(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_once(ctx),
+            Self::VitestConsistentTestIt(rule) => rule.run_once(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_once(ctx),
             Self::VitestHoistedApisOnTop(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
@@ -14285,6 +14302,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestConsistentTestIt(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestHoistedApisOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14991,6 +15009,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.should_run(ctx),
             Self::VitestConsistentEachFor(rule) => rule.should_run(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.should_run(ctx),
+            Self::VitestConsistentTestIt(rule) => rule.should_run(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.should_run(ctx),
             Self::VitestHoistedApisOnTop(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
@@ -15981,6 +16000,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::IS_TSGOLINT_RULE,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::IS_TSGOLINT_RULE,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::IS_TSGOLINT_RULE,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::IS_TSGOLINT_RULE,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::IS_TSGOLINT_RULE,
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
@@ -16856,6 +16876,7 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => PromiseValidParams::HAS_CONFIG,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::HAS_CONFIG,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::HAS_CONFIG,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::HAS_CONFIG,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::HAS_CONFIG,
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::HAS_CONFIG,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
@@ -17566,6 +17587,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.types_info(),
             Self::VitestConsistentEachFor(rule) => rule.types_info(),
             Self::VitestConsistentTestFilename(rule) => rule.types_info(),
+            Self::VitestConsistentTestIt(rule) => rule.types_info(),
             Self::VitestConsistentVitestVi(rule) => rule.types_info(),
             Self::VitestHoistedApisOnTop(rule) => rule.types_info(),
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
@@ -18270,6 +18292,7 @@ impl RuleEnum {
             Self::PromiseValidParams(rule) => rule.run_info(),
             Self::VitestConsistentEachFor(rule) => rule.run_info(),
             Self::VitestConsistentTestFilename(rule) => rule.run_info(),
+            Self::VitestConsistentTestIt(rule) => rule.run_info(),
             Self::VitestConsistentVitestVi(rule) => rule.run_info(),
             Self::VitestHoistedApisOnTop(rule) => rule.run_info(),
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
@@ -19090,6 +19113,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::PromiseValidParams(PromiseValidParams::default()),
         RuleEnum::VitestConsistentEachFor(VitestConsistentEachFor::default()),
         RuleEnum::VitestConsistentTestFilename(VitestConsistentTestFilename::default()),
+        RuleEnum::VitestConsistentTestIt(VitestConsistentTestIt::default()),
         RuleEnum::VitestConsistentVitestVi(VitestConsistentVitestVi::default()),
         RuleEnum::VitestHoistedApisOnTop(VitestHoistedApisOnTop::default()),
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
