@@ -34,8 +34,8 @@ catalogs:
       specifier: 1.0.0-rc.9
       version: 1.0.0-rc.9
     tsdown:
-      specifier: 0.21.3
-      version: 0.21.3
+      specifier: 0.21.4
+      version: 0.21.4
     vitest:
       specifier: 4.0.18
       version: 4.0.18
@@ -92,7 +92,7 @@ importers:
         version: 15.0.4
       tsdown:
         specifier: 'catalog:'
-        version: 0.21.3(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
+        version: 0.21.4(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
@@ -182,7 +182,7 @@ importers:
         version: 7.0.4
       tsdown:
         specifier: 'catalog:'
-        version: 0.21.3(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
+        version: 0.21.4(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -3557,8 +3557,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hookable@6.0.1:
-    resolution: {integrity: sha512-uKGyY8BuzN/a5gvzvA+3FVWo0+wUjgtfSdnmjtrOVwQCZPHpHDH2WRO3VZSOeluYrHoDCiXFffZXs8Dj1ULWtw==}
+  hookable@6.1.0:
+    resolution: {integrity: sha512-ZoKZSJgu8voGK2geJS+6YtYjvIzu9AOM/KZXsBxr83uhLL++e9pEv/dlgwgy3dvHg06kTz6JOh1hk3C8Ceiymw==}
 
   http-errors@2.0.1:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
@@ -4386,14 +4386,14 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.21.3:
-    resolution: {integrity: sha512-oKKeMC8+IgNsB+81hvF5VBsqhqL/nr0g9vse+ujbK40vv0i3ReFI6gUts7hQH7J53ylQNjMgf2Vu6n0+P/uddA==}
+  tsdown@0.21.4:
+    resolution: {integrity: sha512-Q/kBi8SXkr4X6JI/NAZKZY1UuiEcbuXtIskL4tZCsgpDiEPM/2W6lC+OonNA31S+V3KsWedFvbFDBs23hvt+Aw==}
     engines: {node: '>=20.19.0'}
     hasBin: true
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
-      '@tsdown/css': 0.21.3
-      '@tsdown/exe': 0.21.3
+      '@tsdown/css': 0.21.4
+      '@tsdown/exe': 0.21.4
       '@vitejs/devtools': '*'
       publint: ^0.3.0
       typescript: ^5.0.0
@@ -7753,7 +7753,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hookable@6.0.1: {}
+  hookable@6.1.0: {}
 
   http-errors@2.0.1:
     dependencies:
@@ -8533,13 +8533,13 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tsdown@0.21.3(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3):
+  tsdown@0.21.4(@arethetypeswrong/core@0.18.2)(publint@0.3.18)(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 7.0.0
       defu: 6.1.4
       empathic: 2.0.0
-      hookable: 6.0.1
+      hookable: 6.1.0
       import-without-cache: 0.2.5
       obug: 2.1.1
       picomatch: 4.0.3
