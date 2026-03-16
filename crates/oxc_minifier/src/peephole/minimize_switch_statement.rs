@@ -139,8 +139,8 @@ impl<'a> PeepholeOptimizations {
         Self::remove_last_break(&mut first.consequent, ctx);
         Self::remove_last_break(&mut second.consequent, ctx);
 
-        let (test, consequent, alternate) = if first.test.is_some() {
-            (first.test.unwrap(), first.consequent, second.consequent)
+        let (test, consequent, alternate) = if let Some(item) = first.test {
+            (item, first.consequent, second.consequent)
         } else {
             (second.test.unwrap(), second.consequent, first.consequent)
         };
