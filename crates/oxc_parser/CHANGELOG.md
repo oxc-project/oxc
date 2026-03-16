@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- ed5a7fb parser: Report syntax error for `new super()` (#20384) (Boshen)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
 ## [0.119.0] - 2026-03-14
 
 ### 📚 Documentation

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.41.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- ce65099 formatter: Preserve parentheses around as expression before private field access (#20419) (bab)
+- 4ef93ea formatter: Honor trailing ignore comments after list separators (#19925) (Andreas Lubbe)
+
 ## [0.37.0] - 2026-03-09
 
 ### 🚀 Features

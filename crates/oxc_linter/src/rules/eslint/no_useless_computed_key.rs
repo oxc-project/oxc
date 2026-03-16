@@ -49,7 +49,7 @@ impl Default for NoUselessComputedKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary computed property keys in objects and classes
+    /// Disallow unnecessary computed property keys in objects and classes.
     ///
     /// ### Why is this bad?
     ///

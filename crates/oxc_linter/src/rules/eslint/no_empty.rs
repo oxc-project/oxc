@@ -27,7 +27,7 @@ pub struct NoEmpty {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows empty block statements
+    /// Disallows empty block statements.
     ///
     /// ### Why is this bad?
     ///

@@ -53,7 +53,7 @@ impl std::ops::Deref for JsxPascalCase {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce PascalCase for user-defined JSX components
+    /// Enforce PascalCase for user-defined JSX components.
     ///
     /// ### Why is this bad?
     ///

@@ -15,7 +15,7 @@ pub struct BanTslintComment;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows `tslint:<rule-flag>` comments
+    /// This rule disallows `tslint:<rule-flag>` comments.
     ///
     /// ### Why is this bad?
     ///

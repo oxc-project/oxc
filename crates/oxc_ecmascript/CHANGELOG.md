@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- edb8677 ecmascript: Treat collection constructor with variable arg as side-effectful (#20383) (Dunqing)
+- e62524d minifier: Treat object spread of getters as having side effects (#20380) (Boshen)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🚀 Features

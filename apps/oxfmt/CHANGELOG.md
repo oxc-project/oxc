@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.41.0] - 2026-03-16
+
+### 🚀 Features
+
+- d22c443 oxfmt: Export `OxfmtConfig` type (#20275) (leaysgur)
+- a11ecff oxfmt/lsp: Respect `angular` language id as `.component.html` file (#20242) (Sysix)
+
+### 🐛 Bug Fixes
+
+- f908742 oxfmt: Revert #20326 partially (#20413) (leaysgur)
+- 68fb0d0 oxfmt: Skip vite.config.ts which fails to import (#20326) (leaysgur)
+- 88ee826 oxfmt: Handle literalline for script-in-vue (#20130) (leaysgur)
+- 1c07b3b diagnostics: Handle `WouldBlock` in stdout writes to prevent panic (#20295) (Boshen)
+
 ## [0.40.0] - 2026-03-12
 
 ### 🐛 Bug Fixes
