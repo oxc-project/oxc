@@ -4,10 +4,12 @@ import { runAndSnapshot } from "../utils";
 
 const fixturesDir = join(import.meta.dirname, "fixtures");
 
+const VP_ENV = { VITE_PLUS_VERSION: "1" };
+
 describe("vite_config", () => {
   it("basic: reads fmt field from vite.config.ts", async () => {
     const cwd = join(fixturesDir, "basic");
-    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
@@ -15,7 +17,7 @@ describe("vite_config", () => {
     const cwd = join(fixturesDir, "no_fmt_field");
     const snapshot = await runAndSnapshot(cwd, [
       ["--check", "--config", "vite.config.ts", "test.ts"],
-    ]);
+    ], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
@@ -23,19 +25,19 @@ describe("vite_config", () => {
     const cwd = join(fixturesDir, "error_load_failure", "child");
     const snapshot = await runAndSnapshot(cwd, [
       ["--check", "--config", "vite.config.ts", "test.ts"],
-    ]);
+    ], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
   it("error: auto-discovered vite.config.ts that fails to load", async () => {
     const cwd = join(fixturesDir, "error_load_failure", "child");
-    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
   it("skip: auto-discovered vite.config.ts without fmt field uses defaults", async () => {
     const cwd = join(fixturesDir, "no_fmt_field");
-    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
@@ -44,13 +46,13 @@ describe("vite_config", () => {
     // parent has .oxfmtrc.json with semi: false
     // So `const a = 1;` (with semicolon) should be flagged as mismatch
     const cwd = join(fixturesDir, "skip_finds_parent", "child");
-    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
   it("skip: auto-discovered vite.config.ts with function export uses defaults", async () => {
     const cwd = join(fixturesDir, "skip_fn_export");
-    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
     expect(snapshot).toMatchSnapshot();
   });
 
@@ -58,6 +60,14 @@ describe("vite_config", () => {
     // `oxfmt.config.ts` has `semi: false`, `vite.config.ts` has `semi: true`
     // oxfmt.config.ts should win, so `const a = 1;` (with semicolon) should be flagged
     const cwd = join(fixturesDir, "priority");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]], VP_ENV);
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  it("ignored: vite.config.ts is not used without VITE_PLUS_VERSION", async () => {
+    // Same fixture as "basic" but without VITE_PLUS_VERSION env
+    // vite.config.ts has semi: false, but should be ignored → defaults (semi: true) → check passes
+    const cwd = join(fixturesDir, "basic");
     const snapshot = await runAndSnapshot(cwd, [["--check", "test.ts"]]);
     expect(snapshot).toMatchSnapshot();
   });

@@ -29,6 +29,7 @@ use oxc_language_server::{
 };
 
 use crate::{
+    is_vp,
     config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
     lsp::{
         code_actions::{
@@ -489,13 +490,15 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON/JSONC and TS config files
-                vec![
-                    "**/.oxlintrc.json".to_string(),
-                    "**/.oxlintrc.jsonc".to_string(),
-                    "**/oxlint.config.ts".to_string(),
-                    "**/vite.config.ts".to_string(),
-                ]
+                if is_vp() {
+                    vec!["vite.config.ts".to_string()]
+                } else {
+                    vec![
+                        "**/.oxlintrc.json".to_string(),
+                        "**/.oxlintrc.jsonc".to_string(),
+                        "**/oxlint.config.ts".to_string(),
+                    ]
+                }
             }
             Some(v) => vec![v.to_string()],
         };

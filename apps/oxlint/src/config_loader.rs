@@ -14,6 +14,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
+    is_vp,
 };
 
 #[cfg(feature = "napi")]
@@ -464,7 +465,20 @@ impl<'a> ConfigLoader<'a> {
     ///
     /// Checks for both `.oxlintrc.json` and `oxlint.config.ts` files in the given directory.
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
+    ///
+    /// In VP mode (`VITE_PLUS_VERSION` env var set), only `vite.config.ts` is checked.
+    /// In non-VP mode, only oxlint-specific config files are checked.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+        if is_vp() {
+            // VP mode: only vite.config.ts
+            let vite_config_path = dir.join(VITE_CONFIG_NAME);
+            if vite_config_path.is_file() {
+                return self.load_root_js_config(&vite_config_path);
+            }
+            return Ok(None);
+        }
+
+        // Non-VP mode: oxlint-specific configs only
         let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
         let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
         let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -492,13 +506,6 @@ impl<'a> ConfigLoader<'a> {
         }
         if jsonc_exists {
             return Oxlintrc::from_file(&jsonc_path).map(Some);
-        }
-
-        // Fallback: check for vite.config.ts with .lint field (lowest priority)
-        // If .lint field is missing, `load_root_js_config` returns `Ok(None)` to skip.
-        let vite_config_path = dir.join(VITE_CONFIG_NAME);
-        if vite_config_path.is_file() {
-            return self.load_root_js_config(&vite_config_path);
         }
 
         Ok(None)

@@ -35,6 +35,14 @@ const OXFMT_JS_CONFIG_NAME: &str = "oxfmt.config.ts";
 #[cfg(feature = "napi")]
 const VITE_PLUS_CONFIG_NAME: &str = "vite.config.ts";
 
+/// Returns `true` when running inside Vite+ mode (`VITE_PLUS_VERSION` env var is set).
+/// When true, only `vite.config.ts` is used as a config source.
+/// When false, `vite.config.ts` is ignored and only oxfmt-specific configs are used.
+#[cfg(feature = "napi")]
+fn is_vp() -> bool {
+    std::env::var_os("VITE_PLUS_VERSION").is_some()
+}
+
 fn is_js_config_file(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|ext| JS_CONFIG_EXTENSIONS.contains(&ext))
 }
@@ -45,17 +53,25 @@ fn is_vite_plus_config(path: &Path) -> bool {
 }
 
 /// Returns an iterator of all supported config file names, in priority order.
+///
+/// In VP mode (`VITE_PLUS_VERSION` env var set), only `vite.config.ts` is returned.
+/// In non-VP mode, `vite.config.ts` is excluded.
 pub fn all_config_file_names() -> impl Iterator<Item = String> {
     #[cfg(feature = "napi")]
     {
+        if is_vp() {
+            return vec![VITE_PLUS_CONFIG_NAME.to_string()].into_iter();
+        }
         JSON_CONFIG_FILES
             .iter()
             .copied()
-            .chain([OXFMT_JS_CONFIG_NAME, VITE_PLUS_CONFIG_NAME])
+            .chain([OXFMT_JS_CONFIG_NAME])
             .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .into_iter()
     }
     #[cfg(not(feature = "napi"))]
-    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string())
+    JSON_CONFIG_FILES.iter().map(|f| (*f).to_string()).collect::<Vec<_>>().into_iter()
 }
 
 pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {

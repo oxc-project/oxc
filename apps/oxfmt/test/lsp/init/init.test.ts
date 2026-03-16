@@ -18,11 +18,11 @@ describe("LSP initialization", () => {
   it.each([
     [
       undefined,
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
+      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", ".editorconfig"],
     ],
     [
       { "fmt.configPath": "" },
-      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", ".editorconfig"],
+      [".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", ".editorconfig"],
     ],
     [{ "fmt.configPath": "./custom-config.json" }, ["./custom-config.json", ".editorconfig"]],
   ])(

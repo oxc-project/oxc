@@ -46,11 +46,12 @@ const PULL_DIAGNOSTICS_CAPABILITY = {
   },
 };
 
-export function createLspConnection() {
+export function createLspConnection(env: Record<string, string> = {}) {
   const proc = spawn(process.execPath, [CLI_PATH, "--lsp"], {
     env: {
       ...process.env,
       OXC_LOG: "debug",
+      ...env,
     },
   });
 
@@ -154,11 +155,13 @@ export async function lintFixture(
   fixturePath: string,
   languageId: string,
   initializationOptions?: OxlintLSPConfig,
+  env: Record<string, string> = {},
 ): Promise<string> {
   return lintMultiWorkspaceFixture(
     fixturesDir,
     [{ path: fixturePath, languageId }],
     initializationOptions ? [initializationOptions] : undefined,
+    env,
   );
 }
 
@@ -169,11 +172,12 @@ export async function lintMultiWorkspaceFixture(
     languageId: string;
   }[],
   initializationOptions?: OxlintLSPConfig[],
+  env: Record<string, string> = {},
 ): Promise<string> {
   const workspaceUris = fixturePaths.map(
     ({ path }) => pathToFileURL(dirname(join(fixturesDir, path))).href,
   );
-  await using client = createLspConnection();
+  await using client = createLspConnection(env);
 
   await client.initialize(
     workspaceUris.map((uri, index) => ({ uri, name: `workspace-${index}` })),
