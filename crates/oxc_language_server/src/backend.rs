@@ -14,14 +14,14 @@ use tower_lsp_server::{
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit,
-        Uri,
+        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        TextDocumentContentChangeEvent, TextEdit, Uri,
     },
 };
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ConcurrentHashMap, LanguageId, TextDocument, ToolBuilder,
+    ConcurrentHashMap, LanguageId, ToolBuilder,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -221,10 +221,7 @@ impl LanguageServer for Backend {
 
             // Snapshot all open-file entries in one read lock so the inner loop
             // does not need to re-acquire the lock for every URI.
-            let known_documents: Vec<TextDocument> = {
-                let fs = self.file_system.read().await;
-                fs.keys().into_iter().map(|uri| fs.get_document(&uri)).collect()
-            };
+            let known_uris = self.file_system.read().await.keys();
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
@@ -241,13 +238,17 @@ impl LanguageServer for Backend {
                     continue;
                 }
 
-                for document in &known_documents {
+                for uri in &known_uris {
                     // Check if this worker is the most specific one for this URI
-                    let responsible_worker = Self::find_worker_for_uri(workers, &document.uri);
+                    let responsible_worker = Self::find_worker_for_uri(workers, uri);
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let diagnostics = worker.run_diagnostic(document).await;
+                    let document = {
+                        let fs_guard = self.file_system.read().await;
+                        fs_guard.get_document(uri)
+                    };
+                    let diagnostics = worker.run_diagnostic(&document).await;
                     match diagnostics {
                         Err(err) => {
                             error!(
@@ -635,8 +636,9 @@ impl LanguageServer for Backend {
         };
         if let Some(content) = params
             .content_changes
-            .first()
-            .map(|c: &tower_lsp_server::ls_types::TextDocumentContentChangeEvent| c.text.clone())
+            .into_iter()
+            .next()
+            .map(|c: TextDocumentContentChangeEvent| c.text)
         {
             self.file_system.write().await.set(uri.clone(), content);
         }
@@ -678,7 +680,7 @@ impl LanguageServer for Backend {
         self.file_system.write().await.set_with_language(
             uri.clone(),
             LanguageId::new(params.text_document.language_id),
-            content.clone(),
+            content,
         );
 
         let document = self.file_system.read().await.get_document(&uri);

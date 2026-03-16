@@ -112,7 +112,7 @@ impl WorkspaceWorker {
     /// Common aggregator for tool-provided diagnostics.
     async fn collect_diagnostics_with<F>(
         &self,
-        document: &TextDocument,
+        document: &TextDocument<'_>,
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
@@ -151,7 +151,7 @@ impl WorkspaceWorker {
     /// Run different tools to collect diagnostics.
     pub async fn run_diagnostic(
         &self,
-        document: &TextDocument,
+        document: &TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
             .await
@@ -160,7 +160,7 @@ impl WorkspaceWorker {
     /// Run different tools to collect diagnostics on change.
     pub async fn run_diagnostic_on_change(
         &self,
-        document: &TextDocument,
+        document: &TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_change(document)
@@ -171,7 +171,7 @@ impl WorkspaceWorker {
     /// Run different tools to collect diagnostics on save.
     pub async fn run_diagnostic_on_save(
         &self,
-        document: &TextDocument,
+        document: &TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_save(document)
@@ -183,7 +183,7 @@ impl WorkspaceWorker {
     /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
     /// - If a tool error occurs, an Err is returned
-    pub async fn format_file(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+    pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
             let edits = tool.run_format(document)?;
             // If no edits are made, continue to the next tool
@@ -717,7 +717,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .run_diagnostic(&TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -731,7 +731,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic(&TextDocument::new(
-                uri.clone(),
+                &uri,
                 LanguageId::default(),
                 Some("helloworld".to_string()),
             ))
@@ -748,7 +748,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic(&TextDocument::new(
-                Uri::from_str("file:///root/unknown.file").unwrap(),
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -759,7 +759,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic(&TextDocument::new(
-                Uri::from_str("file:///root/error.config").unwrap(),
+                &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -781,7 +781,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .run_diagnostic_on_change(&TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -795,7 +795,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                uri.clone(),
+                &uri,
                 LanguageId::default(),
                 Some("helloworld".to_string()),
             ))
@@ -812,7 +812,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                Uri::from_str("file:///root/unknown.file").unwrap(),
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -823,7 +823,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic_on_change(&TextDocument::new(
-                Uri::from_str("file:///root/error.config").unwrap(),
+                &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -844,7 +844,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(uri.clone(), LanguageId::default(), None))
+            .run_diagnostic_on_save(&TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -858,7 +858,7 @@ mod tests {
 
         let diagnostics_with_content = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                uri.clone(),
+                &uri,
                 LanguageId::default(),
                 Some("helloworld".to_string()),
             ))
@@ -875,7 +875,7 @@ mod tests {
 
         let no_diagnostics = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                Uri::from_str("file:///root/unknown.file").unwrap(),
+                &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
             ))
@@ -886,7 +886,7 @@ mod tests {
 
         let error = worker
             .run_diagnostic_on_save(&TextDocument::new(
-                Uri::from_str("file:///root/error.config").unwrap(),
+                &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
             ))

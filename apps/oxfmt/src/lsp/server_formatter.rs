@@ -286,7 +286,7 @@ impl Tool for ServerFormatter {
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
             let Some(result) =
-                self.format_in_memory(&document.uri, source_text, &document.language_id)
+                self.format_in_memory(document.uri, source_text, &document.language_id)
             else {
                 return Ok(vec![]); // currently not supported
             };

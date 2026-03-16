@@ -18,14 +18,14 @@ pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
-pub struct TextDocument {
-    pub uri: Uri,
+pub struct TextDocument<'a> {
+    pub uri: &'a Uri,
     pub language_id: LanguageId,
     pub text: Option<String>,
 }
 
-impl TextDocument {
-    pub fn new(uri: Uri, language_id: LanguageId, text: Option<String>) -> Self {
+impl<'a> TextDocument<'a> {
+    pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<String>) -> Self {
         Self { uri, language_id, text }
     }
 }

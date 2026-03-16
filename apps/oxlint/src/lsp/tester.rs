@@ -226,7 +226,7 @@ impl Tester<'_> {
             let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {
                 diagnostic: linter.run_diagnostic(&TextDocument::new(
-                    uri.clone(),
+                    &uri,
                     oxc_language_server::LanguageId::default(),
                     None,
                 )),

@@ -25,11 +25,11 @@ impl LSPFileSystem {
         self.files.pin().get(uri).map(|(lang, _)| lang.clone())
     }
 
-    pub fn get_document(&self, uri: &Uri) -> TextDocument {
+    pub fn get_document<'a>(&self, uri: &'a Uri) -> TextDocument<'a> {
         self.files.pin().get(uri).map_or_else(
-            || TextDocument { uri: uri.clone(), language_id: LanguageId::default(), text: None },
+            || TextDocument { uri, language_id: LanguageId::default(), text: None },
             |(language_id, content)| TextDocument {
-                uri: uri.clone(),
+                uri,
                 language_id: language_id.clone(),
                 text: Some(content.clone()),
             },
