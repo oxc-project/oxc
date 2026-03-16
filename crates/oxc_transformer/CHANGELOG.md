@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- 1f65c3f transformer: Emit design:paramtypes when class has static anonymous class expression (#20382) (bab)
+- fa70d5c transformer: Use implementation signature for design:paramtypes when constructor is overloaded (#20394) (bab)
+
 ## [0.119.0] - 2026-03-14
 
 ### 🐛 Bug Fixes

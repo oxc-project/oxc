@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- f8fbd6e linter/plugins: Remove `hashbang` property from AST (#20365) (overlookmotel)
+
+### ⚡ Performance
+
+- 9cd612f linter/plugins: Recycle comment objects (#20362) (overlookmotel)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features
