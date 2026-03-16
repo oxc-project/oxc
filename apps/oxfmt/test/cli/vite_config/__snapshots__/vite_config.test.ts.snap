@@ -60,10 +60,10 @@ Expected a \`fmt\` field in the default export of <cwd>/vite.config.ts
 --------------------"
 `;
 
-exports[`vite_config > ignored: vite.config.ts is not used without IS_VP 1`] = `
+exports[`vite_config > ignored: not auto-discovered vite.config.ts that fails to load 1`] = `
 "--------------------
 arguments: --check test.ts
-working directory: vite_config/fixtures/basic
+working directory: vite_config/fixtures/error_load_failure/child
 exit code: 0
 --- STDOUT ---------
 Checking formatting...
@@ -90,15 +90,17 @@ Finished in <variable>ms on 1 files using 1 threads.
 --------------------"
 `;
 
-exports[`vite_config > priority: oxfmt.config.ts takes precedence over vite.config.ts 1`] = `
+exports[`vite_config > oxfmt: vite.config.ts is ignored, oxfmt.config.ts is used 1`] = `
 "--------------------
 arguments: --check test.ts
 working directory: vite_config/fixtures/priority
-exit code: 0
+exit code: 1
 --- STDOUT ---------
 Checking formatting...
 
-All matched files use the correct format.
+test.ts (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
 Finished in <variable>ms on 1 files using 1 threads.
 --- STDERR ---------
 
@@ -135,7 +137,22 @@ Finished in <variable>ms on 1 files using 1 threads.
 --------------------"
 `;
 
-exports[`vite_config > skip: parent config is found when vite.config.ts without fmt is skipped 1`] = `
+exports[`vite_config > vp: oxfmt.config.ts is ignored, vite.config.ts is used 1`] = `
+"--------------------
+arguments: --check test.ts
+working directory: vite_config/fixtures/priority
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`vite_config > vp: parent oxfmt config is not used when vite.config.ts without fmt is skipped 1`] = `
 "--------------------
 arguments: --check test.ts
 working directory: vite_config/fixtures/skip_finds_parent/child

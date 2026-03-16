@@ -147,6 +147,7 @@ fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
         return None;
     }
     let file_name = entry.path().file_name()?;
+
     if file_name == DEFAULT_OXLINTRC_NAME {
         Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
     } else if file_name == DEFAULT_JSONC_OXLINTRC_NAME {
@@ -470,7 +471,6 @@ impl<'a> ConfigLoader<'a> {
     /// In non-VP mode, only oxlint-specific config files are checked.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         if is_vp() {
-            // VP mode: only vite.config.ts
             let vite_config_path = dir.join(VITE_CONFIG_NAME);
             if vite_config_path.is_file() {
                 return self.load_root_js_config(&vite_config_path);
@@ -478,7 +478,6 @@ impl<'a> ConfigLoader<'a> {
             return Ok(None);
         }
 
-        // Non-VP mode: oxlint-specific configs only
         let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
         let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
         let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -631,7 +630,8 @@ impl<'a> ConfigLoader<'a> {
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
-        if !search_for_nested_configs {
+        // NOTE: For now, nested config support for Vite+ is unstated
+        if !search_for_nested_configs || is_vp() {
             return Ok(LoadedConfigs {
                 root: oxlintrc,
                 nested: FxHashMap::default(),
