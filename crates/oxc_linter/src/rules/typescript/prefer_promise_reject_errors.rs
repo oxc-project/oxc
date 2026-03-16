@@ -21,7 +21,7 @@ pub struct PreferPromiseRejectErrorsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces passing an Error object to Promise.reject().
+    /// This rule enforces passing an Error object to `Promise.reject()`.
     ///
     /// ### Why is this bad?
     ///

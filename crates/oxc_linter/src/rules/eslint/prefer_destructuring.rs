@@ -54,7 +54,7 @@ pub struct PreferDestructuring {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require destructuring from arrays and/or objects
+    /// Require destructuring from arrays and/or objects.
     ///
     /// ### Why is this bad?
     ///

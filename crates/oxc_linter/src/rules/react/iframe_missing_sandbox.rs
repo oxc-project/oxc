@@ -58,7 +58,7 @@ pub struct IframeMissingSandbox;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce sandbox attribute on iframe elements
+    /// Enforce sandbox attribute on iframe elements.
     ///
     /// ### Why is this bad?
     ///

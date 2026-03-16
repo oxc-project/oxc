@@ -16,7 +16,7 @@ pub struct ConsistentEmptyArraySpread;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// When spreading a ternary in an array, we can use both [] and '' as fallbacks,
+    /// When spreading a ternary in an array, we can use both `[]` and `''` as fallbacks,
     /// but it's better to have consistent types in both branches.
     ///
     /// ### Why is this bad?

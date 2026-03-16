@@ -37,7 +37,7 @@ enum NoCondAssignConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assignment operators in conditional expressions
+    /// Disallow assignment operators in conditional expressions.
     ///
     /// ### Why is this bad?
     ///
