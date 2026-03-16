@@ -697,7 +697,14 @@ fn is_type_only(flags: SymbolFlags) -> bool {
 }
 
 fn is_builtin_global_name(ctx: &LintContext, name: &str) -> bool {
-    GLOBALS.values().any(|globals| globals.contains_key(name)) || ctx.globals().is_enabled(name)
+    for env_name in ctx.env().iter() {
+        if let Some(globals) = GLOBALS.get(env_name)
+            && globals.contains_key(name)
+        {
+            return true;
+        }
+    }
+    ctx.globals().is_enabled(name)
 }
 
 fn is_definition_file(path: &Path) -> bool {
