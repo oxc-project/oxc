@@ -58,18 +58,18 @@ export type TokenOrComment = Token | Comment;
 //
 // These constants define the shape of the data stored in `tokensAndCommentsUint32` as per the above.
 const MERGED_SIZE = 16;
-const MERGED_SIZE32_SHIFT = 2; // 4 x u32s per entry (16 bytes)
-const MERGED_SIZE32 = 1 << MERGED_SIZE32_SHIFT; // 4 x u32s per entry
+export const MERGED_SIZE32_SHIFT = 2; // 4 x u32s per entry (16 bytes)
+export const MERGED_SIZE32 = 1 << MERGED_SIZE32_SHIFT; // 4 x u32s per entry
 debugAssert(MERGED_SIZE === MERGED_SIZE32 * 4);
 debugAssert(MERGED_SIZE === COMMENT_SIZE, "Size of token, comment, and merged entry must be equal");
 
-const MERGED_ORIGINAL_INDEX_OFFSET32 = 1; // u32 index of the `original_index` field within an entry
-const MERGED_TYPE_OFFSET32 = 2; // u32 index of the `is_comment` field within an entry
+export const MERGED_ORIGINAL_INDEX_OFFSET32 = 1; // u32 index of the `original_index` field within an entry
+export const MERGED_TYPE_OFFSET32 = 2; // u32 index of the `is_comment` field within an entry
 
 // Type of merged entry.
 // "Poor man's enum" which optimizes better than a TS enum.
 type MergedType = typeof MERGED_TYPE_TOKEN | typeof MERGED_TYPE_COMMENT;
-const MERGED_TYPE_TOKEN = 0;
+export const MERGED_TYPE_TOKEN = 0;
 const MERGED_TYPE_COMMENT = 1;
 
 // Cached `tokensAndComments` array, returned by `getTokensAndComments`.
@@ -119,7 +119,8 @@ export function initTokensAndCommentsBuffer(): void {
   // Reuse backing buffer across files. Grow (doubled) if needed, never shrink.
   // After warm-up over first few files, the buffer will be large enough to hold all tokens and comments
   // for all files, so we avoid allocating a large buffer each time.
-  const requiredLen32 = tokensAndCommentsLen << MERGED_SIZE32_SHIFT;
+  // +1 entry for sentinel (see below).
+  const requiredLen32 = (tokensAndCommentsLen + 1) << MERGED_SIZE32_SHIFT;
   if (tokensAndCommentsBackingUint32.length < requiredLen32) {
     tokensAndCommentsBackingUint32 = new Uint32Array(
       Math.max(requiredLen32, tokensAndCommentsBackingUint32.length << 1),
@@ -136,6 +137,12 @@ export function initTokensAndCommentsBuffer(): void {
   } else {
     mergeTokensAndComments(tokensUint32, commentsUint32);
   }
+
+  // Write a sentinel `MERGED_TYPE_TOKEN` entry immediately after the last valid entry.
+  // This allows `getCommentsAfter`'s forward walk to terminate without an explicit bounds check
+  // against `tokensAndCommentsLen` on every iteration - the sentinel acts as a natural stop.
+  tokensAndCommentsUint32[(tokensAndCommentsLen << MERGED_SIZE32_SHIFT) + MERGED_TYPE_OFFSET32] =
+    MERGED_TYPE_TOKEN;
 
   debugCheckMergedOrder();
 }
