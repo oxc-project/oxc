@@ -159,13 +159,13 @@ declare_oxc_lint!(
     /// /* curly: ["error", "multi-or-nest"] */
     ///
     /// while (true)
-    ///   if(foo)
-    ///       foo();
+    ///   if (foo)
+    ///     foo();
     ///   else
-    ///       bar();
+    ///     bar();
     ///
     /// if (foo) {
-    ///     foo++;
+    ///   foo++;
     /// }
     /// ```
     ///
