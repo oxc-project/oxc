@@ -996,6 +996,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
+        if matches!(callee, Expression::Super(_)) {
+            self.error(diagnostics::new_super(self.end_span(rhs_span)));
+        }
+
         let span = self.end_span(span);
 
         if optional {

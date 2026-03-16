@@ -507,10 +507,13 @@ impl<'a> LegacyDecorator<'a> {
             );
         }
 
-        debug_assert!(
-            !self.emit_decorator_metadata || self.metadata.pop_constructor_metadata().is_none(),
-            "`pop_constructor_metadata` should be `None` because there are no class decorators, so no metadata was generated."
-        );
+        if self.emit_decorator_metadata {
+            let metadata = self.metadata.pop_constructor_metadata();
+            debug_assert!(
+                metadata.is_none(),
+                "`pop_constructor_metadata` should be `None` because there are no class decorators, so no metadata was generated."
+            );
+        }
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If

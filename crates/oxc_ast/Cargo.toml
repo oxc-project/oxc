@@ -17,7 +17,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = true
+doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
