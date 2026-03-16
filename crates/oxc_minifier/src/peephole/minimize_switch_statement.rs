@@ -105,14 +105,9 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         if switch_stmt.cases.is_empty() {
-            if switch_stmt.discriminant.may_have_side_effects(ctx) {
-                *stmt = ctx.ast.statement_expression(
-                    switch_stmt.span,
-                    switch_stmt.discriminant.take_in(ctx.ast),
-                );
-            } else {
-                *stmt = ctx.ast.statement_empty(switch_stmt.span);
-            }
+            *stmt = ctx
+                .ast
+                .statement_expression(switch_stmt.span, switch_stmt.discriminant.take_in(ctx.ast));
             ctx.state.changed = true;
         }
     }
@@ -184,7 +179,7 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         if switch_stmt.cases.len() == 1 {
-            let Some(first_case) = switch_stmt.cases.first() else { return };
+            let first_case = switch_stmt.cases.first().unwrap();
             if !Self::can_case_be_inlined(first_case, ctx) {
                 return;
             }
