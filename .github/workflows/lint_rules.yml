@@ -14,13 +14,14 @@ on:
 
 jobs:
   lint_rules:
-    runs-on: ubuntu-latest
+    if: github.repository == 'oxc-project/oxc'
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       issues: write
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+        uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 

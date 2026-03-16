@@ -22,7 +22,7 @@ fn default_restrict_template_allow() -> Vec<TypeOrValueSpecifier> {
 pub struct RestrictTemplateExpressions(Box<RestrictTemplateExpressionsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RestrictTemplateExpressionsConfig {
     /// Whether to allow `any` typed values in template expressions.
     pub allow_any: bool,
@@ -66,7 +66,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Template literals will call toString() on the interpolated values. Some types don't have meaningful string representations (like objects that become "[object Object]") or may not have a toString method at all. This rule helps ensure that only appropriate types are used in template expressions.
+    /// Template literals will call `toString()` on the interpolated values. Some types don't have meaningful string representations (like objects that become `"[object Object]"`) or may not have a `toString` method at all. This rule helps ensure that only appropriate types are used in template expressions.
     ///
     /// ### Examples
     ///
@@ -122,15 +122,12 @@ declare_oxc_lint!(
     RestrictTemplateExpressions(tsgolint),
     typescript,
     correctness,
-    pending,
     config = RestrictTemplateExpressionsConfig,
 );
 
 impl Rule for RestrictTemplateExpressions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

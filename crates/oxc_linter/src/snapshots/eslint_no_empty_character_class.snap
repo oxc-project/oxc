@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-empty-character-class): Empty character class will not match anything
    ╭─[no_empty_character_class.tsx:1:16]
  1 │ var foo = /^abc[]/;

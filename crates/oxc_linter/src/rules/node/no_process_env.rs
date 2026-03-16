@@ -2,7 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span, ident::PROCESS};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ fn no_process_env_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoProcessEnvConfig {
     /// Variable names which are allowed to be accessed on `process.env`.
     allowed_variables: FxHashSet<CompactStr>,
@@ -66,14 +66,12 @@ fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintCo
     let Some(obj_id) = object_expr.get_identifier_reference() else {
         return false;
     };
-    obj_id.is_global_reference_name("process", ctx.scoping())
+    obj_id.is_global_reference_name(PROCESS, ctx.scoping())
 }
 
 impl Rule for NoProcessEnv {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

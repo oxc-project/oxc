@@ -157,7 +157,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
         };
 
         // Expression child
-        if matches!(self.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
+        if matches!(self.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             if let JSXExpression::EmptyExpression(_) = self.expression {
                 let comments = f.context().comments().comments_before(self.span.end);
                 let has_line_comment = comments.iter().any(|c| c.is_line());
@@ -329,7 +329,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
             // Extract context entry before mutating f
             let tailwind_ctx_to_push = f
                 .options()
-                .experimental_tailwindcss
+                .sort_tailwindcss
                 .as_ref()
                 .filter(|opts| is_tailwind_jsx_attribute(&self.name, opts))
                 .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace));

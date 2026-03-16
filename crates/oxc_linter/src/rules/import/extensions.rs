@@ -391,7 +391,16 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ESM-based file resolve algorithms (e.g., the one that Vite provides) recommend specifying the file extension to improve performance.
+    /// ESM-based file resolve algorithms (e.g., the one that Vite provides) recommend
+    /// specifying the file extension to improve performance. Without extensions, the
+    /// bundler must check for various possible file extensions, which can slow down
+    /// the build process on large projects. In addition, common ESM environments
+    /// (such as browsers and Node.js) typically require fully specified relative imports,
+    /// which means extensionless imports are not supported there.
+    ///
+    /// For personal preference and compatibility reasons, the rule also allows configuration
+    /// to _disallow_ extensions in imports. This is generally not recommended, but it can be
+    /// done if preferred.
     ///
     /// ### Examples
     ///
@@ -438,13 +447,28 @@ declare_oxc_lint!(
     /// ```js
     /// // Configuration: { "vue": "always", "ts": "never" }
     /// import Component from './Component.vue'; // ✓ OK - .vue configured as "always"
-    /// import utils from './utils';              // ✓ OK - .ts configured as "never"
-    /// import styles from './styles.css';        // ✓ OK - .css not configured, ignored
+    /// import utils from './utils';             // ✓ OK - .ts configured as "never"
+    /// import styles from './styles.css';       // ✓ OK - .css not configured, ignored
     ///
     /// // Configuration: ["ignorePackages", { "js": "never", "ts": "never" }]
     /// import foo from './foo';                  // ✓ OK - no extension
     /// import bar from 'lodash/fp';              // ✓ OK - package import, ignored (ignorePackages sets this to true)
     /// ```
+    ///
+    /// ### Differences compared to `eslint-plugin-import`
+    ///
+    /// If you see differences between this rule implementation and the original `eslint-plugin-import`
+    /// rule, please note that there are some intentional, inherent differences in the behavior of this
+    /// rule and the original.
+    ///
+    /// Oxlint understands and can resolve TypeScript paths out-of-the-box. If your ESLint
+    /// configuration did not include `eslint-import-resolver-typescript` or similar, then the original
+    /// rule will not have been able to resolve TypeScript paths correctly, and so the behavior
+    /// between ESLint and Oxlint may differ. Generally, this means that Oxlint will catch _more_
+    /// valid violations than the original rule, though this depends on the specific configuration.
+    ///
+    /// Oxlint is also able to resolve multiple `tsconfig.json` files in a single repo, and so in a
+    /// monorepo setup will be more capable with regards to resolving file paths.
     Extensions,
     import,
     restriction,
@@ -540,15 +564,27 @@ impl Extensions {
                 return;
             }
 
+            // Determine if the extension being checked is actually written in the import
+            // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
+            // if the ACTUAL file extension (resolved) matches what's written in the import.
+            // If resolved is "tsx" but written is "stories", then tsx is NOT written.
+            let extension_is_written = if let Some(resolved) = resolved_extension {
+                // If we have a resolved extension, check if it matches the written extension
+                written_extension == Some(resolved)
+            } else {
+                // Otherwise, just check if there's any written extension
+                written_extension.is_some()
+            };
+
             if config.should_flag_extension(
                 ext_str,
-                written_extension.is_some(),
+                extension_is_written,
                 resolved_extension.is_some(),
                 require_extension,
             ) {
-                if let Some(ext) = written_extension {
+                if extension_is_written {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span, ext, is_import,
+                        span, ext_str, is_import,
                     ));
                 } else {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
@@ -1217,6 +1253,11 @@ fn test() {
             r#"import data from "./data.json" with { type: "json" };"#,
             Some(json!(["ignorePackages"])),
         ),
+        // Files with multiple extensions (e.g., Component.stories.tsx)
+        // These test cases use actual fixture files for proper module resolution
+        (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
+        (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
+        (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1685,6 +1726,16 @@ fn test() {
             r"import useState from '@foo/bar/useState.ts';",
             Some(json!(["never", { "ignorePackages": true }])),
         ),
+        // Files with multiple extensions - should fail when actual extension IS included
+        (
+            r"import Component from './Component.stories.tsx';",
+            Some(json!(["never", { "tsx": "never" }])),
+        ),
+        (
+            r"import Component from './Component.test.ts';",
+            Some(json!(["never", { "ts": "never" }])),
+        ),
+        (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",

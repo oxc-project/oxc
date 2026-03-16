@@ -1,9 +1,14 @@
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
-    sync::mpsc,
+    sync::{Mutex, mpsc},
 };
 
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ignore::{
+    gitignore::{Gitignore, GitignoreBuilder},
+    overrides::OverrideBuilder,
+};
+use rustc_hash::FxHashSet;
 
 use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
@@ -17,14 +22,16 @@ impl Walk {
         paths: &[PathBuf],
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
-        oxfmtrc_path: Option<&Path>,
+        config_dir: Option<&Path>,
         ignore_patterns: &[String],
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
         //
-        let mut target_paths = vec![];
+        let mut target_paths = FxHashSet::default();
+        let mut glob_patterns = vec![];
         let mut exclude_patterns = vec![];
+
         for path in paths {
             let path_str = path.to_string_lossy();
 
@@ -35,26 +42,38 @@ impl Walk {
                 continue;
             }
 
-            // Otherwise, treat as target path
+            // Normalize `./` prefix
+            let normalized =
+                if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
 
-            if path.is_absolute() {
-                target_paths.push(path.clone());
+            // Separate glob patterns from concrete paths
+            if is_glob_pattern(normalized, cwd) {
+                glob_patterns.push(normalized.to_string());
                 continue;
             }
 
-            // NOTE: `.` and cwd behave differently, need to normalize
-            let path = if path_str == "." {
+            // Resolve full path for concrete paths
+            let full_path = if path.is_absolute() {
+                path.clone()
+            } else if normalized == "." {
+                // NOTE: `.` and cwd behave differently, need to normalize
                 cwd.to_path_buf()
-            } else if let Some(stripped) = path_str.strip_prefix("./") {
-                cwd.join(stripped)
             } else {
-                cwd.join(path)
+                cwd.join(normalized)
             };
-            target_paths.push(path);
+            target_paths.insert(full_path);
         }
-        // Default to cwd if no target paths are provided
-        if target_paths.is_empty() {
-            target_paths.push(cwd.to_path_buf());
+
+        // Expand glob patterns and add to target paths
+        // NOTE: See `expand_glob_patterns()` for why we pre-expand globs here
+        if !glob_patterns.is_empty() {
+            target_paths.extend(expand_glob_patterns(cwd, &glob_patterns, with_node_modules)?);
+        }
+
+        // Default to `cwd` if no positive paths were specified.
+        // Exclude patterns alone should still walk, but unmatched globs should not.
+        if target_paths.is_empty() && glob_patterns.is_empty() {
+            target_paths.insert(cwd.to_path_buf());
         }
 
         //
@@ -84,11 +103,9 @@ impl Walk {
         // 2. Handle `oxfmtrc.ignorePatterns`
         // Patterns are relative to the config file location
         if !ignore_patterns.is_empty()
-            && let Some(oxfmtrc_path) = oxfmtrc_path
+            && let Some(config_dir) = config_dir
         {
-            let mut builder = GitignoreBuilder::new(
-                oxfmtrc_path.parent().expect("`oxfmtrc_path` should have a parent directory"),
-            );
+            let mut builder = GitignoreBuilder::new(config_dir);
             for pattern in ignore_patterns {
                 if builder.add_line(None, pattern).is_err() {
                     return Err(format!(
@@ -156,16 +173,7 @@ impl Walk {
                 // it means we want to include hidden files and directories.
                 // However, we (and also Prettier) still skip traversing certain directories.
                 // https://prettier.io/docs/ignore#ignoring-files-prettierignore
-                let is_ignored_dir = {
-                    let dir_name = entry.file_name();
-                    dir_name == ".git"
-                        || dir_name == ".jj"
-                        || dir_name == ".sl"
-                        || dir_name == ".svn"
-                        || dir_name == ".hg"
-                        || (!with_node_modules && dir_name == "node_modules")
-                };
-                if is_ignored_dir {
+                if is_ignored_dir(entry.file_name(), with_node_modules) {
                     return false;
                 }
             }
@@ -182,27 +190,7 @@ impl Walk {
             true
         });
 
-        let inner = inner
-            // Do not follow symlinks like Prettier does.
-            // See https://github.com/prettier/prettier/pull/14627
-            .follow_links(false)
-            // Include hidden files and directories except those we explicitly skip above
-            .hidden(false)
-            // Do not respect `.ignore` file
-            .ignore(false)
-            // Do not search upward
-            // NOTE: Prettier only searches current working directory
-            .parents(false)
-            // Also do not respect globals
-            .git_global(false)
-            // But respect downward nested `.gitignore` files
-            // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
-            .git_ignore(true)
-            // Also do not respect `.git/info/exclude`
-            .git_exclude(false)
-            // Git is not required
-            .require_git(false)
-            .build_parallel();
+        let inner = apply_walk_settings(&mut inner).build_parallel();
         Ok(Some(Self { inner }))
     }
 
@@ -248,6 +236,80 @@ fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors
     false
 }
 
+/// Check if a directory should be skipped during walking.
+/// VCS internal directories are always skipped, and `node_modules` is skipped by default.
+fn is_ignored_dir(dir_name: &OsStr, with_node_modules: bool) -> bool {
+    dir_name == ".git"
+        || dir_name == ".jj"
+        || dir_name == ".sl"
+        || dir_name == ".svn"
+        || dir_name == ".hg"
+        || (!with_node_modules && dir_name == "node_modules")
+}
+
+/// Check if a path string looks like a glob pattern.
+/// Glob-like characters are also valid path characters on some environments.
+/// If the path actually exists on disk, it is treated as a concrete path.
+/// e.g. `{config}.js`, `[id].tsx`
+fn is_glob_pattern(s: &str, cwd: &Path) -> bool {
+    let has_glob_chars = s.contains('*') || s.contains('?') || s.contains('[') || s.contains('{');
+    has_glob_chars && !cwd.join(s).exists()
+}
+
+// NOTE: Why pre-expand globs?
+// An alternative approach would be:
+// - to always walk the entire `cwd`
+// - and filter by both concrete paths and glob patterns
+//
+// However, this would be inefficient for common use cases
+// like `oxfmt src/a.js` or pre-commit hooks that specify only staged files.
+//
+// Pre-expanding globs allows us to walk only the necessary paths.
+// And this only happens if glob patterns are specified.
+//
+// NOTE: Why not use `ignore::Overrides` in the main walk?
+// `ignore::Overrides` have the highest priority in the `ignore` crate,
+// so files matching the glob would be collected even if they're in `.gitignore`!
+/// Expand glob patterns to concrete file paths.
+fn expand_glob_patterns(
+    cwd: &Path,
+    patterns: &[String],
+    with_node_modules: bool,
+) -> Result<Vec<PathBuf>, String> {
+    let mut ob = OverrideBuilder::new(cwd);
+    for pattern in patterns {
+        ob.add(pattern).map_err(|e| format!("Invalid glob pattern `{pattern}`: {e}"))?;
+    }
+    let overrides = ob.build().map_err(|e| format!("Failed to build glob overrides: {e}"))?;
+
+    let mut builder = ignore::WalkBuilder::new(cwd);
+    builder.overrides(overrides);
+    // Skip ignored directories to align with the main walk behavior.
+    builder.filter_entry(move |entry| {
+        !(entry.file_type().is_some_and(|ft| ft.is_dir())
+            && is_ignored_dir(entry.file_name(), with_node_modules))
+    });
+
+    let paths = Mutex::new(vec![]);
+    apply_walk_settings(&mut builder).build_parallel().run(|| {
+        Box::new(|entry| {
+            match entry {
+                Ok(entry) => {
+                    // Align with main walk: only include files
+                    #[expect(clippy::filetype_is_file)]
+                    if entry.file_type().is_some_and(|ft| ft.is_file()) {
+                        paths.lock().unwrap().push(entry.into_path());
+                    }
+                    ignore::WalkState::Continue
+                }
+                Err(_err) => ignore::WalkState::Skip,
+            }
+        })
+    });
+
+    Ok(paths.into_inner().unwrap())
+}
+
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
     // If specified, resolve absolute paths and check existence
     if !ignore_paths.is_empty() {
@@ -270,6 +332,31 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
             path.exists().then_some(path)
         })
         .collect())
+}
+
+/// Apply common walk settings.
+/// This ensures consistent behavior across glob expansion and main walk.
+fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBuilder {
+    builder
+        // Do not follow symlinks like Prettier does.
+        // See https://github.com/prettier/prettier/pull/14627
+        .follow_links(false)
+        // Include hidden files and directories except those we explicitly skip
+        .hidden(false)
+        // Do not respect `.ignore` file
+        .ignore(false)
+        // Do not search upward
+        // NOTE: Prettier only searches current working directory
+        .parents(false)
+        // Also do not respect globals
+        .git_global(false)
+        // But respect downward nested `.gitignore` files
+        // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
+        .git_ignore(true)
+        // Also do not respect `.git/info/exclude`
+        .git_exclude(false)
+        // Git is not required
+        .require_git(false)
 }
 
 // ---

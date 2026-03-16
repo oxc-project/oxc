@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-bitwise): Unexpected use of `"^"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ a ^ b

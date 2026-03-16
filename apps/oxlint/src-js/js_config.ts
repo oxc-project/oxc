@@ -1,0 +1,165 @@
+import { basename as pathBasename } from "node:path";
+
+import { getErrorMessage } from "./utils/utils.ts";
+import { DateNow, JSONStringify } from "./utils/globals.ts";
+
+interface JsConfigResult {
+  path: string;
+  config: unknown; // Will be validated as Oxlintrc on Rust side, `null` means "skip this config"
+}
+
+const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
+
+const VITE_CONFIG_NAME = "vite.config.ts";
+const VITE_OXLINT_CONFIG_FIELD = "lint";
+
+type LoadJsConfigsResult =
+  | { Success: JsConfigResult[] }
+  | { Failures: { path: string; error: string }[] }
+  | { Error: string };
+
+function validateConfigExtends(root: object): void {
+  const visited = new WeakSet<object>();
+  const inStack = new WeakSet<object>();
+  const stackObjects: object[] = [];
+  const stackPaths: string[] = [];
+
+  const formatCycleError = (refPath: string, cycleStart: string, idx: number): string => {
+    const cycle =
+      idx === -1
+        ? `${cycleStart} -> ${cycleStart}`
+        : [...stackPaths.slice(idx), cycleStart].join(" -> ");
+
+    return (
+      "`extends` contains a circular reference.\n\n" +
+      `${refPath} points back to ${cycleStart}\n` +
+      `Cycle: ${cycle}`
+    );
+  };
+
+  const visit = (config: object, path: string): void => {
+    if (visited.has(config)) return;
+    if (inStack.has(config)) {
+      const idx = stackObjects.indexOf(config);
+      const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+      throw new Error(formatCycleError(path, cycleStart, idx));
+    }
+
+    inStack.add(config);
+    stackObjects.push(config);
+    stackPaths.push(path);
+
+    const maybeExtends = (config as Record<string, unknown>).extends;
+    if (maybeExtends !== undefined) {
+      if (!Array.isArray(maybeExtends)) {
+        throw new Error(
+          "`extends` must be an array of config objects (strings/paths are not supported).",
+        );
+      }
+      for (let i = 0; i < maybeExtends.length; i++) {
+        const item = maybeExtends[i];
+        if (!isObject(item)) {
+          throw new Error(
+            `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
+          );
+        }
+
+        const itemPath = `${path}.extends[${i}]`;
+        if (inStack.has(item)) {
+          const idx = stackObjects.indexOf(item);
+          const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+          throw new Error(formatCycleError(itemPath, cycleStart, idx));
+        }
+
+        visit(item, itemPath);
+      }
+    }
+
+    inStack.delete(config);
+    stackObjects.pop();
+    stackPaths.pop();
+    visited.add(config);
+  };
+
+  visit(root, "<root>");
+}
+
+/**
+ * Load JavaScript config files in parallel.
+ *
+ * Uses native Node.js TypeScript support to import the config files.
+ * Each config file should have a default export containing the oxlint configuration.
+ *
+ * @param paths - Array of absolute paths to JavaScript/TypeScript config files
+ * @returns JSON-stringified result with all configs or error
+ */
+export async function loadJsConfigs(paths: string[]): Promise<string> {
+  try {
+    const cacheKey = DateNow();
+    const results = await Promise.allSettled(
+      paths.map(async (path): Promise<JsConfigResult> => {
+        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
+        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
+        const module = await import(fileUrl.href);
+        const config = module.default;
+
+        if (config === undefined) {
+          throw new Error(`Configuration file has no default export.`);
+        }
+
+        // Vite config: extract `.lint` field, skip `defineConfig()` validation
+        if (pathBasename(path) === VITE_CONFIG_NAME) {
+          // NOTE: Vite configs may export a function via `defineConfig(() => ({ ... }))`,
+          // but we don't know the arguments to call the function.
+          // Treat non-object exports as "no config" and skip.
+          if (!isObject(config)) {
+            return { path, config: null };
+          }
+
+          const lintConfig = (config as Record<string, unknown>)[VITE_OXLINT_CONFIG_FIELD];
+          // NOTE: return `null` if `.lint` is missing which signals "skip" this
+          if (lintConfig === undefined) {
+            return { path, config: null };
+          }
+
+          if (!isObject(lintConfig)) {
+            throw new Error(
+              `The \`${VITE_OXLINT_CONFIG_FIELD}\` field in the default export must be an object.`,
+            );
+          }
+          validateConfigExtends(lintConfig as object);
+          return { path, config: lintConfig };
+        }
+
+        if (!isObject(config)) {
+          throw new Error(`Configuration file must have a default export that is an object.`);
+        }
+        validateConfigExtends(config as object);
+        return { path, config };
+      }),
+    );
+
+    const successes: JsConfigResult[] = [];
+    const errors: { path: string; error: string }[] = [];
+
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      if (result.status === "fulfilled") {
+        successes.push(result.value);
+      } else {
+        errors.push({ path: paths[i], error: getErrorMessage(result.reason) });
+      }
+    }
+
+    // If any config failed to load, report all errors
+    if (errors.length > 0) {
+      return JSONStringify({ Failures: errors } satisfies LoadJsConfigsResult);
+    }
+
+    return JSONStringify({ Success: successes } satisfies LoadJsConfigsResult);
+  } catch (err) {
+    return JSONStringify({
+      Error: getErrorMessage(err),
+    } satisfies LoadJsConfigsResult);
+  }
+}

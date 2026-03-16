@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:14]
  1 │ export const myThing = 'invalid'; test('a test', () => { expect(1).toBe(1);});

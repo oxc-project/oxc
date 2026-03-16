@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-script-component-in-head): Prevent usage of `next/script` in `next/head` component.
    ╭─[no_script_component_in_head.tsx:7:13]
  6 │                 return (

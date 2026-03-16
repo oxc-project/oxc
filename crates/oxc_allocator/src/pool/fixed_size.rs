@@ -333,6 +333,7 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 /// <----------------------------------------->             `Allocator` chunk (`CHUNK_SIZE` bytes)
 ///                                      <---->             `ChunkFooter` (aligned on 16)
 /// <----------------------------------->                   `Allocator` chunk data storage (for AST)
+///                                                         (`ACTIVE_SIZE` bytes)
 ///
 ///                                                         METADATA
 ///                                            <---->       `RawTransferMetadata`
@@ -429,21 +430,7 @@ impl FixedSizeAllocator {
 
     /// Reset this [`FixedSizeAllocator`].
     fn reset(&mut self) {
-        // Set cursor back to end
         self.allocator.reset();
-
-        // Set data pointer back to start.
-        // SAFETY: Fixed-size allocators have data pointer originally aligned on `BLOCK_ALIGN`,
-        // and size less than `BLOCK_ALIGN`. So we can restore original data pointer by rounding down
-        // to next multiple of `BLOCK_ALIGN`.
-        // We're restoring the original data pointer, so it cannot break invariants about alignment,
-        // being within the chunk's allocation, or being before cursor pointer.
-        unsafe {
-            let data_ptr = self.allocator.data_ptr();
-            let offset = data_ptr.as_ptr() as usize % BLOCK_ALIGN;
-            let data_ptr = data_ptr.sub(offset);
-            self.allocator.set_data_ptr(data_ptr);
-        }
     }
 
     /// Unwrap a [`FixedSizeAllocator`] into the [`Allocator`] it contains.

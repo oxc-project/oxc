@@ -536,6 +536,7 @@ fn is_allowed_string_like_in_container<'a>(
     is_whitespace(s)
         || contains_line_break_or_is_empty(s)
         || contains_html_entity(s)
+        || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
         || !is_prop && s.trim() != s
         || contains_multiline_comment(s)
@@ -570,6 +571,14 @@ fn contains_quote_characters(s: &str) -> bool {
 
 fn contains_double_quote_characters(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '"'))
+}
+
+fn contains_single_quote_characters(s: &str) -> bool {
+    s.chars().any(|c| matches!(c, '\''))
+}
+
+fn contains_both_quote_characters(s: &str) -> bool {
+    contains_double_quote_characters(s) && contains_single_quote_characters(s)
 }
 
 fn contains_utf8_escape(s: &str) -> bool {
@@ -1065,6 +1074,7 @@ fn test() {
         ("<App label={`${label}`} />", Some(json!(["never"]))),
         ("<App>{`${label}`}</App>", Some(json!(["never"]))),
         (r#"<div>{`Nobody's "here"`}</div>"#, None),
+        (r#"<Foo bar={`a "x" 'y'`} />;"#, Some(json!(["never"]))),
     ];
 
     let fail = vec![

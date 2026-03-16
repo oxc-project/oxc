@@ -10,7 +10,7 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent);
+        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
             self.type_annotation(),
@@ -23,7 +23,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent);
+        let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
             self.expression(),
             self.type_annotation(),

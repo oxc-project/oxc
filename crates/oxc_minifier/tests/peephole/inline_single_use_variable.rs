@@ -10,7 +10,12 @@ fn test_script_same(source_text: &str) {
 
 #[track_caller]
 fn test_script(source_text: &str, expected: &str) {
-    test_options_source_type(source_text, expected, SourceType::cjs(), &default_options());
+    test_options_source_type(
+        source_text,
+        expected,
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
 }
 
 #[track_caller]
@@ -334,32 +339,29 @@ fn keep_names() {
     );
     test_keep_names(
         "var x = function() {}; var y = x; console.log(y.name)",
-        "var x = function() {}, y = x; console.log(y.name)",
+        "var x = function() {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (function() {}); var y = x; console.log(y.name)",
-        "var x = (function() {}), y = x; console.log(y.name)",
+        "var x = (function() {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = function foo() {}; var y = x; console.log(y.name)",
         "console.log(function foo() {}.name)",
     );
 
-    test(
-        "var x = class {}; var y = x; console.log(y.name)",
-        "var y = class {}; console.log(y.name)",
-    );
+    test("var x = class {}; var y = x; console.log(y.name)", "console.log(class {}.name)");
     test_keep_names(
         "var x = class {}; var y = x; console.log(y.name)",
-        "var x = class {}, y = x; console.log(y.name)",
+        "var x = class {}; console.log(x.name)",
     );
     test_keep_names(
         "var x = (class {}); var y = x; console.log(y.name)",
-        "var x = (class {}), y = x; console.log(y.name)",
+        "var x = (class {}); console.log(x.name)",
     );
     test_keep_names(
         "var x = class Foo {}; var y = x; console.log(y.name)",
-        "var y = class Foo {}; console.log(y.name)",
+        "console.log(class Foo {}.name)",
     );
 }
 

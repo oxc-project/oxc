@@ -47,7 +47,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(self.parent.span()).with_soft_block_indent(),
+                    format_dangling_comments(self.parent().span()).with_soft_block_indent(),
                     r_paren_token
                 ]
             );
@@ -56,7 +56,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let is_simple_module_import = is_simple_module_import(self, f.comments());
 
         let call_expression =
-            if !is_simple_module_import && let AstNodes::CallExpression(call) = self.parent {
+            if !is_simple_module_import && let AstNodes::CallExpression(call) = self.parent() {
                 Some(call)
             } else {
                 None
@@ -77,6 +77,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                         && is_test_call_expression(call))
             })
             || is_multiline_template_only_args(self, f.source_text())
+            || is_graphql_call_with_single_template_arg(self, call_expression)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -143,7 +144,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                     f.join_with(&separator).entries(self.iter());
                     write!(
                         f,
-                        [(!matches!(self.parent, AstNodes::ImportExpression(_)))
+                        [(!matches!(self.parent(), AstNodes::ImportExpression(_)))
                             .then_some(FormatTrailingCommas::All)]
                     );
                 })),
@@ -236,7 +237,7 @@ fn format_all_elements_broken_out<'a, 'b>(
 
                 write!(
                     f,
-                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                    [(!matches!(node.parent(), AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
                 );
             })),
@@ -270,7 +271,7 @@ fn format_all_args_broken_out<'a, 'b>(
 
                 write!(
                     f,
-                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                    [(!matches!(node.parent(), AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
                 );
             })),
@@ -288,18 +289,21 @@ pub fn arguments_grouped_layout(
     // To avoid redundant `can_group_expression_argument` calls, we handle this case specially.
     if args.len() == 2 {
         let [first, second] = args else { unreachable!("args.len() == 2 guarantees two elements") };
-        let first = first.as_expression()?;
         let second = second.as_expression()?;
+
+        // `as_expression()` returns `None` for SpreadElement, which is fine since SpreadElement
+        // can never match the last arg's type (used for same-type checking in `should_group_last_argument_impl`).
+        let first_expr = first.as_expression();
 
         if can_group_expression_argument(second, f) {
             // Check if we should group the last argument (second)
-            should_group_last_argument_impl(2, Some(first), second, f)
-                .then_some(GroupedCallArgumentLayout::GroupedLastArgument)
-        } else {
-            // Check if we should group the first argument instead
-            should_group_first_argument(first, second, f)
-                .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
+            return should_group_last_argument_impl(2, first_expr, second, f)
+                .then_some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
+
+        // Only check first argument grouping if first is an expression (not SpreadElement)
+        should_group_first_argument(first_expr?, second, f)
+            .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
     } else {
         // For other cases (not exactly 2 arguments), only check last argument grouping
         should_group_last_argument(args, f)
@@ -435,7 +439,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// additional cases through. The simplicity is determined as
 /// either being a keyword type or any reference type with no additional type
 /// parameters. For example:
-/// ```
+/// ```text
 ///     number          => true
 ///     unknown         => true
 ///     HTMLElement     => true
@@ -444,7 +448,7 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 /// ```
 /// This function also introspects into array and generic types to extract the
 /// core type, but only to a limited extent:
-/// ```
+/// ```text
 ///     string[]        => string
 ///     string[][]      => string
 ///     string[][][]    => string
@@ -765,20 +769,30 @@ fn write_grouped_arguments<'a>(
                 );
             };
 
+            // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
+            // the arrow function should be kept hugged even if its signature breaks.
+            // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
+            let is_decorated = is_decorated_function(argument);
+
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
+            // However, decorated functions are allowed to break while staying hugged.
             let interned = f.intern(&format_once(|f| {
                 RemoveSoftLinesBuffer::new(f).write_element(cached_element);
             }));
 
             if let Some(interned) = interned {
-                if interned.will_break() {
+                if interned.will_break() && !is_decorated {
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
                 // No break; it should print the element without soft lines.
                 // It would be used in the `FormatFunction` or `FormatJsArrowFunctionExpression`.
-                f.context_mut().cache_element(params.as_ref(), interned);
+                // For decorated functions, we keep the original cached element (with soft lines)
+                // so the parameters can break while staying hugged.
+                if !is_decorated {
+                    f.context_mut().cache_element(params.as_ref(), interned);
+                }
             }
         }
 
@@ -968,7 +982,7 @@ pub fn is_simple_module_import(
         return false;
     }
 
-    match arguments.parent {
+    match arguments.parent() {
         AstNodes::ImportExpression(_) => {}
         AstNodes::CallExpression(call) => {
             match &call.callee {
@@ -1004,7 +1018,7 @@ pub fn is_simple_module_import(
     }
 
     matches!(arguments.as_ref()[0], Argument::StringLiteral(_))
-        && !comments.has_comment_before(arguments.parent.span().end)
+        && !comments.has_comment_before(arguments.parent().span().end)
 }
 
 /// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
@@ -1044,7 +1058,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = matches!(call.parent, AstNodes::ExpressionStatement(_));
+            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
                     1 => true,
@@ -1079,6 +1093,19 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
         .unwrap()
         .as_expression()
         .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
+}
+
+/// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
+/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
+fn is_graphql_call_with_single_template_arg<'a>(
+    arguments: &[Argument],
+    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+) -> bool {
+    arguments.len() == 1
+        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
+        && call.is_some_and(
+            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
+        )
 }
 
 /// This function is used to check if the code is a hook-like code:
@@ -1120,10 +1147,82 @@ fn is_react_hook_with_deps_array(
             }
 
             // Is there a comment that isn't around the callback or deps?
-            !comments.comments_before(arguments.parent.span().end).iter().any(|comment| {
+            !comments.comments_before(arguments.parent().span().end).iter().any(|comment| {
                 !callback.span.contains_inclusive(comment.span)
                     && !deps.span.contains_inclusive(comment.span)
             })
+        }
+        _ => false,
+    }
+}
+
+/// The "decorated function" pattern.
+/// The arrow function should be kept hugged even if its signature breaks.
+///
+/// ```js
+/// const decoratedFn = decorator(param1, param2)((
+///   ...
+/// ) => {
+///   ...
+/// });
+/// ```
+///
+/// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
+fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
+    // Check if the argument is an arrow function with a block body
+    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+        return false;
+    };
+
+    if arrow.expression {
+        return false;
+    }
+
+    // Check if the parent is a call expression where:
+    // - The arrow is the only argument
+    // - The callee is also a CallExpression
+    let AstNodes::CallExpression(parent_call) = argument.parent() else {
+        return false;
+    };
+
+    if parent_call.arguments.len() != 1 {
+        return false;
+    }
+
+    let Expression::CallExpression(callee_call) = &parent_call.callee else {
+        return false;
+    };
+
+    // Check if the decorator (callee.callee) is a simple identifier or member expression
+    let decorator = &callee_call.callee;
+    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
+        || matches!(
+            decorator,
+            Expression::StaticMemberExpression(member)
+            if matches!(&member.object, Expression::Identifier(_))
+        );
+
+    if !is_valid_decorator {
+        return false;
+    }
+
+    // Check grandparent context
+    let grandparent = argument.grand_parent();
+    match grandparent {
+        AstNodes::VariableDeclarator(_) => {
+            // Check if the great-grandparent is a const declaration with only one declarator
+            let great_grandparent = grandparent.parent();
+            !matches!(great_grandparent, AstNodes::VariableDeclaration(decl) if decl.kind != VariableDeclarationKind::Const || decl.declarations.len() != 1)
+        }
+        AstNodes::ExportDefaultDeclaration(_) | AstNodes::TSExportAssignment(_) => true,
+        AstNodes::AssignmentExpression(assign) => {
+            // Check if it's `module.exports = ...`
+            matches!(
+                &assign.left,
+                AssignmentTarget::StaticMemberExpression(member)
+                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "module")
+                    && member.property.name == "exports"
+            )
         }
         _ => false,
     }

@@ -4,12 +4,8 @@ pub const IGNORE_TESTS: &[&str] = &[
     // https://github.com/biomejs/biome/blob/cd1c8ec4249e8df8d221393586d664537c9fddb2/crates/biome_formatter_test/src/diff_report.rs#L105
     // ----------------------------------------------------------------------------------------------------------------------------------
     // Bogus nodes
-    "js/chain-expression/new-expression.js",
-    "js/chain-expression/tagged-template-literals.js",
     "typescript/conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts",
     "typescript/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement21.ts",
-    "typescript/chain-expression/new-expression.ts",
-    "typescript/chain-expression/tagged-template-literals.ts",
     // Expression syntax: `a?.b = c`
     "js/optional-chaining-assignment/",
     // Experimental syntax: `do {}`
@@ -59,6 +55,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/multiparser-invalid/",
     "js/multiparser-markdown/",
     "js/multiparser-text/",
+    "js/strings/template-literals.js",
     "js/template-literals/css-prop.js",
     "js/template-literals/styled-components-with-expressions.js",
     "js/template-literals/styled-jsx-with-expressions.js",
@@ -106,4 +103,14 @@ pub const IGNORE_TESTS: &[&str] = &[
     "cursor",
     // Invalid
     "js/call/invalid",
+    // Ambiguous await
+    "js/top-level-await",
+    "jsx/top-level-await",
+    "typescript/top-level-await",
+    "js/ternaries/parenthesis/await-expression.js",
+    // ES5 vs ES6+ identifier: Prettier uses ES5 validation, OXC uses ES6+
+    // Characters outside BMP (like U+102A7) are valid ES6+ identifiers but not ES5
+    "js/quotes/objects.js",
+    // Embedded Angular template
+    "typescript/decorators-ts/angular.ts",
 ];

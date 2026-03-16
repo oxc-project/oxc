@@ -10,15 +10,18 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
+
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::get_function_name_with_kind,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
 };
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
@@ -33,32 +36,43 @@ fn unnamed_diagnostic(inferred_name_or_description: &str, span: Span) -> OxcDiag
         .with_help("Consider giving this function expression a name.")
 }
 
-#[derive(Debug, Clone, Default)]
-struct FuncNamesConfig {
-    functions: FuncNamesConfigType,
-    generators: FuncNamesConfigType,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct FuncNames {
-    config: FuncNamesConfig,
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum FuncNamesConfigType {
+    /// Requires all function expressions to have a name.
     #[default]
     Always,
+    /// Requires a name only if one is not automatically inferred.
     AsNeeded,
+    /// Disallows names for function expressions.
     Never,
 }
 
-impl From<&serde_json::Value> for FuncNamesConfigType {
-    fn from(raw: &serde_json::Value) -> Self {
-        match raw.as_str() {
-            Some("as-needed") => Self::AsNeeded,
-            Some("never") => Self::Never,
-            _ => Self::Always,
-        }
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(default)]
+pub struct FuncNames(FuncNamesConfigType, FuncNamesGeneratorsConfig);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct FuncNamesGeneratorsConfig {
+    /// Configuration for generator function expressions. If not specified, uses the
+    /// primary configuration.
+    ///
+    /// Accepts `always`, `as-needed`, or `never`.
+    ///
+    /// Generator functions are those defined using the `function*` syntax.
+    /// ```js
+    /// function* foobar(i) {
+    ///   yield i;
+    ///   yield i + 10;
+    /// }
+    /// ```
+    generators: Option<FuncNamesConfigType>,
+}
+
+impl FuncNames {
+    fn generators_config(&self) -> FuncNamesConfigType {
+        self.1.generators.unwrap_or(self.0)
     }
 }
 
@@ -73,24 +87,6 @@ declare_oxc_lint!(
     /// stack traces of errors thrown in it or any function called within it.
     /// This makes it more difficult to find where an error is thrown.
     /// Providing an explicit name also improves readability and consistency.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Default: `"always"`
-    /// - Possible values:
-    ///   - `"always"` - requires all function expressions to have a name.
-    ///   - `"as-needed"` - requires a name only if one is not automatically inferred.
-    ///   - `"never"` - disallows names for function expressions.
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///   - `generators`: `("always" | "as-needed" | "never")` (default: falls back to first option)
-    ///     - `"always"` - require named generator function expressions.
-    ///     - `"as-needed"` - require a name only when not inferred.
-    ///     - `"never"` - disallow names for generator function expressions.
     ///
     /// Example configuration:
     /// ```json
@@ -221,35 +217,24 @@ declare_oxc_lint!(
     FuncNames,
     eslint,
     style,
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    config = FuncNames,
 );
 
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(functions_config) = value.get(0) else {
-            return Ok(Self::default());
-        };
-        let generators_config =
-            value.get(1).and_then(|v| v.get("generators")).unwrap_or(functions_config);
-
-        Ok(Self {
-            config: FuncNamesConfig {
-                functions: FuncNamesConfigType::from(functions_config),
-                generators: FuncNamesConfigType::from(generators_config),
-            },
-        })
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind() {
             let parent_node = ctx.nodes().parent_node(node.id());
-            let config =
-                if func.generator { self.config.generators } else { self.config.functions };
+            let config = if func.generator { self.generators_config() } else { self.0 };
 
             if is_invalid_function(config, func, parent_node) {
                 // For named functions, check if they're recursive (need their name for recursion)
                 if let Some(func_name) = func.name()
-                    && is_recursive_function(func, func_name.as_str(), ctx)
+                    && is_recursive_function(func, func_name, ctx)
                 {
                     return;
                 }
@@ -259,7 +244,7 @@ impl Rule for FuncNames {
     }
 }
 
-fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) -> bool {
+fn is_recursive_function(func: &Function, func_name: Ident<'_>, ctx: &LintContext) -> bool {
     let Some(func_scope_id) = func.scope_id.get() else {
         return false;
     };
@@ -313,8 +298,9 @@ fn diagnostic_invalid_function(
 
     let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
 
-    let is_safe_fix =
-        function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name, ctx));
+    let is_safe_fix = function_name
+        .as_ref()
+        .is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
 
     let msg = unnamed_diagnostic(&func_name_complete, report_span);
 
@@ -430,7 +416,7 @@ fn is_invalid_function(
 }
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
-fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
+fn can_safely_apply_fix(func: &Function, name: Ident<'_>, ctx: &LintContext) -> bool {
     !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
         ctx.semantic().symbol_references(shadowed_var).any(|reference| {
             func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
@@ -467,8 +453,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
                 return decl
                     .id
                     .get_identifier_name()
-                    .as_ref()
-                    .map(Atom::as_str)
+                    .map(|n| n.as_str())
                     .filter(|name| is_valid_identifier_name(name))
                     .map(Cow::Borrowed);
             }

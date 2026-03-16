@@ -1091,7 +1091,8 @@ impl ContentEq for FormalParameterKind {
 
 impl ContentEq for FormalParameterRest<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.rest, &other.rest)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.rest, &other.rest)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
     }
 }
@@ -2434,7 +2435,6 @@ impl ContentEq for TSModuleReference<'_> {
             (Self::ExternalModuleReference(a), Self::ExternalModuleReference(b)) => a.content_eq(b),
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }

@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -38,6 +38,16 @@ fn get_replacement_for_position(position: &str) -> Option<&'static str> {
     }
 }
 
+fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent_node = ctx.nodes().parent_node(node.id());
+    let grandparent_node = ctx.nodes().parent_node(parent_node.id());
+    matches!(
+        (parent_node.kind(), grandparent_node.kind()),
+        (AstKind::ExpressionStatement(_), _)
+            | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
+    )
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -68,7 +78,7 @@ declare_oxc_lint!(
     PreferModernDomApis,
     unicorn,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for PreferModernDomApis {
@@ -96,11 +106,24 @@ impl Rule for PreferModernDomApis {
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
-            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
                 preferred_method,
                 method,
                 member_expr.property.span,
-            ));
+            );
+
+            if is_value_not_usable(node, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let new_node = ctx.source_range(call_expr.arguments[0].span());
+                    let old_node = ctx.source_range(call_expr.arguments[1].span());
+
+                    let replacement = format!("{old_node}.{preferred_method}({new_node})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
 
             return;
         }
@@ -112,13 +135,28 @@ impl Rule for PreferModernDomApis {
             Some(2),
             Some(2),
         ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
-            && let Some(replacer) = get_replacement_for_position(lit.value.as_str())
+            && let Some(preferred_method) = get_replacement_for_position(lit.value.as_str())
         {
-            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
-                replacer,
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
+                preferred_method,
                 method,
                 member_expr.property.span,
-            ));
+            );
+
+            let can_fix = method == "insertAdjacentText" || is_value_not_usable(node, ctx);
+
+            if can_fix {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let content = ctx.source_range(call_expr.arguments[1].span());
+                    let reference = ctx.source_range(member_expr.object.span());
+
+                    let replacement = format!("{reference}.{preferred_method}({content})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
@@ -128,87 +166,96 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("oldChildNode.replaceWith(newChildNode);", None),
-        ("referenceNode.before(newNode);", None),
-        ("referenceNode.before(\"text\");", None),
-        ("referenceNode.prepend(newNode);", None),
-        ("referenceNode.prepend(\"text\");", None),
-        ("referenceNode.append(newNode);", None),
-        ("referenceNode.append(\"text\");", None),
-        ("referenceNode.after(newNode);", None),
-        ("referenceNode.after(\"text\");", None),
-        ("oldChildNode.replaceWith(undefined, oldNode);", None),
-        ("oldChildNode.replaceWith(newNode, undefined);", None),
-        ("new parentNode.replaceChild(newNode, oldNode);", None),
-        ("new parentNode.insertBefore(newNode, referenceNode);", None),
-        ("new referenceNode.insertAdjacentText('beforebegin', 'text');", None),
-        ("new referenceNode.insertAdjacentElement('beforebegin', newNode);", None),
-        ("replaceChild(newNode, oldNode);", None),
-        ("insertBefore(newNode, referenceNode);", None),
-        ("insertAdjacentText('beforebegin', 'text');", None),
-        ("insertAdjacentElement('beforebegin', newNode);", None),
-        ("parentNode['replaceChild'](newNode, oldNode);", None),
-        ("parentNode['insertBefore'](newNode, referenceNode);", None),
-        ("referenceNode['insertAdjacentText']('beforebegin', 'text');", None),
-        ("referenceNode['insertAdjacentElement']('beforebegin', newNode);", None),
-        ("parentNode[replaceChild](newNode, oldNode);", None),
-        ("parentNode[insertBefore](newNode, referenceNode);", None),
-        ("referenceNode[insertAdjacentText]('beforebegin', 'text');", None),
-        ("referenceNode[insertAdjacentElement]('beforebegin', newNode);", None),
-        ("parent.foo(a, b);", None),
-        ("parentNode.replaceChild(newNode);", None),
-        ("parentNode.insertBefore(newNode);", None),
-        ("referenceNode.insertAdjacentText('beforebegin');", None),
-        ("referenceNode.insertAdjacentElement('beforebegin');", None),
-        ("parentNode.replaceChild(newNode, oldNode, extra);", None),
-        ("parentNode.insertBefore(newNode, referenceNode, extra);", None),
-        ("referenceNode.insertAdjacentText('beforebegin', 'text', extra);", None),
-        ("referenceNode.insertAdjacentElement('beforebegin', newNode, extra);", None),
-        ("parentNode.replaceChild(...argumentsArray1, ...argumentsArray2);", None),
-        ("parentNode.insertBefore(...argumentsArray1, ...argumentsArray2);", None),
-        ("referenceNode.insertAdjacentText(...argumentsArray1, ...argumentsArray2);", None),
-        ("referenceNode.insertAdjacentElement(...argumentsArray1, ...argumentsArray2);", None),
-        ("referenceNode.insertAdjacentText('foo', 'text');", None),
-        ("referenceNode.insertAdjacentElement('foo', newNode);", None),
+        "oldChildNode.replaceWith(newChildNode);",
+        "referenceNode.before(newNode);",
+        r#"referenceNode.before("text");"#,
+        "referenceNode.prepend(newNode);",
+        r#"referenceNode.prepend("text");"#,
+        "referenceNode.append(newNode);",
+        r#"referenceNode.append("text");"#,
+        "referenceNode.after(newNode);",
+        r#"referenceNode.after("text");"#,
+        "oldChildNode.replaceWith(undefined, oldNode);",
+        "oldChildNode.replaceWith(newNode, undefined);",
+        "new parentNode.replaceChild(newNode, oldNode);",
+        "new parentNode.insertBefore(newNode, referenceNode);",
+        "new referenceNode.insertAdjacentText('beforebegin', 'text');",
+        "new referenceNode.insertAdjacentElement('beforebegin', newNode);",
+        "replaceChild(newNode, oldNode);",
+        "insertBefore(newNode, referenceNode);",
+        "insertAdjacentText('beforebegin', 'text');",
+        "insertAdjacentElement('beforebegin', newNode);",
+        "parentNode['replaceChild'](newNode, oldNode);",
+        "parentNode['insertBefore'](newNode, referenceNode);",
+        "referenceNode['insertAdjacentText']('beforebegin', 'text');",
+        "referenceNode['insertAdjacentElement']('beforebegin', newNode);",
+        "parentNode[replaceChild](newNode, oldNode);",
+        "parentNode[insertBefore](newNode, referenceNode);",
+        "referenceNode[insertAdjacentText]('beforebegin', 'text');",
+        "referenceNode[insertAdjacentElement]('beforebegin', newNode);",
+        "parent.foo(a, b);",
+        "parentNode.replaceChild(newNode);",
+        "parentNode.insertBefore(newNode);",
+        "referenceNode.insertAdjacentText('beforebegin');",
+        "referenceNode.insertAdjacentElement('beforebegin');",
+        "parentNode.replaceChild(newNode, oldNode, extra);",
+        "parentNode.insertBefore(newNode, referenceNode, extra);",
+        "referenceNode.insertAdjacentText('beforebegin', 'text', extra);",
+        "referenceNode.insertAdjacentElement('beforebegin', newNode, extra);",
+        "parentNode.replaceChild(...argumentsArray1, ...argumentsArray2);",
+        "parentNode.insertBefore(...argumentsArray1, ...argumentsArray2);",
+        "referenceNode.insertAdjacentText(...argumentsArray1, ...argumentsArray2);",
+        "referenceNode.insertAdjacentElement(...argumentsArray1, ...argumentsArray2);",
+        "referenceNode.insertAdjacentText('foo', 'text');",
+        "referenceNode.insertAdjacentElement('foo', newNode);",
     ];
 
     let fail = vec![
-        ("parentNode.replaceChild(newChildNode, oldChildNode);", None),
-        ("const foo = parentNode.replaceChild(newChildNode, oldChildNode);", None),
-        ("foo = parentNode.replaceChild(newChildNode, oldChildNode);", None),
-        ("parentNode.insertBefore(newNode, referenceNode);", None),
-        ("parentNode.insertBefore(alfa, beta).insertBefore(charlie, delta);", None),
-        ("const foo = parentNode.insertBefore(alfa, beta);", None),
-        ("foo = parentNode.insertBefore(alfa, beta);", None),
-        ("new Dom(parentNode.insertBefore(alfa, beta))", None),
-        ("`${parentNode.insertBefore(alfa, beta)}`", None),
-        ("referenceNode.insertAdjacentText(\"beforebegin\", \"text\");", None),
-        ("referenceNode.insertAdjacentText(\"afterbegin\", \"text\");", None),
-        ("referenceNode.insertAdjacentText(\"beforeend\", \"text\");", None),
-        ("referenceNode.insertAdjacentText(\"afterend\", \"text\");", None),
-        ("const foo = referenceNode.insertAdjacentText(\"beforebegin\", \"text\");", None),
-        ("foo = referenceNode.insertAdjacentText(\"beforebegin\", \"text\");", None),
-        ("referenceNode.insertAdjacentElement(\"beforebegin\", newNode);", None),
-        ("referenceNode.insertAdjacentElement(\"afterbegin\", \"text\");", None),
-        ("referenceNode.insertAdjacentElement(\"beforeend\", \"text\");", None),
-        ("referenceNode.insertAdjacentElement(\"afterend\", newNode);", None),
-        ("const foo = referenceNode.insertAdjacentElement(\"beforebegin\", newNode);", None),
-        ("foo = referenceNode.insertAdjacentElement(\"beforebegin\", newNode);", None),
-        ("const foo = [referenceNode.insertAdjacentElement(\"beforebegin\", newNode)]", None),
-        ("foo(bar = referenceNode.insertAdjacentElement(\"beforebegin\", newNode))", None),
-        (
-            "const foo = () => { return referenceNode.insertAdjacentElement(\"beforebegin\", newNode); }",
-            None,
-        ),
-        ("if (referenceNode.insertAdjacentElement(\"beforebegin\", newNode)) {}", None),
-        (
-            "const foo = { bar: referenceNode.insertAdjacentElement(\"beforebegin\", newNode) }",
-            None,
-        ),
+        "parentNode.replaceChild(newChildNode, oldChildNode);",
+        "parentNode.replaceChild(
+                newChildNode,
+                oldChildNode
+            );",
+        "parentNode.replaceChild( // inline comments
+                newChildNode, // inline comments
+                oldChildNode // inline comments
+            );",
+        "const foo = parentNode.replaceChild(newChildNode, oldChildNode);",
+        "foo = parentNode.replaceChild(newChildNode, oldChildNode);",
+        "parentNode.insertBefore(newNode, referenceNode);",
+        "parentNode.insertBefore(alfa, beta).insertBefore(charlie, delta);",
+        "const foo = parentNode.insertBefore(alfa, beta);",
+        "foo = parentNode.insertBefore(alfa, beta);",
+        "new Dom(parentNode.insertBefore(alfa, beta))",
+        "`${parentNode.insertBefore(alfa, beta)}`",
+        r#"referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"referenceNode.insertAdjacentText("afterbegin", "text");"#,
+        r#"referenceNode.insertAdjacentText("beforeend", "text");"#,
+        r#"referenceNode.insertAdjacentText("afterend", "text");"#,
+        r#"const foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"referenceNode.insertAdjacentElement("afterbegin", "text");"#,
+        r#"referenceNode.insertAdjacentElement("beforeend", "text");"#,
+        r#"referenceNode.insertAdjacentElement("afterend", newNode);"#,
+        r#"referenceNode.insertAdjacentElement(
+                "afterend",
+                newNode
+            );"#,
+        r#"referenceNode.insertAdjacentElement( // inline comments
+                "afterend", // inline comments
+                newNode  // inline comments
+            ); // inline comments"#,
+        r#"const foo = referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"foo = referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"const foo = [referenceNode.insertAdjacentElement("beforebegin", newNode)]"#,
+        r#"foo(bar = referenceNode.insertAdjacentElement("beforebegin", newNode))"#,
+        r#"const foo = () => { return referenceNode.insertAdjacentElement("beforebegin", newNode); }"#,
+        r#"if (referenceNode.insertAdjacentElement("beforebegin", newNode)) {}"#,
+        r#"const foo = { bar: referenceNode.insertAdjacentElement("beforebegin", newNode) }"#,
     ];
 
-    // TODO: Implement autofix and use these tests.
-    let _fix = vec![
+    let fix = vec![
         (
             "parentNode.replaceChild(newChildNode, oldChildNode);",
             "oldChildNode.replaceWith(newChildNode);",
@@ -285,5 +332,6 @@ fn test() {
     ];
 
     Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

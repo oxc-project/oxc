@@ -6,15 +6,21 @@ pub mod utils;
 
 #[cfg(feature = "napi")]
 mod external_formatter;
+#[cfg(feature = "napi")]
+mod js_config;
 
-pub use config::{
-    ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
-};
+#[cfg(feature = "napi")]
+pub use config::all_config_file_names;
+#[cfg(feature = "napi")]
+pub use config::resolve_options_from_value;
+pub use config::{ConfigResolver, ResolvedOptions, resolve_editorconfig_path};
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{
-    ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
-    JsSortTailwindClassesCb,
+    ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+    JsInitExternalFormatterCb, JsSortTailwindClassesCb,
 };
+#[cfg(feature = "napi")]
+pub use js_config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader};

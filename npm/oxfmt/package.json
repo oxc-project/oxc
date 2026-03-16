@@ -1,9 +1,16 @@
 {
   "name": "oxfmt",
-  "version": "0.25.0",
+  "version": "0.41.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
-  "keywords": [],
-  "homepage": "https://oxc.rs",
+  "keywords": [
+    "formatter",
+    "javascript",
+    "oxc",
+    "oxfmt",
+    "prettier",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/formatter",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",
@@ -28,9 +35,35 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "tinypool": "2.0.0"
+    "tinypool": "2.1.0"
+  },
+  "napi": {
+    "binaryName": "oxfmt",
+    "packageName": "@oxfmt/binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
+      "s390x-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ]
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
-  }
+  },
+  "preferUnplugged": true
 }

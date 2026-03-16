@@ -5,7 +5,12 @@ import {
 } from "../bindings.js";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { buffers } from "../plugins/lint.ts";
-import { BUFFER_SIZE, BUFFER_ALIGN, DATA_POINTER_POS_32 } from "../generated/constants.ts";
+import {
+  BUFFER_SIZE,
+  BUFFER_ALIGN,
+  DATA_POINTER_POS_32,
+  ACTIVE_SIZE,
+} from "../generated/constants.ts";
 
 import type { BufferWithArrays } from "../plugins/types.ts";
 import type { ParserOptions as ParseOptions } from "../bindings.js";
@@ -46,15 +51,26 @@ export function parse(path: string, sourceText: string, options?: ParseOptions) 
   if (buffer === null) initBuffer();
   debugAssertIsNonNull(buffer);
 
-  // Write source into start of buffer.
-  // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB,
-  // so create a view into buffer of this size to write into.
-  const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
+  // Write source into end of buffer.
+  // Maximum size of a string encoded in UTF-8 is 3 x the length of the string in UTF-16 characters
+  // (a source which consists entirely of 3-byte UTF-8 characters).
+  // We can't predict how many bytes will be needed exactly in advance of encoding, so we reserve
+  // the maximum theoretically possible number of bytes required.
+  // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB, so size is capped at 1 GiB.
+  const maxSourceByteLen = sourceText.length * 3;
+  if (maxSourceByteLen > ONE_GIB) throw new Error("Source text is too long");
+  const sourceStartPos = ACTIVE_SIZE - maxSourceByteLen;
+
+  const sourceBuffer = new Uint8Array(
+    buffer.buffer,
+    buffer.byteOffset + sourceStartPos,
+    maxSourceByteLen,
+  );
   const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error("Failed to write source text into buffer");
 
   // Parse into buffer
-  parseRawSync(path, buffer, sourceByteLen, options);
+  parseRawSync(path, buffer, sourceStartPos, sourceByteLen, options);
 
   // Check parsing succeeded.
   // 0 is used as sentinel value to indicate parsing failed.

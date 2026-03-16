@@ -49,27 +49,23 @@ use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, SPAN};
+use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod options;
 
 pub use options::RegExpOptions;
 
-pub struct RegExp<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct RegExp {
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     unsupported_patterns: RegexUnsupportedPatterns,
 }
 
-impl<'a, 'ctx> RegExp<'a, 'ctx> {
-    pub fn new(options: RegExpOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl RegExp {
+    pub fn new(options: RegExpOptions) -> Self {
         // Get unsupported flags
         let mut unsupported_flags = RegExpFlags::empty();
         if options.dot_all_flag {
@@ -100,7 +96,6 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
             look_behind_assertions || named_capture_groups || unicode_property_escapes;
 
         Self {
-            ctx,
             unsupported_flags,
             some_unsupported_patterns,
             unsupported_patterns: RegexUnsupportedPatterns {
@@ -113,7 +108,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for RegExp {
     // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -123,7 +118,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a, '_> {
     }
 }
 
-impl<'a> RegExp<'a, '_> {
+impl<'a> RegExp {
     /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::RegExpLiteral(regexp) = expr else {
@@ -151,7 +146,7 @@ impl<'a> RegExp<'a, '_> {
                         owned_pattern.as_ref().unwrap()
                     }
                     Err(error) => {
-                        self.ctx.error(error);
+                        ctx.state.error(error);
                         return;
                     }
                 }
@@ -163,8 +158,9 @@ impl<'a> RegExp<'a, '_> {
         }
 
         let callee = {
-            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "RegExp");
-            ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
+            let regexp = ctx.ast.ident("RegExp");
+            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), regexp);
+            ctx.create_ident_expr(SPAN, regexp, symbol_id, ReferenceFlags::read())
         };
 
         let arguments = ctx.ast.vec_from_array([

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
    ╭─[require_property.tsx:3:17]
  2 │                       /**

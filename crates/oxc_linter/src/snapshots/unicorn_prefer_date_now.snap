@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
    ╭─[prefer_date_now.tsx:1:12]
  1 │ const ts = new Date().getTime();

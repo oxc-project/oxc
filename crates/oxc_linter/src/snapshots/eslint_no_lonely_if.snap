@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-lonely-if): Unexpected `if` as the only statement in an `else` block
    ╭─[no_lonely_if.tsx:1:19]
  1 │ if (a) {;} else { if (b) {;} }

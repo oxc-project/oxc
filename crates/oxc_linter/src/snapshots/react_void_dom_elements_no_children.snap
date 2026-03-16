@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br>Foo</br>;

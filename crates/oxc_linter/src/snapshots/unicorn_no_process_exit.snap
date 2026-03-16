@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-process-exit): Don't use `process.exit()`
    ╭─[no_process_exit.tsx:1:1]
  1 │ process.exit();

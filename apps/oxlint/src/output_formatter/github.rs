@@ -5,6 +5,7 @@ use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 
+use super::default::get_diagnostic_result_output;
 use crate::output_formatter::InternalFormatter;
 
 #[derive(Debug)]
@@ -21,8 +22,8 @@ impl InternalFormatter for GithubOutputFormatter {
 struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
-        None
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        Some(get_diagnostic_result_output(result))
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
@@ -95,7 +96,16 @@ mod test {
 
         let result = reporter.finish(&DiagnosticResult::default());
 
-        assert!(result.is_none());
+        assert_eq!(result.unwrap(), "Found 0 warnings and 0 errors.\n");
+    }
+
+    #[test]
+    fn reporter_finish_with_errors() {
+        let mut reporter = GithubReporter;
+
+        let result = reporter.finish(&DiagnosticResult::new(2, 1, false));
+
+        assert_eq!(result.unwrap(), "\nFound 2 warnings and 1 error.\n");
     }
 
     #[test]

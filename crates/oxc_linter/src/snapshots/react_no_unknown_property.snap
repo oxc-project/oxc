@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div allowTransparency="true" />
@@ -188,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div onLoad={this.load} />
    ·      ──────
    ╰────
-  help: Property 'onLoad' is only allowed on: link, source, picture, script, iframe, img, object
+  help: Property 'onLoad' is only allowed on: source, body, img, link, script, picture, object, iframe
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -252,6 +253,48 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: Property 'imageSizes' is only allowed on: link
+
+  ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTarget="locale-switcher" />
+   ·      ─────────────
+   ╰────
+  help: Property 'popoverTarget' is only allowed on: input, button
+
+  ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTargetAction="show" />
+   ·      ───────────────────
+   ╰────
+  help: Property 'popoverTargetAction' is only allowed on: input, button
+
+  ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div fetchPriority="high" />
+   ·      ─────────────
+   ╰────
+  help: Property 'fetchPriority' is only allowed on: link, img, script
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <img fetchpriority="high" src="foo.jpg" />
+   ·      ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:7]
+ 1 │ <link fetchpriority="high" href="style.css" rel="stylesheet" />
+   ·       ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <script fetchpriority="high" src="script.js" />
+   ·         ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]

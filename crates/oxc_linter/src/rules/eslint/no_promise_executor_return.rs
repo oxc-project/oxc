@@ -26,7 +26,7 @@ fn no_promise_executor_return_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoPromiseExecutorReturn(Box<NoPromiseExecutorReturnConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoPromiseExecutorReturnConfig {
     /// If `true`, allows returning `void` expressions (e.g., `return void resolve()`).
     allow_void: bool,
@@ -116,14 +116,13 @@ declare_oxc_lint!(
     NoPromiseExecutorReturn,
     eslint,
     pedantic,
+    pending,
     config = NoPromiseExecutorReturnConfig,
 );
 
 impl Rule for NoPromiseExecutorReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

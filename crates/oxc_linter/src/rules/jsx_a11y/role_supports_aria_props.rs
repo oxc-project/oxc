@@ -24,7 +24,14 @@ pub struct RoleSupportsAriaProps;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`. Many ARIA attributes (states and properties) can only be used on elements with particular roles. Some elements have implicit roles, such as `<a href="#" />`, which will resolve to `role="link"`.
+    /// Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`.
+    /// Many ARIA attributes (states and properties) can only be used on elements with particular roles.
+    /// Some elements have implicit roles, such as `<a href="#" />`, which will resolve to `role="link"`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using ARIA attributes that are inconsistent with the element's role can cause problems for assistive
+    /// technologies and their ability to understand or engage with the content of a page.
     ///
     /// ### Examples
     ///
@@ -885,6 +892,7 @@ const OPTION_PROPS: &[AriaProperty] = &[
     AriaProperty::LabelledBy,
     AriaProperty::Live,
     AriaProperty::Owns,
+    AriaProperty::PosInSet,
     AriaProperty::Relevant,
     AriaProperty::RoleDescription,
     AriaProperty::Selected,
@@ -1632,6 +1640,7 @@ fn test() {
         (r"<datalist aria-expanded />", None, None),
         (r#"<div role="heading" aria-level />"#, None, None),
         (r#"<div role="heading" aria-level="1" />"#, None, None),
+        (r#"<option aria-posinset="1" />"#, None, None),
     ];
 
     let fail = vec![

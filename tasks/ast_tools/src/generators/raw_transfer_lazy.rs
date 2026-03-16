@@ -570,7 +570,9 @@ impl<'s> LocalCacheTypes<'s> {
                     })
                 }
             }
-            TypeDef::Primitive(primitive_def) => matches!(primitive_def.name(), "&str" | "Atom"),
+            TypeDef::Primitive(primitive_def) => {
+                matches!(primitive_def.name(), "&str" | "Atom" | "Ident")
+            }
             TypeDef::Vec(_) => true,
             TypeDef::Option(option_def) => {
                 self.needs_cached_prop(option_def.inner_type(self.schema))
@@ -898,7 +900,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse constructor for `&str`
-        "Atom" => return,
+        "Atom" | "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return ast.buffer[pos] === 1;",
@@ -928,6 +930,8 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,
+        // Skip NodeId - it's handled specially (not transferred)
+        "NodeId" => return,
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
@@ -1245,8 +1249,8 @@ impl_deser_name_concat!(VecDef, "Vec");
 impl FunctionNames for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
-        if matches!(type_name, "&str" | "Atom") {
-            // Use 1 constructor for both `&str` and `Atom`
+        if matches!(type_name, "&str" | "Atom" | "Ident") {
+            // Use 1 constructor for `&str`, `Atom`, and `Ident`
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's constructor for `NonZero*` types

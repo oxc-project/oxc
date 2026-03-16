@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-caller): Do not use `arguments.callee`.
    ╭─[no_caller.tsx:1:19]
  1 │ var x = arguments.callee

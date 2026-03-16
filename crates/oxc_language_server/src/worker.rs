@@ -5,15 +5,16 @@ use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
-        CodeActionKind, CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions,
-        FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern,
-        TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
+        CodeActionContext, CodeActionOrCommand, Diagnostic,
+        DidChangeWatchedFilesRegistrationOptions, FileEvent, FileSystemWatcher, GlobPattern, OneOf,
+        Range, Registration, RelativePattern, TextEdit, Unregistration, Uri, WatchKind,
+        WorkspaceEdit,
     },
 };
 use tracing::debug;
 
 use crate::{
-    ToolRestartChanges,
+    LanguageId, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
@@ -191,10 +192,11 @@ impl WorkspaceWorker {
     pub async fn format_file(
         &self,
         uri: &Uri,
+        language_id: &LanguageId,
         content: Option<&str>,
     ) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            let edits = tool.run_format(uri, content)?;
+            let edits = tool.run_format(uri, language_id, content)?;
             // If no edits are made, continue to the next tool
             if edits.is_empty() {
                 continue;
@@ -229,20 +231,15 @@ impl WorkspaceWorker {
 
     /// Get code actions or commands for the given range.
     /// It calls all tools and collects their code actions or commands.
-    /// If `only_code_action_kinds` is provided, only code actions of the specified kinds are returned.
     pub async fn get_code_actions_or_commands(
         &self,
         uri: &Uri,
         range: &Range,
-        only_code_action_kinds: Option<Vec<CodeActionKind>>,
+        context: &CodeActionContext,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
         for tool in self.tools.read().await.iter() {
-            actions.extend(tool.get_code_actions_or_commands(
-                uri,
-                range,
-                only_code_action_kinds.as_ref(),
-            ));
+            actions.extend(tool.get_code_actions_or_commands(uri, range, context));
         }
         actions
     }
@@ -373,9 +370,8 @@ impl WorkspaceWorker {
                 };
 
                 for uri in file_system.keys() {
-                    let Ok(mut reports) =
-                        tool.run_diagnostic(&uri, file_system.get(&uri).as_deref())
-                    else {
+                    let content = file_system.get(&uri).map(|(_, content)| content);
+                    let Ok(mut reports) = tool.run_diagnostic(&uri, content.as_deref()) else {
                         // If diagnostics could not be run, skip this URI, but continue with others
                         // TODO: Should we aggregate errors instead? One by one, or all together?
                         continue;
@@ -446,7 +442,9 @@ mod tests {
     use std::str::FromStr;
 
     use std::sync::Arc;
-    use tower_lsp_server::ls_types::{CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri};
+    use tower_lsp_server::ls_types::{
+        CodeActionContext, CodeActionOrCommand, FileChangeType, FileEvent, Range, Uri,
+    };
 
     use crate::{
         ToolBuilder,
@@ -696,7 +694,7 @@ mod tests {
             .get_code_actions_or_commands(
                 &Uri::from_str("file:///root/file.js").unwrap(),
                 &Range::default(),
-                None,
+                &CodeActionContext::default(),
             )
             .await;
 
@@ -706,7 +704,7 @@ mod tests {
             .get_code_actions_or_commands(
                 &Uri::from_str("file:///root/code_action.config").unwrap(),
                 &Range::default(),
-                None,
+                &CodeActionContext::default(),
             )
             .await;
 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ 0
@@ -240,7 +241,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ class C { static {
  2 │             'foo'
    ·             ─────
@@ -249,7 +250,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:3:4]
+   ╭─[no_unused_expressions.tsx:3:13]
  2 │             'foo'
  3 │             'bar'
    ·             ─────
@@ -258,7 +259,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:11]
+   ╭─[no_unused_expressions.tsx:2:20]
  1 │ 
  2 │             if (0) 0;
    ·                    ──
@@ -267,7 +268,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             f(0), {};
    ·             ─────────
@@ -276,7 +277,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             a, b();
    ·             ───────
@@ -285,7 +286,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │     
  2 │ ╭─▶             a() &&
  3 │ │                 function namedFunctionInExpressionContext() {
@@ -296,7 +297,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             a?.b;
    ·             ─────
@@ -305,7 +306,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             (a?.b).c;
    ·             ─────────
@@ -314,7 +315,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             a?.['b'];
    ·             ─────────
@@ -323,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             (a?.['b']).c;
    ·             ─────────────
@@ -332,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             a?.b()?.c;
    ·             ──────────
@@ -341,7 +342,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             (a?.b()).c;
    ·             ───────────
@@ -350,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             one[2]?.[3][4];
    ·             ───────────────
@@ -359,7 +360,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:2:4]
+   ╭─[no_unused_expressions.tsx:2:13]
  1 │ 
  2 │             one.two?.three.four;
    ·             ────────────────────
@@ -368,7 +369,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:4:6]
+   ╭─[no_unused_expressions.tsx:4:15]
  3 │               const foo = true;
  4 │               'use strict';
    ·               ─────────────
@@ -377,7 +378,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:6:6]
+   ╭─[no_unused_expressions.tsx:6:15]
  5 │ 
  6 │               'use strict';
    ·               ─────────────
@@ -386,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:5:6]
+   ╭─[no_unused_expressions.tsx:5:15]
  4 │ 
  5 │               'use strict';
    ·               ─────────────
@@ -409,7 +410,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:3:4]
+   ╭─[no_unused_expressions.tsx:3:13]
  2 │             class Foo<T> {}
  3 │             Foo<string>;
    ·             ────────────
@@ -425,7 +426,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:3:4]
+   ╭─[no_unused_expressions.tsx:3:13]
  2 │             declare const foo: number | undefined;
  3 │             foo;
    ·             ────
@@ -434,7 +435,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:3:4]
+   ╭─[no_unused_expressions.tsx:3:13]
  2 │             declare const foo: number | undefined;
  3 │             foo as any;
    ·             ───────────
@@ -443,7 +444,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using this expression or removing it
 
   ⚠ eslint(no-unused-expressions): Expected expression to be used
-   ╭─[no_unused_expressions.tsx:3:4]
+   ╭─[no_unused_expressions.tsx:3:13]
  2 │             declare const foo: number | undefined;
  3 │             foo!;
    ·             ─────

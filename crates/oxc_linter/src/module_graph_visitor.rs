@@ -212,15 +212,14 @@ impl ModuleGraphVisitor {
 
             let loaded_module_record = weak_module_record.upgrade().unwrap();
 
-            let path = &loaded_module_record.resolved_absolute_path;
-
-            if !self.traversed.insert(path.clone()) {
-                continue;
-            }
-
             let pair = (&key, &loaded_module_record);
 
             if !filter(pair, module_record) {
+                continue;
+            }
+
+            let path = &loaded_module_record.resolved_absolute_path;
+            if !self.traversed.insert(path.clone()) {
                 continue;
             }
 

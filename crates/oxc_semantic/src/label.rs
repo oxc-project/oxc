@@ -1,8 +1,9 @@
+use oxc_span::Ident;
 use oxc_syntax::node::NodeId;
 
 #[derive(Debug)]
 pub struct LabeledScope<'a> {
-    pub name: &'a str,
+    pub name: Ident<'a>,
     pub used: bool,
     pub node_id: NodeId,
 }
@@ -14,11 +15,11 @@ pub struct UnusedLabels<'a> {
 }
 
 impl<'a> UnusedLabels<'a> {
-    pub fn add(&mut self, name: &'a str, node_id: NodeId) {
+    pub fn add(&mut self, name: Ident<'a>, node_id: NodeId) {
         self.stack.push(LabeledScope { name, used: false, node_id });
     }
 
-    pub fn reference(&mut self, name: &'a str) {
+    pub fn reference(&mut self, name: Ident<'_>) {
         for scope in self.stack.iter_mut().rev() {
             if scope.name == name {
                 scope.used = true;

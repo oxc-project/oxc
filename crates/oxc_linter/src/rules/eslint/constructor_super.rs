@@ -216,14 +216,7 @@ impl Rule for ConstructorSuper {
 
         let cfg = ctx.cfg();
 
-        // Find constructor's CFG entry block
-        // TODO: this is expensive, we should have a direct mapping from function AST to node id (and then to CFG block)
-        let constructor_func_node = ctx.nodes().iter().find(
-            |n| matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span),
-        );
-
-        let Some(constructor_func_node) = constructor_func_node else { return };
-        let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
+        let constructor_block_id = ctx.nodes().cfg_id(constructor.value.node_id());
 
         let (super_call_counts, super_call_spans) =
             Self::find_super_calls_in_cfg(cfg, constructor_block_id, node.id(), ctx);

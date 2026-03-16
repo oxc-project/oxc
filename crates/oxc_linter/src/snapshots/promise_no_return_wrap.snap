@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
    ╭─[no_return_wrap.tsx:1:36]
  1 │ doThing().then(function() { return Promise.resolve(4) })

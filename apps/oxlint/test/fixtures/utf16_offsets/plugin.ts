@@ -1,6 +1,6 @@
 // oxlint-disable typescript/restrict-template-expressions
 
-import type { Plugin } from "#oxlint";
+import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   meta: {

@@ -12,8 +12,9 @@ use crate::{
 
 fn prefer_dom_node_remove_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
-        .with_help("Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.")
+        .with_help("Replace `parentNode.removeChild(childNode)` with `childNode.remove()`.")
         .with_label(span)
+        .with_note("https://developer.mozilla.org/en-US/docs/Web/API/Element/remove")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,7 +27,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The DOM function [`Node#remove()`](https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove) is preferred over the indirect removal of an object with [`Node#removeChild()`](https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild).
+    /// The DOM function [`Node#remove()`](https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove) is preferred
+    /// over the indirect removal of an object with [`Node#removeChild()`](https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild).
     ///
     /// ### Examples
     ///
@@ -41,8 +43,24 @@ declare_oxc_lint!(
     /// ```
     PreferDomNodeRemove,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
+
+/// Returns `true` if the expression is a type that can never be a DOM node
+/// (literals, null, undefined, arrays, arrow functions, classes, functions, objects, template literals).
+fn is_non_dom_node(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ArrayExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::TemplateLiteral(_)
+    ) || expr.is_literal()
+        || expr.is_null_or_undefined()
+}
 
 impl Rule for PreferDomNodeRemove {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -58,22 +76,20 @@ impl Rule for PreferDomNodeRemove {
             return;
         }
 
+        // Check if the callee object (the thing `.removeChild()` is called on) is a non-DOM type
+        if let Some(member_expr) = call_expr.callee.get_member_expr() {
+            let object = member_expr.object().without_parentheses();
+            if is_non_dom_node(object) {
+                return;
+            }
+        }
+
         let Some(expr) = call_expr.arguments[0].as_expression() else {
             return;
         };
 
         let expr = expr.without_parentheses();
-        if matches!(
-            expr,
-            Expression::ArrayExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::ClassExpression(_)
-                | Expression::FunctionExpression(_)
-                | Expression::ObjectExpression(_)
-                | Expression::TemplateLiteral(_)
-        ) || expr.is_literal()
-            || expr.is_null_or_undefined()
-        {
+        if is_non_dom_node(expr) {
             return;
         }
 
@@ -88,28 +104,77 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"foo.remove()",
-        r"this.remove()",
-        r"remove()",
-        r"foo.parentNode.removeChild('bar')",
-        r"parentNode.removeChild(undefined)",
-        r"new parentNode.removeChild(bar);",
-        r"removeChild(foo);",
-        r"parentNode[removeChild](bar);",
-        r"parentNode.foo(bar);",
-        r"parentNode.removeChild(bar, extra);",
-        r"parentNode.removeChild();",
-        r"parentNode.removeChild(...argumentsArray)",
-        r"parentNode.removeChild?.(foo)",
+        "foo.remove()",
+        "this.remove()",
+        "remove()",
+        "foo.parentNode.removeChild('bar')",
+        "parentNode.removeChild(undefined)",
+        "new parentNode.removeChild(bar);",
+        "removeChild(foo);",
+        // `callee.property` is not an `Identifier`
+        // TODO: Get this passing.
+        // "parentNode['removeChild'](bar);",
+        // Computed
+        "parentNode[removeChild](bar);",
+        "parentNode.foo(bar);",
+        // More or less argument(s)
+        "parentNode.removeChild(bar, extra);",
+        "parentNode.removeChild();",
+        "parentNode.removeChild(...argumentsArray)",
+        // Optional call
+        "parentNode.removeChild?.(foo)",
+        // The following are all generated from this JS code upstream:
+        // ...notDomNodeTypes.map(data => `(${data}).removeChild(foo)`),
+        // ...notDomNodeTypes.map(data => `foo.removeChild(${data})`),
+        "([]).removeChild(foo)",
+        "([element]).removeChild(foo)",
+        "([...elements]).removeChild(foo)",
+        "(() => {}).removeChild(foo)",
+        "(class Node {}).removeChild(foo)",
+        "(function() {}).removeChild(foo)",
+        "(0).removeChild(foo)",
+        "(1).removeChild(foo)",
+        "(0.1).removeChild(foo)",
+        r#"("").removeChild(foo)"#,
+        r#"("string").removeChild(foo)"#,
+        "(/regex/).removeChild(foo)",
+        "(null).removeChild(foo)",
+        "(0n).removeChild(foo)",
+        "(1n).removeChild(foo)",
+        "(true).removeChild(foo)",
+        "(false).removeChild(foo)",
+        "({}).removeChild(foo)",
+        "(`templateLiteral`).removeChild(foo)",
+        "(undefined).removeChild(foo)",
+        "foo.removeChild([])",
+        "foo.removeChild([element])",
+        "foo.removeChild([...elements])",
+        "foo.removeChild(() => {})",
+        "foo.removeChild(class Node {})",
+        "foo.removeChild(function() {})",
+        "foo.removeChild(0)",
+        "foo.removeChild(1)",
+        "foo.removeChild(0.1)",
+        r#"foo.removeChild("")"#,
+        r#"foo.removeChild("string")"#,
+        "foo.removeChild(/regex/)",
+        "foo.removeChild(null)",
+        "foo.removeChild(0n)",
+        "foo.removeChild(1n)",
+        "foo.removeChild(true)",
+        "foo.removeChild(false)",
+        "foo.removeChild({})",
+        "foo.removeChild(`templateLiteral`)",
+        "foo.removeChild(undefined)",
     ];
 
     let fail = vec![
-        r"parentNode.removeChild(foo)",
-        r"parentNode.removeChild(this)",
-        r"parentNode.removeChild(some.node)",
-        r"parentNode.removeChild(getChild())",
-        r"parentNode.removeChild(lib.getChild())",
-        r"parentNode.removeChild((() => childNode)())",
+        "parentNode.removeChild(foo)",
+        "parentNode.removeChild(this)",
+        "parentNode.removeChild(some.node)",
+        "parentNode.removeChild(getChild())",
+        "parentNode.removeChild(lib.getChild())",
+        "parentNode.removeChild((() => childNode)())",
         r"
                 async function foo () {
                     parentNode.removeChild(
@@ -163,31 +228,31 @@ fn test() {
             );
         }
         ",
-        r"if (parentNode.removeChild(foo)) {}",
-        r"var removed = parentNode.removeChild(child);",
-        r"const foo = parentNode.removeChild(child);",
-        r"foo.bar(parentNode.removeChild(child));",
+        "if (parentNode.removeChild(foo)) {}",
+        "var removed = parentNode.removeChild(child);",
+        "const foo = parentNode.removeChild(child);",
+        "foo.bar(parentNode.removeChild(child));",
         r#"parentNode.removeChild(child) || "foo";"#,
-        r"parentNode.removeChild(child) + 0;",
-        r"+parentNode.removeChild(child);",
+        "parentNode.removeChild(child) + 0;",
+        "+parentNode.removeChild(child);",
         r#"parentNode.removeChild(child) ? "foo" : "bar";"#,
-        r"if (parentNode.removeChild(child)) {}",
-        r"const foo = [parentNode.removeChild(child)]",
-        r"const foo = { bar: parentNode.removeChild(child) }",
-        r"function foo() { return parentNode.removeChild(child); }",
-        r"const foo = () => { return parentElement.removeChild(child); }",
-        r"foo(bar = parentNode.removeChild(child))",
-        r"foo().removeChild(child)",
-        r"foo[doSomething()].removeChild(child)",
-        r"parentNode?.removeChild(foo)",
-        r"foo?.parentNode.removeChild(foo)",
-        r"foo.parentNode?.removeChild(foo)",
-        r"foo?.parentNode?.removeChild(foo)",
-        r"foo.bar?.parentNode.removeChild(foo.bar)",
-        r"a.b?.c.parentNode.removeChild(foo)",
-        r"a[b?.c].parentNode.removeChild(foo)",
-        r"a?.b.parentNode.removeChild(a.b)",
-        r"a.removeChild!(k)",
+        "if (parentNode.removeChild(child)) {}",
+        "const foo = [parentNode.removeChild(child)]",
+        "const foo = { bar: parentNode.removeChild(child) }",
+        "function foo() { return parentNode.removeChild(child); }",
+        "const foo = () => { return parentElement.removeChild(child); }",
+        "foo(bar = parentNode.removeChild(child))",
+        "foo().removeChild(child)",
+        "foo[doSomething()].removeChild(child)",
+        "parentNode?.removeChild(foo)",
+        "foo?.parentNode.removeChild(foo)",
+        "foo.parentNode?.removeChild(foo)",
+        "foo?.parentNode?.removeChild(foo)",
+        "foo.bar?.parentNode.removeChild(foo.bar)",
+        "a.b?.c.parentNode.removeChild(foo)",
+        "a[b?.c].parentNode.removeChild(foo)",
+        "a?.b.parentNode.removeChild(a.b)",
+        "a.removeChild!(k)",
     ];
 
     Tester::new(PreferDomNodeRemove::NAME, PreferDomNodeRemove::PLUGIN, pass, fail)

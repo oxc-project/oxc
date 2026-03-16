@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
  1 │ import a from 'foo.js';

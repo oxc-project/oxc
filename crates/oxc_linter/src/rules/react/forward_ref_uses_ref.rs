@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// var React = require('react');
     ///
     /// var Component = React.forwardRef((props) => (
-    ///     <div />
+    ///   <div />
     /// ));
     /// ```
     ///
@@ -47,15 +47,15 @@ declare_oxc_lint!(
     /// var React = require('react');
     ///
     /// var Component = React.forwardRef((props, ref) => (
-    ///    <div ref={ref} />
+    ///   <div ref={ref} />
     /// ));
     ///
     /// var Component = React.forwardRef((props, ref) => (
-    ///    <div />
+    ///   <div />
     /// ));
     ///
     /// function Component(props) {
-    ///    return <div />;
+    ///   return <div />;
     /// };
     /// ```
     ForwardRefUsesRef,

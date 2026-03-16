@@ -26,7 +26,7 @@ fn use_hook(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireHookConfig {
     /// An array of function names that are allowed to be called outside of hooks.
     allowed_function_calls: Vec<CompactStr>,
@@ -178,9 +178,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -650,176 +648,176 @@ fn tests() {
         ("describe.for([])('%s', (value) => {})", None),
         (
             "describe('a test', () =>
-			test('something', () => {
-			        expect(true).toBe(true);
-			}));",
+            test('something', () => {
+                    expect(true).toBe(true);
+            }));",
             None,
         ),
         (
             "describe('scoped', () => {
-			      test.scoped({ example: 'value' });
-			    });",
+                  test.scoped({ example: 'value' });
+                });",
             None,
         ),
         (
             "
-			import { myFn } from '../functions';
-			test('myFn', () => {
-			expect(myFn()).toBe(1);
-			});
-			",
+            import { myFn } from '../functions';
+            test('myFn', () => {
+            expect(myFn()).toBe(1);
+            });
+            ",
             None,
         ), // { "parserOptions": { "sourceType": "module" } },
         (
             "
-			class MockLogger {
-			  log() {}
-			     }
+            class MockLogger {
+              log() {}
+                 }
 
-			     test('myFn', () => {
-			       expect(myFn()).toBe(1);
-			     });
-			      ",
+                 test('myFn', () => {
+                   expect(myFn()).toBe(1);
+                 });
+                  ",
             None,
         ),
         (
             "
-			     const { myFn } = require('../functions');
+                 const { myFn } = require('../functions');
 
-			     describe('myFn', () => {
-			       it('returns one', () => {
-			      expect(myFn()).toBe(1);
-			       });
-			     });
-			      ",
+                 describe('myFn', () => {
+                   it('returns one', () => {
+                  expect(myFn()).toBe(1);
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			     describe('some tests', () => {
-			       it('is true', () => {
-			      expect(true).toBe(true);
-			       });
-			     });
-			      ",
+                 describe('some tests', () => {
+                   it('is true', () => {
+                  expect(true).toBe(true);
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			     describe('some tests', () => {
-			       it('is true', () => {
-			      expect(true).toBe(true);
-			       });
+                 describe('some tests', () => {
+                   it('is true', () => {
+                  expect(true).toBe(true);
+                   });
 
-			       describe('more tests', () => {
-			      it('is false', () => {
-			        expect(true).toBe(false);
-			      });
-			       });
-			     });
-			      ",
+                   describe('more tests', () => {
+                  it('is false', () => {
+                    expect(true).toBe(false);
+                  });
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			     describe('some tests', () => {
-			       let consoleLogSpy;
+                 describe('some tests', () => {
+                   let consoleLogSpy;
 
-			       beforeEach(() => {
-			      consoleLogSpy = vi.spyOn(console, 'log');
-			       });
+                   beforeEach(() => {
+                  consoleLogSpy = vi.spyOn(console, 'log');
+                   });
 
-			       it('prints a message', () => {
-			      printMessage('hello world');
+                   it('prints a message', () => {
+                  printMessage('hello world');
 
-			      expect(consoleLogSpy).toHaveBeenCalledWith('hello world');
-			       });
-			     });
-			      ",
+                  expect(consoleLogSpy).toHaveBeenCalledWith('hello world');
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			     let consoleErrorSpy = null;
+                 let consoleErrorSpy = null;
 
-			     beforeEach(() => {
-			       consoleErrorSpy = vi.spyOn(console, 'error');
-			     });
-			      ",
+                 beforeEach(() => {
+                   consoleErrorSpy = vi.spyOn(console, 'error');
+                 });
+                  ",
             None,
         ),
         (
             "
-			     let consoleErrorSpy = undefined;
+                 let consoleErrorSpy = undefined;
 
-			     beforeEach(() => {
-			       consoleErrorSpy = vi.spyOn(console, 'error');
-			     });
-			      ",
+                 beforeEach(() => {
+                   consoleErrorSpy = vi.spyOn(console, 'error');
+                 });
+                  ",
             None,
         ),
         (
             "
-			     describe('some tests', () => {
-			       beforeEach(() => {
-			      setup();
-			       });
-			     });
-			      ",
+                 describe('some tests', () => {
+                   beforeEach(() => {
+                  setup();
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			     beforeEach(() => {
-			       initializeCityDatabase();
-			     });
+                 beforeEach(() => {
+                   initializeCityDatabase();
+                 });
 
-			     afterEach(() => {
-			       clearCityDatabase();
-			     });
+                 afterEach(() => {
+                   clearCityDatabase();
+                 });
 
-			     test('city database has Vienna', () => {
-			       expect(isCity('Vienna')).toBeTruthy();
-			     });
+                 test('city database has Vienna', () => {
+                   expect(isCity('Vienna')).toBeTruthy();
+                 });
 
-			     test('city database has San Juan', () => {
-			       expect(isCity('San Juan')).toBeTruthy();
-			     });
-			      ",
+                 test('city database has San Juan', () => {
+                   expect(isCity('San Juan')).toBeTruthy();
+                 });
+                  ",
             None,
         ),
         (
             "
-			     describe('cities', () => {
-			       beforeEach(() => {
-			      initializeCityDatabase();
-			       });
+                 describe('cities', () => {
+                   beforeEach(() => {
+                  initializeCityDatabase();
+                   });
 
-			       test('city database has Vienna', () => {
-			      expect(isCity('Vienna')).toBeTruthy();
-			       });
+                   test('city database has Vienna', () => {
+                  expect(isCity('Vienna')).toBeTruthy();
+                   });
 
-			       test('city database has San Juan', () => {
-			      expect(isCity('San Juan')).toBeTruthy();
-			       });
+                   test('city database has San Juan', () => {
+                  expect(isCity('San Juan')).toBeTruthy();
+                   });
 
-			       afterEach(() => {
-			      clearCityDatabase();
-			       });
-			     });
-			      ",
+                   afterEach(() => {
+                  clearCityDatabase();
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			       enableAutoDestroy(afterEach);
+                   enableAutoDestroy(afterEach);
 
-			       describe('some tests', () => {
-			      it('is false', () => {
-			        expect(true).toBe(true);
-			      });
-			       });
-			     ",
+                   describe('some tests', () => {
+                  it('is false', () => {
+                    expect(true).toBe(true);
+                  });
+                   });
+                 ",
             Some(serde_json::json!([{ "allowedFunctionCalls": ["enableAutoDestroy"] }])),
         ),
     ];
@@ -828,60 +826,60 @@ fn tests() {
         ("setup();", None),
         (
             "
-			       describe('some tests', () => {
-			      setup();
-			       });
-			     ",
+                   describe('some tests', () => {
+                  setup();
+                   });
+                 ",
             None,
         ),
         (
             "
-			       let { setup } = require('./test-utils');
+                   let { setup } = require('./test-utils');
 
-			       describe('some tests', () => {
-			      setup();
-			       });
-			     ",
+                   describe('some tests', () => {
+                  setup();
+                   });
+                 ",
             None,
         ),
         (
             "
-			     describe('some tests', () => {
-			       setup();
+                 describe('some tests', () => {
+                   setup();
 
-			       it('is true', () => {
-			      expect(true).toBe(true);
-			       });
+                   it('is true', () => {
+                  expect(true).toBe(true);
+                   });
 
-			       describe('more tests', () => {
-			      setup();
+                   describe('more tests', () => {
+                  setup();
 
-			      it('is false', () => {
-			        expect(true).toBe(false);
-			      });
-			       });
-			     });
-			      ",
+                  it('is false', () => {
+                    expect(true).toBe(false);
+                  });
+                   });
+                 });
+                  ",
             None,
         ),
         (
             "
-			       let consoleErrorSpy = vi.spyOn(console, 'error');
+                   let consoleErrorSpy = vi.spyOn(console, 'error');
 
-			       describe('when loading cities from the api', () => {
-			      let consoleWarnSpy = vi.spyOn(console, 'warn');
-			       });
-			     ",
+                   describe('when loading cities from the api', () => {
+                  let consoleWarnSpy = vi.spyOn(console, 'warn');
+                   });
+                 ",
             None,
         ),
         (
             "
-			       let consoleErrorSpy = null;
+                   let consoleErrorSpy = null;
 
-			       describe('when loading cities from the api', () => {
-			      let consoleWarnSpy = vi.spyOn(console, 'warn');
-			       });
-			     ",
+                   describe('when loading cities from the api', () => {
+                  let consoleWarnSpy = vi.spyOn(console, 'warn');
+                   });
+                 ",
             None,
         ),
         ("let value = 1", None),
@@ -889,57 +887,57 @@ fn tests() {
         ("let consoleErrorSpy = vi.spyOn(console, 'error'), consoleWarnSpy;", None),
         (
             "
-			       import { database, isCity } from '../database';
-			       import { loadCities } from '../api';
+                   import { database, isCity } from '../database';
+                   import { loadCities } from '../api';
 
-			       vi.mock('../api');
+                   vi.mock('../api');
 
-			       const initializeCityDatabase = () => {
-			      database.addCity('Vienna');
-			      database.addCity('San Juan');
-			      database.addCity('Wellington');
-			       };
+                   const initializeCityDatabase = () => {
+                  database.addCity('Vienna');
+                  database.addCity('San Juan');
+                  database.addCity('Wellington');
+                   };
 
-			       const clearCityDatabase = () => {
-			      database.clear();
-			       };
+                   const clearCityDatabase = () => {
+                  database.clear();
+                   };
 
-			       initializeCityDatabase();
+                   initializeCityDatabase();
 
-			       test('that persists cities', () => {
-			      expect(database.cities.length).toHaveLength(3);
-			       });
+                   test('that persists cities', () => {
+                  expect(database.cities.length).toHaveLength(3);
+                   });
 
-			       test('city database has Vienna', () => {
-			      expect(isCity('Vienna')).toBeTruthy();
-			       });
+                   test('city database has Vienna', () => {
+                  expect(isCity('Vienna')).toBeTruthy();
+                   });
 
-			       test('city database has San Juan', () => {
-			      expect(isCity('San Juan')).toBeTruthy();
-			       });
+                   test('city database has San Juan', () => {
+                  expect(isCity('San Juan')).toBeTruthy();
+                   });
 
-			       describe('when loading cities from the api', () => {
-			      let consoleWarnSpy = vi.spyOn(console, 'warn');
+                   describe('when loading cities from the api', () => {
+                  let consoleWarnSpy = vi.spyOn(console, 'warn');
 
-			      loadCities.mockResolvedValue(['Wellington', 'London']);
+                  loadCities.mockResolvedValue(['Wellington', 'London']);
 
-			      it('does not duplicate cities', async () => {
-			        await database.loadCities();
+                  it('does not duplicate cities', async () => {
+                    await database.loadCities();
 
-			        expect(database.cities).toHaveLength(4);
-			      });
+                    expect(database.cities).toHaveLength(4);
+                  });
 
-			      it('logs any duplicates', async () => {
-			        await database.loadCities();
+                  it('logs any duplicates', async () => {
+                    await database.loadCities();
 
-			        expect(consoleWarnSpy).toHaveBeenCalledWith(
-			       'Ignored duplicate cities: Wellington',
-			        );
-			      });
-			       });
+                    expect(consoleWarnSpy).toHaveBeenCalledWith(
+                   'Ignored duplicate cities: Wellington',
+                    );
+                  });
+                   });
 
-			       clearCityDatabase();
-			     ",
+                   clearCityDatabase();
+                 ",
             None,
         ), // { "parserOptions": { "sourceType": "module" } }
     ];

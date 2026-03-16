@@ -40,7 +40,7 @@ declare_oxc_lint!(
     PreferLogicalOperatorOverTernary,
     unicorn,
     style,
-    pending
+    suggestion,
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {
@@ -49,21 +49,100 @@ impl Rule for PreferLogicalOperatorOverTernary {
             return;
         };
 
+        // `foo ? foo : bar` -> `foo || bar`
         if is_same_node(&conditional_expression.test, &conditional_expression.consequent, ctx) {
-            ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
-                conditional_expression.span,
-            ));
+            let test_expr = preferred_test_expr(
+                &conditional_expression.test,
+                &conditional_expression.consequent,
+            );
+            let test_text =
+                wrap_nullish_coalesce_operand(test_expr, ctx.source_range(test_expr.span()));
+            let alternate_text = wrap_nullish_coalesce_operand(
+                &conditional_expression.alternate,
+                ctx.source_range(conditional_expression.alternate.span()),
+            );
+            let span = conditional_expression.span;
+
+            ctx.diagnostic_with_suggestion(
+                prefer_logical_operator_over_ternary_diagnostic(span),
+                |fixer| fixer.replace(span, format!("{test_text} || {alternate_text}")),
+            );
+            return;
         }
 
-        // `!bar ? foo : bar;`
+        // `!bar ? foo : bar` -> `bar || foo`
         if let Expression::UnaryExpression(unary_expression) = &conditional_expression.test
             && unary_expression.operator == UnaryOperator::LogicalNot
             && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
         {
-            ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
-                conditional_expression.span,
-            ));
+            let alternate_expr = preferred_alternate_expr(
+                &conditional_expression.test,
+                &conditional_expression.alternate,
+                ctx,
+            );
+            let alternate_text = wrap_nullish_coalesce_operand(
+                alternate_expr,
+                ctx.source_range(alternate_expr.span()),
+            );
+            let consequent_text = wrap_nullish_coalesce_operand(
+                &conditional_expression.consequent,
+                ctx.source_range(conditional_expression.consequent.span()),
+            );
+            let span = conditional_expression.span;
+
+            ctx.diagnostic_with_suggestion(
+                prefer_logical_operator_over_ternary_diagnostic(span),
+                |fixer| fixer.replace(span, format!("{alternate_text} || {consequent_text}")),
+            );
         }
+    }
+}
+
+fn preferred_test_expr<'a>(
+    test: &'a Expression<'a>,
+    consequent: &'a Expression<'a>,
+) -> &'a Expression<'a> {
+    if matches!(test, Expression::ParenthesizedExpression(_)) {
+        return consequent.get_inner_expression();
+    }
+
+    test.get_inner_expression()
+}
+
+fn preferred_alternate_expr<'a>(
+    test: &'a Expression<'a>,
+    alternate: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> &'a Expression<'a> {
+    let Expression::UnaryExpression(outer_unary) = test else {
+        return alternate;
+    };
+    if outer_unary.operator != UnaryOperator::LogicalNot {
+        return alternate;
+    }
+    if !is_same_node(&outer_unary.argument, alternate, ctx) {
+        return alternate;
+    }
+    let Expression::UnaryExpression(inner_unary) = &outer_unary.argument else {
+        return alternate;
+    };
+    if inner_unary.operator != UnaryOperator::LogicalNot {
+        return alternate;
+    }
+
+    &inner_unary.argument
+}
+
+fn wrap_nullish_coalesce_operand(expr: &Expression, text: &str) -> String {
+    if matches!(expr, Expression::ParenthesizedExpression(_)) {
+        return text.to_string();
+    }
+
+    match expr.without_parentheses() {
+        Expression::LogicalExpression(logical_expr) if logical_expr.operator.is_coalesce() => {
+            format!("({text})")
+        }
+        _ => text.to_string(),
     }
 }
 
@@ -138,11 +217,33 @@ fn test() {
          a && b ? a && b : 1",
     ];
 
+    let fix = vec![
+        ("foo ? foo : bar;", "foo || bar;"),
+        ("foo.bar ? foo.bar : foo.baz", "foo.bar || foo.baz"),
+        ("foo?.bar ? foo.bar : baz", "foo?.bar || baz"),
+        ("foo?.bar ? foo?.bar : baz", "foo?.bar || baz"),
+        ("!bar ? foo : bar;", "bar || foo;"),
+        ("!!bar ? foo : !bar;", "bar || foo;"),
+        ("foo() ? foo() : bar", "foo() || bar"),
+        ("foo ? foo : a && b", "foo || a && b"),
+        ("foo ? foo : a || b", "foo || a || b"),
+        ("foo ? foo : a ?? b", "foo || (a ?? b)"),
+        ("a && b ? a && b : bar", "a && b || bar"),
+        ("a || b ? a || b : bar", "a || b || bar"),
+        ("a ?? b ? a ?? b : bar", "(a ?? b) || bar"),
+        ("foo ? foo : await a", "foo || await a"),
+        ("await a ? await a : foo", "await a || foo"),
+        ("await a ? (await (a)) : (foo)", "await a || (foo)"),
+        ("(await a) ? await (a) : (foo)", "await (a) || (foo)"),
+        ("(await a) ? (await (a)) : (foo)", "await (a) || (foo)"),
+    ];
+
     Tester::new(
         PreferLogicalOperatorOverTernary::NAME,
         PreferLogicalOperatorOverTernary::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

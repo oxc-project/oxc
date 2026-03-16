@@ -1,0 +1,3 @@
+{
+  "args": ["-c", "my-oxlint-config.ts"]
+}

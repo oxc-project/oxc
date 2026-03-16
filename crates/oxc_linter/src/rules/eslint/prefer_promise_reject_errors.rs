@@ -18,7 +18,9 @@ use crate::{
 };
 
 fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error").with_label(span)
+    OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error")
+        .with_help("Only pass an Error object to the reject() function for user-defined errors in Promises.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

@@ -4,6 +4,105 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.119.0] - 2026-03-14
+
+### ⚡ Performance
+
+- 5474d0a semantic: V8-style walk-up reference resolution (#20292) (Boshen)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- 733d6dc parser: Report error on `infer` outside conditional type (#19879) (camc314)
+- 5036bb6 parser: Report error on `for await` in static blocks (#19844) (camc314)
+- 5937a32 semantic: Introduce `symbol_declarations` method (#19609) (camc314)
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- 017de5d parser: Update error code for type annotation in `for...in` statement (#19882) (camc314)
+- 8ad3430 semantic/jsdoc: Handle even-numbered backtick sequences in JSDoc parsing (#19664) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- 933ff72 semantic: Emit correct error code for reserved type name (#19545) (camc314)
+
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfb15a3 semantic: Make multi_index_vec clone panic-safe (#19299) (Boshen)
+
+### ⚡ Performance
+
+- 5b90d46 semantic: Improve SoA with multi index vec (#19138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- f32ea19 semantic: Report redeclaration error for import bindings conflicting with value declarations (#19068) (Boshen)
+- 3aeba7a semantic: Report redeclaration error for `function a() {} var a` in module mode (#19041) (Boshen)
+- 463d60d semantic: Skip TS2391 for standalone computed-name class methods (#19025) (Boshen)
+- 6067a49 linter/jsdoc: False positive in `check-tag-names` for `@` in email addresses and npm scopes (#19021) (Boshen)
+- b13bb70 semantic/jsdoc: Inline tags like `{@link}` break jsdoc parsing (#19019) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- 2537924 semantic: Optimize scope resolution with fast paths and inlining (#19029) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 00854e8 semantic: Add TS2337 error code to super call diagnostic (#18531) (camc314)
+
+### 🐛 Bug Fixes
+
+- 74d0998 semantic: Update error msg for multiple `default` cases in switch stmt (#18526) (camc314)
+- b0cd74d semantic: Allow `var` and `function` with same name in static blocks (#18358) (Boshen)
+- 6037995 semantic: Allow `new.target` in class field initializers (#18349) (Boshen)
+- 9a15c6a semantic: Do not rely on spans for node comparison in `Function::bind` (#18296) (overlookmotel)
+
+### ⚡ Performance
+
+- 6b600c4 semantic: Skip parent lookup for function declarations in `Function::bind` (#18293) (overlookmotel)
+- c27ad2d semantic: Move check for function declaration out of `is_function_part_of_if_statement` (#18292) (overlookmotel)
+- 63eb89e semantic: Skip checking redeclarations for function expressions (#18291) (overlookmotel)
+- 7c12743 semantic: Skip checking unresolved exports in CommonJS files (#18250) (overlookmotel)
+
+### 📚 Documentation
+
+- 2ddc073 semantic: Fix typo in comment (#18238) (overlookmotel)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f1e2dc0 semantic: No error in `check_function_redeclaration` for CommonJS files (#18231) (overlookmotel)
+
+### ⚡ Performance
+
+- 52073d9 semantic: Use cheaper test for source type (#18235) (overlookmotel)
+
 ## [0.109.0] - 2026-01-19
 
 ### 💥 BREAKING CHANGES

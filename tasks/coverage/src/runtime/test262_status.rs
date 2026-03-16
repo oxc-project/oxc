@@ -9,6 +9,7 @@ use crate::workspace_root;
 /// see <https://chromium.googlesource.com/v8/v8/+/refs/heads/main/test/test262/test262.status>
 ///
 /// # Panics
+#[expect(dead_code)]
 pub fn get_v8_test262_failure_paths() -> &'static Vec<String> {
     static STATUS: OnceLock<Vec<String>> = OnceLock::new();
     STATUS.get_or_init(|| {

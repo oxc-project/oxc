@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
 };
@@ -20,7 +20,7 @@ pub struct ParserCheckpoint<'a> {
     fatal_error: Option<FatalError>,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
     pub(crate) fn start_span(&self) -> u32 {
         self.token.start()
@@ -96,7 +96,7 @@ impl<'a> ParserImpl<'a> {
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
-    fn advance(&mut self, kind: Kind) {
+    pub(crate) fn advance(&mut self, kind: Kind) {
         // Manually inlined escaped keyword check - escaped identifiers are extremely rare
         if self.token.escaped() && kind.is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
@@ -135,12 +135,6 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
-    }
-
-    /// Advance and change token type, useful for changing keyword to ident
-    #[inline]
-    pub(crate) fn bump_remap(&mut self, kind: Kind) {
-        self.advance(kind);
     }
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
@@ -249,7 +243,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
         }
     }
@@ -333,7 +327,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
+        func: impl FnOnce(&mut ParserImpl<'a, C>) -> T,
     ) -> Option<T> {
         let checkpoint = self.checkpoint_with_error_recovery();
         let ctx = self.ctx;
@@ -347,7 +341,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a, C>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);

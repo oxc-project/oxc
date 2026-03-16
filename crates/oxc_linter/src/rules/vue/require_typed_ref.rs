@@ -101,107 +101,107 @@ fn test() {
     let pass = vec![
         (
             "
-			        import { shallowRef } from 'vue'
-			        const count = shallowRef(0)
-			      ",
+                    import { shallowRef } from 'vue'
+                    const count = shallowRef(0)
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref<number>()
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref<number>()
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref<number>(0)
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref<number>(0)
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const counter: Ref<number | undefined> = ref()
-			      ",
+                    import { ref } from 'vue'
+                    const counter: Ref<number | undefined> = ref()
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref(0)
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref(0)
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        function useCount() {
-			          return {
-			            count: ref<number>()
-			          }
-			        }
-			      ",
+                    import { ref } from 'vue'
+                    function useCount() {
+                      return {
+                        count: ref<number>()
+                      }
+                    }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			      import { ref, defineComponent } from 'vue'
-			      defineComponent({
-			        setup() {
-			          const count = ref<number>()
-			          return { count }
-			        }
-			      })
-			      ",
+                  import { ref, defineComponent } from 'vue'
+                  defineComponent({
+                    setup() {
+                      const count = ref<number>()
+                      return { count }
+                    }
+                  })
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        <script setup>
-			          import { ref } from 'vue'
-			          const count = ref()
-			        </script>
-			      ",
+                    <script setup>
+                      import { ref } from 'vue'
+                      const count = ref()
+                    </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // { "parser": require("vue-eslint-parser") },
         (
             "
-			        <script>
-			          import { ref } from 'vue'
-			          export default {
-			            setup() {
-			              const count = ref()
-			            }
-			          }
-			        </script>
-			      ",
+                    <script>
+                      import { ref } from 'vue'
+                      export default {
+                        setup() {
+                          const count = ref()
+                        }
+                      }
+                    </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // { "parser": require("vue-eslint-parser") },
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref()
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref()
+                  ",
             None,
             None,
             Some(PathBuf::from("test.js")),
@@ -211,101 +211,101 @@ fn test() {
     let fail = vec![
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref()
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref()
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref(null)
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref(null)
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        const count = ref(undefined)
-			      ",
+                    import { ref } from 'vue'
+                    const count = ref(undefined)
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { shallowRef } from 'vue'
-			        const count = shallowRef()
-			      ",
+                    import { shallowRef } from 'vue'
+                    const count = shallowRef()
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        function useCount() {
-			          const count = ref()
-			          return { count }
-			        }
-			      ",
+                    import { ref } from 'vue'
+                    function useCount() {
+                      const count = ref()
+                      return { count }
+                    }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             "
-			        import { ref } from 'vue'
-			        function useCount() {
-			          return {
-			            count: ref()
-			          }
-			        }
-			      ",
+                    import { ref } from 'vue'
+                    function useCount() {
+                      return {
+                        count: ref()
+                      }
+                    }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),
         ),
         (
             r#"
-			        <script setup lang="ts">
-			          import { ref } from 'vue'
-			          const count = ref()
-			        </script>
-			      "#,
+                    <script setup lang="ts">
+                      import { ref } from 'vue'
+                      const count = ref()
+                    </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // { "parser": require("vue-eslint-parser") },
         (
             r#"
-			        <script lang="ts">
-			          import { ref } from 'vue'
-			          export default {
-			            setup() {
-			              const count = ref()
-			            }
-			          }
-			        </script>
-			      "#,
+                    <script lang="ts">
+                      import { ref } from 'vue'
+                      export default {
+                        setup() {
+                          const count = ref()
+                        }
+                      }
+                    </script>
+                  "#,
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ), // { "parser": require("vue-eslint-parser") },
         (
             "
-			        import { ref, defineComponent } from 'vue'
-			        defineComponent({
-			          setup() {
-			            const count = ref()
-			            return { count }
-			          }
-			        })
-			      ",
+                    import { ref, defineComponent } from 'vue'
+                    defineComponent({
+                      setup() {
+                        const count = ref()
+                        return { count }
+                      }
+                    })
+                  ",
             None,
             None,
             Some(PathBuf::from("test.ts")),

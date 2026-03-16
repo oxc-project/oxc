@@ -91,10 +91,20 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Long numbers can become really hard to read, so cutting it into groups of digits,
-    /// separated with a _, is important to keep your code clear. This rule also enforces
-    /// a proper usage of the numeric separator, by checking if the groups of digits are
-    /// of the correct size.
+    /// A long series of digits can be difficult to read, and
+    /// it can be difficult to determine the value of the number at a glance.
+    /// Breaking up the digits with numeric separators (`_`) can greatly
+    /// improve readability.
+    ///
+    /// Compare the following two numbers and how easy it is to understand their magnitude:
+    ///
+    /// ```js
+    /// 1000000000;
+    /// 1_000_000_000;
+    /// ```
+    ///
+    /// This rule also enforces proper group size, for example
+    /// enforcing that the `_` separator is used every 3 digits.
     ///
     /// ### Examples
     ///

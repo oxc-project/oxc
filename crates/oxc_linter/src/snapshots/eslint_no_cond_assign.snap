@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment
    ╭─[no_cond_assign.tsx:1:14]
  1 │ var x; if (x = 0) { var b = 1; }

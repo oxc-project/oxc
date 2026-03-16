@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from "#oxlint";
+import type { Node, Plugin, Rule } from "#oxlint/plugins";
 
 const SPAN: Node = {
   start: 0,
@@ -22,7 +22,8 @@ const rule: Rule = {
         `physicalFilename: ${context.physicalFilename}\n` +
         `getPhysicalFilename(): ${context.getPhysicalFilename()}\n` +
         `cwd: ${context.cwd}\n` +
-        `getCwd(): ${context.getCwd()}`,
+        `getCwd(): ${context.getCwd()}\n` +
+        `parserPath: ${context.parserPath}`,
       node: SPAN,
     });
 

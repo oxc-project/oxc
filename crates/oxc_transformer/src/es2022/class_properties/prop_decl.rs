@@ -2,11 +2,13 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
-    common::helper_loader::Helper, context::TraverseCtx, utils::ast_builder::create_assignment,
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
+    utils::ast_builder::create_assignment,
 };
 
 use super::{
@@ -15,7 +17,7 @@ use super::{
 };
 
 // Instance properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert instance property to initialization expression.
     /// Property `prop = 123;` -> Expression `this.prop = 123` or `_defineProperty(this, "prop", 123)`.
     pub(super) fn convert_instance_property(
@@ -27,9 +29,10 @@ impl<'a> ClassProperties<'a, '_> {
         // Get value
         let value = prop.value.take();
 
+        let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
-            self.create_private_instance_init_assignment(ident, value, ctx)
+            self.create_private_instance_init_assignment(ident, value, span, ctx)
         } else {
             let value = match value {
                 Some(value) => value,
@@ -60,13 +63,14 @@ impl<'a> ClassProperties<'a, '_> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if self.private_fields_as_properties {
             let this = ctx.ast.expression_this(SPAN);
-            self.create_private_init_assignment_loose(ident, value, this, ctx)
+            self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
+            self.create_private_instance_init_assignment_not_loose(ident, value, span, ctx)
         }
     }
 
@@ -75,6 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
@@ -84,13 +89,12 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(prop.binding.create_read_expression(ctx)),
             Argument::from(value),
         ]);
-        // TODO: Should this have span of original `PropertyDefinition`?
-        self.ctx.helper_call_expr(Helper::ClassPrivateFieldInitSpec, SPAN, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateFieldInitSpec, span, arguments, ctx)
     }
 }
 
 // Static properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert static property to initialization expression.
     /// Property `static prop = 123;` -> Expression `C.prop = 123` or `_defineProperty(C, "prop", 123)`.
     pub(super) fn convert_static_property(
@@ -106,9 +110,10 @@ impl<'a> ClassProperties<'a, '_> {
             value
         });
 
+        let span = prop.span;
         if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
-            self.insert_private_static_init_assignment(ident, value, ctx);
+            self.insert_private_static_init_assignment(ident, value, span, ctx);
         } else {
             let value = match value {
                 Some(value) => value,
@@ -153,10 +158,11 @@ impl<'a> ClassProperties<'a, '_> {
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.private_fields_as_properties {
-            self.insert_private_static_init_assignment_loose(ident, value, ctx);
+            self.insert_private_static_init_assignment_loose(ident, value, span, ctx);
         } else {
             self.insert_private_static_init_assignment_not_loose(ident, value, ctx);
         }
@@ -168,6 +174,7 @@ impl<'a> ClassProperties<'a, '_> {
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // TODO: This logic appears elsewhere. De-duplicate it.
@@ -182,7 +189,8 @@ impl<'a> ClassProperties<'a, '_> {
         };
 
         let assignee = class_binding.create_read_expression(ctx);
-        let assignment = self.create_private_init_assignment_loose(ident, value, assignee, ctx);
+        let assignment =
+            self.create_private_init_assignment_loose(ident, value, assignee, span, ctx);
         self.insert_expr_after_class(assignment, ctx);
     }
 
@@ -219,14 +227,14 @@ impl<'a> ClassProperties<'a, '_> {
             self.insert_after_stmts.push(var_decl);
         } else {
             // `_prop = {_: value}`
-            let assignment = create_assignment(prop_binding, obj, ctx);
+            let assignment = create_assignment(prop_binding, obj, SPAN, ctx);
             self.insert_after_exprs.push(assignment);
         }
     }
 }
 
 // Used for both instance and static properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
     /// `#[inline]` because the caller has been checked `self.set_public_class_fields`.
     /// After inlining, the two `self.set_public_class_fields` checks may be folded into one.
@@ -258,7 +266,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // In-built static props `name` and `length` need to be set with `_defineProperty`
-        let needs_define = |name| is_static && (name == "name" || name == "length");
+        let needs_define = |name: &str| is_static && (name == "name" || name == "length");
 
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
@@ -287,9 +295,8 @@ impl<'a> ClassProperties<'a, '_> {
             }
         };
 
-        // TODO: Should this have span of the original `PropertyDefinition`?
         ctx.ast.expression_assignment(
-            SPAN,
+            prop.span,
             AssignmentOperator::Assign,
             AssignmentTarget::from(left),
             value,
@@ -328,8 +335,7 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(key),
             Argument::from(value),
         ]);
-        // TODO: Should this have span of the original `PropertyDefinition`?
-        self.ctx.helper_call_expr(Helper::DefineProperty, SPAN, arguments, ctx)
+        helper_call_expr(Helper::DefineProperty, prop.span, arguments, ctx)
     }
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`
@@ -338,16 +344,14 @@ impl<'a> ClassProperties<'a, '_> {
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Object");
-        let object = ctx.create_ident_expr(
-            SPAN,
-            Atom::from("Object"),
-            object_symbol_id,
-            ReferenceFlags::Read,
-        );
+        let object_name = ctx.ast.ident("Object");
+        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), object_name);
+        let object =
+            ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, "defineProperty");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
@@ -384,7 +388,6 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(prop_binding.create_read_expression(ctx)),
             Argument::from(prop_def),
         ]);
-        // TODO: Should this have span of original `PropertyDefinition`?
-        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+        ctx.ast.expression_call(span, callee, NONE, arguments, false)
     }
 }

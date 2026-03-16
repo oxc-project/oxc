@@ -1,12 +1,10 @@
-use std::ptr;
-
 use memchr::memchr_iter;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span};
+use oxc_span::{GetSpan, ModuleKind, Span, best_match};
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
@@ -17,24 +15,69 @@ use oxc_syntax::{
 
 use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
 
+/// Threshold for edit distance when suggesting similar names
+const SUGGESTION_THRESHOLD: usize = 2;
+
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
 pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
-    if ctx.source_type.is_typescript() || ctx.source_type.is_script() {
+    if ctx.source_type.is_typescript() || !ctx.source_type.is_module() {
         return;
     }
+
+    let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
                 {
-                    ctx.errors
-                        .borrow_mut()
-                        .push(diagnostics::undefined_export(&ident.name, ident.span));
+                    let names = available_names.get_or_insert_with(|| {
+                        let root_scope_id = ctx.scoping.root_scope_id();
+                        ctx.scoping
+                            .get_bindings(root_scope_id)
+                            .keys()
+                            .map(oxc_span::Ident::as_str)
+                            .collect()
+                    });
+                    let suggestion =
+                        best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);
+                    ctx.errors.borrow_mut().push(diagnostics::undefined_export(
+                        &ident.name,
+                        suggestion,
+                        ident.span,
+                    ));
                 }
             }
         }
+    }
+}
+
+/// It is a Syntax Error if any element of the BoundNames of ImportDeclaration
+/// also occurs in the VarDeclaredNames or LexicallyDeclaredNames of ModuleItemList.
+/// <https://tc39.es/ecma262/#sec-imports-static-semantics-early-errors>
+pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
+    if !ctx.source_type.is_module() || ctx.source_type.is_typescript() {
+        return;
+    }
+
+    let scope_id = ctx.scoping.root_scope_id();
+    for (_, &symbol_id) in ctx.scoping.get_bindings(scope_id) {
+        let flags = ctx.scoping.symbol_flags(symbol_id);
+        if !flags.contains(SymbolFlags::Import) {
+            continue;
+        }
+        if !flags.intersects(SymbolFlags::Variable | SymbolFlags::Class | SymbolFlags::Function) {
+            continue;
+        }
+        let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+        if redeclarations.len() < 2 {
+            continue;
+        }
+        let name = ctx.scoping.symbol_name(symbol_id);
+        let first = &redeclarations[0];
+        let last = &redeclarations[redeclarations.len() - 1];
+        ctx.error(diagnostics::redeclaration(name, first.span, last.span));
     }
 }
 
@@ -185,14 +228,16 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             };
 
             let parent = ctx.nodes.parent_node(ctx.current_node_id);
+            let parent_id = parent.id();
             let is_ok = match parent.kind() {
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ctx.nodes.parent_kind(parent.id()))
+                    is_declare_function(&ctx.nodes.parent_kind(parent_id))
                 }
                 AstKind::BindingRestElement(_) => {
-                    let grand_parent = ctx.nodes.parent_node(parent.id());
-                    is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+                    let grand_parent = ctx.nodes.parent_node(parent_id);
+                    let grand_parent_id = grand_parent.id();
+                    is_declare_function(&ctx.nodes.parent_kind(grand_parent_id))
                 }
                 _ => false,
             };
@@ -309,11 +354,30 @@ pub fn check_private_identifier_outside_class(
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
+        let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
-                ctx.class_table_builder.classes.has_private_definition(class_id, &reference.name)
+                ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
-                ctx.error(diagnostics::private_field_undeclared(&reference.name, reference.span));
+                let names = available_names.get_or_insert_with(|| {
+                    let mut names = Vec::new();
+                    for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
+                        for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
+                        {
+                            if element.is_private {
+                                names.push(element.name.as_ref());
+                            }
+                        }
+                    }
+                    names
+                });
+                let suggestion =
+                    best_match(&reference.name, names.iter().copied(), SUGGESTION_THRESHOLD);
+                ctx.error(diagnostics::private_field_undeclared(
+                    &reference.name,
+                    suggestion,
+                    reference.span,
+                ));
             }
         }
     }
@@ -503,9 +567,7 @@ pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
     match prop.meta.name.as_str() {
         "import" => {
             // import.meta is only allowed in ES modules, not in scripts or CommonJS
-            if prop.property.name == "meta"
-                && (ctx.source_type.is_script() || ctx.source_type.is_commonjs())
-            {
+            if prop.property.name == "meta" && !ctx.source_type.is_module() {
                 ctx.error(diagnostics::import_meta(prop.span));
             }
         }
@@ -515,19 +577,50 @@ pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
                 if ctx.source_type.is_commonjs() {
                     return;
                 }
-                let mut in_function_scope = false;
-                for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-                    let flags = ctx.scoping.scope_flags(scope_id);
-                    // In arrow functions, new.target is inherited from the surrounding scope.
-                    if flags.contains(ScopeFlags::Arrow) {
-                        continue;
-                    }
-                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
-                        in_function_scope = true;
-                        break;
+
+                // Check if we're in a valid context for new.target:
+                // 1. Inside a function (including constructor)
+                // 2. Inside a class static block
+                // 3. Inside a class field initializer (new.target evaluates to undefined)
+                //
+                // Arrow functions inherit new.target from their surrounding scope,
+                // so we skip them and continue checking the enclosing context.
+
+                let mut in_valid_context = false;
+
+                // First, check AST ancestors for class field initializers.
+                // We need to do this because class fields don't have their own scope.
+                for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                    match node_kind {
+                        // Regular functions have their own new.target binding.
+                        // Use scope-based check from here.
+                        AstKind::Function(_) => break,
+                        // Class field initializers allow new.target (evaluates to undefined).
+                        // This includes arrow functions nested inside the initializer.
+                        AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
+                            in_valid_context = true;
+                            break;
+                        }
+                        _ => {}
                     }
                 }
-                if !in_function_scope {
+
+                // If not in a class field, fall back to scope-based check
+                if !in_valid_context {
+                    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+                        let flags = ctx.scoping.scope_flags(scope_id);
+                        // In arrow functions, new.target is inherited from the surrounding scope.
+                        if flags.contains(ScopeFlags::Arrow) {
+                            continue;
+                        }
+                        if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
+                            in_valid_context = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !in_valid_context {
                     ctx.error(diagnostics::new_target(prop.span));
                 }
             }
@@ -586,10 +679,17 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var
-        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    if decl.kind != VariableDeclarationKind::Var {
+        return;
+    }
+
+    let scope_flags = ctx.current_scope_flags();
+    // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
+    // in script mode, but in module mode at the top level, function declarations are
+    // lexically scoped, so `function a() {}; var a;` is a redeclaration error.
+    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+        && !(ctx.source_type.is_module() && scope_flags.is_top())
     {
-        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
         return;
     }
 
@@ -597,7 +697,8 @@ pub fn check_variable_declarator_redeclaration(
         let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
         let Some(rd) = redeclarations.iter().nth_back(1) else { return };
 
-        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode.
+        // In module mode at the top level, `function f() {}; var f;` is also invalid.
         if rd.flags.is_function() {
             ctx.error(diagnostics::redeclaration(&ident.name, rd.span, decl.span));
         }
@@ -605,24 +706,23 @@ pub fn check_variable_declarator_redeclaration(
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
-pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+pub fn is_function_decl_part_of_if_statement(
+    function: &Function,
+    builder: &SemanticBuilder,
+) -> bool {
+    debug_assert!(function.is_declaration());
+
+    // Function declarations cannot be `consequent` or `alternate` of an `IfStatement` in strict mode.
+    // This check is redundant - parent kind lookup below will always return `false` in strict mode.
+    // But this check is cheaper, and strict mode code is more common than sloppy mode, so we do this cheap check first.
     if builder.current_scope_flags().is_strict_mode() {
         return false;
     }
-    let AstKind::IfStatement(stmt) = builder.nodes.parent_kind(builder.current_node_id) else {
-        return false;
-    };
-    if let Statement::FunctionDeclaration(func) = &stmt.consequent
-        && ptr::eq(func.as_ref(), function)
-    {
-        return true;
-    }
-    if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate
-        && ptr::eq(func.as_ref(), function)
-    {
-        return true;
-    }
-    false
+
+    // A function declaration whose parent is an `IfStatement` can only be
+    // either that `IfStatement`'s `consequent` or `alternate`
+    // (can't be `test` because that's an expression)
+    matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::IfStatement(_))
 }
 
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
@@ -630,9 +730,15 @@ pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticB
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
 pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+    if !func.is_declaration() {
+        return;
+    }
+
+    // Function declarations always have an identifier, except for `export default function () {}`.
+    // Skip that case.
     let Some(id) = &func.id else { return };
 
-    if is_function_part_of_if_statement(func, ctx) {
+    if is_function_decl_part_of_if_statement(func, ctx) {
         return;
     }
 
@@ -644,8 +750,8 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
         return;
     };
 
-    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
-    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    // Already checked in `check_redeclaration`, because it is also not allowed in TypeScript.
+    // `let a; function a() {}` is invalid in both strict and non-strict mode.
     if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
         return;
     }
@@ -653,7 +759,8 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     let current_scope_flags = ctx.current_scope_flags();
     if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
         && (current_scope_flags.is_function()
-            || (ctx.source_type.is_script() && current_scope_flags.is_top()))
+            || current_scope_flags.is_class_static_block()
+            || (!ctx.source_type.is_module() && current_scope_flags.is_top()))
     {
         // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
         // `function a() {}; function a() {}` and `var a; function a() {}` are
@@ -699,7 +806,10 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
     for case in &stmt.cases {
         if case.test.is_none() {
             if let Some(previous_span) = previous_default {
-                ctx.error(diagnostics::redeclaration("default", previous_span, case.span));
+                ctx.error(diagnostics::switch_stmt_cannot_have_multiple_default_case(
+                    previous_span,
+                    case.span,
+                ));
                 break;
             }
             previous_default.replace(case.span);
@@ -709,12 +819,20 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
+
+    let mut available_labels: Option<Vec<&str>> = None;
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
+                        let suggestion =
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -745,12 +863,20 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
+
+    let mut available_labels: Option<Vec<&str>> = None;
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
+                        let suggestion =
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -784,6 +910,18 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             _ => {}
         }
     }
+}
+
+fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
+    let mut labels = Vec::new();
+    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+        if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+            labels.push(labeled_statement.label.name.as_str());
+        } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
+            break;
+        }
+    }
+    labels
 }
 
 pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
@@ -834,6 +972,14 @@ pub fn check_for_statement_left(
                 decl.span,
             ));
         }
+    }
+}
+
+pub fn check_for_of_statement(stmt: &ForOfStatement, ctx: &SemanticBuilder<'_>) {
+    // ClassStaticBlockBody : ClassStaticBlockStatementList
+    //   It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
+    if stmt.r#await && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
+        ctx.error(diagnostics::class_static_block_await(stmt.span));
     }
 }
 

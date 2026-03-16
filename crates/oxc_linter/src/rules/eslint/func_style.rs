@@ -1,4 +1,8 @@
-use crate::{ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    ast_util::nth_outermost_paren_parent,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 use oxc_ast::{AstKind, ast::FunctionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -22,11 +26,7 @@ enum Style {
     Expression,
     Declaration,
 }
-impl From<&str> for Style {
-    fn from(raw: &str) -> Self {
-        if raw == "declaration" { Self::Declaration } else { Self::Expression }
-    }
-}
+
 impl Style {
     pub fn as_str(&self) -> &str {
         match self {
@@ -44,27 +44,33 @@ enum NamedExports {
     Expression,
     Declaration,
 }
-impl From<&str> for NamedExports {
-    fn from(raw: &str) -> Self {
-        match raw {
-            "expression" => Self::Expression,
-            "declaration" => Self::Declaration,
-            _ => Self::Ignore,
-        }
-    }
-}
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct FuncStyle {
-    /// The style to enforce. Either "expression" (default) or "declaration".
-    style: Style,
+pub struct FuncStyle(Style, FuncStyleConfig);
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct Override {
+    named_exports: Option<NamedExports>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct FuncStyleConfig {
     /// When true, arrow functions are allowed regardless of the style setting.
     allow_arrow_functions: bool,
     /// When true, functions with type annotations are allowed regardless of the style setting.
     allow_type_annotation: bool,
     /// Override the style specifically for named exports. Can be "expression", "declaration", or "ignore" (default).
-    named_exports: Option<NamedExports>,
+    overrides: Override,
+}
+
+impl FuncStyleConfig {
+    /// Returns the configured behavior for named exports, if any.
+    fn named_exports(&self) -> Option<&NamedExports> {
+        self.overrides.named_exports.as_ref()
+    }
 }
 
 declare_oxc_lint!(
@@ -205,30 +211,13 @@ fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
 
 impl Rule for FuncStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
-
-        Ok(Self {
-            style: obj1.and_then(Value::as_str).map(Style::from).unwrap_or_default(),
-            allow_arrow_functions: obj2
-                .and_then(|v| v.get("allowArrowFunctions"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            allow_type_annotation: obj2
-                .and_then(|v| v.get("allowTypeAnnotation"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-            named_exports: obj2
-                .and_then(|v| v.get("overrides"))
-                .and_then(|v| v.get("namedExports"))
-                .and_then(Value::as_str)
-                .map(NamedExports::from),
-        })
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run_once<'a>(&self, ctx: &LintContext) {
+        let FuncStyle(style, config) = self;
         let semantic = ctx.semantic();
-        let is_decl_style = self.style == Style::Declaration;
+        let is_decl_style = *style == Style::Declaration;
 
         // step 1
         // We can iterate over ctx.nodes() and process FunctionDeclaration and FunctionExpression,
@@ -263,19 +252,19 @@ impl Rule for FuncStyle {
                                 let should_diagnostic = match parent.kind() {
                                     AstKind::ExportDefaultDeclaration(_) => false,
                                     AstKind::ExportNamedDeclaration(_) => {
-                                        self.named_exports.is_none()
+                                        config.named_exports().is_none()
                                     }
                                     _ => true,
                                 };
                                 if should_diagnostic {
                                     ctx.diagnostic(func_style_diagnostic(
                                         func.span,
-                                        self.style.as_str(),
+                                        style.as_str(),
                                     ));
                                 }
                             }
 
-                            if self.named_exports == Some(NamedExports::Expression)
+                            if config.named_exports() == Some(&NamedExports::Expression)
                                 && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
                             {
                                 ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
@@ -285,20 +274,20 @@ impl Rule for FuncStyle {
                             let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
                                 let is_type_annotation =
-                                    self.allow_type_annotation && decl.type_annotation.is_some();
+                                    config.allow_type_annotation && decl.type_annotation.is_some();
                                 if is_type_annotation {
                                     continue;
                                 }
                                 if is_decl_style
-                                    && (self.named_exports.is_none() || !is_ancestor_export)
+                                    && (config.named_exports().is_none() || !is_ancestor_export)
                                 {
                                     ctx.diagnostic(func_style_diagnostic(
                                         decl.span,
-                                        self.style.as_str(),
+                                        style.as_str(),
                                     ));
                                 }
 
-                                if self.named_exports == Some(NamedExports::Declaration)
+                                if config.named_exports() == Some(&NamedExports::Declaration)
                                     && is_ancestor_export
                                 {
                                     ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
@@ -308,7 +297,7 @@ impl Rule for FuncStyle {
                         _ => {}
                     }
                 }
-                AstKind::ThisExpression(_) | AstKind::Super(_) if !self.allow_arrow_functions => {
+                AstKind::ThisExpression(_) | AstKind::Super(_) if !config.allow_arrow_functions => {
                     // We need to determine if the recent FunctionBody is an arrow function
                     let arrow_func_ancestor = semantic
                         .nodes()
@@ -319,7 +308,7 @@ impl Rule for FuncStyle {
                         arrow_func_ancestor_records.insert(ret.id());
                     }
                 }
-                AstKind::ArrowFunctionExpression(_) if !self.allow_arrow_functions => {
+                AstKind::ArrowFunctionExpression(_) if !config.allow_arrow_functions => {
                     arrow_func_nodes.push(node);
                 }
                 _ => {}
@@ -333,16 +322,18 @@ impl Rule for FuncStyle {
                 let parent = semantic.nodes().parent_node(node.id());
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
                     let is_type_annotation =
-                        self.allow_type_annotation && decl.type_annotation.is_some();
+                        config.allow_type_annotation && decl.type_annotation.is_some();
                     if is_type_annotation {
                         continue;
                     }
                     let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
-                    if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
+                    if is_decl_style && (config.named_exports().is_none() || !is_ancestor_export) {
                         ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                     }
 
-                    if self.named_exports == Some(NamedExports::Declaration) && is_ancestor_export {
+                    if config.named_exports() == Some(&NamedExports::Declaration)
+                        && is_ancestor_export
+                    {
                         ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                     }
                 }
@@ -477,7 +468,7 @@ fn test() {
         (
             "export var foo = () => {};",
             Some(
-                serde_json::json!(["declaration",{ "allowArrowFunctions": true, "overrides": { "namedExports": "ignore" }}]),
+                serde_json::json!(["declaration", { "allowArrowFunctions": true, "overrides": { "namedExports": "ignore" }}]),
             ),
         ),
         ("$1: function $2() { }", Some(serde_json::json!(["declaration"]))), // { "sourceType": "script" },
@@ -539,13 +530,13 @@ fn test() {
         (
             "export function foo(): void {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } },            ]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } },            ]),
             ),
         ),
         (
             "export function foo(): void {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } },            ]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } },            ]),
             ),
         ),
         (
@@ -563,13 +554,13 @@ fn test() {
         (
             "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
             "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
@@ -684,57 +675,57 @@ fn test() {
         (
             "export function foo() {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
             "export function foo() {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         ("export var foo = function(){};", Some(serde_json::json!(["declaration"]))), // { "ecmaVersion": 6 },
         (
             "export var foo = function(){};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "export var foo = function(){};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         ("export var foo = () => {};", Some(serde_json::json!(["declaration"]))), // { "ecmaVersion": 6 },
         (
             "export var b = () => {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "export var c = () => {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "function foo() {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "var foo = function() {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "var foo = () => {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
@@ -774,13 +765,13 @@ fn test() {
         (
             "export function foo(): void {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
             "export function foo(): void {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
@@ -790,13 +781,13 @@ fn test() {
         (
             "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ),
         (
             "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ),
         (
@@ -818,19 +809,19 @@ fn test() {
         (
             "function foo(): void {};",
             Some(
-                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
             ),
         ),
         (
             "const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
             "const foo: () => void = (): void => {};",
             Some(
-                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         ("$1: function $2(): void { }", None),

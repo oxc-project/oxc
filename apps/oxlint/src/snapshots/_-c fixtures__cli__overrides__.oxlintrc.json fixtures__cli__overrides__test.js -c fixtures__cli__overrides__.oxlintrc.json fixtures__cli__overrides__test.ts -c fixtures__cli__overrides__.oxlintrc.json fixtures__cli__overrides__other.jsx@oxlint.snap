@@ -1,0 +1,67 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/cli/overrides/.oxlintrc.json fixtures/cli/overrides/test.js
+working directory: 
+----------
+
+  x eslint(no-var): Unexpected var, use let or const instead.
+   ,-[fixtures/cli/overrides/test.js:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c fixtures/cli/overrides/.oxlintrc.json fixtures/cli/overrides/test.ts
+working directory: 
+----------
+
+  x eslint(no-var): Unexpected var, use let or const instead.
+   ,-[fixtures/cli/overrides/test.ts:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[fixtures/cli/overrides/test.ts:2:1]
+ 1 | var msg = "hello";
+ 2 | console.log(msg);
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c fixtures/cli/overrides/.oxlintrc.json fixtures/cli/overrides/other.jsx
+working directory: 
+----------
+
+  x eslint(no-var): Unexpected var, use let or const instead.
+   ,-[fixtures/cli/overrides/other.jsx:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 95 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

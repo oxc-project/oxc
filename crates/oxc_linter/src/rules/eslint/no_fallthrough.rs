@@ -3,6 +3,10 @@ use std::ops::Range;
 use cow_utils::CowUtils;
 use itertools::Itertools;
 use lazy_regex::Regex;
+use rustc_hash::{FxHashMap, FxHashSet};
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{Statement, SwitchCase, SwitchStatement},
@@ -17,30 +21,40 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::JsonSchema;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a `break` statement before `case`.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `case`.")
+        .with_help("Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.")
+        .with_label(span)
 }
 
 fn no_fallthrough_default_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a `break` statement before `default`.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `default`.")
+        .with_help("Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.")
+        .with_label(span)
 }
 
 fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Found a comment that would permit fallthrough, but case cannot fall through.",
     )
+    .with_help(
+        "Remove the fallthrough comment or add code that allows fallthrough (e.g. remove `break`).",
+    )
     .with_label(span)
 }
 
-#[derive(Default, Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Default, Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoFallthroughConfig {
     /// Custom regex pattern to match fallthrough comments.
+    #[serde(default, deserialize_with = "deserialize_comment_pattern")]
     comment_pattern: Option<Regex>,
     /// Whether to allow empty case clauses to fall through.
     allow_empty_case: bool,
@@ -48,22 +62,18 @@ struct NoFallthroughConfig {
     report_unused_fallthrough_comment: bool,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Deserialize)]
 pub struct NoFallthrough(Box<NoFallthroughConfig>);
 
-impl NoFallthrough {
-    fn new(
-        comment_pattern: Option<&str>,
-        allow_empty_case: Option<bool>,
-        report_unused_fallthrough_comment: Option<bool>,
-    ) -> Self {
-        Self(Box::new(NoFallthroughConfig {
-            comment_pattern: comment_pattern
-                .map(|pattern| Regex::new(format!("(?iu){pattern}").as_str()).unwrap()),
-            allow_empty_case: allow_empty_case.unwrap_or(false),
-            report_unused_fallthrough_comment: report_unused_fallthrough_comment.unwrap_or(false),
-        }))
-    }
+fn deserialize_comment_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| Regex::new(&format!("(?iu){pattern}")).map_err(D::Error::custom))
+        .transpose()
 }
 
 declare_oxc_lint!(
@@ -243,13 +253,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFallthrough {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(value) = value.get(0) else { return Ok(Self::default()) };
-        let comment_pattern = value.get("commentPattern").and_then(serde_json::Value::as_str);
-        let allow_empty_case = value.get("allowEmptyCase").and_then(serde_json::Value::as_bool);
-        let report_unused_fallthrough_comment =
-            value.get("reportUnusedFallthroughComment").and_then(serde_json::Value::as_bool);
-
-        Ok(Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -280,6 +284,16 @@ impl Rule for NoFallthrough {
                 if node == switch_id {
                     (last_cond, true)
                 } else if node == default_or_exit {
+                    if default.is_some() {
+                        // Continue past default to detect fallthrough FROM default
+                        (last_cond, true)
+                    } else {
+                        // Stop at exit block to prevent exploring outside switch
+                        (last_cond, false)
+                    }
+                } else if default.is_some() && Some(node) == exit {
+                    // When a default exists, stop at the shared end-of-switch block
+                    // to avoid traversing beyond the switch body.
                     (last_cond, false)
                 } else if tests.contains_key(&node) {
                     (last_cond, true)
@@ -581,6 +595,13 @@ fn test() {
                 "reportUnusedFallthroughComment": false
             }])),
         ),
+        // Issue #11340: default in middle with return
+        (
+            "function f(name) { switch(name) { case 'a': case 'b': default: return 'x'; case 'c': return 'y'; } }",
+            None,
+        ),
+        // Default in middle with break
+        ("switch(foo) { default: a(); break; case 1: b(); }", None),
         // Issue #6417: switch with logical operators should work correctly with break
         ("switch(true) { case x === 1 || x === 2: a(); break; case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); break; case x === 3: b(); }", None),
@@ -656,6 +677,10 @@ fn test() {
                 "reportUnusedFallthroughComment": true
             }])),
         ),
+        // Issue #11340: default falls through to next case
+        ("switch(foo) { default: a(); case 1: b(); }", None),
+        // Issue #11340: default in middle, falls through both directions
+        ("switch(foo) { case 0: a(); default: b(); case 1: c(); }", None),
         // Issue #6417: switch with logical operators should detect fallthrough
         ("switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); case x === 3: b(); }", None),

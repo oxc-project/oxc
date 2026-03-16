@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:11]
  1 │ var foo = 'hello, ' + name + '!';

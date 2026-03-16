@@ -5,27 +5,23 @@ import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
-
+import { switchWorkspace } from "./workspace.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
-  initCompiledVisitor,
+  resetCompiledVisitor,
   VISITOR_EMPTY,
   VISITOR_CFG,
 } from "./visitor.ts";
 
-// Lazy implementation
-/*
-import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
-import { walkProgram } from '../generated/walk.js';
-*/
-
 import { walkProgram, ancestors } from "../generated/walk.js";
 
+import type { VisitFn, EnterExit } from "./visitor.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
@@ -37,9 +33,6 @@ export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
-
-// Default parser services object (empty object).
-const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
 
 /**
  * Lint a file.
@@ -53,6 +46,7 @@ const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -63,9 +57,19 @@ export function lintFile(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  workspaceUri: string | null,
 ): string | null {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
+    lintFileImpl(
+      filePath,
+      bufferId,
+      buffer,
+      ruleIds,
+      optionsIds,
+      settingsJSON,
+      globalsJSON,
+      workspaceUri,
+    );
 
     let ret: string | null = null;
 
@@ -99,6 +103,7 @@ export function lintFile(
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -110,6 +115,7 @@ export function lintFileImpl(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  workspaceUri: string | null,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -143,6 +149,24 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
+  // The order rules run in is indeterminate.
+  // To make order predictable in tests, in debug builds, sort rules by ID in ascending order.
+  // i.e. rules run in same order as they're defined in plugin.
+  let ruleIndexes: number[] | undefined;
+  if (DEBUG) {
+    const rules = ruleIds.map((ruleId, index) => ({ ruleId, optionsId: optionsIds[index], index }));
+    rules.sort((rule1, rule2) => rule1.ruleId - rule2.ruleId);
+    ruleIds = rules.map((rule) => rule.ruleId);
+    optionsIds = rules.map((rule) => rule.optionsId);
+    ruleIndexes = rules.map((rule) => rule.index);
+  }
+
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
+  debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
+
   // Pass file path to context module, so `Context`s know what file is being linted
   setupFileContext(filePath);
 
@@ -154,34 +178,32 @@ export function lintFileImpl(
   //
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
-  const hasBOM = false; // TODO: Set this correctly
-  const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
-  setupSourceForFile(buffer, hasBOM, parserServices);
+  const hasBOM = buffer[HAS_BOM_FLAG_POS] === 1;
+  setupSourceForFile(buffer, hasBOM);
 
   // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);
   setGlobalsForFile(globalsJSON);
 
   // Get visitors for this file from all rules
-  initCompiledVisitor();
-
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
     debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
     const ruleDetails = registeredRules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
-    ruleDetails.ruleIndex = i;
+    // In debug build, use `ruleIndexes`, because `ruleIds` has been re-ordered.
+    ruleDetails.ruleIndex = DEBUG ? ruleIndexes![i] : i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssertIsNonNull(allOptions);
     debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
-    ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+    Object.defineProperty(ruleDetails.context, "options", {
+      value: optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId],
+    });
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
@@ -218,37 +240,61 @@ export function lintFileImpl(
     if (visitorState === VISITOR_CFG) {
       walkProgramWithCfg(ast, compiledVisitor);
     } else {
-      walkProgram(ast, compiledVisitor);
+      walkProgram(ast, compiledVisitor as (VisitFn | EnterExit | null)[]);
     }
 
     debugAssert(ancestors.length === 0, "`ancestors` should be empty after walking AST");
 
-    // Lazy implementation
-    /*
-    const sourceIsAscii = sourceText.length === sourceByteLen;
-    const ast = {
-      buffer,
-      sourceText,
-      sourceByteLen,
-      sourceIsAscii,
-      nodes: new Map(),
-      token: TOKEN,
-    };
-
-    walkProgram(programPos, ast, compiledVisitor);
-    */
+    // Reset compiled visitor, ready for next file
+    resetCompiledVisitor();
   }
+
+  // Run any `after` hooks
+  runAfterHooks(true);
+}
+
+/**
+ * Run any `after` hooks.
+ *
+ * Rules using `before` and `after` hooks likely maintain some internal state in their `createOnce` method.
+ * To keep that state in sync, it's critical that `after` hooks always run, even if an error is thrown during any of:
+ *
+ * 1. A later rule's `before` hook.
+ * 2. AST walk.
+ * 3. An earlier rule's `after` hook.
+ *
+ * So if any `after` hook throws an error, this function continues running remaining hooks, and re-throws the error
+ * only at the very end. This ensures an error in one rule does not affect any other rules.
+ *
+ * This function is called by `resetStateAfterError` to ensure `after` hooks are run no matter where an error occurs.
+ *
+ * @param shouldThrowIfError - `true` if any errors thrown in after hooks should be re-thrown
+ */
+function runAfterHooks(shouldThrowIfError: boolean) {
+  const afterHooksLen = afterHooks.length;
+  if (afterHooksLen === 0) return;
 
   // Run `after` hooks
-  const afterHooksLen = afterHooks.length;
-  if (afterHooksLen !== 0) {
-    for (let i = 0; i < afterHooksLen; i++) {
+  let error: unknown;
+  let didError = false;
+
+  for (let i = 0; i < afterHooksLen; i++) {
+    try {
       // Don't call hook with `afterHooks` array as `this`, or user could mess with it
       (0, afterHooks[i])();
+    } catch (err) {
+      if (didError === false) {
+        error = err;
+        didError = true;
+      }
     }
-    // Reset array, ready for next file
-    afterHooks.length = 0;
   }
+
+  // Reset array, ready for next file
+  afterHooks.length = 0;
+
+  // If error was thrown in any `after` hooks, re-throw it
+  if (didError && shouldThrowIfError) throw error;
 }
 
 /**
@@ -266,6 +312,17 @@ export function resetFile() {
  * in the correct initial state for linting the next file.
  */
 export function resetStateAfterError() {
+  // This function must never throw, so call `runAfterHooks` with `false` to swallow any errors
+  runAfterHooks(false);
+
+  // In case error occurred during visitor compilation, clear internal state of visitor compilation,
+  // so no leftovers bleed into next file.
+  // We could have a separate function to reset state which could be simpler and faster, but `resetStateAfterError`
+  // should never be called - only happens when rules return an invalid visitor or malfunction.
+  // So better to use the existing functions, rather than bloat the package with more code which should never run.
+  finalizeCompiledVisitor();
+  resetCompiledVisitor();
+
   diagnostics.length = 0;
   ancestors.length = 0;
   resetFile();

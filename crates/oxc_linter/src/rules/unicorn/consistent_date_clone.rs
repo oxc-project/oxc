@@ -95,22 +95,22 @@ fn test() {
         "Date(date.getTime())",
         // TODO: We may support these cases in future
         "new Date(
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate(),
-				date.getHours(),
-				date.getMinutes(),
-				date.getSeconds(),
-				date.getMilliseconds(),
-			);",
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+                date.getMilliseconds(),
+            );",
         "new Date(
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate(),
-				date.getHours(),
-				date.getMinutes(),
-				date.getSeconds(),
-			);",
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+            );",
     ];
 
     let fail = vec![

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
  1 │ foo.slice(foo.length - 2, foo.length - 1)

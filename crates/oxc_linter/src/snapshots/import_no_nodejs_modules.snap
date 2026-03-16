@@ -1,0 +1,147 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `path`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import path from "path"
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs from "fs"
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `path`
+   ╭─[no_nodejs_modules.tsx:1:12]
+ 1 │ var path = require("path")
+   ·            ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:10]
+ 1 │ var fs = require("fs")
+   ·          ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import(`fs`)
+   · ────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs from "fs"
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `crypto`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import crypto from "crypto"
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `util`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import("util")
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export * from "fs"
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:path`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import path from "node:path"
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:path`
+   ╭─[no_nodejs_modules.tsx:1:12]
+ 1 │ var path = require("node:path")
+   ·            ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs from "node:fs"
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:fs`
+   ╭─[no_nodejs_modules.tsx:1:10]
+ 1 │ var fs = require("node:fs")
+   ·          ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:crypto`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import crypto from "node:crypto"
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import("node:fs")
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:path`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export { foo } from "node:path"
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:util`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import util = require("node:util")
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs from "node:fs"
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `node:crypto`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import("node:crypto")
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import fs = require("fs")
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `path`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import path = require("path")
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `fs`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export { foo } from "fs"
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `crypto`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export { default as foo } from "crypto"
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `path`
+   ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ export * from "path"
+   · ────────────────────
+   ╰────

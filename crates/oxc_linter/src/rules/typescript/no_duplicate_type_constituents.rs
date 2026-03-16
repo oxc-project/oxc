@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoDuplicateTypeConstituents(Box<NoDuplicateTypeConstituentsConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoDuplicateTypeConstituentsConfig {
     /// Whether to ignore duplicate types in intersection types.
     /// When true, allows `type T = A & A`.
@@ -63,15 +63,13 @@ declare_oxc_lint!(
     NoDuplicateTypeConstituents(tsgolint),
     typescript,
     correctness,
-    pending,
+    fix,
     config = NoDuplicateTypeConstituentsConfig,
 );
 
 impl Rule for NoDuplicateTypeConstituents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

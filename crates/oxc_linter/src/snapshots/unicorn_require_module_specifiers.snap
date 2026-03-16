@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(require-module-specifiers): Empty import specifier is not allowed
    ╭─[require_module_specifiers.tsx:1:8]
  1 │ import {} from "foo";

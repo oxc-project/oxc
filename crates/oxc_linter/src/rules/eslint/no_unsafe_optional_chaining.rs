@@ -28,7 +28,7 @@ fn no_unsafe_arithmetic_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnsafeOptionalChaining {
     /// Disallow arithmetic operations on optional chaining expressions.
     /// If this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN.
@@ -38,11 +38,11 @@ pub struct NoUnsafeOptionalChaining {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow use of optional chaining in contexts where the undefined value is not allowed
+    /// Disallow use of optional chaining in contexts where the `undefined` value is not allowed.
     ///
     /// ### Why is this bad?
     ///
-    /// The optional chaining (`?.`) expression can short-circuit with a return value of undefined.
+    /// The optional chaining (`?.`) expression can short-circuit with a return value of `undefined`.
     /// Therefore, treating an evaluated optional chaining expression as a function, object, number, etc.,
     /// can cause TypeError or unexpected results. For example:
     ///
@@ -65,9 +65,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeOptionalChaining {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

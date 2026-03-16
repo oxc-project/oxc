@@ -1,4 +1,5 @@
 use crate::fixer::{RuleFix, RuleFixer};
+use crate::rule::TupleRuleConfig;
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{AstKind, ast::IfStatement, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,48 +18,40 @@ fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
+/// The enforcement type for the curly rule.
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum CurlyType {
+pub enum CurlyType {
+    /// Require braces in all cases (default)
     #[default]
     All,
+    /// Require braces only when there are multiple statements in the block
     Multi,
+    /// Require braces when the block spans multiple lines
     MultiLine,
+    /// Require braces when the block is nested or spans multiple lines
     MultiOrNest,
 }
 
-impl CurlyType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "multi" => Self::Multi,
-            "multi-line" => Self::MultiLine,
-            "multi-or-nest" => Self::MultiOrNest,
-            _ => Self::All,
-        }
-    }
-}
+/// Configuration for the curly rule, specified as an array of one or two elements.
+///
+/// Examples:
+/// - `["all"]` - Require braces in all cases (default)
+/// - `["multi"]` - Require braces only for multi-statement blocks
+/// - `["multi-line"]` - Require braces for multi-line blocks
+/// - `["multi-or-nest"]` - Require braces for nested or multi-line blocks
+/// - `["multi", "consistent"]` - Multi mode with consistent braces in if-else chains
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema, Serialize)]
+#[serde(default)]
+pub struct Curly(CurlyType, Option<CurlyConsistent>);
 
-#[derive(Debug, Default, Clone)]
-pub struct Curly(CurlyConfig);
-
+/// The optional second element of the curly config array.
+/// When set to `"consistent"`, enforces consistent brace usage within if-else chains.
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct CurlyConfig {
-    /// Which type of curly brace enforcement to use.
-    ///
-    /// - `"all"`: require braces in all cases
-    /// - `"multi"`: require braces only for multi-statement blocks
-    /// - `"multi-line"`: require braces only for multi-line blocks
-    /// - `"multi-or-nest"`: require braces for multi-line blocks or when nested
-    curly_type: CurlyType,
-    /// Whether to enforce consistent use of curly braces in if-else chains.
-    consistent: bool,
-}
-
-impl Default for CurlyConfig {
-    fn default() -> Self {
-        Self { curly_type: CurlyType::All, consistent: false }
-    }
+#[serde(rename_all = "kebab-case")]
+pub enum CurlyConsistent {
+    /// Enforce consistent brace usage in if-else chains
+    Consistent,
 }
 
 struct IfBranch<'a> {
@@ -113,8 +106,14 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi"] */
     ///
-    /// if (foo) foo();
-    /// else { bar(); baz(); }
+    /// if (foo) {
+    ///   foo();
+    /// }
+    ///
+    /// if (foo) bar();
+    /// else {
+    ///   foo();
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi"` option:
@@ -130,12 +129,13 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-line"] */
     ///
-    /// if (foo) foo()
+    /// if (foo)
+    ///   foo();
     /// else
     ///   bar();
     ///
-    /// while (foo)
-    ///   foo()
+    /// if (foo)
+    ///   foo(bar, baz);
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi-line"` option:
@@ -158,11 +158,15 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-or-nest"] */
     ///
-    /// if (foo)
-    ///   if (bar) bar();
+    /// while (true)
+    ///   if (foo)
+    ///     foo();
+    ///   else
+    ///     bar();
     ///
-    /// while (foo)
-    ///   while (bar) bar();
+    /// if (foo) {
+    ///   foo++;
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `"multi-or-nest"` option:
@@ -178,12 +182,12 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// #### `{ "consistent": true }`
+    /// #### `"consistent"`
     ///
-    /// When enabled, `consistent: true` enforces consistent use of braces within an `if-else` chain.
+    /// When enabled, `"consistent"` enforces consistent use of braces within an `if-else` chain.
     /// If one branch of the chain uses braces, then all branches must use braces, even if not strictly required by the first option.
     ///
-    /// Examples of **incorrect** code with `"multi"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi", "consistent"] */
     ///
@@ -199,7 +203,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **correct** code with `"multi"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi", "consistent"] */
     ///
@@ -218,7 +222,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **incorrect** code with `"multi-line"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi-line"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-line", "consistent"] */
     ///
@@ -228,7 +232,7 @@ declare_oxc_lint!(
     ///   baz();
     /// ```
     ///
-    /// Examples of **correct** code with `"multi-line"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi-line"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-line", "consistent"] */
     ///
@@ -239,7 +243,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **incorrect** code with `"multi-or-nest"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi-or-nest"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
@@ -248,7 +252,7 @@ declare_oxc_lint!(
     /// } else qux();
     /// ```
     ///
-    /// Examples of **correct** code with `"multi-or-nest"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi-or-nest"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
@@ -262,23 +266,19 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CurlyConfig,
+    config = Curly,
 );
 
 impl Rule for Curly {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let curly_type =
-            value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
-
-        let consistent =
-            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
-
-        Ok(Self(CurlyConfig { curly_type, consistent }))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
+            AstKind::IfStatement(stmt) if !is_else_if(node, stmt, ctx) => {
+                self.run_for_if_statement(stmt, ctx);
+            }
             AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
             AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),
             AstKind::ForOfStatement(stmt) => self.run_for_loop("for-of", &stmt.body, ctx),
@@ -291,12 +291,12 @@ impl Rule for Curly {
 
 impl<'a> Curly {
     fn run_for_if_statement(&self, stmt: &'a IfStatement<'a>, ctx: &LintContext<'a>) {
-        let branches = get_if_branches_from_statement(stmt, &self.0.curly_type, ctx);
+        let branches = get_if_branches_from_statement(stmt, &self.0, ctx);
         let does_any_branch_need_braces =
             branches.iter().any(|b| b.should_have_braces.unwrap_or(b.has_braces));
 
         for branch in &branches {
-            let should_have_braces = if self.0.consistent {
+            let should_have_braces = if self.1.is_some() {
                 Some(does_any_branch_need_braces)
             } else {
                 branch.should_have_braces
@@ -314,7 +314,7 @@ impl<'a> Curly {
 
     fn run_for_loop(&self, keyword: &str, body: &Statement<'a>, ctx: &LintContext<'a>) {
         let has_braces = has_braces(body);
-        let should_have_braces = should_have_braces(&self.0.curly_type, body, ctx);
+        let should_have_braces = should_have_braces(&self.0, body, ctx);
         report_if_needed(ctx, body, keyword, has_braces, should_have_braces);
     }
 }
@@ -358,6 +358,15 @@ fn get_if_branches_from_statement<'a>(
 
 fn get_if_else_keyword(is_else: bool) -> &'static str {
     if is_else { "else" } else { "if" }
+}
+
+fn is_else_if(node: &AstNode, stmt: &IfStatement, ctx: &LintContext) -> bool {
+    if let AstKind::IfStatement(parent_if) = ctx.nodes().parent_kind(node.id())
+        && parent_if.alternate.as_ref().is_some_and(|alt| alt.span() == stmt.span)
+    {
+        return true;
+    }
+    false
 }
 
 fn has_braces(body: &Statement) -> bool {
@@ -885,6 +894,17 @@ fn test() {
             "if (a) { if (b) foo(); } else { bar(); }",
             Some(serde_json::json!(["multi-or-nest", "consistent"])),
         ),
+        (
+            "if (dividerPosition) {
+              if (condition1 && condition2) {
+                closePos = state.pos;
+                const y = closePos;
+              }
+            } else if (condition3 && condition4) {
+              dividerPosition = state.pos;
+            }",
+            Some(serde_json::json!(["multi-or-nest", "consistent"])),
+        ),
         ("if (a) { if (b) { foo(); bar(); } } else baz();", Some(serde_json::json!(["multi"]))),
         (
             "if (a) foo(); else if (b) { if (c) bar(); } else baz();",
@@ -961,6 +981,22 @@ fn test() {
         ("if (foo) /* {{ nested }} */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("while (foo) /* [brackets] */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("for (;;) /* (parens) { braces } */ bar()", Some(serde_json::json!(["multi-line"]))),
+        // Test cases for trailing comments on previous line - should NOT trigger curly error
+        // Issue #13352: false positive when one-liner conditionals have trailing comments
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        ("if (foo) bar(); // comment\nelse baz();", Some(serde_json::json!(["multi-line"]))),
+        (
+            "if (foo) bar(); // comment on if\nelse if (bar) baz(); // comment on else if\nelse qux();",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        // From issue comment - exact reproduction case
+        (
+            "if (bar < 2) foo = 1 // comment 1\nelse if (bar > 3) foo = 2 // comment 2\nelse foo = 3 // comment 3",
+            Some(serde_json::json!(["multi-line"])),
+        ),
     ];
 
     let fail = vec![

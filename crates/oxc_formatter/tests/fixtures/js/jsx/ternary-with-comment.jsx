@@ -49,3 +49,15 @@ const x = (
     )}
   </>
 );
+
+// https://github.com/oxc-project/oxc/issues/18419
+const Component = () => (
+  <div>
+    {"error" ? (
+      <Error />
+    ) : (
+      <Success />
+      /* This is a comment inside the expression */
+    )}
+  </div>
+);

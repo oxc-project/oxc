@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
    ╭─[no_unused_vars.tsx:1:10]
  1 │ import { a } from 'a'

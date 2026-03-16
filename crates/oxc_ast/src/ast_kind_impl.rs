@@ -4,7 +4,7 @@
 //! including type checking, conversions, and tree traversal helpers.
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
-use oxc_span::{Atom, GetSpan};
+use oxc_span::{Atom, GetSpan, Ident};
 
 use super::{AstKind, ast::*};
 
@@ -174,7 +174,7 @@ impl<'a> AstKind<'a> {
     ///
     /// Returns the identifier name if this is any kind of identifier node,
     /// `None` otherwise.
-    pub fn identifier_name(self) -> Option<Atom<'a>> {
+    pub fn identifier_name(self) -> Option<Ident<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
             Self::IdentifierReference(ident) => Some(ident.name),
@@ -392,7 +392,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
             )
             .into(),
 
@@ -474,7 +474,7 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
             )
             .into(),
             Self::FormalParameterRest(_) => "FormalParameterRest".into(),
@@ -629,7 +629,7 @@ impl<'a> MemberExpressionKind<'a> {
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name),
+            Self::Static(member_expr) => Some(member_expr.property.name.into()),
             Self::PrivateField(_) => None,
         }
     }
@@ -840,8 +840,11 @@ impl GetAddress for PropertyKeyKind<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+
     use super::*;
     use oxc_span::Span;
+    use oxc_syntax::node::NodeId;
 
     // Note: These tests verify the logic of the methods.
     // Integration tests using real parsed AST are in the linter crate.
@@ -853,6 +856,7 @@ mod tests {
 
         let num_lit = NumericLiteral {
             span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
             base: oxc_syntax::number::NumberBase::Decimal,
@@ -860,7 +864,8 @@ mod tests {
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.has_argument_with_span(test_span));
 
-        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.has_argument_with_span(test_span));
     }
@@ -872,6 +877,7 @@ mod tests {
 
         let num_lit = NumericLiteral {
             span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
             base: oxc_syntax::number::NumberBase::Decimal,
@@ -879,7 +885,8 @@ mod tests {
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.is_callee_with_span(test_span));
 
-        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.is_callee_with_span(test_span));
     }

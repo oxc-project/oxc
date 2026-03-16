@@ -1,5 +1,0 @@
-{
-  "rules": {
-      "unicorn/switch-case-braces": "warn"
-  }
-}

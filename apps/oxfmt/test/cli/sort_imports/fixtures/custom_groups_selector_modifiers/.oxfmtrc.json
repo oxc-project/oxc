@@ -1,0 +1,21 @@
+{
+    "experimentalSortImports": {
+        "customGroups": [
+            {
+                "groupName": "scope-types",
+                "elementNamePattern": ["@scope/**"],
+                "modifiers": ["type"]
+            },
+            {
+                "groupName": "scope-values",
+                "elementNamePattern": ["@scope/**"],
+                "modifiers": ["value"]
+            },
+            {
+                "groupName": "externals",
+                "selector": "external"
+            }
+        ],
+        "groups": ["scope-types", "scope-values", "externals", "unknown"]
+    }
+}

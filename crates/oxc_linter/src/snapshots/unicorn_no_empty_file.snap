@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.
    ╭─[no_empty_file.tsx:1:1]
    ╰────

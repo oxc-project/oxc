@@ -4,6 +4,85 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.55.0] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- bc20217 oxlint,oxfmt: Omit useless `| null` for `Option<T>` field from schema (#20273) (leaysgur)
+
+### 📚 Documentation
+
+- f339f10 linter/plugins: Promote JS plugins to alpha status (#20281) (overlookmotel)
+
+## [1.54.0] - 2026-03-12
+
+### 📚 Documentation
+
+- 0c7da4f linter: Fix extra closing brace in example config. (#20253) (connorshea)
+
+## [1.52.0] - 2026-03-09
+
+### 🚀 Features
+
+- 61bf388 linter: Add `options.reportUnusedDisableDirectives` to config file (#19799) (Peter Wagenet)
+- 2919313 linter: Introduce denyWarnings config options (#19926) (camc314)
+- a607119 linter: Introduce maxWarnings config option (#19777) (camc314)
+
+### 📚 Documentation
+
+- 6c0e0b5 linter: Add oxlint.config.ts to the config docs. (#19941) (connorshea)
+- 160e423 linter: Add a note that the typeAware and typeCheck options require oxlint-tsgolint (#19940) (connorshea)
+
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
+## [1.45.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 1b2f354 ci: Add missing riscv64/s390x napi targets for oxfmt and oxlint (#19217) (Cameron)
+
+## [1.44.0] - 2026-02-10
+
+### 🚀 Features
+
+- ee2925b oxlint/lsp: Enable JS plugins (#18834) (overlookmotel)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 📚 Documentation
+
+- 9561e7f linter/plugins: Alter JS plugins example (#18900) (overlookmotel)
+- b425a0c linter: Document jsPlugins examples (#18671) (Cameron)
+- df2b7fa linter: Expand settings example with reference to custom plugins (#18670) (camc314)
+
+## [1.42.0] - 2026-01-26
+
+### 🚀 Features
+
+- 15d69dc linter: Implement react/display-name rule (#18426) (camchenry)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [1.41.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
 ## [1.37.0] - 2026-01-05
 
 ### 💥 BREAKING CHANGES

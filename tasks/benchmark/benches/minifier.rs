@@ -2,7 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_mangler::Mangler;
+use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -71,6 +71,32 @@ fn bench_mangler(criterion: &mut Criterion) {
             });
         });
     }
+
+    {
+        let files = TestFiles::minimal();
+        let first_file = files.files().first().unwrap();
+        let id = BenchmarkId::from_parameter(format!("{}_keep_names", &first_file.file_name));
+        let source_type = SourceType::from_path(&first_file.file_name).unwrap();
+        let source_text = first_file.source_text.as_str();
+        let allocator = Allocator::default();
+        let temp_allocator = Allocator::default();
+        group.bench_function(id, |b| {
+            b.iter_with_setup_wrapper(|runner| {
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                runner.run(|| {
+                    Mangler::new_with_temp_allocator(&temp_allocator)
+                        .with_options(MangleOptions {
+                            top_level: None,
+                            keep_names: MangleOptionsKeepNames::all_true(),
+                            debug: false,
+                        })
+                        .build_with_semantic(&mut semantic, &program);
+                });
+            });
+        });
+    }
+
     group.finish();
 }
 

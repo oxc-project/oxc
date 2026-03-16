@@ -1,13 +1,15 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
 };
+
+const REACT: Ident<'static> = Ident::new_const("React");
 
 fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React` must be in scope when using JSX.")
@@ -64,7 +66,7 @@ impl Rule for ReactInJsxScope {
             _ => return,
         };
         let scope = ctx.scoping();
-        let react_name = "React";
+        let react_name = REACT;
         if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
             return;
         }

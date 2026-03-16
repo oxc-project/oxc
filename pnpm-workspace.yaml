@@ -3,31 +3,25 @@ packages:
   - napi/*
   - wasm/*
   - npm/*
-  - editors/*
-  - plugins/
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
-  - tasks/mcp
 
 catalog:
   "@arethetypeswrong/core": 0.18.2
   "@napi-rs/cli": 3.5.1
-  "@napi-rs/wasm-runtime": 1.1.0
+  "@napi-rs/wasm-runtime": 1.1.1
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  eslint: 9.36.0
-  publint: 0.3.15
-  rolldown: 1.0.0-beta.60
-  tsdown: 0.19.0
-  typescript: 5.9.3
-  vitest: 4.0.15
+  eslint: 9.39.3
+  json-schema-to-typescript: ^15.0.4
+  publint: 0.3.18
+  rolldown: 1.0.0-rc.9
+  tsdown: 0.21.4
+  vitest: 4.0.18
 
 onlyBuiltDependencies:
   - "@vscode/vsce-sign@2.0.8"
   - esbuild@0.25.11
-
-patchedDependencies:
-  prettier-plugin-tailwindcss@0.7.2: patches/prettier-plugin-tailwindcss@0.7.2.patch
 
 verifyDepsBeforeRun: install

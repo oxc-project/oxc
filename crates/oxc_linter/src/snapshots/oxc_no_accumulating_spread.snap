@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})

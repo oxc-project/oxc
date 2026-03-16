@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
    ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set([])
@@ -187,5 +188,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_collection_argument.mjs:1:23]
  1 │ new Set(foo ?? bar ?? [])
    ·                       ──
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
+   ╭─[no_useless_collection_argument.mjs:1:9]
+ 1 │ new Set([/**/])
+   ·         ──────
    ╰────
   help: Delete this code.

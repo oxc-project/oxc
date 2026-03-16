@@ -4,6 +4,121 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.120.0] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- ed5a7fb parser: Report syntax error for `new super()` (#20384) (Boshen)
+
+## [0.119.0] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- 78c264a parser: Fix conditional expressions with arrow-function alternates in TS (#20356) (camc314)
+
+## [0.117.0] - 2026-03-09
+
+### 🚀 Features
+
+- e8547cc parser: Report error for using declarations in ambient contexts (#19934) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7502afe parser: Correct capacity for tokens `Vec` (#19967) (overlookmotel)
+
+### ⚡ Performance
+
+- 8ba61dd parser: Make pushing tokens faster (#19960) (overlookmotel)
+
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- ee4982b parser: Add `VARIANTS` const to `Kind` via `fieldless_enum!` macro (#19877) (overlookmotel)
+- 12b841e parser: Make all `Kind::is_*` methods `const` (#19874) (overlookmotel)
+- 25c2e25 estree/tokens: Add function to update tokens in place (#19856) (overlookmotel)
+- f78e6df parser: Add `mutate_tokens` Cargo feature (#19853) (overlookmotel)
+- 42bd431 parser: Report error for missing initializer in using decl (#19824) (camc314)
+- a2f58e5 parser: Report error for `implements` clause in non-ts files (#19820) (Cameron)
+- ea6b796 parser: Add `LexerConfig::TOKENS_METHOD_IS_STATIC` const (#19683) (overlookmotel)
+- 9e11dc6 parser,estree,coverage: Collect tokens in parser and convert to ESTree format (#19497) (camc314)
+- c4a3677 parser: Report error for initializer in ambient context (#19187) (camc314)
+
+### 🐛 Bug Fixes
+
+- ef798af parser: Use TS8037 for satisfies expression in JS files diagnostic (#19819) (camc314)
+- 98ea5c5 parser: Use TS8016 for type assertions in JS files diagnostic (#19818) (camc314)
+- 6a59a76 parser: Improve error recovery for private identifiers in property names (#19710) (Boshen)
+
+### ⚡ Performance
+
+- 7233548 parser: Remove branches from `finish_next_inner` (#19695) (overlookmotel)
+- b5d9845 parser: Remove const generic param from `finish_next_inner` (#19684) (overlookmotel)
+- 136e39b parser/tokens: Pre-allocate capacity for tokens (#19543) (overlookmotel)
+- b3b2d30 parser: Introduce `ParserConfig` (#19637) (overlookmotel)
+
+### 📚 Documentation
+
+- 75c9cd8 parser: Improve doc comments for `ParserConfig` and `LexerConfig` (#19682) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- 142a1be parser: Detect binary files with TS1490 error (#19047) (Boshen)
+- 0eff6be parser: Error JSX-like type assertions and generics in `.mts`/`.cts` (#18910) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 56c086b parser: Add modifier ordering validation (TS1029) (#19024) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+- 1f6b193 parser: Validate TypeScript import type options (#18889) (Boshen)
+- 1663184 parser: Allow conditional types in function type parameters (#18886) (Boshen)
+- 5758046 parser: Error on property access after instantiation expression (#18887) (Boshen)
+- 5eb4a94 parser: Handle `<<` as two `<` tokens in type argument contexts (#18885) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- f78c525 parser: Try hybrid parsing for jsx children and closing element/fragments (#18789) (camchenry)
+
+## [0.112.0] - 2026-02-02
+
+### 🚀 Features
+
+- 8670b18 parser: Error on ambient class accessor implementations (#18592) (camc314)
+
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 0a02026 semantic: Add TS1499 code to diagnostic (#18557) (camc314)
+- 8b4618f parser: Add TS1500 code to diagnostic (#18547) (camc314)
+- 866b6b3 parser: Add TS1048 code to diagnostic (#18546) (camc314)
+- 1117c44 parser: Add TS1054 code to diagnostic (#18541) (camc314)
+- e4fcdde semantic: Add TS1053 code to diagnostic (#18539) (camc314)
+- bcbf396 semantic: Add TS1052 code to diagnostic (#18538) (camc314)
+- 8155edf semantic: Add TS1049 code to diagnostic (#18535) (camc314)
+- 51d3b3f parser: Add TS1502 code to diagnostic (#18534) (camc314)
+- 993fd2b parser: Parse unambiguous await with better error messages (#18480) (Boshen)
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- aed3669 parser: Parse HTML-like comments in unambiguous mode (#18442) (Boshen)
+- c4132fb parser: Validate accessor parameters in interface method signatures (#18391) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🚀 Features

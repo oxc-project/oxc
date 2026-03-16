@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-activedescendant-has-tabindex): Elements with `aria-activedescendant` must be tabbable.
    ╭─[aria_activedescendant_has_tabindex.tsx:1:2]
  1 │ <div aria-activedescendant={someID} />;

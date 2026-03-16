@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, TailwindcssOptions,
+    Buffer, SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatElement, Formatter, TailwindContextEntry, prelude::*},
     write,
@@ -23,6 +23,27 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 // Detection Functions
 // ============================================================================
 
+/// Returns the Tailwind context if we should sort classes in the given string literal.
+///
+/// Returns `Some(ctx)` when:
+/// - We're inside a Tailwind function call context
+/// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
+/// - The string contains whitespace (indicating multiple classes to sort)
+pub fn tailwind_context_for_string_literal<'a>(
+    string: &AstNode<'a, StringLiteral<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> Option<TailwindContextEntry> {
+    f.context().tailwind_context().copied().filter(|ctx| {
+        let text = f.source_text().text_for(string);
+
+        if ctx.disabled {
+            return false;
+        }
+
+        text.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+    })
+}
+
 /// Checks if a JSX attribute is a Tailwind class attribute.
 ///
 /// Returns `true` for:
@@ -30,7 +51,7 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - Custom attributes specified in `attributes` option
 pub fn is_tailwind_jsx_attribute(
     attr_name: &JSXAttributeName<'_>,
-    options: &TailwindcssOptions,
+    options: &SortTailwindcssOptions,
 ) -> bool {
     let JSXAttributeName::Identifier(ident) = attr_name else {
         return false;
@@ -58,7 +79,10 @@ pub fn is_tailwind_jsx_attribute(
 /// - `foo().clsx(...)` - chained calls
 ///
 /// Based on [prettier-plugin-tailwindcss's `isSortableExpression`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L584-L605).
-pub fn is_tailwind_function_call(callee: &Expression<'_>, options: &TailwindcssOptions) -> bool {
+pub fn is_tailwind_function_call(
+    callee: &Expression<'_>,
+    options: &SortTailwindcssOptions,
+) -> bool {
     if options.functions.is_empty() {
         return false;
     }
@@ -212,7 +236,7 @@ pub fn write_tailwind_string_literal<'a>(
         f.source_text().text_for(&string_literal),
         // `className="string"`
         //            ^^^^^^^^
-        matches!(string_literal.parent, AstNodes::JSXAttribute(_)),
+        matches!(string_literal.parent(), AstNodes::JSXAttribute(_)),
         StringLiteralParentKind::Expression,
     )
     .clean_text(f);

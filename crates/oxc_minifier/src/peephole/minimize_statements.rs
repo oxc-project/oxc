@@ -1,5 +1,6 @@
 use std::{cmp::min, iter, ops::ControlFlow};
 
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
@@ -9,9 +10,8 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
-use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -33,7 +33,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_statements(stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx.ast);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
@@ -299,7 +299,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
@@ -349,7 +349,7 @@ impl<'a> PeepholeOptimizations {
     fn join_sequence(
         a: &mut Expression<'a>,
         b: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let a = a.take_in(ctx.ast);
         let b = b.take_in(ctx.ast);
@@ -384,7 +384,7 @@ impl<'a> PeepholeOptimizations {
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
@@ -424,7 +424,7 @@ impl<'a> PeepholeOptimizations {
         {
             ctx.state.changed = true;
         }
-        let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
+        let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
                 ctx.state.changed = true;
@@ -452,7 +452,7 @@ impl<'a> PeepholeOptimizations {
     /// - `let [x, y] = [...arr];` -> false
     fn can_simplify_array_to_array_destruction_assignment(
         decl: &VariableDeclarator<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let BindingPattern::ArrayPattern(id_kind) = &decl.id else { return false };
         // if left side of assignment is empty do not process it
@@ -516,7 +516,7 @@ impl<'a> PeepholeOptimizations {
     fn simplify_array_destruction_assignment(
         decl: &mut VariableDeclarator<'a>,
         result: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let BindingPattern::ArrayPattern(id_pattern) = &mut decl.id else {
             return false;
@@ -667,7 +667,7 @@ impl<'a> PeepholeOptimizations {
     fn simplify_destructuring_assignment(
         _kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let mut changed = false;
         let mut i = declarations.len();
@@ -707,7 +707,7 @@ impl<'a> PeepholeOptimizations {
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut expr_stmt.expression,
@@ -783,7 +783,7 @@ impl<'a> PeepholeOptimizations {
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
@@ -836,7 +836,7 @@ impl<'a> PeepholeOptimizations {
         mut switch_stmt: Box<'a, SwitchStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut switch_stmt.discriminant,
@@ -897,7 +897,7 @@ impl<'a> PeepholeOptimizations {
         mut if_stmt: Box<'a, IfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         let changed =
             Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
@@ -1050,7 +1050,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
             let changed = Self::substitute_single_use_symbol_in_statement(
@@ -1106,7 +1106,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let changed = Self::substitute_single_use_symbol_in_statement(
             &mut throw_stmt.argument,
@@ -1135,7 +1135,7 @@ impl<'a> PeepholeOptimizations {
         mut for_stmt: Box<'a, ForStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(init) = &mut for_stmt.init {
             match init {
@@ -1236,7 +1236,7 @@ impl<'a> PeepholeOptimizations {
         mut for_in_stmt: Box<'a, ForInStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         // Annex B.3.5 allows initializers in non-strict mode
         // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
@@ -1279,7 +1279,14 @@ impl<'a> PeepholeOptimizations {
                             false
                         }
                     };
-                    if !has_side_effectful_initializer {
+                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Block-scoped declarations (let/const) can cause variable shadowing issues
+                    // where the inlined expression might reference a variable with the same name
+                    // as the for-in variable, but after inlining, it would incorrectly refer to
+                    // the shadowed for-in variable instead.
+                    // See: https://github.com/oxc-project/oxc/issues/18650
+                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+                    if !has_side_effectful_initializer && !is_block_scoped {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                         result.pop();
@@ -1322,7 +1329,7 @@ impl<'a> PeepholeOptimizations {
     fn handle_for_of_statement(
         mut for_of_stmt: Box<'a, ForOfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
         let changed = Self::substitute_single_use_symbol_in_statement(
@@ -1367,7 +1374,7 @@ impl<'a> PeepholeOptimizations {
     fn handle_block(
         result: &mut Vec<'a, Statement<'a>>,
         block_stmt: Box<'a, BlockStatement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
         if keep_block {
@@ -1419,7 +1426,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
@@ -1457,7 +1464,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_within_declaration(
         kind: VariableDeclarationKind,
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if Self::keep_top_level_var_in_script_mode(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
@@ -1493,7 +1500,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> usize {
         let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
@@ -1550,7 +1557,7 @@ impl<'a> PeepholeOptimizations {
         search_for: &str,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {

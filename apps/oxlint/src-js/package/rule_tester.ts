@@ -8,9 +8,11 @@
  */
 
 import { default as assert, AssertionError } from "node:assert";
+import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:path";
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
-import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
+import { applyFixes } from "../bindings.js";
+import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
@@ -19,9 +21,11 @@ import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
+import type { FixReport } from "../plugins/fix.ts";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
-import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { DiagnosticData, SuggestionReport } from "../plugins/report.ts";
+import type { Settings } from "../plugins/settings.ts";
 import type { ParseOptions } from "./parse.ts";
 
 // ------------------------------------------------------------------------------
@@ -37,7 +41,7 @@ type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
  * @param method - Test case logic
  * @returns Returned value of `method`
  */
-function defaultDescribe<R>(text: string, method: () => R): R {
+function defaultDescribe<T, R>(this: T, text: string, method: (this: T) => R): R {
   return method.call(this);
 }
 
@@ -54,7 +58,7 @@ let describe: DescribeFn =
  * @throws {Error} Any error upon execution of `method`
  * @returns Returned value of `method`
  */
-function defaultIt<R>(text: string, method: () => R): R {
+function defaultIt<T, R>(this: T, text: string, method: (this: T) => R): R {
   try {
     return method.call(this);
   } catch (err) {
@@ -107,10 +111,46 @@ function getItOnly(): ItFn {
 interface Config {
   /**
    * ESLint compatibility mode.
-   * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
+   *
+   * Useful if moving test cases over from ESLint's `RuleTester` to Oxlint's.
+   * It is recommended to only use this option as a temporary measure and alter the test cases
+   * so `eslintCompat` is no longer required.
+   *
+   * If `true`:
+   * - Column offsets in diagnostics are incremented by 1.
+   * - Fixes which are adjacent to each other are considered overlapping, and only the first fix is applied.
+   * - Defaults `sourceType` to "module" if not provided (otherwise default is "unambiguous").
+   * - Disallows `sourceType: "unambiguous"`.
+   * - Allows `null` as property value for `globals`.
+   *   `globals: { foo: null }` is treated as equivalent to `globals: { foo: "readonly" }`.
+   *   ESLint accepts `null`, though this is undocumented. Oxlint does not accept `null`.
+   * - Slightly different behavior when `report` is called with `loc` of form `{ line, column }`.
+   *
+   * All of these match ESLint `RuleTester`'s behavior.
    */
   eslintCompat?: boolean;
+
+  /**
+   * Language options.
+   */
   languageOptions?: LanguageOptions;
+
+  /**
+   * Current working directory for the linter.
+   * If not provided, defaults to the directory containing the test file.
+   */
+  cwd?: string;
+
+  /**
+   * Maximum number of additional fix passes to apply.
+   * After the first fix pass, re-lints the fixed code and applies fixes again,
+   * repeating up to `recursive` additional times (or until no more fixes are produced).
+   *
+   * - `false` / `null` / `undefined`: no recursion (default)
+   * - `true`: 10 extra passes
+   * - `number`: N extra passes
+   */
+  recursive?: boolean | number | null | undefined;
 }
 
 /**
@@ -124,17 +164,18 @@ interface LanguageOptions {
 }
 
 /**
- * Language options config, with `parser` and `ecmaVersion` properties.
+ * Language options config, with `parser` and `ecmaVersion` properties, and extended `parserOptions`.
  * These properties should not be present in `languageOptions` config,
  * but could be if test cases are ported from ESLint.
  * For internal use only.
  */
-interface LanguageOptionsInternal extends LanguageOptions {
+export interface LanguageOptionsInternal extends LanguageOptions {
   ecmaVersion?: number | "latest";
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
   };
+  parserOptions?: ParserOptionsInternal;
 }
 
 /**
@@ -177,12 +218,25 @@ interface ParserOptions {
   ecmaFeatures?: EcmaFeatures;
   /**
    * Language variant to parse file as.
+   *
+   * If test case provides a filename, that takes precedence over `lang` option.
+   * Language will be inferred from file extension.
    */
   lang?: Language;
   /**
    * `true` to ignore non-fatal parsing errors.
    */
   ignoreNonFatalErrors?: boolean;
+}
+
+/**
+ * Parser options config, with extended `ecmaFeatures`.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+export interface ParserOptionsInternal extends ParserOptions {
+  ecmaFeatures?: EcmaFeaturesInternal;
 }
 
 /**
@@ -198,9 +252,29 @@ interface EcmaFeatures {
 }
 
 /**
+ * ECMA features config, with `globalReturn` and `impliedStrict` properties.
+ * These properties should not be present in `ecmaFeatures` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface EcmaFeaturesInternal extends EcmaFeatures {
+  /**
+   * `true` if file is parsed with top-level `return` statements allowed.
+   */
+  globalReturn?: boolean;
+  /**
+   * `true` if file is parsed as strict mode code.
+   */
+  impliedStrict?: boolean;
+}
+
+/**
  * Parser language.
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+
+// Number of additional fix passes to apply after the first pass if `recursive: true`
+const RECURSIVE_TRUE_PASSES = 10;
 
 // Empty language options
 const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
@@ -214,19 +288,27 @@ let sharedConfig: Config = {};
 
 // List of keys that `ValidTestCase` or `InvalidTestCase` can have.
 // Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
-const TEST_CASE_PROP_KEYS = new Set([
+// The type constraints enforce this.
+const TEST_CASE_PROP_KEYS_ARRAY = [
   "code",
   "name",
   "only",
   "filename",
   "options",
+  "settings",
   "before",
   "after",
   "output",
   "errors",
   // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
   "__proto__",
-]);
+] as const satisfies readonly (TestCaseOwnKeys | "__proto__")[];
+
+type TestCaseOwnKeys = Exclude<keyof ValidTestCase | keyof InvalidTestCase, keyof Config>;
+type MissingKeys = Exclude<TestCaseOwnKeys, (typeof TEST_CASE_PROP_KEYS_ARRAY)[number]>;
+type KeysSet = MissingKeys extends never ? Set<string> : never;
+
+const TEST_CASE_PROP_KEYS: KeysSet = new Set(TEST_CASE_PROP_KEYS_ARRAY);
 
 /**
  * Test case.
@@ -237,8 +319,9 @@ interface TestCase extends Config {
   only?: boolean;
   filename?: string;
   options?: Options;
-  before?: (this: this) => void;
-  after?: (this: this) => void;
+  settings?: Settings;
+  before?(this: this): void;
+  after?(this: this): void;
 }
 
 /**
@@ -269,6 +352,17 @@ interface ErrorBase {
   column?: number;
   endLine?: number | undefined;
   endColumn?: number | undefined;
+  suggestions?: ErrorSuggestion[] | null;
+}
+
+/**
+ * Expected suggestion in a test case error.
+ */
+interface ErrorSuggestion {
+  desc?: string;
+  messageId?: string;
+  data?: DiagnosticData;
+  output: string;
 }
 
 /**
@@ -295,11 +389,16 @@ interface Diagnostic {
   column: number;
   endLine: number;
   endColumn: number;
-  suggestions: Suggestion[] | null;
+  fixes: FixReport[] | null;
+  suggestions: SuggestionReport[] | null;
 }
 
 // Default path (without extension) for test cases if not provided
 const DEFAULT_FILENAME_BASE = "file";
+
+// Default CWD for test cases if not provided.
+// Root of `oxlint` package once bundled into `dist`.
+const DEFAULT_CWD = dirname(import.meta.dirname);
 
 // ------------------------------------------------------------------------------
 // `RuleTester` class
@@ -442,7 +541,7 @@ export class RuleTester {
   }
 }
 
-// In debug builds only, we provide a hook to modify test cases before they're run.
+// In conformance build only, we provide a hook to modify test cases before they're run.
 // Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
@@ -530,6 +629,10 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   if (typeof errors === "number") {
     // If `errors` is a number, it's expected error count
     assertErrorCountIsCorrect(diagnostics, errors);
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
@@ -556,12 +659,77 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
         assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
 
-        // TODO: Test suggestions
+        // Test suggestions
+        if (Object.hasOwn(error, "suggestions")) {
+          if (error.suggestions == null) {
+            // `suggestions: null` means "expect no suggestions"
+            assert(diagnostic.suggestions === null, "Rule produced suggestions");
+          } else {
+            assertSuggestionsAreCorrect(diagnostic, error, messages, test);
+          }
+        }
       }
     }
   }
 
-  // TODO: Test output after fixes
+  // Test output after fixes
+  const { code } = test;
+  const eslintCompat = test.eslintCompat === true;
+
+  let fixedCode = runFixes(diagnostics, code, eslintCompat);
+  if (fixedCode === null) fixedCode = code;
+
+  // Re-lint and re-fix for additional passes if `recursive` option used
+  const { recursive } = test;
+  const extraPassCount =
+    typeof recursive === "number" ? recursive : recursive === true ? RECURSIVE_TRUE_PASSES : 0;
+
+  if (extraPassCount > 0 && fixedCode !== code) {
+    for (let pass = 0; pass < extraPassCount; pass++) {
+      const diagnostics = lint({ ...test, code: fixedCode }, plugin);
+      const newFixedCode = runFixes(diagnostics, fixedCode, eslintCompat);
+      if (newFixedCode === null) break;
+      fixedCode = newFixedCode;
+    }
+  }
+
+  if (Object.hasOwn(test, "output")) {
+    const expectedOutput = test.output;
+    if (expectedOutput === null) {
+      assert.strictEqual(fixedCode, code, "Expected no autofixes to be suggested");
+    } else {
+      assert.strictEqual(fixedCode, expectedOutput, "Output is incorrect");
+      assert.notStrictEqual(
+        code,
+        expectedOutput,
+        "Test property `output` matches `code`. If no autofix is expected, set output to `null`.",
+      );
+    }
+  } else {
+    assert.strictEqual(fixedCode, code, "The rule fixed the code. Please add `output` property.");
+  }
+}
+
+/**
+ * Run fixes on code and return fixed code.
+ * If no fixes to apply, returns `null`.
+ *
+ * @param diagnostics - Array of `Diagnostic`s returned by `lint`
+ * @param code - Code to run fixes on
+ * @returns Fixed code, or `null` if no fixes to apply
+ * @throws {Error} If error when applying fixes
+ */
+function runFixes(diagnostics: Diagnostic[], code: string, eslintCompat: boolean): string | null {
+  const fixGroups: FixReport[][] = [];
+  for (const diagnostic of diagnostics) {
+    if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
+  }
+  if (fixGroups.length === 0) return null;
+
+  const fixedCode = applyFixes(code, JSON.stringify(fixGroups), eslintCompat);
+  if (fixedCode === null) throw new Error("Failed to apply fixes");
+
+  return fixedCode;
 }
 
 /**
@@ -578,7 +746,6 @@ function assertInvalidTestCaseMessageIsCorrect(
 ): void {
   // Check `message` property
   if (Object.hasOwn(error, "message")) {
-    // Check `message` property
     assert(
       !Object.hasOwn(error, "messageId"),
       "Error should not specify both `message` and a `messageId`",
@@ -594,53 +761,80 @@ function assertInvalidTestCaseMessageIsCorrect(
   );
 
   // Check `messageId` property
+  assertMessageIdIsCorrect(
+    diagnostic.messageId,
+    diagnostic.message,
+    error.messageId!,
+    error.data,
+    messages,
+    "",
+  );
+}
+
+/**
+ * Assert that a `messageId` used by the rule under test is correct, and validate `data` (if provided).
+ *
+ * @param reportedMessageId - `messageId` from the diagnostic or suggestion
+ * @param reportedMessage - Message from the diagnostic or suggestion
+ * @param messageId - Expected `messageId` from the test case
+ * @param data - Data from the test case (if provided)
+ * @param messages - Messages from the rule under test
+ * @param prefix - Prefix for assertion error messages (e.g. "" or "Suggestion at index 0: ")
+ * @throws {AssertionError} If messageId is not correct
+ * @throws {AssertionError} If message tenplate with placeholder data inserted does not match reported message
+ */
+function assertMessageIdIsCorrect(
+  reportedMessageId: string | null,
+  reportedMessage: string,
+  messageId: string,
+  data: DiagnosticData | undefined,
+  messages: Record<string, string> | null,
+  prefix: string,
+): void {
   assert(
     messages !== null,
-    "Error can not use `messageId` if rule under test doesn't define `meta.messages`",
+    `${prefix}Cannot use 'messageId' if rule under test doesn't define 'meta.messages'`,
   );
 
-  const messageId: string = error.messageId!;
   if (!Object.hasOwn(messages, messageId)) {
     const legalMessageIds = `[${Object.keys(messages)
       .map((key) => `'${key}'`)
       .join(", ")}]`;
-    assert.fail(`Invalid messageId '${messageId}'. Expected one of ${legalMessageIds}`);
+    assert.fail(`${prefix}Invalid messageId '${messageId}'. Expected one of ${legalMessageIds}.`);
   }
 
   assert.strictEqual(
-    diagnostic.messageId,
+    reportedMessageId,
     messageId,
-    `messageId '${diagnostic.messageId}' does not match expected messageId '${messageId}'`,
+    `${prefix}messageId '${reportedMessageId}' does not match expected messageId '${messageId}'`,
   );
 
-  const reportedMessage = diagnostic.message;
+  // Check if message contains placeholders for which no data was provided
   const ruleMessage = messages[messageId];
-
   const unsubstitutedPlaceholders = getUnsubstitutedMessagePlaceholders(
     reportedMessage,
     ruleMessage,
-    error.data,
+    data,
   );
   if (unsubstitutedPlaceholders.length !== 0) {
     assert.fail(
-      "The reported message has " +
+      `${prefix}The reported message has ` +
         (unsubstitutedPlaceholders.length > 1
           ? `unsubstituted placeholders: ${unsubstitutedPlaceholders.map((name) => `'${name}'`).join(", ")}`
           : `an unsubstituted placeholder '${unsubstitutedPlaceholders[0]}'`) +
         `. Please provide the missing ${unsubstitutedPlaceholders.length > 1 ? "values" : "value"} ` +
-        "via the `data` property on the error object.",
+        "via the `data` property.",
     );
   }
 
-  if (Object.hasOwn(error, "data")) {
-    // If data was provided, then directly compare the returned message to a synthetic
-    // interpolated message using the same message ID and data provided in the test
-    const rehydratedMessage = replacePlaceholders(ruleMessage, error.data!);
-
+  // Check `data` is correct by filling in placeholders in the message with provided data and checking that
+  // rehydrated message matches the reported message
+  if (data !== undefined) {
+    const rehydratedMessage = replacePlaceholders(ruleMessage, data);
     assert.strictEqual(
       reportedMessage,
       rehydratedMessage,
-      `Hydrated message "${rehydratedMessage}" does not match "${reportedMessage}"`,
+      `${prefix}Hydrated message "${rehydratedMessage}" does not match "${reportedMessage}"`,
     );
   }
 }
@@ -719,6 +913,110 @@ function assertInvalidTestCaseLocationIsCorrect(
 }
 
 /**
+ * Assert that suggestions reported by the rule under test match expected suggestions.
+ * @param diagnostic - Diagnostic emitted by the rule under test
+ * @param error - Error object from the test case
+ * @param messages - Messages from the rule under test
+ * @param test - Test case
+ * @throws {AssertionError} If suggestions do not match
+ */
+function assertSuggestionsAreCorrect(
+  diagnostic: Diagnostic,
+  error: Error,
+  messages: Record<string, string> | null,
+  test: TestCase,
+): void {
+  const actualSuggestions = diagnostic.suggestions ?? [];
+  const expectedSuggestions = error.suggestions!;
+
+  assert.strictEqual(
+    actualSuggestions.length,
+    expectedSuggestions.length,
+    `Error should have ${expectedSuggestions.length} suggestion${expectedSuggestions.length > 1 ? "s" : ""}. ` +
+      `Instead found ${actualSuggestions.length} suggestion${actualSuggestions.length > 1 ? "s" : ""}.`,
+  );
+
+  const eslintCompat = test.eslintCompat === true;
+
+  for (let i = 0; i < expectedSuggestions.length; i++) {
+    const actual = actualSuggestions[i]!;
+    const expected = expectedSuggestions[i]!;
+    const prefix = `Suggestion at index ${i}`;
+
+    // Validate suggestion message (`desc` or `messageId` + `data`)
+    assertSuggestionMessageIsCorrect(actual, expected, messages, prefix);
+
+    // Validate output
+    assert(Object.hasOwn(expected, "output"), `${prefix}: \`output\` property is required`);
+
+    const suggestedCode = applyFixes(test.code, JSON.stringify([actual.fixes]), eslintCompat);
+    assert(suggestedCode !== null, `${prefix}: Failed to apply suggestion fix`);
+
+    assert.strictEqual(
+      suggestedCode,
+      expected.output,
+      `${prefix}: Expected the applied suggestion fix to match the test suggestion output`,
+    );
+
+    assert.notStrictEqual(
+      expected.output,
+      test.code,
+      `${prefix}: The output of a suggestion should differ from the original source code`,
+    );
+  }
+}
+
+/**
+ * Assert that a suggestion's message matches expectations.
+ * @param actual - Actual suggestion from the diagnostic
+ * @param expected - Expected suggestion from the test case
+ * @param messages - Messages from the rule under test
+ * @param prefix - Prefix for assertion error messages
+ * @throws {AssertionError} If suggestion message does not match
+ */
+function assertSuggestionMessageIsCorrect(
+  actual: SuggestionReport,
+  expected: ErrorSuggestion,
+  messages: Record<string, string> | null,
+  prefix: string,
+): void {
+  if (Object.hasOwn(expected, "desc")) {
+    assert(
+      !Object.hasOwn(expected, "messageId"),
+      `${prefix}: Test should not specify both \`desc\` and \`messageId\``,
+    );
+    assert(
+      !Object.hasOwn(expected, "data"),
+      `${prefix}: Test should not specify both \`desc\` and \`data\``,
+    );
+    assert.strictEqual(
+      actual.message,
+      expected.desc,
+      `${prefix}: \`desc\` should be "${expected.desc}" but got "${actual.message}" instead`,
+    );
+    return;
+  }
+
+  if (Object.hasOwn(expected, "messageId")) {
+    assertMessageIdIsCorrect(
+      actual.messageId,
+      actual.message,
+      expected.messageId!,
+      expected.data,
+      messages,
+      `${prefix}: `,
+    );
+    return;
+  }
+
+  if (Object.hasOwn(expected, "data")) {
+    assert.fail(`${prefix}: Test must specify \`messageId\` if \`data\` is used`);
+  }
+
+  assert.fail(`${prefix}: Test must specify either \`messageId\` or \`desc\``);
+}
+
+/**
  * Assert that the number of errors reported for test case is as expected.
  * @param diagnostics - Diagnostics reported by the rule under test
  * @param expectedErrorCount - Expected number of diagnistics
@@ -785,32 +1083,6 @@ function getUnsubstitutedMessagePlaceholders(
  */
 function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
-}
-
-// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
-// This is used in conformance tests.
-type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
-
-function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
-  run: RunFunction<T>,
-): RunFunction<T> {
-  return function (test, plugin, config, seenTestCases) {
-    try {
-      run(test, plugin, config, seenTestCases);
-    } catch (err) {
-      // oxlint-disable-next-line no-ex-assign
-      if (typeof err !== "object" || err === null) err = new Error("Unknown error");
-      err.__testCase = test;
-      throw err;
-    }
-  };
-}
-
-if (CONFORMANCE) {
-  // oxlint-disable-next-line no-func-assign
-  (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
-  // oxlint-disable-next-line no-func-assign
-  (runInvalidTestCase as any) = wrapRunTestCaseFunction(runInvalidTestCase);
 }
 
 /**
@@ -955,40 +1227,51 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
-  // Determine filename.
-  // If not provided, use default filename based on `parseOptions.lang`.
-  let { filename } = test;
-  if (filename == null) {
-    let ext: string | undefined = parseOptions.lang;
-    if (ext == null) {
-      ext = "js";
-    } else if (ext === "dts") {
-      ext = "d.ts";
+  // Determine path and CWD.
+  // If not provided, use default filename based on `parseOptions.lang`,
+  // and the directory of this file as CWD.
+  // If `filename` is an absolute path, make `cwd` the directory containing `filename`.
+  let path: string;
+  let { filename, cwd } = test;
+  if (filename != null && isAbsolutePath(filename)) {
+    if (cwd == null) cwd = dirname(filename);
+    path = filename;
+  } else {
+    if (filename == null) {
+      let ext: string | undefined = parseOptions.lang;
+      if (ext == null) {
+        ext = "js";
+      } else if (ext === "dts") {
+        ext = "d.ts";
+      }
+      filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
     }
-    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+
+    if (cwd == null) cwd = DEFAULT_CWD;
+    path = pathJoin(cwd, filename);
   }
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(plugin, null, false);
+    registerPlugin(plugin, null, false, null);
 
     // Set up options
-    const optionsId = setupOptions(test);
+    const optionsId = setupOptions(test, cwd);
 
     // Parse file into buffer
-    parse(filename, test.code, parseOptions);
+    parse(path, test.code, parseOptions);
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
-    if (CONFORMANCE) setEcmaVersionContext(test);
+    if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
-    const globalsJSON: string = getGlobalsJson(test);
-    const settingsJSON = "{}"; // TODO
+    const globalsJSON = getGlobalsJson(test);
+    const settingsJSON = JSON.stringify(test.settings ?? {});
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON, null);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -1023,7 +1306,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
         column,
         endLine,
         endColumn,
-        suggestions: null, // TODO
+        fixes: diagnostic.fixes,
+        suggestions: diagnostic.suggestions,
       };
     });
   } finally {
@@ -1074,12 +1358,14 @@ function getParseOptions(test: TestCase): ParseOptions {
     // Handle `parserOptions.ignoreNonFatalErrors`
     if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
 
-    // Handle `parserOptions.lang`
-    const { lang } = parserOptions;
-    if (lang != null) {
-      parseOptions.lang = lang;
-    } else if (parserOptions.ecmaFeatures?.jsx === true) {
-      parseOptions.lang = "jsx";
+    // Handle `parserOptions.lang`. `filename` takes precedence over `lang` if provided.
+    if (test.filename == null) {
+      const { lang } = parserOptions;
+      if (lang != null) {
+        parseOptions.lang = lang;
+      } else if (parserOptions.ecmaFeatures?.jsx === true) {
+        parseOptions.lang = "jsx";
+      }
     }
   }
 
@@ -1178,9 +1464,10 @@ function getGlobalsJson(test: TestCase): string {
  * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
  *
  * @param test - Test case
+ * @param cwd - Current working directory for test case
  * @returns Options ID to pass to `lintFileImpl`
  */
-function setupOptions(test: TestCase): number {
+function setupOptions(test: TestCase, cwd: string): number {
   // Initial entries for default options
   const allOptions: Options[] = [[]],
     allRuleIds: number[] = [0];
@@ -1198,9 +1485,16 @@ function setupOptions(test: TestCase): number {
   // Serialize to JSON and pass to `setOptions`
   let allOptionsJson: string;
   try {
-    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
+    allOptionsJson = JSON.stringify({
+      options: allOptions,
+      ruleIds: allRuleIds,
+      cwd,
+      workspaceUri: null,
+    });
   } catch (err) {
-    throw new Error(`Failed to serialize options: ${err}`);
+    throw new Error(
+      `Failed to serialize options: ${err as (typeof globalThis)["Error"]["prototype"]}`,
+    );
   }
   setOptions(allOptionsJson);
 
@@ -1208,28 +1502,40 @@ function setupOptions(test: TestCase): number {
 }
 
 /**
- * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * Inject:
+ * - `languageOptions.ecmaVersion` into `context.languageOptions`.
+ * - `languageOptions.parserOptions.ecmaFeatures.globalReturn` into scope analyzer options.
+ * - `languageOptions.parserOptions.ecmaFeatures.impliedStrict` into scope analyzer options.
+ *
  * This is only supported in conformance tests, where it's necessary to pass some tests.
- * Oxlint doesn't support any version except latest.
+ * Oxlint doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA features.
  * @param test - Test case
  */
-function setEcmaVersionContext(test: TestCase) {
+function setEcmaVersionAndFeatures(test: TestCase) {
   if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
 
+  // Set `ecmaVersion`.
   // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
   // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
   // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
   // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
   // in an early step of config parsing.
   const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  const ecmaVersion = languageOptions?.ecmaVersion;
+  let ecmaVersion = languageOptions?.ecmaVersion;
 
-  let version = ECMA_VERSION;
   if (typeof ecmaVersion === "number") {
-    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+    if (ecmaVersion > 5 && ecmaVersion < 2015) ecmaVersion += 2009;
+  } else {
+    ecmaVersion = ECMA_VERSION;
   }
+  setEcmaVersion(ecmaVersion);
 
-  setEcmaVersion(version);
+  // Set `globalReturn` and `impliedStrict` in scope analyzer options
+  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures;
+  ecmaFeaturesOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
+  // Strict mode does not exist in ES3
+  ecmaFeaturesOverride.impliedStrict =
+    ecmaVersion === 3 ? false : (ecmaFeatures?.impliedStrict ?? null);
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)
@@ -1260,6 +1566,7 @@ function getTestName(test: TestCase): string {
  * @throws {*} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
+  // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
   if (Object.hasOwn(test, "before")) runHook(test, test.before, "before");
 }
 
@@ -1270,6 +1577,7 @@ function runBeforeHook(test: TestCase): void {
  * @throws {*} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
+  // oxlint-disable-next-line typescript/unbound-method - bound in `runHook`
   if (Object.hasOwn(test, "after")) runHook(test, test.after, "after");
 }
 
@@ -1340,6 +1648,10 @@ function assertInvalidTestCaseIsWellFormed(
   const { errors } = test;
   if (typeof errors === "number") {
     assert(errors > 0, "Invalid cases must have `errors` value greater than 0");
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     assert(
       errors !== undefined,
@@ -1479,6 +1791,7 @@ type _ValidTestCase = ValidTestCase;
 type _InvalidTestCase = InvalidTestCase;
 type _TestCases = TestCases;
 type _Error = Error;
+type _ErrorSuggestion = ErrorSuggestion;
 
 export namespace RuleTester {
   export type Config = _Config;
@@ -1495,4 +1808,5 @@ export namespace RuleTester {
   export type InvalidTestCase = _InvalidTestCase;
   export type TestCases = _TestCases;
   export type Error = _Error;
+  export type ErrorSuggestion = _ErrorSuggestion;
 }

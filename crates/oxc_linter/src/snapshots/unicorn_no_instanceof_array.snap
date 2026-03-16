@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ arr instanceof Array

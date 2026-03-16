@@ -1,4 +1,7 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::{
+    sync::{Arc, atomic::Ordering, mpsc::channel},
+    time::Duration,
+};
 
 use napi::{
     Status,
@@ -9,13 +12,17 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupRuleConfigsCb, LintFileResult, LoadPluginResult,
+    ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+    LintFileResult, LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsSetupRuleConfigsCb},
+    run::{
+        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
+        JsSetupRuleConfigsCb,
+    },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -23,12 +30,22 @@ pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_create_workspace = wrap_create_workspace(create_workspace);
+    let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
-    ExternalLinter::new(rust_load_plugin, rust_setup_rule_configs, rust_lint_file)
+    ExternalLinter::new(
+        rust_load_plugin,
+        rust_setup_rule_configs,
+        rust_lint_file,
+        rust_create_workspace,
+        rust_destroy_workspace,
+    )
 }
 
 /// Result returned by `loadPlugin` JS callback.
@@ -45,14 +62,19 @@ pub enum LoadPluginReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_url, plugin_name, plugin_name_is_alias| {
+    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((plugin_url, plugin_name, plugin_name_is_alias)))
-                    .await?
-                    .into_future()
-                    .await
+                cb.call_async(FnArgs::from((
+                    plugin_url,
+                    plugin_name,
+                    plugin_name_is_alias,
+                    workspace_uri,
+                )))
+                .await?
+                .into_future()
+                .await
             })
         });
 
@@ -71,7 +93,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
             Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
         }
-    })
+    }))
 }
 
 /// Wrap `setupRuleConfigs` JS callback as a normal Rust function.
@@ -80,7 +102,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
 /// and block current thread until `setupRuleConfigs` completes execution.
 fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
-    Box::new(move |options_json: String| {
+    Arc::new(Box::new(move |options_json: String| {
         let (tx, rx) = channel();
 
         // Send data to JS
@@ -113,7 +135,7 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
         } else {
             Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
         }
-    })
+    }))
 }
 
 /// Result returned by `lintFile` JS callback.
@@ -133,12 +155,13 @@ pub enum LintFileReturnValue {
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    Box::new(
+    Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
               options_ids: Vec<u32>,
               settings_json: String,
               globals_json: String,
+              workspace_uri: Option<String>,
               allocator: &Allocator| {
             let (tx, rx) = channel();
 
@@ -160,6 +183,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     options_ids,
                     settings_json,
                     globals_json,
+                    workspace_uri,
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
@@ -183,7 +207,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                             Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
                             // Error occurred on JS side
                             Ok(LintFileReturnValue::Failure(err)) => Err(err),
-                            // Invalid JSON - should be impossible, because we control serialization on JS side
+                            // JSON deserialization failure.
+                            // Possible if rule produces fixes/suggestions with out of range offsets.
                             Err(err) => Err(format!(
                                 "Failed to deserialize JSON returned by `lintFile`: {err}"
                             )),
@@ -200,7 +225,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
-    )
+    ))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
@@ -279,4 +304,66 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+/// Wrap `createWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async move { cb.call_async(workspace_uri).await?.into_future().await })
+        });
+
+        match res {
+            // `createWorkspace` completed successfully
+            Ok(()) => Ok(()),
+            // `createWorkspace` threw an error
+            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+        }
+    }))
+}
+
+/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side `destroyWorkspace` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side.
+///
+/// Uses a timeout to prevent indefinite blocking during shutdown, which can cause issues
+/// in multi-root workspace scenarios where multiple workspaces are being destroyed concurrently.
+fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            workspace_uri,
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // Ignore send errors - the receiver may have timed out
+                let _ = tx.send(result);
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            // Use a timeout to prevent blocking indefinitely during shutdown.
+            // If JS side doesn't respond within the timeout, we proceed with shutdown anyway.
+            match rx.recv_timeout(Duration::from_secs(5)) {
+                // Destroying workspace succeeded
+                Ok(Ok(()))
+                // Timeout or sender dropped - proceed with shutdown
+                | Err(_) => Ok(()),
+                // `destroyWorkspace` threw an error
+                Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
+        }
+    }))
 }

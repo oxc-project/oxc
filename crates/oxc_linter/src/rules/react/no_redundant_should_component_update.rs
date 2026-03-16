@@ -26,6 +26,9 @@ declare_oxc_lint!(
     ///
     /// Disallow usage of `shouldComponentUpdate` when extending `React.PureComponent`.
     ///
+    /// Note that usage of `PureComponent` is
+    /// [not recommended in modern React](https://react.dev/reference/react/PureComponent).
+    ///
     /// ### Why is this bad?
     ///
     /// `React.PureComponent` automatically implements `shouldComponentUpdate` with a shallow prop and state comparison.

@@ -1,5 +1,22 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`config_ignore_patterns > explicit --config with parent-relative path resolves ignorePatterns correctly 1`] = `
+"--------------------
+arguments: --check --config ../.oxfmtrc.json .
+working directory: config_ignore_patterns/fixtures/nested_cwd/sub
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+src/test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
 exports[`config_ignore_patterns > nested cwd - ignorePatterns resolved relative to .oxfmtrc.json location 1`] = `
 "--------------------
 arguments: --check .

@@ -1,9 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::Atom;
 use oxc_traverse::BoundIdentifier;
 
-use super::{ClassBindings, ClassProperties, FxIndexMap};
+use super::{ClassBindings, ClassProperties, IdentIndexMap};
 
 /// Details of a class.
 ///
@@ -17,7 +16,7 @@ pub(super) struct ClassDetails<'a> {
     /// Mapping private prop name to binding for temp var.
     /// This is then used as lookup when transforming e.g. `this.#x`.
     /// `None` if class has no private properties.
-    pub private_props: Option<FxIndexMap<Atom<'a>, PrivateProp<'a>>>,
+    pub private_props: Option<IdentIndexMap<'a, PrivateProp<'a>>>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
 }
@@ -269,7 +268,7 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
 }
 
 // Shortcut methods to get current class
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Get details of current class.
     pub(super) fn current_class(&self) -> &ClassDetails<'a> {
         self.classes_stack.last()

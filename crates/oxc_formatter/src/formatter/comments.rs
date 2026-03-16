@@ -102,6 +102,19 @@ use oxc_span::{GetSpan, Span};
 
 use crate::formatter::SourceText;
 
+/// Snapshot of the comment processing state for speculative formatting.
+///
+/// Created by [`Comments::snapshot`] and restored by [`Comments::restore`].
+/// This allows speculative formatting (e.g., checking `will_break`) without
+/// permanently advancing the comment cursor.
+#[derive(Clone, Copy)]
+pub struct CommentSnapshot {
+    printed_count: usize,
+    last_handled_type_cast_comment: usize,
+    type_cast_node_span: Span,
+    view_limit: Option<usize>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
     source_text: SourceText<'a>,
@@ -185,7 +198,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b'=' | b':')
+                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
             }) {
                 if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
@@ -281,11 +294,13 @@ impl<'a> Comments<'a> {
 
     /// Gets trailing comments for a node based on its context.
     /// Returns comments that should be printed as trailing comments for `preceding_node`.
+    ///
+    /// `following_span_start` is the start position of the following sibling node, or 0 if none.
     pub fn get_trailing_comments(
         &self,
         enclosing_span: Span,
         preceding_span: Span,
-        following_span: Option<Span>,
+        following_span_start: u32,
     ) -> &'a [Comment] {
         let comments = self.unprinted_comments();
         if comments.is_empty() {
@@ -299,7 +314,7 @@ impl<'a> Comments<'a> {
             comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
         );
 
-        let Some(following_span) = following_span else {
+        if following_span_start == 0 {
             // Find dangling comments at the end of the enclosing node
             let comments = self.comments_before(enclosing_span.end);
             let mut start = preceding_span.end;
@@ -319,7 +334,7 @@ impl<'a> Comments<'a> {
             }
 
             return comments;
-        };
+        }
 
         let mut comment_index = 0;
         let mut type_cast_comment = None;
@@ -328,11 +343,11 @@ impl<'a> Comments<'a> {
             // Stop if the comment:
             // 1. is over the following node
             // 2. is after the enclosing node, which means the comment should be printed in the parent node.
-            if comment.span.end > following_span.start || comment.span.end > enclosing_span.end {
+            if comment.span.end > following_span_start || comment.span.end > enclosing_span.end {
                 break;
             }
 
-            if following_span.start > enclosing_span.end && comment.span.end <= enclosing_span.end {
+            if following_span_start > enclosing_span.end && comment.span.end <= enclosing_span.end {
                 // Do nothing; this comment is inside the enclosing node, and the following node is outside the enclosing node.
                 // So it must be a trailing comment, continue checking the next comment.
             } else if self.is_type_cast_comment(comment) {
@@ -353,7 +368,7 @@ impl<'a> Comments<'a> {
         }
 
         // Find the first comment (from the end) that has non-whitespace/non-paren content after it
-        let mut gap_end = type_cast_comment.map_or(following_span.start, |c| c.span.start);
+        let mut gap_end = type_cast_comment.map_or(following_span_start, |c| c.span.start);
 
         for (idx, comment) in comments[..comment_index].iter().enumerate().rev() {
             if source_text.all_bytes_match(comment.span.end, gap_end, |b| {
@@ -372,6 +387,18 @@ impl<'a> Comments<'a> {
     /// Checks if the node has a suppression comment.
     pub fn is_suppressed(&self, start: u32) -> bool {
         self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// Checks if there is a trailing suppression comment on the same line.
+    ///
+    /// This supports patterns like:
+    /// `statement(); // prettier-ignore`
+    /// `statement(); /* prettier-ignore */`
+    /// `value, // prettier-ignore`
+    pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
+        self.end_of_line_comments_after(pos)
+            .iter()
+            .any(|comment| self.is_suppression_comment(comment))
     }
 
     /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
@@ -466,5 +493,40 @@ impl<'a> Comments<'a> {
     #[inline]
     pub fn restore_view_limit(&mut self, limit: Option<usize>) {
         self.view_limit = limit;
+    }
+
+    /// Saves the current comment processing state for later restoration.
+    ///
+    /// Use with [`Comments::restore`] to safely perform speculative formatting
+    /// without permanently advancing the comment cursor. This prevents comment
+    /// deletion bugs when using [`Formatter::intern`] for `will_break` checks.
+    pub fn snapshot(&self) -> CommentSnapshot {
+        CommentSnapshot {
+            printed_count: self.printed_count,
+            last_handled_type_cast_comment: self.last_handled_type_cast_comment,
+            type_cast_node_span: self.type_cast_node_span,
+            view_limit: self.view_limit,
+        }
+    }
+
+    /// Restores comment processing state from a previous snapshot.
+    ///
+    /// This rolls back the comment cursor so that any comments consumed
+    /// during speculative formatting are available again for real formatting.
+    pub fn restore(&mut self, snapshot: CommentSnapshot) {
+        self.printed_count = snapshot.printed_count;
+        self.last_handled_type_cast_comment = snapshot.last_handled_type_cast_comment;
+        self.type_cast_node_span = snapshot.type_cast_node_span;
+        self.view_limit = snapshot.view_limit;
+    }
+
+    /// Advances the cursor past all comments ending before `pos`.
+    ///
+    /// Used before speculative formatting to skip comments that are outside
+    /// the span of interest, preventing them from being incorrectly included
+    /// as leading comments of the speculatively formatted node.
+    pub fn skip_comments_before(&mut self, pos: u32) {
+        let count = self.comments_before(pos).len();
+        self.printed_count += count;
     }
 }

@@ -320,6 +320,31 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
+    /// Whether type-aware linting is enabled in the root config.
+    pub fn type_aware_enabled(&self) -> bool {
+        self.base.base.config.options.type_aware.unwrap_or(false)
+    }
+
+    /// Whether type-checking diagnostics are enabled in the root config.
+    pub fn type_check_enabled(&self) -> bool {
+        self.base.base.config.options.type_check.unwrap_or(false)
+    }
+
+    /// Whether warnings should produce a non-zero exit code.
+    pub fn deny_warnings(&self) -> bool {
+        self.base.base.config.options.deny_warnings.unwrap_or(false)
+    }
+
+    /// Max warnings configured in the root config.
+    pub fn max_warnings(&self) -> Option<usize> {
+        self.base.base.config.options.max_warnings
+    }
+
+    /// The severity for reporting unused disable directives, if set in the root config.
+    pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
+        self.base.base.config.options.report_unused_disable_directives
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -377,6 +402,7 @@ mod test {
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
+            oxlintrc::OxlintOptions,
         },
         rule::Rule,
         rules::{
@@ -782,6 +808,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories to enable restriction rules
@@ -869,6 +896,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories
@@ -974,6 +1002,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories
@@ -1136,5 +1165,153 @@ mod test {
         assert_eq!(severity, AllowWarnDeny::Deny);
         // `options_id` should not equal the base options ID
         assert_ne!(options_id, base_options_id);
+    }
+
+    #[test]
+    fn test_type_aware_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { type_aware: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_aware_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_check_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.type_check_enabled());
+    }
+
+    #[test]
+    fn test_type_check_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.type_check_enabled());
+    }
+
+    #[test]
+    fn test_deny_warnings_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { deny_warnings: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.deny_warnings());
+    }
+
+    #[test]
+    fn test_deny_warnings_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.deny_warnings());
+    }
+
+    #[test]
+    fn test_report_unused_disable_directives_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions {
+                    report_unused_disable_directives: Some(AllowWarnDeny::Warn),
+                    ..OxlintOptions::default()
+                },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert_eq!(store.report_unused_disable_directives(), Some(AllowWarnDeny::Warn));
+    }
+
+    #[test]
+    fn test_report_unused_disable_directives_none_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert_eq!(store.report_unused_disable_directives(), None);
+    }
+
+    #[test]
+    fn test_max_warnings_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { max_warnings: Some(3), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert_eq!(store.max_warnings(), Some(3));
+    }
+
+    #[test]
+    fn test_max_warnings_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert_eq!(store.max_warnings(), None);
     }
 }

@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from "#oxlint";
+import type { Node, Plugin, Rule } from "#oxlint/plugins";
 
 const SPAN: Node = {
   start: 0,
@@ -20,23 +20,27 @@ const alwaysRunRule: Rule = {
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
+    // Available but `null`
+    const { id, options } = context;
+
     // Check that these APIs throw here
-    const idError = tryCatch(() => context.id);
     const cwdError = tryCatch(() => context.cwd);
     const getCwdError = tryCatch(() => context.getCwd());
     const filenameError = tryCatch(() => context.filename);
     const getFilenameError = tryCatch(() => context.getFilename());
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
     const getPhysicalFilenameError = tryCatch(() => context.getPhysicalFilename());
-    const optionsError = tryCatch(() => context.options);
     const sourceCodeError = tryCatch(() => context.sourceCode);
     const getSourceCodeError = tryCatch(() => context.getSourceCode());
     const settingsError = tryCatch(() => context.settings);
     const parserOptionsError = tryCatch(() => context.parserOptions);
+    const parserPathError = tryCatch(() => context.parserPath);
     const reportError = tryCatch(() => context.report({ message: "oh no", node: SPAN }));
 
     return {
       before() {
+        context.report({ message: `createOnce: id: ${id}`, node: SPAN });
+        context.report({ message: `createOnce: options: ${JSON.stringify(options)}`, node: SPAN });
         context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({
           message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`,
@@ -47,7 +51,6 @@ const alwaysRunRule: Rule = {
           message: `createOnce: getCwd() error: ${getCwdError?.message}`,
           node: SPAN,
         });
-        context.report({ message: `createOnce: id error: ${idError?.message}`, node: SPAN });
         context.report({
           message: `createOnce: filename error: ${filenameError?.message}`,
           node: SPAN,
@@ -65,10 +68,6 @@ const alwaysRunRule: Rule = {
           node: SPAN,
         });
         context.report({
-          message: `createOnce: options error: ${optionsError?.message}`,
-          node: SPAN,
-        });
-        context.report({
           message: `createOnce: sourceCode error: ${sourceCodeError?.message}`,
           node: SPAN,
         });
@@ -82,6 +81,10 @@ const alwaysRunRule: Rule = {
         });
         context.report({
           message: `createOnce: parserOptions error: ${parserOptionsError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: parserPath error: ${parserPathError?.message}`,
           node: SPAN,
         });
         context.report({
@@ -202,11 +205,11 @@ const plugin: Plugin = {
 
 export default plugin;
 
-function tryCatch(fn: () => unknown) {
+function tryCatch(fn: () => unknown): Error {
   try {
     fn();
   } catch (err) {
-    return err;
+    return err as Error;
   }
   throw new Error("Expected function to throw");
 }

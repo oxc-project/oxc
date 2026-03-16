@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-reflect-apply): Prefer `Reflect.apply()` over `Function#apply()`.
    ╭─[prefer_reflect_apply.tsx:1:1]
  1 │ foo.apply(null, [42]);

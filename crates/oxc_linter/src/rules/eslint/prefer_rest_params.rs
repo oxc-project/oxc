@@ -2,10 +2,12 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, ident::ARGUMENTS};
 
 fn prefer_rest_params_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.").with_label(span)
+    OxcDiagnostic::warn("Use the rest parameters instead of `arguments`.")
+        .with_help("Replace `arguments` with rest parameters (`...args`).")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,7 +75,7 @@ impl Rule for PreferRestParams {
             {
                 return;
             }
-            let binding = ctx.scoping().find_binding(node.scope_id(), "arguments");
+            let binding = ctx.scoping().find_binding(node.scope_id(), ARGUMENTS);
             if binding.is_none() {
                 ctx.diagnostic(prefer_rest_params_diagnostic(node.span()));
             }

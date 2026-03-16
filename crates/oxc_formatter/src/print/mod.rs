@@ -11,6 +11,7 @@ mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
+mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -37,6 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
+pub use fragment::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
@@ -52,7 +54,9 @@ use crate::{
         Format, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
-        token::number::{NumberFormatOptions, format_number_token},
+        token::number::{
+            NumberFormatOptions, format_number_token, format_trimmed_number, is_simple_number,
+        },
         trivia::{
             DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
             FormatTrailingComments,
@@ -70,7 +74,8 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindcss::write_tailwind_string_literal,
+        suppressed::FormatSuppressedNode,
+        tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
     },
     write,
 };
@@ -97,7 +102,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let text = text_without_whitespace(self.name().as_str());
         let is_property_key_parent = matches!(
-            self.parent,
+            self.parent(),
             AstNodes::ObjectProperty(_)
                 | AstNodes::TSPropertySignature(_)
                 | AstNodes::TSMethodSignature(_)
@@ -380,10 +385,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
-        let is_callee_or_object = match self.parent {
+        let is_callee_or_object = match self.parent() {
             AstNodes::StaticMemberExpression(_) => true,
             AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
-            _ => self.parent.is_call_like_callee_span(self.span),
+            _ => self.parent().is_call_like_callee_span(self.span),
         };
 
         if is_callee_or_object {
@@ -426,7 +431,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
         // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
         if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
             let needs_parens =
-                crate::parentheses::chain_expression_needs_parens(self.span, self.parent);
+                crate::parentheses::chain_expression_needs_parens(self.span, self.parent());
             if needs_parens {
                 write!(f, "(");
             }
@@ -450,7 +455,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         if matches!(
-            self.parent,
+            self.parent(),
             AstNodes::DoWhileStatement(_)
                 | AstNodes::IfStatement(_)
                 | AstNodes::WhileStatement(_)
@@ -470,7 +475,7 @@ fn expression_statement_needs_semicolon<'a>(
     f: &Formatter<'_, 'a>,
 ) -> bool {
     if matches!(
-        stmt.parent,
+        stmt.parent(),
         // `if (true) (() => {})`
         AstNodes::IfStatement(_)
         // `do ({} => {}) while (true)`
@@ -552,11 +557,19 @@ fn expression_statement_needs_semicolon<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        let span = self.span();
         // Check if we need a leading semicolon to prevent ASI issues
         if f.options().semicolons == Semicolons::AsNeeded
             && expression_statement_needs_semicolon(self, f)
         {
             write!(f, ";");
+        }
+
+        if f.comments().has_trailing_suppression_comment(span.end) {
+            // Preserve original text when the statement has an inline suppression comment:
+            // `stmt(); // prettier-ignore` or `stmt(); /* prettier-ignore */`
+            write!(f, [FormatSuppressedNode(span)]);
+            return;
         }
 
         write!(f, [self.expression(), OptionalSemicolon]);
@@ -887,7 +900,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DebuggerStatement> {
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         Format::fmt(self, f);
-        if let AstNodes::VariableDeclarator(declarator) = self.parent {
+        if let AstNodes::VariableDeclarator(declarator) = self.parent() {
             write!(f, declarator.definite.then_some("!"));
         }
     }
@@ -968,11 +981,58 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        format_number_token(
-            f.source_text().text_for(self),
-            NumberFormatOptions::keep_one_trailing_decimal_zero(),
-        )
-        .fmt(f);
+        let source_text = f.source_text().text_for(self);
+        let options = NumberFormatOptions::keep_one_trailing_decimal_zero();
+
+        // Check if this numeric literal is a property key (not a value) that should be quoted
+        // when quoteProps is "consistent" and another property requires quotes.
+        // We need to check that this literal's span matches the key's span, not just that the parent is a property.
+        let is_property_key = match self.parent() {
+            AstNodes::ObjectProperty(prop) => prop.key.span() == self.span(),
+            AstNodes::TSPropertySignature(prop) => prop.key.span() == self.span(),
+            AstNodes::TSMethodSignature(prop) => prop.key.span() == self.span(),
+            AstNodes::MethodDefinition(prop) => prop.key.span() == self.span(),
+            AstNodes::PropertyDefinition(prop) => prop.key.span() == self.span(),
+            AstNodes::AccessorProperty(prop) => prop.key.span() == self.span(),
+            _ => false,
+        };
+
+        if is_property_key && f.context().is_quote_needed() {
+            // Get the formatted number text
+            let formatted = format_trimmed_number(source_text, options);
+
+            // Check if the number is "simple" (only digits, or digits.digits)
+            // and the value matches the formatted representation.
+            // This follows Prettier's behavior in shouldQuotePropertyKey.
+            //
+            // For TypeScript, quoting numbers is not safe (it changes the type),
+            // so we skip this logic for TypeScript files.
+            let should_quote =
+                !f.context().source_type().is_typescript() && is_simple_number(&formatted) && {
+                    // Check if String(value) === formatted
+                    // In JavaScript: String(1.0) = "1", String(1.5) = "1.5"
+                    let value = self.value;
+                    let value_str = if value.fract() == 0.0 && value.abs() < 1e15 {
+                        // Integer-like values: format without decimal point
+                        format!("{value:.0}")
+                    } else {
+                        // Use default float formatting
+                        format!("{value}")
+                    };
+                    value_str == *formatted
+                };
+
+            if should_quote {
+                let quote_str = f.options().quote_style.as_str();
+                write!(
+                    f,
+                    [quote_str, text(f.context().allocator().alloc_str(&formatted)), quote_str]
+                );
+                return;
+            }
+        }
+
+        format_number_token(source_text, options).fmt(f);
     }
 }
 
@@ -980,25 +1040,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        let tailwind_ctx = f.context().tailwind_context().copied().filter(|ctx| {
-            // Skip:
-            // - if context is disabled (e.g., inside nested non-Tailwind call expressions)
-            // - empty string literals (which have no classes to sort)
-            if ctx.disabled || self.value.is_empty() {
-                return false;
-            }
-
-            // No whitespace means only one class, so no need to sort
-            let content = f.source_text().text_for(self);
-            content.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
-        });
-
-        if let Some(ctx) = tailwind_ctx {
+        if let Some(ctx) = tailwind_context_for_string_literal(self, f) {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {
             // Not in Tailwind context - use normal string literal formatting
-            let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
+            let is_jsx = matches!(self.parent(), AstNodes::JSXAttribute(_));
             FormatLiteralStringToken::new(
                 f.source_text().text_for(self),
                 is_jsx,
@@ -1097,7 +1144,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSFunctionType(_) | AstNodes::TSConstructorType(_) => {
                 write!(f, ["=>", space(), self.type_annotation()]);
             }
@@ -1124,8 +1171,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, ["(", self.type_annotation(), ")"]);
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        unreachable!("No `TSParenthesizedType` as we disabled `preserve_parens` in the parser")
     }
 }
 

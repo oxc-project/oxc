@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🚀 Features
+
+- b3dceae data_structures: Add `fieldless_enum!` macro (#19876) (overlookmotel)
+- 4699498 data_structures: Add `CodeBuffer::print_strs_array` (#19760) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+
+## [0.115.0] - 2026-02-23
+
+### 🚀 Features
+
+- e814049 oxc_data_structure/rope: Add `get_offset_from_line_and_column` (#18133) (Sysix)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🚀 Features

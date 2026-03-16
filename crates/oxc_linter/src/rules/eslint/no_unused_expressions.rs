@@ -25,7 +25,7 @@ fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoUnusedExpressions(Box<NoUnusedExpressionsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnusedExpressionsConfig {
     /// When set to `true`, allows short circuit evaluations in expressions.
     allow_short_circuit: bool,
@@ -80,9 +80,7 @@ impl Rule for NoUnusedExpressions {
     }
 
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -238,86 +236,86 @@ fn test() {
         // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L29
         (
             "
-			      test.age?.toLocaleString();
-			    ",
+                  test.age?.toLocaleString();
+                ",
             None,
         ),
         (
             "
-			      let a = (a?.b).c;
-			    ",
+                  let a = (a?.b).c;
+                ",
             None,
         ),
         (
             "
-			      let b = a?.['b'];
-			    ",
+                  let b = a?.['b'];
+                ",
             None,
         ),
         (
             "
-			      let c = one[2]?.[3][4];
-			    ",
+                  let c = one[2]?.[3][4];
+                ",
             None,
         ),
         (
             "
-			      one[2]?.[3][4]?.();
-			    ",
+                  one[2]?.[3][4]?.();
+                ",
             None,
         ),
         (
             "
-			      a?.['b']?.c();
-			    ",
+                  a?.['b']?.c();
+                ",
             None,
         ),
         (
             "
-			      module Foo {
-			        'use strict';
-			      }
-			    ",
+                  module Foo {
+                    'use strict';
+                  }
+                ",
             None,
         ),
         (
             "
-			      namespace Foo {
-			        'use strict';
+                  namespace Foo {
+                    'use strict';
 
-			        export class Foo {}
-			        export class Bar {}
-			      }
-			    ",
+                    export class Foo {}
+                    export class Bar {}
+                  }
+                ",
             None,
         ),
         (
             "
-			      function foo() {
-			        'use strict';
+                  function foo() {
+                    'use strict';
 
-			        return null;
-			      }
-			    ",
+                    return null;
+                  }
+                ",
             None,
         ),
         (
             "
-			      import('./foo');
-			    ",
+                  import('./foo');
+                ",
             None,
         ),
         (
             "
-			      import('./foo').then(() => {});
-			    ",
+                  import('./foo').then(() => {});
+                ",
             None,
         ),
         (
             "
-			      class Foo<T> {}
-			      new Foo<string>();
-			    ",
+                  class Foo<T> {}
+                  new Foo<string>();
+                ",
             None,
         ),
         ("foo && foo?.();", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
@@ -329,19 +327,19 @@ fn test() {
         ("const _func = (value: number) => value + 1;", None),
         (
             "
-			type FooBarBaz = 'foo' | 'bar' | 'baz';
-			export function satisfiesTest(c: FooBarBaz): string {
-			    switch(c) {
-			        case 'foo':
-			            return 'foo';
-			        case 'bar':
-			            return 'bar';
-			        default:
-			            c satisfies never;
-			            return '';
-			    }
-			}
-			    ",
+            type FooBarBaz = 'foo' | 'bar' | 'baz';
+            export function satisfiesTest(c: FooBarBaz): string {
+                switch(c) {
+                    case 'foo':
+                        return 'foo';
+                    case 'bar':
+                        return 'bar';
+                    default:
+                        c satisfies never;
+                        return '';
+                }
+            }
+                ",
             None,
         ),
         ("value satisfies number;", None),
@@ -394,139 +392,139 @@ fn test() {
         ("class C { static { 'use strict'; } }", None),                  // { "ecmaVersion": 2022 },
         (
             "class C { static {
-			'foo'
-			'bar'
-			 } }",
+            'foo'
+            'bar'
+             } }",
             None,
         ), // { "ecmaVersion": 2022 }
         // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L91
         (
             "
-			if (0) 0;
-			      ",
+            if (0) 0;
+                  ",
             None,
         ),
         (
             "
-			f(0), {};
-			      ",
+            f(0), {};
+                  ",
             None,
         ),
         (
             "
-			a, b();
-			      ",
+            a, b();
+                  ",
             None,
         ),
         (
             "
-			a() &&
-			  function namedFunctionInExpressionContext() {
-			    f();
-			  };
-			      ",
+            a() &&
+              function namedFunctionInExpressionContext() {
+                f();
+              };
+                  ",
             None,
         ),
         (
             "
-			a?.b;
-			      ",
+            a?.b;
+                  ",
             None,
         ),
         (
             "
-			(a?.b).c;
-			      ",
+            (a?.b).c;
+                  ",
             None,
         ),
         (
             "
-			a?.['b'];
-			      ",
+            a?.['b'];
+                  ",
             None,
         ),
         (
             "
-			(a?.['b']).c;
-			      ",
+            (a?.['b']).c;
+                  ",
             None,
         ),
         (
             "
-			a?.b()?.c;
-			      ",
+            a?.b()?.c;
+                  ",
             None,
         ),
         (
             "
-			(a?.b()).c;
-			      ",
+            (a?.b()).c;
+                  ",
             None,
         ),
         (
             "
-			one[2]?.[3][4];
-			      ",
+            one[2]?.[3][4];
+                  ",
             None,
         ),
         (
             "
-			one.two?.three.four;
-			      ",
+            one.two?.three.four;
+                  ",
             None,
         ),
         (
             "
-			module Foo {
-			  const foo = true;
-			  'use strict';
-			}
-			      ",
+            module Foo {
+              const foo = true;
+              'use strict';
+            }
+                  ",
             None,
         ),
         (
             "
-			namespace Foo {
-			  export class Foo {}
-			  export class Bar {}
+            namespace Foo {
+              export class Foo {}
+              export class Bar {}
 
-			  'use strict';
-			}
-			      ",
+              'use strict';
+            }
+                  ",
             None,
         ),
         (
             "
-			function foo() {
-			  const foo = true;
+            function foo() {
+              const foo = true;
 
-			  'use strict';
-			}
-			      ",
+              'use strict';
+            }
+                  ",
             None,
         ),
         ("foo && foo?.bar;", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
         ("foo ? foo?.bar : bar.baz;", Some(serde_json::json!([{ "allowTernary": true }]))),
         (
             "
-			class Foo<T> {}
-			Foo<string>;
-			      ",
+            class Foo<T> {}
+            Foo<string>;
+                  ",
             None,
         ),
         ("Map<string, string>;", None),
         (
             "
-			declare const foo: number | undefined;
-			foo;
-			      ",
+            declare const foo: number | undefined;
+            foo;
+                  ",
             None,
         ),
         (
             "
-			declare const foo: number | undefined;
-			foo as any;
-			      ",
+            declare const foo: number | undefined;
+            foo as any;
+                  ",
             None,
         ),
         // (
@@ -538,9 +536,9 @@ fn test() {
         // ),
         (
             "
-			declare const foo: number | undefined;
-			foo!;
-			      ",
+            declare const foo: number | undefined;
+            foo!;
+                  ",
             None,
         ),
         ("const _func = (value: number) => { value + 1; }", None),

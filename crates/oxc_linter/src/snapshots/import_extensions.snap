@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(extensions): File extension "jsx" should not be included in the import declaration.
    ╭─[extensions.tsx:3:17]
  2 │                 import lib from "./bar.js";
@@ -690,5 +691,26 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[extensions.tsx:1:1]
  1 │ import useState from '@foo/bar/useState.ts';
    · ────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "tsx" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.stories.tsx';
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.test.ts';
+   · ────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import utils from './utils.spec.js';
+   · ────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.

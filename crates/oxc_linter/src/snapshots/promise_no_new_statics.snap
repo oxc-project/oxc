@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:1:1]
  1 │ new Promise.resolve()

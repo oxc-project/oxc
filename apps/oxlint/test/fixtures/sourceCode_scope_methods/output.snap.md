@@ -54,7 +54,7 @@
   | isStrict: false
   | variables: [arguments, innerFunction]
   | through: [Object]
-  | upper type: global
+  | upper type: function
     ,-[files/index.cjs:5:1]
   4 |     
   5 | ,-> function topLevelFunction() {
@@ -297,6 +297,4 @@ Finished in Xms on 2 files with 1 rules using X threads.
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

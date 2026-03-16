@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
    ╭─[no_access_key.tsx:1:6]
  1 │ <div accesskey="h" />

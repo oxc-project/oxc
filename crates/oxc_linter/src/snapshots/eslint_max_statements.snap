@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(max-statements): function `foo` has too many statements (3). Maximum allowed is 2.
    ╭─[max_statements.tsx:1:1]
  1 │ function foo() { var bar = 1; var baz = 2; var qux = 3; }

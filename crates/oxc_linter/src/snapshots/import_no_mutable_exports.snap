@@ -1,17 +1,20 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:1:8]
  1 │ export let count = 1
    ·        ─────────────
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:1:8]
  1 │ export var count = 1
    ·        ─────────────
    ╰────
+  help: Replace 'var' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -20,12 +23,14 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export { foo }
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:1:1]
  1 │ let foo = 4, baz = 5; export { foo }
    · ─────────────────────
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -34,6 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export { foo }
    ╰────
+  help: Replace 'var' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -42,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export { foo as baz }
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -50,6 +57,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export { foo as baz }
    ╰────
+  help: Replace 'var' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -58,6 +66,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export default foo
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -66,6 +75,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
  3 │             export default foo
    ╰────
+  help: Replace 'var' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:3:13]
@@ -74,6 +84,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  4 │             export {
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'var' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -82,6 +93,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  3 │             let c = 3;
    ╰────
+  help: Replace 'var' with 'const' to export an immutable binding.
 
   ⚠ eslint-plugin-import(no-mutable-exports): Exporting mutable 'let' binding, use 'const' instead.
    ╭─[no_mutable_exports.tsx:2:13]
@@ -90,3 +102,4 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
  3 │             export {
    ╰────
+  help: Replace 'let' with 'const' to export an immutable binding.

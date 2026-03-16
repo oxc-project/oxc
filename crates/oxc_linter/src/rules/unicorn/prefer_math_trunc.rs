@@ -4,7 +4,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, fixer::RuleFixer, rule::Rule, utils::pad_fix_with_token_boundary,
+};
 
 fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
@@ -44,12 +46,12 @@ declare_oxc_lint!(
     PreferMathTrunc,
     unicorn,
     pedantic,
-    pending
+    suggestion
 );
 
 impl Rule for PreferMathTrunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let operator = match node.kind() {
+        let (operator, argument_span, is_assignment) = match node.kind() {
             AstKind::UnaryExpression(unary_expr) => {
                 if !matches!(unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
@@ -68,7 +70,7 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                UnaryOperator::BitwiseNot.as_str()
+                (UnaryOperator::BitwiseNot.as_str(), inner_unary_expr.argument.span(), false)
             }
             AstKind::BinaryExpression(bin_expr) => {
                 let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
@@ -88,7 +90,7 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                bin_expr.operator.as_str()
+                (bin_expr.operator.as_str(), bin_expr.left.span(), false)
             }
             AstKind::AssignmentExpression(assignment_expr) => {
                 let Expression::NumericLiteral(right_num_lit) = &assignment_expr.right else {
@@ -110,12 +112,27 @@ impl Rule for PreferMathTrunc {
                     return;
                 }
 
-                assignment_expr.operator.as_str()
+                (assignment_expr.operator.as_str(), assignment_expr.left.span(), true)
             }
             _ => return,
         };
 
-        ctx.diagnostic(prefer_math_trunc_diagnostic(node.kind().span(), operator));
+        let span = node.kind().span();
+        ctx.diagnostic_with_suggestion(
+            prefer_math_trunc_diagnostic(span, operator),
+            |fixer: RuleFixer<'_, 'a>| {
+                let argument_text = ctx.source_range(argument_span);
+                let mut replacement = if is_assignment {
+                    // `x |= 0` -> `x = Math.trunc(x)`
+                    format!("{argument_text} = Math.trunc({argument_text})")
+                } else {
+                    // `x | 0` or `~~x` -> `Math.trunc(x)`
+                    format!("Math.trunc({argument_text})")
+                };
+                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+                fixer.replace(span, replacement)
+            },
+        );
     }
 }
 
@@ -124,59 +141,79 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const foo = 1 | 1;",
-        r"const foo = 0 | 1;",
-        r"const foo = 1.4 | +0;",
-        r"const foo = 1.4 | -0;",
-        r"const foo = 1.4 | (.5 - 0.5);",
-        r"const foo = 1.4 & 0xFFFFFFFF",
-        r"const foo = 1.4 & 0xFF",
-        r"const foo = 1.4 & 0x0",
-        r"const foo = 1.4 & 0",
-        r"const foo = ~3.9;",
-        r"const foo = 1.1 >> 1",
-        r"const foo = 0 << 1",
+        "const foo = 1 | 1;",
+        "const foo = 0 | 1;",
+        "const foo = 1.4 | +0;",
+        "const foo = 1.4 | -0;",
+        "const foo = 1.4 | (.5 - 0.5);",
+        "const foo = 1.4 & 0xFFFFFFFF",
+        "const foo = 1.4 & 0xFF",
+        "const foo = 1.4 & 0x0",
+        "const foo = 1.4 & 0",
+        "const foo = ~3.9;",
+        "const foo = 1.1 >> 1",
+        "const foo = 0 << 1",
+        "let foo = 0;
+            foo |= 1;",
+        "let foo = 1.2; // comment 1
+            foo |= 1; // comment 2 and 1.2 | 0",
     ];
 
     let fail = vec![
-        r"const foo = 1.1 | 0;",
-        r"const foo = 111 | 0;",
-        r"const foo = (1 + 2 / 3.4) | 0;",
-        r"const foo = bar((1.4 | 0) + 2);",
-        r"const foo = (0, 1.4) | 0;",
-        r"function foo() {return.1 | 0;}",
-        r"const foo = 1.4 | 0.;",
-        r"const foo = 1.4 | .0;",
-        r"const foo = 1.4 | 0.0000_0000_0000;",
-        r"const foo = 1.4 | 0b0;",
-        r"const foo = 1.4 | 0x0000_0000_0000;",
-        r"const foo = 1.4 | 0o0;",
-        r"const foo = 1.23 | 0 | 4;",
-        r"const foo = ~~3.9;",
-        r"const foo = ~~111;",
-        r"const foo = ~~(1 + 2 / 3.4);",
-        r"const foo = ~~1 + 2 / 3.4;",
-        r"const foo = ~~(0, 1.4);",
-        r"const foo = ~~~10.01;",
-        r"const foo = ~~(~10.01);",
-        r"const foo = ~(~~10.01);",
-        r"const foo = ~~-10.01;",
-        r"const foo = ~~~~10.01;",
-        r"function foo() {return~~3.9;}",
-        r"const foo = bar >> 0;",
-        r"const foo = bar << 0;",
-        r"const foo = bar ^ 0;",
-        r"function foo() {return.1 ^0;}",
-        r"function foo() {return[foo][0] ^= 0;};",
-        r"const foo = /* first comment */ 3.4 | 0; // A B C",
-        r"const foo = /* first comment */ ~~3.4; // A B C",
-        r"const foo = /* will keep */ 3.4 /* will remove 1 */ | /* will remove 2 */ 0;",
-        r"const foo = /* will keep */ ~ /* will remove 1 */ ~ /* will remove 2 */ 3.4;",
-        r"const foo = ~~bar | 0;",
-        r"const foo = ~~(bar| 0);",
-        r"const foo = bar | 0 | 0;",
-        r"const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);",
+        "const foo = 1.1 | 0;",
+        "const foo = 111 | 0;",
+        "const foo = (1 + 2 / 3.4) | 0;",
+        "const foo = bar((1.4 | 0) + 2);",
+        "const foo = (0, 1.4) | 0;",
+        "function foo() {return.1 | 0;}",
+        "const foo = 1.4 | 0.;",
+        "const foo = 1.4 | .0;",
+        "const foo = 1.4 | 0.0000_0000_0000;",
+        "const foo = 1.4 | 0b0;",
+        "const foo = 1.4 | 0x0000_0000_0000;",
+        "const foo = 1.4 | 0o0;",
+        "const foo = 1.23 | 0 | 4;",
+        "const foo = ~~3.9;",
+        "const foo = ~~111;",
+        "const foo = ~~(1 + 2 / 3.4);",
+        "const foo = ~~1 + 2 / 3.4;",
+        "const foo = ~~(0, 1.4);",
+        "const foo = ~~~10.01;",
+        "const foo = ~~(~10.01);",
+        "const foo = ~(~~10.01);",
+        "const foo = ~~-10.01;",
+        "const foo = ~~~~10.01;",
+        "function foo() {return~~3.9;}",
+        "const foo = bar >> 0;",
+        "const foo = bar << 0;",
+        "const foo = bar ^ 0;",
+        "function foo() {return.1 ^0;}",
+        "function foo() {return[foo][0] ^= 0;};",
+        "const foo = /* first comment */ 3.4 | 0; // A B C",
+        "const foo = /* first comment */ ~~3.4; // A B C",
+        "const foo = /* will keep */ 3.4 /* will remove 1 */ | /* will remove 2 */ 0;",
+        "const foo = /* will keep */ ~ /* will remove 1 */ ~ /* will remove 2 */ 3.4;",
+        "const foo = ~~bar | 0;",
+        "const foo = ~~(bar| 0);",
+        "const foo = bar | 0 | 0;",
+        "const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);",
     ];
 
-    Tester::new(PreferMathTrunc::NAME, PreferMathTrunc::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const foo = 1.1 | 0;", "const foo = Math.trunc(1.1);"),
+        ("const foo = ~~3.9;", "const foo = Math.trunc(3.9);"),
+        ("function foo() {return.1 | 0;}", "function foo() {return Math.trunc(.1);}"),
+        ("function foo() {return~~3.9;}", "function foo() {return Math.trunc(3.9);}"),
+        ("const foo = bar >> 0;", "const foo = Math.trunc(bar);"),
+        ("const foo = bar << 0;", "const foo = Math.trunc(bar);"),
+        ("const foo = bar ^ 0;", "const foo = Math.trunc(bar);"),
+        (
+            "function foo() {return[foo][0] ^= 0;};",
+            "function foo() {return[foo][0] = Math.trunc([foo][0]);};",
+        ),
+    ];
+
+    Tester::new(PreferMathTrunc::NAME, PreferMathTrunc::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:1:10]
  1 │ if (foo) bar()
@@ -20,13 +21,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[curly.tsx:1:25]
  1 │ if (foo) { bar() } else baz()
    ·                         ─────
-   ╰────
-  help: Replace `baz()` with `{baz()}`.
-
-  ⚠ eslint(curly): Expected { after 'if' condition.
-   ╭─[curly.tsx:1:34]
- 1 │ if (foo) { bar() } else if (faa) baz()
-   ·                                  ─────
    ╰────
   help: Replace `baz()` with `{baz()}`.
 
@@ -161,13 +155,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `{ quuux(); }` with ` quuux(); `.
 
-  ⚠ eslint(curly): Unexpected { after 'if' condition.
-   ╭─[curly.tsx:1:41]
- 1 │ if (foo) if (bar) baz(); else if (quux) { quuux(); }
-   ·                                         ────────────
-   ╰────
-  help: Replace `{ quuux(); }` with ` quuux(); `.
-
   ⚠ eslint(curly): Unexpected { after 'while' condition.
    ╭─[curly.tsx:1:13]
  1 │ while (foo) { bar() }
@@ -202,28 +189,6 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────────────────────────
    ╰────
   help: Replace `{ if (b) console.log(1); else console.log(2) }` with ` if (b) console.log(1); else console.log(2) `.
-
-  ⚠ eslint(curly): Unexpected { after 'else'.
-    ╭─[curly.tsx:6:11]
-  5 │                     console.log(1)
-  6 │ ╭─▶             } else {
-  7 │ │                   if (2)
-  8 │ │                       console.log(2)
-  9 │ │                   else
- 10 │ │                       console.log(3)
- 11 │ ╰─▶             }
-    ╰────
-  help: Replace `{
-        			    if (2)
-        			        console.log(2)
-        			    else
-        			        console.log(3)
-        			}` with `
-        			    if (2)
-        			        console.log(2)
-        			    else
-        			        console.log(3)
-        			`.
 
   ⚠ eslint(curly): Unexpected { after 'else'.
     ╭─[curly.tsx:6:11]
@@ -561,13 +526,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `faa();` with `{faa();}`.
 
   ⚠ eslint(curly): Expected { after 'if' condition.
-   ╭─[curly.tsx:1:33]
- 1 │ if (true) foo(); else if (true) faa(); else { bar(); baz(); }
-   ·                                 ──────
-   ╰────
-  help: Replace `faa();` with `{faa();}`.
-
-  ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:1:21]
  1 │ if (true) if (true) foo(); else { bar(); baz(); }
    ·                     ──────
@@ -740,22 +698,6 @@ source: crates/oxc_linter/src/tester.rs
         			;
         			}` with `
         			doSomething()
-        			;
-        			`.
-
-  ⚠ eslint(curly): Unexpected { after 'if' condition.
-   ╭─[curly.tsx:2:18]
- 1 │     if (foo) doSomething();
- 2 │ ╭─▶             else if (bar) {
- 3 │ │               doSomethingElse()
- 4 │ │               ;
- 5 │ ╰─▶             }
-   ╰────
-  help: Replace `{
-        			doSomethingElse()
-        			;
-        			}` with `
-        			doSomethingElse()
         			;
         			`.
 
@@ -1008,13 +950,6 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────
    ╰────
   help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
-
-  ⚠ eslint(curly): Unexpected { after 'if' condition.
-   ╭─[curly.tsx:1:51]
- 1 │ if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}
-   ·                                                   ────────
-   ╰────
-  help: Replace `{bar();}` with `bar();`.
 
   ⚠ eslint(curly): Unexpected { after 'if' condition.
    ╭─[curly.tsx:1:51]

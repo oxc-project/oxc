@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()` or `vi.spyOn()`.
    ╭─[prefer_spy_on.tsx:1:9]
  1 │ obj.a = jest.fn(); const test = 10;

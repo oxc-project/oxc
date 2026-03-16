@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(warn-todo): The use of `.todo` is not recommended.
    ╭─[warn_todo.tsx:3:10]
  2 │ 

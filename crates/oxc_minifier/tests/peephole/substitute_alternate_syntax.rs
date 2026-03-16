@@ -711,7 +711,7 @@ fn test_fold_string_constructor() {
     // Don't fold the existence check to preserve behavior
     test_same("var a = String?.('hello')");
 
-    test_same("var s = Symbol(), a = String(s);");
+    test("var s = Symbol(), a = String(s);", "var a = String(Symbol());");
 
     test_same("var a = String('hello', bar());");
     test_same("var a = String({valueOf: function() { return 1; }});");
@@ -729,7 +729,7 @@ fn test_fold_number_constructor() {
 fn test_fold_big_int_constructor() {
     test("var x = BigInt(1n)", "var x = 1n");
     test_same("BigInt()");
-    test_same("BigInt(1)");
+    test("BigInt(1)", "");
 }
 
 #[test]
@@ -800,19 +800,19 @@ fn test_object_callee_indirect_call() {
 fn test_rewrite_arguments_copy_loop() {
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -824,11 +824,11 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r) }",
-        "function _() { var r = [...arguments]; console.log(r) }",
+        "function _() { console.log([...arguments]) }",
     );
     test(
         "function _() { for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r) }",
@@ -903,7 +903,7 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test(
         "function _() { { let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) } }",
-        "function _() { { let _; var r = [...arguments]; console.log(r) } }",
+        "function _() { { let _; console.log([...arguments]) } }",
     );
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, e) }",

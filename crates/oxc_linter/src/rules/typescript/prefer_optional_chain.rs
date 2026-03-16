@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct PreferOptionalChain(Box<PreferOptionalChainConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferOptionalChainConfig {
     /// Allow autofixers that will change the return type of the expression.
     /// This option is considered unsafe as it may break the build.
@@ -94,15 +94,13 @@ declare_oxc_lint!(
     PreferOptionalChain(tsgolint),
     typescript,
     nursery, // move to style after we've confirmed this works correctly on as many edge-cases as possible.
-    fix,
+    dangerous_fix_suggestion,
     config = PreferOptionalChainConfig,
 );
 
 impl Rule for PreferOptionalChain {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

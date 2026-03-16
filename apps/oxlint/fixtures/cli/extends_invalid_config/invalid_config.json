@@ -1,0 +1,7 @@
+{
+  "plugins": ["jest"],
+  "rules": {
+    // Invalid config: `allow` should only have string values
+    "jest/no-hooks": ["error", { "allow": [true, false] }]
+  }
+}

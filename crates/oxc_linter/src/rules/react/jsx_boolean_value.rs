@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
     utils::get_prop_value,
 };
 
@@ -31,35 +31,44 @@ fn boolean_value_undefined_false_diagnostic(attr: &str, span: Span) -> OxcDiagno
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct JsxBooleanValue(Box<JsxBooleanValueConfig>);
-
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum EnforceBooleanAttribute {
+    /// All boolean attributes must have explicit values.
     Always,
+    /// All boolean attributes must omit values that are set to `true`.
     #[default]
     Never,
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct JsxBooleanValueConfig {
-    /// Enforce boolean attributes to always or never have a value.
-    pub enforce_boolean_attribute: EnforceBooleanAttribute,
-    /// List of attribute names to exclude from the rule.
-    pub exceptions: FxHashSet<CompactStr>,
-    /// If true, treats `prop={false}` as equivalent to the prop being undefined
-    pub assume_undefined_is_false: bool,
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct JsxBooleanValueOptions {
+    /// List of attribute names that should always have explicit boolean values.
+    /// Only necessary when main mode is `"never"`.
+    always: FxHashSet<CompactStr>,
+    /// List of attribute names that should never have explicit boolean values.
+    /// Only necessary when main mode is `"always"`.
+    never: FxHashSet<CompactStr>,
+    /// If `true`, treats `prop={false}` as equivalent to the prop being `undefined`.
+    /// When combined with `"never"` mode, this will enforce that the attribute is omitted entirely.
+    ///
+    /// ```jsx
+    /// // With "assumeUndefinedIsFalse": true
+    /// <App foo={false} />; // Incorrect
+    /// <App />;             // Correct
+    /// ```
+    ///
+    /// This option does nothing in `"always"` mode.
+    assume_undefined_is_false: bool,
 }
 
-impl std::ops::Deref for JsxBooleanValue {
-    type Target = JsxBooleanValueConfig;
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
+#[serde(default)]
+pub struct JsxBooleanValueConfig(EnforceBooleanAttribute, JsxBooleanValueOptions);
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct JsxBooleanValue(Box<JsxBooleanValueConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -68,18 +77,31 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In JSX, you can set a boolean attribute to `true` or omit it. This rule will enforce a consistent style for boolean attributes.
+    /// In JSX, you can set a boolean attribute to `true` or omit it.
+    /// This rule will enforce a consistent style for boolean attributes.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule with default `"never"` mode:
     /// ```jsx
     /// const Hello = <Hello personal={true} />;
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule with default `"never"` mode:
     /// ```jsx
     /// const Hello = <Hello personal />;
+    ///
+    /// const Foo = <Foo isSomething={false} />;
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with `"always"` mode:
+    /// ```jsx
+    /// const Hello = <Hello personal />;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `"always"` mode:
+    /// ```jsx
+    /// const Hello = <Hello personal={true} />;
     /// ```
     JsxBooleanValue,
     react,
@@ -90,42 +112,13 @@ declare_oxc_lint!(
 
 impl Rule for JsxBooleanValue {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let enforce_boolean_attribute = value
-            .get(0)
-            .and_then(serde_json::Value::as_str)
-            .map_or_else(EnforceBooleanAttribute::default, |value| match value {
-                "always" => EnforceBooleanAttribute::Always,
-                _ => EnforceBooleanAttribute::Never,
-            });
-
-        let config = value.get(1);
-        let assume_undefined_is_false = config
-            .and_then(|c| c.get("assumeUndefinedIsFalse"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        // The exceptions are the inverse of the default, specifying both always and
-        // never in the rule configuration is not allowed and ignored.
-        let attribute_name = match enforce_boolean_attribute {
-            EnforceBooleanAttribute::Never => "always",
-            EnforceBooleanAttribute::Always => "never",
-        };
-
-        let exceptions = config
-            .and_then(|c| c.get(attribute_name))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(JsxBooleanValueConfig {
-            enforce_boolean_attribute,
-            exceptions,
-            assume_undefined_is_false,
-        })))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else { return };
+
+        let JsxBooleanValueConfig(mode, options) = &*self.0;
 
         for attr in &jsx_opening_elem.attributes {
             let JSXAttributeItem::Attribute(jsx_attr) = attr else { continue };
@@ -133,7 +126,7 @@ impl Rule for JsxBooleanValue {
 
             match get_prop_value(attr) {
                 None => {
-                    if self.is_always(ident.name.as_str()) {
+                    if Self::is_always(mode, options, ident.name.as_str()) {
                         ctx.diagnostic_with_fix(
                             boolean_value_always_diagnostic(&ident.name, ident.span),
                             |fixer| fixer.insert_text_after(&ident.span, "={true}"),
@@ -144,7 +137,7 @@ impl Rule for JsxBooleanValue {
                     if let Some(expr) = container.expression.as_expression()
                         && let Expression::BooleanLiteral(expr) = expr.without_parentheses()
                     {
-                        if expr.value && self.is_never(ident.name.as_str()) {
+                        if expr.value && Self::is_never(mode, options, ident.name.as_str()) {
                             let span = Span::new(ident.span.end, jsx_attr.span.end);
                             ctx.diagnostic_with_fix(
                                 boolean_value_diagnostic(&ident.name, span),
@@ -153,8 +146,8 @@ impl Rule for JsxBooleanValue {
                         }
 
                         if !expr.value
-                            && self.is_never(ident.name.as_str())
-                            && self.assume_undefined_is_false
+                            && Self::is_never(mode, options, ident.name.as_str())
+                            && options.assume_undefined_is_false
                         {
                             ctx.diagnostic_with_fix(
                                 boolean_value_undefined_false_diagnostic(
@@ -177,20 +170,32 @@ impl Rule for JsxBooleanValue {
 }
 
 impl JsxBooleanValue {
-    fn is_always(&self, prop_name: &str) -> bool {
-        let is_exception = self.exceptions.contains(prop_name);
-        if matches!(self.enforce_boolean_attribute, EnforceBooleanAttribute::Always) {
-            return !is_exception;
+    /// Returns true if the attribute should always have an explicit boolean value.
+    fn is_always(
+        mode: &EnforceBooleanAttribute,
+        options: &JsxBooleanValueOptions,
+        prop_name: &str,
+    ) -> bool {
+        match mode {
+            // When mode is "always", all attributes should have explicit values except those in `never`
+            EnforceBooleanAttribute::Always => !options.never.contains(prop_name),
+            // When mode is "never", only attributes in `always` should have explicit values
+            EnforceBooleanAttribute::Never => options.always.contains(prop_name),
         }
-        is_exception
     }
 
-    fn is_never(&self, prop_name: &str) -> bool {
-        let is_exception = self.exceptions.contains(prop_name);
-        if matches!(self.enforce_boolean_attribute, EnforceBooleanAttribute::Never) {
-            return !is_exception;
+    /// Returns true if the attribute should never have an explicit boolean value.
+    fn is_never(
+        mode: &EnforceBooleanAttribute,
+        options: &JsxBooleanValueOptions,
+        prop_name: &str,
+    ) -> bool {
+        match mode {
+            // When mode is "never", all attributes should omit values except those in `always`
+            EnforceBooleanAttribute::Never => !options.always.contains(prop_name),
+            // When mode is "always", only attributes in `never` should omit values
+            EnforceBooleanAttribute::Always => options.never.contains(prop_name),
         }
-        is_exception
     }
 }
 
@@ -229,10 +234,9 @@ fn test() {
         ),
         (
             "<App foo={true} bar={false} baz={false} bak={false} />;",
-            Some(serde_json::json!([
-            "always",
-                { "assumeUndefinedIsFalse": true, "never": ["baz", "bak"] },
-              ])),
+            Some(
+                serde_json::json!(["always", { "assumeUndefinedIsFalse": true, "never": ["baz", "bak"] }]),
+            ),
         ),
         (
             "<App foo={true} bar={true} baz />;",
@@ -255,10 +259,9 @@ fn test() {
         (
             "<App foo={true} bar={false} baz={false} bak={false} />;",
             "<App foo={true} bar={false}   />;",
-            Some(serde_json::json!([
-            "always",
-                { "assumeUndefinedIsFalse": true, "never": ["baz", "bak"] },
-              ])),
+            Some(
+                serde_json::json!(["always", { "assumeUndefinedIsFalse": true, "never": ["baz", "bak"] }]),
+            ),
         ),
         ("<App foo />", "<App foo={true} />", Some(serde_json::json!(["always"]))),
     ];

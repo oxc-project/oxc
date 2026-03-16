@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
    ╭─[no_dynamic_require.tsx:1:1]
  1 │ require("../" + name)

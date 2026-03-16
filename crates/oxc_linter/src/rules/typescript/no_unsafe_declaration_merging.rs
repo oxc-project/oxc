@@ -98,100 +98,67 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            "
-			interface Foo {}
-			class Bar implements Foo {}
-			    ",
-            None,
-        ),
-        (
-            "
-         			namespace Foo {}
-         			namespace Foo {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			enum Foo {}
-         			namespace Foo {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			namespace Fooo {}
-         			function Foo() {}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			const Foo = class {};
-         			    ",
-            None,
-        ),
-        (
-            "
-         			interface Foo {
-         			  props: string;
-         			}
+        "
+            interface Foo {}
+            class Bar implements Foo {}
+                ",
+        "
+                     namespace Foo {}
+                     namespace Foo {}
+                         ",
+        "
+                     enum Foo {}
+                     namespace Foo {}
+                         ",
+        "
+                     namespace Fooo {}
+                     function Foo() {}
+                         ",
+        "
+                     const Foo = class {};
+                         ",
+        "
+                     interface Foo {
+                       props: string;
+                     }
 
-         			function bar() {
-         			  return class Foo {};
-         			}
-         			    ",
-            None,
-        ),
-        (
-            "
-         			interface Foo {
-         			  props: string;
-         			}
+                     function bar() {
+                       return class Foo {};
+                     }
+                         ",
+        "
+                     interface Foo {
+                       props: string;
+                     }
 
-         			(function bar() {
-         			  class Foo {}
-         			})();
-         			    ",
-            None,
-        ),
-        (
-            "
-         			declare global {
-         			  interface Foo {}
-         			}
+                     (function bar() {
+                       class Foo {}
+                     })();
+                         ",
+        "
+                     declare global {
+                       interface Foo {}
+                     }
 
-         			class Foo {}
-         			    ",
-            None,
-        ),
+                     class Foo {}
+                         ",
     ];
 
     let fail = vec![
-        (
-            "
-			interface Foo {}
-			class Foo {}
-			      ",
-            None,
-        ),
-        (
-            "
-         			class Foo {}
-         			interface Foo {}
-         			      ",
-            None,
-        ),
-        (
-            "
-         			declare global {
-         			  interface Foo {}
-         			  class Foo {}
-         			}
-         			      ",
-            None,
-        ),
+        "
+            interface Foo {}
+            class Foo {}
+                  ",
+        "
+                     class Foo {}
+                     interface Foo {}
+                           ",
+        "
+                     declare global {
+                       interface Foo {}
+                       class Foo {}
+                     }
+                           ",
     ];
 
     Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::PLUGIN, pass, fail)

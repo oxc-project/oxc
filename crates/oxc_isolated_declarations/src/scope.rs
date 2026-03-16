@@ -102,19 +102,19 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.add_reference(ident.name, KindFlags::Value);
+        self.add_reference(ident.name.into(), KindFlags::Value);
     }
 
     fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
         if let BindingPattern::BindingIdentifier(ident) = pattern {
-            self.add_binding(ident.name, KindFlags::Value);
+            self.add_binding(ident.name.into(), KindFlags::Value);
         }
         walk_binding_pattern(self, pattern);
     }
 
     fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
         if let TSTypeName::IdentifierReference(ident) = name {
-            self.add_reference(ident.name, KindFlags::Type);
+            self.add_reference(ident.name.into(), KindFlags::Type);
         } else {
             walk_ts_type_name(self, name);
         }
@@ -124,7 +124,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         if let Some(type_name) = ty.expr_name.as_ts_type_name() {
             if let Some(ident) = TSTypeName::get_identifier_reference(type_name) {
-                self.add_reference(ident.name, KindFlags::Value);
+                self.add_reference(ident.name.into(), KindFlags::Value);
                 // `typeof Type<Parameters>`
                 //              ^^^^^^^^^^^
                 if let Some(type_parameters) = &ty.type_arguments {
@@ -143,7 +143,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             // export { ... }
             for specifier in &decl.specifiers {
                 if let Some(name) = specifier.local.identifier_name() {
-                    self.add_reference(name, KindFlags::All);
+                    self.add_reference(name.into(), KindFlags::All);
                 }
             }
         }
@@ -151,7 +151,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-            self.add_reference(ident.name, KindFlags::All);
+            self.add_reference(ident.name.into(), KindFlags::All);
         } else {
             walk_export_default_declaration(self, decl);
         }
@@ -165,33 +165,33 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             }
             Declaration::FunctionDeclaration(decl) => {
                 if let Some(id) = decl.id.as_ref() {
-                    self.add_binding(id.name, KindFlags::Value);
+                    self.add_binding(id.name.into(), KindFlags::Value);
                 }
             }
             Declaration::ClassDeclaration(decl) => {
                 if let Some(id) = decl.id.as_ref() {
-                    self.add_binding(id.name, KindFlags::Value);
+                    self.add_binding(id.name.into(), KindFlags::Value);
                 }
             }
             Declaration::TSTypeAliasDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Type);
+                self.add_binding(decl.id.name.into(), KindFlags::Type);
             }
             Declaration::TSInterfaceDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Type);
+                self.add_binding(decl.id.name.into(), KindFlags::Type);
             }
             Declaration::TSEnumDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::All);
+                self.add_binding(decl.id.name.into(), KindFlags::All);
             }
             Declaration::TSModuleDeclaration(decl) => {
                 if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    self.add_binding(ident.name, KindFlags::All);
+                    self.add_binding(ident.name.into(), KindFlags::All);
                 }
             }
             Declaration::TSGlobalDeclaration(_) => {
                 // no binding
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
-                self.add_binding(decl.id.name, KindFlags::Value);
+                self.add_binding(decl.id.name.into(), KindFlags::Value);
             }
         }
         walk_declaration(self, declaration);

@@ -1,6 +1,6 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
-use super::group_config::{GroupName, ImportModifier, ImportSelector};
+use super::group_config::{GroupEntry, GroupName, ImportModifier, ImportSelector};
 use super::options::CustomGroupDefinition;
 
 // Intermediate import metadata that is used for group matching
@@ -13,32 +13,31 @@ pub struct ImportMetadata<'a> {
 pub struct GroupMatcher {
     // Custom groups that are used in `options.groups`
     custom_groups: Vec<(CustomGroupDefinition, usize)>,
-
     // Predefined groups sorted by priority,
     // so that we don't need to enumerate all possible group names of a given import.
     predefined_groups: Vec<(GroupName, usize)>,
-
     // The index of "unknown" in groups or `groups.len()` if absent
     unknown_group_index: usize,
 }
 
 impl GroupMatcher {
-    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroupDefinition]) -> Self {
-        let custom_group_name_set =
-            custom_groups.iter().map(|g| g.group_name.clone()).collect::<FxHashSet<_>>();
-
+    pub fn new(groups: &[Vec<GroupEntry>], custom_groups: &[CustomGroupDefinition]) -> Self {
         let mut unknown_group_index: Option<usize> = None;
 
         let mut used_custom_group_index_map = FxHashMap::default();
         let mut predefined_groups = Vec::new();
         for (index, group_union) in groups.iter().enumerate() {
-            for group in group_union {
-                if group == "unknown" {
-                    unknown_group_index = Some(index);
-                } else if custom_group_name_set.contains(group) {
-                    used_custom_group_index_map.insert(group.to_owned(), index);
-                } else if let Some(group_name) = GroupName::parse(group) {
-                    predefined_groups.push((group_name, index));
+            for entry in group_union {
+                match entry {
+                    GroupEntry::Unknown => {
+                        unknown_group_index = Some(index);
+                    }
+                    GroupEntry::Custom(name) => {
+                        used_custom_group_index_map.insert(name.as_str(), index);
+                    }
+                    GroupEntry::Predefined(group_name) => {
+                        predefined_groups.push((group_name.clone(), index));
+                    }
                 }
             }
         }
@@ -46,7 +45,7 @@ impl GroupMatcher {
         let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
-            if let Some(index) = used_custom_group_index_map.get(&custom_group.group_name) {
+            if let Some(index) = used_custom_group_index_map.get(custom_group.group_name.as_str()) {
                 used_custom_groups.push((custom_group.clone(), *index));
             }
         }
@@ -62,10 +61,21 @@ impl GroupMatcher {
 
     pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
         for (custom_group, index) in &self.custom_groups {
-            let is_match = custom_group
-                .element_name_pattern
-                .iter()
-                .any(|pattern| import_metadata.source.starts_with(pattern));
+            let is_match = {
+                let name_matches = custom_group.element_name_pattern.is_empty()
+                    || custom_group
+                        .element_name_pattern
+                        .iter()
+                        .any(|pattern| fast_glob::glob_match(pattern, import_metadata.source));
+                let selector_matches =
+                    custom_group.selector.is_none_or(|s| import_metadata.selectors.contains(&s));
+                let modifiers_match =
+                    custom_group.modifiers.iter().all(|m| import_metadata.modifiers.contains(m));
+
+                // These are AND logic
+                name_matches && selector_matches && modifiers_match
+            };
+
             if is_match {
                 return *index;
             }

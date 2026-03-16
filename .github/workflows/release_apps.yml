@@ -17,14 +17,15 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'oxc-project/oxc'
     name: Check version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version_changed: ${{ steps.oxfmt.outputs.version_changed && steps.oxlint.outputs.version_changed }}
       oxfmt_version: ${{ steps.oxfmt.outputs.version }}
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -41,49 +42,87 @@ jobs:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            code-target: win32-x64
-            build-oxlint-args: ""
+            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            code-target: win32-arm64
-            build-oxlint-args: ""
+            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            build: pnpm run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            code-target: linux-x64-gnu
-            build-oxlint-args: --use-napi-cross
+            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            code-target: linux-arm64-gnu
-            build-oxlint-args: --use-napi-cross
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            code-target: linux-x64-musl
-            build-oxlint-args: -x
+            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            code-target: linux-arm64-musl
-            build-oxlint-args: -x
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            code-target: darwin-x64
-            build-oxlint-args: ""
+            build: pnpm run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            code-target: darwin-arm64
-            build-oxlint-args: ""
+            build: pnpm run build-napi-release --target aarch64-apple-darwin
 
-    name: Build Oxlint ${{ matrix.code-target }}
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm run build-napi-release --target aarch64-linux-android
+
+          - os: ubuntu-latest
+            target: armv7-linux-androideabi
+            build: pnpm run build-napi-release --target armv7-linux-androideabi
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+
+          - os: ubuntu-latest
+            target: powerpc64le-unknown-linux-gnu
+            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+
+    name: Build Oxlint ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
       TARGET_CC: clang # for mimalloc
@@ -91,10 +130,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - if: ${{ contains(matrix.os, 'windows') }}
+        run: git config --system core.longpaths true
+
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -111,71 +153,140 @@ jobs:
         with:
           version: 0.13.0
 
+      - name: Setup OpenHarmony SDK
+        if: ${{ contains(matrix.target, 'ohos') }}
+        uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
+
       - name: Build oxlint for node.js
         working-directory: apps/oxlint
-        run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxlint-args }}
+        run: ${{ matrix.build }}
 
       - name: Build Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') && !contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
         run: cross build --release -p oxlint --features allocator --target=${{ matrix.target }}
 
+      - name: Build Rust binary (zigbuild)
+        if: ${{ contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
+        run: |
+          pip3 install cargo-zigbuild
+          cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
+
+      - name: Upload NAPI artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: oxlint-bindings-${{ matrix.target }}
+          path: |
+            apps/oxlint/src-js/*.node
+            apps/oxlint/src-js/*.wasm
+
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive oxlint .node binary
+      - name: Archive Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
         uses: ./.github/actions/archive-binary
         with:
-          source_path: apps/oxlint/src-js/oxlint.${{ matrix.code-target }}${{ runner.os == 'Windows' && '-msvc' || '' }}.node
-          binary_name: oxlint.${{ matrix.code-target }}.node
-          archive_name: oxlint-${{ matrix.code-target }}
+          source_path: target/${{ matrix.target }}/release/oxlint${{ runner.os == 'Windows' && '.exe' || '' }}
+          binary_name: oxlint-${{ matrix.target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          archive_name: rust-oxlint-${{ matrix.target }}
+
+      # For github release
+      - name: Upload Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: rust-oxlint-${{ matrix.target }}
+          path: |
+            rust-oxlint-**.zip
+            rust-oxlint-**.tar.gz
+
+  build-oxlint-freebsd:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    name: Build Oxlint FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - name: Build
+        id: build
+        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        env:
+          DEBUG: napi:*
+          RUSTUP_IO_THREADS: 1
+        with:
+          operating_system: freebsd
+          version: "14.2"
+          memory: 8G
+          cpu_count: 3
+          environment_variables: "DEBUG RUSTUP_IO_THREADS"
+          shell: bash
+          run: |
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
+            curl https://sh.rustup.rs -sSf --output rustup.sh
+            sh rustup.sh -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            echo "~~~~ rustc --version ~~~~"
+            rustc --version
+            echo "~~~~ node -v ~~~~"
+            node -v
+            pwd
+            ls -lah
+            whoami
+            env
+            export COREPACK_INTEGRITY_KEYS=0
+            sudo corepack enable
+            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
+            cd apps/oxlint
+            pnpm run build-napi-release --target x86_64-unknown-freebsd
+            cd ../..
+            cargo build --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
+            rm -rf node_modules
+            rm -rf target/x86_64-unknown-freebsd/release/build
+            rm -rf target/x86_64-unknown-freebsd/release/deps
+            rm -rf target/x86_64-unknown-freebsd/release/incremental
+
+      - name: Upload NAPI artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: oxlint-bindings-x86_64-unknown-freebsd
+          path: apps/oxlint/src-js/*.node
 
       - name: Archive Rust binary
         uses: ./.github/actions/archive-binary
         with:
-          source_path: target/${{ matrix.target }}/release/oxlint${{ runner.os == 'Windows' && '.exe' || '' }}
-          binary_name: oxlint-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
-          archive_name: rust-oxlint-${{ matrix.code-target }}
+          source_path: target/x86_64-unknown-freebsd/release/oxlint
+          binary_name: oxlint-x86_64-unknown-freebsd
+          archive_name: rust-oxlint-x86_64-unknown-freebsd
 
-      - name: Upload Binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - name: Upload Rust binary
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
-          name: oxlint-${{ matrix.code-target }}
-          path: |
-            oxlint**.zip
-            oxlint**.tar.gz
-
-      # For github release
-      - name: Upload Binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          if-no-files-found: error
-          name: rust-oxlint-${{ matrix.code-target }}
+          name: rust-oxlint-x86_64-unknown-freebsd
           path: |
             rust-oxlint-**.zip
             rust-oxlint-**.tar.gz
 
   publish-oxlint:
     name: Publish Oxlint
-    needs: [check, build-oxlint]
-    runs-on: ubuntu-latest
+    needs: [check, build-oxlint, build-oxlint-freebsd]
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
+    env:
+      package_path: npm/oxlint
+      plugins_package_path: npm/oxlint-plugins
+      plugin_eslint_package_path: npm/oxlint-plugin-eslint
+      npm_dir: npm/oxlint-release
+      PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          path: .
-          pattern: oxlint-*
-          merge-multiple: true
-
-      - run: ls
-
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+          path: artifacts
+          pattern: oxlint-bindings-*
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
@@ -183,73 +294,128 @@ jobs:
         working-directory: apps/oxlint
         run: pnpm run build-js
 
-      - name: Generate npm packages
+      - run: mkdir -p ${npm_dir}
+
+      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+
+      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxlint/src-js --npm-dir ${npm_dir}
+
+      - name: Copy dist files to npm package
+        run: cp -r apps/oxlint/dist npm/oxlint/dist
+
+      - name: Copy dist files to @oxlint/plugins npm package
         run: |
-          node npm/oxlint/scripts/generate-packages.js
-          cat npm/oxlint/package.json
-          for package in npm/oxlint*; do cat $package/package.json ; echo ; done
+          cp apps/oxlint/dist-pkg-plugins/* ${plugins_package_path}/
+
+      - name: Copy dist files to oxlint-plugin-eslint npm package
+        run: |
+          cp -r apps/oxlint/dist-pkg-plugin-eslint/. ${plugin_eslint_package_path}/
 
       - run: npm install -g npm@latest # For trusted publishing support
 
-      - name: Check packages exist on npm
-        run: node .github/scripts/check-npm-packages.js "npm/oxlint*"
-
-      - name: Publish npm packages as latest
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+      - name: Check Publish
         run: |
-          for package in npm/oxlint*
-          do
-            pnpm publish $package/ --provenance --access public --no-git-checks
-            echo '----'
-          done
+          node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+          node .github/scripts/check-npm-packages.js "${plugins_package_path}"
+          node .github/scripts/check-npm-packages.js "${plugin_eslint_package_path}"
+
+      - name: Trusted Publish
+        run: |
+          # Trusted publishing is configured, publish token is not required.
+          # Publish sub-packages and adds `optionalDependencies` to main package.
+          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # Publish `oxlint` package
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
+          # Publish `@oxlint/plugins` package
+          bash .github/scripts/publish-if-needed.sh ${plugins_package_path} ${PUBLISH_FLAGS}
+          # Publish `oxlint-plugin-eslint` package
+          bash .github/scripts/publish-if-needed.sh ${plugin_eslint_package_path} ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            code-target: win32-x64
-            build-oxfmt-args: ""
+            build: pnpm run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            code-target: win32-arm64
-            build-oxfmt-args: ""
+            build: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            build: pnpm run build-napi-release --target i686-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            code-target: linux-x64-gnu
-            build-oxfmt-args: --use-napi-cross
+            build: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            code-target: linux-arm64-gnu
-            build-oxfmt-args: --use-napi-cross
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            build: pnpm run build-napi-release --target armv7-unknown-linux-gnueabihf --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            code-target: linux-x64-musl
-            build-oxfmt-args: -x
+            build: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            code-target: linux-arm64-musl
-            build-oxfmt-args: -x
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            build: pnpm run build-napi-release --target armv7-unknown-linux-musleabihf -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            code-target: darwin-x64
-            build-oxfmt-args: ""
+            build: pnpm run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            code-target: darwin-arm64
-            build-oxfmt-args: ""
+            build: pnpm run build-napi-release --target aarch64-apple-darwin
 
-    name: Build Oxfmt ${{ matrix.code-target }}
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm run build-napi-release --target aarch64-linux-android
+
+          - os: ubuntu-latest
+            target: armv7-linux-androideabi
+            build: pnpm run build-napi-release --target armv7-linux-androideabi
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-ohos
+            build: pnpm run build-napi-release --target aarch64-unknown-linux-ohos
+
+          - os: ubuntu-latest
+            target: powerpc64le-unknown-linux-gnu
+            build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+
+    name: Build Oxfmt ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
       TARGET_CC: clang # for mimalloc
@@ -257,10 +423,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - if: ${{ contains(matrix.os, 'windows') }}
+        run: git config --system core.longpaths true
+
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Install cross
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -277,71 +446,138 @@ jobs:
         with:
           version: 0.13.0
 
+      - name: Setup OpenHarmony SDK
+        if: ${{ contains(matrix.target, 'ohos') }}
+        uses: Boshen/setup-ohos-sdk@edb865a89a712f1f15dbad932dfa9cfce849d95c # v1.0.0
+
       - name: Build oxfmt for node.js
         working-directory: apps/oxfmt
-        run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxfmt-args }}
+        run: ${{ matrix.build }}
 
       - name: Build Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') && !contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
         run: cross build --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
+      - name: Build Rust binary (zigbuild)
+        if: ${{ contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
+        run: |
+          pip3 install cargo-zigbuild
+          cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
+
+      - name: Upload NAPI artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: oxfmt-bindings-${{ matrix.target }}
+          path: |
+            apps/oxfmt/src-js/*.node
+            apps/oxfmt/src-js/*.wasm
+
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive oxfmt .node binary
+      - name: Archive Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
         uses: ./.github/actions/archive-binary
         with:
-          source_path: apps/oxfmt/src-js/oxfmt.${{ matrix.code-target }}${{ runner.os == 'Windows' && '-msvc' || '' }}.node
-          binary_name: oxfmt.${{ matrix.code-target }}.node
-          archive_name: oxfmt-${{ matrix.code-target }}
+          source_path: target/${{ matrix.target }}/release/oxfmt${{ runner.os == 'Windows' && '.exe' || '' }}
+          binary_name: oxfmt-${{ matrix.target }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          archive_name: rust-oxfmt-${{ matrix.target }}
+
+      # For github release
+      - name: Upload Rust binary
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: rust-oxfmt-${{ matrix.target }}
+          path: |
+            rust-oxfmt-**.zip
+            rust-oxfmt-**.tar.gz
+
+  build-oxfmt-freebsd:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    name: Build Oxfmt FreeBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - name: Build
+        id: build
+        uses: cross-platform-actions/action@492b0c80085400348c599edace11141a4ee73524 # v0.32.0
+        env:
+          DEBUG: napi:*
+          RUSTUP_IO_THREADS: 1
+        with:
+          operating_system: freebsd
+          version: "14.2"
+          memory: 8G
+          cpu_count: 3
+          environment_variables: "DEBUG RUSTUP_IO_THREADS"
+          shell: bash
+          run: |
+            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
+            curl https://sh.rustup.rs -sSf --output rustup.sh
+            sh rustup.sh -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            echo "~~~~ rustc --version ~~~~"
+            rustc --version
+            echo "~~~~ node -v ~~~~"
+            node -v
+            pwd
+            ls -lah
+            whoami
+            env
+            export COREPACK_INTEGRITY_KEYS=0
+            sudo corepack enable
+            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
+            cd apps/oxfmt
+            pnpm run build-napi-release --target x86_64-unknown-freebsd
+            cd ../..
+            cargo build --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
+            rm -rf node_modules
+            rm -rf target/x86_64-unknown-freebsd/release/build
+            rm -rf target/x86_64-unknown-freebsd/release/deps
+            rm -rf target/x86_64-unknown-freebsd/release/incremental
+
+      - name: Upload NAPI artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          if-no-files-found: error
+          name: oxfmt-bindings-x86_64-unknown-freebsd
+          path: apps/oxfmt/src-js/*.node
 
       - name: Archive Rust binary
         uses: ./.github/actions/archive-binary
         with:
-          source_path: target/${{ matrix.target }}/release/oxfmt${{ runner.os == 'Windows' && '.exe' || '' }}
-          binary_name: oxfmt-${{ matrix.code-target }}${{ runner.os == 'Windows' && '.exe' || '' }}
-          archive_name: rust-oxfmt-${{ matrix.code-target }}
+          source_path: target/x86_64-unknown-freebsd/release/oxfmt
+          binary_name: oxfmt-x86_64-unknown-freebsd
+          archive_name: rust-oxfmt-x86_64-unknown-freebsd
 
-      - name: Upload Binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - name: Upload Rust binary
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
-          name: oxfmt-${{ matrix.code-target }}
-          path: |
-            oxfmt-**.zip
-            oxfmt-**.tar.gz
-
-      # For github release
-      - name: Upload Binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          if-no-files-found: error
-          name: rust-oxfmt-${{ matrix.code-target }}
+          name: rust-oxfmt-x86_64-unknown-freebsd
           path: |
             rust-oxfmt-**.zip
             rust-oxfmt-**.tar.gz
 
   publish-oxfmt:
     name: Publish Oxfmt
-    needs: [check, build-oxfmt]
-    runs-on: ubuntu-latest
+    needs: [check, build-oxfmt, build-oxfmt-freebsd]
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
+    env:
+      package_path: npm/oxfmt
+      npm_dir: npm/oxfmt-release
+      PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          path: .
-          pattern: oxfmt-*
-          merge-multiple: true
-
-      - run: ls
-
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+          path: artifacts
+          pattern: oxfmt-bindings-*
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
@@ -349,40 +585,50 @@ jobs:
         working-directory: apps/oxfmt
         run: pnpm run build-js
 
-      - name: Generate npm packages
-        run: |
-          node npm/oxfmt/scripts/generate-packages.js
-          cat npm/oxfmt/package.json
-          for package in npm/oxfmt*; do cat $package/package.json ; echo ; done
+      - run: mkdir -p ${npm_dir}
+
+      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+
+      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir apps/oxfmt/src-js --npm-dir ${npm_dir}
+
+      - name: Copy dist files to npm package
+        run: cp -r apps/oxfmt/dist npm/oxfmt/dist
 
       - run: npm install -g npm@latest # For trusted publishing support
 
-      - name: Check packages exist on npm
-        run: node .github/scripts/check-npm-packages.js "npm/oxfmt*"
+      - name: Check Publish
+        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
-      - name: Publish npm packages as latest
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+      - name: Trusted Publish
         run: |
-          for package in npm/oxfmt*
-          do
-            pnpm publish $package/ --provenance --access public --no-git-checks
-            echo '----'
-          done
+          # Trusted publishing is configured, publish token is not required.
+          # Publish sub-packages and adds `optionalDependencies` to main package.
+          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
 
   github-release:
     name: GitHub Release
-    needs: [check, build-oxlint, build-oxfmt, publish-oxlint, publish-oxfmt]
+    needs:
+      [
+        check,
+        build-oxlint,
+        build-oxlint-freebsd,
+        build-oxfmt,
+        build-oxfmt-freebsd,
+        publish-oxlint,
+        publish-oxfmt,
+      ]
     permissions:
       contents: write # for softprops/action-gh-release@v1.3.1
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           fetch-depth: 0 # for changelog
           persist-credentials: true
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
         with:
           restore-cache: false
           tools: cargo-release-oxc
@@ -418,7 +664,7 @@ jobs:
           git tag oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} ${{ github.sha }}
           git push origin oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} oxfmt_v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: ./release-artifacts
           pattern: rust-*
@@ -455,7 +701,7 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
           embed-title: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
           embed-description: A new release is available! Check the changelog for details.
-          embed-url: ${{ steps.release.outputs.url }}
+          embed-url: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
@@ -469,7 +715,7 @@ jobs:
           - os: windows-latest
           - os: ubuntu-latest
           - os: ubuntu-latest
-            container: node:18-alpine # musl
+            container: node:24-alpine # musl
           - os: macos-latest
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
@@ -490,12 +736,12 @@ jobs:
   bump:
     needs: [check, smoke]
     name: Bump oxlint dependents
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
 
       - name: Bump oxc-project/eslint-plugin-oxlint
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
@@ -504,7 +750,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/oxlint-migrate
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
@@ -513,7 +759,7 @@ jobs:
           inputs: '{ "version": "${{ needs.check.outputs.oxlint_version }}" }'
 
       - name: Bump oxc-project/mirrors-oxlint
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/mirrors-oxlint
           workflow: main.yml

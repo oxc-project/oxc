@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -17,7 +17,7 @@ use super::PeepholeOptimizations;
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 impl<'a> PeepholeOptimizations {
     #[expect(clippy::float_cmp)]
-    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::UnaryExpression(e) = expr else { return };
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
@@ -37,7 +37,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) {
@@ -49,7 +49,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = match e.operator {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
@@ -72,7 +72,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ChainExpression(e) = expr else { return };
         let left_expr = match &e.expression {
             match_member_expression!(ChainElement) => {
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -174,7 +174,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -249,7 +249,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // TODO: tryReduceOperandsForOp
 
@@ -353,7 +353,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx)
             && let Some(v) = e.evaluate_value(ctx)
         {
@@ -399,7 +399,7 @@ impl<'a> PeepholeOptimizations {
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
         parent_span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
@@ -411,12 +411,14 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
-                left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                left_last_quasi.value.raw = ctx.ast.atom_from_strs_array([
+                    left_last_quasi.value.raw.as_str(),
+                    right_first_quasi.value.raw.as_str(),
+                ]);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(ctx.ast.atom(&(cooked1.into_string() + cooked2.as_str())))
+                    Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), cooked2.as_str()]))
                 } else {
                     None
                 };
@@ -486,7 +488,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_left_child_op(
         e: &mut BinaryExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let op = e.operator;
         debug_assert!(matches!(
@@ -521,7 +523,7 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(e) = expr else { return };
         if !ctx.is_global_expr("Number", &e.callee) {
             return;
@@ -561,7 +563,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
         if e.operator.is_equality()
@@ -620,8 +622,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
                 Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
@@ -692,7 +694,10 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_spread_inlineable_object_literal(
+        e: &ObjectExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
@@ -712,7 +717,7 @@ impl<'a> PeepholeOptimizations {
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         let has_expr_to_inline = t
             .expressions
             .iter()
@@ -721,7 +726,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut inline_exprs = Vec::new();
+        let mut inline_exprs = Vec::with_capacity(t.expressions.len());
         let new_exprs =
             ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
                 if expr.may_have_side_effects(ctx) {
@@ -741,16 +746,15 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let new_raw = quasi.value.raw.into_string()
-                + &Self::escape_string_for_template_literal(&str)
-                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom(&new_raw);
+            let escaped = Self::escape_string_for_template_literal(&str);
+            let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            quasi.value.raw =
+                ctx.ast.atom_from_strs_array([quasi.value.raw.as_str(), &escaped, next_raw]);
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let v =
-                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom(&v))
+                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
+                Some(ctx.ast.atom_from_strs_array([cooked1.as_str(), &str, cooked2_str]))
             } else {
                 None
             };

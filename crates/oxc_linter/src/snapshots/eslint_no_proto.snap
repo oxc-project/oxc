@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-proto): The '__proto__' property is deprecated
    ╭─[no_proto.tsx:1:9]
  1 │ var a = test.__proto__;

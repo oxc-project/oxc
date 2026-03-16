@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, best_match};
 
 use crate::{
     AstNode,
@@ -98,39 +98,9 @@ impl Rule for NoTypos {
 }
 
 fn check_function_name(name: &str, span: Span, ctx: &LintContext) {
-    let mut potential_typos = NEXTJS_DATA_FETCHING_FUNCTIONS
-        .into_iter()
-        .filter_map(|o| {
-            let distance = min_distance(o, name);
-            (distance <= THRESHOLD && distance > 0).then_some((o, distance))
-        })
-        .collect::<Vec<_>>();
-
-    potential_typos.sort_by(|a, b| a.1.cmp(&b.1));
-    if let Some(suggestion) = potential_typos.first().map(|(option, _)| option) {
+    if let Some(suggestion) = best_match(name, NEXTJS_DATA_FETCHING_FUNCTIONS, THRESHOLD) {
         ctx.diagnostic(no_typos_diagnostic(name, suggestion, span));
     }
-}
-
-fn min_distance(a: &str, b: &str) -> usize {
-    if a.len() < b.len() {
-        return min_distance(b, a);
-    }
-
-    let b_chars: Vec<char> = b.chars().collect();
-
-    let n = b_chars.len();
-    let mut prev: Vec<usize> = (0..=n).collect();
-    let mut curr: Vec<usize> = Vec::with_capacity(n + 1);
-    for (i, ca) in a.chars().enumerate() {
-        curr.clear();
-        curr.push(i + 1);
-        for (j, &cb) in b_chars.iter().enumerate() {
-            curr.push((prev[j] + usize::from(ca != cb)).min(prev[j + 1] + 1).min(curr[j] + 1));
-        }
-        std::mem::swap(&mut prev, &mut curr);
-    }
-    prev[n]
 }
 
 #[test]
@@ -169,8 +139,7 @@ fn test() {
                 return <div></div>;
                 }
                 export async function getStaticPaths() {};
-                export async function getStaticProps() {};
-           	",
+                export async function getStaticProps() {};",
             None,
             None,
             Some(PathBuf::from("pages/test.tsx")),
@@ -180,8 +149,7 @@ fn test() {
                 export default function Page() {
                 return <div></div>;
                 }
-                export async function getServerSideProps() {};
-        	",
+                export async function getServerSideProps() {};",
             None,
             None,
             Some(PathBuf::from("pages/test.tsx")),

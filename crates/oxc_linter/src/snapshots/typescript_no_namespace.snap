@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
    ╭─[no_namespace.tsx:1:1]
  1 │ module foo {}

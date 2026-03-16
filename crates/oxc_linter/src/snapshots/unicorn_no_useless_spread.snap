@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
  1 │ const array = [...[a]]

@@ -17,8 +17,8 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 pub struct RequireAwait;
 
 fn require_await_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Async function has no 'await' expression.")
-        .with_help("Consider removing the 'async' keyword.")
+    OxcDiagnostic::warn("Async function has no `await` expression.")
+        .with_help("Consider removing the `async` keyword.")
         .with_label(span)
 }
 
@@ -26,6 +26,12 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow async functions which have no `await` expression.
+    ///
+    /// ::: warning NOTE
+    /// This rule is inferior to the accuracy of the type-aware
+    /// `typescript/require-await` rule. If using type-aware
+    /// rules, always prefer that rule over this one.
+    /// :::
     ///
     /// ### Why is this bad?
     ///
@@ -46,14 +52,15 @@ declare_oxc_lint!(
     ///     return data.map(processDataItem);
     /// }
     /// ```
-    /// Asynchronous functions that don’t use await might not need to be
+    ///
+    /// Asynchronous functions that don’t use `await` might not need to be
     /// asynchronous functions and could be the unintentional result of
     /// refactoring.
     ///
     /// Note: this rule ignores async generator functions. This is because
     /// generators yield rather than return a value and async generators might
     /// yield all the values of another async generator without ever actually
-    /// needing to use await.
+    /// needing to use `await`.
     ///
     /// ### Examples
     ///
@@ -228,24 +235,24 @@ fn test() {
         "async function foo() { for await (x of xs); }",
         "await foo()",
         "
-        	                for await (let num of asyncIterable) {
-        	                    console.log(num);
-        	                }
-        	            ",
+                            for await (let num of asyncIterable) {
+                                console.log(num);
+                            }
+                        ",
         "async function* run() { yield * anotherAsyncGenerator() }",
         "async function* run() {
-        	                await new Promise(resolve => setTimeout(resolve, 100));
-        	                yield 'Hello';
-        	                console.log('World');
-        	            }
-        	            ",
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            yield 'Hello';
+                            console.log('World');
+                        }
+                        ",
         "
         async function foo() {
             {
                 await doSomething()
             }
         }
-        	            ",
+                        ",
         "async function* run() { }",
         "const foo = async function *(){}",
         r#"const foo = async function *(){ console.log("bar") }"#,

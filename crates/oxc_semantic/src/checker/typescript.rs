@@ -73,6 +73,19 @@ pub fn check_ts_type_alias_declaration<'a>(
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
+pub fn check_ts_infer_type<'a>(infer_type: &TSInferType<'a>, ctx: &SemanticBuilder<'a>) {
+    let is_in_conditional_extends_clause =
+        ctx.nodes.ancestor_kinds(ctx.current_node_id).any(|kind| {
+            kind.as_ts_conditional_type().is_some_and(|conditional| {
+                conditional.extends_type.span().contains_inclusive(infer_type.span)
+            })
+        });
+
+    if !is_in_conditional_extends_clause {
+        ctx.error(diagnostics::infer_declaration_only_permitted_in_extends_clause(infer_type.span));
+    }
+}
+
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
@@ -93,7 +106,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
     let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
-        if let Some(old_span) = idents.insert(ident.name, ident.span) {
+        if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
             ctx.error(diagnostics::redeclaration(&ident.name, old_span, ident.span));
         }
     });
@@ -183,24 +196,36 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     }
 
     if !class.r#declare && !ctx.in_declare_scope() {
+        let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
                 && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                && b.is_none_or(|b| match b {
-                    ClassElement::StaticBlock(_)
-                    | ClassElement::PropertyDefinition(_)
-                    | ClassElement::AccessorProperty(_)
-                    | ClassElement::TSIndexSignature(_) => true,
-                    ClassElement::MethodDefinition(b) => b.key.static_name() != a.key.static_name(),
-                })
             {
-                if a.kind.is_constructor() {
-                    ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                let next_is_same = b.is_some_and(|b| {
+                    matches!(b,
+                        ClassElement::MethodDefinition(b)
+                            if b.key.static_name() == a.key.static_name()
+                    )
+                });
+                if next_is_same {
+                    is_in_overload_group = true;
+                } else if a.key.static_name().is_some() || is_in_overload_group {
+                    // Report error for:
+                    // 1. Methods with static names that are not followed by an implementation
+                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                    if a.kind.is_constructor() {
+                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    }
+                    is_in_overload_group = false;
                 } else {
-                    ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    is_in_overload_group = false;
                 }
+            } else {
+                is_in_overload_group = false;
             }
         }
     }

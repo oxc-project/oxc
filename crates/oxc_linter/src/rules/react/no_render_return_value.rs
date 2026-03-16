@@ -25,15 +25,20 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using the return value from `ReactDOM.render()` is a legacy feature and should not be used.
+    /// Using the return value from `ReactDOM.render()` is a legacy
+    /// feature and should not be used.
+    ///
+    /// Note that `ReactDOM.render`
+    /// [has been removed entirely in React 19](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-reactdom-render)
+    /// and so should generally not be used.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// vaa inst =ReactDOM.render(<App />, document.body);
+    /// var inst = ReactDOM.render(<App />, document.body);
     /// function render() {
-    ///  return ReactDOM.render(<App />, document.body);
+    ///   return ReactDOM.render(<App />, document.body);
     /// }
     /// ```
     ///
@@ -96,9 +101,9 @@ fn test() {
         ("ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        let node;
-        	        ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
-        	      ",
+                    let node;
+                    ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
+                  ",
             None,
         ),
         ("ReactDOM.render(<div ref={ref => this.node = ref}/>, document.body);", None),
@@ -117,18 +122,18 @@ fn test() {
         ("var Hello = ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        var o = {
-        	          inst: ReactDOM.render(<div />, document.body)
-        	        };
-        	      ",
+                    var o = {
+                      inst: ReactDOM.render(<div />, document.body)
+                    };
+                  ",
             None,
         ),
         (
             "
-        	        function render () {
-        	          return ReactDOM.render(<div />, document.body)
-        	        }
-        	      ",
+                    function render () {
+                      return ReactDOM.render(<div />, document.body)
+                    }
+                  ",
             None,
         ),
         ("var render = (a, b) => ReactDOM.render(a, b)", None),

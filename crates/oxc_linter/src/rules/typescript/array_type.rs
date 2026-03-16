@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        TSType, TSTypeAliasDeclaration, TSTypeAnnotation, TSTypeName, TSTypeOperatorOperator,
-        TSTypeReference,
-    },
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -13,7 +10,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
 };
@@ -22,7 +18,7 @@ use crate::{
 pub struct ArrayType(Box<ArrayTypeConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ArrayTypeConfig {
     /// The array type expected for mutable cases.
     default: ArrayOption,
@@ -138,98 +134,40 @@ fn array_simple(
 
 impl Rule for ArrayType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSArrayType(ts_array_type) => {
-                check(
+                check_array_type(
+                    node,
+                    ts_array_type.span,
                     &ts_array_type.element_type,
                     self.default_config(),
                     self.readonly_config(),
                     ctx,
                 );
             }
-            AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                check(
-                    &ts_type_annotation.type_annotation,
-                    self.default_config(),
-                    self.readonly_config(),
-                    ctx,
-                );
-            }
-            // for example: type barUnion = (string | number | boolean)[];
-            AstKind::TSTypeAliasDeclaration(ts_alias_annotation) => {
-                check(
-                    &ts_alias_annotation.type_annotation,
-                    self.default_config(),
-                    self.readonly_config(),
-                    ctx,
-                );
-            }
-            // for example: let ya = [[1, '2']] as [number, string][];
-            AstKind::TSAsExpression(ts_as_expression) => {
-                check(
-                    &ts_as_expression.type_annotation,
-                    self.default_config(),
-                    self.readonly_config(),
-                    ctx,
-                );
-            }
-            // for example: const arr = [] as const satisfies readonly string[];
-            AstKind::TSSatisfiesExpression(ts_satisfies_expression) => {
-                check(
-                    &ts_satisfies_expression.type_annotation,
-                    self.default_config(),
-                    self.readonly_config(),
-                    ctx,
-                );
-            }
             AstKind::TSTypeReference(ts_type_reference)
-                if outermost_paren_parent(node, ctx).is_some_and(|x| match x.kind() {
-                    AstKind::TSTypeAliasDeclaration(TSTypeAliasDeclaration {
-                        type_annotation,
-                        ..
-                    })
-                    | AstKind::TSTypeAnnotation(TSTypeAnnotation { type_annotation, .. }) => {
-                        matches!(type_annotation, TSType::TSArrayType(_))
-                    }
-                    _ => false,
-                }) =>
+                if ts_type_reference.type_name.get_identifier_reference().is_some_and(
+                    |type_name| matches!(type_name.name.as_str(), "Array" | "ReadonlyArray"),
+                ) =>
             {
+                if should_skip_type_reference(
+                    node,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                ) {
+                    return;
+                }
                 check_and_report_error_reference(
                     self.default_config(),
                     self.readonly_config(),
                     ts_type_reference,
                     ctx,
                 );
-            }
-            AstKind::TSTypeParameterInstantiation(ts_type_param_instantiation) => {
-                for param in &ts_type_param_instantiation.params {
-                    check(param, self.default_config(), self.readonly_config(), ctx);
-                }
-            }
-            AstKind::TSConditionalType(ts_conditional_type) => {
-                let default_config = self.default_config();
-                let readonly_config = self.readonly_config();
-                check(&ts_conditional_type.check_type, default_config, readonly_config, ctx);
-                check(&ts_conditional_type.extends_type, default_config, readonly_config, ctx);
-                check(&ts_conditional_type.true_type, default_config, readonly_config, ctx);
-                check(&ts_conditional_type.false_type, default_config, readonly_config, ctx);
-            }
-            AstKind::TSIndexedAccessType(ts_indexed_access_type) => {
-                let default_config = self.default_config();
-                let readonly_config = self.readonly_config();
-                check(&ts_indexed_access_type.object_type, default_config, readonly_config, ctx);
-                check(&ts_indexed_access_type.index_type, default_config, readonly_config, ctx);
-            }
-            AstKind::TSMappedType(ts_mapped_type) => {
-                if let Some(type_annotation) = &ts_mapped_type.type_annotation {
-                    check(type_annotation, self.default_config(), self.readonly_config(), ctx);
-                }
             }
             _ => {}
         }
@@ -250,38 +188,20 @@ impl ArrayType {
     }
 }
 
-fn check(
+fn check_array_type<'a>(
+    node: &AstNode<'a>,
+    type_reference_span: Span,
     type_annotation: &TSType,
     default_config: &ArrayOption,
     readonly_config: &ArrayOption,
-    ctx: &LintContext,
+    ctx: &LintContext<'a>,
 ) {
-    if let TSType::TSArrayType(array_type) = &type_annotation {
-        check_and_report_error_generic(
-            default_config,
-            array_type.span,
-            &array_type.element_type,
-            ctx,
-            false,
-        );
-    }
-
-    if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation
-        && matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly)
-        && let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation
-    {
-        check_and_report_error_generic(
-            readonly_config,
-            ts_operator_type.span,
-            &array_type.element_type,
-            ctx,
-            true,
-        );
-    }
-
-    if let TSType::TSTypeReference(ts_type_reference) = &type_annotation {
-        check_and_report_error_reference(default_config, readonly_config, ts_type_reference, ctx);
-    }
+    let (config, span, is_readonly) = if let Some(span) = readonly_array_span(node, ctx) {
+        (readonly_config, span, true)
+    } else {
+        (default_config, type_reference_span, false)
+    };
+    check_and_report_error_generic(config, span, type_annotation, ctx, is_readonly);
 }
 
 fn type_needs_parentheses(type_param: &TSType) -> bool {
@@ -348,48 +268,72 @@ fn check_and_report_error_reference(
     ts_type_reference: &TSTypeReference,
     ctx: &LintContext,
 ) {
-    if let TSTypeName::IdentifierReference(ident_ref_type_name) = &ts_type_reference.type_name {
-        if ident_ref_type_name.name.as_str() == "ReadonlyArray"
-            || ident_ref_type_name.name.as_str() == "Array"
-        {
-            check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
-        } else if ident_ref_type_name.name.as_str() == "Promise"
-            && let Some(type_params) = &ts_type_reference.type_arguments
-            && type_params.params.len() == 1
-            && let Some(type_param) = type_params.params.first()
-        {
-            if let TSType::TSArrayType(array_type) = &type_param {
-                check_and_report_error_generic(
-                    default_config,
-                    array_type.span,
-                    &array_type.element_type,
-                    ctx,
-                    false,
-                );
-            }
+    if let TSTypeName::IdentifierReference(ident_ref_type_name) = &ts_type_reference.type_name
+        && (ident_ref_type_name.name.as_str() == "ReadonlyArray"
+            || ident_ref_type_name.name.as_str() == "Array")
+    {
+        check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
+    }
+}
 
-            if let TSType::TSTypeOperatorType(ts_operator_type) = &type_param
-                && matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly)
-                && let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation
-            {
-                check_and_report_error_generic(
-                    readonly_config,
-                    ts_operator_type.span,
-                    &array_type.element_type,
-                    ctx,
-                    true,
-                );
-            }
-
-            if let TSType::TSTypeReference(ts_type_reference) = &type_param {
-                check_and_report_error_reference(
+fn should_skip_type_reference<'a>(
+    node: &AstNode<'a>,
+    default_config: &ArrayOption,
+    readonly_config: &ArrayOption,
+    ctx: &LintContext<'a>,
+) -> bool {
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::TSArrayType(ts_array_type) => {
+                return array_type_would_report(
+                    ancestor,
+                    &ts_array_type.element_type,
                     default_config,
                     readonly_config,
-                    ts_type_reference,
                     ctx,
                 );
             }
+            AstKind::TSTypeAnnotation(_)
+            | AstKind::TSTypeAliasDeclaration(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeParameter(_)
+            | AstKind::TSConditionalType(_)
+            | AstKind::TSIndexedAccessType(_)
+            | AstKind::TSMappedType(_) => return false,
+            _ => {}
         }
+    }
+
+    false
+}
+
+fn readonly_array_span<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<Span> {
+    let parent = ctx.nodes().parent_node(node.id());
+    match parent.kind() {
+        AstKind::TSTypeOperator(ts_operator_type)
+            if matches!(ts_operator_type.operator, TSTypeOperatorOperator::Readonly) =>
+        {
+            Some(ts_operator_type.span)
+        }
+        _ => None,
+    }
+}
+
+fn array_type_would_report<'a>(
+    node: &AstNode<'a>,
+    type_annotation: &TSType,
+    default_config: &ArrayOption,
+    readonly_config: &ArrayOption,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let config =
+        if readonly_array_span(node, ctx).is_some() { readonly_config } else { default_config };
+    match config {
+        ArrayOption::Array => false,
+        ArrayOption::Generic => true,
+        ArrayOption::ArraySimple => !is_simple_type(type_annotation.without_parenthesized()),
     }
 }
 
@@ -431,6 +375,7 @@ fn check_and_report_error_array(
         return;
     }
     let first_type_param = type_params.as_ref().unwrap().params.first().unwrap();
+    let first_type_param = first_type_param.without_parenthesized();
     if matches!(config, ArrayOption::ArraySimple) && !is_simple_type(first_type_param) {
         return;
     }
@@ -1102,6 +1047,7 @@ const instance = new MyClass<number>(42);",
         ),
         ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
         ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("interface I { b: string | string[]; }", Some(serde_json::json!([{"default":"generic"}]))),
         ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
         (
             "let a: readonly (string | number)[] = [];",
@@ -1474,6 +1420,16 @@ export const test8 = testFn<Array<string>, number[]>([]);",
             "type MakeArrays<T> = { [K in keyof T]: T[K][] };",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
+        ("let y = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type Box<T extends string[]> = T;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type Box<T extends Array<string>> = T;", Some(serde_json::json!([{"default":"array"}]))),
+        ("type Box<T = string[]> = T;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type Box<T = Array<string>> = T;", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array<(string | number)> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        (
+            "let x: ReadonlyArray<(string | number)> = [];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
         // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
         (
             "const arr = [] as const satisfies readonly string[];",
@@ -1662,6 +1618,11 @@ export const test8 = testFn<Array<string>, number[]>([]);",
         (
             "let a: (string | number)[] = [];",
             "let a: Array<string | number> = [];",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "interface I { b: string | string[]; }",
+            "interface I { b: string | Array<string>; }",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
         (
@@ -2137,6 +2098,41 @@ export const test9 = testFn<ReadonlyArray<number>>([]);",
             "function testFn<T>(param: T) { return param; }
 export const test9 = testFn<readonly number[]>([]);",
             Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        (
+            "let y = <Array<string>>['2'];",
+            "let y = <string[]>['2'];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Box<T extends string[]> = T;",
+            "type Box<T extends Array<string>> = T;",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "type Box<T extends Array<string>> = T;",
+            "type Box<T extends string[]> = T;",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Box<T = string[]> = T;",
+            "type Box<T = Array<string>> = T;",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "type Box<T = Array<string>> = T;",
+            "type Box<T = string[]> = T;",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "let x: Array<(string | number)> = [];",
+            "let x: (string | number)[] = [];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "let x: ReadonlyArray<(string | number)> = [];",
+            "let x: readonly (string | number)[] = [];",
+            Some(serde_json::json!([{"default":"array"}])),
         ),
         // https://github.com/oxc-project/oxc/issues/16897 - satisfies expression
         (

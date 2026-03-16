@@ -18,4 +18,4 @@ We encourage the use of AI tools to assist with development, but all contributio
 
 ---
 
-You may checkout the complete contributing guide on the [website](https://oxc.rs/docs/contribute/development.html).
+Please see the complete contributing guide on the [website](https://oxc.rs/docs/contribute/introduction.html).

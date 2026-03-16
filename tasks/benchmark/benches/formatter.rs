@@ -20,7 +20,7 @@ fn bench_formatter(criterion: &mut Criterion) {
                     .parse()
                     .program;
                 let format_options = FormatOptions {
-                    experimental_sort_imports: Some(SortImportsOptions::default()),
+                    sort_imports: Some(SortImportsOptions::default()),
                     ..Default::default()
                 };
                 runner.run(|| {

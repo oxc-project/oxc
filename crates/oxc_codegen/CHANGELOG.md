@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.117.0] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- 36b2e56 codegen: Print type for TSImportEqualsDeclaration (#20128) (camc314)
+- 5a246ec codegen: Print type arguments for JSXOpeningElement (#20127) (camc314)
+- a40870e codegen: Preserve parens for TSNonNullExpression (#20125) (camc314)
+- ae830b2 codegen: Print `declare` for `TSInterfaceDeclaration` (#20124) (camc314)
+- 588009e codegen: Print `static` keyword for TSIndexSignature (#19755) (Dunqing)
+- 5a8799c codegen: Print `with_clause` for `ExportNamedDeclaration` (#20002) (Dunqing)
+
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- abc7e19 codegen: Improve parenthesised checks when printing types (#19880) (camc314)
+- 1710f56 codegen: Remove double indentation for enum inside namespace (#19775) (Dunqing)
+- 9e4995c codegen: Print type annotation on `CatchParameter` (#19790) (camc314)
+- 297b2bb codegen: Wrap `TSConditionalType` in parens when necessary (#19788) (camc314)
+- cec7878 codegen: Print `definite` property on AccessorProperty (#19786) (camc314)
+- 6f395cf codegen: Print `definite` property on PropertyDefinition (#19785) (camc314)
+- b749373 codegen: Correctly parenthesise TSArrayType (#19784) (camc314)
+- 876dc1b codegen: Print object property `this` param (#19783) (camc314)
+- ed17bbf codegen: Print `override` keyword for method and property definitions (#19753) (Dunqing)
+- 3b96f41 codegen: Print comments in JSX expression containers and spread attributes (#19701) (Boshen)
+
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- e316694 codegen: Avoid sourcemap panic on `U+2028`/`U+2029` (#19548) (camc314)
+
+### ⚡ Performance
+
+- b5fa195 codegen: Remove bounds check from `SourcemapBuilder` (#19578) (overlookmotel)
+
+## [0.114.0] - 2026-02-16
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 48b0542 span: [**BREAKING**] SourceType::ts should set module to unambigious (#18873) (Boshen)
+
+## [0.111.0] - 2026-01-26
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- aed3669 parser: Parse HTML-like comments in unambiguous mode (#18442) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🐛 Bug Fixes

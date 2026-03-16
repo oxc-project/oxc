@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.25.0"
+version = "0.41.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,6 +28,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
+oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
@@ -45,6 +46,7 @@ json-strip-comments = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -65,10 +67,10 @@ napi-build = { workspace = true }
 
 [dev-dependencies]
 
-[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_arch = "riscv64", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
-[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64"), not(target_arch = "riscv64")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = [
   "skip_collect_on_exit",
   "local_dynamic_tls",

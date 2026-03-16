@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label htmlFor="js_id"><span><span><span>A label</span></span></span></label>

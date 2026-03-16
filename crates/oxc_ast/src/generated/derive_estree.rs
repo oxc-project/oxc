@@ -1632,6 +1632,7 @@ impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("attributes", &self.with_entries);
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3111,7 +3112,6 @@ impl ESTree for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => it.serialize(serializer),
             Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }

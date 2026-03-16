@@ -4,9 +4,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn prefer_reflect_apply_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Reflect.apply()` over `Function#apply()`.")
@@ -20,6 +25,7 @@ pub struct PreferReflectApply;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows the use of `Function.prototype.apply()` and suggests using `Reflect.apply()` instead.
     ///
     /// ### Why is this bad?
     ///
@@ -41,7 +47,7 @@ declare_oxc_lint!(
     PreferReflectApply,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
@@ -81,7 +87,19 @@ impl Rule for PreferReflectApply {
         if is_static_property_name_equal(member_expr, "apply")
             && matches!(call_expr.arguments.as_slice(), [first, second] if is_apply_signature(first, second))
         {
-            ctx.diagnostic(prefer_reflect_apply_diagnostic(call_expr.span));
+            ctx.diagnostic_with_suggestion(
+                prefer_reflect_apply_diagnostic(call_expr.span),
+                |fixer| {
+                    create_reflect_apply_fix(
+                        ctx,
+                        fixer,
+                        call_expr.span,
+                        member_expr.object().span(),
+                        call_expr.arguments[0].span(),
+                        call_expr.arguments[1].span(),
+                    )
+                },
+            );
             return;
         }
 
@@ -102,12 +120,38 @@ impl Rule for PreferReflectApply {
                     if iden.name == "Function"
                         && matches!(call_expr.arguments.as_slice(), [_, second, third] if is_apply_signature(second, third))
                     {
-                        ctx.diagnostic(prefer_reflect_apply_diagnostic(call_expr.span));
+                        ctx.diagnostic_with_suggestion(
+                            prefer_reflect_apply_diagnostic(call_expr.span),
+                            |fixer| {
+                                create_reflect_apply_fix(
+                                    ctx,
+                                    fixer,
+                                    call_expr.span,
+                                    call_expr.arguments[0].span(),
+                                    call_expr.arguments[1].span(),
+                                    call_expr.arguments[2].span(),
+                                )
+                            },
+                        );
                     }
                 }
             }
         }
     }
+}
+
+fn create_reflect_apply_fix(
+    ctx: &LintContext,
+    fixer: RuleFixer,
+    call_span: Span,
+    func_span: Span,
+    this_arg_span: Span,
+    args_span: Span,
+) -> RuleFix {
+    let func = ctx.source_range(func_span);
+    let this_arg = ctx.source_range(this_arg_span);
+    let args = ctx.source_range(args_span);
+    fixer.replace(call_span, format!("Reflect.apply({func}, {this_arg}, {args})"))
 }
 
 #[test]
@@ -145,8 +189,7 @@ fn test() {
         r#"foo["apply"](null, [42]);"#,
     ];
 
-    // TODO: Implement a fixer.
-    let _fix = vec![
+    let fix = vec![
         ("foo.apply(null, [42]);", "Reflect.apply(foo, null, [42]);"),
         ("foo.bar.apply(null, [42]);", "Reflect.apply(foo.bar, null, [42]);"),
         ("Function.prototype.apply.call(foo, null, [42]);", "Reflect.apply(foo, null, [42]);"),
@@ -170,5 +213,6 @@ fn test() {
     ];
 
     Tester::new(PreferReflectApply::NAME, PreferReflectApply::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

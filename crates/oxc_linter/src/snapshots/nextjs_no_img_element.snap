@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:6:19]
  5 │                         <div>

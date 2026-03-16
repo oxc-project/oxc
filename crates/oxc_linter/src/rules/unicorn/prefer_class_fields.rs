@@ -44,18 +44,40 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
+    /// ```ts
     /// class Foo {
-    ///     constructor() {
-    ///         this.bar = 1;
-    ///     }
+    ///   constructor() {
+    ///     this.bar = 1;
+    ///   }
+    /// }
+    ///
+    /// class MyError extends Error {
+    ///   constructor(message: string) {
+    ///     super(message);
+    ///     this.name = 'MyError';
+    ///   }
+    /// }
+    ///
+    /// class Foo {
+    ///   foo = "foo";
+    ///   constructor() {
+    ///     this.foo = "bar";
+    ///   }
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// class Foo {
-    ///     bar = 1;
+    ///   bar = 1;
+    /// }
+    ///
+    /// class MyError extends Error {
+    ///   name = "MyError";
+    /// }
+    ///
+    /// class Foo {
+    ///   foo = "bar";
     /// }
     /// ```
     PreferClassFields,
@@ -238,129 +260,129 @@ fn test() {
         "class Foo {constructor() {notThis.bar = 1}}",
         "class Foo {constructor() {notThis.bar = 1 + 2}}",
         "class Foo {
-				constructor() {
-					if (something) { return; }
-					this.bar = 1;
-				}
-			}",
+                constructor() {
+                    if (something) { return; }
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				foo: string = 'foo';
-			}",
+                foo: string = 'foo';
+            }",
         "declare class Foo {
-				constructor(foo?: string);
-			}",
+                constructor(foo?: string);
+            }",
     ];
 
     let fail = vec![
         "class Foo {
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				constructor() {
-					;
-					this.bar = 1;
-				}
-			}",
+                constructor() {
+                    ;
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				constructor() {
-					this.bar = 1;
-					this.baz = 2;
-				}
-			}",
+                constructor() {
+                    this.bar = 1;
+                    this.baz = 2;
+                }
+            }",
         "class Foo {
-				constructor() {
-					this.bar = 1;
-					this.bar = 2;
-				}
-			}",
+                constructor() {
+                    this.bar = 1;
+                    this.bar = 2;
+                }
+            }",
         "class Foo {
-				bar;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                bar;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				#bar;
-				constructor() {
-					this.#bar = 1;
-				}
-			}",
+                #bar;
+                constructor() {
+                    this.#bar = 1;
+                }
+            }",
         "class Foo {
-				bar = 0;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                bar = 0;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				#bar = 0;
-				constructor() {
-					this.#bar = 1;
-				}
-			}",
+                #bar = 0;
+                constructor() {
+                    this.#bar = 1;
+                }
+            }",
         "class Foo {
-				[bar];
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                [bar];
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				[bar] = 0;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                [bar] = 0;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				static bar;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                static bar;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				static bar = 0;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                static bar = 0;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				static [bar];
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                static [bar];
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-				static [bar] = 1;
-				constructor() {
-					this.bar = 1;
-				}
-			}",
+                static [bar] = 1;
+                constructor() {
+                    this.bar = 1;
+                }
+            }",
         "class Foo {
-			constructor() {
-				this.bar = 1;
-			}}",
+            constructor() {
+                this.bar = 1;
+            }}",
         "class Foo {
-			constructor() {
-				this.bar = 1;
-			}
-			static}",
+            constructor() {
+                this.bar = 1;
+            }
+            static}",
         "class Foo {
-			constructor() {
-				this.bar = 1;
-			}
-			static// comment;
-			}",
+            constructor() {
+                this.bar = 1;
+            }
+            static// comment;
+            }",
         r#"class MyError extends Error {
-				constructor(message: string) {
-					this.name = "MyError";
-				}
-			}"#,
+                constructor(message: string) {
+                    this.name = "MyError";
+                }
+            }"#,
         r#"class MyError extends Error {
-				name: string;
-				constructor(message: string) {
-					this.name = "MyError";
-				}
-			}"#,
+                name: string;
+                constructor(message: string) {
+                    this.name = "MyError";
+                }
+            }"#,
     ];
 
     let fix = vec![

@@ -1,9 +1,9 @@
-commit: 6f55d0c2
+commit: 63829c6d
 
 parser_test262 Summary:
-AST Parsed     : 46556/46556 (100.00%)
-Positive Passed: 46556/46556 (100.00%)
-Negative Passed: 4581/4581 (100.00%)
+AST Parsed     : 46917/46917 (100.00%)
+Positive Passed: 46917/46917 (100.00%)
+Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -1594,7 +1594,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: The `v` flag is a superset of `u`. Use only either of them
 
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+  × TS(1502): The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:1]
  17 │ 
  18 │ /./uv;
@@ -7020,7 +7020,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·       ─────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-call.js:16:17]
  15 │ 
  16 │ async(foo) => { super() };
@@ -7059,7 +7059,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·        ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js:16:13]
  15 │ 
  16 │ async(foo = super()) => {}
@@ -7202,7 +7202,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-body-contains-super-call.js:16:29]
  15 │ 
  16 │ (async function foo (foo) { super() })
@@ -7233,7 +7233,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                       ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-formals-contains-super-call.js:16:28]
  15 │ 
  16 │ (async function foo (foo = super()) { var bar; });
@@ -7752,7 +7752,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:18:22]
  17 │ 
  18 │ (async function*() { super(); });
@@ -7806,7 +7806,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ─────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js:18:22]
  17 │ 
  18 │ (async function*(a = super()) { });
@@ -10198,7 +10198,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
  26 │ var C = class {
  27 │   x = () => super();
@@ -10683,7 +10683,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/comp-name-init-err-contains-super.js:28:9]
  27 │ var C = class {
  28 │   [x] = super();
@@ -10700,7 +10700,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/equality-init-err-contains-super.js:27:13]
  26 │ var C = class {
  27 │   x = {} == super();
@@ -11026,7 +11026,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/literal-name-init-err-contains-super.js:27:7]
  26 │ var C = class {
  27 │   x = super();
@@ -11043,7 +11043,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   x = () => {
  28 │     var t = () => super();
@@ -11060,7 +11060,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   [x] = () => super();
@@ -11095,7 +11095,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
  25 │ var C = class {
  26 │   x = () => super();
@@ -11112,7 +11112,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   #x = () => {
  28 │     var t = () => super();
@@ -11129,7 +11129,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
  25 │ var C = class {
  26 │   #x = () => super();
@@ -11146,7 +11146,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js:26:26]
  25 │ var C = class {
  26 │   #x = () => true ? {} : super();
@@ -11163,7 +11163,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
  25 │ var C = class {
  26 │   #x = () => typeof super();
@@ -11180,7 +11180,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
  26 │ var C = class {
  27 │   static [x] = () => super();
@@ -11197,7 +11197,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
  25 │ var C = class {
  26 │   static x = () => super();
@@ -11214,7 +11214,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-private-init-err-contains-super.js:26:21]
  25 │ var C = class {
  26 │   static #x = () => super();
@@ -11231,7 +11231,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
  25 │ var C = class {
  26 │   static 'x' = () => super();
@@ -11248,7 +11248,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
  25 │ var C = class {
  26 │   'x' = () => super();
@@ -11265,7 +11265,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-ternary-init-err-contains-super.js:26:25]
  25 │ var C = class {
  26 │   x = () => true ? {} : super();
@@ -11282,7 +11282,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-typeof-init-err-contains-super.js:26:20]
  25 │ var C = class {
  26 │   x = () => typeof super();
@@ -11299,7 +11299,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   #x = () => super();
@@ -11316,7 +11316,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-literal-name-init-err-contains-super.js:27:8]
  26 │ var C = class {
  27 │   #x = super();
@@ -11333,7 +11333,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-ternary-init-err-contains-super.js:27:20]
  26 │ var C = class {
  27 │   #x = true ? {} : super();
@@ -11350,7 +11350,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-typeof-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   #x = typeof super();
@@ -11367,7 +11367,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-comp-name-init-err-contains-super.js:28:16]
  27 │ var C = class {
  28 │   static [x] = super();
@@ -11384,7 +11384,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-literal-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   static x = super();
@@ -11401,7 +11401,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-private-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   static #x = super();
@@ -11418,7 +11418,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
  26 │ var C = class {
  27 │   static 'x' = super();
@@ -11435,7 +11435,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/string-literal-name-init-err-contains-super.js:27:9]
  26 │ var C = class {
  27 │   'x' = super();
@@ -11475,6 +11475,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:15]
@@ -11491,6 +11492,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:15]
@@ -11507,6 +11509,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:41:15]
@@ -11523,6 +11526,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:41:15]
@@ -11539,6 +11543,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:41:15]
@@ -11555,6 +11560,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:41:15]
@@ -11571,6 +11577,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:41:15]
@@ -11595,6 +11602,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:15]
@@ -11611,6 +11619,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:41:15]
@@ -11651,6 +11660,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:41:15]
@@ -11667,6 +11677,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:41:15]
@@ -11691,6 +11702,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
@@ -11707,6 +11719,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
@@ -11723,6 +11736,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
@@ -11739,6 +11753,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
@@ -11755,6 +11770,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
@@ -11771,6 +11787,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
@@ -11787,6 +11804,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
@@ -11811,6 +11829,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
@@ -11827,6 +11846,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
@@ -11867,6 +11887,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
@@ -11883,6 +11904,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
@@ -11907,6 +11929,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:16]
@@ -11923,6 +11946,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:16]
@@ -11939,6 +11963,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:16]
@@ -11955,6 +11980,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:16]
@@ -11971,6 +11997,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:41:16]
@@ -11987,6 +12014,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:16]
@@ -12003,6 +12031,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:41:16]
@@ -12027,6 +12056,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:16]
@@ -12043,6 +12073,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:41:16]
@@ -12083,6 +12114,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:16]
@@ -12099,6 +12131,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:41:16]
@@ -12123,6 +12156,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
@@ -12139,6 +12173,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
@@ -12155,6 +12190,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
@@ -12171,6 +12207,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
@@ -12187,6 +12224,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
@@ -12203,6 +12241,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
@@ -12219,6 +12258,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
@@ -12243,6 +12283,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
@@ -12259,6 +12300,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
@@ -12299,6 +12341,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
@@ -12315,6 +12358,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
@@ -12339,6 +12383,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
@@ -12355,6 +12400,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
@@ -12371,6 +12417,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
@@ -12387,6 +12434,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
@@ -12403,6 +12451,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
@@ -12419,6 +12468,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
@@ -12435,6 +12485,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
@@ -12459,6 +12510,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
@@ -12475,6 +12527,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
@@ -12515,6 +12568,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
@@ -12531,6 +12585,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
@@ -12555,6 +12610,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
@@ -12571,6 +12627,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
@@ -12587,6 +12644,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
@@ -12603,6 +12661,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
@@ -12619,6 +12678,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
@@ -12635,6 +12695,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
@@ -12651,6 +12712,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
@@ -12675,6 +12737,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
@@ -12691,6 +12754,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
@@ -12731,6 +12795,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
@@ -12747,6 +12812,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]
@@ -12880,7 +12946,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │ {
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-field-on-object-destructuring.js:31:13]
  30 │   destructureX() {
  31 │     const { #x: x } = this;
@@ -13261,7 +13327,7 @@ Negative Passed: 4581/4581 (100.00%)
  37 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
  25 │   async * method() {
  26 │       super();
@@ -13269,7 +13335,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:26:7]
  25 │   async method() {
  26 │       super();
@@ -13277,7 +13343,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:26:7]
  25 │   * method() {
  26 │       super();
@@ -13285,7 +13351,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:26:7]
  25 │   get method() {
  26 │       super();
@@ -13293,7 +13359,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:26:7]
  25 │   method() {
  26 │       super();
@@ -13301,7 +13367,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:26:7]
  25 │   async * #method() {
  26 │       super();
@@ -13309,7 +13375,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:26:7]
  25 │   async #method() {
  26 │       super();
@@ -13317,7 +13383,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:26:7]
  25 │   * #method() {
  26 │       super();
@@ -13325,7 +13391,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:26:7]
  25 │   #method() {
  26 │       super();
@@ -13333,7 +13399,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:26:7]
  25 │   set method(_) {
  26 │       super();
@@ -13397,7 +13463,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:26:7]
  25 │   static async * method() {
  26 │       super();
@@ -13413,7 +13479,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:26:7]
  25 │   static async method() {
  26 │       super();
@@ -13429,7 +13495,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:26:7]
  25 │   static * method() {
  26 │       super();
@@ -13445,7 +13511,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:26:7]
  25 │   static get method() {
  26 │       super();
@@ -13461,7 +13527,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-meth-super.js:26:7]
  25 │   static method() {
  26 │       super();
@@ -13477,7 +13543,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:26:7]
  25 │   static async * #method() {
  26 │       super();
@@ -13493,7 +13559,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:26:7]
  25 │   static async #method() {
  26 │       super();
@@ -13509,7 +13575,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:26:7]
  25 │   static * #method() {
  26 │       super();
@@ -13525,7 +13591,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:26:7]
  25 │   static #method() {
  26 │       super();
@@ -13549,7 +13615,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:26:7]
  25 │   static set method(_) {
  26 │       super();
@@ -13854,7 +13920,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/ternary-init-err-contains-super.js:27:19]
  26 │ var C = class {
  27 │   x = true ? {} : super();
@@ -13871,7 +13937,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/typeof-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   x = typeof super();
@@ -17382,7 +17448,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/function/early-body-super-call.js:18:3]
  17 │ 0, function() {
  18 │   super();
@@ -17426,7 +17492,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                            ──
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/function/early-params-super-call.js:17:17]
  16 │ 
  17 │ 0, function(x = super()) {};
@@ -18162,6 +18228,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·     ──
  31 │   }
     ╰────
+  help: Did you mean '#a'?
 
   × Private identifier '#name' is not allowed outside class bodies
     ╭─[test262/test/language/expressions/in/private-field-invalid-identifier-simple.js:26:1]
@@ -19144,7 +19211,7 @@ Negative Passed: 4581/4581 (100.00%)
  18 │ })
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-body-contains-super-call.js:17:18]
  16 │ ({
  17 │   async foo () { super() }
@@ -19188,7 +19255,7 @@ Negative Passed: 4581/4581 (100.00%)
  19 │ })
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-contains-super-call.js:16:19]
  15 │ ({
  16 │   async foo(foo = super()) { }
@@ -19461,7 +19528,7 @@ Negative Passed: 4581/4581 (100.00%)
  23 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/generator-super-call-body.js:22:9]
  21 │     *foo(a) {
  22 │         super();
@@ -19469,7 +19536,7 @@ Negative Passed: 4581/4581 (100.00%)
  23 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/generator-super-call-param.js:21:14]
  20 │ var obj = {
  21 │     *foo(a = super()) {
@@ -19552,7 +19619,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/name-super-call-body.js:18:5]
  17 │   method() {
  18 │     super();
@@ -19560,7 +19627,7 @@ Negative Passed: 4581/4581 (100.00%)
  19 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/name-super-call-param.js:17:18]
  16 │ ({
  17 │   method(param = super()) {}
@@ -19568,7 +19635,7 @@ Negative Passed: 4581/4581 (100.00%)
  18 │ });
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn-inside-class.js:25:11]
  24 │   field = {
  25 │     async #m() {}
@@ -19576,7 +19643,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn.js:24:9]
  23 │ var o = {
  24 │   async #m() {}
@@ -19584,7 +19651,15 @@ Negative Passed: 4581/4581 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn.js:24:9]
+ 23 │ var o = {
+ 24 │   async #m() {}
+    ·         ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen-inside-class.js:25:13]
  24 │   field = {
  25 │     async * #m() {}
@@ -19592,7 +19667,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen.js:24:11]
  23 │ var o = {
  24 │   async * #m() {}
@@ -19600,7 +19675,15 @@ Negative Passed: 4581/4581 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen.js:24:11]
+ 23 │ var o = {
+ 24 │   async * #m() {}
+    ·           ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen-inside-class.js:25:7]
  24 │   field = {
  25 │     * #m() {}
@@ -19608,7 +19691,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen.js:24:5]
  23 │ var o = {
  24 │   * #m() {}
@@ -19616,7 +19699,15 @@ Negative Passed: 4581/4581 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen.js:24:5]
+ 23 │ var o = {
+ 24 │   * #m() {}
+    ·     ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method-inside-class.js:25:9]
  24 │   field = {
  25 │     get #m() {}
@@ -19624,7 +19715,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method.js:24:7]
  23 │ var o = {
  24 │   get #m() {}
@@ -19632,7 +19723,15 @@ Negative Passed: 4581/4581 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method.js:24:7]
+ 23 │ var o = {
+ 24 │   get #m() {}
+    ·       ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method-inside-class.js:25:5]
  24 │   field = {
  25 │     #m() {}
@@ -19640,7 +19739,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method.js:24:3]
  23 │ var o = {
  24 │   #m() {}
@@ -19648,7 +19747,15 @@ Negative Passed: 4581/4581 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method.js:24:3]
+ 23 │ var o = {
+ 24 │   #m() {}
+    ·   ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method-inside-class.js:25:9]
  24 │   field = {
  25 │     set #m(x) {}
@@ -19656,7 +19763,15 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method.js:24:7]
+ 23 │ var o = {
+ 24 │   set #m(x) {}
+    ·       ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method.js:24:7]
  23 │ var o = {
  24 │   set #m(x) {}
@@ -20523,7 +20638,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·   ──────────
  38 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[test262/test/language/global-code/new.target.js:21:1]
@@ -20531,7 +20646,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/global-code/return.js:23:1]
@@ -20540,7 +20655,7 @@ Negative Passed: 4581/4581 (100.00%)
     · ──────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/global-code/super-call-arrow.js:37:3]
  36 │ () => {
  37 │   super();
@@ -20548,7 +20663,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/global-code/super-call.js:21:1]
  20 │ 
  21 │ super();
@@ -24480,11 +24595,11 @@ Negative Passed: 4581/4581 (100.00%)
     ·   ─
     ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
     ╭─[test262/test/language/module-code/comment-single-line-html-open.js:16:1]
  15 │ 
  16 │ <!--
-    · ─
+    · ────
     ╰────
 
   × Duplicated export 'z'
@@ -24730,7 +24845,7 @@ Negative Passed: 4581/4581 (100.00%)
  16 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/module-code/early-strict-mode.js:15:5]
@@ -26247,7 +26362,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-body-contains-super-call.js:16:28]
  15 │ 
  16 │ async function foo (foo) { super() };
@@ -26286,7 +26401,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                      ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-formals-contains-super-call.js:16:27]
  15 │ 
  16 │ async function foo (foo = super()) { let bar; }
@@ -26678,6 +26793,15 @@ Negative Passed: 4581/4581 (100.00%)
  30 │       throw new Test262Error();
     ╰────
 
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/await-using/redeclaration-error-from-within-strict-mode-function-await-using.js:16:49]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (async function() { 'use strict'; { await using f = null; var f; } })
+    ·                                                 ┬             ┬
+    ·                                                 │             ╰── It can not be redeclared here
+    ·                                                 ╰── `f` has already been declared here
+    ╰────
+
   × Using declarations may not have binding patterns.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-arraybindingpattern-after-bindingidentifier.js:18:25]
  17 │ async function f() {
@@ -26728,6 +26852,24 @@ Negative Passed: 4581/4581 (100.00%)
  18 │ }
     ╰────
   help: Try inserting a semicolon here
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-caseclause.js:22:7]
+ 21 │     case 0:
+ 22 │       await using _ = null;
+    ·       ─────────────────────
+ 23 │       break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-defaultclause.js:22:7]
+ 21 │     default:
+ 22 │       await using _ = null;
+    ·       ─────────────────────
+ 23 │       break;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
@@ -27978,7 +28120,7 @@ Negative Passed: 4581/4581 (100.00%)
  17 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-body-contains-super-call.js:16:18]
  15 │ class Foo {
  16 │   async foo () { super() }
@@ -28013,7 +28155,7 @@ Negative Passed: 4581/4581 (100.00%)
  19 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js:16:19]
  15 │ class Foo {
  16 │   async foo(foo = super()) { }
@@ -29248,7 +29390,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
  26 │ class C {
  27 │   x = () => super();
@@ -29733,7 +29875,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/comp-name-init-err-contains-super.js:28:9]
  27 │ class C {
  28 │   [x] = super();
@@ -29750,7 +29892,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/equality-init-err-contains-super.js:27:13]
  26 │ class C {
  27 │   x = {} == super();
@@ -30076,7 +30218,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/literal-name-init-err-contains-super.js:27:7]
  26 │ class C {
  27 │   x = super();
@@ -30093,7 +30235,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   x = () => {
  28 │     var t = () => super();
@@ -30110,7 +30252,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   [x] = () => super();
@@ -30145,7 +30287,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
  25 │ class C {
  26 │   x = () => super();
@@ -30162,7 +30304,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   #x = () => {
  28 │     var t = () => super();
@@ -30179,7 +30321,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
  25 │ class C {
  26 │   #x = () => super();
@@ -30196,7 +30338,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-ternary-init-err-contains-super.js:26:27]
  25 │ class C {
  26 │   #x = () => false ? {} : super();
@@ -30213,7 +30355,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
  25 │ class C {
  26 │   #x = () => typeof super();
@@ -30230,7 +30372,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
  26 │ class C {
  27 │   static [x] = () => super();
@@ -30247,7 +30389,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
  25 │ class C {
  26 │   static x = () => super();
@@ -30264,7 +30406,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-private-init-err-contains-super.js:26:21]
  25 │ class C {
  26 │   static #x = () => super();
@@ -30281,7 +30423,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
  25 │ class C {
  26 │   static 'x' = () => super();
@@ -30298,7 +30440,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
  25 │ class C {
  26 │   'x' = () => super();
@@ -30315,7 +30457,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-ternary-init-err-contains-super.js:26:26]
  25 │ class C {
  26 │   x = () => false ? {} : super();
@@ -30332,7 +30474,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-typeof-init-err-contains-super.js:26:20]
  25 │ class C {
  26 │   x = () => typeof super();
@@ -30349,7 +30491,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   #x = () => super();
@@ -30366,7 +30508,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-literal-name-init-err-contains-super.js:27:8]
  26 │ class C {
  27 │   #x = super();
@@ -30383,7 +30525,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-ternary-init-err-contains-super.js:27:21]
  26 │ class C {
  27 │   #x = false ? {} : super();
@@ -30400,7 +30542,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-typeof-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   #x = typeof super();
@@ -30478,7 +30620,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-comp-name-init-err-contains-super.js:28:16]
  27 │ class C {
  28 │   static [x] = super();
@@ -30495,7 +30637,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-literal-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   static x = super();
@@ -30512,7 +30654,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-private-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   static #x = super();
@@ -30529,7 +30671,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
  26 │ class C {
  27 │   static 'x' = super();
@@ -30546,7 +30688,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/string-literal-name-init-err-contains-super.js:27:9]
  26 │ class C {
  27 │   'x' = super();
@@ -30586,6 +30728,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:38:15]
@@ -30602,6 +30745,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:38:15]
@@ -30618,6 +30762,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:38:15]
@@ -30634,6 +30779,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:38:15]
@@ -30650,6 +30796,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:38:15]
@@ -30666,6 +30813,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:38:15]
@@ -30682,6 +30830,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:38:15]
@@ -30706,6 +30855,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:38:15]
@@ -30722,6 +30872,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:38:15]
@@ -30762,6 +30913,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:38:15]
@@ -30778,6 +30930,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │   
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:38:15]
@@ -30802,6 +30955,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
@@ -30818,6 +30972,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
@@ -30834,6 +30989,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
@@ -30850,6 +31006,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
@@ -30866,6 +31023,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
@@ -30882,6 +31040,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
@@ -30898,6 +31057,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
@@ -30922,6 +31082,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
@@ -30938,6 +31099,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
@@ -30978,6 +31140,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
@@ -30994,6 +31157,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  36 │   
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
@@ -31018,6 +31182,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:38:16]
@@ -31034,6 +31199,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:38:16]
@@ -31050,6 +31216,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:38:16]
@@ -31066,6 +31233,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:38:16]
@@ -31082,6 +31250,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:38:16]
@@ -31098,6 +31267,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:38:16]
@@ -31114,6 +31284,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:38:16]
@@ -31138,6 +31309,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:38:16]
@@ -31154,6 +31326,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:38:16]
@@ -31194,6 +31367,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:38:16]
@@ -31210,6 +31384,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                     ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:38:16]
@@ -31234,6 +31409,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
@@ -31250,6 +31426,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
@@ -31266,6 +31443,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
@@ -31282,6 +31460,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
@@ -31298,6 +31477,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
@@ -31314,6 +31494,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
@@ -31330,6 +31511,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
@@ -31354,6 +31536,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
@@ -31370,6 +31553,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
@@ -31410,6 +31594,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
@@ -31426,6 +31611,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
@@ -31450,6 +31636,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
@@ -31466,6 +31653,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
@@ -31482,6 +31670,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
@@ -31498,6 +31687,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
@@ -31514,6 +31704,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
@@ -31530,6 +31721,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
@@ -31546,6 +31738,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
@@ -31570,6 +31763,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
@@ -31586,6 +31780,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
@@ -31626,6 +31821,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
@@ -31642,6 +31838,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                 ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
@@ -31666,6 +31863,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
@@ -31682,6 +31880,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
@@ -31698,6 +31897,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
@@ -31714,6 +31914,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
@@ -31730,6 +31931,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
@@ -31746,6 +31948,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
@@ -31762,6 +31965,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
@@ -31786,6 +31990,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
@@ -31802,6 +32007,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
@@ -31842,6 +32048,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
@@ -31858,6 +32065,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                   ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]
@@ -31991,7 +32199,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │ {
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-field-on-object-destructuring.js:31:13]
  30 │   destructureX() {
  31 │     const { #x: x } = this;
@@ -32372,7 +32580,7 @@ Negative Passed: 4581/4581 (100.00%)
  37 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
  25 │   async * method() {
  26 │       super();
@@ -32380,7 +32588,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:26:7]
  25 │   async method() {
  26 │       super();
@@ -32388,7 +32596,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:26:7]
  25 │   * method() {
  26 │       super();
@@ -32396,7 +32604,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:26:7]
  25 │   get method() {
  26 │       super();
@@ -32404,7 +32612,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:26:7]
  25 │   method() {
  26 │       super();
@@ -32412,7 +32620,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:26:7]
  25 │   async * #method() {
  26 │       super();
@@ -32420,7 +32628,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:26:7]
  25 │   async #method() {
  26 │       super();
@@ -32428,7 +32636,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:26:7]
  25 │   * #method() {
  26 │       super();
@@ -32436,7 +32644,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:26:7]
  25 │   #method() {
  26 │       super();
@@ -32444,7 +32652,7 @@ Negative Passed: 4581/4581 (100.00%)
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:26:7]
  25 │   set method(_) {
  26 │       super();
@@ -32508,7 +32716,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:26:7]
  25 │   static async * method() {
  26 │       super();
@@ -32524,7 +32732,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:26:7]
  25 │   static async method() {
  26 │       super();
@@ -32540,7 +32748,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:26:7]
  25 │   static * method() {
  26 │       super();
@@ -32556,7 +32764,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:26:7]
  25 │   static get method() {
  26 │       super();
@@ -32572,7 +32780,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-meth-super.js:26:7]
  25 │   static method() {
  26 │       super();
@@ -32588,7 +32796,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:26:7]
  25 │   static async * #method() {
  26 │       super();
@@ -32604,7 +32812,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:26:7]
  25 │   static async #method() {
  26 │       super();
@@ -32620,7 +32828,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:26:7]
  25 │   static * #method() {
  26 │       super();
@@ -32636,7 +32844,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:26:7]
  25 │   static #method() {
  26 │       super();
@@ -32660,7 +32868,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:26:7]
  25 │   static set method(_) {
  26 │       super();
@@ -32965,7 +33173,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/ternary-init-err-contains-super.js:27:20]
  26 │ class C {
  27 │   x = false ? {} : super();
@@ -32982,7 +33190,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/typeof-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   x = typeof super();
@@ -33567,7 +33775,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/static-init-invalid-super-call.js:21:5]
  20 │   static {
  21 │     super();
@@ -36871,7 +37079,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/function/early-body-super-call.js:18:3]
  17 │ function f() {
  18 │   super();
@@ -36915,7 +37123,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                      ──
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/function/early-params-super-call.js:17:16]
  16 │ 
  17 │ function f(x = super()) {}
@@ -38454,17 +38662,17 @@ Negative Passed: 4581/4581 (100.00%)
  22 │ }
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
     ╭─[test262/test/language/statements/switch/S12.11_A2_T1.js:22:5]
  21 │           result += 2;
  22 │ ╭─▶     default:
  23 │ │         result += 32;
  24 │ ├─▶       break;
-    · ╰──── `default` has already been declared here
+    · ╰──── First 'default' clause is here.
  25 │ ╭─▶     default:
  26 │ │         result += 32;
  27 │ ├─▶       break;
-    · ╰──── It can not be redeclared here
+    · ╰──── Another 'default' clause cannot appear here.
  28 │       }
     ╰────
 
@@ -39299,6 +39507,31 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/using/redeclaration-error-from-within-strict-mode-function-using.js:16:37]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (function() { 'use strict'; { using f = null; var f; } })
+    ·                                     ┬             ┬
+    ·                                     │             ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/statements/using/static-init-await-binding-invalid.js:26:11]
+ 25 │   static {
+ 26 │     using await = null;
+    ·           ─────
+ 27 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[test262/test/language/statements/using/static-init-await-binding-invalid.js:26:11]
+ 25 │   static {
+ 26 │     using await = null;
+    ·           ─────
+ 27 │   }
+    ╰────
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/block-scope-syntax-using-declarations-mixed-with-without-initializer.js:30:19]
  29 │ {
@@ -39365,6 +39598,24 @@ Negative Passed: 4581/4581 (100.00%)
     ·         ──
  19 │ }
     ╰────
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-caseclause.js:21:5]
+ 20 │   case 0:
+ 21 │     using _ = null;
+    ·     ───────────────
+ 22 │     break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-defaultclause.js:21:5]
+ 20 │   default:
+ 21 │     using _ = null;
+    ·     ───────────────
+ 22 │     break;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js:23:1]

@@ -264,11 +264,9 @@
   help: Remove the debugger statement
 
 Found 20 warnings and 20 errors.
-Finished in Xms on 20 files with 56 rules using X threads.
+Finished in Xms on 20 files with 58 rules using X threads.
 ```
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

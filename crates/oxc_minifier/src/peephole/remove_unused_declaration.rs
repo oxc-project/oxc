@@ -1,16 +1,16 @@
 use super::PeepholeOptimizations;
-use crate::{CompressOptionsUnused, ctx::Ctx};
+use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 
 impl<'a> PeepholeOptimizations {
-    fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
+    fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.unused != CompressOptionsUnused::Keep
             && !Self::keep_top_level_var_in_script_mode(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()
     }
 
-    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::ArrayExpression(_)
             | Expression::StringLiteral(_)
@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
@@ -67,7 +67,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_variable_declaration(
         mut stmt: Statement<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
         Some(stmt)
     }
 
-    pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::FunctionDeclaration(f) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
@@ -99,7 +99,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(c) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Do remove top level vars in script mode.
-    pub fn keep_top_level_var_in_script_mode(ctx: &Ctx<'a, '_>) -> bool {
+    pub fn keep_top_level_var_in_script_mode(ctx: &TraverseCtx<'a>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()
             && ctx.source_type().is_script()
     }
@@ -156,7 +156,7 @@ impl<'a> PeepholeOptimizations {
     /// import 'a'
     /// import 'b'
     /// ```
-    pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_import_specifiers(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.options().treeshake.invalid_import_side_effects
             || ctx.state.options.unused == CompressOptionsUnused::Keep
         {

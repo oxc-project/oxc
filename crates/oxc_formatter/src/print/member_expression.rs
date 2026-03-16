@@ -89,7 +89,7 @@ fn layout<'a>(
     // `a.b.c!` and `a.b?.c`
     // `TSNonNullExpression` is a wrapper node for `!`, and `ChainExpression` is a wrapper node for `?.`,
     // so we need to skip them to find the real parent node.
-    let mut parent = node.parent;
+    let mut parent = node.parent();
     while matches!(parent, AstNodes::TSNonNullExpression(_) | AstNodes::ChainExpression(_)) {
         parent = parent.parent();
     }

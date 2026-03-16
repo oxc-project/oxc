@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
    ╭─[self_closing_comp.tsx:1:49]
  1 │ var contentContainer = <div className="content"></div>;

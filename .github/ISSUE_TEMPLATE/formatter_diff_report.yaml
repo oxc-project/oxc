@@ -10,6 +10,8 @@ body:
       value: |
         Thanks for helping us improve Oxfmt! Please fill out the sections below to help us understand and reproduce the issue you're experiencing.
 
+        > **Tip:** You can use the "Report Diff" button in the [Oxc Playground](https://playground.oxc.rs/?t=formatter&formatterPanels=output,prettier) to auto-fill this form. Note: This currently only works for JavaScript/TypeScript code (js, jsx, ts, tsx).
+
   - type: textarea
     id: input
     attributes:

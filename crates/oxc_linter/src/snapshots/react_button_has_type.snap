@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:2]
  1 │ <button/>

@@ -22,7 +22,7 @@ fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagn
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessComputedKey {
     /// The `enforceForClassMembers` option controls whether the rule applies to
     /// class members (methods and properties).
@@ -49,7 +49,7 @@ impl Default for NoUselessComputedKey {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary computed property keys in objects and classes
+    /// Disallow unnecessary computed property keys in objects and classes.
     ///
     /// ### Why is this bad?
     ///
@@ -119,9 +119,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessComputedKey {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

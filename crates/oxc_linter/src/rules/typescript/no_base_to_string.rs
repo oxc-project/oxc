@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct NoBaseToString(Box<NoBaseToStringConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBaseToStringConfig {
     /// Whether to also check values of type `unknown`.
     /// When `true`, calling toString on `unknown` values will be flagged.
@@ -38,11 +38,11 @@ impl Default for NoBaseToStringConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule requires toString() and toLocaleString() calls to only be called on objects which provide useful information when stringified.
+    /// This rule requires `toString()` and `toLocaleString()` calls to only be called on objects which provide useful information when stringified.
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript's toString() method returns '[object Object]' on plain objects, which is not useful information. This rule prevents toString() and toLocaleString() from being called on objects that return less useful strings.
+    /// JavaScript's `toString()` method returns '[object Object]' on plain objects, which is not useful information. This rule prevents `toString()` and `toLocaleString()` from being called on objects that return less useful strings.
     ///
     /// ### Examples
     ///
@@ -78,15 +78,12 @@ declare_oxc_lint!(
     NoBaseToString(tsgolint),
     typescript,
     correctness,
-    pending,
     config = NoBaseToStringConfig,
 );
 
 impl Rule for NoBaseToString {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

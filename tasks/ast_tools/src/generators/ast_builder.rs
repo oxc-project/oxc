@@ -74,7 +74,6 @@ impl Generator for AstBuilderGenerator {
             #![allow(unused_imports)]
             #![expect(
                 clippy::default_trait_access,
-                clippy::inconsistent_struct_constructor,
                 clippy::unused_self,
             )]
 
@@ -85,10 +84,14 @@ impl Generator for AstBuilderGenerator {
             use oxc_allocator::{Allocator, Box, IntoIn, Vec};
             use oxc_syntax::{
                 comment_node::CommentNodeId,
+                node::NodeId,
                 scope::ScopeId,
                 symbol::SymbolId,
                 reference::ReferenceId
             };
+
+            ///@@line_break
+            use oxc_span::{Atom, Ident};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};
@@ -96,6 +99,47 @@ impl Generator for AstBuilderGenerator {
             ///@@line_break
             impl<'a> AstBuilder<'a> {
                 #fns
+            }
+
+            ///@@line_break
+            /// Escape special characters for template element raw value.
+            ///
+            /// Escapes: backticks, `${`, backslashes, and carriage returns.
+            fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+                let bytes = raw.as_bytes();
+                // Calculate size needed for escaped string
+                let mut extra_bytes = 0usize;
+                for i in 0..bytes.len() {
+                    extra_bytes += match bytes[i] {
+                        b'\\' | b'`' | b'\r' => 1,
+                        b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+                        _ => 0,
+                    };
+                }
+                if extra_bytes == 0 {
+                    return ast.atom(raw);
+                }
+                // Allocate directly in arena
+                let len = bytes.len() + extra_bytes;
+                let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+                let ptr = ast.allocator.alloc_layout(layout);
+                // SAFETY: `ptr` points to `len` bytes of valid memory allocated by the arena.
+                // Input is valid UTF-8, we only escape ASCII bytes, so output is also valid UTF-8.
+                #[expect(clippy::undocumented_unsafe_blocks)]
+                unsafe {
+                    let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
+                    let mut j = 0;
+                    for i in 0..bytes.len() {
+                        match bytes[i] {
+                            b'\\' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'\\'; j += 2; }
+                            b'`' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'`'; j += 2; }
+                            b'$' if bytes.get(i + 1) == Some(&b'{') => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'$'; j += 2; }
+                            b'\r' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'r'; j += 2; }
+                            b => { *escaped.get_unchecked_mut(j) = b; j += 1; }
+                        }
+                    }
+                    Atom::from(std::str::from_utf8_unchecked(escaped))
+                }
             }
         };
 
@@ -118,6 +162,8 @@ struct Param<'d> {
     is_default: bool,
     /// `true` if is `CommentNodeId` field
     is_comment_node_id: bool,
+    /// `true` if is `node_id` field
+    is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
     ///   e.g. `name: A where A: Into<Atom<'a>>`.
@@ -165,7 +211,8 @@ fn generate_builder_methods_for_struct(
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
     let (fn_name_postfix, doc_postfix) = if has_default_fields {
-        let default_params = params.iter().filter(|param| param.is_default);
+        // Exclude node_id from the list of default params (it's always set to NodeId::DUMMY)
+        let default_params = params.iter().filter(|param| param.is_default && !param.is_node_id);
         let fn_name_postfix = format!(
             "_with_{}",
             default_params.clone().map(|param| param.field.name()).join("_and_")
@@ -231,7 +278,10 @@ fn generate_builder_methods_for_struct_impl(
     let struct_ident = struct_def.ident();
     let struct_ty = struct_def.ty(schema);
 
-    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
+    let args = params
+        .iter()
+        .filter(|param| !param.is_comment_node_id && !param.is_node_id)
+        .map(|param| &param.ident);
 
     let mut fn_name_base = struct_def.snake_name();
     if !fn_name_postfix.is_empty() {
@@ -262,13 +312,32 @@ fn generate_builder_methods_for_struct_impl(
 
     let params_docs = generate_doc_comment_for_params(params);
 
+    // Special case for TemplateElement: add `escape_raw` parameter
+    let (extra_params, body) = if struct_name == "TemplateElement" {
+        let extra_params = quote! { , escape_raw: bool };
+        let body = quote! {
+            let value = if escape_raw {
+                TemplateElementValue {
+                    raw: escape_template_element_raw(value.raw.as_str(), self),
+                    cooked: value.cooked,
+                }
+            } else {
+                value
+            };
+            #struct_ident { #fields }
+        };
+        (extra_params, body)
+    } else {
+        (quote! {}, quote! { #struct_ident { #fields } })
+    };
+
     let method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
-            #struct_ident { #fields }
+        pub fn #fn_name #generic_params (self, #fn_params #extra_params) -> #struct_ty #where_clause {
+            #body
         }
     };
 
@@ -345,7 +414,9 @@ fn get_struct_params<'s>(
             }
 
             let generic_details = match type_def {
-                TypeDef::Primitive(primitive_def) if primitive_def.name() == "Atom" => {
+                TypeDef::Primitive(primitive_def)
+                    if matches!(primitive_def.name(), "Atom" | "Ident") =>
+                {
                     atom_generic_count += 1;
                     Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
                 }
@@ -380,12 +451,14 @@ fn get_struct_params<'s>(
             let fn_param = quote!( #field_ident: #fn_param_ty );
 
             let is_comment_node_id = field.type_id == comment_node_id_type_id;
+            let is_node_id = field.name() == "node_id";
             Param {
                 field,
                 ident: field_ident,
                 fn_param,
                 is_default,
                 is_comment_node_id,
+                is_node_id,
                 generic_type,
             }
         })
@@ -424,7 +497,12 @@ fn get_struct_fn_params_and_fields(
     let fn_params = params.iter().filter_map(|param| {
         let param_ident = &param.ident;
 
-        if param.is_default {
+        // Special case: node_id always uses NodeId::DUMMY and is never a parameter
+        // Must check before is_default to handle cases where node_id might be marked as default
+        if param.is_node_id {
+            fields.push(quote!( #param_ident: Cell::new(NodeId::DUMMY) ));
+            return None;
+        } else if param.is_default {
             if include_default_fields {
                 // Builder functions which take default fields receive the innermost type as param.
                 // So wrap the param's value in `Cell::new(...)`, or `Some(...)` if necessary.
@@ -504,7 +582,8 @@ fn generate_builder_method_for_enum_variant(
     let variant_ident = variant.ident();
 
     let output = has_default_fields.then(|| {
-        let default_params = params.iter().filter(|param| param.is_default);
+        // Exclude node_id from the list of default params (it's always set to NodeId::DUMMY)
+        let default_params = params.iter().filter(|param| param.is_default && !param.is_node_id);
         let fn_name_postfix = format!(
             "_with_{}",
             default_params.clone().map(|param| param.field.name()).join("_and_")
@@ -562,9 +641,14 @@ fn generate_builder_method_for_enum_variant_impl(
     is_boxed: bool,
 ) -> TokenStream {
     let fn_name = format_ident!("{}{}", fn_name, fn_name_postfix);
-    let fn_params =
-        params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.fn_param);
-    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
+    let fn_params = params
+        .iter()
+        .filter(|param| !param.is_comment_node_id && !param.is_node_id)
+        .map(|param| &param.fn_param);
+    let args = params
+        .iter()
+        .filter(|param| !param.is_comment_node_id && !param.is_node_id)
+        .map(|param| &param.ident);
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
@@ -660,18 +744,19 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
         return quote!();
     }
 
-    let lines = params.iter().filter(|param| !param.is_comment_node_id).map(|param| {
-        let field = param.field;
-        let field_name = field.name();
-        let field_comment = if let Some(field_comment) = field.doc_comment.as_deref() {
-            format!(" * `{field_name}`: {field_comment}")
-        } else if field.name() == "span" {
-            " * `span`: The [`Span`] covering this node".to_string()
-        } else {
-            format!(" * `{field_name}`")
-        };
-        quote!( #[doc = #field_comment] )
-    });
+    let lines =
+        params.iter().filter(|param| !param.is_comment_node_id && !param.is_node_id).map(|param| {
+            let field = param.field;
+            let field_name = field.name();
+            let field_comment = if let Some(field_comment) = field.doc_comment.as_deref() {
+                format!(" * `{field_name}`: {field_comment}")
+            } else if field.name() == "span" {
+                " * `span`: The [`Span`] covering this node".to_string()
+            } else {
+                format!(" * `{field_name}`")
+            };
+            quote!( #[doc = #field_comment] )
+        });
 
     quote! {
         ///

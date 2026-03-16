@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NewForBuiltins,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NewForBuiltins {
@@ -158,8 +159,8 @@ fn test() {
         "const foo = new BigInt64Array()",
         "const foo = new BigUint64Array()",
         "const foo = new DataView()",
-        "const foo = new Date()",
         "const foo = new Error()",
+        "const foo = new Float16Array()",
         "const foo = new Float32Array()",
         "const foo = new Float64Array()",
         "const foo = new Function()",
@@ -182,27 +183,29 @@ fn test() {
         "const foo = Number()",
         "const foo = String()",
         "const foo = Symbol()",
-        r"
-            import { Map } from 'immutable';
-            const m = Map();
-        ",
-        r"
-        	const {Map} = require('immutable');
-        	const foo = Map();
-        ",
-        r"
-        	const {String} = require('guitar');
-        	const lowE = new String();
-        ",
-        r"
-        	import {String} from 'guitar';
-        	const lowE = new String();
-        ",
+        "
+                        import { Map } from 'immutable';
+                        const m = Map();
+                    ",
+        "
+                        const {Map} = require('immutable');
+                        const foo = Map();
+                    ",
+        "
+                        const {String} = require('guitar');
+                        const lowE = new String();
+                    ",
+        "
+                        import {String} from 'guitar';
+                        const lowE = new String();
+                    ",
         "new Foo();Bar();",
         "Foo();new Bar();",
         "const isObject = v => Object(v) === v;",
         "const isObject = v => globalThis.Object(v) === v;",
         "(x) !== Object(x)",
+        // r#"new Symbol("")"#, // {"globals": {"Symbol": "off"}},
+        "const foo = new Date();",
     ];
 
     let fail = vec![
@@ -210,24 +213,73 @@ fn test() {
         r#"const symbol = new (Symbol)("");"#,
         r#"const symbol = new /* comment */ Symbol("");"#,
         "const symbol = new Symbol;",
+        "() => {
+                return new // 1
+                    Symbol();
+            }",
+        "() => {
+                return (
+                    new // 2
+                        Symbol()
+                );
+            }",
+        "() => {
+                return new // 3
+                    (Symbol);
+            }",
+        "() => {
+                return new // 4
+                    Symbol;
+            }",
+        "() => {
+                return (
+                    new // 5
+                        Symbol
+                );
+            }",
+        "() => {
+                return (
+                    new // 6
+                        (Symbol)
+                );
+            }",
+        "() => {
+                throw new // 1
+                    Symbol();
+            }",
+        "() => {
+                return new /**/ Symbol;
+            }",
         "new globalThis.String()",
         "new global.String()",
         "new self.String()",
         "new window.String()",
+        // TODO: Fix.
+        // "const {String} = globalThis;
+        //     new String();",
+        // "const {String: RenamedString} = globalThis;
+        //     new RenamedString();",
+        // "const RenamedString = globalThis.String;
+        //     new RenamedString();",
         "globalThis.Array()",
         "global.Array()",
         "self.Array()",
         "window.Array()",
-        "globalThis.Array()",
+        // "const {Array: RenamedArray} = globalThis;
+        //     RenamedArray();",
+        // We do not support configuring globals like this:
+        // "globalThis.Array()", // {"globals": {"Array": "off"}},
+        // "const {Array} = globalThis;
+        //     Array();", // {"globals": {"Symbol": "off"}},
         "const foo = Object()",
         "const foo = Array()",
         "const foo = ArrayBuffer()",
         "const foo = BigInt64Array()",
         "const foo = BigUint64Array()",
         "const foo = DataView()",
-        "const foo = Date()",
         "const foo = Error()",
         "const foo = Error('Foo bar')",
+        // "const foo = Float16Array()",
         "const foo = Float32Array()",
         "const foo = Float64Array()",
         "const foo = Function()",
@@ -251,27 +303,36 @@ fn test() {
         "const foo = new Number('123')",
         "const foo = new String()",
         "const foo = new Symbol()",
-        r"
-			function varCheck() {
-				{
-					var WeakMap = function() {};
-				}
-				// This should not reported
-				return WeakMap()
-			}
-			function constCheck() {
-				{
-					const Array = function() {};
-				}
-				return Array()
-			}
-			function letCheck() {
-				{
-					let Map = function() {};
-				}
-				return Map()
-			}
-        ",
+        "function varCheck() {
+                {
+                    var WeakMap = function() {};
+                }
+                // This should not reported
+                return WeakMap()
+            }
+            function constCheck() {
+                {
+                    const Array = function() {};
+                }
+                return Array()
+            }
+            function letCheck() {
+                {
+                    let Map = function() {};
+                }
+                return Map()
+            }",
+        // "function foo() {
+        //         return(globalThis).Map()
+        //     }",
+        "const foo = Date();",
+        "const foo = globalThis.Date();",
+        // "function foo() {
+        //         return(globalThis).Date();
+        //     }",
+        "const foo = Date(/*comment*/);",
+        "const foo = globalThis/*comment*/.Date();",
+        "const foo = Date(bar);",
     ];
 
     Tester::new(NewForBuiltins::NAME, NewForBuiltins::PLUGIN, pass, fail).test_and_snapshot();

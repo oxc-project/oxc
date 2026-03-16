@@ -444,3 +444,35 @@ fn test_redeclaration() {
         .has_number_of_references(0) // no references to the function
         .test();
 }
+
+// https://github.com/oxc-project/oxc/issues/18719
+#[test]
+fn test_function_var_redeclaration_in_module() {
+    // Both orderings should produce a redeclaration error in module mode
+    SemanticTester::js("function a() {} var a = ''").has_error("already been declared");
+    SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
+}
+
+// https://github.com/oxc-project/oxc/issues/15961
+#[test]
+fn test_import_value_redeclaration_in_module() {
+    // Import + var
+    SemanticTester::js("import { Foo } from './foo.js'; var Foo;")
+        .has_error("already been declared");
+    SemanticTester::js("var Foo; import { Foo } from './foo.js';")
+        .has_error("already been declared");
+    // Import + let
+    SemanticTester::js("import { Foo } from './foo.js'; let Foo;")
+        .has_error("already been declared");
+    // Import + const
+    SemanticTester::js("import { Foo } from './foo.js'; const Foo = 1;")
+        .has_error("already been declared");
+    // Import + class
+    SemanticTester::js("import { Foo } from './foo.js'; class Foo {}")
+        .has_error("already been declared");
+    // Import + function
+    SemanticTester::js("import { Foo } from './foo.js'; function Foo() {}")
+        .has_error("already been declared");
+    // TypeScript should NOT report this error (declaration merging)
+    SemanticTester::ts("import { Foo } from './foo.js'; var Foo;").has_root_symbol("Foo").test();
+}

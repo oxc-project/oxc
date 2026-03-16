@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-anonymous-default-export): Assign array to a variable before exporting as module default
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ export default []

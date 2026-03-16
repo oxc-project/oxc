@@ -64,6 +64,22 @@ impl Codegen<'_> {
         }
     }
 
+    /// Print comments attached to any position in the given range `(start, end)` (exclusive).
+    /// Returns `true` if any comments were printed.
+    pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
+        if self.comments.is_empty() {
+            return false;
+        }
+        // Find and remove the first key in the range.
+        let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
+        if let Some(key) = key {
+            let comments = self.comments.remove(&key).unwrap();
+            self.print_comments(&comments);
+            return true;
+        }
+        false
+    }
+
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         if self.comments.is_empty() {
             return false;

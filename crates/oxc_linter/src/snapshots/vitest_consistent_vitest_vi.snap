@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:1:10]
  1 │ import { vitest } from "vitest";

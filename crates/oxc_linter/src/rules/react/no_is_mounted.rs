@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn no_is_mounted_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use `isMounted`")
-        .with_help("`isMounted` is on its way to being officially deprecated. You can use an `_isMounted` property to track the mounted status yourself.")
+    OxcDiagnostic::warn("Do not use `isMounted`.")
+        .with_help("`isMounted` is not supported in modern React, and does not work in class or function components.")
         .with_label(span)
 }
 
@@ -21,12 +21,12 @@ pub struct NoIsMounted;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents using `isMounted` in classes.
+    /// This rule prevents using `isMounted` in class components.
     ///
     /// ### Why is this bad?
     ///
-    /// `isMounted` is an anti-pattern, is not available when using classes,
-    /// and it is on its way to being officially deprecated.
+    /// `isMounted` is an anti-pattern, and is not available
+    /// when using classes or function components.
     ///
     /// ### Examples
     ///
@@ -34,14 +34,14 @@ declare_oxc_lint!(
     ///
     /// ```jsx
     /// class Hello extends React.Component {
-    ///     someMethod() {
-    ///         if (!this.isMounted()) {
-    ///             return;
-    ///         }
+    ///   someMethod() {
+    ///     if (!this.isMounted()) {
+    ///       return;
     ///     }
-    ///     render() {
-    ///         return <div onClick={this.someMethod.bind(this)}>Hello</div>;
-    ///     }
+    ///   }
+    ///   render() {
+    ///     return <div onClick={this.someMethod.bind(this)}>Hello</div>;
+    ///   }
     /// };
     /// ```
     NoIsMounted,

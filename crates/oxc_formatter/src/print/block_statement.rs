@@ -21,7 +21,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, "{");
 
-        let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent {
+        let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent() {
             f.context().get_cached_element(&catch.span)
         } else {
             None
@@ -51,7 +51,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
                         format_dangling_comments(self.span)
                     ))
                 );
-            } else if is_non_collapsible(self.parent) {
+            } else if is_non_collapsible(self.parent()) {
                 write!(f, hard_line_break());
             }
         } else {
@@ -83,7 +83,7 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`
-            matches!(catch.parent, AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())
+            matches!(catch.parent(), AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())
         }
         _ => true,
     }

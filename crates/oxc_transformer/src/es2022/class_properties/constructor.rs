@@ -106,7 +106,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -146,7 +146,7 @@ pub(super) struct InstanceInitScopes {
     pub constructor_scope_id: Option<ScopeId>,
 }
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Replace `super()` call(s) in constructor, if required.
     ///
     /// Returns:
@@ -236,11 +236,12 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-            params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
+            params_rest =
+                Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE));
             stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
-        stmts.extend(exprs_into_stmts(inits, ctx));
+        stmts.extend(exprs_into_stmts(inits, ctx.ast));
 
         let params = ctx.ast.alloc_formal_parameters(
             SPAN,
@@ -268,7 +269,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Insert inits into constructor body
         let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
-        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, ctx));
+        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, ctx.ast));
     }
 
     /// Create `_super` function containing instance property initializers,
@@ -311,7 +312,8 @@ impl<'a> ClassProperties<'a, '_> {
             {
                 let rest_element =
                     ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-                let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
+                let rest =
+                    ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE);
                 ctx.ast.alloc_formal_parameters(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
@@ -368,7 +370,8 @@ impl<'a> ClassProperties<'a, '_> {
         // `return this;`
         let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
         // `<inits>; return this;`
-        let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
+        let body_stmts =
+            ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx.ast).chain([return_stmt]));
         // `function() { <inits>; return this; }`
         let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
@@ -402,13 +405,13 @@ impl<'a> ClassProperties<'a, '_> {
         let init = if self.current_class().is_declaration {
             Some(super_func)
         } else {
-            let assignment = create_assignment(super_binding, super_func, ctx);
+            let assignment = create_assignment(super_binding, super_func, SPAN, ctx);
             // TODO: Why does this end up before class, not after?
             // TODO: This isn't right. Should not be adding to `insert_after_exprs` in entry phase.
             self.insert_after_exprs.push(assignment);
             None
         };
-        self.ctx.var_declarations.insert_let(super_binding, init, ctx);
+        ctx.state.var_declarations.insert_let(super_binding, init, ctx.ast);
     }
 
     /// Rename any symbols in constructor which clash with symbols used in initializers
@@ -430,7 +433,7 @@ impl<'a> ClassProperties<'a, '_> {
             // Save replacement name in `clashing_symbols`
             *name = new_name;
             // Rename symbol and binding
-            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name);
         }
 
         // Rename identifiers for clashing symbols in constructor params and body
@@ -767,13 +770,13 @@ impl<'a> ConstructorBodySuperReplacer<'a, '_> {
 
 /// Visitor to rename bindings and references.
 struct ConstructorSymbolRenamer<'a, 'v> {
-    clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
+    clashing_symbols: &'v mut FxHashMap<SymbolId, Ident<'a>>,
     ctx: &'v TraverseCtx<'a>,
 }
 
 impl<'a, 'v> ConstructorSymbolRenamer<'a, 'v> {
     fn new(
-        clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
+        clashing_symbols: &'v mut FxHashMap<SymbolId, Ident<'a>>,
         ctx: &'v TraverseCtx<'a>,
     ) -> Self {
         Self { clashing_symbols, ctx }

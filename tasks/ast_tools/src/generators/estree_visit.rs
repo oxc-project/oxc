@@ -216,11 +216,9 @@ fn generate(codegen: &Codegen) -> Codes {
         }
         /* END_IF */
 
-        const { isArray } = Array;
-
         function walkNode(node, visitors) {
             if (node == null) return;
-            if (isArray(node)) {
+            if (Array.isArray(node)) {
                 const len = node.length;
                 for (let i = 0; i < len; i++) {
                     walkNode(node[i], visitors);
@@ -513,9 +511,19 @@ fn generate(codegen: &Codegen) -> Codes {
     let visitor_type_oxlint = format!("
         import type * as ESTree from './types.d.ts';
 
-        export interface VisitorObject {{
-            {visitor_type} [key: string]: (node: ESTree.Node) => void;
+        // To understand why we need the \"Bivariance hack\", see: https://github.com/DefinitelyTyped/DefinitelyTyped/pull/20219
+        // For downsides, see: https://github.com/oxc-project/oxc/issues/18154#issuecomment-4012955607
+        type BivarianceHackHandler<Handler extends (...args: any) => any> = {{
+            bivarianceHack(...args: Parameters<Handler>): ReturnType<Handler>;
+        }}[\"bivarianceHack\"];
+
+        interface StrictVisitorObject {{
+            {visitor_type}
         }}
+
+        export type VisitorObject = {{
+            [K in keyof StrictVisitorObject]?: BivarianceHackHandler<Exclude<StrictVisitorObject[K], undefined>> | undefined;
+        }} & Record<string, BivarianceHackHandler<(node: ESTree.Node) => void> | undefined>;
     ");
 
     // Type definitions for walk.js.
@@ -528,9 +536,9 @@ fn generate(codegen: &Codegen) -> Codes {
     let walk_dts_parser = "
         import type * as ESTree from '@oxc-project/types';
 
-        type VisitFn = ((node: ESTree.Node) => void) | null;
-        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
-        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+        type VisitFn = (node: ESTree.Node) => void;
+        type EnterExit = { enter: VisitFn; exit: VisitFn };
+        type CompiledVisitors = (VisitFn | EnterExit | null)[];
 
         export declare function walkProgram(program: ESTree.Program, visitors: CompiledVisitors): void;
     ".to_string();
@@ -543,10 +551,9 @@ fn generate(codegen: &Codegen) -> Codes {
     #[rustfmt::skip]
     let walk_dts_oxlint = "
         import type { Node, Program } from './types.d.ts';
+        import type { VisitFn, EnterExit } from '../plugins/visitor.ts';
 
-        type VisitFn = ((node: Node) => void) | null;
-        type EnterExitVisitor = { enter: VisitFn; exit: VisitFn } | null;
-        type CompiledVisitors = (VisitFn | EnterExitVisitor)[];
+        type CompiledVisitors = (VisitFn | EnterExit | null)[];
 
         export declare function walkProgram(program: Program, visitors: CompiledVisitors): void;
         export declare const ancestors: Node[];

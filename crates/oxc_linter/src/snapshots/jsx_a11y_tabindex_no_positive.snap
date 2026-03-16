@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for `tabIndex`.
    ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex="1" />
