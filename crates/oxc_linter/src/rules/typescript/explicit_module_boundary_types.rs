@@ -614,6 +614,18 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         if self.rule.is_some_allowed_name(el.static_name()) {
             return;
         }
+        if let ClassElement::PropertyDefinition(prop) = &el {
+            if let Some(value) = &prop.value {
+                if matches!(
+                    get_typed_inner_expression(value),
+                    Expression::TSAsExpression(_)
+                        | Expression::TSTypeAssertion(_)
+                        | Expression::TSSatisfiesExpression(_)
+                ) {
+                    return;
+                }
+            }
+        }
 
         let is_target = self.with_target_property(el.property_key());
         walk::walk_class_element(self, el);
@@ -626,7 +638,14 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             self.scope_flags.set(ScopeFlags::SetAccessor, true);
         }
         let had_name = self.with_target_property(Some(&it.key));
-        walk::walk_object_property(self, it);
+        if !matches!(
+            get_typed_inner_expression(&it.value),
+            Expression::TSAsExpression(_)
+                | Expression::TSTypeAssertion(_)
+                | Expression::TSSatisfiesExpression(_)
+        ) {
+            walk::walk_object_property(self, it);
+        }
         self.scope_flags = prev_flags;
         self.reset_target(had_name);
     }
@@ -1562,6 +1581,42 @@ mod test {
             ",
                 None,
             ),
+            (
+                "
+            type F = () => number;
+            export const OBJ = {
+              f: (() => 42) as F,
+            };
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+            export class Class {
+              g = (() => 42) as F;
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+            export const OBJ = {
+              f: (() => 42) satisfies F,
+            };
+            ",
+                None,
+            ),
+            (
+                "
+            type F = () => number;
+            export class Class {
+              g = (() => 42) satisfies F;
+            }
+            ",
+                None,
+            ),
         ];
 
         let fail = vec![
@@ -2111,6 +2166,28 @@ mod test {
                 };
                 ",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
+                None,
+                Some(PathBuf::from("test.ts")),
+            ),
+            (
+                "
+                type F = () => number;
+                export const OBJ = {
+                  f: <F>(() => 42),
+                };
+                ",
+                None,
+                None,
+                Some(PathBuf::from("test.ts")),
+            ),
+            (
+                "
+                type F = () => number;
+                export class Class {
+                  g = <F>(() => 42);
+                }
+                ",
+                None,
                 None,
                 Some(PathBuf::from("test.ts")),
             ),
