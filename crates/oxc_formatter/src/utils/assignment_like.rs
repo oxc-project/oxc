@@ -364,7 +364,11 @@ impl<'a> AssignmentLike<'a, '_> {
                 };
                 if let Some(span) = type_span {
                     let comments = f.context().comments().comments_before(span.start);
-                    if comments.len() == 1 {
+                    // Only relocate inline comments (not own-line comments).
+                    // Own-line comments (e.g. JSDoc on its own line before the union)
+                    // must stay as leading comments of the union type so they get
+                    // proper indentation. See https://github.com/oxc-project/oxc/issues/20219
+                    if comments.len() == 1 && !comments[0].preceded_by_newline() {
                         write!(f, [FormatTrailingComments::Comments(comments)]);
                     }
                 }
