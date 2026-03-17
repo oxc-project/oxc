@@ -21,6 +21,7 @@ fn complexity_diagnostic(span: Span, name: &str, complexity: usize, max: usize) 
     OxcDiagnostic::warn(format!(
         "{name} has a complexity of {complexity}. Maximum allowed is {max}."
     ))
+    .with_help("Refactor the function by extracting logic into smaller helper functions to reduce its cyclomatic complexity.")
     .with_label(span)
 }
 

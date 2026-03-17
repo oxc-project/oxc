@@ -21,11 +21,15 @@ use crate::{
 };
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Identifier name is too short (< {config_min}).")).with_label(span)
+    OxcDiagnostic::warn(format!("Identifier name is too short (< {config_min})."))
+        .with_help(format!("Use a more descriptive name that is at least {config_min} characters long."))
+        .with_label(span)
 }
 
 fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Identifier name is too long (> {config_max}).")).with_label(span)
+    OxcDiagnostic::warn(format!("Identifier name is too long (> {config_max})."))
+        .with_help(format!("Shorten the identifier name to {config_max} characters or fewer, using abbreviations where meaning is still clear."))
+        .with_label(span)
 }
 
 const DEFAULT_MAX_LENGTH: u64 = u64::MAX;

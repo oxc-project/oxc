@@ -14,7 +14,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unmodified_loop_condition_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is not modified in this loop.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is not modified in this loop."))
+        .with_help("Ensure the loop condition variable is modified within the loop body, or refactor to avoid an infinite or trivially-exiting loop.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
