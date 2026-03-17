@@ -125,14 +125,18 @@ impl SortImportsTransform {
 
                 // Flush current line
                 if current_line_start < idx {
+                    // Always use `Hard` for the flushed line's mode.
+                    // The outer guard guarantees `mode` is `Empty` or `Hard` here,
+                    // and the empty line semantics are already captured by the `SourceLine::Empty` pushed below.
+                    let flush_mode = LineMode::Hard;
                     let line = if is_standalone_alignable_comment {
                         // Standalone alignable comment: directly create CommentOnly
-                        SourceLine::CommentOnly(current_line_start..idx, *mode)
+                        SourceLine::CommentOnly(current_line_start..idx, flush_mode)
                     } else {
                         SourceLine::from_element_range(
                             prev_elements,
                             current_line_start..idx,
-                            *mode,
+                            flush_mode,
                         )
                     };
                     lines.push(line);
