@@ -7,537 +7,627 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var x = 1;
    ·     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var x;
    ·     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ obj.e = document.body;
    ·     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:10]
  1 │ function x() {};
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ function xyz(a) {};
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ var obj = { a: 1, bc: 2 };
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:24]
  1 │ try { blah(); } catch (e) { /* pass */ }
    ·                        ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:25]
  1 │ var handler = function (e) {};
    ·                         ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:10]
  1 │ for (var i=0; i < 10; i++) { console.log(i); }
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var j=0; while (j > -10) { console.log(--j); }
    ·     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:6]
  1 │ var [i] = arr;
    ·      ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ var [,i,a] = arr;
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:9]
  1 │ var [,i,a] = arr;
    ·         ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ function foo([a]) {}
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:8]
  1 │ import x from 'module';
    ·        ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ import { x as z } from 'module';
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:17]
  1 │ import { foo as z } from 'module';
    ·                 ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:19]
  1 │ import { 'foo' as z } from 'module';
    ·                   ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ import * as x from 'module';
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:8]
  1 │ import longName from 'module';
    ·        ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:13]
  1 │ import * as longName from 'module';
    ·             ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:17]
  1 │ import { foo as longName } from 'module';
    ·                 ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 4).
    ╭─[id_length.tsx:1:5]
  1 │ var _$xt_$ = Foo(42)
    ·     ──────
    ╰────
+  help: Shorten the identifier name to 4 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 4).
    ╭─[id_length.tsx:1:5]
  1 │ var _$x$_t$ = Foo(42)
    ·     ───────
    ╰────
+  help: Shorten the identifier name to 4 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:5]
  1 │ var toString;
    ·     ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:2]
  1 │ (a) => { a * a };
    ·  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ function foo(x = 0) { }
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ class x { }
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { x() {} }
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:17]
  1 │ function foo(...x) { }
    ·                 ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ function foo({x}) { }
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:18]
  1 │ function foo({x: a}) { }
    ·                  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:18]
  1 │ function foo({x: a, longName}) { }
    ·                  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 3).
    ╭─[id_length.tsx:1:26]
  1 │ function foo({ longName: a }) {}
    ·                          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:22]
  1 │ function foo({ prop: longName }) {};
    ·                      ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:19]
  1 │ function foo({ a: b }) {};
    ·                   ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 10).
    ╭─[id_length.tsx:1:5]
  1 │ var hasOwnProperty;
    ·     ──────────────
    ╰────
+  help: Shorten the identifier name to 10 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:29]
  1 │ function foo({ a: { b: { c: d, e } } }) { }
    ·                             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:32]
  1 │ function foo({ a: { b: { c: d, e } } }) { }
    ·                                ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ var { x} = {};
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:10]
  1 │ var { x: a} = {};
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:10]
  1 │ var { a: a} = {};
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ var { prop: a } = {};
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 3).
    ╭─[id_length.tsx:1:17]
  1 │ var { longName: a } = {};
    ·                 ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ var { prop: [x] } = {};
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ var { prop: [[x]] } = {};
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:13]
  1 │ var { prop: longName } = {};
    ·             ────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:10]
  1 │ var { x: a} = {};
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:20]
  1 │ var { a: { b: { c: d } } } = {};
    ·                    ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:20]
  1 │ var { a: { b: { c: d, e } } } = {};
    ·                    ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:23]
  1 │ var { a: { b: { c: d, e } } } = {};
    ·                       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:17]
  1 │ var { a: { b: { c, e: longName } } } = {};
    ·                 ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:20]
  1 │ var { a: { b: { c: d, e: longName } } } = {};
    ·                    ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ var { a, b: { c: d, e: longName } } = {};
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:18]
  1 │ var { a, b: { c: d, e: longName } } = {};
    ·                  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:8]
  1 │ import x from 'y';
    ·        ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:12]
  1 │ export var x = 0;
    ·            ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ ({ a: obj.x.y.z } = {});
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ ({ prop: obj.x } = {});
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var x = 1;
    ·     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:12]
  1 │ var {prop: x} = foo;
    ·            ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:12]
  1 │ var foo = {x: prop};
    ·            ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:10]
  1 │ function BEFORE_send() {};
    ·          ───────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 5).
    ╭─[id_length.tsx:1:10]
  1 │ function NOTMATCHED_send() {};
    ·          ───────────────
    ╰────
+  help: Shorten the identifier name to 5 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 3).
    ╭─[id_length.tsx:1:10]
  1 │ function N() {};
    ·          ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { #x() {} }
    ·             ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { x = 1 }
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { #x = 1 }
    ·             ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too long (> 3).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { #abcdefg() {} }
    ·             ────────
    ╰────
+  help: Shorten the identifier name to 3 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 3).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { abcdefg = 1 }
    ·             ───────
    ╰────
+  help: Shorten the identifier name to 3 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too long (> 3).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { #abcdefg = 1 }
    ·             ────────
    ╰────
+  help: Shorten the identifier name to 3 characters or fewer, using abbreviations where meaning is still clear.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:21]
  1 │ export type Example<T> = T extends Array<infer U> ? U : never;
    ·                     ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:48]
  1 │ export type Example<T> = T extends Array<infer U> ? U : never;
    ·                                                ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var 𠮟 = 2
    ·     ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var 葛󠄀 = 2
    ·     ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ var myObj = { 𐌘: 1 };
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:2]
  1 │ (𐌘) => { 𐌘 * 𐌘 };
    ·  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ class 𠮟 { }
    ·       ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ class Foo { 𐌘() {} }
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ class Foo1 { #𐌘() {} }
    ·              ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ class Foo2 { 𐌘 = 1 }
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ class Foo3 { #𐌘 = 1 }
    ·              ──
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:18]
  1 │ function foo1(...𐌘) { }
    ·                  ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ function foo([𐌘]) { }
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ var [ 𐌘 ] = arr;
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ var { prop: [𐌘]} = {};
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:15]
  1 │ function foo({𐌘}) { }
    ·               ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:7]
  1 │ var { 𐌘 } = {};
    ·       ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:13]
  1 │ var { prop: 𐌘} = {};
    ·             ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:14]
  1 │ ({ prop: obj.𐌘 } = {});
    ·              ─
    ╰────
+  help: Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.

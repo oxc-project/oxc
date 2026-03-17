@@ -22,7 +22,7 @@ use crate::{
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier name is too short (< {config_min})."))
-        .with_help(format!("Use a more descriptive name that is at least {config_min} characters long."))
+        .with_help("Choose a name that communicates intent — e.g. `index` instead of `i`, or `count` instead of `n`.")
         .with_label(span)
 }
 
