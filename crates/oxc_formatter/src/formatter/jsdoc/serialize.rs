@@ -328,16 +328,23 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
             // Add a trailing blank line before the next tag when:
             // 1. This is a multi-line @example tag followed by a different kind
-            // 2. This tag's description ends with a list or code block
+            // 2. This tag's description ends with a block element AND the source
+            //    had an explicit trailing blank line (don't fabricate blank lines)
             let tag_newline_count = self.content_lines.line_count_since(lines_before);
+            let source_has_trailing_blank = {
+                let raw_ws = tag.comment().parsed_preserving_whitespace();
+                raw_ws.ends_with("\n\n")
+            };
             let needs_trailing_blank = if normalized_kind == "example" && tag_newline_count > 1 {
                 // Multi-line @example: blank line before different tag kind
                 effective_tags
                     .get(tag_idx + 1)
                     .is_some_and(|&(_, next_kind)| next_kind != normalized_kind)
             } else {
-                // Other tags: blank line if description ends with a block element
+                // Other tags: blank line if source had trailing blank and
+                // description ends with a block element
                 effective_tags.get(tag_idx + 1).is_some()
+                    && source_has_trailing_blank
                     && self.content_lines.last_line_is_block_end()
             };
             if needs_trailing_blank && !self.content_lines.last_is_empty() {

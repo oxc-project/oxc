@@ -86,7 +86,6 @@ const baz = 42;
  *
  *       const value = new BaseClass("test");
  *       functionWithArguments("arg", 0, value);
- *
  * @returns This is the return value of the function.
  */
 function qux(paramA) {}
@@ -132,7 +131,6 @@ const baz = 42;
  *
  *       const value = new BaseClass("test");
  *       functionWithArguments("arg", 0, value);
- *
  * @returns This is the return value of the function.
  */
 function qux(paramA) {}
