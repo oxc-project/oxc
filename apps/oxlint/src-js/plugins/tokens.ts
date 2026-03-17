@@ -372,10 +372,13 @@ function deserializeTokenIfNeeded(index: number): Token | null {
     }
   } else if (kind === REGEXP_KIND) {
     // Reuse cached regex descriptor object if available, otherwise create a new one.
-    // The array access is inside the `regexObjects.length > regexIndex` branch so V8 can elide the bounds check.
+    //
+    // The array access is inside the `regexIndex < regexObjects.length` branch so V8 can remove the bounds check
+    // on `regexObjects[regexIndex]`. Comparison *must* be this way around. Maglev would *not* remove bounds check
+    // if comparison was `regexObjects.length > regexIndex`, even though it's semantically equivalent.
     let regex: Regex;
     const regexIndex = tokensWithRegex.length;
-    if (regexObjects.length > regexIndex) {
+    if (regexIndex < regexObjects.length) {
       regex = regexObjects[regexIndex];
     } else {
       regexObjects.push((regex = { pattern: null!, flags: null! }));
