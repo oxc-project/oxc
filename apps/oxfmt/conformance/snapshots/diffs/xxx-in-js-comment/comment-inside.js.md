@@ -1,6 +1,6 @@
 # comment-inside.js
 
-> html embed expressions not yet implemented; css `${}` indentation bug (TODO)
+> html embed expressions not yet implemented
 
 ## Option 1
 
@@ -31,29 +31,7 @@
  
  graphql`
    ${
-@@ -32,17 +32,15 @@
-   }
- `;
- 
- css`
--  ${
--    foo
--    /* comment */
-+  ${foo
-+  /* comment */
-   }
- `;
- css`
--  ${
--    foo
--    /* comment */
-+  ${foo
-+  /* comment */
-   }
- `;
- 
- markdown`${
-@@ -61,7 +59,6 @@
+@@ -61,7 +61,6 @@
    <div>
      ${x(
        foo, // fg
@@ -103,13 +81,15 @@ graphql`
 `;
 
 css`
-  ${foo
-  /* comment */
+  ${
+    foo
+    /* comment */
   }
 `;
 css`
-  ${foo
-  /* comment */
+  ${
+    foo
+    /* comment */
   }
 `;
 

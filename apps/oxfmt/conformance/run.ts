@@ -95,8 +95,7 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }],
     notes: {
-      "comment-inside.js":
-        "html embed expressions not yet implemented; css `${}` indentation bug (TODO)",
+      "comment-inside.js": "html embed expressions not yet implemented",
     },
   },
 ];

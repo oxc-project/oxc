@@ -1,5 +1,6 @@
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     IndentWidth,
@@ -102,19 +103,40 @@ pub(super) fn format_css_doc<'a>(
                                 write_text_with_line_breaks(f, part, allocator, indent_width);
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
-                            && let Some(expr) = expressions.get(idx)
+                            && let Some(&expr) = expressions.get(idx)
                         {
-                            // Format `${expr}` directly to preserve soft line breaks
-                            // so the printer can decide line breaks based on `printWidth`.
-                            // (Regular template expressions use `RemoveSoftLinesBuffer`
-                            // which forces single-line layout.)
-                            // TODO: Expression indentation is incorrect — Prettier indents
-                            // `${ expr }` with the surrounding CSS block, but we don't.
-                            // See `multiparser-comments/comment-inside.js` css cases.
-                            write!(
-                                f,
-                                [group(&format_args!("${", expr, line_suffix_boundary(), "}"))]
-                            );
+                            // Prettier's `printTemplateExpression()` adds indent+softline when:
+                            // - the original source has newlines in the interpolation
+                            // - AND the expression is a comment-bearing node or Identifier/etc
+                            // For CSS embed, the relevant case is comments inside `${...}`.
+                            let has_newline = f.source_text().has_newline_before(expr.span().start)
+                                || f.source_text().has_newline_after(expr.span().end);
+                            let has_comment = has_newline && {
+                                let comments = f.context().comments();
+                                let leading = comments.comments_before(expr.span().start);
+                                let trailing =
+                                    comments.comments_before_character(expr.span().start, b'}');
+                                !leading.is_empty() || !trailing.is_empty()
+                            };
+
+                            let format_expr = format_with(|f| {
+                                if has_comment {
+                                    write!(
+                                        f,
+                                        [
+                                            indent(&format_args!(
+                                                soft_line_break(),
+                                                expr,
+                                                line_suffix_boundary()
+                                            )),
+                                            soft_line_break()
+                                        ]
+                                    );
+                                } else {
+                                    write!(f, [expr, line_suffix_boundary()]);
+                                }
+                            });
+                            write!(f, [group(&format_args!("${", format_expr, "}"))]);
                         }
                     }
                 }

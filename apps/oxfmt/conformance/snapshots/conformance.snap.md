@@ -68,4 +68,4 @@
 
 | File | Note |
 | :--- | :--- |
-| [comment-inside.js](diffs/xxx-in-js-comment/comment-inside.js.md) | html embed expressions not yet implemented; css `${}` indentation bug (TODO) |
+| [comment-inside.js](diffs/xxx-in-js-comment/comment-inside.js.md) | html embed expressions not yet implemented |
