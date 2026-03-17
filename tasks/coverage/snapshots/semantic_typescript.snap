@@ -22822,9 +22822,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_field", "dec", "field3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_field", "field3"]
-Reference flags mismatch for "_field":
-after transform: ReferenceId(15): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -22864,9 +22861,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/c
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_defineProperty", "_field", "_field2", "dec", "field3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_defineProperty", "_field", "_field2", "field3"]
-Reference flags mismatch for "_field":
-after transform: ReferenceId(15): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -22896,9 +22890,6 @@ rebuilt        : SymbolId(7): Span { start: 199, end: 200 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(7): [ReferenceId(24)]
 rebuilt        : SymbolId(7): []
-Reference flags mismatch for "_field":
-after transform: ReferenceId(16): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>

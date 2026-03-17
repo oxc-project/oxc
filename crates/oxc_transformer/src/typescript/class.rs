@@ -206,11 +206,7 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub(super) fn transform_class_on_exit(
-        &self,
-        class: &mut Class<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
@@ -220,6 +216,9 @@ impl<'a> TypeScript<'a> {
                 && prop.value.is_none()
                 && !prop.key.is_private_identifier()
             {
+                if let Some(key) = prop.key.as_expression() {
+                    return key_needs_temp_var(key, ctx);
+                }
                 return false;
             }
             true
