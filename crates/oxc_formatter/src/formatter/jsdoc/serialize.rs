@@ -527,7 +527,9 @@ fn should_skip_capitalize(tag_kind: &str) -> bool {
             | "import"
             | "memberof"
             | "module"
+            | "satisfies"
             | "see"
+            | "type"
     )
 }
 
