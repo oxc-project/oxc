@@ -206,11 +206,7 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub(super) fn transform_class_on_exit(
-        &self,
-        class: &mut Class<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
