@@ -219,8 +219,9 @@ impl LanguageServer for Backend {
                 vec![serde_json::Value::Null; needed_configurations.len()]
             };
 
-            // Snapshot all open-file entries in one read lock so the inner loop
-            // does not need to re-acquire the lock for every URI.
+            // Snapshot all open-file URIs in one read lock so we don't need to
+            // re-acquire the lock just to iterate the list of URIs. Individual
+            // document lookups still take their own read lock per URI.
             let known_uris = self.file_system.read().await.keys();
             // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
