@@ -9,7 +9,7 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{CompactStr, GetSpan, Ident, IdentHashSet, Span};
 use oxc_syntax::node::NodeId;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
@@ -325,9 +325,17 @@ struct ExplicitTypesChecker<'a, 'c> {
     /// Spans of methods that have overload signatures in the current class.
     /// Pre-computed in `visit_class` to avoid storing a reference to `ClassBody`.
     overloaded_methods: FxHashSet<Span>,
+    /// Names of top-level functions that have overload signatures.
+    /// Pre-computed once at checker creation from the program body.
+    overloaded_functions: IdentHashSet<'a>,
 }
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
+        let overloaded_functions = if rule.allow_overload_functions {
+            Self::collect_overloaded_functions(&ctx.nodes().program().body)
+        } else {
+            IdentHashSet::default()
+        };
         Self {
             rule,
             ctx,
@@ -336,6 +344,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             fn_returns: FxHashMap::default(),
             scope_flags: ScopeFlags::empty(),
             overloaded_methods: FxHashSet::default(),
+            overloaded_functions,
         }
     }
     // fn target_span(&self) -> Option<Span> {
@@ -413,12 +422,56 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         }
     }
 
-    /// Checks whether `func` is part of an overload set by looking for sibling
-    /// function declarations with the same name but no body (overload signatures).
+    /// Checks whether `func` is part of an overload set by checking the
+    /// pre-computed set of overloaded function names.
     fn function_has_overload_signatures(&self, func: &Function<'a>) -> bool {
-        let func_name = func.name();
-        let program = self.ctx.nodes().program();
-        has_overload_in_statements(&program.body, func_name)
+        match func.name() {
+            Some(name) => self.overloaded_functions.contains(&name),
+            // unnamed export default functions: check if any unnamed overload exists
+            None => self.overloaded_functions.iter().any(|n| n.is_empty()),
+        }
+    }
+
+    /// Scans top-level statements once to collect names of functions that have
+    /// overload signatures (declarations without a body).
+    fn collect_overloaded_functions(
+        statements: &oxc_allocator::Vec<'a, Statement<'a>>,
+    ) -> IdentHashSet<'a> {
+        let mut overloads = IdentHashSet::default();
+        for statement in statements {
+            let candidate = match statement {
+                Statement::FunctionDeclaration(func) => func.as_ref(),
+                match_module_declaration!(Statement) => match statement.to_module_declaration() {
+                    ModuleDeclaration::ExportNamedDeclaration(named) => match &named.declaration {
+                        Some(Declaration::FunctionDeclaration(func)) => func.as_ref(),
+                        _ => continue,
+                    },
+                    ModuleDeclaration::ExportDefaultDeclaration(default) => {
+                        match &default.declaration {
+                            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                                func.as_ref()
+                            }
+                            _ => continue,
+                        }
+                    }
+                    _ => continue,
+                },
+                _ => continue,
+            };
+            // Only collect overload signatures (no body, or TSDeclareFunction)
+            if candidate.body.is_some()
+                && !matches!(candidate.r#type, FunctionType::TSDeclareFunction)
+            {
+                continue;
+            }
+            if let Some(name) = candidate.name() {
+                overloads.insert(name);
+            } else {
+                // unnamed export default overload
+                overloads.insert(Ident::empty());
+            }
+        }
+        overloads
     }
 
     /// Pre-computes which methods in `class_body` have overload signatures,
@@ -807,49 +860,6 @@ fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
         get_typed_inner_expression(expr),
         Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
     )
-}
-
-/// Checks if a function with the given name has overload signatures among
-/// the provided statements (e.g., program body or module block).
-///
-/// A function has overload signatures if there exists a sibling function
-/// declaration (including TSDeclareFunction, export named, or export default)
-/// with the same name and no body.
-fn has_overload_in_statements(
-    statements: &oxc_allocator::Vec<'_, Statement<'_>>,
-    impl_name: Option<Ident<'_>>,
-) -> bool {
-    statements.iter().any(|statement| {
-        let candidate = match statement {
-            Statement::FunctionDeclaration(func) => func.as_ref(),
-            match_module_declaration!(Statement) => match statement.to_module_declaration() {
-                ModuleDeclaration::ExportNamedDeclaration(named) => match &named.declaration {
-                    Some(Declaration::FunctionDeclaration(func)) => func.as_ref(),
-                    _ => return false,
-                },
-                ModuleDeclaration::ExportDefaultDeclaration(default) => {
-                    match &default.declaration {
-                        ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.as_ref(),
-                        _ => return false,
-                    }
-                }
-                _ => return false,
-            },
-            _ => return false,
-        };
-
-        // Only consider overload signatures (no body, or TSDeclareFunction)
-        if candidate.body.is_some() && !matches!(candidate.r#type, FunctionType::TSDeclareFunction)
-        {
-            return false;
-        }
-
-        match (impl_name, candidate.name()) {
-            (None, None) => true, // `export default function() {}` with unnamed overloads
-            (Some(name), Some(candidate_name)) => name == candidate_name,
-            _ => false,
-        }
-    })
 }
 
 #[cfg(test)]
