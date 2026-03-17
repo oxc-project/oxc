@@ -123,11 +123,17 @@ const tokensWithLoc: Token[] = [];
 // Cached regex descriptor objects, reused across files
 const regexObjects: Regex[] = [];
 
-// Tokens whose `regex` property was set, and therefore needs clearing on reset.
+// Indices of tokens whose `regex` property was set, and therefore needs clearing on reset.
 // Regex tokens are rare, so this array is almost always very small.
-// `tokensWithRegex.length` also serves as the index into `regexObjects`
+// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+// `activeTokensWithRegexCount` also serves as the index into `regexObjects`
 // for the next regex descriptor object which can be reused.
-const tokensWithRegex: Token[] = [];
+let tokensWithRegexIndexes = new Uint32Array(0);
+let activeTokensWithRegexCount = 0;
+
+// Minimum capacity of `tokensWithRegexIndexes` array when not empty.
+// 16 elements = 64 bytes = 1 cache line.
+const REGEX_INDEXES_MIN_CAPACITY = 16;
 
 // Tracks indices of deserialized tokens so their `value` can be cleared on reset,
 // preventing source text strings from being held alive by stale `value` slices.
@@ -373,23 +379,35 @@ function deserializeTokenIfNeeded(index: number): Token | null {
   } else if (kind === REGEXP_KIND) {
     // Reuse cached regex descriptor object if available, otherwise create a new one.
     //
-    // The array access is inside the `regexIndex < regexObjects.length` branch so V8 can remove the bounds check
-    // on `regexObjects[regexIndex]`. Comparison *must* be this way around. Maglev would *not* remove bounds check
-    // if comparison was `regexObjects.length > regexIndex`, even though it's semantically equivalent.
+    // The array access is inside the `activeTokensWithRegexCount < regexObjects.length` branch so V8 can remove
+    // the bounds check on `regexObjects[activeTokensWithRegexCount]`. Comparison *must* be this way around.
+    // Maglev would *not* remove bounds check if comparison was `regexObjects.length > activeTokensWithRegexCount`,
+    // even though it's semantically equivalent.
     let regex: Regex;
-    const regexIndex = tokensWithRegex.length;
-    if (regexIndex < regexObjects.length) {
-      regex = regexObjects[regexIndex];
+    if (activeTokensWithRegexCount < regexObjects.length) {
+      regex = regexObjects[activeTokensWithRegexCount];
     } else {
       regexObjects.push((regex = { pattern: null!, flags: null! }));
+
+      // Grow `tokensWithRegexIndexes` if full. `Uint32Array`s can't grow in place,
+      // so allocate a new one (doubled, min 16), and copy the existing entries into it.
+      const indexesLen = tokensWithRegexIndexes.length;
+      if (indexesLen === activeTokensWithRegexCount) {
+        const newArr = new Uint32Array(
+          indexesLen === 0 ? REGEX_INDEXES_MIN_CAPACITY : indexesLen << 1,
+        );
+        newArr.set(tokensWithRegexIndexes, 0);
+        tokensWithRegexIndexes = newArr;
+      }
     }
     token.regex = regex;
+
+    // Store index of this token, so `resetTokens` can set this token's `regex` property back to `undefined`
+    tokensWithRegexIndexes[activeTokensWithRegexCount++] = index;
 
     const patternEnd = value.lastIndexOf("/");
     regex.pattern = value.slice(1, patternEnd);
     regex.flags = value.slice(patternEnd + 1);
-
-    tokensWithRegex.push(token);
   }
 
   token.type = TOKEN_TYPES[kind];
@@ -501,8 +519,8 @@ export function resetTokens() {
   // Reset `regex` property on regex tokens.
   // This avoids having to set it for every non-regex token in `deserializeTokenIfNeeded`.
   // Clear `pattern` and `flags` fields of `Regex` object, to release source text string slices (see above).
-  for (let i = 0, len = tokensWithRegex.length; i < len; i++) {
-    const token = tokensWithRegex[i];
+  for (let i = 0; i < activeTokensWithRegexCount; i++) {
+    const token = cachedTokens[tokensWithRegexIndexes[i]];
 
     const regex = token.regex!;
     regex.pattern = null!;
@@ -511,7 +529,7 @@ export function resetTokens() {
     token.regex = undefined;
   }
 
-  tokensWithRegex.length = 0;
+  activeTokensWithRegexCount = 0;
 
   // Clear other state
   tokens = null;
