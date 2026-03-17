@@ -92,6 +92,8 @@ export interface TemplateToken extends BaseToken {
   type: "Template";
 }
 
+type Regex = RegularExpressionToken["regex"];
+
 // Tokens for the current file.
 // Created lazily only when needed.
 export let tokens: TokenType[] | null = null;
@@ -119,7 +121,7 @@ let previousTokens: Token[] = [];
 const tokensWithLoc: Token[] = [];
 
 // Cached regex descriptor objects, reused across files
-const regexObjects: RegularExpressionToken["regex"][] = [];
+const regexObjects: Regex[] = [];
 
 // Tokens whose `regex` property was set, and therefore needs clearing on reset.
 // Regex tokens are rare, so this array is almost always very small.
@@ -140,7 +142,7 @@ let resetLoc: (token: Token) => void;
 class Token {
   type: TokenType["type"] = null!; // Overwritten later
   value: string = null!; // Overwritten later
-  regex: RegularExpressionToken["regex"] | undefined;
+  regex: Regex | undefined;
   start: number = 0;
   end: number = 0;
   range: [number, number] = [0, 0];
@@ -336,7 +338,7 @@ export function deserializeTokenIfNeeded(index: number): Token | null {
   } else if (kind === REGEXP_KIND) {
     // Reuse cached regex descriptor object if available, otherwise create a new one.
     // The array access is inside the `regexObjects.length > regexIndex` branch so V8 can elide the bounds check.
-    let regex: RegularExpressionToken["regex"];
+    let regex: Regex;
     const regexIndex = tokensWithRegex.length;
     if (regexObjects.length > regexIndex) {
       regex = regexObjects[regexIndex];
