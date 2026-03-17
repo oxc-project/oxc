@@ -15,7 +15,7 @@ use crate::{
     es2022::ES2022Options,
     es2026::ES2026Options,
     jsx::JsxOptions,
-    plugins::{PluginsOptions, StyledComponentsOptions},
+    plugins::{EmotionOptions, PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
@@ -91,6 +91,7 @@ impl TransformOptions {
             plugins: PluginsOptions {
                 styled_components: Some(StyledComponentsOptions::default()),
                 tagged_template_transform: true,
+                emotion: Some(EmotionOptions::default()),
             },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
@@ -269,6 +270,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             plugins.styled_components = Some(styled_components.clone());
         }
         plugins.tagged_template_transform = options.plugins.tagged_template_escape;
+        if let Some(emotion) = &options.plugins.emotion {
+            plugins.emotion = Some(emotion.clone());
+        }
 
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),

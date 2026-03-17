@@ -72,6 +72,8 @@ use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
 
+use super::{base36_encode, default_as_true};
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 /// Configuration for the styled-components transform.
@@ -191,10 +193,6 @@ pub struct StyledComponentsOptions {
     /// Default: `[]`
     #[serde(default)]
     pub top_level_import_paths: Vec<String>,
-}
-
-const fn default_as_true() -> bool {
-    true
 }
 
 fn default_for_meaningless_file_names() -> Vec<String> {
@@ -629,23 +627,6 @@ impl<'a> StyledComponents<'a> {
 
     /// Generates a unique file hash based on the source path or source code.
     fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
-        #[inline]
-        fn base36_encode(mut num: u64) -> InlineString<7, u8> {
-            const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
-
-            num %= 36_u64.pow(6); // 36^6, to ensure the result is <= 6 characters long.
-
-            let mut str = InlineString::new();
-            while num != 0 {
-                // SAFETY: `num < 36.pow(6)` to start with, is and divided by 36 on each turn of loop,
-                // so we cannot push more than 6 bytes. Capacity of `InlineString` is 7.
-                // All bytes in `BASE36_BYTES` are ASCII.
-                unsafe { str.push_unchecked(BASE36_BYTES[(num % 36) as usize]) };
-                num /= 36;
-            }
-            str
-        }
-
         let mut hasher = FxHasher::default();
         if state.source_path.is_absolute() {
             state.source_path.hash(&mut hasher);

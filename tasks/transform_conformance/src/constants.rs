@@ -65,6 +65,7 @@ pub const PLUGINS: &[&str] = &[
     // Built-in third-party plugins
     "plugin-styled-components",
     "plugin-tagged-template-transform",
+    "plugin-emotion",
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
