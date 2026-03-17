@@ -81,6 +81,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 43] = [
     "require-top-level-describe",
     "valid-describe-callback",
     "valid-expect",
+    "valid-title",
 ];
 
 /// List of Eslint rules that have TypeScript equivalents.
