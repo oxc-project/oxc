@@ -473,6 +473,7 @@ mod test {
         assert_eq!(config.options.deny_warnings, None);
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
+        assert_eq!(config.options.ignore_eslint_directives, None);
     }
 
     #[test]
@@ -542,6 +543,16 @@ mod test {
         )
         .unwrap();
         assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "ignoreEslintDirectives": true } }))
+                .unwrap();
+        assert_eq!(config.options.ignore_eslint_directives, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "ignoreEslintDirectives": false } }))
+                .unwrap();
+        assert_eq!(config.options.ignore_eslint_directives, Some(false));
     }
 
     #[test]
@@ -607,6 +618,28 @@ mod test {
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
         assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        // root wins over base for ignoreEslintDirectives
+        let mut root: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "ignoreEslintDirectives": true } }))
+                .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "ignoreEslintDirectives": false } }))
+                .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.ignore_eslint_directives, Some(true));
+
+        // base value propagates when root does not set ignoreEslintDirectives
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "ignoreEslintDirectives": true } }))
+                .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.ignore_eslint_directives, Some(true));
     }
 
     #[test]
