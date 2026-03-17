@@ -1,9 +1,6 @@
-# JSDoc Diffs: typedoc
+# JSDoc Diffs: typedoc (round 6, 2026-03-17)
 
-Date: 2026-03-15 (round 5)
-Prettier version: 3.8.1
-JSDoc tags: 792
-Files with diffs: 13
+13 files with diffs, 792 JSDoc tags
 
 ## `example/src/classes/CancellablePromise.ts`
 

@@ -1,6 +1,6 @@
 # JSDoc Diffs: Chart.js
 
-Date: 2026-03-15 (round 5 - post brace_depth fix)
+Date: 2026-03-17 (round 6)
 Prettier version: 3.8.1 + prettier-plugin-jsdoc 1.8.0
 JSDoc tags: 1276
 Files with diffs: 4

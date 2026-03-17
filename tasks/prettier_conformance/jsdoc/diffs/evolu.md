@@ -1,9 +1,6 @@
-# JSDoc Diffs: evolu
+# JSDoc Diffs: evolu (round 6, 2026-03-17)
 
-Date: 2026-03-15 (round 5)
-Prettier version: 3.8.1
-JSDoc tags: 134
-Files with diffs: 13
+13 files with diffs, 55 JSDoc tags
 
 ## `packages/common/src/Array.ts`
 
@@ -74,12 +71,12 @@ Files with diffs: 13
 
 ```diff
 @@ -3249,9 +3249,9 @@ export function union(...args: ReadonlyArray<any>): any {
-    *    - Detect if all arguments are objects with the same property but different
--   *         literal values (tagged unions).
-+   *      literal values (tagged unions).
-    *    - Generate a specialized function to improve validation performance for such
--   *         cases.
-+   *      cases.
+   *    - Detect if all arguments are objects with the same property but different
+-  *         literal values (tagged unions).
++  *      literal values (tagged unions).
+   *    - Generate a specialized function to improve validation performance for such
+-  *         cases.
++  *      cases.
 ```
 
 ## `packages/common/src/local-first/Db.ts`

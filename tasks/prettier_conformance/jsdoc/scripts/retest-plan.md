@@ -430,3 +430,49 @@ After fixing brace_depth reset at newlines (commit b76a6fe75e) to prevent apostr
 ### Bugs Found (round 5)
 
 See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-17, round 6)
+
+After fixing 2 bugs: inline comment width measurement for adjacent whitespace (commit 92cf372163), and inheriting useTabs in fenced code block formatting (commit f58291996e). 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 5 |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | 0                   |
+| wxt        | 1,183      | 1                | 0                   |
+| typedoc    | 792        | 13               | 0                   |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,149      | 8                | -8                  |
+| **Total**  | **7,534**  | **39**           | **-8**              |
+
+### Fixes Confirmed
+
+- **useTabs in fenced code blocks** (svelte index-client.js): Code blocks now inherit `useTabs: true` from project config, preserving tab indentation instead of converting to spaces. Resolved 8 svelte diffs from round 5.
+
+### Remaining Diff Categories (all design differences or upstream bugs)
+
+1. **`{@link}` wrapping** (~14 files across evolu, typedoc, chartjs): oxfmt keeps `{@link Foo}` atomic; prettier-plugin-jsdoc breaks across lines. Design difference.
+2. **`@type` description capitalization** (svelte 3 files, typedoc 1 file): oxfmt capitalizes first word after type in inline casts. Upstream bug (#7).
+3. **`{@includeCode}` placement** (typedoc 3 files): Each `{@includeCode}` on own line. Design difference.
+4. **Sub-list indent normalization** (evolu 2, wxt 1, typedoc 2): 4-space vs content-aligned. Design difference / improvement.
+5. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+6. **Description placement after long types** (chartjs 1 file): Different wrapping of description after inline object types.
+7. **Double-space normalization** (svelte 1 file): Collapses double space to single space in `@returns`.
+8. **`@default` blank line before tag** (typedoc 1 file): Blank line inserted before `@returns` after fenced code block.
+9. **Comment re-wrapping** (svelte 3 files): Lines re-wrapped to better fit printWidth.
+10. **Fenced code block indent** (svelte 1 file): Tab vs space alignment difference in TypeScript code block.
+
+### Performance
+
+| Repository | Without JSDoc | With JSDoc | Overhead        |
+| ---------- | ------------- | ---------- | --------------- |
+| evolu      | 2.56s         | 2.34s      | ~0% (noise)     |
+| wxt        | 2.78s         | 2.55s      | ~0% (noise)     |
+| typedoc    | 1.13s         | 1.13s      | ~0% (noise)     |
+| Chart.js   | 2.24s         | 2.07s      | ~0% (noise)     |
+| svelte     | 883ms         | 825ms      | ~0% (noise)     |
+
+### Bugs Found (round 6)
+
+See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
