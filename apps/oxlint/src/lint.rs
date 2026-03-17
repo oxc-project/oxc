@@ -1532,6 +1532,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_missing_builtin_rule() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_builtin_rule".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_nested() {
         Tester::new().with_cwd("fixtures/cli/invalid_config_nested".into()).test_and_snapshot(&[]);
     }
