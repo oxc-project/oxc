@@ -57,6 +57,14 @@ pub struct OxlintOptions {
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
+    /// Ignore `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, and
+    /// `eslint-enable` directive comments. When enabled, only `oxlint-*` directives are honored.
+    ///
+    /// This is useful for projects migrating from ESLint where legacy `eslint-*` comments
+    /// should no longer suppress diagnostics.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_eslint_directives: Option<bool>,
 }
 
 impl OxlintOptions {
@@ -67,6 +75,7 @@ impl OxlintOptions {
             && self.deny_warnings.is_none()
             && self.max_warnings.is_none()
             && self.report_unused_disable_directives.is_none()
+            && self.ignore_eslint_directives.is_none()
     }
 
     #[must_use]
@@ -79,6 +88,9 @@ impl OxlintOptions {
             report_unused_disable_directives: self
                 .report_unused_disable_directives
                 .or(other.report_unused_disable_directives),
+            ignore_eslint_directives: self
+                .ignore_eslint_directives
+                .or(other.ignore_eslint_directives),
         }
     }
 }

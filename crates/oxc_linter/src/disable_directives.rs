@@ -334,8 +334,13 @@ impl DisableDirectivesBuilder {
         }
     }
 
-    pub fn build(mut self, source_text: &str, comments: &[Comment]) -> DisableDirectives {
-        self.build_impl(source_text, comments);
+    pub fn build(
+        mut self,
+        source_text: &str,
+        comments: &[Comment],
+        ignore_eslint_directives: bool,
+    ) -> DisableDirectives {
+        self.build_impl(source_text, comments, ignore_eslint_directives);
 
         DisableDirectives {
             intervals: self.intervals,
@@ -350,7 +355,12 @@ impl DisableDirectivesBuilder {
     }
 
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn build_impl(&mut self, source_text: &str, comments: &[Comment]) {
+    fn build_impl(
+        &mut self,
+        source_text: &str,
+        comments: &[Comment],
+        ignore_eslint_directives: bool,
+    ) {
         let source_len = source_text.len() as u32;
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
@@ -370,9 +380,9 @@ impl DisableDirectivesBuilder {
             let text = text_source.trim_start();
             let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
-            if let Some(text) =
-                text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
-            {
+            if let Some(text) = text.strip_prefix("oxlint-disable").or_else(|| {
+                if ignore_eslint_directives { None } else { text.strip_prefix("eslint-disable") }
+            }) {
                 rule_name_start += 14; // eslint-disable and oxlint-disable are each 14 bytes
                 // `eslint-disable`
                 if text.trim().is_empty() {
@@ -507,9 +517,9 @@ impl DisableDirectivesBuilder {
                 }
             }
 
-            if let Some(text) =
-                text.strip_prefix("eslint-enable").or_else(|| text.strip_prefix("oxlint-enable"))
-            {
+            if let Some(text) = text.strip_prefix("oxlint-enable").or_else(|| {
+                if ignore_eslint_directives { None } else { text.strip_prefix("eslint-enable") }
+            }) {
                 rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
@@ -1107,7 +1117,7 @@ mod tests {
             let semantic = process_source(&allocator, &source_text);
             let comments = semantic.comments();
             let directives =
-                DisableDirectivesBuilder::new().build(semantic.source_text(), comments);
+                DisableDirectivesBuilder::new().build(semantic.source_text(), comments, false);
             test(comments, directives);
         }
     }
@@ -1115,8 +1125,11 @@ mod tests {
     fn test_directive_span(source_text: &str, expected_start: u32, expected_stop: u32) {
         let allocator = Allocator::default();
         let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            false,
+        );
         let interval = &directives.intervals.intervals[0];
 
         assert_eq!(interval.start, expected_start);
@@ -1360,8 +1373,11 @@ function test() {
 ";
         let allocator = Allocator::default();
         let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+        let directives = DisableDirectivesBuilder::new().build(
+            semantic.source_text(),
+            semantic.comments(),
+            false,
+        );
 
         // The function spans from line 2 to line 6 (positions 1 to 138)
         let function_span = Span::new(1, 138);

@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/json_schema.rs
+assertion_line: 30
 expression: snapshot
 ---
 ---
@@ -341,6 +342,19 @@ type: `boolean`
 Ensure warnings produce a non-zero exit code.
 
 Equivalent to passing `--deny-warnings` on the CLI.
+
+
+### options.ignoreEslintDirectives
+
+type: `boolean`
+
+
+Ignore `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, and
+`eslint-enable` directive comments. When enabled, only `oxlint-*` directives are honored.
+
+This is useful for projects migrating from ESLint where legacy `eslint-*` comments
+should no longer suppress diagnostics.
+Only supported in the root configuration file.
 
 
 ### options.maxWarnings

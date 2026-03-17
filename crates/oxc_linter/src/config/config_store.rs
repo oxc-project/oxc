@@ -345,6 +345,11 @@ impl ConfigStore {
         self.base.base.config.options.report_unused_disable_directives
     }
 
+    /// Whether `eslint-*` directive comments should be ignored, honoring only `oxlint-*` directives.
+    pub fn ignore_eslint_directives(&self) -> bool {
+        self.base.base.config.options.ignore_eslint_directives.unwrap_or(false)
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
