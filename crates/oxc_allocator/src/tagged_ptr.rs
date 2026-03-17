@@ -231,4 +231,172 @@ mod tests {
         let r = unsafe { tagged.as_ref::<u64>() };
         assert_eq!(*r, 42);
     }
+
+    /// Proof-of-concept: demonstrates that TaggedPtr can represent an Expression-like
+    /// tagged enum in 8 bytes (vs 16 bytes for the current `#[repr(C, u8)]` enum).
+    ///
+    /// This test simulates the target design where:
+    /// - Expression is a `#[repr(transparent)]` struct wrapping TaggedPtr
+    /// - All 43+ variants (discriminants 0-50) are stored as tagged pointers
+    /// - Pattern matching uses a `.kind()` view enum
+    /// - Option<Expression> is also 8 bytes (null niche)
+    #[test]
+    fn proof_of_concept_expression_like_enum() {
+        use crate::Allocator;
+
+        // Simulate AST node types (simplified).
+        // #[repr(C)] ensures span_start is at offset 0, matching real AST nodes.
+        #[repr(C)]
+        #[derive(Debug, PartialEq)]
+        struct BooleanLiteral {
+            span_start: u32,
+            span_end: u32,
+            value: bool,
+        }
+
+        #[repr(C)]
+        #[derive(Debug, PartialEq)]
+        struct NumericLiteral {
+            span_start: u32,
+            span_end: u32,
+            value: f64,
+        }
+
+        #[repr(C)]
+        #[derive(Debug, PartialEq)]
+        struct Identifier {
+            span_start: u32,
+            span_end: u32,
+            name_len: u32,
+        }
+
+        // The tagged expression type — 8 bytes!
+        #[repr(transparent)]
+        struct CompactExpression<'a>(TaggedPtr<'a>);
+
+        // View enum for matching
+        #[derive(Debug)]
+        enum CompactExpressionKind<'a> {
+            BooleanLiteral(&'a BooleanLiteral),
+            NumericLiteral(&'a NumericLiteral),
+            Identifier(&'a Identifier),
+        }
+
+        impl<'a> CompactExpression<'a> {
+            fn boolean_literal(inner: crate::Box<'a, BooleanLiteral>) -> Self {
+                Self(unsafe { TaggedPtr::new(0, crate::Box::into_non_null(inner)) })
+            }
+
+            fn numeric_literal(inner: crate::Box<'a, NumericLiteral>) -> Self {
+                Self(unsafe { TaggedPtr::new(2, crate::Box::into_non_null(inner)) })
+            }
+
+            fn identifier(inner: crate::Box<'a, Identifier>) -> Self {
+                Self(unsafe { TaggedPtr::new(7, crate::Box::into_non_null(inner)) })
+            }
+
+            fn kind(&self) -> CompactExpressionKind<'a> {
+                unsafe {
+                    match self.0.discriminant() {
+                        0 => CompactExpressionKind::BooleanLiteral(self.0.as_ref()),
+                        2 => CompactExpressionKind::NumericLiteral(self.0.as_ref()),
+                        7 => CompactExpressionKind::Identifier(self.0.as_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+            }
+
+            fn is_identifier(&self) -> bool {
+                self.0.discriminant() == 7
+            }
+
+            fn as_identifier(&self) -> Option<&'a Identifier> {
+                if self.0.discriminant() == 7 {
+                    Some(unsafe { self.0.as_ref() })
+                } else {
+                    None
+                }
+            }
+
+            /// Optimized GetSpan — single pointer deref, no match needed.
+            /// All AST nodes have span at offset 0.
+            fn span_start(&self) -> u32 {
+                // SAFETY: All variant types have span_start: u32 at offset 0.
+                unsafe { *self.0.as_ptr::<u32>().as_ref() }
+            }
+        }
+
+        // === Size assertions ===
+        assert_eq!(mem::size_of::<CompactExpression>(), 8, "Expression should be 8 bytes");
+        assert_eq!(
+            mem::size_of::<Option<CompactExpression>>(),
+            8,
+            "Option<Expression> should be 8 bytes (null niche)"
+        );
+
+        // For comparison: the current 16-byte representation
+        #[repr(C, u8)]
+        #[allow(dead_code)]
+        enum OldExpression<'a> {
+            BooleanLiteral(crate::Box<'a, BooleanLiteral>) = 0,
+            NumericLiteral(crate::Box<'a, NumericLiteral>) = 2,
+            Identifier(crate::Box<'a, Identifier>) = 7,
+        }
+        assert_eq!(mem::size_of::<OldExpression>(), 16, "Old Expression is 16 bytes");
+
+        // === Functionality tests ===
+        let allocator = Allocator::default();
+
+        // Create expressions
+        let bool_expr = CompactExpression::boolean_literal(crate::Box::new_in(
+            BooleanLiteral { span_start: 0, span_end: 4, value: true },
+            &allocator,
+        ));
+        let num_expr = CompactExpression::numeric_literal(crate::Box::new_in(
+            NumericLiteral { span_start: 10, span_end: 12, value: 42.0 },
+            &allocator,
+        ));
+        let id_expr = CompactExpression::identifier(crate::Box::new_in(
+            Identifier { span_start: 20, span_end: 23, name_len: 3 },
+            &allocator,
+        ));
+
+        // Pattern matching via kind()
+        match bool_expr.kind() {
+            CompactExpressionKind::BooleanLiteral(lit) => {
+                assert!(lit.value);
+                assert_eq!(lit.span_start, 0);
+            }
+            _ => panic!("expected BooleanLiteral"),
+        }
+
+        match num_expr.kind() {
+            CompactExpressionKind::NumericLiteral(lit) => {
+                assert_eq!(lit.value, 42.0);
+            }
+            _ => panic!("expected NumericLiteral"),
+        }
+
+        // is_* and as_* accessors
+        assert!(id_expr.is_identifier());
+        assert!(!id_expr.is_identifier() && false || id_expr.is_identifier());
+        assert_eq!(id_expr.as_identifier().unwrap().name_len, 3);
+        assert!(bool_expr.as_identifier().is_none());
+
+        // Optimized span access (single deref, no match)
+        assert_eq!(bool_expr.span_start(), 0);
+        assert_eq!(num_expr.span_start(), 10);
+        assert_eq!(id_expr.span_start(), 20);
+
+        // Option<CompactExpression> is also 8 bytes
+        let some_expr: Option<CompactExpression> = Some(CompactExpression::boolean_literal(
+            crate::Box::new_in(
+                BooleanLiteral { span_start: 0, span_end: 1, value: false },
+                &allocator,
+            ),
+        ));
+        assert!(some_expr.is_some());
+        let none_expr: Option<CompactExpression> = None;
+        assert!(none_expr.is_none());
+    }
 }

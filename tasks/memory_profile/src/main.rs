@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, TaggedPtr};
 use oxc_ast::ast::*;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -8,31 +8,38 @@ use oxc_tasks_common::TestFiles;
 
 #[expect(clippy::print_stdout)]
 fn main() {
-    // Print AST enum sizes — this is what TaggedPtr integration will shrink
-    println!("=== AST Enum Sizes ===");
-    println!("  Expression:          {} bytes", size_of::<Expression>());
-    println!("  Option<Expression>:  {} bytes", size_of::<Option<Expression>>());
-    println!("  Statement:           {} bytes", size_of::<Statement>());
-    println!("  Option<Statement>:   {} bytes", size_of::<Option<Statement>>());
-    println!("  Declaration:         {} bytes", size_of::<Declaration>());
-    println!("  TSType:              {} bytes", size_of::<TSType>());
-    println!("  Option<TSType>:      {} bytes", size_of::<Option<TSType>>());
-    println!("  MemberExpression:    {} bytes", size_of::<MemberExpression>());
-    println!("  BindingPattern:      {} bytes", size_of::<BindingPattern>());
-    println!("  ForStatementInit:    {} bytes", size_of::<ForStatementInit>());
-    println!("  AssignmentTarget:    {} bytes", size_of::<AssignmentTarget>());
+    // Show TaggedPtr size — the building block for compact AST enums
+    println!("=== TaggedPtr Sizes ===");
+    println!("  TaggedPtr:           {} bytes", size_of::<TaggedPtr>());
+    println!("  Option<TaggedPtr>:   {} bytes", size_of::<Option<TaggedPtr>>());
     println!();
 
-    // Print key AST node sizes that contain inline Expression/Statement fields
-    println!("=== Key AST Node Sizes (affected by enum shrinkage) ===");
-    println!("  BinaryExpression:      {} bytes", size_of::<BinaryExpression>());
-    println!("  ConditionalExpression: {} bytes", size_of::<ConditionalExpression>());
-    println!("  AssignmentExpression:  {} bytes", size_of::<AssignmentExpression>());
-    println!("  CallExpression:        {} bytes", size_of::<CallExpression>());
-    println!("  UnaryExpression:       {} bytes", size_of::<UnaryExpression>());
-    println!("  BindingPattern:        {} bytes", size_of::<BindingPattern>());
-    println!("  VariableDeclarator:    {} bytes", size_of::<VariableDeclarator>());
-    println!("  ReturnStatement:       {} bytes", size_of::<ReturnStatement>());
+    // Current AST enum sizes (16 bytes) — these will shrink to 8 bytes with TaggedPtr
+    println!("=== Current AST Enum Sizes (target: 8 bytes each) ===");
+    println!("  Expression:          {} bytes -> 8 bytes", size_of::<Expression>());
+    println!("  Option<Expression>:  {} bytes -> 8 bytes", size_of::<Option<Expression>>());
+    println!("  Statement:           {} bytes -> 8 bytes", size_of::<Statement>());
+    println!("  Declaration:         {} bytes -> 8 bytes", size_of::<Declaration>());
+    println!("  TSType:              {} bytes -> 8 bytes", size_of::<TSType>());
+    println!("  MemberExpression:    {} bytes -> 8 bytes", size_of::<MemberExpression>());
+    println!("  ForStatementInit:    {} bytes -> 8 bytes", size_of::<ForStatementInit>());
+    println!("  AssignmentTarget:    {} bytes -> 8 bytes", size_of::<AssignmentTarget>());
+    println!();
+
+    // Key node sizes that will cascade down
+    println!("=== Key Node Sizes (current -> projected with 8-byte enums) ===");
+    let binary = size_of::<BinaryExpression>();
+    let cond = size_of::<ConditionalExpression>();
+    let assign = size_of::<AssignmentExpression>();
+    let call = size_of::<CallExpression>();
+    let unary = size_of::<UnaryExpression>();
+    let ret = size_of::<ReturnStatement>();
+    println!("  BinaryExpression:      {:2} bytes -> {:2} bytes (-{:2})", binary, binary - 16, 16);
+    println!("  ConditionalExpression: {:2} bytes -> {:2} bytes (-{:2})", cond, cond - 24, 24);
+    println!("  AssignmentExpression:  {:2} bytes -> {:2} bytes (-{:2})", assign, assign - 16, 16);
+    println!("  CallExpression:        {:2} bytes -> {:2} bytes (- 8)", call, call - 8);
+    println!("  UnaryExpression:       {:2} bytes -> {:2} bytes (- 8)", unary, unary - 8);
+    println!("  ReturnStatement:       {:2} bytes -> {:2} bytes (- 8)", ret, ret - 8);
     println!();
 
     // Measure arena memory for real-world files
@@ -41,7 +48,7 @@ fn main() {
     let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
     let mut allocator = Allocator::default();
 
-    // Warm up so the bump allocator pre-allocates enough space
+    // Warm up
     for file in files.files() {
         allocator.reset();
         let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
@@ -59,9 +66,7 @@ fn main() {
         assert!(parsed.errors.is_empty(), "Parse errors in {}", file.file_name);
 
         let arena_after_parse = allocator.used_bytes();
-
         let _semantic = SemanticBuilder::new().build(&parsed.program);
-
         let arena_after_semantic = allocator.used_bytes();
 
         println!(
