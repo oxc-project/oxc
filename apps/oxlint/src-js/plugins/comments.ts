@@ -55,6 +55,19 @@ let previousComments: Comment[] = [];
 // Comments whose `loc` property has been accessed, and therefore needs clearing on reset.
 const commentsWithLoc: Comment[] = [];
 
+// Tracks indices of deserialized comments so their `value` can be cleared on reset,
+// preventing source text strings from being held alive by stale `value` slices.
+//
+// Pre-allocated in `initCommentsBuffer` to avoid growth during deserialization.
+// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+//
+// `deserializedCommentsLen` is the number of deserialized comments in current file.
+// If all comments have been deserialized (`allCommentsDeserialized === true`), `deserializedCommentsLen` is 0,
+// and no further indexes are written to `deserializedCommentIndexes`. `resetComments` will reset all comments,
+// up to `commentsLen`.
+let deserializedCommentIndexes = new Uint32Array(0);
+let deserializedCommentsLen = 0;
+
 // Empty comments array.
 // Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
 const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentType[];
@@ -148,6 +161,8 @@ export function deserializeComments(): void {
   }
 
   allCommentsDeserialized = true;
+  // No need to count any more, since all comments have been deserialized
+  deserializedCommentsLen = 0;
 
   debugCheckDeserializedComments();
 }
@@ -196,9 +211,14 @@ export function initCommentsBuffer(): void {
   commentsUint8 = new Uint8Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE);
   commentsUint32 = new Uint32Array(arrayBuffer, absolutePos, commentsLen * (COMMENT_SIZE >> 2));
 
-  // Grow cache if needed (one-time cost as cache warms up)
-  while (cachedComments.length < commentsLen) {
-    cachedComments.push(new Comment());
+  // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
+  // Later files will skip this step, and allocations stop.
+  if (cachedComments.length < commentsLen) {
+    do {
+      cachedComments.push(new Comment());
+    } while (cachedComments.length < commentsLen);
+
+    deserializedCommentIndexes = new Uint32Array(commentsLen);
   }
 
   // If file has a hashbang, eagerly deserialize the first comment, and set its type to `Shebang`.
@@ -223,8 +243,23 @@ export function initCommentsBuffer(): void {
  * @returns Deserialized comment
  */
 export function getComment(index: number): CommentType {
-  const comment = deserializeCommentIfNeeded(index);
-  return comment === null ? cachedComments[index] : comment;
+  // Skip all other checks if all comments have been deserialized
+  if (!allCommentsDeserialized) {
+    const comment = deserializeCommentIfNeeded(index);
+
+    if (comment !== null) {
+      // Comment was newly deserialized.
+      // Record the comment so its `value` can be cleared on reset, preventing source text strings
+      // from being held alive by stale `value` slices.
+      // This is in `getComment` rather than `deserializeCommentIfNeeded` so the bulk path
+      // (`deserializeComments`) skips the tracking - it uses `allCommentsDeserialized` instead.
+      deserializedCommentIndexes[deserializedCommentsLen++] = index;
+      return comment;
+    }
+  }
+
+  // Comment was already deserialized
+  return cachedComments[index];
 }
 
 /**
@@ -235,7 +270,7 @@ export function getComment(index: number): CommentType {
  * @param index - Comment index in the comments buffer
  * @returns `Comment` object if newly deserialized, or `null` if already deserialized
  */
-export function deserializeCommentIfNeeded(index: number): Comment | null {
+function deserializeCommentIfNeeded(index: number): Comment | null {
   const pos = index << COMMENT_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
@@ -324,14 +359,38 @@ function debugCheckDeserializedComments(): void {
  * will recalculate it when the comment is reused for a different file.
  */
 export function resetComments(): void {
+  // Early exit if comments were never accessed (e.g. no rules used comments-related methods)
+  if (commentsUint32 === null) return;
+
+  // Clear `value` property of deserialized comments to release source text string slices.
+  // Without this, V8's SlicedString optimization keeps the entire source text alive
+  // as long as any comment's `value` (which is a slice of it) exists.
+  if (allCommentsDeserialized === false) {
+    // Only a subset of comments have been deserialized, so clear only those
+    for (let i = 0; i < deserializedCommentsLen; i++) {
+      cachedComments[deserializedCommentIndexes[i]].value = null!;
+    }
+
+    deserializedCommentsLen = 0;
+  } else {
+    // All comments have been deserialized, so clear them all
+    for (let i = 0; i < commentsLen; i++) {
+      cachedComments[i].value = null!;
+    }
+
+    allCommentsDeserialized = false;
+  }
+
+  // Reset `#loc` on comments where `loc` has been accessed
   for (let i = 0, len = commentsWithLoc.length; i < len; i++) {
     resetCommentLoc(commentsWithLoc[i]);
   }
+
   commentsWithLoc.length = 0;
 
+  // Reset other state
   comments = null;
   commentsUint8 = null;
   commentsUint32 = null;
   commentsLen = 0;
-  allCommentsDeserialized = false;
 }

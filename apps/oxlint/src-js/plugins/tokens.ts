@@ -129,6 +129,19 @@ const regexObjects: Regex[] = [];
 // for the next regex descriptor object which can be reused.
 const tokensWithRegex: Token[] = [];
 
+// Tracks indices of deserialized tokens so their `value` can be cleared on reset,
+// preventing source text strings from being held alive by stale `value` slices.
+//
+// Pre-allocated in `initTokensBuffer` to avoid growth during deserialization.
+// `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
+//
+// `deserializedTokensLen` is the number of deserialized tokens in current file.
+// If all tokens have been deserialized (`allTokensDeserialized === true`), `deserializedTokensLen` is 0,
+// and no further indexes are written to `deserializedTokenIndexes`. `resetTokens` will reset all tokens,
+// up to `tokensLen`.
+let deserializedTokenIndexes = new Uint32Array(0);
+let deserializedTokensLen = 0;
+
 // Reset `#loc` field on a `Token` class instance
 let resetLoc: (token: Token) => void;
 
@@ -245,6 +258,8 @@ export function deserializeTokens(): void {
   }
 
   allTokensDeserialized = true;
+  // No need to count any more, since all tokens have been deserialized
+  deserializedTokensLen = 0;
 
   debugCheckDeserializedTokens();
 }
@@ -277,9 +292,14 @@ export function initTokensBuffer(): void {
   tokensUint8 = new Uint8Array(arrayBuffer, absolutePos, tokensLen << TOKEN_SIZE_SHIFT);
   tokensUint32 = new Uint32Array(arrayBuffer, absolutePos, tokensLen << (TOKEN_SIZE_SHIFT - 2));
 
-  // Grow cache if needed (one-time cost as cache warms up)
-  while (cachedTokens.length < tokensLen) {
-    cachedTokens.push(new Token());
+  // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
+  // Later files will skip this step, and allocations stop.
+  if (cachedTokens.length < tokensLen) {
+    do {
+      cachedTokens.push(new Token());
+    } while (cachedTokens.length < tokensLen);
+
+    deserializedTokenIndexes = new Uint32Array(tokensLen);
   }
 
   // Check buffer data has valid ranges and ascending order
@@ -295,8 +315,23 @@ export function initTokensBuffer(): void {
  * @returns Deserialized token
  */
 export function getToken(index: number): TokenType {
-  const token = deserializeTokenIfNeeded(index);
-  return (token === null ? cachedTokens[index] : token) as TokenType;
+  // Skip all other checks if all tokens have been deserialized
+  if (!allTokensDeserialized) {
+    const token = deserializeTokenIfNeeded(index);
+
+    if (token !== null) {
+      // Token was newly deserialized.
+      // Record the token so its `value` can be cleared on reset, preventing source text strings
+      // from being held alive by stale `value` slices.
+      // This is in `getToken` rather than `deserializeTokenIfNeeded` so the bulk path
+      // (`deserializeTokens`) skips the tracking - it uses `allTokensDeserialized` instead.
+      deserializedTokenIndexes[deserializedTokensLen++] = index;
+      return token as TokenType;
+    }
+  }
+
+  // Token was already deserialized
+  return cachedTokens[index] as TokenType;
 }
 
 /**
@@ -307,7 +342,7 @@ export function getToken(index: number): TokenType {
  * @param index - Token index in the tokens buffer
  * @returns `Token` object if newly deserialized, or `null` if already deserialized
  */
-export function deserializeTokenIfNeeded(index: number): Token | null {
+function deserializeTokenIfNeeded(index: number): Token | null {
   const pos = index << TOKEN_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
@@ -343,7 +378,7 @@ export function deserializeTokenIfNeeded(index: number): Token | null {
     if (regexObjects.length > regexIndex) {
       regex = regexObjects[regexIndex];
     } else {
-      regexObjects.push((regex = { pattern: "", flags: "" }));
+      regexObjects.push((regex = { pattern: null!, flags: null! }));
     }
     token.regex = regex;
 
@@ -431,19 +466,53 @@ function debugCheckDeserializedTokens(): void {
  * will recalculate it when the token is reused for a different file.
  */
 export function resetTokens() {
+  // Early exit if tokens were never accessed (e.g. no rules used tokens-related methods)
+  if (tokensUint32 === null) return;
+
+  // Clear `value` property of deserialized tokens to release source text string slices.
+  // Without this, V8's SlicedString optimization keeps the entire source text alive
+  // as long as any token's `value` (which is a slice of it) exists.
+  if (allTokensDeserialized === false) {
+    // Only a subset of tokens have been deserialized, so clear only those
+    for (let i = 0; i < deserializedTokensLen; i++) {
+      cachedTokens[deserializedTokenIndexes[i]].value = null!;
+    }
+
+    deserializedTokensLen = 0;
+  } else {
+    // All tokens have been deserialized, so clear them all
+    for (let i = 0; i < tokensLen; i++) {
+      cachedTokens[i].value = null!;
+    }
+
+    allTokensDeserialized = false;
+  }
+
+  // Reset `#loc` on tokens where `loc` has been accessed
   for (let i = 0, len = tokensWithLoc.length; i < len; i++) {
     resetLoc(tokensWithLoc[i]);
   }
+
   tokensWithLoc.length = 0;
 
+  // Reset `regex` property on regex tokens.
+  // This avoids having to set it for every non-regex token in `deserializeTokenIfNeeded`.
+  // Clear `pattern` and `flags` fields of `Regex` object, to release source text string slices (see above).
   for (let i = 0, len = tokensWithRegex.length; i < len; i++) {
-    tokensWithRegex[i].regex = undefined;
+    const token = tokensWithRegex[i];
+
+    const regex = token.regex!;
+    regex.pattern = null!;
+    regex.flags = null!;
+
+    token.regex = undefined;
   }
+
   tokensWithRegex.length = 0;
 
+  // Clear other state
   tokens = null;
   tokensUint8 = null;
   tokensUint32 = null;
   tokensLen = 0;
-  allTokensDeserialized = false;
 }
