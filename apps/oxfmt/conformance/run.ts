@@ -56,9 +56,7 @@ const categories: Category[] = [
       { dir: join(EDGE_CASES_DIR, "gql-in-js") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
-    },
+    notes: {},
   },
   {
     name: "css-in-js",
@@ -78,6 +76,27 @@ const categories: Category[] = [
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
       "styled-components.js": "`Xxx.extend` not recognized as tag",
+    },
+  },
+  {
+    name: "xxx-in-js-comment",
+    sources: [
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-html/language-comment"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      {
+        dir: join(PRETTIER_FIXTURES_DIR, "js/multiparser-comments"),
+        ext: ".js",
+        excludes: ["format.test.js"],
+      },
+      { dir: join(EDGE_CASES_DIR, "xxx-in-js-comment") },
+    ],
+    optionSets: [{ printWidth: 80 }],
+    notes: {
+      "comment-inside.js":
+        "html embed expressions not yet implemented; css `${}` indentation bug (TODO)",
     },
   },
 ];

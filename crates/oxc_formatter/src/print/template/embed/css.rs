@@ -108,6 +108,9 @@ pub(super) fn format_css_doc<'a>(
                             // so the printer can decide line breaks based on `printWidth`.
                             // (Regular template expressions use `RemoveSoftLinesBuffer`
                             // which forces single-line layout.)
+                            // TODO: Expression indentation is incorrect — Prettier indents
+                            // `${ expr }` with the surrounding CSS block, but we don't.
+                            // See `multiparser-comments/comment-inside.js` css cases.
                             write!(
                                 f,
                                 [group(&format_args!("${", expr, line_suffix_boundary(), "}"))]

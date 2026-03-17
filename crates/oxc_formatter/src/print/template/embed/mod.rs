@@ -55,6 +55,60 @@ pub(super) fn try_format_graphql_call<'a>(
     graphql::format_graphql_doc(template, f)
 }
 
+/// Try to format a template literal with a language comment (e.g., `/* HTML */`).
+/// Returns `true` if formatting was performed, `false` if not applicable.
+///
+/// Supported languages:
+/// - HTML
+/// - GraphQL
+pub(super) fn try_format_comment_embedded<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let Some(language) = get_language_comment(template, f) else {
+        return false;
+    };
+    match language {
+        "html" => try_embed_html_from_template(template, f),
+        "graphql" => graphql::format_graphql_doc(template, f),
+        _ => false,
+    }
+}
+
+/// Check if the template literal has a leading block comment that specifies an embedded language.
+///
+/// Returns the language name if found.
+/// The comment must be:
+/// - a block comment
+/// - with exactly one space on either side
+fn get_language_comment<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> Option<&'static str> {
+    // By the time `TemplateLiteral::write()` runs, parent nodes have already printed
+    // leading comments via the cursor-based system. So `/* HTML */` is the last printed comment.
+    let comment = f.context().comments().printed_comments().last()?;
+    if !comment.is_block() || comment.span.end > template.span.start {
+        return None;
+    }
+
+    // Ensure there's nothing but whitespace between the comment and the template literal.
+    // This prevents matching `const html /* HTML */ = \`...\`` where `=` is between them.
+    if !f
+        .source_text()
+        .all_bytes_match(comment.span.end, template.span.start, |b| b.is_ascii_whitespace())
+    {
+        return None;
+    }
+
+    let text = f.source_text().text_for(&comment.content_span());
+    match text {
+        " HTML " => Some("html"),
+        " GraphQL " => Some("graphql"),
+        _ => None,
+    }
+}
+
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 pub(super) fn try_format_css_template<'a>(
@@ -159,6 +213,18 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
 }
 
 // ---
+
+fn try_embed_html_from_template<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    // TODO: Remove this check and use placeholder approach for expressions
+    if !template.is_no_substitution_template() {
+        return false;
+    }
+    let template_content = template.quasis()[0].value.raw.as_str();
+    format_embedded_template(f, "tagged-html", template_content)
+}
 
 fn try_embed_html<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,

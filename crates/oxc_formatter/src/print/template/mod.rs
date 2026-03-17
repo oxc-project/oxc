@@ -43,6 +43,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
         if embed::try_format_graphql_call(self, f) {
             return;
         }
+        // Language comment: /* HTML */ `...` or /* GraphQL */ `...`
+        if embed::try_format_comment_embedded(self, f) {
+            return;
+        }
         let template = TemplateLike::TemplateLiteral(self);
         write!(f, template);
     }
