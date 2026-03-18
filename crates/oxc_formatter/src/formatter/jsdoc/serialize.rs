@@ -285,16 +285,17 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             first_non_import_tag_emitted = true;
             prev_normalized_kind = Some(normalized_kind);
 
-            // Track whether this tag's source has a trailing blank line.
-            // For unknown tags (not in TAGS_ORDER), upstream preserves these
-            // blank lines because it uses the raw description as-is.
+            // Check whether this tag's source has a trailing blank line.
             // In parsed_preserving_whitespace(), a trailing blank `*` line
             // plus the whitespace before the next `@` produces `\n\n` at the end.
             // Without a blank line, only a single `\n` is present.
-            prev_tag_had_trailing_blank = {
+            // Used for: (1) inter-tag blank lines for unknown tags (next iteration),
+            // (2) trailing blank after block elements (this iteration, post-format).
+            let source_has_trailing_blank = {
                 let raw_ws = tag.comment().parsed_preserving_whitespace();
                 raw_ws.ends_with("\n\n")
             };
+            prev_tag_had_trailing_blank = source_has_trailing_blank;
 
             // Track content before formatting this tag
             let lines_before = self.content_lines.byte_len();
@@ -331,10 +332,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             // 2. This tag's description ends with a block element AND the source
             //    had an explicit trailing blank line (don't fabricate blank lines)
             let tag_newline_count = self.content_lines.line_count_since(lines_before);
-            let source_has_trailing_blank = {
-                let raw_ws = tag.comment().parsed_preserving_whitespace();
-                raw_ws.ends_with("\n\n")
-            };
             let needs_trailing_blank = if normalized_kind == "example" && tag_newline_count > 1 {
                 // Multi-line @example: blank line before different tag kind
                 effective_tags
@@ -522,8 +519,12 @@ pub(super) fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> S
 }
 
 /// Tags whose descriptions should NOT be capitalized.
-/// Matches upstream's `TAGS_PEV_FORMAT_DESCRIPTION` exactly:
+/// Based on upstream's `TAGS_PEV_FORMAT_DESCRIPTION` (roles.ts:126-134):
 /// borrows, default, defaultValue, import, memberof, module, see.
+/// Also includes `deprecated` (redundant with `should_skip_description_formatting`).
+/// Additionally skips `type` and `satisfies` — upstream inconsistently capitalizes
+/// the second word but not the first (upstream bug #7 in upstream-jsdoc-bugs.md).
+/// Skipping entirely avoids mangling identifiers in inline casts.
 fn should_skip_capitalize(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
