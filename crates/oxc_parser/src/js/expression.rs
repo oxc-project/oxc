@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ast::ast::ExpressionKind;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Ident, Span};
@@ -715,7 +714,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let mut in_optional_chain = false;
         let lhs = self.parse_member_expression_or_higher(&mut in_optional_chain);
-        let lhs = self.parse_call_expression_rest(span, lhs, &mut in_optional_chain);
+        let mut lhs = self.parse_call_expression_rest(span, lhs, &mut in_optional_chain);
         if !in_optional_chain {
             return lhs;
         }
@@ -734,18 +733,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
-        match expr.kind() {
-            match_member_expression!(ExpressionKind) => {
-                let member_expr = expr.into_member_expression();
-                self.ast.expression_chain(span, ChainElement::from(member_expr))
-            }
-            ExpressionKind::CallExpression(e) => {
-                self.ast.expression_chain(span, ChainElement::CallExpression(e))
-            }
-            ExpressionKind::TSNonNullExpression(e) => {
-                self.ast.expression_chain(span, ChainElement::TSNonNullExpression(e))
-            }
-            _ => expr,
+        if matches!(expr.kind(), match_member_expression!(ExpressionKind)) {
+            let member_expr = expr.into_member_expression();
+            self.ast.expression_chain(span, ChainElement::from(member_expr))
+        } else if expr.is_call_expression() {
+            self.ast.expression_chain(span, ChainElement::CallExpression(expr.into_call_expression()))
+        } else if expr.is_ts_non_null_expression() {
+            self.ast.expression_chain(span, ChainElement::TSNonNullExpression(expr.into_ts_non_null_expression()))
+        } else {
+            expr
         }
     }
 
@@ -852,9 +848,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             if self.cur_kind().is_template_start_of_tagged_template() {
                 let (expr, type_arguments) =
-                    if let Some(instantiation_expr) = lhs.as_ts_instantiation_expression() {
-                        let expr = instantiation_expr.unbox();
-                        (expr.expression, Some(expr.type_arguments))
+                    if lhs.is_ts_instantiation_expression() {
+                        let instantiation_expr = lhs.into_ts_instantiation_expression().unbox();
+                        (instantiation_expr.expression, Some(instantiation_expr.type_arguments))
                     } else {
                         (lhs, None)
                     };
@@ -958,8 +954,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         let mut type_arguments = None;
-        if let Some(instantiation_expr) = callee.as_ts_instantiation_expression() {
-            let instantiation_expr = instantiation_expr.unbox();
+        if callee.is_ts_instantiation_expression() {
+            let instantiation_expr = callee.into_ts_instantiation_expression().unbox();
             type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
         }
@@ -1048,8 +1044,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot && let Some(expr) = lhs.as_ts_instantiation_expression() {
-                    let expr = expr.unbox();
+                if !question_dot && lhs.is_ts_instantiation_expression() {
+                    let expr = lhs.into_ts_instantiation_expression().unbox();
                     type_arguments.replace(expr.type_arguments);
                     lhs = expr.expression;
                 }

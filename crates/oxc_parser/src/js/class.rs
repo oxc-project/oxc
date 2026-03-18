@@ -175,8 +175,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
             let type_argument;
-            if let Some(expr) = extend.as_ts_instantiation_expression() {
-                let expr = expr.unbox();
+            if extend.is_ts_instantiation_expression() {
+                let expr = extend.into_ts_instantiation_expression().unbox();
                 extend = expr.expression;
                 type_argument = Some(expr.type_arguments);
             } else {

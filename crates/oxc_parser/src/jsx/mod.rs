@@ -26,9 +26,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `<`
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            Expression::JSXFragment(self.parse_jsx_fragment(span, false))
+            Expression::jsx_fragment(self.parse_jsx_fragment(span, false))
         } else if kind.is_identifier_or_keyword() {
-            Expression::JSXElement(self.parse_jsx_element(span, false))
+            Expression::jsx_element(self.parse_jsx_element(span, false))
         } else {
             self.unexpected()
         }
@@ -452,11 +452,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.parse_jsx_expression_container(span_start, /* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
-            Kind::LAngle => match self.parse_jsx_expression() {
-                Expression::JSXFragment(fragment) => JSXAttributeValue::Fragment(fragment),
-                Expression::JSXElement(element) => JSXAttributeValue::Element(element),
-                _ => self.unexpected(),
-            },
+            Kind::LAngle => {
+                let expr = self.parse_jsx_expression();
+                if expr.is_jsx_fragment() {
+                    JSXAttributeValue::Fragment(expr.into_jsx_fragment())
+                } else if expr.is_jsx_element() {
+                    JSXAttributeValue::Element(expr.into_jsx_element())
+                } else {
+                    self.unexpected()
+                }
+            }
             _ => self.unexpected(),
         }
     }

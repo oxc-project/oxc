@@ -73,21 +73,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 TSEnumMemberName::String(self.alloc(literal))
             }
-            Kind::LBrack => match self.parse_computed_property_name() {
-                Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
-                Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                    TSEnumMemberName::ComputedTemplateString(template)
-                }
-                Expression::NumericLiteral(literal) => {
-                    let error = diagnostics::enum_member_cannot_have_numeric_name(literal.span());
+            Kind::LBrack => {
+                let expr = self.parse_computed_property_name();
+                if expr.is_string_literal() {
+                    TSEnumMemberName::ComputedString(expr.into_string_literal())
+                } else if expr.is_template_literal() && expr.to_template_literal().is_no_substitution_template() {
+                    TSEnumMemberName::ComputedTemplateString(expr.into_template_literal())
+                } else if expr.is_numeric_literal() {
+                    let error = diagnostics::enum_member_cannot_have_numeric_name(expr.span());
                     self.fatal_error(error)
-                }
-                expr => {
+                } else {
                     let error =
                         diagnostics::computed_property_names_not_allowed_in_enums(expr.span());
                     self.fatal_error(error)
                 }
-            },
+            }
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 let error = diagnostics::computed_property_names_not_allowed_in_enums(
                     self.cur_token().span(),

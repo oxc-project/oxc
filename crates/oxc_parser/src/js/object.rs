@@ -227,7 +227,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.end_span(span),
             kind,
             key,
-            Expression::FunctionExpression(function),
+            Expression::function_expression(function),
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,
