@@ -683,11 +683,7 @@ impl JsdocFormatter<'_, '_> {
                 s
             };
 
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
+            let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
 
             // Upstream: tagString.length + firstWord.length > printWidth → new line
             let first_word_w = full_desc.split_whitespace().next().map_or(0, str_width);
@@ -905,16 +901,8 @@ impl JsdocFormatter<'_, '_> {
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
 
             let first_word_w = desc_text_no_dash.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w > self.wrap_width {
@@ -1217,16 +1205,8 @@ impl JsdocFormatter<'_, '_> {
                     // Tags like @deprecated that skip capitalization but still
                     // wrap at printWidth.
                     let indent = self.continuation_indent();
-                    let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                        0
-                    } else {
-                        self.continuation_indent_width()
-                    });
-                    let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
-                        0
-                    } else {
-                        self.continuation_indent_width()
-                    });
+                    let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+                    let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
                     let desc = wrap_text(
                         raw_ws_desc,
                         indent_width,
@@ -1261,16 +1241,8 @@ impl JsdocFormatter<'_, '_> {
         } else {
             // Pass description through wrap_text with tag_string_length offset
             let indent = self.continuation_indent();
-            let indent_width = self.wrap_width.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
-            let tag_str_len = prefix_len.saturating_sub(if indent.is_empty() {
-                0
-            } else {
-                self.continuation_indent_width()
-            });
+            let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+            let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
 
             let first_word_w = desc_text.split_whitespace().next().map_or(0, str_width);
             if prefix_len + first_word_w > self.wrap_width {

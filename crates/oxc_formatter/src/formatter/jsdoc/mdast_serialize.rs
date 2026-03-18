@@ -640,9 +640,10 @@ fn serialize_children(
                 wrap_paragraph(&merged_text, effective_width, offset, 0, &mut para_buf);
                 let para_str = para_buf.into_string();
 
-                let line_count = para_str.split('\n').count();
-                for (li, line) in para_str.split('\n').enumerate() {
-                    let is_last = li == line_count - 1;
+                let mut para_iter = para_str.split('\n').peekable();
+                let mut li = 0usize;
+                while let Some(line) = para_iter.next() {
+                    let is_last = para_iter.peek().is_none();
                     if indent > 0 {
                         if line.is_empty() {
                             lines.push_empty();
@@ -668,6 +669,7 @@ fn serialize_children(
                     } else {
                         lines.push(line);
                     }
+                    li += 1;
                 }
 
                 i = run_end;
@@ -950,9 +952,10 @@ fn serialize_paragraph(
     wrap_paragraph(&inline_text, effective_width, first_line_offset, 0, &mut para_buf);
     let para_str = para_buf.into_string();
 
-    let line_count = para_str.split('\n').count();
-    for (i, line) in para_str.split('\n').enumerate() {
-        let is_last = i == line_count - 1;
+    let mut para_iter = para_str.split('\n').peekable();
+    let mut i = 0usize;
+    while let Some(line) = para_iter.next() {
+        let is_last = para_iter.peek().is_none();
         if indent > 0 {
             if line.is_empty() {
                 lines.push_empty();
@@ -978,6 +981,7 @@ fn serialize_paragraph(
         } else {
             lines.push(line);
         }
+        i += 1;
     }
 }
 
