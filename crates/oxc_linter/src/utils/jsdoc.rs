@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, ExpressionKind, FormalParameters},
+    ast::{BindingPattern, Expression, FormalParameters},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
@@ -247,17 +247,15 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
 
                 ParamKind::Nested(collected)
             }
-            BindingPattern::AssignmentPattern(assign_pat) => {
-                match assign_pat.right.kind() {
-                    ExpressionKind::Identifier(_) => get_param_name(&assign_pat.left, false),
-                    _ => {
-                        // TODO: If `config.useDefaultObjectProperties` = true,
-                        // collect default parameters from `assign_pat.right` like:
-                        // { prop = { a: 1, b: 2 }} => [prop, prop.a, prop.b]
-                        //     get_param_name(&assign_pat.left, false)
-                        // }
-                        get_param_name(&assign_pat.left, false)
-                    }
+            match assign_pat.right.kind() {
+                ExpressionKind::Identifier(_) => get_param_name(&assign_pat.left, false),
+                _ => {
+                    // TODO: If `config.useDefaultObjectProperties` = true,
+                    // collect default parameters from `assign_pat.right` like:
+                    // { prop = { a: 1, b: 2 }} => [prop, prop.a, prop.b]
+                    //     get_param_name(&assign_pat.left, false)
+                    // }
+                    get_param_name(&assign_pat.left, false)
                 }
             },
         }
