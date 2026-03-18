@@ -56,14 +56,14 @@ impl IsGlobalReference for IdentifierReference<'_> {
 
 impl IsGlobalReference for Expression<'_> {
     fn is_global_reference(&self, scoping: &Scoping) -> bool {
-        if let Expression::Identifier(ident) = self {
+        if let Some(ident) = self.as_identifier() {
             return ident.is_global_reference(scoping);
         }
         false
     }
 
     fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool {
-        if let Expression::Identifier(ident) = self {
+        if let Some(ident) = self.as_identifier() {
             return ident.is_global_reference_name(name, scoping);
         }
         false

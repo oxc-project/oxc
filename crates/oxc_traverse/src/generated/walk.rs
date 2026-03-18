@@ -85,121 +85,125 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_expression(&mut *node, ctx);
-    match &mut *node {
-        Expression::BooleanLiteral(node) => {
-            walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
+    match (*node).kind_mut() {
+        ExpressionKindMut::BooleanLiteral(node) => {
+            walk_boolean_literal(traverser, node as *mut _, ctx)
         }
-        Expression::NullLiteral(node) => walk_null_literal(traverser, (&mut **node) as *mut _, ctx),
-        Expression::NumericLiteral(node) => {
-            walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::NullLiteral(node) => walk_null_literal(traverser, node as *mut _, ctx),
+        ExpressionKindMut::NumericLiteral(node) => {
+            walk_numeric_literal(traverser, node as *mut _, ctx)
         }
-        Expression::BigIntLiteral(node) => {
-            walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::BigIntLiteral(node) => {
+            walk_big_int_literal(traverser, node as *mut _, ctx)
         }
-        Expression::RegExpLiteral(node) => {
-            walk_reg_exp_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::RegExpLiteral(node) => {
+            walk_reg_exp_literal(traverser, node as *mut _, ctx)
         }
-        Expression::StringLiteral(node) => {
-            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::StringLiteral(node) => {
+            walk_string_literal(traverser, node as *mut _, ctx)
         }
-        Expression::TemplateLiteral(node) => {
-            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TemplateLiteral(node) => {
+            walk_template_literal(traverser, node as *mut _, ctx)
         }
-        Expression::Identifier(node) => {
-            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::Identifier(node) => {
+            walk_identifier_reference(traverser, node as *mut _, ctx)
         }
-        Expression::MetaProperty(node) => {
-            walk_meta_property(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::MetaProperty(node) => {
+            walk_meta_property(traverser, node as *mut _, ctx)
         }
-        Expression::Super(node) => walk_super(traverser, (&mut **node) as *mut _, ctx),
-        Expression::ArrayExpression(node) => {
-            walk_array_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::Super(node) => walk_super(traverser, node as *mut _, ctx),
+        ExpressionKindMut::ArrayExpression(node) => {
+            walk_array_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ArrowFunctionExpression(node) => {
-            walk_arrow_function_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ArrowFunctionExpression(node) => {
+            walk_arrow_function_expression(traverser, node as *mut _, ctx)
         }
-        Expression::AssignmentExpression(node) => {
-            walk_assignment_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::AssignmentExpression(node) => {
+            walk_assignment_expression(traverser, node as *mut _, ctx)
         }
-        Expression::AwaitExpression(node) => {
-            walk_await_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::AwaitExpression(node) => {
+            walk_await_expression(traverser, node as *mut _, ctx)
         }
-        Expression::BinaryExpression(node) => {
-            walk_binary_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::BinaryExpression(node) => {
+            walk_binary_expression(traverser, node as *mut _, ctx)
         }
-        Expression::CallExpression(node) => {
-            walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::CallExpression(node) => {
+            walk_call_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ChainExpression(node) => {
-            walk_chain_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ChainExpression(node) => {
+            walk_chain_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ClassExpression(node) => walk_class(traverser, (&mut **node) as *mut _, ctx),
-        Expression::ConditionalExpression(node) => {
-            walk_conditional_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ClassExpression(node) => walk_class(traverser, node as *mut _, ctx),
+        ExpressionKindMut::ConditionalExpression(node) => {
+            walk_conditional_expression(traverser, node as *mut _, ctx)
         }
-        Expression::FunctionExpression(node) => {
-            walk_function(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::FunctionExpression(node) => {
+            walk_function(traverser, node as *mut _, ctx)
         }
-        Expression::ImportExpression(node) => {
-            walk_import_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ImportExpression(node) => {
+            walk_import_expression(traverser, node as *mut _, ctx)
         }
-        Expression::LogicalExpression(node) => {
-            walk_logical_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::LogicalExpression(node) => {
+            walk_logical_expression(traverser, node as *mut _, ctx)
         }
-        Expression::NewExpression(node) => {
-            walk_new_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::NewExpression(node) => {
+            walk_new_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ObjectExpression(node) => {
-            walk_object_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ObjectExpression(node) => {
+            walk_object_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ParenthesizedExpression(node) => {
-            walk_parenthesized_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ParenthesizedExpression(node) => {
+            walk_parenthesized_expression(traverser, node as *mut _, ctx)
         }
-        Expression::SequenceExpression(node) => {
-            walk_sequence_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::SequenceExpression(node) => {
+            walk_sequence_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TaggedTemplateExpression(node) => {
-            walk_tagged_template_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TaggedTemplateExpression(node) => {
+            walk_tagged_template_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ThisExpression(node) => {
-            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::ThisExpression(node) => {
+            walk_this_expression(traverser, node as *mut _, ctx)
         }
-        Expression::UnaryExpression(node) => {
-            walk_unary_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::UnaryExpression(node) => {
+            walk_unary_expression(traverser, node as *mut _, ctx)
         }
-        Expression::UpdateExpression(node) => {
-            walk_update_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::UpdateExpression(node) => {
+            walk_update_expression(traverser, node as *mut _, ctx)
         }
-        Expression::YieldExpression(node) => {
-            walk_yield_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::YieldExpression(node) => {
+            walk_yield_expression(traverser, node as *mut _, ctx)
         }
-        Expression::PrivateInExpression(node) => {
-            walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::PrivateInExpression(node) => {
+            walk_private_in_expression(traverser, node as *mut _, ctx)
         }
-        Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
-        Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
-        Expression::TSAsExpression(node) => {
-            walk_ts_as_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::JSXElement(node) => walk_jsx_element(traverser, node as *mut _, ctx),
+        ExpressionKindMut::JSXFragment(node) => walk_jsx_fragment(traverser, node as *mut _, ctx),
+        ExpressionKindMut::TSAsExpression(node) => {
+            walk_ts_as_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSSatisfiesExpression(node) => {
-            walk_ts_satisfies_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSSatisfiesExpression(node) => {
+            walk_ts_satisfies_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSTypeAssertion(node) => {
-            walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSTypeAssertion(node) => {
+            walk_ts_type_assertion(traverser, node as *mut _, ctx)
         }
-        Expression::TSNonNullExpression(node) => {
-            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, node as *mut _, ctx)
         }
-        Expression::TSInstantiationExpression(node) => {
-            walk_ts_instantiation_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::TSInstantiationExpression(node) => {
+            walk_ts_instantiation_expression(traverser, node as *mut _, ctx)
         }
-        Expression::V8IntrinsicExpression(node) => {
-            walk_v8_intrinsic_expression(traverser, (&mut **node) as *mut _, ctx)
+        ExpressionKindMut::V8IntrinsicExpression(node) => {
+            walk_v8_intrinsic_expression(traverser, node as *mut _, ctx)
         }
-        Expression::ComputedMemberExpression(_)
-        | Expression::StaticMemberExpression(_)
-        | Expression::PrivateFieldExpression(_) => {
-            walk_member_expression(traverser, node as *mut _, ctx)
+        ExpressionKindMut::ComputedMemberExpression(node) => {
+            walk_computed_member_expression(traverser, node as *mut _, ctx)
+        }
+        ExpressionKindMut::StaticMemberExpression(node) => {
+            walk_static_member_expression(traverser, node as *mut _, ctx)
+        }
+        ExpressionKindMut::PrivateFieldExpression(node) => {
+            walk_private_field_expression(traverser, node as *mut _, ctx)
         }
     }
     traverser.exit_expression(&mut *node, ctx);

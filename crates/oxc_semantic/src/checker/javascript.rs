@@ -1334,19 +1334,17 @@ pub fn check_private_field_expression(
 pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
-        match unary_expr.argument.get_inner_expression() {
-            Expression::Identifier(ident) if ctx.strict_mode() => {
+        let inner = unary_expr.argument.get_inner_expression();
+        if let Some(ident) = inner.as_identifier() {
+            if ctx.strict_mode() {
                 ctx.error(diagnostics::delete_of_unqualified(ident.span));
             }
-            Expression::PrivateFieldExpression(expr) => {
-                ctx.error(diagnostics::delete_private_field(expr.span));
+        } else if let Some(expr) = inner.as_private_field_expression() {
+            ctx.error(diagnostics::delete_private_field(expr.span));
+        } else if let Some(chain_expr) = inner.as_chain_expression() {
+            if let ChainElement::PrivateFieldExpression(e) = &chain_expr.expression {
+                ctx.error(diagnostics::delete_private_field(e.field.span));
             }
-            Expression::ChainExpression(chain_expr) => {
-                if let ChainElement::PrivateFieldExpression(e) = &chain_expr.expression {
-                    ctx.error(diagnostics::delete_private_field(e.field.span));
-                }
-            }
-            _ => {}
         }
     }
 }

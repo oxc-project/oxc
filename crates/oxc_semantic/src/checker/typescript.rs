@@ -153,19 +153,12 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     decl.body.members.iter().for_each(|member| {
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
-            need_initializer = !matches!(
-                initializer.without_parentheses(),
-                // A = 1
-                Expression::NumericLiteral(_)
-                    // B = A
-                    | Expression::Identifier(_)
-                    // C = E.D
-                    | match_member_expression!(Expression)
-                    // D = 1 + 2
-                    | Expression::BinaryExpression(_)
-                    // E = -1
-                    | Expression::UnaryExpression(_)
-            );
+            let init = initializer.without_parentheses();
+            need_initializer = !(init.is_numeric_literal()
+                || init.is_identifier()
+                || init.is_member_expression()
+                || init.is_binary_expression()
+                || init.is_unary_expression());
         } else if need_initializer {
             ctx.error(diagnostics::enum_member_must_have_initializer(member.span));
         }
@@ -328,7 +321,7 @@ pub fn check_property_definition(prop: &PropertyDefinition, ctx: &SemanticBuilde
 }
 
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    if let Expression::FunctionExpression(func) = &prop.value
+    if let Some(func) = prop.value.as_function_expression()
         && prop.kind.is_accessor()
         && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
     {

@@ -102,11 +102,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
         if let BindingPattern::BindingIdentifier(id) = &self.id
             && let Some(symbol_id) = id.symbol_id.get()
             && let Some(init) = &self.init
-            && match init {
-                Expression::FunctionExpression(func) => func.pure,
-                Expression::ArrowFunctionExpression(func) => func.pure,
-                _ => false,
-            }
+            && (init.as_function_expression().is_some_and(|func| func.pure)
+                || init.as_arrow_function_expression().is_some_and(|func| func.pure))
         {
             builder.scoping.no_side_effects.insert(symbol_id);
         }
