@@ -214,8 +214,7 @@ pub fn format_description_mdast(
             first = false;
             // A line is "last in paragraph" if it's the final line overall or
             // the next line is empty (paragraph boundary).
-            let is_last_in_para =
-                iter.peek().is_none_or(|next| next.is_empty());
+            let is_last_in_para = iter.peek().is_none_or(|next| next.is_empty());
             if line.is_empty() {
                 at_paragraph_start = true;
             } else if at_paragraph_start {

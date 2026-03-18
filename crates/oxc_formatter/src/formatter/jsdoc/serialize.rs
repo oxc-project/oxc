@@ -1067,12 +1067,7 @@ pub fn format_jsdoc_comment<'a>(
     available_width: usize,
     f: &Formatter<'_, 'a>,
 ) -> Option<FormattedJsdoc<'a>> {
-    let fmt = JsdocFormatter::new(
-        options,
-        f.options(),
-        f.allocator(),
-        available_width,
-    );
+    let fmt = JsdocFormatter::new(options, f.options(), f.allocator(), available_width);
     fmt.format(comment, source_text)
 }
 

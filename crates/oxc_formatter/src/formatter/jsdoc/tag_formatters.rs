@@ -786,8 +786,7 @@ impl JsdocFormatter<'_, '_> {
                         self.allocator,
                     ) {
                         if was_multiline && !formatted.contains('\n') {
-                            normalized_type_str =
-                                Cow::Owned(star_stripped.unwrap());
+                            normalized_type_str = Cow::Owned(star_stripped.unwrap());
                         } else {
                             normalized_type_str = Cow::Owned(formatted);
                         }
@@ -1205,7 +1204,8 @@ impl JsdocFormatter<'_, '_> {
                     // Tags like @deprecated that skip capitalization but still
                     // wrap at printWidth.
                     let indent = self.continuation_indent();
-                    let indent_width = self.wrap_width.saturating_sub(self.continuation_indent_width());
+                    let indent_width =
+                        self.wrap_width.saturating_sub(self.continuation_indent_width());
                     let tag_str_len = prefix_len.saturating_sub(self.continuation_indent_width());
                     let desc = wrap_text(
                         raw_ws_desc,
