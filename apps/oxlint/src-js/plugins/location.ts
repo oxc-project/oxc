@@ -171,7 +171,13 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
 function populateLineColumn(offset: number, out: LineColumn): void {
   debugAssertLinesIsInitialized();
 
-  // Binary search `lineStartIndices` for the line containing `offset`
+  // Find first line that starts *after* `offset`, via binary search of `lineStartIndices`.
+  // `lineStartIndices` is sorted and `lineStartIndices[0]` is always 0.
+  //
+  // After the loop, `low` is the index of the first line whose start is *past* `offset`.
+  // This is also the 1-indexed line number of the line containing `offset`.
+  // e.g. if `offset` is on the 3rd line, `low` = 3, and `lineStartIndices[2]` is that line's start.
+  // `do...while` is safe because `lineStartIndices` always has at least one entry, so `low < high` at start of loop.
   let low = 0,
     high = lineStartIndices.length,
     mid: number;
@@ -184,8 +190,8 @@ function populateLineColumn(offset: number, out: LineColumn): void {
     }
   } while (low < high);
 
-  out.line = low;
-  out.column = offset - lineStartIndices[low - 1];
+  out.line = low; // 1-indexed line number
+  out.column = offset - lineStartIndices[low - 1]; // Offset from start of the line
 }
 
 /**
