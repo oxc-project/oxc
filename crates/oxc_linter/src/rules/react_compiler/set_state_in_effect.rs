@@ -29,24 +29,24 @@ fn test() {
     use crate::tester::Tester;
     let pass = vec![
         // Valid: setState in event handler is fine
-        r#"
+        r"
         function Component(props) {
           const [state, setState] = useState(0);
           return <div onClick={() => setState(1)}>{state}</div>;
         }
-        "#,
+        ",
         // Cross-category: conditional hook triggers Hooks, not SetStateInEffect
-        r#"
+        r"
         function useConditional() {
           if (cond) {
             useConditionalHook();
           }
         }
-        "#,
+        ",
     ];
     let fail = vec![
         // setState in useLayoutEffect
-        r#"
+        r"
         import { useState, useLayoutEffect } from 'react';
         function Component(props) {
           const [state, setState] = useState(props.initial);
@@ -55,7 +55,7 @@ fn test() {
           }, [props.value]);
           return <div>{state}</div>;
         }
-        "#,
+        ",
     ];
     Tester::new(SetStateInEffect::NAME, SetStateInEffect::PLUGIN, pass, fail).test_and_snapshot();
 }

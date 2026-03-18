@@ -77,11 +77,11 @@ fn default_enabled_opts() -> ReactCompilerOptions {
 
 #[test]
 fn react_compiler_basic_component() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Compiled output should contain the cache variable from react/compiler-runtime
     assert!(
@@ -102,13 +102,13 @@ function Component({ name }) {
 fn react_compiler_nested_function_discovery_infer_mode() {
     // Test that infer mode discovers and compiles a component nested inside
     // a variable declaration (not inside a class body).
-    let source = r#"
+    let source = r"
 const obj = {
     Component: function Component() {
         return <div />;
     }
 };
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("infer".to_string()),
@@ -126,11 +126,11 @@ const obj = {
 #[test]
 fn react_compiler_infer_mode_top_level_component() {
     // In infer mode, a top-level component with a capitalized name should be compiled.
-    let source = r#"
+    let source = r"
 function MyComponent({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("infer".to_string()),
@@ -149,7 +149,7 @@ function MyComponent({ name }) {
 
 #[test]
 fn react_compiler_class_body_skipping() {
-    let source = r#"
+    let source = r"
 class Foo {
     render() {
         function Inner() {
@@ -158,7 +158,7 @@ class Foo {
         return Inner();
     }
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("infer".to_string()),
@@ -179,12 +179,12 @@ class Foo {
 
 #[test]
 fn react_compiler_module_level_opt_out() {
-    let source = r#"
+    let source = r"
 'use no memo';
 function Component() {
     return <div />;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Module-level 'use no memo' should discard all compiled output
     assert!(
@@ -203,12 +203,12 @@ function Component() {
 
 #[test]
 fn react_compiler_function_level_opt_out() {
-    let source = r#"
+    let source = r"
 function Component() {
     'use no memo';
     return <div />;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Function-level 'use no memo' should prevent compilation of that function
     assert!(
@@ -223,11 +223,11 @@ function Component() {
 
 #[test]
 fn react_compiler_no_emit_mode() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -241,11 +241,11 @@ function Component({ name }) {
 
 #[test]
 fn react_compiler_lint_output_mode() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -263,12 +263,12 @@ function Component({ name }) {
 
 #[test]
 fn react_compiler_ignore_use_no_forget() {
-    let source = r#"
+    let source = r"
 function Component() {
     'use no memo';
     return <div />;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -285,12 +285,12 @@ function Component() {
 
 #[test]
 fn react_compiler_ignore_use_no_forget_module_level() {
-    let source = r#"
+    let source = r"
 'use no memo';
 function Component() {
     return <div />;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -311,11 +311,11 @@ function Component() {
 
 #[test]
 fn react_compiler_target_react17_runtime_module() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -336,11 +336,11 @@ function Component({ name }) {
 
 #[test]
 fn react_compiler_target_default_runtime_module() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Default target (react-19) should import from "react/compiler-runtime"
     assert!(
@@ -351,11 +351,11 @@ function Component({ name }) {
 
 #[test]
 fn react_compiler_target_react18_runtime_module() {
-    let source = r#"
+    let source = r"
 function Component({ name }) {
     return <div>{name}</div>;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -375,14 +375,14 @@ function Component({ name }) {
 
 #[test]
 fn react_compiler_all_mode_only_top_level() {
-    let source = r#"
+    let source = r"
 function outer() {
     function inner() {
         return 1;
     }
     return inner();
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -403,11 +403,11 @@ function outer() {
 
 #[test]
 fn react_compiler_disabled_no_changes() {
-    let source = r#"
+    let source = r"
 function Component() {
     return <div />;
 }
-"#;
+";
     let opts = ReactCompilerOptions { enabled: false, ..ReactCompilerOptions::default() };
     let code = transform_react_compiler(source, opts);
     assert!(!code.contains("_c("), "Expected no compilation when plugin is disabled, got:\n{code}");
@@ -446,11 +446,11 @@ function Component() {
 
 #[test]
 fn react_compiler_arrow_function_component() {
-    let source = r#"
+    let source = r"
 const Component = ({ name }) => {
     return <div>{name}</div>;
 };
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     assert!(
         code.contains("_c(") || code.contains("$["),
@@ -464,11 +464,11 @@ const Component = ({ name }) => {
 
 #[test]
 fn react_compiler_export_default_function() {
-    let source = r#"
+    let source = r"
 export default function App() {
     return <div>App</div>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     assert!(
         code.contains("_c(") || code.contains("$["),
@@ -486,14 +486,14 @@ export default function App() {
 
 #[test]
 fn react_compiler_multiple_components() {
-    let source = r#"
+    let source = r"
 function Header({ title }) {
     return <h1>{title}</h1>;
 }
 function Footer({ text }) {
     return <footer>{text}</footer>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     assert!(
         code.contains("function Header") && code.contains("function Footer"),
@@ -507,12 +507,12 @@ function Footer({ text }) {
 
 #[test]
 fn react_compiler_custom_opt_out_directive() {
-    let source = r#"
+    let source = r"
 function Component() {
     'use my custom skip';
     return <div />;
 }
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -533,12 +533,12 @@ function Component() {
 
 #[test]
 fn react_compiler_use_no_forget_legacy() {
-    let source = r#"
+    let source = r"
 function Component() {
     'use no forget';
     return <div />;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     assert!(
         !code.contains("_c("),
@@ -552,13 +552,13 @@ function Component() {
 
 #[test]
 fn react_compiler_multi_declarator_gating() {
-    let source = r#"
+    let source = r"
 const Foo = ({ a }) => {
     return <div>{a}</div>;
 }, Bar = ({ b }) => {
     return <span>{b}</span>;
 };
-"#;
+";
     let opts = ReactCompilerOptions {
         enabled: true,
         compilation_mode: Some("all".to_string()),
@@ -593,7 +593,7 @@ fn react_compiler_arrow_in_map_with_jsx() {
     // ArrowFunctionExpression nodes (from FunctionExpression lowering) that
     // lack a scope_id. When the traverse later walks them it panics on
     // `.get().unwrap()` in walk_arrow_function_expression.
-    let source = r#"
+    let source = r"
 import { memo } from 'react';
 export default memo(function EffectTitle({ effect }) {
     const players = effect.players
@@ -601,7 +601,7 @@ export default memo(function EffectTitle({ effect }) {
         : null;
     return <div>{players}</div>;
 });
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Should compile without panicking; output should contain JSX transform
     assert!(
@@ -618,7 +618,7 @@ export default memo(function EffectTitle({ effect }) {
 fn react_compiler_tsx_arrow_with_type_predicate() {
     // EffectTitle.tsx pattern: arrow function with TS type predicate in .find()
     // plus arrow in .map() returning JSX, inside a memo-wrapped component.
-    let source = r#"
+    let source = r"
 import { memo } from 'react';
 
 type GameEndCondition = { type: 'GameEnd'; value: number };
@@ -650,7 +650,7 @@ export default memo(function EffectTitle({ effect, trigger }: { effect: Effect; 
 
     return <div>{trigger}{players}</div>;
 });
-"#;
+";
     let code = transform_react_compiler_tsx(source, default_enabled_opts());
     assert!(
         code.contains("_jsx") || code.contains("jsx("),
@@ -666,13 +666,13 @@ export default memo(function EffectTitle({ effect, trigger }: { effect: Effect; 
 fn react_compiler_generated_names_avoid_global_references() {
     // `_temp` is used as a global reference (unresolved). The compiler should
     // NOT generate a variable called `_temp` since it would shadow the global.
-    let source = r#"
+    let source = r"
 const result = _temp(42);
 export function Component() {
     const x = useState(0);
     return <div onClick={() => x[1](x[0] + 1)}>{result}</div>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // The compiled output may generate temp-like names.
     // `_temp` should not appear as a `let` declaration since it's a global reference.
@@ -687,14 +687,14 @@ export function Component() {
 #[test]
 fn react_compiler_generated_names_avoid_unresolved_references() {
     // Multiple globals that look like generated names — the compiler must avoid all of them.
-    let source = r#"
+    let source = r"
 _temp;
 _temp2;
 export function Component() {
     const x = useState(0);
     return <div onClick={() => x[1](x[0] + 1)}>{x[0]}</div>;
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // Neither `_temp` nor `_temp2` should appear as let declarations
     let has_let_temp =
@@ -719,7 +719,7 @@ fn react_compiler_outlined_function_has_symbol_id() {
     // semantic analysis would see an unresolved binding.
     //
     // This test uses the "outlined-helper" pattern from the TS reference tests.
-    let source = r#"
+    let source = r"
 function Component(props) {
     return (
         <div>
@@ -729,7 +729,7 @@ function Component(props) {
         </div>
     );
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // The compiler should outline the arrow function callback into a top-level
     // function (typically named `_temp`).
@@ -748,7 +748,7 @@ function Component(props) {
 fn react_compiler_outlined_function_referenced_correctly() {
     // Verify that the outlined function name is referenced correctly in the
     // compiled component body (e.g., `props.items.map(_temp)`).
-    let source = r#"
+    let source = r"
 function Component(props) {
     return (
         <div>
@@ -758,7 +758,7 @@ function Component(props) {
         </div>
     );
 }
-"#;
+";
     let code = transform_react_compiler(source, default_enabled_opts());
     // The compiled body should reference the outlined function by name.
     // e.g., `props.items.map(_temp)` instead of inlining the arrow function.

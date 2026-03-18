@@ -439,7 +439,7 @@ pub(crate) mod react {
 }
 
 pub(crate) mod react_compiler {
-    pub mod cache;
+    pub(super) mod cache;
     pub mod capitalized_calls;
     pub mod compiler_config;
     pub mod error_boundaries;
@@ -461,7 +461,7 @@ pub(crate) mod react_compiler {
     pub mod rule_suppression;
     pub mod set_state_in_effect;
     pub mod set_state_in_render;
-    pub mod shared;
+    pub(super) mod shared;
     pub mod static_components;
     pub mod syntax;
     pub mod todo_rule;

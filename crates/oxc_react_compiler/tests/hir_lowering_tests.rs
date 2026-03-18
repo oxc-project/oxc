@@ -1,3 +1,12 @@
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    clippy::items_after_statements,
+    clippy::disallowed_methods,
+    clippy::match_wildcard_for_single_variants,
+    clippy::field_reassign_with_default
+)]
+
 /// HIR lowering unit tests.
 ///
 /// These tests verify that the HIR lowering layer produces correct output for
@@ -16,7 +25,7 @@ fn print_codegen_body(
 ) -> String {
     use oxc_codegen::{Codegen, Context, Gen};
     let mut codegen = Codegen::new();
-    for stmt in output.body.iter() {
+    for stmt in &output.body {
         stmt.print(&mut codegen, Context::default());
     }
     codegen.into_source_text()
@@ -32,7 +41,7 @@ fn debug_aliased_mutation_lambda_deps() {
     use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
     use oxc_react_compiler::hir::InstructionValue as IV;
 
-    let source = r#"function Component(props) {
+    let source = r"function Component(props) {
   const x = [];
   const f = arg => {
     const y = x;
@@ -41,7 +50,7 @@ fn debug_aliased_mutation_lambda_deps() {
   f(props.input);
   return [x[0]];
 }
-"#;
+";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
@@ -120,11 +129,8 @@ fn debug_aliased_mutation_lambda_deps() {
             }
         }
         println!("  terminal: {:?}", std::mem::discriminant(&block.terminal));
-        match &block.terminal {
-            Terminal::Scope(s) => {
-                println!("    -> Scope {:?} (body block: {:?})", s.scope.id, s.block)
-            }
-            _ => {}
+        if let Terminal::Scope(s) = &block.terminal {
+            println!("    -> Scope {:?} (body block: {:?})", s.scope.id, s.block);
         }
     }
 
@@ -139,12 +145,12 @@ fn debug_aliased_mutation_lambda_deps() {
                     println!("{}", print_codegen_body(&codegen_func));
                 }
                 Err(e) => {
-                    println!("Codegen error: {:?}", e);
+                    println!("Codegen error: {e:?}");
                 }
             }
         }
         Err(e) => {
-            println!("Pipeline error: {:?}", e);
+            println!("Pipeline error: {e:?}");
         }
     }
 
@@ -190,13 +196,13 @@ fn debug_optional_chain_post_pipeline() {
     use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
     use oxc_react_compiler::hir::InstructionValue as IV;
 
-    let source = r#"
+    let source = r"
 function Component(props) {
   let x = [];
   x.push(props.a?.b);
   return x;
 }
-"#;
+";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
@@ -295,7 +301,7 @@ function Component(props) {
             Terminal::Return(r) => format!("Return(id{:?})", r.value.identifier.id),
             _ => format!("{:?}", block.terminal).chars().take(200).collect(),
         };
-        println!("  Terminal: {}", term_str);
+        println!("  Terminal: {term_str}");
         println!();
     }
 }
@@ -311,7 +317,7 @@ fn debug_conformance_comparison() {
 
     let sources = [(
         "reduce-reactive-deps/conditional-member-expr",
-        r#"// To preserve the nullthrows behavior and reactive deps of this code,
+        r"// To preserve the nullthrows behavior and reactive deps of this code,
 // Forget needs to add `props.a` as a dependency (since `props.a.b` is
 // a conditional dependency, i.e. gated behind control flow)
 
@@ -325,9 +331,9 @@ export const FIXTURE_ENTRYPOINT = {
   fn: Component,
   params: [{a: null}],
 };
-"#,
+",
         // expected function body from .expect.md:
-        r#"function Component(props) {
+        r"function Component(props) {
   const $ = _c(2);
   let x;
   if ($[0] !== props.a?.b) {
@@ -339,7 +345,7 @@ export const FIXTURE_ENTRYPOINT = {
     x = $[1];
   }
   return x;
-}"#,
+}",
     )];
 
     for (name, source, expected_func) in &sources {
@@ -382,19 +388,21 @@ export const FIXTURE_ENTRYPOINT = {
                         );
                         println!("=== {name} ===");
                         println!("--- Actual output ---");
-                        println!("{}", actual_full);
+                        println!("{actual_full}");
                         println!("--- Expected ---");
-                        println!("{}", expected_func);
+                        println!("{expected_func}");
                         // Print diff to see what differs
                         let actual_lines: Vec<&str> = actual_full.lines().collect();
                         let expected_lines: Vec<&str> = expected_func.lines().collect();
-                        if actual_lines != expected_lines {
+                        if actual_lines == expected_lines {
+                            println!("EXACT MATCH!");
+                        } else {
                             println!("--- Differences ---");
                             for (i, (a, e)) in
                                 actual_lines.iter().zip(expected_lines.iter()).enumerate()
                             {
                                 if a != e {
-                                    println!("Line {}: actual=|{}| expected=|{}|", i, a, e);
+                                    println!("Line {i}: actual=|{a}| expected=|{e}|");
                                 }
                             }
                             if actual_lines.len() != expected_lines.len() {
@@ -404,17 +412,15 @@ export const FIXTURE_ENTRYPOINT = {
                                     expected_lines.len()
                                 );
                             }
-                        } else {
-                            println!("EXACT MATCH!");
                         }
                     }
                     Err(e) => {
-                        println!("Codegen error for {name}: {:?}", e);
+                        println!("Codegen error for {name}: {e:?}");
                     }
                 }
             }
             Err(e) => {
-                println!("Pipeline error for {name}: {:?}", e);
+                println!("Pipeline error for {name}: {e:?}");
             }
         }
     }
@@ -441,7 +447,7 @@ fn debug_normalized_comparison() {
     let expect_path = std::path::Path::new(fixtures_path)
         .join("reduce-reactive-deps/conditional-member-expr.expect.md");
 
-    println!("Fixture path: {:?}", fixture_path);
+    println!("Fixture path: {fixture_path:?}");
     println!("Fixture exists: {}", fixture_path.exists());
 
     if !fixture_path.exists() {
@@ -496,19 +502,19 @@ fn debug_normalized_comparison() {
                             format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
                         }
                     };
-                    println!("=== Actual full ===\n{}\n", actual_full);
+                    println!("=== Actual full ===\n{actual_full}\n");
                     println!(
                         "=== Expected content (first 500 chars) ===\n{}\n",
                         &expect_content[..expect_content.len().min(500)]
                     );
                 }
                 Err(e) => {
-                    println!("Codegen error: {:?}", e);
+                    println!("Codegen error: {e:?}");
                 }
             }
         }
         Err(e) => {
-            println!("Pipeline error: {:?}", e);
+            println!("Pipeline error: {e:?}");
         }
     }
 }
@@ -523,13 +529,13 @@ fn debug_normalized_comparison() {
 fn debug_conditional_member_expr_deps() {
     use oxc_react_compiler::entrypoint::pipeline::{run_codegen, run_pipeline};
 
-    let source = r#"// @enablePropagateDepsInHIR
+    let source = r"// @enablePropagateDepsInHIR
 function Component(props) {
   let x = [];
   x.push(props.a?.b);
   return x;
 }
-"#;
+";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
@@ -568,12 +574,12 @@ function Component(props) {
                     println!("{}", print_codegen_body(&codegen_func));
                 }
                 Err(e) => {
-                    println!("Codegen error: {:?}", e);
+                    println!("Codegen error: {e:?}");
                 }
             }
         }
         Err(e) => {
-            println!("Pipeline error: {:?}", e);
+            println!("Pipeline error: {e:?}");
         }
     }
 
@@ -1747,7 +1753,7 @@ mod invariants {
     /// Verify that a recursive arrow function captures its own name from the outer scope.
     #[test]
     fn recursive_arrow_captures_own_name() {
-        let source = r#"function Foo(value) {
+        let source = r"function Foo(value) {
             const factorial = (x) => {
                 if (x <= 1) {
                     return 1;
@@ -1756,7 +1762,7 @@ mod invariants {
                 }
             };
             return factorial(value);
-        }"#;
+        }";
 
         let hir = lower_function_source(source);
 
@@ -1790,7 +1796,7 @@ mod invariants {
 /// declarations, producing _c(3) instead of _c(5).
 #[test]
 fn test_capturing_func_mutate_scope_declarations() {
-    let source = r#"
+    let source = r"
 import {mutate} from 'shared-runtime';
 
 function Component({a, b}) {
@@ -1803,7 +1809,7 @@ function Component({a, b}) {
   x();
   return [y, z];
 }
-"#;
+";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();

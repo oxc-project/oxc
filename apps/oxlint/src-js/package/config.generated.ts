@@ -53,6 +53,7 @@ export type LintPluginOptionsSchema =
   | "jsx-a11y"
   | "nextjs"
   | "react-perf"
+  | "react-compiler"
   | "promise"
   | "node"
   | "vue";
