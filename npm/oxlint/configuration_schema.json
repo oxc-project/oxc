@@ -553,6 +553,15 @@
           ],
           "markdownDescription": "Enabled or disabled specific global variables."
         },
+        "ignores": {
+          "description": "If a file matches any of these glob patterns, the overrides configuration won't apply.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "If a file matches any of these glob patterns, the overrides configuration won't apply."
+        },
         "jsPlugins": {
           "description": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.",
           "anyOf": [

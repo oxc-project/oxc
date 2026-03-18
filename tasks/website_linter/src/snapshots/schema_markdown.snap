@@ -428,6 +428,22 @@ type: `object`
 Enabled or disabled specific global variables.
 
 
+#### overrides[n].ignores
+
+type: `array`
+
+
+If a file matches any of these glob patterns, the overrides configuration won't apply.
+
+
+##### overrides[n].ignores[n]
+
+type: `string`
+
+
+
+
+
 #### overrides[n].jsPlugins
 
 type: `array`
