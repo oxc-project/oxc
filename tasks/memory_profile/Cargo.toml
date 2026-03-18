@@ -17,5 +17,5 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_parser = { workspace = true }
-oxc_semantic = { workspace = true }
+# oxc_semantic = { workspace = true }  # temporarily disabled - Statement migration in progress
 oxc_tasks_common = { workspace = true }

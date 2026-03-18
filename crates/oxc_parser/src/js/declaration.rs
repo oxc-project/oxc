@@ -61,7 +61,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
-        Statement::VariableDeclaration(self.alloc(decl))
+        Statement::variable_declaration(self.alloc(decl))
     }
 
     pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {

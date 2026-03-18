@@ -329,7 +329,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )));
             }
         }
-        Statement::FunctionDeclaration(decl)
+        Statement::function_declaration(decl)
     }
 
     /// Parse function implementation in Javascript, cursor

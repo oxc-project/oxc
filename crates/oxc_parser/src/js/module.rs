@@ -245,7 +245,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.module_record_builder.visit_import_declaration(&import_decl);
         }
 
-        Statement::ImportDeclaration(import_decl)
+        Statement::import_declaration(import_decl)
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
@@ -1285,7 +1285,7 @@ mod test {
 
         let src = "import foo = bar";
         parse_and_assert_statements(src, |statements| {
-            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+            if let Some(decl) = statements[0].as_ts_import_equals_declaration() {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Value);
                 assert_eq!(decl.id.name, "foo");
             } else {
@@ -1295,7 +1295,7 @@ mod test {
 
         let src = "import type foo = bar";
         parse_and_assert_statements(src, |statements| {
-            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+            if let Some(decl) = statements[0].as_ts_import_equals_declaration() {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Type);
                 assert_eq!(decl.id.name, "foo");
             } else {
@@ -1305,7 +1305,7 @@ mod test {
 
         let src = "import type from = require('./a')";
         parse_and_assert_statements(src, |statements| {
-            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+            if let Some(decl) = statements[0].as_ts_import_equals_declaration() {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Type);
                 assert_eq!(decl.id.name, "from");
             } else {
@@ -1315,7 +1315,7 @@ mod test {
 
         let src = "import from = b";
         parse_and_assert_statements(src, |statements| {
-            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+            if let Some(decl) = statements[0].as_ts_import_equals_declaration() {
                 assert_eq!(decl.import_kind, ImportOrExportKind::Value);
                 assert_eq!(decl.id.name, "from");
             } else {
@@ -1334,7 +1334,7 @@ mod test {
         assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
         let declarations = ret.program.body.iter().collect::<Vec<_>>();
         assert_eq!(declarations.len(), 1);
-        let Statement::ImportDeclaration(decl) = declarations[0] else {
+        let Some(decl) = declarations[0].as_import_declaration() else {
             panic!("Expected ImportDeclaration, found: {:?}", declarations[0]);
         };
         assert_eq!(decl.import_kind, ImportOrExportKind::Value);
@@ -1369,7 +1369,7 @@ mod test {
                 .body
                 .iter()
                 .filter_map(|s| {
-                    if let Statement::ImportDeclaration(decl) = s { Some(decl) } else { None }
+                    s.as_import_declaration()
                 })
                 .collect::<Vec<_>>();
         f(statements);

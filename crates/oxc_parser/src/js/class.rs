@@ -30,7 +30,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 decl.body.span.start,
             )));
         }
-        Statement::ClassDeclaration(decl)
+        Statement::class_declaration(decl)
     }
 
     /// Section 15.7 Class Definitions

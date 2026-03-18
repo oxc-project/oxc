@@ -6,30 +6,30 @@ use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEff
 
 impl<'a> MayHaveSideEffects<'a> for Statement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        match self {
-            Statement::BlockStatement(block) => block.may_have_side_effects(ctx),
-            Statement::DoWhileStatement(do_while) => do_while.may_have_side_effects(ctx),
-            Statement::ExpressionStatement(expr) => expr.expression.may_have_side_effects(ctx),
-            Statement::IfStatement(if_stmt) => if_stmt.may_have_side_effects(ctx),
-            Statement::LabeledStatement(labeled) => labeled.body.may_have_side_effects(ctx),
-            Statement::ReturnStatement(return_stmt) => {
+        match self.kind() {
+            StatementKind::BlockStatement(block) => block.may_have_side_effects(ctx),
+            StatementKind::DoWhileStatement(do_while) => do_while.may_have_side_effects(ctx),
+            StatementKind::ExpressionStatement(expr) => expr.expression.may_have_side_effects(ctx),
+            StatementKind::IfStatement(if_stmt) => if_stmt.may_have_side_effects(ctx),
+            StatementKind::LabeledStatement(labeled) => labeled.body.may_have_side_effects(ctx),
+            StatementKind::ReturnStatement(return_stmt) => {
                 return_stmt.argument.may_have_side_effects(ctx)
             }
-            Statement::SwitchStatement(switch) => switch.may_have_side_effects(ctx),
-            Statement::TryStatement(try_stmt) => try_stmt.may_have_side_effects(ctx),
-            Statement::WhileStatement(while_stmt) => while_stmt.may_have_side_effects(ctx),
-            Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::EmptyStatement(_) => false,
-            match_declaration!(Statement) => self.to_declaration().may_have_side_effects(ctx),
-            Statement::ForInStatement(_)
-            | Statement::ForOfStatement(_)
-            | Statement::ForStatement(_)
-            | Statement::ThrowStatement(_)
-            | Statement::WithStatement(_)
-            | Statement::DebuggerStatement(_) => true,
-            #[expect(clippy::match_same_arms)]
-            match_module_declaration!(Statement) => true,
+            StatementKind::SwitchStatement(switch) => switch.may_have_side_effects(ctx),
+            StatementKind::TryStatement(try_stmt) => try_stmt.may_have_side_effects(ctx),
+            StatementKind::WhileStatement(while_stmt) => while_stmt.may_have_side_effects(ctx),
+            StatementKind::BreakStatement(_)
+            | StatementKind::ContinueStatement(_)
+            | StatementKind::EmptyStatement(_) => false,
+            _ if self.is_declaration() => self.to_declaration().may_have_side_effects(ctx),
+            StatementKind::ForInStatement(_)
+            | StatementKind::ForOfStatement(_)
+            | StatementKind::ForStatement(_)
+            | StatementKind::ThrowStatement(_)
+            | StatementKind::WithStatement(_)
+            | StatementKind::DebuggerStatement(_) => true,
+            _ if self.is_module_declaration() => true,
+            _ => unreachable!(),
         }
     }
 }

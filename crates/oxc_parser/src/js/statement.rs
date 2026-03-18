@@ -79,7 +79,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
             if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt
+                if let Some(expr) = stmt.as_expression_statement()
                     && let Some(string) = expr.expression.as_string_literal()
                 {
                     // span start will mismatch if they are parenthesized when `preserve_parens = false`
@@ -178,11 +178,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) {
-        match stmt {
-            Statement::FunctionDeclaration(func) => {
+        match stmt.kind_mut() {
+            StatementKindMut::FunctionDeclaration(func) => {
                 func.pure = true;
             }
-            Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
+            StatementKindMut::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
@@ -192,7 +192,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => {}
             },
-            Statement::ExportNamedDeclaration(decl) => match &mut decl.declaration {
+            StatementKindMut::ExportNamedDeclaration(decl) => match &mut decl.declaration {
                 Some(Declaration::FunctionDeclaration(func)) => {
                     func.pure = true;
                 }
@@ -204,7 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => {}
             },
-            Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
+            StatementKindMut::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr);
                 }
@@ -239,7 +239,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
-        Statement::BlockStatement(block)
+        Statement::block_statement(block)
     }
 
     /// Section 14.3.2 Variable Statement
@@ -260,7 +260,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
 
-        Statement::VariableDeclaration(decl)
+        Statement::variable_declaration(decl)
     }
 
     /// Section 14.4 Empty Statement
@@ -699,7 +699,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
-            if let Statement::VariableDeclaration(var_decl) = &stmt
+            if let Some(var_decl) = stmt.as_variable_declaration()
                 && var_decl.kind.is_using()
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
