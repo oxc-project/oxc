@@ -5,6 +5,7 @@ use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 use oxc_allocator::Allocator;
 
 use crate::FormatOptions;
+use crate::external_formatter::ExternalCallbacks;
 
 use super::embedded::{format_embedded_js, is_js_ts_lang};
 use super::line_buffer::LineBuffer;
@@ -176,6 +177,7 @@ pub fn format_description_mdast(
     capitalize: bool,
     format_options: Option<&FormatOptions>,
     allocator: Option<&Allocator>,
+    external_callbacks: Option<&ExternalCallbacks>,
 ) -> String {
     if text.trim().is_empty() {
         return String::new();
@@ -284,6 +286,7 @@ pub fn format_description_mdast(
         source: &protected,
         format_options,
         allocator,
+        external_callbacks,
     };
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
@@ -301,6 +304,7 @@ struct SerializeOptions<'a> {
     source: &'a str,
     format_options: Option<&'a FormatOptions>,
     allocator: Option<&'a Allocator>,
+    external_callbacks: Option<&'a ExternalCallbacks>,
 }
 
 // ──────────────────────────────────────────────────
@@ -1307,10 +1311,20 @@ fn format_code_value<'a>(
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
     if let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) {
-        // For fenced code with an explicit non-JS/TS lang, preserve verbatim
+        // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
         if let Some(l) = lang
             && !is_js_ts_lang(l)
         {
+            if let Some(external) = opts.external_callbacks
+                && let Some(Ok(formatted)) = external.format_embedded(l, code)
+            {
+                let mut result = formatted;
+                // Trim trailing newline that Prettier adds
+                if result.ends_with('\n') {
+                    result.pop();
+                }
+                return Cow::Owned(result);
+            }
             return Cow::Borrowed(code);
         }
         // Fenced JS/TS, fenced with no lang, or indented code: try formatting

@@ -6,6 +6,7 @@ use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
 
 use crate::FormatOptions;
+use crate::external_formatter::ExternalCallbacks;
 use crate::formatter::Formatter;
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
@@ -62,6 +63,7 @@ pub(super) struct JsdocFormatter<'a, 'o> {
     pub(super) format_options: &'o FormatOptions,
     pub(super) type_format_options: FormatOptions,
     pub(super) allocator: &'a Allocator,
+    pub(super) external_callbacks: Option<&'o ExternalCallbacks>,
     pub(super) wrap_width: usize,
     pub(super) content_lines: LineBuffer,
 }
@@ -72,6 +74,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         format_options: &'o FormatOptions,
         allocator: &'a Allocator,
         available_width: usize,
+        external_callbacks: Option<&'o ExternalCallbacks>,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
         // Use commentContentPrintWidth (= wrap_width) as the line width for type
@@ -92,6 +95,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             format_options,
             type_format_options,
             allocator,
+            external_callbacks,
             wrap_width,
             content_lines: LineBuffer::new(),
         }
@@ -177,6 +181,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 self.options.capitalize_descriptions,
                 Some(self.format_options),
                 Some(self.allocator),
+                self.external_callbacks,
             );
             if self.options.description_tag {
                 // Emit as @description tag
@@ -1067,7 +1072,14 @@ pub fn format_jsdoc_comment<'a>(
     available_width: usize,
     f: &Formatter<'_, 'a>,
 ) -> Option<FormattedJsdoc<'a>> {
-    let fmt = JsdocFormatter::new(options, f.options(), f.allocator(), available_width);
+    let external_callbacks = f.context().external_callbacks();
+    let fmt = JsdocFormatter::new(
+        options,
+        f.options(),
+        f.allocator(),
+        available_width,
+        Some(external_callbacks),
+    );
     fmt.format(comment, source_text)
 }
 
