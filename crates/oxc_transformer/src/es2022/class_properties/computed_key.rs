@@ -20,13 +20,13 @@ impl<'a> ClassProperties<'a> {
     ) {
         // Exit if key is not an `Expression`
         // (`PropertyKey::StaticIdentifier` or `PropertyKey::PrivateIdentifier`)
-        let Some(key) = method.key.as_expression_mut() else {
+        let Some(mut key) = method.key.as_expression_mut() else {
             return;
         };
 
         // Exit if evaluating key cannot have side effects.
         // This check also results in exit for non-computed keys e.g. `class C { 'x'() {} 123() {} }`.
-        if !key_needs_temp_var(key, ctx) {
+        if !key_needs_temp_var(&key, ctx) {
             return;
         }
 
@@ -98,11 +98,11 @@ impl<'a> ClassProperties<'a> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let Some(key) = prop.key.as_expression_mut() else {
+        let Some(mut key) = prop.key.as_expression_mut() else {
             return;
         };
 
-        if key_needs_temp_var(key, ctx) {
+        if key_needs_temp_var(&key, ctx) {
             self.insert_before.push(key.take_in(ctx.ast));
         }
     }

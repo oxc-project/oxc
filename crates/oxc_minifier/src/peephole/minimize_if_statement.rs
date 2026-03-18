@@ -15,11 +15,11 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-        if let Some(expr_stmt) = if_stmt.consequent.as_expression_statement_mut() {
+        if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) b();" => "a || b();"
-                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                         (LogicalOperator::Or, &mut unary_expr.argument)
                     }
                     // "if (a) b();" => "a && b();"
@@ -48,10 +48,10 @@ impl<'a> PeepholeOptimizations {
                 let mut expr = if_stmt.test.take_in(ctx.ast);
                 Self::remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(Some(expr_stmt)) = if_stmt.alternate.as_expression_statement_mut() {
+            } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) {} else b();" => "a && b();"
-                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                         (LogicalOperator::And, &mut unary_expr.argument)
                     }
                     // "if (a) {} else b();" => "a || b();"
@@ -63,9 +63,9 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
-                match if_stmt.test.kind_mut() {
+                match &mut if_stmt.test {
                     // "if (!a) {} else return b;" => "if (a) return b;"
-                    ExpressionKindMut::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                         if_stmt.test = unary_expr.argument.take_in(ctx.ast);
                         if_stmt.consequent = stmt.take_in(ctx.ast);
                         if_stmt.alternate = None;
@@ -89,8 +89,9 @@ impl<'a> PeepholeOptimizations {
             // "yes" is not missing (and is not an expression)
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
-                if !alternate.is_if_statement()
-                    && let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()                    && unary_expr.operator.is_not()
+                if !matches!(alternate, Statement::IfStatement(_))
+                    && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
+                    && unary_expr.operator.is_not()
                 {
                     // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                     if_stmt.test = unary_expr.argument.take_in(ctx.ast);
@@ -102,7 +103,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
             } else {
                 // "no" is missing
-                if let Some(if2_stmt) = if_stmt.consequent.as_if_statement_mut()
+                if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
                     && if2_stmt.alternate.is_none()
                 {
                     // "if (a) if (b) return c;" => "if (a && b) return c;"
@@ -126,13 +127,13 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(if2) = if_stmt.consequent.as_if_statement_mut()
+        if let Statement::IfStatement(if2) = &mut if_stmt.consequent
             && if2.consequent.is_jump_statement()
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
             if_stmt.consequent =
-                Statement::block_statement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
+                Statement::BlockStatement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
                     if_stmt.consequent.span(),
                     ctx.ast.vec1(if_stmt.consequent.take_in(ctx.ast)),
                     scope_id,
@@ -142,9 +143,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_statement_empty(stmt: &Statement<'a>) -> bool {
-        match stmt.kind_mut() {
-            StatementKindMut::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
-            StatementKindMut::EmptyStatement(_) => true,
+        match stmt {
+            Statement::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
+            Statement::EmptyStatement(_) => true,
             _ => false,
         }
     }

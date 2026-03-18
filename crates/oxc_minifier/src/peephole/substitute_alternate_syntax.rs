@@ -149,7 +149,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_chain_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_chain_expression_mut() else { return };
+        let Expression::ChainExpression(e) = expr else { return };
         Self::try_flatten_nested_chain_expression(e, ctx);
         Self::substitute_chain_call_expression(e, ctx);
     }
@@ -172,7 +172,7 @@ impl<'a> PeepholeOptimizations {
             && arrow_expr.body.directives.is_empty()
             && arrow_expr.body.statements.len() == 1
             && let Some(body) = arrow_expr.body.statements.first_mut()
-            && let Some(ret_stmt) = body.as_return_statement_mut()
+            && let Statement::ReturnStatement(ret_stmt) = body
         {
             let return_stmt_arg = ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx.ast));
             if let Some(arg) = return_stmt_arg {
@@ -194,8 +194,8 @@ impl<'a> PeepholeOptimizations {
     ///
     /// Enabled by `compress.typeofs`
     pub fn substitute_typeof_undefined(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_binary_expression_mut() else { return };
-        let Some(unary_expr) = e.left.as_unary_expression() else { return };
+        let Expression::BinaryExpression(e) = expr else { return };
+        let Expression::UnaryExpression(unary_expr) = &e.left else { return };
         if !unary_expr.operator.is_typeof() {
             return;
         }
@@ -219,7 +219,7 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.expression_binary(e.span, left, new_comp_op, right)
         } else {
             let span = e.span;
-            let Some(unary_expr) = e.left.as_unary_expression_mut() else { return };
+            let Expression::UnaryExpression(unary_expr) = &mut e.left else { return };
             ctx.ast.expression_binary(
                 span,
                 unary_expr.take_in(ctx.ast).argument,
@@ -235,7 +235,7 @@ impl<'a> PeepholeOptimizations {
     /// - `1 - +b` => `1 - b` (for other operators as well)
     /// - `+a - 1` => `a - 1` (for other operators as well)
     pub fn substitute_unary_plus(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_unary_expression_mut() else { return };
+        let Expression::UnaryExpression(e) = expr else { return };
         if e.operator != UnaryOperator::UnaryPlus {
             return;
         }
@@ -304,12 +304,12 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(e) = expr.as_logical_expression_mut() else { return };
-        let Some(right) = e.right.as_logical_expression() else { return };
+        let Expression::LogicalExpression(e) = expr else { return };
+        let Expression::LogicalExpression(right) = &e.right else { return };
         if right.operator != e.operator {
             return;
         }
-        let Some(mut right) = e.right.take_in(ctx.ast).as_logical_expression_mut() else { return };
+        let Expression::LogicalExpression(mut right) = e.right.take_in(ctx.ast) else { return };
         let mut new_left = ctx.ast.expression_logical(
             e.span,
             e.left.take_in(ctx.ast),
@@ -332,7 +332,7 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(e) = expr.as_binary_expression_mut() else { return };
+        let Expression::BinaryExpression(e) = expr else { return };
 
         // Handle associative rotation
         let is_associative = matches!(
@@ -340,11 +340,11 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseXOR
         );
         if is_associative
-            && let Some(right) = e.right.as_binary_expression()
+            && let Expression::BinaryExpression(right) = &e.right
             && right.operator == e.operator
             && !right.right.may_have_side_effects(ctx)
         {
-            let Some(mut right) = e.right.take_in(ctx.ast).as_binary_expression_mut() else {
+            let Expression::BinaryExpression(mut right) = e.right.take_in(ctx.ast) else {
                 return;
             };
             let mut new_left = ctx.ast.expression_binary(
@@ -365,12 +365,12 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Handle commutative rotation
-        if let Some(right) = e.right.as_binary_expression()
+        if let Expression::BinaryExpression(right) = &e.right
             && matches!(e.operator, BinaryOperator::Multiplication)
             && e.operator.precedence() == right.operator.precedence()
         {
             // Don't swap if left does not need a parentheses
-            if let Some(left) = e.left.as_binary_expression()
+            if let Expression::BinaryExpression(left) = &e.left
                 && e.operator.precedence() <= left.operator.precedence()
             {
                 return;
@@ -404,7 +404,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This compression is safe for `document.all` because `typeof document.all` is not `'object'`.
     pub fn substitute_is_object_and_not_null(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_logical_expression_mut() else { return };
+        let Expression::LogicalExpression(e) = expr else { return };
         let inversed = match e.operator {
             LogicalOperator::And => false,
             LogicalOperator::Or => true,
@@ -417,7 +417,7 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
             return;
         }
-        let Some(left) = e.left.as_logical_expression() else {
+        let Expression::LogicalExpression(left) = &e.left else {
             return;
         };
         if left.operator != e.operator {
@@ -433,7 +433,7 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         let span = e.span;
-        let Some(left) = e.left.as_logical_expression_mut() else {
+        let Expression::LogicalExpression(left) = &mut e.left else {
             return;
         };
         *expr = ctx.ast.expression_logical(span, left.left.take_in(ctx.ast), e.operator, new_expr);
@@ -450,7 +450,7 @@ impl<'a> PeepholeOptimizations {
         let pair = Self::commutative_pair(
             (&left, &right),
             |a_expr| {
-                let Some(a) = a_expr.as_binary_expression_mut() else { return None };
+                let Expression::BinaryExpression(a) = a_expr else { return None };
                 let is_target_ops = if inversed {
                     matches!(
                         a.operator,
@@ -465,11 +465,11 @@ impl<'a> PeepholeOptimizations {
                 let (id, ()) = Self::commutative_pair(
                     (&a.left, &a.right),
                     |a_a| {
-                        let Some(a_a) = a_a.as_unary_expression_mut() else { return None };
+                        let Expression::UnaryExpression(a_a) = a_a else { return None };
                         if a_a.operator != UnaryOperator::Typeof {
                             return None;
                         }
-                        let Some(id) = a_a.argument.as_identifier() else { return None };
+                        let Expression::Identifier(id) = &a_a.argument else { return None };
                         Some(id)
                     },
                     |b| b.is_specific_string_literal("object").then_some(()),
@@ -477,7 +477,7 @@ impl<'a> PeepholeOptimizations {
                 Some((id, a_expr))
             },
             |b| {
-                let Some(b) = b.as_binary_expression_mut() else {
+                let Expression::BinaryExpression(b) = b else {
                     return None;
                 };
                 let is_target_ops = if inversed {
@@ -494,7 +494,7 @@ impl<'a> PeepholeOptimizations {
                 let (id, ()) = Self::commutative_pair(
                     (&b.left, &b.right),
                     |a_a| {
-                        let Some(id) = a_a.as_identifier_mut() else { return None };
+                        let Expression::Identifier(id) = a_a else { return None };
                         Some(id)
                     },
                     |b| b.is_null().then_some(()),
@@ -513,7 +513,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut new_left_expr = typeof_binary_expr.clone_in_with_semantic_ids(ctx.ast.allocator);
-        if let Some(new_left_expr_binary) = new_left_expr.as_binary_expression_mut() {
+        if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
         } else {
@@ -544,7 +544,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_loose_equals_undefined(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_binary_expression_mut() else { return };
+        let Expression::BinaryExpression(e) = expr else { return };
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
@@ -600,28 +600,28 @@ impl<'a> PeepholeOptimizations {
             name_e: &str,
             offset: f64,
         ) -> VerifyArrayArgResult {
-            match arg_expr.kind() {
-                ExpressionKind::Identifier(id) => {
+            match arg_expr {
+                Expression::Identifier(id) => {
                     if offset == 0.0 && id.name == name_e {
                         VerifyArrayArgResult::WithoutOffset
                     } else {
                         VerifyArrayArgResult::Invalid
                     }
                 }
-                ExpressionKind::ConditionalExpression(cond_expr) => {
-                    let Some(test_expr) = cond_expr.test.as_binary_expression() else {
+                Expression::ConditionalExpression(cond_expr) => {
+                    let Expression::BinaryExpression(test_expr) = &cond_expr.test else {
                         return VerifyArrayArgResult::Invalid;
                     };
-                    let Some(cons_expr) = cond_expr.consequent.as_binary_expression() else {
+                    let Expression::BinaryExpression(cons_expr) = &cond_expr.consequent else {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
                         && test_expr.left.is_specific_id(name_e)
-                        && &test_expr.right.as_numeric_literal().is_some_and(|n| n.value == offset)
+                        && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
-                        && &cons_expr.left.as_identifier().is_some_and(|id| id.name == name_e)
-                        && &cons_expr.right.as_numeric_literal().is_some_and(|n| n.value == offset)
-                        && &cond_expr.alternate.as_numeric_literal().is_some_and(|n| n.value == 0.0)
+                        && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
+                        && matches!(&cons_expr.right, Expression::NumericLiteral(n) if n.value == offset)
+                        && matches!(&cond_expr.alternate, Expression::NumericLiteral(n) if n.value == 0.0)
                     {
                         VerifyArrayArgResult::WithOffset
                     } else {
@@ -639,17 +639,17 @@ impl<'a> PeepholeOptimizations {
 
         // Parse statement: `r[a - offset] = arguments[a];`
         let body_assign_expr = {
-            match for_stmt.body.kind_mut() {
-                StatementKind::ExpressionStatement(expr_stmt) => expr_stmt,
-                StatementKind::BlockStatement(block) if block.body.len() == 1 => {
-                    match block.body[0].kind_mut() {
-                        StatementKind::ExpressionStatement(expr_stmt) => expr_stmt,
+            let assign = match &mut for_stmt.body {
+                Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+                Statement::BlockStatement(block) if block.body.len() == 1 => {
+                    match &mut block.body[0] {
+                        Statement::ExpressionStatement(expr_stmt) => expr_stmt,
                         _ => return,
                     }
                 }
                 _ => return,
             };
-            let Some(assign_expr) = assign.expression.as_assignment_expression_mut() else {
+            let Expression::AssignmentExpression(assign_expr) = &mut assign.expression else {
                 return;
             };
             if !assign_expr.operator.is_assign() {
@@ -668,17 +668,17 @@ impl<'a> PeepholeOptimizations {
             else {
                 return;
             };
-            let Some(lhs_member_expr_obj) = lhs_member_expr.object.as_identifier() else {
+            let Expression::Identifier(lhs_member_expr_obj) = &lhs_member_expr.object else {
                 return;
             };
-            match lhs_member_expr.expression.kind() {
-                ExpressionKind::Identifier(id) => (id.name, 0.0),
-                ExpressionKind::BinaryExpression(b) => {
+            let (base_name, offset) = match &lhs_member_expr.expression {
+                Expression::Identifier(id) => (id.name, 0.0),
+                Expression::BinaryExpression(b) => {
                     if b.operator != BinaryOperator::Subtraction {
                         return;
                     }
-                    let Some(id) = b.left.as_identifier() else { return };
-                    let Some(n) = b.right.as_numeric_literal() else { return };
+                    let Expression::Identifier(id) = &b.left else { return };
+                    let Expression::NumericLiteral(n) = &b.right else { return };
                     if n.value.fract() != 0.0 || n.value < 0.0 {
                         return;
                     }
@@ -690,11 +690,12 @@ impl<'a> PeepholeOptimizations {
         };
 
         let arguments_id = {
-            let Some(rhs_member_expr) = body_assign_expr.right.as_computed_member_expression_mut()            else {
+            let Expression::ComputedMemberExpression(rhs_member_expr) = &mut body_assign_expr.right
+            else {
                 return;
             };
             let ComputedMemberExpression { object, expression, .. } = rhs_member_expr.as_mut();
-            let Some(rhs_member_expr_obj) = object.as_identifier_mut() else {
+            let Expression::Identifier(rhs_member_expr_obj) = object else {
                 return;
             };
             if rhs_member_expr_obj.name != "arguments"
@@ -702,7 +703,7 @@ impl<'a> PeepholeOptimizations {
             {
                 return;
             }
-            let Some(rhs_member_expr_expr_id) = expression.as_identifier_mut() else {
+            let Expression::Identifier(rhs_member_expr_expr_id) = expression else {
                 return;
             };
             if rhs_member_expr_expr_id.name != a_id_name {
@@ -714,7 +715,7 @@ impl<'a> PeepholeOptimizations {
 
         // Parse update: `a++`
         {
-            let Some(Some(u)) = for_stmt.update.as_update_expression() else {
+            let Some(Expression::UpdateExpression(u)) = &for_stmt.update else {
                 return;
             };
             let SimpleAssignmentTarget::AssignmentTargetIdentifier(id) = &u.argument else {
@@ -728,23 +729,23 @@ impl<'a> PeepholeOptimizations {
 
         // Parse test: `a < e` or `a < arguments.length`
         let e_id_info = {
-            let Some(Some(b)) = for_stmt.test.as_binary_expression() else {
+            let Some(Expression::BinaryExpression(b)) = &for_stmt.test else {
                 return;
             };
             if b.operator != BinaryOperator::LessThan {
                 return;
             }
-            let Some(left) = b.left.as_identifier() else { return };
+            let Expression::Identifier(left) = &b.left else { return };
             if left.name != a_id_name {
                 return;
             }
-            match b.right.kind() {
-                ExpressionKind::Identifier(right) => Some((
+            match &b.right {
+                Expression::Identifier(right) => Some((
                     &right.name,
                     ctx.scoping().get_reference(right.reference_id()).symbol_id(),
                 )),
-                ExpressionKind::StaticMemberExpression(sm) => {
-                    let Some(id) = sm.object.as_identifier() else {
+                Expression::StaticMemberExpression(sm) => {
+                    let Expression::Identifier(id) = &sm.object else {
                         return;
                     };
                     if id.name != "arguments"
@@ -793,8 +794,8 @@ impl<'a> PeepholeOptimizations {
             if de_id.name != e_id_name {
                 return;
             }
-            let Some(Some(sm)) = de.init.as_static_member_expression() else { return };
-            let Some(id) = sm.object.as_identifier() else { return };
+            let Some(Expression::StaticMemberExpression(sm)) = &de.init else { return };
+            let Expression::Identifier(id) = &sm.object else { return };
             if id.name != "arguments"
                 || !ctx.is_global_reference(id)
                 || sm.property.name != "length"
@@ -815,7 +816,7 @@ impl<'a> PeepholeOptimizations {
             if de_id.name != a_id_name {
                 return;
             }
-            if !matches!(&de_a.init, Some(Expression::numeric_literal(n)) if n.value == offset) {
+            if !matches!(&de_a.init, Some(Expression::NumericLiteral(n)) if n.value == offset) {
                 return;
             }
             de_id.symbol_id()
@@ -827,10 +828,10 @@ impl<'a> PeepholeOptimizations {
                 .declarations
                 .get_mut(idx)
                 .expect("var_init.declarations.len() check above ensures this");
-            match de_r.init.kind() {
+            match &de_r.init {
                 // Array(e > 1 ? e - 1 : 0) or Array(e)
-                Some(ExpressionKind::CallExpression(call)) => {
-                    let Some(id) = call.callee.as_identifier() else { return };
+                Some(Expression::CallExpression(call)) => {
+                    let Expression::Identifier(id) = &call.callee else { return };
                     if id.name != "Array" || !ctx.is_global_reference(id) {
                         return;
                     }
@@ -845,7 +846,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     e_ref_count += if result == VerifyArrayArgResult::WithOffset { 2 } else { 1 };
                 }
-                Some(ExpressionKind::ArrayExpression(arr)) => {
+                Some(Expression::ArrayExpression(arr)) => {
                     if !arr.elements.is_empty() {
                         return;
                     }
@@ -889,14 +890,14 @@ impl<'a> PeepholeOptimizations {
             SPAN,
             ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
                 SPAN,
-                Expression::identifier(arguments_id.take_in_box(ctx.ast)),
+                Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
             )),
         );
         // wrap with `.slice(offset)`
         let arr = if offset > 0.0 {
             let obj = base_arr;
             let callee =
-                Expression::static_member_expression(ctx.ast.alloc_static_member_expression(
+                Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     SPAN,
                     obj,
                     ctx.ast.identifier_name(SPAN, "slice"),
@@ -938,9 +939,9 @@ impl<'a> PeepholeOptimizations {
     /// `return void 0` -> `return`
     pub fn substitute_return_statement(stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Some(argument) = &stmt.argument else { return };
-        match argument.kind() {
-            ExpressionKind::Identifier(ident) => ctx.is_identifier_undefined(ident),
-            ExpressionKind::UnaryExpression(e) => {
+        if !match argument {
+            Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
+            Expression::UnaryExpression(e) => {
                 e.operator.is_void() && !argument.may_have_side_effects(ctx)
             }
             _ => false,
@@ -980,11 +981,11 @@ impl<'a> PeepholeOptimizations {
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
     pub fn substitute_simple_function_call(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_call_expression_mut() else { return };
+        let Expression::CallExpression(e) = expr else { return };
         if e.optional || e.arguments.len() >= 2 {
             return;
         }
-        let Some(ident) = e.callee.as_identifier() else { return };
+        let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !matches!(name, "Boolean" | "Number" | "String" | "BigInt") {
             return;
@@ -1041,7 +1042,7 @@ impl<'a> PeepholeOptimizations {
             "BigInt" => match arg {
                 None => None,
                 Some(arg) => {
-                    arg.is_big_int_literal().then(|| arg.take_in(ctx.ast))
+                    matches!(arg, Expression::BigIntLiteral(_)).then(|| arg.take_in(ctx.ast))
                 }
             },
             _ => None,
@@ -1057,14 +1058,14 @@ impl<'a> PeepholeOptimizations {
         callee: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<&'a str> {
-        match callee.kind() {
-            ExpressionKind::StaticMemberExpression(e) => {
-                if !e.object.as_identifier().is_some_and(|ident| ident.name == "window") {
+        match callee {
+            Expression::StaticMemberExpression(e) => {
+                if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
                     return None;
                 }
                 Some(e.property.name.as_str())
             }
-            ExpressionKind::Identifier(ident) => {
+            Expression::Identifier(ident) => {
                 let name = ident.name.as_str();
                 if !matches!(name, "Object" | "Array") {
                     return None;
@@ -1084,18 +1085,18 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match expr.kind() {
-            ExpressionKind::NewExpression(e) => &e.callee,
-            ExpressionKind::CallExpression(e) => &e.callee,
+        let callee = match expr {
+            Expression::NewExpression(e) => &e.callee,
+            Expression::CallExpression(e) => &e.callee,
             _ => return,
         };
         let Some(name) = Self::get_fold_constructor_name(callee, ctx) else { return };
-        match expr.kind() {
-            ExpressionKind::NewExpression(e) => {
+        let (span, callee, args, is_new_expr) = match expr {
+            Expression::NewExpression(e) => {
                 let NewExpression { span, callee, arguments, .. } = e.as_mut();
                 (span, callee, arguments, true)
             }
-            ExpressionKind::CallExpression(e) => {
+            Expression::CallExpression(e) => {
                 let CallExpression { span, callee, arguments, .. } = e.as_mut();
                 (span, callee, arguments, false)
             }
@@ -1119,7 +1120,7 @@ impl<'a> PeepholeOptimizations {
                         ctx.state.changed = true;
                     }
                     // `new Array(8)` -> `Array(8)`
-                    else if let Some(n) = arg.as_numeric_literal_mut() {
+                    else if let Expression::NumericLiteral(n) = arg {
                         // new Array(2) -> `[,,]`
                         // this does not work with IE8 and below
                         // learned from https://github.com/babel/minify/pull/45
@@ -1146,7 +1147,7 @@ impl<'a> PeepholeOptimizations {
                         }
                     }
                     // `new Array(literal)` -> `[literal]`
-                    else if arg.is_literal() || arg.is_array_expression() {
+                    else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                         let elements =
                             ctx.ast.vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast)));
                         *expr = ctx.ast.expression_array(*span, elements);
@@ -1179,8 +1180,8 @@ impl<'a> PeepholeOptimizations {
     /// `new Function()` -> `Function()`
     /// `new RegExp()` -> `RegExp()`
     pub fn substitute_global_new_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(e) = expr.as_new_expression_mut() else { return };
-        let Some(ident) = e.callee.as_identifier() else { return };
+        let Expression::NewExpression(e) = expr else { return };
+        let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !matches!(name, "Error" | "AggregateError" | "Function" | "RegExp")
             && !Self::is_native_error_name(name)
@@ -1256,7 +1257,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(t) = expr.as_template_literal_mut() else { return };
+        let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
         *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
         ctx.state.changed = true;
@@ -1311,7 +1312,7 @@ impl<'a> PeepholeOptimizations {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
-                    if let Some(array_expr) = spread_el.argument.as_array_expression() {
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
                         should_fold = true;
                         array_expr.elements.len()
                     } else {
@@ -1332,7 +1333,7 @@ impl<'a> PeepholeOptimizations {
 
         for arg in old_args {
             if let Argument::SpreadElement(mut spread_el) = arg {
-                if let Some(array_expr) = spread_el.argument.as_array_expression_mut() {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
                     for el in &mut array_expr.elements {
                         match el {
                             ArrayExpressionElement::SpreadElement(spread_el) => {
@@ -1370,28 +1371,28 @@ impl<'a> PeepholeOptimizations {
     ) {
         match &mut expr.expression {
             ChainElement::StaticMemberExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::ComputedMemberExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::PrivateFieldExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::CallExpression(call) => {
-                if let Some(chain) = call.callee.without_parentheses_mut().as_chain_expression_mut() {
+                if let Expression::ChainExpression(chain) = call.callee.without_parentheses_mut() {
                     call.callee = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
@@ -1418,11 +1419,11 @@ impl<'a> PeepholeOptimizations {
         expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(inner_call) = expr.callee.as_call_expression_mut() else { return };
+        let Expression::CallExpression(inner_call) = &mut expr.callee else { return };
         if inner_call.optional || inner_call.arguments.len() != 1 {
             return;
         }
-        let Some(callee) = inner_call.callee.as_identifier() else {
+        let Expression::Identifier(callee) = &inner_call.callee else {
             return;
         };
         if callee.name != "Object" || !ctx.is_global_reference(callee) {
@@ -1478,7 +1479,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
     pub fn substitute_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &TraverseCtx<'a>) {
-        let Some(ident) = e.callee.as_identifier() else { return };
+        let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
             return;
@@ -1492,7 +1493,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     pub fn substitute_boolean(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(lit) = expr.as_boolean_literal_mut() else { return };
+        let Expression::BooleanLiteral(lit) = expr else { return };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
             if lit.value { 0.0 } else { 1.0 },
@@ -1508,12 +1509,12 @@ impl<'a> PeepholeOptimizations {
         // this threshold is chosen by hand by checking the minsize output
         const THRESHOLD: usize = 40;
 
-        let Some(array) = expr.as_array_expression_mut() else {
+        let Expression::ArrayExpression(array) = expr else {
             return;
         };
 
         let is_all_string = array.elements.iter().all(|element| {
-            element.as_expression().is_some_and(|expr| expr.is_string_literal())
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
         });
         if !is_all_string {
             return;
@@ -1528,7 +1529,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let strings = array.elements.iter().map(|element| {
-            let Some(str) = element.to_expression().as_string_literal_mut() else { unreachable!() };
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
             str.value.as_str()
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
@@ -1538,7 +1539,7 @@ impl<'a> PeepholeOptimizations {
         // "str1,str2".split(',')
         *expr = ctx.ast.expression_call_with_pure(
             expr.span(),
-            Expression::static_member_expression(ctx.ast.alloc_static_member_expression(
+            Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                 expr.span(),
                 ctx.ast.expression_string_literal(
                     expr.span(),
@@ -1619,20 +1620,20 @@ impl<'a> PeepholeOptimizations {
     /// - Converts arrow function IIFEs that return void or execute one expression
     ///   (e.g., `(() => { foo() })()` or `(() => { return foo() })()`) into simpler expressions.
     pub fn substitute_iife_call(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(call_expr) = e.as_call_expression_mut() else { return };
+        let Expression::CallExpression(call_expr) = e else { return };
 
         if !call_expr.arguments.is_empty() || !call_expr.callee.is_function() {
             return;
         }
 
-        match call_expr.callee.kind() {
-            ExpressionKind::FunctionExpression(f) => {
+        let is_empty_iife = match &call_expr.callee {
+            Expression::FunctionExpression(f) => {
                 f.params.is_empty()
                     && f.body.as_ref().is_some_and(|body| body.is_empty())
                     // ignore async/generator if a return value is not used
                     && ((!f.r#async && !f.generator) || Self::is_expression_result_unused(ctx))
             }
-            ExpressionKind::ArrowFunctionExpression(f) => {
+            Expression::ArrowFunctionExpression(f) => {
                 f.params.is_empty()
                     && f.body.is_empty()
                     // ignore async if a return value is not used
@@ -1652,7 +1653,7 @@ impl<'a> PeepholeOptimizations {
         let is_pure =
             (call_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&call_expr.callee);
 
-        if let Some(f) = call_expr.callee.as_arrow_function_expression_mut()
+        if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
             && f.body.statements.len() == 1
@@ -1668,8 +1669,8 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
                 return;
             }
-            match f.body.statements[0].kind_mut() {
-                StatementKind::ExpressionStatement(expr_stmt) => {
+            match &mut f.body.statements[0] {
+                Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
                     if is_pure && Self::is_expression_result_unused(ctx) {
                         *e = ctx.ast.void_0(call_expr.span);
@@ -1684,7 +1685,7 @@ impl<'a> PeepholeOptimizations {
 
                     ctx.state.changed = true;
                 }
-                StatementKind::ReturnStatement(ret_stmt) => {
+                Statement::ReturnStatement(ret_stmt) => {
                     if let Some(argument) = &mut ret_stmt.argument {
                         // Replace "(() => { return foo() })()" with "foo()"
                         if is_pure && Self::is_expression_result_unused(ctx) {

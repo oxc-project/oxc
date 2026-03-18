@@ -20,7 +20,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
         Self::minimize_conditional_expression(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::conditional_expression(ctx.ast.alloc(cond_expr)))
+            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
@@ -28,13 +28,13 @@ impl<'a> PeepholeOptimizations {
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        match expr.test.kind_mut() {
+        match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
-            ExpressionKindMut::SequenceExpression(sequence_expr) => {
+            Expression::SequenceExpression(sequence_expr) => {
                 if sequence_expr.expressions.len() > 1 {
                     let span = expr.span();
                     let mut sequence = expr.test.take_in(ctx.ast);
-                    let Some(sequence_expr) = sequence.as_sequence_expression_mut() else {
+                    let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                         unreachable!()
                     };
                     let expr = Self::minimize_conditional(
@@ -49,7 +49,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // "!a ? b : c" => "a ? c : b"
-            ExpressionKindMut::UnaryExpression(test_expr) => {
+            Expression::UnaryExpression(test_expr) => {
                 if test_expr.operator.is_not() {
                     let test = test_expr.argument.take_in(ctx.ast);
                     let consequent = expr.alternate.take_in(ctx.ast);
@@ -59,9 +59,9 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
             }
-            ExpressionKindMut::Identifier(id) => {
+            Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
-                if let Some(id2) = expr.consequent.as_identifier()
+                if let Expression::Identifier(id2) = &expr.consequent
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
                 // "a ? b : a" => "a && b"
-                if let Some(id2) = expr.alternate.as_identifier()
+                if let Expression::Identifier(id2) = &expr.alternate
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -86,7 +86,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // `x != y ? b : c` -> `x == y ? c : b`
-            ExpressionKindMut::BinaryExpression(test_expr) => {
+            Expression::BinaryExpression(test_expr) => {
                 if matches!(
                     test_expr.operator,
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
-        if let Some(consequent) = expr.consequent.as_conditional_expression_mut()
+        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
             return Some(ctx.ast.expression_conditional(
@@ -122,7 +122,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b : c ? b : d" => "a || c ? b : d"
-        if let Some(alternate) = expr.alternate.as_conditional_expression_mut()
+        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
             return Some(ctx.ast.expression_conditional(
@@ -140,7 +140,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? c : (b, c)" => "(a || b), c"
-        if let Some(alternate) = expr.alternate.as_sequence_expression_mut()
+        if let Expression::SequenceExpression(alternate) = &mut expr.alternate
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
         {
@@ -160,7 +160,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
-        if let Some(consequent) = expr.consequent.as_sequence_expression_mut()
+        if let Expression::SequenceExpression(consequent) = &mut expr.consequent
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
         {
@@ -180,7 +180,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b || c : c" => "(a && b) || c"
-        if let Some(logical_expr) = expr.consequent.as_logical_expression_mut()
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
@@ -199,7 +199,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? c : b && c" => "(a || b) && c"
-        if let Some(logical_expr) = expr.alternate.as_logical_expression_mut()
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
             && logical_expr.operator == LogicalOperator::And
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
@@ -298,7 +298,8 @@ impl<'a> PeepholeOptimizations {
         // Try using the "??" or "?." operators
         if (ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator)
             || ctx.supports_feature(ESFeature::ES2020OptionalChaining))
-            && let Some(test_binary) = expr.test.as_binary_expression_mut()            && let Some(is_negate) = match test_binary.operator {
+            && let Expression::BinaryExpression(test_binary) = &mut expr.test
+            && let Some(is_negate) = match test_binary.operator {
                 BinaryOperator::Inequality => Some(true),
                 BinaryOperator::Equality => Some(false),
                 _ => None,
@@ -418,8 +419,8 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let (
-            Expression::assignment_expression(consequent),
-            Expression::assignment_expression(alternate),
+            Expression::AssignmentExpression(consequent),
+            Expression::AssignmentExpression(alternate),
         ) = (&mut expr.consequent, &mut expr.alternate)
         else {
             return None;
@@ -468,7 +469,7 @@ impl<'a> PeepholeOptimizations {
             expr,
             ctx,
         ) {
-            if !expr.is_chain_expression() {
+            if !matches!(expr, Expression::ChainExpression(_)) {
                 *expr = ctx.ast.expression_chain(
                     expr.span(),
                     expr.take_in(ctx.ast).into_chain_element().unwrap(),
@@ -487,8 +488,8 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        match expr.kind_mut() {
-            ExpressionKindMut::StaticMemberExpression(e) => {
+        match expr {
+            Expression::StaticMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
                     e.object = expr_to_inject.take_in(ctx.ast);
@@ -503,7 +504,7 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
             }
-            ExpressionKindMut::ComputedMemberExpression(e) => {
+            Expression::ComputedMemberExpression(e) => {
                 if e.object.is_specific_id(target_id_name) {
                     e.optional = true;
                     e.object = expr_to_inject.take_in(ctx.ast);
@@ -518,7 +519,7 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
             }
-            ExpressionKindMut::CallExpression(e) => {
+            Expression::CallExpression(e) => {
                 if e.callee.is_specific_id(target_id_name) {
                     e.optional = true;
                     e.callee = expr_to_inject.take_in(ctx.ast);
@@ -533,7 +534,7 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 }
             }
-            ExpressionKindMut::ChainExpression(e) => match &mut e.expression {
+            Expression::ChainExpression(e) => match &mut e.expression {
                 ChainElement::StaticMemberExpression(e) => {
                     if e.object.is_specific_id(target_id_name) {
                         e.optional = true;

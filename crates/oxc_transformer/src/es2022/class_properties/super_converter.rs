@@ -366,7 +366,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut update_expr = expr.take_in(ctx.ast).into_update_expression().unbox();
+        let mut update_expr = expr.take_in(ctx.ast).into_update_expression();
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
         else {
             unreachable!()

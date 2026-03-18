@@ -11,11 +11,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        match expr.kind_mut() {
-            Expression::array_expression(_)
-            | ExpressionKindMut::StringLiteral(_)
-            | ExpressionKindMut::TemplateLiteral(_) => true,
-            ExpressionKindMut::Identifier(ident) => {
+        match expr {
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => true,
+            Expression::Identifier(ident) => {
                 ident.name == "arguments"
                     && ctx.is_global_reference(ident)
                     // arguments can be reassigned in non-strict mode
@@ -69,7 +69,7 @@ impl<'a> PeepholeOptimizations {
         mut stmt: Statement<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        let Some(var_decl) = stmt.as_variable_declaration_mut() else { return Some(stmt) };
+        let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
@@ -81,7 +81,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(f) = stmt.as_function_declaration_mut() else { return };
+        let Statement::FunctionDeclaration(f) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
         }
@@ -100,7 +100,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(c) = stmt.as_class_declaration_mut() else { return };
+        let Statement::ClassDeclaration(c) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return;
         }
@@ -169,7 +169,7 @@ impl<'a> PeepholeOptimizations {
 
         debug_assert!(!ctx.source_type().is_script(), "imports are not allowed in script mode");
 
-        let Some(import_decl) = stmt.as_import_declaration_mut() else { return };
+        let Statement::ImportDeclaration(import_decl) = stmt else { return };
 
         if let Some(phase) = import_decl.phase {
             let (ImportPhase::Defer | ImportPhase::Source) = phase;

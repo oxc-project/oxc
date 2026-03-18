@@ -15,10 +15,10 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match expr.kind_mut() {
+        match expr {
             // "!!a" => "a"
-            ExpressionKindMut::UnaryExpression(u1) if u1.operator.is_not() => {
-                if let Some(u2) = u1.argument.as_unary_expression_mut()
+            Expression::UnaryExpression(u1) if u1.operator.is_not() => {
+                if let Expression::UnaryExpression(u2) = &mut u1.argument
                     && u2.operator.is_not()
                 {
                     let mut e = u2.argument.take_in(ctx.ast);
@@ -27,9 +27,9 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 }
             }
-            Expression::binary_expression(e)
+            Expression::BinaryExpression(e)
                 if e.operator.is_equality()
-                    && e.right.as_numeric_literal().is_some_and(|lit| lit.value == 0.0)
+                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
                     && e.left.is_int32_or_uint32(ctx) =>
             {
                 let argument = e.left.take_in(ctx.ast);
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
             // "if (!!a && !!b)" => "if (a && b)"
-            ExpressionKindMut::LogicalExpression(e) if e.operator.is_and() => {
+            Expression::LogicalExpression(e) if e.operator.is_and() => {
                 Self::minimize_expression_in_boolean_context(&mut e.left, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
@@ -56,7 +56,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
-            ExpressionKindMut::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
+            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
                 Self::minimize_expression_in_boolean_context(&mut e.left, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
@@ -65,7 +65,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 }
             }
-            ExpressionKindMut::ConditionalExpression(e) => {
+            Expression::ConditionalExpression(e) => {
                 // "if (a ? !!b : !!c)" => "if (a ? b : c)"
                 Self::minimize_expression_in_boolean_context(&mut e.consequent, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
@@ -99,7 +99,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 }
             }
-            ExpressionKindMut::SequenceExpression(seq_expr) => {
+            Expression::SequenceExpression(seq_expr) => {
                 if let Some(last) = seq_expr.expressions.last_mut() {
                     Self::minimize_expression_in_boolean_context(last, ctx);
                 }

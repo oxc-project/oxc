@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(ident) = expr.as_identifier_mut() else { return };
+        let Expression::Identifier(ident) = expr else { return };
         let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
