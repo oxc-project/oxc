@@ -510,7 +510,8 @@ mod tests {
 
     #[test]
     fn test_wrap_preserves_markdown_list() {
-        let result = wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None, None);
+        let result =
+            wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None, None);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -548,8 +549,15 @@ mod tests {
 
     #[test]
     fn test_wrap_preserves_code_fence_with_language() {
-        let result =
-            wrap_text("Some text\n```js\nconst x = 1;\n```\nMore text", 80, 0, false, None, None, None);
+        let result = wrap_text(
+            "Some text\n```js\nconst x = 1;\n```\nMore text",
+            80,
+            0,
+            false,
+            None,
+            None,
+            None,
+        );
         assert_eq!(result, "Some text\n\n```js\nconst x = 1;\n```\n\nMore text");
     }
 
@@ -569,7 +577,8 @@ mod tests {
     fn test_numbered_spread_list_collapses_blank_lines() {
         // Upstream prettier-plugin-jsdoc removes blank lines between list items
         // even when the source has them (spread lists).
-        let result = wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
+        let result =
+            wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
         assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
