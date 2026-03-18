@@ -30,6 +30,7 @@ jobs:
       - run: |
           echo "::warning title=whatDoesTheTitleDo,file=apps/oxlint/src/output_formatter/github.rs,line=1,endLine=1,col=0,endColumn=10::This is the meessage maybe."
           echo "::warning title=whatDoesTheTitleDo,file=apps/oxlint/src/output_formatter/github.rs,line=1,endLine=1,col=0,endColumn=10::This is the message\nNewline"
+          echo "::warning file=apps/oxlint/src/output_formatter/github.rs,line=1,endLine=1,col=1,endColumn=10,title=eslint(no-debugger)::test.ts:1 [eslint(no-debugger)] error message"
       #     cargo ck
       # - run: cargo test --all-features
       # - run: git diff --exit-code # Must commit everything
