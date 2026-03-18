@@ -1712,6 +1712,89 @@ mod test_suite {
         InitializeRequestOptions::default()
     }
 
+    /// When all workspace folders are removed and the server had explicit workspace folders,
+    /// it should enter single-file mode so subsequent file opens create workers dynamically.
+    #[tokio::test]
+    async fn test_entering_single_file_mode_when_all_workspaces_removed() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        // Confirm there is initially one workspace worker.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Remove the only workspace folder.
+        server
+            .send_request(workspace_folders_changed(
+                vec![],
+                vec![WorkspaceFolder {
+                    uri: WORKSPACE.parse().unwrap(),
+                    name: "workspace".to_string(),
+                }],
+            ))
+            .await;
+
+        // No workers remain; the server should be in single-file mode.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert_eq!(*response.result().unwrap(), json!([]));
+
+        // Opening a file should now dynamically create a worker (single-file mode).
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        server.send_request(test_configuration_request(4)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        server.shutdown(5).await;
+    }
+
+    /// When workspace folders are added while the server is in single-file mode,
+    /// it should exit single-file mode and shut down existing single-file workers.
+    #[tokio::test]
+    async fn test_exiting_single_file_mode_when_workspace_added() {
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), vec![]),
+            initialize_request_workspace_folders(single_file_mode_initialize()),
+        )
+        .await;
+
+        // Open a file to create a single-file worker.
+        let file = "file:///path/to/some/file.js";
+        server.send_request(did_open(file, "content")).await;
+
+        // Confirm the dynamically-created worker exists.
+        server.send_request(test_configuration_request(2)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.result().unwrap().as_array().unwrap().len(), 1);
+
+        // Add a workspace folder — this should exit single-file mode and remove the
+        // dynamically-created worker, replacing it with the new explicit workspace worker.
+        server
+            .send_request(workspace_folders_changed(
+                vec![WorkspaceFolder {
+                    uri: WORKSPACE.parse().unwrap(),
+                    name: "workspace".to_string(),
+                }],
+                vec![],
+            ))
+            .await;
+
+        // Now there should be exactly one worker: the explicitly added workspace.
+        server.send_request(test_configuration_request(3)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let workers = response.result().unwrap().as_array().unwrap();
+        assert_eq!(workers.len(), 1);
+
+        server.shutdown(4).await;
+    }
+
     #[tokio::test]
     async fn test_single_file_mode_creates_worker_on_open() {
         let mut server = TestServer::new_initialized(

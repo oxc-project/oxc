@@ -516,12 +516,33 @@ impl LanguageServer for Backend {
     /// - clearing diagnostics
     /// - unregistering file watchers
     ///
+    /// When workspace folders are added while the server is in single-file mode, the server
+    /// exits single-file mode and shuts down any dynamically-created single-file workers.
+    /// When all workspace folders are removed, the server enters single-file mode so that
+    /// subsequent file opens will again create workers dynamically.
+    ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let mut workers = self.workspace_workers.write().await;
         let mut cleared_diagnostics = vec![];
         let mut added_registrations = vec![];
         let mut removed_registrations = vec![];
+
+        // When workspace folders are added while we are in single-file mode, exit that mode
+        // and shut down any dynamically-created single-file workers before the new
+        // explicit workspace workers are added.
+        if !params.event.added.is_empty()
+            && self.single_file_mode.load(Ordering::Relaxed)
+        {
+            self.single_file_mode.store(false, Ordering::Relaxed);
+
+            // Shut down all existing single-file workers.
+            for worker in workers.drain(..) {
+                let (uris, unregistrations) = worker.shutdown().await;
+                cleared_diagnostics.extend(uris);
+                removed_registrations.extend(unregistrations);
+            }
+        }
 
         for folder in params.event.removed {
             let Some((index, worker)) =
@@ -533,6 +554,12 @@ impl LanguageServer for Backend {
             cleared_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
             workers.remove(index);
+        }
+
+        // If all workspace folders have been removed, enter single-file mode so that
+        // subsequent file opens will create workers dynamically.
+        if workers.is_empty() && params.event.added.is_empty() {
+            self.single_file_mode.store(true, Ordering::Relaxed);
         }
 
         let diagnostic_mode =
