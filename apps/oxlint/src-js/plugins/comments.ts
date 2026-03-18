@@ -71,6 +71,10 @@ let activeCommentsWithLocCount = 0;
 let deserializedCommentIndexes = EMPTY_UINT32_ARRAY;
 let deserializedCommentsLen = 0;
 
+// Minimum capacity (in `u32`s) of `deserializedCommentIndexes`, when not empty.
+// 16 elements = 64 bytes = 1 cache line.
+const DESERIALIZED_COMMENT_INDEXES_MIN_CAPACITY = 16;
+
 // Empty comments array.
 // Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
 const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentType[];
@@ -227,7 +231,18 @@ export function initCommentsBuffer(): void {
       cachedComments.push(new Comment());
     } while (cachedComments.length < commentsLen);
 
-    deserializedCommentIndexes = new Uint32Array(commentsLen);
+    // Grow `deserializedCommentIndexes` if needed.
+    // `Uint32Array`s can't grow in place, so allocate a new one.
+    // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
+    const indexesLen = deserializedCommentIndexes.length;
+    if (indexesLen < commentsLen) {
+      deserializedCommentIndexes = new Uint32Array(
+        Math.max(
+          commentsLen,
+          indexesLen === 0 ? DESERIALIZED_COMMENT_INDEXES_MIN_CAPACITY : indexesLen << 1,
+        ),
+      );
+    }
   }
 
   // If file has a hashbang, eagerly deserialize the first comment, and set its type to `Shebang`.

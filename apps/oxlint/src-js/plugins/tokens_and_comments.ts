@@ -93,6 +93,10 @@ export let tokensAndCommentsLen = 0;
 // `tokensAndCommentsUint32` is a view over this buffer's prefix.
 let tokensAndCommentsBackingUint32 = EMPTY_UINT32_ARRAY;
 
+// Minimum capacity (in `u32`s) of `tokensAndCommentsBackingUint32`, when not empty.
+// 256 elements = 1 KiB.
+const MERGED_BACKING_MIN_CAPACITY = 256;
+
 /**
  * Initialize tokens-and-comments buffer.
  *
@@ -117,14 +121,17 @@ export function initTokensAndCommentsBuffer(): void {
 
   tokensAndCommentsLen = tokensLen + commentsLen;
 
-  // Reuse backing buffer across files. Grow (doubled) if needed, never shrink.
+  // Reuse backing buffer across files. Grow if needed, never shrink.
   // After warm-up over first few files, the buffer will be large enough to hold all tokens and comments
   // for all files, so we avoid allocating a large buffer each time.
   // +1 entry for sentinel (see below).
+  // `Uint32Array`s can't grow in place, so allocate a new one.
+  // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
   const requiredLen32 = (tokensAndCommentsLen + 1) << MERGED_SIZE32_SHIFT;
-  if (tokensAndCommentsBackingUint32.length < requiredLen32) {
+  const backingLen = tokensAndCommentsBackingUint32.length;
+  if (backingLen < requiredLen32) {
     tokensAndCommentsBackingUint32 = new Uint32Array(
-      Math.max(requiredLen32, tokensAndCommentsBackingUint32.length << 1),
+      Math.max(requiredLen32, backingLen === 0 ? MERGED_BACKING_MIN_CAPACITY : backingLen << 1),
     );
   }
 

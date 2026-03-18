@@ -151,6 +151,12 @@ const REGEX_INDEXES_MIN_CAPACITY = 16;
 let deserializedTokenIndexes = EMPTY_UINT32_ARRAY;
 let deserializedTokensLen = 0;
 
+// Minimum capacity (in `u32`s) of `deserializedTokenIndexes`, when not empty.
+// 16 elements = 64 bytes = 1 cache line.
+// Note that this default aims to be a reasonable minimum for number of *deserialized* tokens,
+// not *total* number of tokens.
+const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
+
 // Reset `#loc` field on a `Token` class instance
 let resetLoc: (token: Token) => void;
 
@@ -318,7 +324,18 @@ export function initTokensBuffer(): void {
       cachedTokens.push(new Token());
     } while (cachedTokens.length < tokensLen);
 
-    deserializedTokenIndexes = new Uint32Array(tokensLen);
+    // Grow `deserializedTokenIndexes` if needed.
+    // `Uint32Array`s can't grow in place, so allocate a new one.
+    // First allocation uses minimum capacity. Subsequent growths double, to avoid frequent reallocations.
+    const indexesLen = deserializedTokenIndexes.length;
+    if (indexesLen < tokensLen) {
+      deserializedTokenIndexes = new Uint32Array(
+        Math.max(
+          tokensLen,
+          indexesLen === 0 ? DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY : indexesLen << 1,
+        ),
+      );
+    }
   }
 
   // Check buffer data has valid ranges and ascending order
