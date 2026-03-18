@@ -357,8 +357,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS-only statements early to avoid traversing their children
-        stmts.retain(|stmt| match stmt.kind() {
-            match_declaration!(StatementKind) => {
+        stmts.retain(|stmt| match stmt.kind_mut() {
+            match_declaration!(StatementKindMut) => {
                 self.should_keep_declaration(stmt.to_declaration(), ctx)
             }
             _ => true,

@@ -217,7 +217,7 @@ impl<'a> TypeScript<'a> {
                 && prop.value.is_none()
                 && !prop.key.is_private_identifier()
             {
-                if let Some(key) = prop.key.as_expression() {
+                if let Some(key) = prop.key.as_expression_mut() {
                     return key_needs_temp_var(key, ctx);
                 }
                 return false;

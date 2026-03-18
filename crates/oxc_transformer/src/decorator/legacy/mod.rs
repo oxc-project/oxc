@@ -608,7 +608,7 @@ impl<'a> LegacyDecorator<'a> {
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ClassDeclaration`.
     #[inline]
     fn transform_class_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(class) = stmt.as_class_declaration() else { unreachable!() };
+        let Some(class) = stmt.as_class_declaration_mut() else { unreachable!() };
 
         let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
         else {

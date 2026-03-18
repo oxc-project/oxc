@@ -39,7 +39,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(export_assignment) = stmt.as_ts_export_assignment() {
+        if let Some(export_assignment) = stmt.as_ts_export_assignment_mut() {
             *stmt = self.transform_ts_export_assignment(export_assignment, ctx);
         }
     }

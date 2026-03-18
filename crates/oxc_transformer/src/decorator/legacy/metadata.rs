@@ -586,14 +586,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         literal: &TSLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match literal.kind() {
+        match literal.kind_mut() {
             TSLiteral::BooleanLiteral(_) => Self::global_boolean(ctx),
             TSLiteral::NumericLiteral(_) => Self::global_number(ctx),
             TSLiteral::BigIntLiteral(_) => Self::global_bigint(ctx),
             TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_) => Self::global_string(ctx),
             TSLiteral::UnaryExpression(expr) => match expr.argument.kind() {
-                ExpressionKind::NumericLiteral(_) => Self::global_number(ctx),
-                ExpressionKind::StringLiteral(_) => Self::global_string(ctx),
+                ExpressionKindMut::NumericLiteral(_) => Self::global_number(ctx),
+                ExpressionKindMut::StringLiteral(_) => Self::global_string(ctx),
                 // Cannot be a type annotation
                 _ => unreachable!(),
             },

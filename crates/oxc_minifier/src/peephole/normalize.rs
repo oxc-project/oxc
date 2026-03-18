@@ -140,7 +140,7 @@ impl<'a> Normalize {
 
     fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.drop_console
-            && stmt.as_expression_statement().is_some_and(|expr| Self::is_console(&expr.expression)
+            && stmt.as_expression_statement().is_some_and(|expr| Self::is_console(&expr.expression))
     }
 
     fn recover_arrow_expression_after_drop_console(
@@ -378,11 +378,11 @@ impl<'a> Normalize {
         if match len {
             0 if !zero_arg_throws_error => true,
             1 => match new_expr.arguments[0].as_expression() {
-                Some(array_expr) = >.and_then(|__s| __s.as_array_expression()) {
-                    array_expr.elements.is_empty() && !one_arg_array_throws_error
+                Some(e) if e.is_array_expression() => {
+                    e.to_array_expression().elements.is_empty() && !one_arg_array_throws_error
                 }
                 Some(e) => {
-                    if let Some(new_expr) = e.as_new_expression_mut() {
+                    if let Some(new_expr) = e.as_new_expression() {
                         new_expr.pure
                     } else {
                         let value_type = e.value_type(&ctx);

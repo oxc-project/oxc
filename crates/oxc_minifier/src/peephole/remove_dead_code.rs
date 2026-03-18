@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
             }
             1 => {
                 let first = &s.body[0];
-                if first.as_variable_declaration().is_some_and(|decl| !decl.kind.is_var()
+                if first.as_variable_declaration().is_some_and(|decl| !decl.kind.is_var())
                     || first.is_class_declaration()
                     || first.is_function_declaration()
                 {

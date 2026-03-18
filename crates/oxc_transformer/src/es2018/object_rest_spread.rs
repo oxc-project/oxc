@@ -576,14 +576,9 @@ impl<'a> ObjectRestSpread<'a> {
 
                     debug_assert!(arrow.body.statements.len() == 1);
 
-                    let Some(stmt) = arrow.body.statements.pop().unwrap().as_expression_statement()
-                    else {
-                        unreachable!(
-                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
-                        );
-                    };
+                    let stmt = arrow.body.statements.pop().unwrap().into_expression_statement().unbox();
                     let return_stmt =
-                        ctx.ast.statement_return(stmt.span, Some(stmt.unbox().expression));
+                        ctx.ast.statement_return(stmt.span, Some(stmt.expression));
                     arrow.body.statements.push(return_stmt);
                 }
                 Self::replace_rest_element(
@@ -1022,7 +1017,7 @@ impl<'a> ObjectRestSpread<'a> {
                 None
             }
             key => {
-                let expr = key.as_expression_mut()?;
+                let mut expr = key.as_expression_mut()?;
                 // `let { [1], ... rest }`
                 if expr.is_literal() {
                     let span = expr.span();
@@ -1040,10 +1035,10 @@ impl<'a> ObjectRestSpread<'a> {
                     }
                 }
                 let bound_identifier =
-                    ctx.generate_uid_based_on_node(expr, state.scope_id, state.symbol_flags);
+                    ctx.generate_uid_based_on_node(&expr, state.scope_id, state.symbol_flags);
                 let p = bound_identifier.create_binding_pattern(ctx);
                 let mut lhs = bound_identifier.create_read_expression(ctx);
-                mem::swap(&mut lhs, expr);
+                mem::swap(&mut lhs, &mut expr);
                 new_decls.push(ctx.ast.variable_declarator(
                     SPAN,
                     state.kind,

@@ -600,7 +600,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         for case in &mut switch_stmt.cases {
             for case_stmt in &mut case.consequent {
-                let Some(var_decl) = case_stmt.as_variable_declaration() else { continue };
+                let Some(var_decl) = case_stmt.as_variable_declaration_mut() else { continue };
                 if !matches!(
                     var_decl.kind,
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
@@ -719,7 +719,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         for stmt in stmts.iter_mut() {
             let address = stmt.address();
-            let Some(variable_declaration) = stmt.as_variable_declaration() else { continue };
+            let Some(variable_declaration) = stmt.as_variable_declaration_mut() else { continue };
             if !matches!(
                 variable_declaration.kind,
                 VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing

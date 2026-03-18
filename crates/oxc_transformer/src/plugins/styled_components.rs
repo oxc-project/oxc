@@ -349,7 +349,7 @@ impl<'a> StyledComponents<'a> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        let Some(tagged) = expr.as_tagged_template_expression() else {
+        let Some(tagged) = expr.as_tagged_template_expression_mut() else {
             unreachable!();
         };
 
