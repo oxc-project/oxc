@@ -1,4 +1,4 @@
-use oxc_ast::ast::{ChainElement, Expression};
+use oxc_ast::ast::{ChainElement, Expression, ExpressionKind};
 
 /// Check if the callee is a pure function based on a list of pure function names.
 ///
@@ -33,35 +33,35 @@ fn extract_callee_path<'a>(callee: &'a Expression<'a>) -> Option<Vec<&'a str>> {
     let mut current = callee;
 
     loop {
-        match current {
-            Expression::Identifier(ident) => {
+        match current.kind() {
+            ExpressionKind::Identifier(ident) => {
                 path_parts.push(ident.name.as_str());
                 break;
             }
-            Expression::StaticMemberExpression(member) => {
+            ExpressionKind::StaticMemberExpression(member) => {
                 path_parts.push(member.property.name.as_str());
                 current = &member.object;
             }
-            Expression::ComputedMemberExpression(member) => {
-                let Expression::StringLiteral(lit) = &member.expression else {
+            ExpressionKind::ComputedMemberExpression(member) => {
+                let Some(lit) = member.expression.as_string_literal() else {
                     return None;
                 };
                 path_parts.push(lit.value.as_str());
                 current = &member.object;
             }
-            Expression::CallExpression(call) => {
+            ExpressionKind::CallExpression(call) => {
                 // Call expressions don't add to the path, they just pass through
                 // But they do "seal" the previous path - anything before a call is an extension
                 path_parts.clear();
                 current = &call.callee;
             }
-            Expression::ChainExpression(chain) => match &chain.expression {
+            ExpressionKind::ChainExpression(chain) => match &chain.expression {
                 ChainElement::StaticMemberExpression(member) => {
                     path_parts.push(member.property.name.as_str());
                     current = &member.object;
                 }
                 ChainElement::ComputedMemberExpression(member) => {
-                    let Expression::StringLiteral(lit) = &member.expression else {
+                    let Some(lit) = member.expression.as_string_literal() else {
                         return None;
                     };
                     path_parts.push(lit.value.as_str());
@@ -80,7 +80,7 @@ fn extract_callee_path<'a>(callee: &'a Expression<'a>) -> Option<Vec<&'a str>> {
                     return None;
                 }
             },
-            Expression::ParenthesizedExpression(paren) => {
+            ExpressionKind::ParenthesizedExpression(paren) => {
                 current = &paren.expression;
             }
             _ => {

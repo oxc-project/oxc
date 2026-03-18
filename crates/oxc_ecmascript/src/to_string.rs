@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -19,18 +20,18 @@ pub trait ToJsString<'a> {
 
 impl<'a> ToJsString<'a> for Expression<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
-        match self {
-            Expression::StringLiteral(lit) => lit.to_js_string(ctx),
-            Expression::TemplateLiteral(lit) => lit.to_js_string(ctx),
-            Expression::Identifier(ident) => ident.to_js_string(ctx),
-            Expression::NumericLiteral(lit) => lit.to_js_string(ctx),
-            Expression::BigIntLiteral(lit) => lit.to_js_string(ctx),
-            Expression::NullLiteral(lit) => lit.to_js_string(ctx),
-            Expression::BooleanLiteral(lit) => lit.to_js_string(ctx),
-            Expression::UnaryExpression(e) => e.to_js_string(ctx),
-            Expression::ArrayExpression(e) => e.to_js_string(ctx),
-            Expression::ObjectExpression(e) => e.to_js_string(ctx),
-            Expression::RegExpLiteral(e) => e.to_js_string(ctx),
+        match self.kind() {
+            ExpressionKind::StringLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::TemplateLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::Identifier(ident) => ident.to_js_string(ctx),
+            ExpressionKind::NumericLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::BigIntLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::NullLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::BooleanLiteral(lit) => lit.to_js_string(ctx),
+            ExpressionKind::UnaryExpression(e) => e.to_js_string(ctx),
+            ExpressionKind::ArrayExpression(e) => e.to_js_string(ctx),
+            ExpressionKind::ObjectExpression(e) => e.to_js_string(ctx),
+            ExpressionKind::RegExpLiteral(e) => e.to_js_string(ctx),
             _ => None,
         }
     }

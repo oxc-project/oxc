@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 
 use crate::{
     GlobalContext, StringToNumber, ToJsString,
@@ -14,27 +15,27 @@ pub trait ToNumber<'a> {
 
 impl<'a> ToNumber<'a> for Expression<'a> {
     fn to_number(&self, ctx: &impl GlobalContext<'a>) -> Option<f64> {
-        match self {
-            Expression::NumericLiteral(number_literal) => Some(number_literal.value),
-            Expression::BooleanLiteral(bool_literal) => {
+        match self.kind() {
+            ExpressionKind::NumericLiteral(number_literal) => Some(number_literal.value),
+            ExpressionKind::BooleanLiteral(bool_literal) => {
                 if bool_literal.value {
                     Some(1.0)
                 } else {
                     Some(0.0)
                 }
             }
-            Expression::NullLiteral(_) => Some(0.0),
-            Expression::Identifier(ident) => match ident.name.as_str() {
+            ExpressionKind::NullLiteral(_) => Some(0.0),
+            ExpressionKind::Identifier(ident) => match ident.name.as_str() {
                 "Infinity" if ctx.is_global_reference(ident) => Some(f64::INFINITY),
                 "NaN" | "undefined" if ctx.is_global_reference(ident) => Some(f64::NAN),
                 _ => None,
             },
-            Expression::StringLiteral(lit) => Some(lit.value.as_str().string_to_number()),
-            Expression::UnaryExpression(unary) if unary.operator.is_not() => {
+            ExpressionKind::StringLiteral(lit) => Some(lit.value.as_str().string_to_number()),
+            ExpressionKind::UnaryExpression(unary) if unary.operator.is_not() => {
                 let number = unary.argument.to_number(ctx)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })
             }
-            Expression::ObjectExpression(obj) => {
+            ExpressionKind::ObjectExpression(obj) => {
                 // If `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden,
                 // (assuming that those methods in Object.prototype are not modified)
                 // `ToPrimitive` returns `"[object Object]"`
@@ -45,8 +46,8 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 }
             }
             // `ToPrimitive` for RegExp object returns `"/regexp/"`
-            Expression::RegExpLiteral(_) => Some(f64::NAN),
-            Expression::ArrayExpression(arr) => {
+            ExpressionKind::RegExpLiteral(_) => Some(f64::NAN),
+            ExpressionKind::ArrayExpression(arr) => {
                 // ToNumber for arrays:
                 // 1. ToPrimitive(array, hint Number) -> tries valueOf, then toString
                 // 2. Array.toString() -> Array.join(",")

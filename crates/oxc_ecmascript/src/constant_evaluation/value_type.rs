@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
@@ -64,27 +65,27 @@ pub trait DetermineValueType<'a> {
 
 impl<'a> DetermineValueType<'a> for Expression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        match self {
-            Expression::BigIntLiteral(_) => ValueType::BigInt,
-            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
+        match self.kind() {
+            ExpressionKind::BigIntLiteral(_) => ValueType::BigInt,
+            ExpressionKind::BooleanLiteral(_) | ExpressionKind::PrivateInExpression(_) => {
                 ValueType::Boolean
             }
-            Expression::NullLiteral(_) => ValueType::Null,
-            Expression::NumericLiteral(_) => ValueType::Number,
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_) => ValueType::Object,
-            Expression::MetaProperty(meta_prop) => {
+            ExpressionKind::NullLiteral(_) => ValueType::Null,
+            ExpressionKind::NumericLiteral(_) => ValueType::Number,
+            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => ValueType::String,
+            ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::RegExpLiteral(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::ClassExpression(_) => ValueType::Object,
+            ExpressionKind::MetaProperty(meta_prop) => {
                 match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
                     ("import", "meta") => ValueType::Object,
                     _ => ValueType::Undetermined,
                 }
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 if ctx.is_global_reference(ident) {
                     match ident.name.as_str() {
                         "undefined" => ValueType::Undefined,
@@ -95,17 +96,17 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                     ValueType::Undetermined
                 }
             }
-            Expression::UnaryExpression(e) => e.value_type(ctx),
-            Expression::BinaryExpression(e) => e.value_type(ctx),
-            Expression::SequenceExpression(e) => {
+            ExpressionKind::UnaryExpression(e) => e.value_type(ctx),
+            ExpressionKind::BinaryExpression(e) => e.value_type(ctx),
+            ExpressionKind::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, |e| e.value_type(ctx))
             }
-            Expression::AssignmentExpression(e) => e.value_type(ctx),
-            Expression::ConditionalExpression(e) => e.value_type(ctx),
-            Expression::LogicalExpression(e) => e.value_type(ctx),
-            Expression::ParenthesizedExpression(e) => e.expression.value_type(ctx),
-            Expression::StaticMemberExpression(e) => e.value_type(ctx),
-            Expression::NewExpression(e) => e.value_type(ctx),
+            ExpressionKind::AssignmentExpression(e) => e.value_type(ctx),
+            ExpressionKind::ConditionalExpression(e) => e.value_type(ctx),
+            ExpressionKind::LogicalExpression(e) => e.value_type(ctx),
+            ExpressionKind::ParenthesizedExpression(e) => e.expression.value_type(ctx),
+            ExpressionKind::StaticMemberExpression(e) => e.value_type(ctx),
+            ExpressionKind::NewExpression(e) => e.value_type(ctx),
             _ => ValueType::Undetermined,
         }
     }

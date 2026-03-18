@@ -1,5 +1,6 @@
 use num_traits::ToPrimitive;
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 
 use crate::GlobalContext;
 
@@ -18,18 +19,18 @@ pub trait IsInt32OrUint32<'a> {
 
 impl<'a> IsInt32OrUint32<'a> for Expression<'a> {
     fn is_int32_or_uint32(&self, ctx: &impl GlobalContext<'a>) -> bool {
-        match self {
-            Expression::NumericLiteral(n) => n.is_int32_or_uint32(ctx),
-            Expression::UnaryExpression(e) => e.is_int32_or_uint32(ctx),
-            Expression::BinaryExpression(e) => e.is_int32_or_uint32(ctx),
-            Expression::LogicalExpression(e) => e.is_int32_or_uint32(ctx),
-            Expression::ConditionalExpression(e) => {
+        match self.kind() {
+            ExpressionKind::NumericLiteral(n) => n.is_int32_or_uint32(ctx),
+            ExpressionKind::UnaryExpression(e) => e.is_int32_or_uint32(ctx),
+            ExpressionKind::BinaryExpression(e) => e.is_int32_or_uint32(ctx),
+            ExpressionKind::LogicalExpression(e) => e.is_int32_or_uint32(ctx),
+            ExpressionKind::ConditionalExpression(e) => {
                 e.consequent.is_int32_or_uint32(ctx) && e.alternate.is_int32_or_uint32(ctx)
             }
-            Expression::SequenceExpression(e) => {
+            ExpressionKind::SequenceExpression(e) => {
                 e.expressions.last().is_some_and(|e| e.is_int32_or_uint32(ctx))
             }
-            Expression::ParenthesizedExpression(e) => e.expression.is_int32_or_uint32(ctx),
+            ExpressionKind::ParenthesizedExpression(e) => e.expression.is_int32_or_uint32(ctx),
             _ => false,
         }
     }

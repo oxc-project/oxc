@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::ast::{ExpressionKind, *};
 
 use crate::{
     ToBigInt, ToIntegerIndex,
@@ -17,24 +17,24 @@ use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEff
 
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        match self {
-            Expression::Identifier(ident) => ident.may_have_side_effects(ctx),
-            Expression::NumericLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::MetaProperty(_)
-            | Expression::ThisExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::Super(_) => false,
-            Expression::TemplateLiteral(e) => e.may_have_side_effects(ctx),
-            Expression::UnaryExpression(e) => e.may_have_side_effects(ctx),
-            Expression::LogicalExpression(e) => e.may_have_side_effects(ctx),
-            Expression::ParenthesizedExpression(e) => e.expression.may_have_side_effects(ctx),
-            Expression::ConditionalExpression(e) => {
+        match self.kind() {
+            ExpressionKind::Identifier(ident) => ident.may_have_side_effects(ctx),
+            ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::StringLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::NullLiteral(_)
+            | ExpressionKind::RegExpLiteral(_)
+            | ExpressionKind::MetaProperty(_)
+            | ExpressionKind::ThisExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::Super(_) => false,
+            ExpressionKind::TemplateLiteral(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::UnaryExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::LogicalExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::ParenthesizedExpression(e) => e.expression.may_have_side_effects(ctx),
+            ExpressionKind::ConditionalExpression(e) => {
                 if e.test.may_have_side_effects(ctx) {
                     return true;
                 }
@@ -48,31 +48,31 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 }
                 e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
-            Expression::SequenceExpression(e) => {
+            ExpressionKind::SequenceExpression(e) => {
                 e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
             }
-            Expression::BinaryExpression(e) => e.may_have_side_effects(ctx),
-            Expression::ObjectExpression(object_expr) => {
+            ExpressionKind::BinaryExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::ObjectExpression(object_expr) => {
                 object_expr.properties.iter().any(|property| property.may_have_side_effects(ctx))
             }
-            Expression::ArrayExpression(e) => e.may_have_side_effects(ctx),
-            Expression::ClassExpression(e) => e.may_have_side_effects(ctx),
-            Expression::PrivateInExpression(e) => {
+            ExpressionKind::ArrayExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::ClassExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::PrivateInExpression(e) => {
                 if e.right.may_have_side_effects(ctx) {
                     return true;
                 }
                 // `#x in y` throws when `y` is not an object.
                 !e.right.value_type(ctx).is_object()
             }
-            Expression::ChainExpression(e) => e.expression.may_have_side_effects(ctx),
-            match_member_expression!(Expression) => {
+            ExpressionKind::ChainExpression(e) => e.expression.may_have_side_effects(ctx),
+            ExpressionKind::ComputedMemberExpression(_) | ExpressionKind::StaticMemberExpression(_) | ExpressionKind::PrivateFieldExpression(_) => {
                 self.to_member_expression().may_have_side_effects(ctx)
             }
-            Expression::CallExpression(e) => e.may_have_side_effects(ctx),
-            Expression::NewExpression(e) => e.may_have_side_effects(ctx),
-            Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
-            Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
-            Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::CallExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::NewExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::AssignmentExpression(e) => e.may_have_side_effects(ctx),
+            ExpressionKind::UpdateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
     }
@@ -113,7 +113,7 @@ impl<'a> MayHaveSideEffects<'a> for UnaryExpression<'a> {
                 self.argument.may_have_side_effects(ctx)
             }
             UnaryOperator::Typeof => {
-                if matches!(&self.argument, Expression::Identifier(_)) {
+                if self.argument.is_identifier() {
                     false
                 } else {
                     self.argument.may_have_side_effects(ctx)
@@ -152,7 +152,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                 // When the following conditions are met, instanceof won't throw `TypeError`.
                 // - the right hand side is a known global reference which is a function
                 // - the left hand side is not a proxy
-                if let Expression::Identifier(right_ident) = &self.right {
+                if let Some(right_ident) = self.right.as_identifier() {
                     let name = right_ident.name.as_str();
                     // Any known global non-constructor functions can be allowed here.
                     // But because non-constructor functions are not likely to be used, we ignore them.
@@ -214,7 +214,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                             | BinaryOperator::Division
                             | BinaryOperator::Remainder
                     ) {
-                        if let Expression::BigIntLiteral(right) = &self.right {
+                        if let Some(right) = self.right.as_big_int_literal() {
                             match self.operator {
                                 BinaryOperator::Exponential => {
                                     right.is_negative() || self.left.may_have_side_effects(ctx)
@@ -274,11 +274,11 @@ impl<'a> MayHaveSideEffects<'a> for ArrayExpression<'a> {
 impl<'a> MayHaveSideEffects<'a> for ArrayExpressionElement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            ArrayExpressionElement::SpreadElement(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
-                Expression::Identifier(ident) => {
+            ArrayExpressionElement::SpreadElement(e) => match e.argument.kind() {
+                ExpressionKind::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
+                ExpressionKind::StringLiteral(_) => false,
+                ExpressionKind::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                ExpressionKind::Identifier(ident) => {
                     // FIXME: we should treat `arguments` outside a function scope to have sideeffects
                     !(ident.name == "arguments" && ctx.is_global_reference(ident))
                 }
@@ -300,9 +300,9 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                 if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
                     e.argument.may_have_side_effects(ctx)
                 } else {
-                    match &e.argument {
-                        Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                        Expression::ObjectExpression(obj) => {
+                    match e.argument.kind() {
+                        ExpressionKind::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
+                        ExpressionKind::ObjectExpression(obj) => {
                             obj.properties.iter().any(|property| match property {
                                 ObjectPropertyKind::ObjectProperty(p) => {
                                     p.kind == PropertyKind::Get || p.may_have_side_effects(ctx)
@@ -312,8 +312,8 @@ impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
                                 }
                             })
                         }
-                        Expression::StringLiteral(_) => false,
-                        Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                        ExpressionKind::StringLiteral(_) => false,
+                        ExpressionKind::TemplateLiteral(t) => t.may_have_side_effects(ctx),
                         _ => true,
                     }
                 }
@@ -355,7 +355,7 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
         // To allow classes with a super class to be removed, we ignore this side effect.
         if self.super_class.as_ref().is_some_and(|sup| {
             // `(class C extends (() => {}))` is TypeError.
-            matches!(sup.without_parentheses(), Expression::ArrowFunctionExpression(_))
+            sup.without_parentheses().is_arrow_function_expression()
                 || sup.may_have_side_effects(ctx)
         }) {
             return true;
@@ -424,17 +424,17 @@ impl<'a> MayHaveSideEffects<'a> for StaticMemberExpression<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        match &self.expression {
-            Expression::StringLiteral(s) => {
+        match self.expression.kind() {
+            ExpressionKind::StringLiteral(s) => {
                 property_access_may_have_side_effects(&self.object, &s.value, ctx)
             }
-            Expression::TemplateLiteral(t) => t.single_quasi().is_some_and(|quasi| {
+            ExpressionKind::TemplateLiteral(t) => t.single_quasi().is_some_and(|quasi| {
                 property_access_may_have_side_effects(&self.object, &quasi, ctx)
             }),
-            Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
+            ExpressionKind::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
                 !integer_index_property_access_may_have_side_effects(&self.object, n, ctx)
             }),
-            Expression::BigIntLiteral(b) => {
+            ExpressionKind::BigIntLiteral(b) => {
                 if b.is_negative() {
                     return true;
                 }
@@ -470,7 +470,7 @@ fn property_access_may_have_side_effects<'a>(
     }
 
     // Check known global property reads (e.g. Math.PI, console.log)
-    if let Expression::Identifier(ident) = object
+    if let Some(ident) = object.as_identifier()
         && ctx.is_global_reference(ident)
         && is_known_global_property(ident.name.as_str(), property)
     {
@@ -478,8 +478,8 @@ fn property_access_may_have_side_effects<'a>(
     }
 
     // Check known 3-level chains (e.g. Object.prototype.hasOwnProperty)
-    if let Expression::StaticMemberExpression(member) = object
-        && let Expression::Identifier(ident) = &member.object
+    if let Some(member) = object.as_static_member_expression()
+        && let Some(ident) = member.object.as_identifier()
         && ctx.is_global_reference(ident)
         && is_known_global_property_deep(
             ident.name.as_str(),
@@ -492,7 +492,7 @@ fn property_access_may_have_side_effects<'a>(
 
     match property {
         "length" => {
-            !(matches!(object, Expression::ArrayExpression(_))
+            !(object.is_array_expression()
                 || object.value_type(ctx).is_string())
         }
         _ => true,
@@ -510,9 +510,9 @@ fn integer_index_property_access_may_have_side_effects<'a>(
     if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
         return false;
     }
-    match object {
-        Expression::StringLiteral(s) => property as usize >= s.value.encode_utf16().count(),
-        Expression::ArrayExpression(arr) => property as usize >= get_array_minimum_length(arr),
+    match object.kind() {
+        ExpressionKind::StringLiteral(s) => property as usize >= s.value.encode_utf16().count(),
+        ExpressionKind::ArrayExpression(arr) => property as usize >= get_array_minimum_length(arr),
         _ => true,
     }
 }
@@ -521,9 +521,9 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
     arr.elements
         .iter()
         .map(|e| match e {
-            ArrayExpressionElement::SpreadElement(spread) => match &spread.argument {
-                Expression::ArrayExpression(arr) => get_array_minimum_length(arr),
-                Expression::StringLiteral(str) => str.value.chars().count(),
+            ArrayExpressionElement::SpreadElement(spread) => match spread.argument.kind() {
+                ExpressionKind::ArrayExpression(arr) => get_array_minimum_length(arr),
+                ExpressionKind::StringLiteral(str) => str.value.chars().count(),
                 _ => 0,
             },
             _ => 1,
@@ -538,7 +538,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
-        if let Expression::Identifier(ident) = &self.callee
+        if let Some(ident) = self.callee.as_identifier()
             && ctx.is_global_reference(ident)
         {
             let name = ident.name.as_str();
@@ -580,13 +580,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             }
         }
 
-        let (object, name) = match &self.callee {
-            Expression::StaticMemberExpression(member) if !member.optional => {
+        let (object, name) = match self.callee.kind() {
+            ExpressionKind::StaticMemberExpression(member) if !member.optional => {
                 (member.object.get_identifier_reference(), member.property.name.as_str())
             }
-            Expression::ComputedMemberExpression(member) if !member.optional => {
-                match &member.expression {
-                    Expression::StringLiteral(s) => {
+            ExpressionKind::ComputedMemberExpression(member) if !member.optional => {
+                match member.expression.kind() {
+                    ExpressionKind::StringLiteral(s) => {
                         (member.object.get_identifier_reference(), s.value.as_str())
                     }
                     _ => return true,
@@ -651,7 +651,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
-        if let Expression::Identifier(ident) = &self.callee
+        if let Some(ident) = self.callee.as_identifier()
             && ctx.is_global_reference(ident)
         {
             let name = ident.name.as_str();
@@ -718,10 +718,10 @@ impl<'a> MayHaveSideEffects<'a> for TaggedTemplateExpression<'a> {
 impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            Argument::SpreadElement(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
-                Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+            Argument::SpreadElement(e) => match e.argument.kind() {
+                ExpressionKind::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
+                ExpressionKind::StringLiteral(_) => false,
+                ExpressionKind::TemplateLiteral(t) => t.may_have_side_effects(ctx),
                 _ => true,
             },
             match_expression!(Argument) => self.to_expression().may_have_side_effects(ctx),
@@ -785,7 +785,7 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
         return false;
     }
 
-    let Expression::BinaryExpression(bin_expr) = guard_condition else {
+    let Some(bin_expr) = guard_condition.as_binary_expression() else {
         return false;
     };
     match bin_expr.operator {
@@ -794,20 +794,20 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
         | BinaryOperator::Equality
         | BinaryOperator::Inequality => {
             let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
-            if matches!(ty_of, Expression::StringLiteral(_)) {
+            if ty_of.is_string_literal() {
                 std::mem::swap(&mut string, &mut ty_of);
             }
 
-            let Expression::UnaryExpression(unary) = ty_of else {
+            let Some(unary) = ty_of.as_unary_expression() else {
                 return false;
             };
             if !(unary.operator == UnaryOperator::Typeof
-                && matches!(unary.argument, Expression::Identifier(_)))
+                && unary.argument.is_identifier())
             {
                 return false;
             }
 
-            let Expression::StringLiteral(string) = string else {
+            let Some(string) = string.as_string_literal() else {
                 return false;
             };
 
@@ -827,21 +827,21 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
         | BinaryOperator::GreaterThan
         | BinaryOperator::GreaterEqualThan => {
             let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
-            if matches!(ty_of, Expression::StringLiteral(_)) {
+            if ty_of.is_string_literal() {
                 std::mem::swap(&mut string, &mut ty_of);
                 is_yes_branch = !is_yes_branch;
             }
 
-            let Expression::UnaryExpression(unary) = ty_of else {
+            let Some(unary) = ty_of.as_unary_expression() else {
                 return false;
             };
             if !(unary.operator == UnaryOperator::Typeof
-                && matches!(unary.argument, Expression::Identifier(_)))
+                && unary.argument.is_identifier())
             {
                 return false;
             }
 
-            let Expression::StringLiteral(string) = string else {
+            let Some(string) = string.as_string_literal() else {
                 return false;
             };
             if string.value != "u" {

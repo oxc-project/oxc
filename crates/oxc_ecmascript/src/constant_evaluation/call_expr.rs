@@ -9,7 +9,7 @@
 use std::borrow::Cow;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::ast::{ExpressionKind, *};
 use oxc_syntax::number::ToJsString;
 
 use cow_utils::CowUtils;
@@ -54,20 +54,20 @@ pub fn try_fold_known_global_methods<'a>(
     arguments: &Vec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if let Expression::Identifier(ident) = callee {
+    if let Some(ident) = callee.as_identifier() {
         if let Some(result) = try_fold_global_functions(ident, arguments, ctx) {
             return Some(result);
         }
         return None;
     }
 
-    let (name, object) = match callee {
-        Expression::StaticMemberExpression(member) if !member.optional => {
+    let (name, object) = match callee.kind() {
+        ExpressionKind::StaticMemberExpression(member) if !member.optional => {
             (member.property.name.as_str(), &member.object)
         }
-        Expression::ComputedMemberExpression(member) if !member.optional => {
-            match &member.expression {
-                Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+        ExpressionKind::ComputedMemberExpression(member) if !member.optional => {
+            match member.expression.kind() {
+                ExpressionKind::StringLiteral(s) => (s.value.as_str(), &member.object),
                 _ => return None,
             }
         }
@@ -107,9 +107,9 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
-    let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-        Expression::Identifier(ident) => ident
+    let value = match object.kind() {
+        ExpressionKind::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+        ExpressionKind::Identifier(ident) => ident
             .reference_id
             .get()
             .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
@@ -137,7 +137,7 @@ fn try_fold_string_index_of<'a>(
     if args.len() >= 3 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -171,7 +171,7 @@ fn try_fold_string_substring_or_slice<'a>(
     if args.len() > 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -208,7 +208,7 @@ fn try_fold_string_char_at<'a>(
     if args.len() > 1 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -230,7 +230,7 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -252,7 +252,7 @@ fn try_fold_starts_with<'a>(
         return None;
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
 
@@ -265,7 +265,7 @@ fn try_fold_string_replace<'a>(
     if args.len() != 2 {
         return None;
     }
-    let Expression::StringLiteral(s) = object else { return None };
+    let Some(s) = object.as_string_literal() else { return None };
     let search_value = args.first().unwrap();
     let search_value = match search_value {
         Argument::SpreadElement(_) => return None,
@@ -319,10 +319,10 @@ fn try_fold_to_string<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    match object {
+    match object.kind() {
         // Number.prototype.toString()
         // Number.prototype.toString(radix)
-        Expression::NumericLiteral(lit) if args.len() <= 1 => {
+        ExpressionKind::NumericLiteral(lit) if args.len() <= 1 => {
             let mut radix: u32 = 0;
             if args.is_empty() {
                 radix = 10;
@@ -360,10 +360,10 @@ fn try_fold_to_string<'a>(
             let result = format_radix(i, radix);
             Some(ConstantValue::String(Cow::Owned(result)))
         }
-        Expression::RegExpLiteral(lit) if args.is_empty() => {
+        ExpressionKind::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
         }
-        e if args.is_empty() => e
+        _ if args.is_empty() => object
             .evaluate_value(ctx)
             // `null` and `undefined` returns type errors
             .filter(|v| !v.is_undefined() && !v.is_null())

@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 
 use crate::GlobalContext;
 
@@ -22,36 +23,36 @@ pub trait IsLiteralValue<'a, 'b> {
 
 impl<'a> IsLiteralValue<'a, '_> for Expression<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
-        match self {
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_) => true,
-            Self::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-            Self::Identifier(ident) => {
+        match self.kind() {
+            ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::NullLiteral(_)
+            | ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::RegExpLiteral(_)
+            | ExpressionKind::StringLiteral(_) => true,
+            ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
+            ExpressionKind::Identifier(ident) => {
                 matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
                     && ctx.is_global_reference(ident)
             }
-            Self::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
-            Self::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
-            Self::FunctionExpression(_) | Self::ArrowFunctionExpression(_) => include_functions,
-            Self::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
-            Self::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),
-            Self::LogicalExpression(e) => {
+            ExpressionKind::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
+            ExpressionKind::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
+            ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_) => include_functions,
+            ExpressionKind::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
+            ExpressionKind::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),
+            ExpressionKind::LogicalExpression(e) => {
                 e.left.is_literal_value(include_functions, ctx)
                     && e.right.is_literal_value(include_functions, ctx)
             }
-            Self::ConditionalExpression(e) => {
+            ExpressionKind::ConditionalExpression(e) => {
                 e.test.is_literal_value(include_functions, ctx)
                     && e.consequent.is_literal_value(include_functions, ctx)
                     && e.alternate.is_literal_value(include_functions, ctx)
             }
-            Self::ParenthesizedExpression(e) => {
+            ExpressionKind::ParenthesizedExpression(e) => {
                 e.expression.is_literal_value(include_functions, ctx)
             }
-            Self::SequenceExpression(e) => {
+            ExpressionKind::SequenceExpression(e) => {
                 e.expressions.iter().all(|expr| expr.is_literal_value(include_functions, ctx))
             }
             _ => false,
@@ -88,7 +89,7 @@ impl<'a> IsLiteralValue<'a, '_> for UnaryExpression<'a> {
             }
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                 can_convert_to_number_transparently(&self.argument, include_functions, ctx)
-                    || matches!(self.argument, Expression::BigIntLiteral(_))
+                    || self.argument.is_big_int_literal()
             }
             UnaryOperator::Delete => false,
         }
@@ -110,10 +111,10 @@ impl<'a> IsLiteralValue<'a, '_> for BinaryExpression<'a> {
                 {
                     return true;
                 }
-                (matches!(&self.left, Expression::NumericLiteral(_))
-                    && matches!(&self.right, Expression::NumericLiteral(_)))
-                    | (matches!(&self.left, Expression::BigIntLiteral(_))
-                        && matches!(&self.right, Expression::BigIntLiteral(_)))
+                (self.left.is_numeric_literal()
+                    && self.right.is_numeric_literal())
+                    | (self.left.is_big_int_literal()
+                        && self.right.is_big_int_literal())
             }
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication
@@ -126,18 +127,19 @@ impl<'a> IsLiteralValue<'a, '_> for BinaryExpression<'a> {
             | BinaryOperator::BitwiseOR
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd => {
-                if (matches!(&self.left, Expression::NumericLiteral(_))
+                if (self.left.is_numeric_literal()
                     && can_convert_to_number_transparently(&self.right, include_functions, ctx))
-                    || (matches!(&self.right, Expression::NumericLiteral(_))
+                    || (self.right.is_numeric_literal()
                         && can_convert_to_number_transparently(&self.left, include_functions, ctx))
                 {
                     return true;
                 }
-                let (Expression::BigIntLiteral(_), Expression::BigIntLiteral(right)) =
-                    (&self.left, &self.right)
+                let (Some(left_big_int), Some(right)) =
+                    (self.left.as_big_int_literal(), self.right.as_big_int_literal())
                 else {
                     return false;
                 };
+                let _ = left_big_int;
                 // 1n / 0n, 1n % 0n, 1n ** (-1n) throws an error
                 match self.operator {
                     BinaryOperator::ShiftRightZeroFill => false,
@@ -175,11 +177,11 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
     fn is_literal_value(&self, include_functions: bool, ctx: &impl GlobalContext<'a>) -> bool {
         match self {
             Self::ObjectProperty(property) => property.is_literal_value(include_functions, ctx),
-            Self::SpreadProperty(property) => match &property.argument {
-                Expression::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
-                Expression::StringLiteral(_) => true,
-                Expression::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-                Expression::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
+            Self::SpreadProperty(property) => match property.argument.kind() {
+                ExpressionKind::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
+                ExpressionKind::StringLiteral(_) => true,
+                ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
+                ExpressionKind::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
                 _ => false,
             },
         }
@@ -199,7 +201,7 @@ impl<'a> IsLiteralValue<'a, '_> for PropertyKey<'a> {
             Self::StaticIdentifier(_) => true,
             Self::PrivateIdentifier(_) => false,
             match_expression!(Self) => {
-                can_convert_to_string_transparently(self.to_expression(), include_functions, ctx)
+                can_convert_to_string_transparently(&self.to_expression(), include_functions, ctx)
             }
         }
     }
@@ -210,20 +212,20 @@ fn can_convert_to_number_transparently<'a>(
     include_functions: bool,
     ctx: &impl GlobalContext<'a>,
 ) -> bool {
-    match expr {
-        Expression::NumericLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::StringLiteral(_) => true,
-        Expression::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
+        ExpressionKind::Identifier(ident) => {
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
                 && ctx.is_global_reference(ident)
         }
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
             include_functions
         }
-        Expression::UnaryExpression(e) => match e.operator {
+        ExpressionKind::UnaryExpression(e) => match e.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot | UnaryOperator::Typeof => {
                 e.argument.is_literal_value(include_functions, ctx)
             }
@@ -232,7 +234,7 @@ fn can_convert_to_number_transparently<'a>(
             }
             UnaryOperator::Delete => false,
         },
-        Expression::BinaryExpression(e) => match e.operator {
+        ExpressionKind::BinaryExpression(e) => match e.operator {
             BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
                 e.left.is_literal_value(include_functions, ctx)
                     && e.right.is_literal_value(include_functions, ctx)
@@ -245,10 +247,10 @@ fn can_convert_to_number_transparently<'a>(
                 {
                     return true;
                 }
-                (matches!(&e.left, Expression::NumericLiteral(_))
-                    && matches!(&e.right, Expression::NumericLiteral(_)))
-                    | (matches!(&e.left, Expression::BigIntLiteral(_))
-                        && matches!(&e.right, Expression::BigIntLiteral(_)))
+                (e.left.is_numeric_literal()
+                    && e.right.is_numeric_literal())
+                    | (e.left.is_big_int_literal()
+                        && e.right.is_big_int_literal())
             }
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication
@@ -261,9 +263,9 @@ fn can_convert_to_number_transparently<'a>(
             | BinaryOperator::BitwiseOR
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd => {
-                if (matches!(&e.left, Expression::NumericLiteral(_))
+                if (e.left.is_numeric_literal()
                     && can_convert_to_number_transparently(&e.right, include_functions, ctx))
-                    || (matches!(&e.right, Expression::NumericLiteral(_))
+                    || (e.right.is_numeric_literal()
                         && can_convert_to_number_transparently(&e.left, include_functions, ctx))
                 {
                     return true;
@@ -279,19 +281,19 @@ fn can_convert_to_number_transparently<'a>(
             | BinaryOperator::In
             | BinaryOperator::Instanceof => false,
         },
-        Expression::LogicalExpression(e) => {
+        ExpressionKind::LogicalExpression(e) => {
             can_convert_to_number_transparently(&e.left, include_functions, ctx)
                 && can_convert_to_number_transparently(&e.right, include_functions, ctx)
         }
-        Expression::ConditionalExpression(e) => {
+        ExpressionKind::ConditionalExpression(e) => {
             e.test.is_literal_value(include_functions, ctx)
                 && can_convert_to_number_transparently(&e.consequent, include_functions, ctx)
                 && can_convert_to_number_transparently(&e.alternate, include_functions, ctx)
         }
-        Expression::ParenthesizedExpression(e) => {
+        ExpressionKind::ParenthesizedExpression(e) => {
             can_convert_to_number_transparently(&e.expression, include_functions, ctx)
         }
-        Expression::SequenceExpression(e) => {
+        ExpressionKind::SequenceExpression(e) => {
             can_convert_to_number_transparently(
                 e.expressions.last().expect("should have at least one element"),
                 include_functions,
@@ -312,35 +314,35 @@ fn can_convert_to_string_transparently<'a>(
     include_functions: bool,
     ctx: &impl GlobalContext<'a>,
 ) -> bool {
-    match expr {
-        Expression::NumericLiteral(_)
-        | Expression::StringLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::BigIntLiteral(_) => true,
-        Expression::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::BigIntLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
+        ExpressionKind::Identifier(ident) => {
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
                 && ctx.is_global_reference(ident)
         }
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
             include_functions
         }
-        Expression::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
-        Expression::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),
-        Expression::LogicalExpression(e) => {
+        ExpressionKind::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
+        ExpressionKind::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),
+        ExpressionKind::LogicalExpression(e) => {
             e.left.is_literal_value(include_functions, ctx)
                 && e.right.is_literal_value(include_functions, ctx)
         }
-        Expression::ConditionalExpression(e) => {
+        ExpressionKind::ConditionalExpression(e) => {
             e.test.is_literal_value(include_functions, ctx)
                 && can_convert_to_string_transparently(&e.consequent, include_functions, ctx)
                 && can_convert_to_string_transparently(&e.alternate, include_functions, ctx)
         }
-        Expression::ParenthesizedExpression(e) => {
+        ExpressionKind::ParenthesizedExpression(e) => {
             can_convert_to_string_transparently(&e.expression, include_functions, ctx)
         }
-        Expression::SequenceExpression(e) => {
+        ExpressionKind::SequenceExpression(e) => {
             can_convert_to_string_transparently(
                 e.expressions.last().expect("should have at least one element"),
                 include_functions,
@@ -361,9 +363,9 @@ fn is_immutable_string<'a>(
     include_functions: bool,
     ctx: &impl GlobalContext<'a>,
 ) -> bool {
-    match expr {
-        Expression::StringLiteral(_) => true,
-        Expression::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
+    match expr.kind() {
+        ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
         _ => false,
     }
 }
