@@ -1793,6 +1793,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_checker"
+version = "0.115.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "oxc_types",
+]
+
+[[package]]
 name = "oxc_codegen"
 version = "0.115.0"
 dependencies = [
@@ -1849,10 +1863,12 @@ dependencies = [
  "itertools",
  "lazy-regex",
  "oxc",
+ "oxc_checker",
  "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
+ "oxc_types",
  "phf",
  "pico-args",
  "rayon",
@@ -2517,6 +2533,17 @@ dependencies = [
  "oxc_str",
  "oxc_syntax",
  "rustc-hash",
+]
+
+[[package]]
+name = "oxc_types"
+version = "0.115.0"
+dependencies = [
+ "bitflags",
+ "nonmax",
+ "oxc_index",
+ "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]

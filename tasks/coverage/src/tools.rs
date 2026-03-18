@@ -1103,6 +1103,172 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
         .collect()
 }
 
+// ================================
+// Checker (.types baseline conformance)
+// ================================
+
+pub fn run_checker_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
+    let baselines_dir = workspace_root().join("typescript/tests/baselines/reference");
+
+    files
+        .par_iter()
+        .filter_map(|f| {
+            // Skip files with expected errors (they may not parse)
+            if !f.error_codes.is_empty() {
+                return None;
+            }
+            // Only handle single-unit files for now
+            if f.units.len() != 1 {
+                return None;
+            }
+
+            // Derive .types baseline path from source path
+            let stem = f.path.file_stem()?.to_str()?;
+            let baseline_path = baselines_dir.join(format!("{stem}.types"));
+            let baseline_content = fs::read_to_string(&baseline_path).ok()?;
+
+            let source = &f.units[0].content;
+            let source_type = f.units[0].source_type;
+            let result = run_checker_single(source, source_type, &baseline_content);
+            Some(CoverageResult { path: f.path.clone(), should_fail: false, result })
+        })
+        .collect()
+}
+
+fn run_checker_single(
+    source: &str,
+    source_type: SourceType,
+    baseline_content: &str,
+) -> TestResult {
+    use oxc::semantic::SemanticBuilder;
+    use oxc_checker::Checker;
+
+    // Parse the .types baseline
+    let assertions = parse_types_baseline(baseline_content);
+    if assertions.is_empty() {
+        return TestResult::Passed;
+    }
+
+    // Parse source → semantic → checker
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, source_type).parse();
+    if !parsed.errors.is_empty() {
+        return TestResult::ParseError(
+            parsed.errors.iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n"),
+            false,
+        );
+    }
+    let program = &parsed.program;
+    let semantic = SemanticBuilder::new().build(program).semantic;
+    let mut checker = Checker::new(semantic);
+
+    // Collect computed types from AST
+    let actual = collect_checker_types(&mut checker, program, source);
+
+    // Match assertions against actual
+    let mut actual_iter = actual.iter();
+    for (expr_text, expected_type) in &assertions {
+        let mut found = false;
+        for (act_text, act_type) in actual_iter.by_ref() {
+            if act_text == expr_text {
+                if act_type != expected_type {
+                    return TestResult::Mismatch(
+                        "checker",
+                        format!(">{expr_text} : {act_type}"),
+                        format!(">{expr_text} : {expected_type}"),
+                    );
+                }
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            return TestResult::Mismatch(
+                "checker",
+                String::new(),
+                format!(">{expr_text} : {expected_type}"),
+            );
+        }
+    }
+
+    TestResult::Passed
+}
+
+/// Parse `.types` baseline content into `(expression_text, expected_type)` pairs.
+fn parse_types_baseline(content: &str) -> Vec<(String, String)> {
+    let mut assertions = Vec::new();
+    let mut in_source = false;
+
+    for line in content.lines() {
+        if line.starts_with("=== ") && line.ends_with(" ===") {
+            in_source = true;
+            continue;
+        }
+        if line.starts_with("//// [") || !in_source {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix('>') {
+            // Skip underline lines like ">  : ^^^^^^"
+            let trimmed = rest.trim_start();
+            if trimmed.starts_with(": ") && trimmed[2..].chars().all(|c| c == '^') {
+                continue;
+            }
+            if let Some((expr, typ)) = rest.split_once(" : ") {
+                assertions.push((expr.to_string(), typ.to_string()));
+            }
+        }
+    }
+
+    assertions
+}
+
+/// Walk the AST collecting `(source_text, type_string)` pairs for nodes
+/// that tsc reports types for: expression nodes and declaration binding names.
+fn collect_checker_types<'a>(
+    checker: &mut oxc_checker::Checker<'a>,
+    program: &oxc::ast::ast::Program<'a>,
+    source: &str,
+) -> Vec<(String, String)> {
+    use oxc::ast_visit::Visit;
+
+    let mut walker = TypeCollectorVisitor { checker, source, results: Vec::new() };
+    walker.visit_program(program);
+    walker.results
+}
+
+struct TypeCollectorVisitor<'a, 'b> {
+    checker: &'b mut oxc_checker::Checker<'a>,
+    source: &'b str,
+    results: Vec<(String, String)>,
+}
+
+impl<'a> oxc::ast_visit::Visit<'a> for TypeCollectorVisitor<'a, '_> {
+    fn visit_expression(&mut self, expr: &oxc::ast::ast::Expression<'a>) {
+        use oxc::span::GetSpan as _;
+
+        // Record the type for this expression before recursing
+        let span = expr.span();
+        if (span.start as usize) < self.source.len() && (span.end as usize) <= self.source.len() {
+            let expr_text = &self.source[span.start as usize..span.end as usize];
+            let type_id = self.checker.get_type_of_expression(expr);
+            self.results.push((expr_text.to_string(), self.checker.type_to_string(type_id)));
+        }
+
+        // Continue walking into sub-expressions
+        oxc::ast_visit::walk::walk_expression(self, expr);
+    }
+
+    fn visit_binding_identifier(&mut self, id: &oxc::ast::ast::BindingIdentifier<'a>) {
+        // Record the type for declaration binding names
+        if let Some(symbol_id) = id.symbol_id.get() {
+            let type_id = self.checker.get_type_of_symbol(symbol_id);
+            self.results.push((id.name.to_string(), self.checker.type_to_string(type_id)));
+        }
+
+        oxc::ast_visit::walk::walk_binding_identifier(self, id);
+    }
+}
+
 fn parse_estree_json_blocks<'a>(content: &'a str, section_kind: &str) -> Vec<&'a str> {
     let prefix = format!(":{section_kind}:\n```json\n");
     content

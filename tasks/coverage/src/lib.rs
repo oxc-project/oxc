@@ -451,6 +451,16 @@ impl AppArgs {
         );
     }
 
+    /// Run type checker conformance tests against `.types` baselines
+    pub fn run_checker(&self, data: &TestData) {
+        self.run_tool(
+            "checker_typescript",
+            TYPESCRIPT_PATH,
+            &data.typescript,
+            tools::run_checker_typescript,
+        );
+    }
+
     /// Run transpiler tests (isolated declarations)
     pub fn run_transpiler(&self) {
         typescript::transpile_runner::run(self.filter.as_deref(), self.detail);

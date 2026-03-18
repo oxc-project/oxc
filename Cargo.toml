@@ -139,6 +139,8 @@ oxc_transformer_plugins = { version = "0.115.0", path = "crates/oxc_transformer_
 oxc_traverse = { version = "0.115.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
+oxc_checker = { path = "crates/oxc_checker" } # TypeScript type checker
+oxc_types = { path = "crates/oxc_types" } # Type checker type representation
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine

@@ -39,6 +39,7 @@ fn main() {
         "runtime" => app_args.run_runtime(),
         "estree" => app_args.run_estree(&data),
         "estree_tokens" => app_args.run_estree_tokens(&data),
+        "checker" => app_args.run_checker(&data),
         "all" => {
             app_args.run_all();
             app_args.run_runtime();
