@@ -1,10 +1,11 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind, Statement,
-        TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
+        ReturnStatement, TSType, TSTypeName,
     },
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -18,9 +19,6 @@ use crate::{
     ast_util::{iter_outer_expressions, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    rules::eslint::array_callback_return::return_checker::{
-        StatementReturnStatus, check_statement,
-    },
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -633,48 +631,45 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 }
 
 fn all_return_statements_are_functions(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
-            check_return_statements(&arrow_func_expr.body.statements)
-        }
+    let function_body = match node.kind() {
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => &arrow_func_expr.body,
         AstKind::Function(func) => {
             if let Some(func_body) = &func.body {
-                check_return_statements(&func_body.statements)
+                func_body
             } else {
-                false
+                return false;
             }
         }
-        _ => false,
-    }
+        _ => return false,
+    };
+
+    let mut checker = ReturnStatementChecker { has_return: false, all_returns_are_functions: true };
+
+    checker.visit_function_body(function_body);
+
+    checker.has_return && checker.all_returns_are_functions
 }
 
-fn check_return_statements<'a>(statements: &'a [Statement<'a>]) -> bool {
-    if statements.is_empty() {
-        return false;
+struct ReturnStatementChecker {
+    has_return: bool,
+    all_returns_are_functions: bool,
+}
+
+impl<'a> Visit<'a> for ReturnStatementChecker {
+    fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
+        self.has_return = true;
+        self.all_returns_are_functions &=
+            return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
     }
 
-    let mut has_return = false;
+    fn visit_function(
+        &mut self,
+        _func: &oxc_ast::ast::Function<'a>,
+        _flags: oxc_semantic::ScopeFlags,
+    ) {
+    }
 
-    let all_statements_valid = statements.iter().all(|stmt| {
-        if let Statement::ReturnStatement(return_stmt) = stmt {
-            if let Some(arg) = &return_stmt.argument {
-                has_return = true;
-                return is_function(arg);
-            }
-            false
-        } else {
-            let status = check_statement(stmt);
-            if status == StatementReturnStatus::AlwaysExplicit {
-                has_return = true;
-            }
-            matches!(
-                status,
-                StatementReturnStatus::NotReturn | StatementReturnStatus::AlwaysExplicit
-            )
-        }
-    });
-
-    has_return && all_statements_valid
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }
 
 /**
@@ -2126,6 +2121,18 @@ fn test() {
             const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
+            None,
+            None,
+        ),
+        (
+            "export function myFunction2() { try { return 'something'; } catch (error) { throw new Error('some wrapped', { cause: error }); } }",
+            None,
+            None,
+            None,
+        ),
+        (
+            "export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }",
+            Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
         ),
