@@ -4,7 +4,7 @@
 
 use std::ops::Not;
 
-use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
+use oxc_ast::ast::{BinaryExpression, Expression, ExpressionKind, LogicalExpression};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
@@ -117,9 +117,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
             }
 
             let left = v.e.left();
-            let left_binary = match left {
-                Expression::BinaryExpression(e) => Some(Binaryish::Binary(e)),
-                Expression::LogicalExpression(e) => Some(Binaryish::Logical(e)),
+            let left_binary = match left.kind() {
+                ExpressionKind::BinaryExpression(e) => Some(Binaryish::Binary(e)),
+                ExpressionKind::LogicalExpression(e) => Some(Binaryish::Logical(e)),
                 _ => None,
             };
 
@@ -186,12 +186,12 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         match self.operator {
             BinaryishOperator::Logical(LogicalOperator::Coalesce) => {
-                if let Expression::LogicalExpression(logical_expr) = e.left()
+                if let Some(logical_expr) = e.left().as_logical_expression()
                     && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
                 {
                     self.left_precedence = Precedence::Prefix;
                 }
-                if let Expression::LogicalExpression(logical_expr) = e.right()
+                if let Some(logical_expr) = e.right().as_logical_expression()
                     && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
                 {
                     self.right_precedence = Precedence::Prefix;
@@ -199,10 +199,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
                 // Negative numbers are printed using a unary operator
-                if matches!(
-                    e.left(),
-                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
-                ) {
+                if e.left().is_unary_expression() || e.left().is_numeric_literal() {
                     self.left_precedence = Precedence::Call;
                 }
             }
@@ -210,7 +207,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             _ => {}
         }
 
-        if let Expression::PrivateInExpression(e) = self.e.left() {
+        if let Some(e) = self.e.left().as_private_in_expression() {
             e.gen_expr(p, Precedence::Lowest, Context::empty());
             self.visit_right_and_finish(p);
             return false;
