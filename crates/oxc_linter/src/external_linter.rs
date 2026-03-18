@@ -76,7 +76,7 @@ pub struct LoadPluginResult {
 #[serde(rename_all = "camelCase")]
 pub enum DiagnosticRangeKind {
     #[default]
-    Program,
+    Section,
     Actual,
 }
 

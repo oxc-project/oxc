@@ -718,7 +718,7 @@ impl Linter {
                 for diagnostic in diagnostics {
                     let (source_text, has_bom, span_converter, use_actual_range) =
                         match diagnostic.range_kind {
-                            DiagnosticRangeKind::Program => (
+                            DiagnosticRangeKind::Section => (
                                 program_original_source_text,
                                 program_has_bom,
                                 &program_span_converter,

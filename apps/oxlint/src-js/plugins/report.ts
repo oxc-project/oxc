@@ -73,7 +73,7 @@ export interface SuggestionReport {
   fixes: FixReport[];
 }
 
-type DiagnosticRangeKind = "program" | "actual";
+type DiagnosticRangeKind = "section" | "actual";
 
 /**
  * Diagnostic in form sent to Rust.
@@ -124,7 +124,8 @@ export function report(
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
-  let rangeKind: DiagnosticRangeKind = "program";
+  // `node` and `loc` are relative to the currently linted script section.
+  let rangeKind: DiagnosticRangeKind = "section";
   // We need the original location in conformance tests
   let conformedLoc: LocationWithOptionalEnd | null = null;
 
