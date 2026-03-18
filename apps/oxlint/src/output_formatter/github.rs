@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::fmt::Write;
 
 use oxc_diagnostics::{
@@ -38,8 +37,8 @@ fn format_github(diagnostic: &Error) -> String {
         Severity::Error => "error",
         Severity::Warning | miette::Severity::Advice => "warning",
     };
-    let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
-    let message = escape_message(&display_filename(&filename), start.line, &message);
+    let title = rule_id.as_deref().unwrap_or("oxlint");
+    let message = escape_message(display_filename(&filename), start.line, &message);
     let filename = escape_property(&filename);
     format!(
         "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
@@ -60,19 +59,19 @@ fn escape_message(filename: &str, line: usize, message: &str) -> String {
     result
 }
 
-fn display_filename(filename: &str) -> Cow<'_, str> {
+fn display_filename(filename: &str) -> &str {
     if let Some((_, path)) = filename.split_once("://") {
         #[cfg(windows)]
         if let Some(path) = path.strip_prefix('/')
             && path.as_bytes().get(1) == Some(&b':')
         {
-            return Cow::Borrowed(path);
+            return path;
         }
 
-        return Cow::Borrowed(path);
+        return path;
     }
 
-    Cow::Borrowed(filename)
+    filename
 }
 
 fn push_escaped_data(result: &mut String, value: &str) {
