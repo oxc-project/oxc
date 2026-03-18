@@ -97,6 +97,39 @@ impl JsdocFormatter<'_, '_> {
         self.format_example_code(trimmed);
     }
 
+    /// Push formatted code lines with continuation indent, tracking template literal depth
+    /// so that content inside template literals is not re-indented.
+    fn push_formatted_code_lines(&mut self, code: &str, indent: &str) {
+        let mut template_depth: u32 = 0;
+        for line in code.lines() {
+            if line.is_empty() {
+                self.content_lines.push_empty();
+            } else if template_depth == 0 {
+                let s = self.content_lines.begin_line();
+                s.push_str(indent);
+                s.push_str(line);
+            } else {
+                self.content_lines.push(line);
+            }
+            template_depth = update_template_depth(line, template_depth);
+        }
+    }
+
+    /// Push raw code lines with continuation indent, optionally preserving original indentation.
+    fn push_raw_code_lines(&mut self, code: &str, indent: &str) {
+        for line in code.lines() {
+            let content =
+                if self.options.keep_unparsable_example_indent { line } else { line.trim() };
+            if content.is_empty() {
+                self.content_lines.push_empty();
+            } else {
+                let s = self.content_lines.begin_line();
+                s.push_str(indent);
+                s.push_str(content);
+            }
+        }
+    }
+
     /// Format example code content with continuation indent.
     /// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
     fn format_example_code(&mut self, code: &str) {
@@ -142,42 +175,12 @@ impl JsdocFormatter<'_, '_> {
                 },
             )
         {
-            // Add continuation indent to code structure lines, but NOT to template literal
-            // content. The formatter preserves template literal content verbatim, so
-            // adding indent to those lines would shift them incorrectly.
-            let mut template_depth: u32 = 0;
-            for line in formatted.lines() {
-                if line.is_empty() {
-                    self.content_lines.push_empty();
-                } else if template_depth == 0 {
-                    {
-                        let s = self.content_lines.begin_line();
-                        s.push_str(indent);
-                        s.push_str(line);
-                    }
-                } else {
-                    self.content_lines.push(line);
-                }
-                // Count unescaped backticks to track template literal depth
-                template_depth = update_template_depth(line, template_depth);
-            }
+            self.push_formatted_code_lines(&formatted, indent);
             return;
         }
 
         // Fallback: pass through with continuation indent
-        for line in code.lines() {
-            let line_content =
-                if self.options.keep_unparsable_example_indent { line } else { line.trim() };
-            if line_content.is_empty() {
-                self.content_lines.push_empty();
-            } else {
-                {
-                    let s = self.content_lines.begin_line();
-                    s.push_str(indent);
-                    s.push_str(line_content);
-                }
-            }
-        }
+        self.push_raw_code_lines(code, indent);
     }
 
     /// Handle fenced code blocks inside @example tags.
@@ -208,58 +211,14 @@ impl JsdocFormatter<'_, '_> {
                     self.format_options,
                     self.allocator,
                 ) {
-                    let mut template_depth: u32 = 0;
-                    for line in formatted.lines() {
-                        if line.is_empty() {
-                            self.content_lines.push_empty();
-                        } else if template_depth == 0 {
-                            {
-                                let s = self.content_lines.begin_line();
-                                s.push_str(indent);
-                                s.push_str(line);
-                            }
-                        } else {
-                            self.content_lines.push(line);
-                        }
-                        template_depth = update_template_depth(line, template_depth);
-                    }
+                    self.push_formatted_code_lines(&formatted, indent);
                 } else {
                     // Fallback for unparsable inner code
-                    for line in inner_code.lines() {
-                        let content = if self.options.keep_unparsable_example_indent {
-                            line
-                        } else {
-                            line.trim()
-                        };
-                        if content.is_empty() {
-                            self.content_lines.push_empty();
-                        } else {
-                            {
-                                let s = self.content_lines.begin_line();
-                                s.push_str(indent);
-                                s.push_str(content);
-                            }
-                        }
-                    }
+                    self.push_raw_code_lines(inner_code, indent);
                 }
             } else {
                 // Non-JS/TS fenced code: preserve with continuation indent
-                for line in inner_code.lines() {
-                    let content = if self.options.keep_unparsable_example_indent {
-                        line
-                    } else {
-                        line.trim()
-                    };
-                    if content.is_empty() {
-                        self.content_lines.push_empty();
-                    } else {
-                        {
-                            let s = self.content_lines.begin_line();
-                            s.push_str(indent);
-                            s.push_str(content);
-                        }
-                    }
-                }
+                self.push_raw_code_lines(inner_code, indent);
             }
         }
 
