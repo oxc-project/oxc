@@ -15,7 +15,7 @@ import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLines } from "./location.ts";
+import { getNodeLoc, initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
@@ -136,7 +136,7 @@ export function resetSourceAndAst(): void {
   sourceText = null;
   ast = null;
   resetBuffer();
-  resetLines();
+  resetLinesAndLocs();
   resetScopeManager();
   resetTokens();
   resetComments();
