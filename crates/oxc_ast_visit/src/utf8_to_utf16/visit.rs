@@ -25,15 +25,19 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut prop.span.start);
 
         // If shorthand, span of `key` and `value` are the same
-        match (prop.shorthand, &mut prop.key, &mut prop.value) {
-            (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
+        if prop.shorthand {
+            if let (PropertyKey::StaticIdentifier(key), Some(value)) =
+                (&mut prop.key, prop.value.as_identifier_mut())
+            {
                 self.visit_identifier_name(key);
                 value.span = key.span;
+            } else {
+                self.visit_property_key(&mut prop.key);
+                self.visit_expression(&mut prop.value);
             }
-            (_, key, value) => {
-                self.visit_property_key(key);
-                self.visit_expression(value);
-            }
+        } else {
+            self.visit_property_key(&mut prop.key);
+            self.visit_expression(&mut prop.value);
         }
 
         self.convert_offset(&mut prop.span.end);
