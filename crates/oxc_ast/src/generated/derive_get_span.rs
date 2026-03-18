@@ -542,42 +542,9 @@ impl GetSpan for ParenthesizedExpression<'_> {
 }
 
 impl GetSpan for Statement<'_> {
+    #[inline]
     fn span(&self) -> Span {
-        match self {
-            Self::BlockStatement(it) => GetSpan::span(&**it),
-            Self::BreakStatement(it) => GetSpan::span(&**it),
-            Self::ContinueStatement(it) => GetSpan::span(&**it),
-            Self::DebuggerStatement(it) => GetSpan::span(&**it),
-            Self::DoWhileStatement(it) => GetSpan::span(&**it),
-            Self::EmptyStatement(it) => GetSpan::span(&**it),
-            Self::ExpressionStatement(it) => GetSpan::span(&**it),
-            Self::ForInStatement(it) => GetSpan::span(&**it),
-            Self::ForOfStatement(it) => GetSpan::span(&**it),
-            Self::ForStatement(it) => GetSpan::span(&**it),
-            Self::IfStatement(it) => GetSpan::span(&**it),
-            Self::LabeledStatement(it) => GetSpan::span(&**it),
-            Self::ReturnStatement(it) => GetSpan::span(&**it),
-            Self::SwitchStatement(it) => GetSpan::span(&**it),
-            Self::ThrowStatement(it) => GetSpan::span(&**it),
-            Self::TryStatement(it) => GetSpan::span(&**it),
-            Self::WhileStatement(it) => GetSpan::span(&**it),
-            Self::WithStatement(it) => GetSpan::span(&**it),
-            Self::VariableDeclaration(it) => GetSpan::span(&**it),
-            Self::FunctionDeclaration(it) => GetSpan::span(&**it),
-            Self::ClassDeclaration(it) => GetSpan::span(&**it),
-            Self::TSTypeAliasDeclaration(it) => GetSpan::span(&**it),
-            Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
-            Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
-            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
-            Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
-            Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
-            Self::ImportDeclaration(it) => GetSpan::span(&**it),
-            Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
-            Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
-            Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
-            Self::TSExportAssignment(it) => GetSpan::span(&**it),
-            Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
-        }
+        unsafe { *self.0.as_ptr::<Span>().as_ref() }
     }
 }
 

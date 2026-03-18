@@ -676,7 +676,7 @@ impl<'a> Dummy<'a> for Statement<'a> {
     ///
     /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::DebuggerStatement(Dummy::dummy(allocator))
+        Statement::debugger_statement(Dummy::dummy(allocator))
     }
 }
 

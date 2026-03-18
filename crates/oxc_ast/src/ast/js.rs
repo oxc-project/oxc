@@ -1290,41 +1290,314 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
-inherit_variants! {
-/// Statement
-///
-/// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
-/// See [`ast` module docs] for explanation of inheritance.
-///
-/// [`ast` module docs]: `super`
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-pub enum Statement<'a> {
-    // Statements
-    BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
-    BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
-    ContinueStatement(Box<'a, ContinueStatement<'a>>) = 2,
-    DebuggerStatement(Box<'a, DebuggerStatement>) = 3,
-    DoWhileStatement(Box<'a, DoWhileStatement<'a>>) = 4,
-    EmptyStatement(Box<'a, EmptyStatement>) = 5,
-    ExpressionStatement(Box<'a, ExpressionStatement<'a>>) = 6,
-    ForInStatement(Box<'a, ForInStatement<'a>>) = 7,
-    ForOfStatement(Box<'a, ForOfStatement<'a>>) = 8,
-    ForStatement(Box<'a, ForStatement<'a>>) = 9,
-    IfStatement(Box<'a, IfStatement<'a>>) = 10,
-    LabeledStatement(Box<'a, LabeledStatement<'a>>) = 11,
-    ReturnStatement(Box<'a, ReturnStatement<'a>>) = 12,
-    SwitchStatement(Box<'a, SwitchStatement<'a>>) = 13,
-    ThrowStatement(Box<'a, ThrowStatement<'a>>) = 14,
-    TryStatement(Box<'a, TryStatement<'a>>) = 15,
-    WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
-    WithStatement(Box<'a, WithStatement<'a>>) = 17,
-    // `Declaration` variants added here by `inherit_variants!` macro
-    @inherit Declaration
-    // `ModuleDeclaration` variants added here by `inherit_variants!` macro
-    @inherit ModuleDeclaration
+/// Helper macro to define Statement struct with TaggedPtr, StatementKind view enum,
+/// constructors, kind()/kind_mut(), and per-variant accessor methods.
+macro_rules! define_statement_variants {
+    ($(
+        $Variant:ident($InnerTy:ty) = $disc:literal => $ctor:ident,
+            $is:ident, $as:ident, $as_mut:ident, $to:ident, $to_mut:ident, $into:ident;
+    )*) => {
+        /// Represents a type for AST nodes corresponding to JavaScript's statements.
+        ///
+        /// Uses pointer tagging to encode the discriminant in unused high bits of the pointer,
+        /// reducing size from 16 bytes to 8 bytes on 64-bit platforms.
+        #[repr(transparent)]
+        pub struct Statement<'a>(pub(crate) TaggedPtr<'a>);
+
+        /// View enum for pattern matching on [`Statement`] variants (shared references).
+        #[derive(Debug)]
+        pub enum StatementKind<'a> {
+            $($Variant(&'a $InnerTy),)*
+        }
+
+        /// View enum for pattern matching on [`Statement`] variants (mutable references).
+        pub enum StatementKindMut<'a, 'b> {
+            $($Variant(&'b mut $InnerTy),)*
+        }
+
+        impl<'a> Statement<'a> {
+            $(
+                #[inline]
+                pub fn $ctor(inner: Box<'a, $InnerTy>) -> Self {
+                    Self(unsafe { TaggedPtr::new($disc, Box::into_non_null(inner)) })
+                }
+            )*
+
+            #[inline]
+            pub fn discriminant(&self) -> u8 { self.0.discriminant() }
+
+            #[inline]
+            pub fn kind(&self) -> StatementKind<'a> {
+                unsafe {
+                    match self.0.discriminant() {
+                        $($disc => StatementKind::$Variant(self.0.as_ref()),)*
+                        _ => std::hint::unreachable_unchecked(),
+                    }
+                }
+            }
+
+            #[inline]
+            pub fn kind_mut(&mut self) -> StatementKindMut<'a, '_> {
+                unsafe {
+                    match self.0.discriminant() {
+                        $($disc => StatementKindMut::$Variant(self.0.as_mut()),)*
+                        _ => std::hint::unreachable_unchecked(),
+                    }
+                }
+            }
+
+            $(
+                #[inline]
+                pub fn $is(&self) -> bool { self.0.discriminant() == $disc }
+
+                #[inline]
+                pub fn $as(&self) -> Option<&'a $InnerTy> {
+                    if self.$is() { Some(unsafe { self.0.as_ref() }) } else { None }
+                }
+
+                #[inline]
+                pub fn $as_mut(&mut self) -> Option<&mut $InnerTy> {
+                    if self.$is() { Some(unsafe { self.0.as_mut() }) } else { None }
+                }
+
+                #[inline]
+                pub fn $to(&self) -> &'a $InnerTy { self.$as().unwrap() }
+
+                #[inline]
+                pub fn $to_mut(&mut self) -> &mut $InnerTy { self.$as_mut().unwrap() }
+
+                #[inline]
+                pub fn $into(self) -> Box<'a, $InnerTy> {
+                    debug_assert!(self.$is());
+                    unsafe { Box::from_non_null(self.0.as_ptr()) }
+                }
+            )*
+        }
+    };
 }
+
+define_statement_variants! {
+    // Statement variants (0-17)
+    BlockStatement(BlockStatement<'a>) = 0 => block_statement,
+        is_block_statement, as_block_statement, as_block_statement_mut,
+        to_block_statement, to_block_statement_mut, into_block_statement;
+    BreakStatement(BreakStatement<'a>) = 1 => break_statement,
+        is_break_statement, as_break_statement, as_break_statement_mut,
+        to_break_statement, to_break_statement_mut, into_break_statement;
+    ContinueStatement(ContinueStatement<'a>) = 2 => continue_statement,
+        is_continue_statement, as_continue_statement, as_continue_statement_mut,
+        to_continue_statement, to_continue_statement_mut, into_continue_statement;
+    DebuggerStatement(DebuggerStatement) = 3 => debugger_statement,
+        is_debugger_statement, as_debugger_statement, as_debugger_statement_mut,
+        to_debugger_statement, to_debugger_statement_mut, into_debugger_statement;
+    DoWhileStatement(DoWhileStatement<'a>) = 4 => do_while_statement,
+        is_do_while_statement, as_do_while_statement, as_do_while_statement_mut,
+        to_do_while_statement, to_do_while_statement_mut, into_do_while_statement;
+    EmptyStatement(EmptyStatement) = 5 => empty_statement,
+        is_empty_statement, as_empty_statement, as_empty_statement_mut,
+        to_empty_statement, to_empty_statement_mut, into_empty_statement;
+    ExpressionStatement(ExpressionStatement<'a>) = 6 => expression_statement,
+        is_expression_statement, as_expression_statement, as_expression_statement_mut,
+        to_expression_statement, to_expression_statement_mut, into_expression_statement;
+    ForInStatement(ForInStatement<'a>) = 7 => for_in_statement,
+        is_for_in_statement, as_for_in_statement, as_for_in_statement_mut,
+        to_for_in_statement, to_for_in_statement_mut, into_for_in_statement;
+    ForOfStatement(ForOfStatement<'a>) = 8 => for_of_statement,
+        is_for_of_statement, as_for_of_statement, as_for_of_statement_mut,
+        to_for_of_statement, to_for_of_statement_mut, into_for_of_statement;
+    ForStatement(ForStatement<'a>) = 9 => for_statement,
+        is_for_statement, as_for_statement, as_for_statement_mut,
+        to_for_statement, to_for_statement_mut, into_for_statement;
+    IfStatement(IfStatement<'a>) = 10 => if_statement,
+        is_if_statement, as_if_statement, as_if_statement_mut,
+        to_if_statement, to_if_statement_mut, into_if_statement;
+    LabeledStatement(LabeledStatement<'a>) = 11 => labeled_statement,
+        is_labeled_statement, as_labeled_statement, as_labeled_statement_mut,
+        to_labeled_statement, to_labeled_statement_mut, into_labeled_statement;
+    ReturnStatement(ReturnStatement<'a>) = 12 => return_statement,
+        is_return_statement, as_return_statement, as_return_statement_mut,
+        to_return_statement, to_return_statement_mut, into_return_statement;
+    SwitchStatement(SwitchStatement<'a>) = 13 => switch_statement,
+        is_switch_statement, as_switch_statement, as_switch_statement_mut,
+        to_switch_statement, to_switch_statement_mut, into_switch_statement;
+    ThrowStatement(ThrowStatement<'a>) = 14 => throw_statement,
+        is_throw_statement, as_throw_statement, as_throw_statement_mut,
+        to_throw_statement, to_throw_statement_mut, into_throw_statement;
+    TryStatement(TryStatement<'a>) = 15 => try_statement,
+        is_try_statement, as_try_statement, as_try_statement_mut,
+        to_try_statement, to_try_statement_mut, into_try_statement;
+    WhileStatement(WhileStatement<'a>) = 16 => while_statement,
+        is_while_statement, as_while_statement, as_while_statement_mut,
+        to_while_statement, to_while_statement_mut, into_while_statement;
+    WithStatement(WithStatement<'a>) = 17 => with_statement,
+        is_with_statement, as_with_statement, as_with_statement_mut,
+        to_with_statement, to_with_statement_mut, into_with_statement;
+    // Declaration variants (32-40)
+    VariableDeclaration(VariableDeclaration<'a>) = 32 => variable_declaration,
+        is_variable_declaration, as_variable_declaration, as_variable_declaration_mut,
+        to_variable_declaration, to_variable_declaration_mut, into_variable_declaration;
+    FunctionDeclaration(Function<'a>) = 33 => function_declaration,
+        is_function_declaration, as_function_declaration, as_function_declaration_mut,
+        to_function_declaration, to_function_declaration_mut, into_function_declaration;
+    ClassDeclaration(Class<'a>) = 34 => class_declaration,
+        is_class_declaration, as_class_declaration, as_class_declaration_mut,
+        to_class_declaration, to_class_declaration_mut, into_class_declaration;
+    TSTypeAliasDeclaration(TSTypeAliasDeclaration<'a>) = 35 => ts_type_alias_declaration,
+        is_ts_type_alias_declaration, as_ts_type_alias_declaration, as_ts_type_alias_declaration_mut,
+        to_ts_type_alias_declaration, to_ts_type_alias_declaration_mut, into_ts_type_alias_declaration;
+    TSInterfaceDeclaration(TSInterfaceDeclaration<'a>) = 36 => ts_interface_declaration,
+        is_ts_interface_declaration, as_ts_interface_declaration, as_ts_interface_declaration_mut,
+        to_ts_interface_declaration, to_ts_interface_declaration_mut, into_ts_interface_declaration;
+    TSEnumDeclaration(TSEnumDeclaration<'a>) = 37 => ts_enum_declaration,
+        is_ts_enum_declaration, as_ts_enum_declaration, as_ts_enum_declaration_mut,
+        to_ts_enum_declaration, to_ts_enum_declaration_mut, into_ts_enum_declaration;
+    TSModuleDeclaration(TSModuleDeclaration<'a>) = 38 => ts_module_declaration,
+        is_ts_module_declaration, as_ts_module_declaration, as_ts_module_declaration_mut,
+        to_ts_module_declaration, to_ts_module_declaration_mut, into_ts_module_declaration;
+    TSGlobalDeclaration(TSGlobalDeclaration<'a>) = 39 => ts_global_declaration,
+        is_ts_global_declaration, as_ts_global_declaration, as_ts_global_declaration_mut,
+        to_ts_global_declaration, to_ts_global_declaration_mut, into_ts_global_declaration;
+    TSImportEqualsDeclaration(TSImportEqualsDeclaration<'a>) = 40 => ts_import_equals_declaration,
+        is_ts_import_equals_declaration, as_ts_import_equals_declaration, as_ts_import_equals_declaration_mut,
+        to_ts_import_equals_declaration, to_ts_import_equals_declaration_mut, into_ts_import_equals_declaration;
+    // ModuleDeclaration variants (64-69)
+    ImportDeclaration(ImportDeclaration<'a>) = 64 => import_declaration,
+        is_import_declaration, as_import_declaration, as_import_declaration_mut,
+        to_import_declaration, to_import_declaration_mut, into_import_declaration;
+    ExportAllDeclaration(ExportAllDeclaration<'a>) = 65 => export_all_declaration,
+        is_export_all_declaration, as_export_all_declaration, as_export_all_declaration_mut,
+        to_export_all_declaration, to_export_all_declaration_mut, into_export_all_declaration;
+    ExportDefaultDeclaration(ExportDefaultDeclaration<'a>) = 66 => export_default_declaration,
+        is_export_default_declaration, as_export_default_declaration, as_export_default_declaration_mut,
+        to_export_default_declaration, to_export_default_declaration_mut, into_export_default_declaration;
+    ExportNamedDeclaration(ExportNamedDeclaration<'a>) = 67 => export_named_declaration,
+        is_export_named_declaration, as_export_named_declaration, as_export_named_declaration_mut,
+        to_export_named_declaration, to_export_named_declaration_mut, into_export_named_declaration;
+    TSExportAssignment(TSExportAssignment<'a>) = 68 => ts_export_assignment,
+        is_ts_export_assignment, as_ts_export_assignment, as_ts_export_assignment_mut,
+        to_ts_export_assignment, to_ts_export_assignment_mut, into_ts_export_assignment;
+    TSNamespaceExportDeclaration(TSNamespaceExportDeclaration<'a>) = 69 => ts_namespace_export_declaration,
+        is_ts_namespace_export_declaration, as_ts_namespace_export_declaration, as_ts_namespace_export_declaration_mut,
+        to_ts_namespace_export_declaration, to_ts_namespace_export_declaration_mut, into_ts_namespace_export_declaration;
+}
+
+impl<'a> Statement<'a> {
+    /// Returns `true` if this statement is a Declaration variant.
+    #[inline]
+    pub fn is_declaration(&self) -> bool {
+        matches!(self.0.discriminant(), 32..=40)
+    }
+
+    /// Returns `true` if this statement is a ModuleDeclaration variant.
+    #[inline]
+    pub fn is_module_declaration(&self) -> bool {
+        matches!(self.0.discriminant(), 64..=69)
+    }
+
+    /// Convert to Declaration by value.
+    /// Declaration is still a regular enum, so we reconstruct it from the tagged pointer.
+    #[inline]
+    pub fn as_declaration(&self) -> Option<Declaration<'a>> {
+        if !self.is_declaration() {
+            return None;
+        }
+        // SAFETY: discriminant is 32-40; pointer is valid.
+        Some(unsafe {
+            match self.0.discriminant() {
+                32 => Declaration::VariableDeclaration(Box::from_non_null(self.0.as_ptr())),
+                33 => Declaration::FunctionDeclaration(Box::from_non_null(self.0.as_ptr())),
+                34 => Declaration::ClassDeclaration(Box::from_non_null(self.0.as_ptr())),
+                35 => Declaration::TSTypeAliasDeclaration(Box::from_non_null(self.0.as_ptr())),
+                36 => Declaration::TSInterfaceDeclaration(Box::from_non_null(self.0.as_ptr())),
+                37 => Declaration::TSEnumDeclaration(Box::from_non_null(self.0.as_ptr())),
+                38 => Declaration::TSModuleDeclaration(Box::from_non_null(self.0.as_ptr())),
+                39 => Declaration::TSGlobalDeclaration(Box::from_non_null(self.0.as_ptr())),
+                40 => Declaration::TSImportEqualsDeclaration(Box::from_non_null(self.0.as_ptr())),
+                _ => std::hint::unreachable_unchecked(),
+            }
+        })
+    }
+
+    /// Convert to Declaration by value. Panics if not a declaration.
+    #[inline]
+    pub fn to_declaration(&self) -> Declaration<'a> {
+        self.as_declaration().unwrap()
+    }
+
+    /// Convert to Declaration, consuming self. Panics if not a declaration.
+    #[inline]
+    pub fn into_declaration(self) -> Declaration<'a> {
+        self.to_declaration()
+    }
+
+    /// Convert to ModuleDeclaration by value.
+    #[inline]
+    pub fn as_module_declaration(&self) -> Option<ModuleDeclaration<'a>> {
+        if !self.is_module_declaration() {
+            return None;
+        }
+        // SAFETY: discriminant is 64-69; pointer is valid.
+        Some(unsafe {
+            match self.0.discriminant() {
+                64 => ModuleDeclaration::ImportDeclaration(Box::from_non_null(self.0.as_ptr())),
+                65 => ModuleDeclaration::ExportAllDeclaration(Box::from_non_null(self.0.as_ptr())),
+                66 => ModuleDeclaration::ExportDefaultDeclaration(Box::from_non_null(self.0.as_ptr())),
+                67 => ModuleDeclaration::ExportNamedDeclaration(Box::from_non_null(self.0.as_ptr())),
+                68 => ModuleDeclaration::TSExportAssignment(Box::from_non_null(self.0.as_ptr())),
+                69 => ModuleDeclaration::TSNamespaceExportDeclaration(Box::from_non_null(self.0.as_ptr())),
+                _ => std::hint::unreachable_unchecked(),
+            }
+        })
+    }
+
+    /// Convert to ModuleDeclaration by value. Panics if not a module declaration.
+    #[inline]
+    pub fn to_module_declaration(&self) -> ModuleDeclaration<'a> {
+        self.as_module_declaration().unwrap()
+    }
+
+    /// Convert to ModuleDeclaration, consuming self.
+    #[inline]
+    pub fn into_module_declaration(self) -> ModuleDeclaration<'a> {
+        self.to_module_declaration()
+    }
+}
+
+impl<'a> std::fmt::Debug for Statement<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.kind().fmt(f)
+    }
+}
+
+impl<'a> From<Declaration<'a>> for Statement<'a> {
+    #[inline]
+    fn from(value: Declaration<'a>) -> Self {
+        match value {
+            Declaration::VariableDeclaration(o) => Statement::variable_declaration(o),
+            Declaration::FunctionDeclaration(o) => Statement::function_declaration(o),
+            Declaration::ClassDeclaration(o) => Statement::class_declaration(o),
+            Declaration::TSTypeAliasDeclaration(o) => Statement::ts_type_alias_declaration(o),
+            Declaration::TSInterfaceDeclaration(o) => Statement::ts_interface_declaration(o),
+            Declaration::TSEnumDeclaration(o) => Statement::ts_enum_declaration(o),
+            Declaration::TSModuleDeclaration(o) => Statement::ts_module_declaration(o),
+            Declaration::TSGlobalDeclaration(o) => Statement::ts_global_declaration(o),
+            Declaration::TSImportEqualsDeclaration(o) => Statement::ts_import_equals_declaration(o),
+        }
+    }
+}
+
+impl<'a> From<ModuleDeclaration<'a>> for Statement<'a> {
+    #[inline]
+    fn from(value: ModuleDeclaration<'a>) -> Self {
+        match value {
+            ModuleDeclaration::ImportDeclaration(o) => Statement::import_declaration(o),
+            ModuleDeclaration::ExportAllDeclaration(o) => Statement::export_all_declaration(o),
+            ModuleDeclaration::ExportDefaultDeclaration(o) => Statement::export_default_declaration(o),
+            ModuleDeclaration::ExportNamedDeclaration(o) => Statement::export_named_declaration(o),
+            ModuleDeclaration::TSExportAssignment(o) => Statement::ts_export_assignment(o),
+            ModuleDeclaration::TSNamespaceExportDeclaration(o) => Statement::ts_namespace_export_declaration(o),
+        }
+    }
 }
 
 /// `"use strict";` in `"use strict";`

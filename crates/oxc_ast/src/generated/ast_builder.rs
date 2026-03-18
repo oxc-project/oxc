@@ -3431,7 +3431,7 @@ impl<'a> AstBuilder<'a> {
     /// * `body`
     #[inline]
     pub fn statement_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(self.alloc_block_statement(span, body))
+        Statement::block_statement(self.alloc_block_statement(span, body))
     }
 
     /// Build a [`Statement::BlockStatement`] with `scope_id`.
@@ -3449,7 +3449,7 @@ impl<'a> AstBuilder<'a> {
         body: Vec<'a, Statement<'a>>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::BlockStatement(self.alloc_block_statement_with_scope_id(span, body, scope_id))
+        Statement::block_statement(self.alloc_block_statement_with_scope_id(span, body, scope_id))
     }
 
     /// Build a [`Statement::BreakStatement`].
@@ -3461,7 +3461,7 @@ impl<'a> AstBuilder<'a> {
     /// * `label`
     #[inline]
     pub fn statement_break(self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
-        Statement::BreakStatement(self.alloc_break_statement(span, label))
+        Statement::break_statement(self.alloc_break_statement(span, label))
     }
 
     /// Build a [`Statement::ContinueStatement`].
@@ -3477,7 +3477,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> Statement<'a> {
-        Statement::ContinueStatement(self.alloc_continue_statement(span, label))
+        Statement::continue_statement(self.alloc_continue_statement(span, label))
     }
 
     /// Build a [`Statement::DebuggerStatement`].
@@ -3488,7 +3488,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn statement_debugger(self, span: Span) -> Statement<'a> {
-        Statement::DebuggerStatement(self.alloc_debugger_statement(span))
+        Statement::debugger_statement(self.alloc_debugger_statement(span))
     }
 
     /// Build a [`Statement::DoWhileStatement`].
@@ -3506,7 +3506,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> Statement<'a> {
-        Statement::DoWhileStatement(self.alloc_do_while_statement(span, body, test))
+        Statement::do_while_statement(self.alloc_do_while_statement(span, body, test))
     }
 
     /// Build a [`Statement::EmptyStatement`].
@@ -3517,7 +3517,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn statement_empty(self, span: Span) -> Statement<'a> {
-        Statement::EmptyStatement(self.alloc_empty_statement(span))
+        Statement::empty_statement(self.alloc_empty_statement(span))
     }
 
     /// Build a [`Statement::ExpressionStatement`].
@@ -3529,7 +3529,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`
     #[inline]
     pub fn statement_expression(self, span: Span, expression: Expression<'a>) -> Statement<'a> {
-        Statement::ExpressionStatement(self.alloc_expression_statement(span, expression))
+        Statement::expression_statement(self.alloc_expression_statement(span, expression))
     }
 
     /// Build a [`Statement::ForInStatement`].
@@ -3549,7 +3549,7 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForInStatement(self.alloc_for_in_statement(span, left, right, body))
+        Statement::for_in_statement(self.alloc_for_in_statement(span, left, right, body))
     }
 
     /// Build a [`Statement::ForInStatement`] with `scope_id`.
@@ -3571,7 +3571,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::ForInStatement(
+        Statement::for_in_statement(
             self.alloc_for_in_statement_with_scope_id(span, left, right, body, scope_id),
         )
     }
@@ -3595,7 +3595,7 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(self.alloc_for_of_statement(span, r#await, left, right, body))
+        Statement::for_of_statement(self.alloc_for_of_statement(span, r#await, left, right, body))
     }
 
     /// Build a [`Statement::ForOfStatement`] with `scope_id`.
@@ -3619,7 +3619,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(
+        Statement::for_of_statement(
             self.alloc_for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
         )
     }
@@ -3643,7 +3643,7 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForStatement(self.alloc_for_statement(span, init, test, update, body))
+        Statement::for_statement(self.alloc_for_statement(span, init, test, update, body))
     }
 
     /// Build a [`Statement::ForStatement`] with `scope_id`.
@@ -3667,7 +3667,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::ForStatement(
+        Statement::for_statement(
             self.alloc_for_statement_with_scope_id(span, init, test, update, body, scope_id),
         )
     }
@@ -3689,7 +3689,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> Statement<'a> {
-        Statement::IfStatement(self.alloc_if_statement(span, test, consequent, alternate))
+        Statement::if_statement(self.alloc_if_statement(span, test, consequent, alternate))
     }
 
     /// Build a [`Statement::LabeledStatement`].
@@ -3707,7 +3707,7 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::LabeledStatement(self.alloc_labeled_statement(span, label, body))
+        Statement::labeled_statement(self.alloc_labeled_statement(span, label, body))
     }
 
     /// Build a [`Statement::ReturnStatement`].
@@ -3719,7 +3719,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`
     #[inline]
     pub fn statement_return(self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
-        Statement::ReturnStatement(self.alloc_return_statement(span, argument))
+        Statement::return_statement(self.alloc_return_statement(span, argument))
     }
 
     /// Build a [`Statement::SwitchStatement`].
@@ -3737,7 +3737,7 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
-        Statement::SwitchStatement(self.alloc_switch_statement(span, discriminant, cases))
+        Statement::switch_statement(self.alloc_switch_statement(span, discriminant, cases))
     }
 
     /// Build a [`Statement::SwitchStatement`] with `scope_id`.
@@ -3757,7 +3757,7 @@ impl<'a> AstBuilder<'a> {
         cases: Vec<'a, SwitchCase<'a>>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::SwitchStatement(self.alloc_switch_statement_with_scope_id(
+        Statement::switch_statement(self.alloc_switch_statement_with_scope_id(
             span,
             discriminant,
             cases,
@@ -3774,7 +3774,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`: The expression being thrown, e.g. `err` in `throw err;`
     #[inline]
     pub fn statement_throw(self, span: Span, argument: Expression<'a>) -> Statement<'a> {
-        Statement::ThrowStatement(self.alloc_throw_statement(span, argument))
+        Statement::throw_statement(self.alloc_throw_statement(span, argument))
     }
 
     /// Build a [`Statement::TryStatement`].
@@ -3799,7 +3799,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
-        Statement::TryStatement(self.alloc_try_statement(span, block, handler, finalizer))
+        Statement::try_statement(self.alloc_try_statement(span, block, handler, finalizer))
     }
 
     /// Build a [`Statement::WhileStatement`].
@@ -3817,7 +3817,7 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::WhileStatement(self.alloc_while_statement(span, test, body))
+        Statement::while_statement(self.alloc_while_statement(span, test, body))
     }
 
     /// Build a [`Statement::WithStatement`].
@@ -3835,7 +3835,7 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::WithStatement(self.alloc_with_statement(span, object, body))
+        Statement::with_statement(self.alloc_with_statement(span, object, body))
     }
 
     /// Build a [`Statement::WithStatement`] with `scope_id`.
@@ -3855,7 +3855,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::WithStatement(
+        Statement::with_statement(
             self.alloc_with_statement_with_scope_id(span, object, body, scope_id),
         )
     }

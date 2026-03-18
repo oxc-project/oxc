@@ -1029,14 +1029,12 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
 impl Statement<'_> {
     /// Returns `true` if this statement uses any TypeScript syntax (such as `declare`).
     pub fn is_typescript_syntax(&self) -> bool {
-        match self {
-            match_declaration!(Self) => {
-                self.as_declaration().is_some_and(Declaration::is_typescript_syntax)
-            }
-            match_module_declaration!(Self) => {
-                self.as_module_declaration().is_some_and(ModuleDeclaration::is_typescript_syntax)
-            }
-            _ => false,
+        if self.is_declaration() {
+            self.as_declaration().is_some_and(|d| d.is_typescript_syntax())
+        } else if self.is_module_declaration() {
+            self.as_module_declaration().is_some_and(|m| m.is_typescript_syntax())
+        } else {
+            false
         }
     }
 
@@ -1051,14 +1049,11 @@ impl Statement<'_> {
     /// - `while (true) { }` => `true`
     /// - `if (true) { }` => `false`
     pub fn is_iteration_statement(&self) -> bool {
-        matches!(
-            self,
-            Statement::DoWhileStatement(_)
-                | Statement::ForInStatement(_)
-                | Statement::ForOfStatement(_)
-                | Statement::ForStatement(_)
-                | Statement::WhileStatement(_)
-        )
+        self.is_do_while_statement()
+            || self.is_for_in_statement()
+            || self.is_for_of_statement()
+            || self.is_for_statement()
+            || self.is_while_statement()
     }
 
     /// Returns `true` if this statement affects control flow, such as `return`, `throw`, `break`, or `continue`.
@@ -1072,19 +1067,16 @@ impl Statement<'_> {
     /// - `if (true) { }` => `false`
     pub fn is_jump_statement(&self) -> bool {
         self.get_one_child().is_some_and(|stmt| {
-            matches!(
-                stmt,
-                Self::ReturnStatement(_)
-                    | Self::ThrowStatement(_)
-                    | Self::BreakStatement(_)
-                    | Self::ContinueStatement(_)
-            )
+            stmt.is_return_statement()
+                || stmt.is_throw_statement()
+                || stmt.is_break_statement()
+                || stmt.is_continue_statement()
         })
     }
 
     /// Returns the single statement from block statement, or self
     pub fn get_one_child(&self) -> Option<&Self> {
-        if let Statement::BlockStatement(block_stmt) = self {
+        if let Some(block_stmt) = self.as_block_statement() {
             return (block_stmt.body.len() == 1).then(|| &block_stmt.body[0]);
         }
         Some(self)
@@ -1092,10 +1084,15 @@ impl Statement<'_> {
 
     /// Returns the single statement from block statement, or self
     pub fn get_one_child_mut(&mut self) -> Option<&mut Self> {
-        if let Statement::BlockStatement(block_stmt) = self {
-            return (block_stmt.body.len() == 1).then_some(&mut block_stmt.body[0]);
+        // SAFETY: We either return a reference into the block's body or self.
+        // These don't alias because if it's a block statement, we return from its body.
+        let ptr: *mut Self = self;
+        unsafe {
+            if let Some(block_stmt) = (*ptr).as_block_statement_mut() {
+                return (block_stmt.body.len() == 1).then_some(&mut block_stmt.body[0]);
+            }
+            Some(&mut *ptr)
         }
-        Some(self)
     }
 }
 
@@ -1562,7 +1559,7 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0]
+            && let Some(expr_stmt) = self.body.statements[0].as_expression_statement()
         {
             return Some(&expr_stmt.expression);
         }
@@ -1572,7 +1569,7 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
         if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0]
+            && let Some(expr_stmt) = self.body.statements[0].as_expression_statement_mut()
         {
             return Some(&mut expr_stmt.expression);
         }

@@ -241,44 +241,9 @@ impl GetAddress for ChainElement<'_> {
 }
 
 impl GetAddress for Statement<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
-        match self {
-            Self::BlockStatement(it) => GetAddress::address(it),
-            Self::BreakStatement(it) => GetAddress::address(it),
-            Self::ContinueStatement(it) => GetAddress::address(it),
-            Self::DebuggerStatement(it) => GetAddress::address(it),
-            Self::DoWhileStatement(it) => GetAddress::address(it),
-            Self::EmptyStatement(it) => GetAddress::address(it),
-            Self::ExpressionStatement(it) => GetAddress::address(it),
-            Self::ForInStatement(it) => GetAddress::address(it),
-            Self::ForOfStatement(it) => GetAddress::address(it),
-            Self::ForStatement(it) => GetAddress::address(it),
-            Self::IfStatement(it) => GetAddress::address(it),
-            Self::LabeledStatement(it) => GetAddress::address(it),
-            Self::ReturnStatement(it) => GetAddress::address(it),
-            Self::SwitchStatement(it) => GetAddress::address(it),
-            Self::ThrowStatement(it) => GetAddress::address(it),
-            Self::TryStatement(it) => GetAddress::address(it),
-            Self::WhileStatement(it) => GetAddress::address(it),
-            Self::WithStatement(it) => GetAddress::address(it),
-            Self::VariableDeclaration(it) => GetAddress::address(it),
-            Self::FunctionDeclaration(it) => GetAddress::address(it),
-            Self::ClassDeclaration(it) => GetAddress::address(it),
-            Self::TSTypeAliasDeclaration(it) => GetAddress::address(it),
-            Self::TSInterfaceDeclaration(it) => GetAddress::address(it),
-            Self::TSEnumDeclaration(it) => GetAddress::address(it),
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
-            Self::TSGlobalDeclaration(it) => GetAddress::address(it),
-            Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
-            Self::ImportDeclaration(it) => GetAddress::address(it),
-            Self::ExportAllDeclaration(it) => GetAddress::address(it),
-            Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
-            Self::ExportNamedDeclaration(it) => GetAddress::address(it),
-            Self::TSExportAssignment(it) => GetAddress::address(it),
-            Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
-        }
+        unsafe { Address::from_ptr(self.0.as_ptr::<u8>().as_ptr()) }
     }
 }
 

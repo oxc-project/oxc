@@ -2199,188 +2199,80 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
     type Cloned = Statement<'new_alloc>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::BlockStatement(it) => Statement::BlockStatement(CloneIn::clone_in(it, allocator)),
-            Self::BreakStatement(it) => Statement::BreakStatement(CloneIn::clone_in(it, allocator)),
-            Self::ContinueStatement(it) => {
-                Statement::ContinueStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::DebuggerStatement(it) => {
-                Statement::DebuggerStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::DoWhileStatement(it) => {
-                Statement::DoWhileStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::EmptyStatement(it) => Statement::EmptyStatement(CloneIn::clone_in(it, allocator)),
-            Self::ExpressionStatement(it) => {
-                Statement::ExpressionStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::ForInStatement(it) => Statement::ForInStatement(CloneIn::clone_in(it, allocator)),
-            Self::ForOfStatement(it) => Statement::ForOfStatement(CloneIn::clone_in(it, allocator)),
-            Self::ForStatement(it) => Statement::ForStatement(CloneIn::clone_in(it, allocator)),
-            Self::IfStatement(it) => Statement::IfStatement(CloneIn::clone_in(it, allocator)),
-            Self::LabeledStatement(it) => {
-                Statement::LabeledStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::ReturnStatement(it) => {
-                Statement::ReturnStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::SwitchStatement(it) => {
-                Statement::SwitchStatement(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThrowStatement(it) => Statement::ThrowStatement(CloneIn::clone_in(it, allocator)),
-            Self::TryStatement(it) => Statement::TryStatement(CloneIn::clone_in(it, allocator)),
-            Self::WhileStatement(it) => Statement::WhileStatement(CloneIn::clone_in(it, allocator)),
-            Self::WithStatement(it) => Statement::WithStatement(CloneIn::clone_in(it, allocator)),
-            Self::VariableDeclaration(it) => {
-                Statement::VariableDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionDeclaration(it) => {
-                Statement::FunctionDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassDeclaration(it) => {
-                Statement::ClassDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAliasDeclaration(it) => {
-                Statement::TSTypeAliasDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInterfaceDeclaration(it) => {
-                Statement::TSInterfaceDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSEnumDeclaration(it) => {
-                Statement::TSEnumDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSModuleDeclaration(it) => {
-                Statement::TSModuleDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSGlobalDeclaration(it) => {
-                Statement::TSGlobalDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSImportEqualsDeclaration(it) => {
-                Statement::TSImportEqualsDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportDeclaration(it) => {
-                Statement::ImportDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportAllDeclaration(it) => {
-                Statement::ExportAllDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportDefaultDeclaration(it) => {
-                Statement::ExportDefaultDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExportNamedDeclaration(it) => {
-                Statement::ExportNamedDeclaration(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSExportAssignment(it) => {
-                Statement::TSExportAssignment(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNamespaceExportDeclaration(it) => {
-                Statement::TSNamespaceExportDeclaration(CloneIn::clone_in(it, allocator))
-            }
+        use crate::ast::js::StatementKind;
+        match self.kind() {
+            StatementKind::BlockStatement(it) => Statement::block_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::BreakStatement(it) => Statement::break_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ContinueStatement(it) => Statement::continue_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::DebuggerStatement(it) => Statement::debugger_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::DoWhileStatement(it) => Statement::do_while_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::EmptyStatement(it) => Statement::empty_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ExpressionStatement(it) => Statement::expression_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ForInStatement(it) => Statement::for_in_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ForOfStatement(it) => Statement::for_of_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ForStatement(it) => Statement::for_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::IfStatement(it) => Statement::if_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::LabeledStatement(it) => Statement::labeled_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ReturnStatement(it) => Statement::return_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::SwitchStatement(it) => Statement::switch_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ThrowStatement(it) => Statement::throw_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TryStatement(it) => Statement::try_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::WhileStatement(it) => Statement::while_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::WithStatement(it) => Statement::with_statement(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::VariableDeclaration(it) => Statement::variable_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::FunctionDeclaration(it) => Statement::function_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ClassDeclaration(it) => Statement::class_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSTypeAliasDeclaration(it) => Statement::ts_type_alias_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSInterfaceDeclaration(it) => Statement::ts_interface_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSEnumDeclaration(it) => Statement::ts_enum_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSModuleDeclaration(it) => Statement::ts_module_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSGlobalDeclaration(it) => Statement::ts_global_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSImportEqualsDeclaration(it) => Statement::ts_import_equals_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ImportDeclaration(it) => Statement::import_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ExportAllDeclaration(it) => Statement::export_all_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ExportDefaultDeclaration(it) => Statement::export_default_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::ExportNamedDeclaration(it) => Statement::export_named_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSExportAssignment(it) => Statement::ts_export_assignment(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            StatementKind::TSNamespaceExportDeclaration(it) => Statement::ts_namespace_export_declaration(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::BlockStatement(it) => {
-                Statement::BlockStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BreakStatement(it) => {
-                Statement::BreakStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ContinueStatement(it) => {
-                Statement::ContinueStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::DebuggerStatement(it) => {
-                Statement::DebuggerStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::DoWhileStatement(it) => {
-                Statement::DoWhileStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::EmptyStatement(it) => {
-                Statement::EmptyStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ExpressionStatement(it) => {
-                Statement::ExpressionStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ForInStatement(it) => {
-                Statement::ForInStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ForOfStatement(it) => {
-                Statement::ForOfStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ForStatement(it) => {
-                Statement::ForStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::IfStatement(it) => {
-                Statement::IfStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::LabeledStatement(it) => {
-                Statement::LabeledStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ReturnStatement(it) => {
-                Statement::ReturnStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::SwitchStatement(it) => {
-                Statement::SwitchStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ThrowStatement(it) => {
-                Statement::ThrowStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TryStatement(it) => {
-                Statement::TryStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::WhileStatement(it) => {
-                Statement::WhileStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::WithStatement(it) => {
-                Statement::WithStatement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::VariableDeclaration(it) => {
-                Statement::VariableDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::FunctionDeclaration(it) => {
-                Statement::FunctionDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassDeclaration(it) => {
-                Statement::ClassDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSTypeAliasDeclaration(it) => Statement::TSTypeAliasDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSInterfaceDeclaration(it) => Statement::TSInterfaceDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSEnumDeclaration(it) => {
-                Statement::TSEnumDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSModuleDeclaration(it) => {
-                Statement::TSModuleDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSGlobalDeclaration(it) => {
-                Statement::TSGlobalDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSImportEqualsDeclaration(it) => Statement::TSImportEqualsDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ImportDeclaration(it) => {
-                Statement::ImportDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ExportAllDeclaration(it) => {
-                Statement::ExportAllDeclaration(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ExportDefaultDeclaration(it) => Statement::ExportDefaultDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ExportNamedDeclaration(it) => Statement::ExportNamedDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSExportAssignment(it) => {
-                Statement::TSExportAssignment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNamespaceExportDeclaration(it) => Statement::TSNamespaceExportDeclaration(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
+        use crate::ast::js::StatementKind;
+        match self.kind() {
+            StatementKind::BlockStatement(it) => Statement::block_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::BreakStatement(it) => Statement::break_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ContinueStatement(it) => Statement::continue_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::DebuggerStatement(it) => Statement::debugger_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::DoWhileStatement(it) => Statement::do_while_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::EmptyStatement(it) => Statement::empty_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ExpressionStatement(it) => Statement::expression_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ForInStatement(it) => Statement::for_in_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ForOfStatement(it) => Statement::for_of_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ForStatement(it) => Statement::for_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::IfStatement(it) => Statement::if_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::LabeledStatement(it) => Statement::labeled_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ReturnStatement(it) => Statement::return_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::SwitchStatement(it) => Statement::switch_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ThrowStatement(it) => Statement::throw_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TryStatement(it) => Statement::try_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::WhileStatement(it) => Statement::while_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::WithStatement(it) => Statement::with_statement(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::VariableDeclaration(it) => Statement::variable_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::FunctionDeclaration(it) => Statement::function_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ClassDeclaration(it) => Statement::class_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSTypeAliasDeclaration(it) => Statement::ts_type_alias_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSInterfaceDeclaration(it) => Statement::ts_interface_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSEnumDeclaration(it) => Statement::ts_enum_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSModuleDeclaration(it) => Statement::ts_module_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSGlobalDeclaration(it) => Statement::ts_global_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSImportEqualsDeclaration(it) => Statement::ts_import_equals_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ImportDeclaration(it) => Statement::import_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ExportAllDeclaration(it) => Statement::export_all_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ExportDefaultDeclaration(it) => Statement::export_default_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::ExportNamedDeclaration(it) => Statement::export_named_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSExportAssignment(it) => Statement::ts_export_assignment(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            StatementKind::TSNamespaceExportDeclaration(it) => Statement::ts_namespace_export_declaration(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
         }
     }
 }

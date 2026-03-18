@@ -661,46 +661,44 @@ impl ContentEq for ParenthesizedExpression<'_> {
 
 impl ContentEq for Statement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::BlockStatement(a), Self::BlockStatement(b)) => a.content_eq(b),
-            (Self::BreakStatement(a), Self::BreakStatement(b)) => a.content_eq(b),
-            (Self::ContinueStatement(a), Self::ContinueStatement(b)) => a.content_eq(b),
-            (Self::DebuggerStatement(a), Self::DebuggerStatement(b)) => a.content_eq(b),
-            (Self::DoWhileStatement(a), Self::DoWhileStatement(b)) => a.content_eq(b),
-            (Self::EmptyStatement(a), Self::EmptyStatement(b)) => a.content_eq(b),
-            (Self::ExpressionStatement(a), Self::ExpressionStatement(b)) => a.content_eq(b),
-            (Self::ForInStatement(a), Self::ForInStatement(b)) => a.content_eq(b),
-            (Self::ForOfStatement(a), Self::ForOfStatement(b)) => a.content_eq(b),
-            (Self::ForStatement(a), Self::ForStatement(b)) => a.content_eq(b),
-            (Self::IfStatement(a), Self::IfStatement(b)) => a.content_eq(b),
-            (Self::LabeledStatement(a), Self::LabeledStatement(b)) => a.content_eq(b),
-            (Self::ReturnStatement(a), Self::ReturnStatement(b)) => a.content_eq(b),
-            (Self::SwitchStatement(a), Self::SwitchStatement(b)) => a.content_eq(b),
-            (Self::ThrowStatement(a), Self::ThrowStatement(b)) => a.content_eq(b),
-            (Self::TryStatement(a), Self::TryStatement(b)) => a.content_eq(b),
-            (Self::WhileStatement(a), Self::WhileStatement(b)) => a.content_eq(b),
-            (Self::WithStatement(a), Self::WithStatement(b)) => a.content_eq(b),
-            (Self::VariableDeclaration(a), Self::VariableDeclaration(b)) => a.content_eq(b),
-            (Self::FunctionDeclaration(a), Self::FunctionDeclaration(b)) => a.content_eq(b),
-            (Self::ClassDeclaration(a), Self::ClassDeclaration(b)) => a.content_eq(b),
-            (Self::TSTypeAliasDeclaration(a), Self::TSTypeAliasDeclaration(b)) => a.content_eq(b),
-            (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
-            (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
-            (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
-            (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
-                a.content_eq(b)
-            }
-            (Self::ImportDeclaration(a), Self::ImportDeclaration(b)) => a.content_eq(b),
-            (Self::ExportAllDeclaration(a), Self::ExportAllDeclaration(b)) => a.content_eq(b),
-            (Self::ExportDefaultDeclaration(a), Self::ExportDefaultDeclaration(b)) => {
-                a.content_eq(b)
-            }
-            (Self::ExportNamedDeclaration(a), Self::ExportNamedDeclaration(b)) => a.content_eq(b),
-            (Self::TSExportAssignment(a), Self::TSExportAssignment(b)) => a.content_eq(b),
-            (Self::TSNamespaceExportDeclaration(a), Self::TSNamespaceExportDeclaration(b)) => {
-                a.content_eq(b)
-            }
+        use crate::ast::js::StatementKind;
+        if self.discriminant() != other.discriminant() {
+            return false;
+        }
+        match (self.kind(), other.kind()) {
+            (StatementKind::BlockStatement(a), StatementKind::BlockStatement(b)) => a.content_eq(b),
+            (StatementKind::BreakStatement(a), StatementKind::BreakStatement(b)) => a.content_eq(b),
+            (StatementKind::ContinueStatement(a), StatementKind::ContinueStatement(b)) => a.content_eq(b),
+            (StatementKind::DebuggerStatement(a), StatementKind::DebuggerStatement(b)) => a.content_eq(b),
+            (StatementKind::DoWhileStatement(a), StatementKind::DoWhileStatement(b)) => a.content_eq(b),
+            (StatementKind::EmptyStatement(a), StatementKind::EmptyStatement(b)) => a.content_eq(b),
+            (StatementKind::ExpressionStatement(a), StatementKind::ExpressionStatement(b)) => a.content_eq(b),
+            (StatementKind::ForInStatement(a), StatementKind::ForInStatement(b)) => a.content_eq(b),
+            (StatementKind::ForOfStatement(a), StatementKind::ForOfStatement(b)) => a.content_eq(b),
+            (StatementKind::ForStatement(a), StatementKind::ForStatement(b)) => a.content_eq(b),
+            (StatementKind::IfStatement(a), StatementKind::IfStatement(b)) => a.content_eq(b),
+            (StatementKind::LabeledStatement(a), StatementKind::LabeledStatement(b)) => a.content_eq(b),
+            (StatementKind::ReturnStatement(a), StatementKind::ReturnStatement(b)) => a.content_eq(b),
+            (StatementKind::SwitchStatement(a), StatementKind::SwitchStatement(b)) => a.content_eq(b),
+            (StatementKind::ThrowStatement(a), StatementKind::ThrowStatement(b)) => a.content_eq(b),
+            (StatementKind::TryStatement(a), StatementKind::TryStatement(b)) => a.content_eq(b),
+            (StatementKind::WhileStatement(a), StatementKind::WhileStatement(b)) => a.content_eq(b),
+            (StatementKind::WithStatement(a), StatementKind::WithStatement(b)) => a.content_eq(b),
+            (StatementKind::VariableDeclaration(a), StatementKind::VariableDeclaration(b)) => a.content_eq(b),
+            (StatementKind::FunctionDeclaration(a), StatementKind::FunctionDeclaration(b)) => a.content_eq(b),
+            (StatementKind::ClassDeclaration(a), StatementKind::ClassDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSTypeAliasDeclaration(a), StatementKind::TSTypeAliasDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSInterfaceDeclaration(a), StatementKind::TSInterfaceDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSEnumDeclaration(a), StatementKind::TSEnumDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSModuleDeclaration(a), StatementKind::TSModuleDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSGlobalDeclaration(a), StatementKind::TSGlobalDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSImportEqualsDeclaration(a), StatementKind::TSImportEqualsDeclaration(b)) => a.content_eq(b),
+            (StatementKind::ImportDeclaration(a), StatementKind::ImportDeclaration(b)) => a.content_eq(b),
+            (StatementKind::ExportAllDeclaration(a), StatementKind::ExportAllDeclaration(b)) => a.content_eq(b),
+            (StatementKind::ExportDefaultDeclaration(a), StatementKind::ExportDefaultDeclaration(b)) => a.content_eq(b),
+            (StatementKind::ExportNamedDeclaration(a), StatementKind::ExportNamedDeclaration(b)) => a.content_eq(b),
+            (StatementKind::TSExportAssignment(a), StatementKind::TSExportAssignment(b)) => a.content_eq(b),
+            (StatementKind::TSNamespaceExportDeclaration(a), StatementKind::TSNamespaceExportDeclaration(b)) => a.content_eq(b),
             _ => false,
         }
     }

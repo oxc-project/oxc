@@ -540,42 +540,9 @@ impl GetSpanMut for ParenthesizedExpression<'_> {
 }
 
 impl GetSpanMut for Statement<'_> {
+    #[inline]
     fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::BlockStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BreakStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ContinueStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::DebuggerStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::DoWhileStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::EmptyStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForInStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForOfStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IfStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LabeledStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ReturnStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SwitchStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThrowStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TryStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::WhileStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::WithStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAliasDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSGlobalDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-        }
+        unsafe { self.0.as_mut::<Span>() }
     }
 }
 
