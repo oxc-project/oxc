@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::path::Path;
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -38,12 +39,33 @@ fn format_github(diagnostic: &Error) -> String {
         Severity::Warning | miette::Severity::Advice => "warning",
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
+    let filename_for_message = display_filename(&filename);
     let filename = escape_property(&filename);
-    let message = escape_data(&message);
+    let message = escape_data(&format_message(&filename_for_message, start.line, &message));
     format!(
         "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
         start.line, end.line, start.column, end.column
     )
+}
+
+fn format_message(filename: &str, line: usize, message: &str) -> String {
+    if filename.is_empty() || line == 0 {
+        return message.to_string();
+    }
+
+    format!("{filename}:{line} {message}")
+}
+
+fn display_filename(filename: &str) -> Cow<'_, str> {
+    let path = Path::new(filename);
+    if filename.contains("://") || path.is_absolute() {
+        return path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map_or(Cow::Borrowed(filename), |name| Cow::Owned(name.to_string()));
+    }
+
+    Cow::Borrowed(filename)
 }
 
 fn escape_data(value: &str) -> String {
@@ -120,7 +142,7 @@ mod test {
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
-            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::test.ts:1 error message\n"
         );
     }
 }
