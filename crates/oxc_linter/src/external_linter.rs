@@ -77,7 +77,7 @@ pub struct LoadPluginResult {
 pub enum DiagnosticRangeKind {
     #[default]
     Program,
-    Physical,
+    Actual,
 }
 
 #[derive(Clone, Debug, Deserialize)]

@@ -3,7 +3,7 @@
 
 # stdout
 ```
-  x vue-physical-plugin(report-template): Unexpected template marker
+  x vue-actual-plugin(report-template): Unexpected template marker
    ,-[files/template-only.vue:2:9]
  1 | <template>
  2 |   <span>template-bad</span>
@@ -11,7 +11,7 @@
  3 | </template>
    `----
 
-  x vue-physical-plugin(report-template): Unexpected template marker
+  x vue-actual-plugin(report-template): Unexpected template marker
    ,-[files/with-script.vue:2:8]
  1 | <template>
  2 |   <div>template-bad</div>

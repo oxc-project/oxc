@@ -41,7 +41,7 @@ impl PartialLoader {
     /// Extract js sections for external linters.
     ///
     /// Some frameworks need to preserve a synthetic section even when there is no `<script>`
-    /// so JS plugins can still report against the physical file.
+    /// so JS plugins can still report against the original file.
     pub fn parse_for_external_linter<'a>(
         ext: &str,
         source_text: &'a str,

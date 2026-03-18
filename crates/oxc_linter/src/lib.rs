@@ -130,7 +130,7 @@ fn create_span_converter(source_text: &str) -> (&str, bool, Utf8ToUtf16) {
     (stripped_source_text, has_bom, span_converter)
 }
 
-fn map_physical_span_to_section(span: Span, section_offset: u32, section_len: u32) -> Option<Span> {
+fn map_actual_span_to_section(span: Span, section_offset: u32, section_len: u32) -> Option<Span> {
     if section_offset == 0 {
         return Some(span);
     }
@@ -637,9 +637,9 @@ impl Linter {
             program.source_text = program_source_text;
         }
 
-        let physical_original_source_text = ctx_host.physical_source_text();
-        let (_physical_source_text, physical_has_bom, physical_span_converter) =
-            create_span_converter(physical_original_source_text);
+        let actual_original_source_text = ctx_host.actual_source_text();
+        let (_actual_source_text, actual_has_bom, actual_span_converter) =
+            create_span_converter(actual_original_source_text);
 
         // Convert tokens for raw transfer
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
@@ -716,7 +716,7 @@ impl Linter {
                 let current_section_offset = ctx_host.current_source_text_offset();
 
                 for diagnostic in diagnostics {
-                    let (source_text, has_bom, span_converter, use_physical_range) =
+                    let (source_text, has_bom, span_converter, use_actual_range) =
                         match diagnostic.range_kind {
                             DiagnosticRangeKind::Program => (
                                 program_original_source_text,
@@ -724,10 +724,10 @@ impl Linter {
                                 &program_span_converter,
                                 false,
                             ),
-                            DiagnosticRangeKind::Physical => (
-                                physical_original_source_text,
-                                physical_has_bom,
-                                &physical_span_converter,
+                            DiagnosticRangeKind::Actual => (
+                                actual_original_source_text,
+                                actual_has_bom,
+                                &actual_span_converter,
                                 true,
                             ),
                         };
@@ -744,8 +744,8 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
-                    let disable_directives_span = if use_physical_range {
-                        map_physical_span_to_section(
+                    let disable_directives_span = if use_actual_range {
+                        map_actual_span_to_section(
                             span,
                             current_section_offset,
                             current_section_len,
@@ -817,8 +817,8 @@ impl Linter {
                             .with_severity(severity.into()),
                         possible_fixes,
                     );
-                    if use_physical_range {
-                        ctx_host.push_diagnostic_without_offset(message);
+                    if use_actual_range {
+                        ctx_host.push_diagnostic_in_actual_coordinates(message);
                     } else {
                         ctx_host.push_diagnostic(message);
                     }

@@ -18,12 +18,12 @@ import type { LineColumn, Range, Ranged } from "./location.ts";
  * Passed to `Context#report()`.
  *
  * - Either `message` or `messageId` property must be provided.
- * - Either `node`, `loc`, or `physicalRange` property must be provided.
+ * - Either `node`, `loc`, or `actualRange` property must be provided.
  */
 // This is the type of the value passed to `Context#report()` by user.
 // `DiagnosticReport` (see below) is the type of diagnostics used internally on JS side, and sent to Rust.
 export type Diagnostic = RequireAtLeastOne<
-  RequireAtLeastOne<DiagnosticBase, "node" | "loc" | "physicalRange">,
+  RequireAtLeastOne<DiagnosticBase, "node" | "loc" | "actualRange">,
   "message" | "messageId"
 >;
 
@@ -32,7 +32,7 @@ interface DiagnosticBase {
   messageId?: string | null | undefined;
   node?: Ranged;
   loc?: LocationWithOptionalEnd | LineColumn;
-  physicalRange?: Range;
+  actualRange?: Range;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[] | null | undefined;
@@ -73,7 +73,7 @@ export interface SuggestionReport {
   fixes: FixReport[];
 }
 
-type DiagnosticRangeKind = "program" | "physical";
+type DiagnosticRangeKind = "program" | "actual";
 
 /**
  * Diagnostic in form sent to Rust.
@@ -128,13 +128,13 @@ export function report(
   // We need the original location in conformance tests
   let conformedLoc: LocationWithOptionalEnd | null = null;
 
-  if (Object.hasOwn(diagnostic, "physicalRange") && diagnostic.physicalRange != null) {
-    const { physicalRange } = diagnostic;
-    if (!Array.isArray(physicalRange) || physicalRange.length !== 2) {
-      throw new TypeError("`physicalRange` must be an array of length 2");
+  if (Object.hasOwn(diagnostic, "actualRange") && diagnostic.actualRange != null) {
+    const { actualRange } = diagnostic;
+    if (!Array.isArray(actualRange) || actualRange.length !== 2) {
+      throw new TypeError("`actualRange` must be an array of length 2");
     }
 
-    [start, end] = physicalRange;
+    [start, end] = actualRange;
 
     if (
       typeof start !== "number" ||
@@ -144,10 +144,10 @@ export function report(
       (start | 0) !== start ||
       (end | 0) !== end
     ) {
-      throw new TypeError("`physicalRange[0]` and `physicalRange[1]` must be non-negative integers");
+      throw new TypeError("`actualRange[0]` and `actualRange[1]` must be non-negative integers");
     }
 
-    rangeKind = "physical";
+    rangeKind = "actual";
   } else if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
     // Can be any of:
@@ -186,7 +186,7 @@ export function report(
   } else {
     // `node`
     const { node } = diagnostic;
-    if (node == null) throw new TypeError("Either `node` or `loc` is required");
+    if (node == null) throw new TypeError("Either `node`, `loc`, or `actualRange` is required");
     if (typeof node !== "object") throw new TypeError("`node` must be an object");
 
     // ESLint uses `loc` here instead of `range`.

@@ -41,8 +41,8 @@ pub struct ContextSubHost<'a> {
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
-    /// Original source text for the whole physical file.
-    pub(super) physical_source_text: &'a str,
+    /// Original source text for the whole file being linted.
+    pub(super) actual_source_text: &'a str,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -53,14 +53,14 @@ impl<'a> ContextSubHost<'a> {
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
     ) -> Self {
-        let physical_source_text = semantic.source_text();
+        let actual_source_text = semantic.source_text();
         Self::new_with_framework_options(
             semantic,
             module_record,
             source_text_offset,
             FrameworkOptions::Default,
             ArenaBox::new_empty_boxed_slice(),
-            physical_source_text,
+            actual_source_text,
         )
     }
 
@@ -72,7 +72,7 @@ impl<'a> ContextSubHost<'a> {
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
         parser_tokens: ArenaBox<'a, [Token]>,
-        physical_source_text: &'a str,
+        actual_source_text: &'a str,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -91,7 +91,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: frameworks_options,
             parser_tokens,
-            physical_source_text,
+            actual_source_text,
         }
     }
 
@@ -117,12 +117,12 @@ impl<'a> ContextSubHost<'a> {
         self.framework_options
     }
 
-    /// Shared reference to the original physical source text.
-    pub fn physical_source_text(&self) -> &'a str {
-        self.physical_source_text
+    /// Shared reference to the original full-file source text.
+    pub fn actual_source_text(&self) -> &'a str {
+        self.actual_source_text
     }
 
-    /// Source text offset of this sub host within the physical file.
+    /// Source text offset of this sub host within the full file.
     pub fn source_text_offset(&self) -> u32 {
         self.source_text_offset
     }
@@ -261,12 +261,12 @@ impl<'a> ContextHost<'a> {
         &mut self.current_sub_host_mut().parser_tokens
     }
 
-    /// Shared reference to the original physical source text of the current file.
-    pub fn physical_source_text(&self) -> &'a str {
-        self.current_sub_host().physical_source_text()
+    /// Shared reference to the original full-file source text of the current file.
+    pub fn actual_source_text(&self) -> &'a str {
+        self.current_sub_host().actual_source_text()
     }
 
-    /// Source text offset of the current sub host within the physical file.
+    /// Source text offset of the current sub host within the full file.
     pub fn current_source_text_offset(&self) -> u32 {
         self.current_sub_host().source_text_offset()
     }
@@ -323,9 +323,9 @@ impl<'a> ContextHost<'a> {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
-    /// Add a diagnostic that is already expressed in physical file coordinates.
+    /// Add a diagnostic that is already expressed in actual file coordinates.
     #[inline]
-    pub(crate) fn push_diagnostic_without_offset(&self, diagnostic: Message) {
+    pub(crate) fn push_diagnostic_in_actual_coordinates(&self, diagnostic: Message) {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
