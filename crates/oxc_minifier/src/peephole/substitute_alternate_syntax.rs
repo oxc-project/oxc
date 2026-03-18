@@ -1106,60 +1106,63 @@ impl<'a> PeepholeOptimizations {
                     *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
                     ctx.state.changed = true;
                 } else if args.len() == 1 {
-                    let Some(arg) = args[0].as_expression_mut() else { return };
+                    let Some(mut arg) = args[0].as_expression_mut() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
                         *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
                         ctx.state.changed = true;
                     }
                     // `new Array(8)` -> `Array(8)`
-                    else if arg.is_numeric_literal() {
-                        let n = arg.as_numeric_literal().unwrap();
-                        // new Array(2) -> `[,,]`
-                        // this does not work with IE8 and below
-                        // learned from https://github.com/babel/minify/pull/45
-                        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                        if n.value.fract() == 0.0 {
-                            let n_int = n.value as usize;
-                            if (1..=6).contains(&n_int) {
-                                let elisions = repeat_with(|| {
-                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
-                                })
-                                .take(n_int);
-                                *expr = ctx
-                                    .ast
-                                    .expression_array(*span, ctx.ast.vec_from_iter(elisions));
+                    else {
+                        // Extract numeric literal info before if-else chain to avoid borrow issues
+                        let numeric_info = arg.as_numeric_literal().map(|n| (n.value, n.span));
+                        if let Some((value, nspan)) = numeric_info {
+                            // new Array(2) -> `[,,]`
+                            // this does not work with IE8 and below
+                            // learned from https://github.com/babel/minify/pull/45
+                            #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                            if value.fract() == 0.0 {
+                                let n_int = value as usize;
+                                if (1..=6).contains(&n_int) {
+                                    let elisions = repeat_with(|| {
+                                        ArrayExpressionElement::Elision(ctx.ast.elision(nspan))
+                                    })
+                                    .take(n_int);
+                                    *expr = ctx
+                                        .ast
+                                        .expression_array(*span, ctx.ast.vec_from_iter(elisions));
+                                    ctx.state.changed = true;
+                                    return;
+                                }
+                            }
+                            if is_new_expr {
+                                let callee = callee.take_in(ctx.ast);
+                                let args = args.take_in(ctx.ast);
+                                *expr = ctx.ast.expression_call(*span, callee, NONE, args, false);
                                 ctx.state.changed = true;
-                                return;
                             }
                         }
-                        if is_new_expr {
+                        // `new Array(literal)` -> `[literal]`
+                        else if arg.is_literal() || arg.is_array_expression() {
+                            let elements =
+                                ctx.ast.vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast)));
+                            *expr = ctx.ast.expression_array(*span, elements);
+                            ctx.state.changed = true;
+                        }
+                        // `new Array(x)` -> `Array(x)`
+                        else if is_new_expr {
                             let callee = callee.take_in(ctx.ast);
                             let args = args.take_in(ctx.ast);
                             *expr = ctx.ast.expression_call(*span, callee, NONE, args, false);
                             ctx.state.changed = true;
                         }
                     }
-                    // `new Array(literal)` -> `[literal]`
-                    else if arg.is_literal() || arg.is_array_expression() {
-                        let elements =
-                            ctx.ast.vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast)));
-                        *expr = ctx.ast.expression_array(*span, elements);
-                        ctx.state.changed = true;
-                    }
-                    // `new Array(x)` -> `Array(x)`
-                    else if is_new_expr {
-                        let callee = callee.take_in(ctx.ast);
-                        let args = args.take_in(ctx.ast);
-                        *expr = ctx.ast.expression_call(*span, callee, NONE, args, false);
-                        ctx.state.changed = true;
-                    }
                 } else {
                     // `new Array(1, 2, 3)` -> `[1, 2, 3]`
                     let elements = ctx.ast.vec_from_iter(
                         args.iter_mut()
                             .filter_map(|arg| arg.as_expression_mut())
-                            .map(|arg| ArrayExpressionElement::from(arg.take_in(ctx.ast))),
+                            .map(|mut arg| ArrayExpressionElement::from(arg.take_in(ctx.ast))),
                     );
                     *expr = ctx.ast.expression_array(*span, elements);
                     ctx.state.changed = true;
@@ -1417,15 +1420,14 @@ impl<'a> PeepholeOptimizations {
         if inner_call.optional || inner_call.arguments.len() != 1 {
             return;
         }
-        let Some(callee) = inner_call.callee.as_identifier() else {
-            return;
-        };
-        if callee.name != "Object" || !ctx.is_global_reference(callee) {
+        let is_object_callee = inner_call.callee.as_identifier()
+            .is_some_and(|callee| callee.name == "Object" && ctx.is_global_reference(callee));
+        if !is_object_callee {
             return;
         }
 
         let span = inner_call.span;
-        let Some(arg_expr) = inner_call.arguments[0].as_expression_mut() else {
+        let Some(mut arg_expr) = inner_call.arguments[0].as_expression_mut() else {
             return;
         };
 

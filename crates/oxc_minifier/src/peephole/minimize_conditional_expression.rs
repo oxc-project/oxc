@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
                 if sequence_expr.expressions.len() > 1 {
                     let span = expr.span();
                     let mut sequence = expr.test.take_in(ctx.ast);
-                    let ExpressionKindMut::SequenceExpression(sequence_expr) = &mut sequence else {
+                    let Some(sequence_expr) = sequence.as_sequence_expression_mut() else {
                         unreachable!()
                     };
                     let expr = Self::minimize_conditional(
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
             }
             ExpressionKindMut::Identifier(id) => {
                 // "a ? a : b" => "a || b"
-                if let ExpressionKindMut::Identifier(id2) = &expr.consequent
+                if let Some(id2) = expr.consequent.as_identifier()
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
                 // "a ? b : a" => "a && b"
-                if let ExpressionKindMut::Identifier(id2) = &expr.alternate
+                if let Some(id2) = expr.alternate.as_identifier()
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -218,8 +218,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
-        if let (Expression::call_expression(consequent), Expression::call_expression(alternate)) =
-            (&mut expr.consequent, &mut expr.alternate)
+        if let (Some(consequent), Some(alternate)) =
+            (expr.consequent.as_call_expression_mut(), expr.alternate.as_call_expression_mut())
         {
             // `a ? b() : b()` is handled later
             if !consequent.arguments.is_empty() &&
@@ -235,7 +235,7 @@ impl<'a> PeepholeOptimizations {
                     .iter()
                     .zip(&alternate.arguments)
                     .skip(1)
-                    .all(|(a, b)| a.content_eq(b))
+                    .all(|(a, b): (&Argument<'a>, &Argument<'a>)| a.content_eq(b))
             {
                 // `a ? b(...c) : b(...e)` -> `b(...a ? c : e)``
                 if matches!(consequent.arguments[0], Argument::SpreadElement(_))
@@ -298,7 +298,7 @@ impl<'a> PeepholeOptimizations {
         // Try using the "??" or "?." operators
         if (ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator)
             || ctx.supports_feature(ESFeature::ES2020OptionalChaining))
-            && let Expression::binary_expression(test_binary) = &mut expr.test
+            && let Some(test_binary) = expr.test.as_binary_expression_mut()
             && let Some(is_negate) = match test_binary.operator {
                 BinaryOperator::Inequality => Some(true),
                 BinaryOperator::Equality => Some(false),
@@ -336,7 +336,7 @@ impl<'a> PeepholeOptimizations {
                     if maybe_same_id_expr.is_specific_id(&target_id_name) {
                         return Some(ctx.ast.expression_logical(
                             expr.span,
-                            value_expr.take_in(ctx.ast),
+                            Expression::take_in(value_expr, ctx.ast),
                             LogicalOperator::Coalesce,
                             if is_negate {
                                 expr.alternate.take_in(ctx.ast)
@@ -418,11 +418,10 @@ impl<'a> PeepholeOptimizations {
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let (
-            Expression::assignment_expression(consequent),
-            Expression::assignment_expression(alternate),
-        ) = (&mut expr.consequent, &mut expr.alternate)
-        else {
+        let (Some(consequent), Some(alternate)) = (
+            expr.consequent.as_assignment_expression_mut(),
+            expr.alternate.as_assignment_expression_mut(),
+        ) else {
             return None;
         };
         if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {

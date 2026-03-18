@@ -1,5 +1,5 @@
 use oxc_allocator::TakeIn;
-use oxc_ast::ast::*;
+use oxc_ast::ast::{*, ExpressionKind};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
@@ -30,7 +30,8 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // "(a, b) op c" => "a, b op c"
-        if let Some(mut sequence_expr) = a .as_sequence_expression_mut(){
+        if a.is_sequence_expression() {
+            let mut sequence_expr = a.into_sequence_expression();
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
