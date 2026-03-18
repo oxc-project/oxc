@@ -7,6 +7,7 @@ use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::{Atom, GetSpan, Ident};
 
 use super::{AstKind, ast::*};
+use crate::ast::js::ExpressionKind;
 
 impl<'a> AstKind<'a> {
     /// Check if this AST node is a statement
@@ -239,50 +240,50 @@ impl<'a> AstKind<'a> {
     ///
     /// Converts any expression type to its corresponding `AstKind` variant.
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
-        match e {
-            Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
-            Expression::NullLiteral(e) => Self::NullLiteral(e),
-            Expression::NumericLiteral(e) => Self::NumericLiteral(e),
-            Expression::BigIntLiteral(e) => Self::BigIntLiteral(e),
-            Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
-            Expression::StringLiteral(e) => Self::StringLiteral(e),
-            Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
-            Expression::Identifier(e) => Self::IdentifierReference(e),
-            Expression::MetaProperty(e) => Self::MetaProperty(e),
-            Expression::Super(e) => Self::Super(e),
-            Expression::ArrayExpression(e) => Self::ArrayExpression(e),
-            Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
-            Expression::AssignmentExpression(e) => Self::AssignmentExpression(e),
-            Expression::AwaitExpression(e) => Self::AwaitExpression(e),
-            Expression::BinaryExpression(e) => Self::BinaryExpression(e),
-            Expression::CallExpression(e) => Self::CallExpression(e),
-            Expression::ChainExpression(e) => Self::ChainExpression(e),
-            Expression::ClassExpression(e) => Self::Class(e),
-            Expression::ComputedMemberExpression(e) => Self::ComputedMemberExpression(e),
-            Expression::ConditionalExpression(e) => Self::ConditionalExpression(e),
-            Expression::FunctionExpression(e) => Self::Function(e),
-            Expression::ImportExpression(e) => Self::ImportExpression(e),
-            Expression::LogicalExpression(e) => Self::LogicalExpression(e),
-            Expression::NewExpression(e) => Self::NewExpression(e),
-            Expression::ObjectExpression(e) => Self::ObjectExpression(e),
-            Expression::ParenthesizedExpression(e) => Self::ParenthesizedExpression(e),
-            Expression::PrivateFieldExpression(e) => Self::PrivateFieldExpression(e),
-            Expression::StaticMemberExpression(e) => Self::StaticMemberExpression(e),
-            Expression::SequenceExpression(e) => Self::SequenceExpression(e),
-            Expression::TaggedTemplateExpression(e) => Self::TaggedTemplateExpression(e),
-            Expression::ThisExpression(e) => Self::ThisExpression(e),
-            Expression::UnaryExpression(e) => Self::UnaryExpression(e),
-            Expression::UpdateExpression(e) => Self::UpdateExpression(e),
-            Expression::YieldExpression(e) => Self::YieldExpression(e),
-            Expression::PrivateInExpression(e) => Self::PrivateInExpression(e),
-            Expression::JSXElement(e) => Self::JSXElement(e),
-            Expression::JSXFragment(e) => Self::JSXFragment(e),
-            Expression::TSAsExpression(e) => Self::TSAsExpression(e),
-            Expression::TSSatisfiesExpression(e) => Self::TSSatisfiesExpression(e),
-            Expression::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
-            Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
-            Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
-            Expression::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
+        match e.kind() {
+            ExpressionKind::BooleanLiteral(e) => Self::BooleanLiteral(e),
+            ExpressionKind::NullLiteral(e) => Self::NullLiteral(e),
+            ExpressionKind::NumericLiteral(e) => Self::NumericLiteral(e),
+            ExpressionKind::BigIntLiteral(e) => Self::BigIntLiteral(e),
+            ExpressionKind::RegExpLiteral(e) => Self::RegExpLiteral(e),
+            ExpressionKind::StringLiteral(e) => Self::StringLiteral(e),
+            ExpressionKind::TemplateLiteral(e) => Self::TemplateLiteral(e),
+            ExpressionKind::Identifier(e) => Self::IdentifierReference(e),
+            ExpressionKind::MetaProperty(e) => Self::MetaProperty(e),
+            ExpressionKind::Super(e) => Self::Super(e),
+            ExpressionKind::ArrayExpression(e) => Self::ArrayExpression(e),
+            ExpressionKind::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
+            ExpressionKind::AssignmentExpression(e) => Self::AssignmentExpression(e),
+            ExpressionKind::AwaitExpression(e) => Self::AwaitExpression(e),
+            ExpressionKind::BinaryExpression(e) => Self::BinaryExpression(e),
+            ExpressionKind::CallExpression(e) => Self::CallExpression(e),
+            ExpressionKind::ChainExpression(e) => Self::ChainExpression(e),
+            ExpressionKind::ClassExpression(e) => Self::Class(e),
+            ExpressionKind::ComputedMemberExpression(e) => Self::ComputedMemberExpression(e),
+            ExpressionKind::ConditionalExpression(e) => Self::ConditionalExpression(e),
+            ExpressionKind::FunctionExpression(e) => Self::Function(e),
+            ExpressionKind::ImportExpression(e) => Self::ImportExpression(e),
+            ExpressionKind::LogicalExpression(e) => Self::LogicalExpression(e),
+            ExpressionKind::NewExpression(e) => Self::NewExpression(e),
+            ExpressionKind::ObjectExpression(e) => Self::ObjectExpression(e),
+            ExpressionKind::ParenthesizedExpression(e) => Self::ParenthesizedExpression(e),
+            ExpressionKind::PrivateFieldExpression(e) => Self::PrivateFieldExpression(e),
+            ExpressionKind::StaticMemberExpression(e) => Self::StaticMemberExpression(e),
+            ExpressionKind::SequenceExpression(e) => Self::SequenceExpression(e),
+            ExpressionKind::TaggedTemplateExpression(e) => Self::TaggedTemplateExpression(e),
+            ExpressionKind::ThisExpression(e) => Self::ThisExpression(e),
+            ExpressionKind::UnaryExpression(e) => Self::UnaryExpression(e),
+            ExpressionKind::UpdateExpression(e) => Self::UpdateExpression(e),
+            ExpressionKind::YieldExpression(e) => Self::YieldExpression(e),
+            ExpressionKind::PrivateInExpression(e) => Self::PrivateInExpression(e),
+            ExpressionKind::JSXElement(e) => Self::JSXElement(e),
+            ExpressionKind::JSXFragment(e) => Self::JSXFragment(e),
+            ExpressionKind::TSAsExpression(e) => Self::TSAsExpression(e),
+            ExpressionKind::TSSatisfiesExpression(e) => Self::TSSatisfiesExpression(e),
+            ExpressionKind::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
+            ExpressionKind::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
+            ExpressionKind::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
+            ExpressionKind::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
         }
     }
 
@@ -437,9 +438,9 @@ impl AstKind<'_> {
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
             Self::LogicalExpression(_) => "LogicalExpression".into(),
             Self::NewExpression(n) => {
-                let callee = match &n.callee {
-                    Expression::Identifier(id) => Some(id.name.as_str()),
-                    match_member_expression!(Expression) => {
+                let callee = match n.callee.kind() {
+                    ExpressionKind::Identifier(id) => Some(id.name.as_str()),
+                    match_member_expression!(ExpressionKind) => {
                         n.callee.to_member_expression().static_property_name()
                     }
                     _ => None,
@@ -640,9 +641,9 @@ impl<'a> MemberExpressionKind<'a> {
     /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
-            Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-                Expression::TemplateLiteral(lit) => {
+            Self::Computed(expr) => match expr.expression.kind() {
+                ExpressionKind::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                ExpressionKind::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
                         lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {

@@ -294,13 +294,16 @@ impl<'a> Decorator<'a> {
     /// @decorator.a.b(xx)
     /// ```
     pub fn name(&self) -> Option<&'a str> {
-        match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
+        use crate::ast::js::ExpressionKind;
+        match self.expression.kind() {
+            ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
+                self.expression.to_member_expression().static_property_name()
             }
-            Expression::CallExpression(call) => {
-                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
+            ExpressionKind::CallExpression(call) => {
+                call.callee.get_member_expr().and_then(|me| me.static_property_name())
             }
             _ => None,
         }

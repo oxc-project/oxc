@@ -8,22 +8,23 @@ use crate::ast::{
     StaticMemberExpression, TSTypeAssertion, UnaryExpression, UpdateExpression, YieldExpression,
     match_member_expression,
 };
+use crate::ast::js::ExpressionKind;
 
 impl GetPrecedence for Expression<'_> {
     fn precedence(&self) -> Precedence {
-        match self {
-            Self::SequenceExpression(expr) => expr.precedence(),
-            Self::AssignmentExpression(expr) => expr.precedence(),
-            Self::YieldExpression(expr) => expr.precedence(),
-            Self::ConditionalExpression(expr) => expr.precedence(),
-            Self::LogicalExpression(expr) => expr.precedence(),
-            Self::BinaryExpression(expr) => expr.precedence(),
-            Self::UnaryExpression(expr) => expr.precedence(),
-            Self::UpdateExpression(expr) => expr.precedence(),
-            Self::AwaitExpression(expr) => expr.precedence(),
-            Self::NewExpression(expr) => expr.precedence(),
-            Self::CallExpression(expr) => expr.precedence(),
-            match_member_expression!(Self) => self.to_member_expression().precedence(),
+        match self.kind() {
+            ExpressionKind::SequenceExpression(expr) => expr.precedence(),
+            ExpressionKind::AssignmentExpression(expr) => expr.precedence(),
+            ExpressionKind::YieldExpression(expr) => expr.precedence(),
+            ExpressionKind::ConditionalExpression(expr) => expr.precedence(),
+            ExpressionKind::LogicalExpression(expr) => expr.precedence(),
+            ExpressionKind::BinaryExpression(expr) => expr.precedence(),
+            ExpressionKind::UnaryExpression(expr) => expr.precedence(),
+            ExpressionKind::UpdateExpression(expr) => expr.precedence(),
+            ExpressionKind::AwaitExpression(expr) => expr.precedence(),
+            ExpressionKind::NewExpression(expr) => expr.precedence(),
+            ExpressionKind::CallExpression(expr) => expr.precedence(),
+            match_member_expression!(ExpressionKind) => self.to_member_expression().precedence(),
             _ => panic!("All cases should be covered"),
         }
     }

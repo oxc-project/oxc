@@ -22,56 +22,54 @@ impl ContentEq for Program<'_> {
 
 impl ContentEq for Expression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
-            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
-            (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
-            (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
-            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
-            (Self::Super(a), Self::Super(b)) => a.content_eq(b),
-            (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
-            (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
-            (Self::AssignmentExpression(a), Self::AssignmentExpression(b)) => a.content_eq(b),
-            (Self::AwaitExpression(a), Self::AwaitExpression(b)) => a.content_eq(b),
-            (Self::BinaryExpression(a), Self::BinaryExpression(b)) => a.content_eq(b),
-            (Self::CallExpression(a), Self::CallExpression(b)) => a.content_eq(b),
-            (Self::ChainExpression(a), Self::ChainExpression(b)) => a.content_eq(b),
-            (Self::ClassExpression(a), Self::ClassExpression(b)) => a.content_eq(b),
-            (Self::ConditionalExpression(a), Self::ConditionalExpression(b)) => a.content_eq(b),
-            (Self::FunctionExpression(a), Self::FunctionExpression(b)) => a.content_eq(b),
-            (Self::ImportExpression(a), Self::ImportExpression(b)) => a.content_eq(b),
-            (Self::LogicalExpression(a), Self::LogicalExpression(b)) => a.content_eq(b),
-            (Self::NewExpression(a), Self::NewExpression(b)) => a.content_eq(b),
-            (Self::ObjectExpression(a), Self::ObjectExpression(b)) => a.content_eq(b),
-            (Self::ParenthesizedExpression(a), Self::ParenthesizedExpression(b)) => a.content_eq(b),
-            (Self::SequenceExpression(a), Self::SequenceExpression(b)) => a.content_eq(b),
-            (Self::TaggedTemplateExpression(a), Self::TaggedTemplateExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
-            (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
-            (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
-            (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
-            (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
-            (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
-            (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
-            (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
-            (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
-            (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
-            (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::StaticMemberExpression(a), Self::StaticMemberExpression(b)) => a.content_eq(b),
-            (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
+        use crate::ast::js::ExpressionKind;
+        if self.discriminant() != other.discriminant() {
+            return false;
+        }
+        match (self.kind(), other.kind()) {
+            (ExpressionKind::BooleanLiteral(a), ExpressionKind::BooleanLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::NullLiteral(a), ExpressionKind::NullLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::NumericLiteral(a), ExpressionKind::NumericLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::BigIntLiteral(a), ExpressionKind::BigIntLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::RegExpLiteral(a), ExpressionKind::RegExpLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::StringLiteral(a), ExpressionKind::StringLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::TemplateLiteral(a), ExpressionKind::TemplateLiteral(b)) => a.content_eq(b),
+            (ExpressionKind::Identifier(a), ExpressionKind::Identifier(b)) => a.content_eq(b),
+            (ExpressionKind::MetaProperty(a), ExpressionKind::MetaProperty(b)) => a.content_eq(b),
+            (ExpressionKind::Super(a), ExpressionKind::Super(b)) => a.content_eq(b),
+            (ExpressionKind::ArrayExpression(a), ExpressionKind::ArrayExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ArrowFunctionExpression(a), ExpressionKind::ArrowFunctionExpression(b)) => a.content_eq(b),
+            (ExpressionKind::AssignmentExpression(a), ExpressionKind::AssignmentExpression(b)) => a.content_eq(b),
+            (ExpressionKind::AwaitExpression(a), ExpressionKind::AwaitExpression(b)) => a.content_eq(b),
+            (ExpressionKind::BinaryExpression(a), ExpressionKind::BinaryExpression(b)) => a.content_eq(b),
+            (ExpressionKind::CallExpression(a), ExpressionKind::CallExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ChainExpression(a), ExpressionKind::ChainExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ClassExpression(a), ExpressionKind::ClassExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ConditionalExpression(a), ExpressionKind::ConditionalExpression(b)) => a.content_eq(b),
+            (ExpressionKind::FunctionExpression(a), ExpressionKind::FunctionExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ImportExpression(a), ExpressionKind::ImportExpression(b)) => a.content_eq(b),
+            (ExpressionKind::LogicalExpression(a), ExpressionKind::LogicalExpression(b)) => a.content_eq(b),
+            (ExpressionKind::NewExpression(a), ExpressionKind::NewExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ObjectExpression(a), ExpressionKind::ObjectExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ParenthesizedExpression(a), ExpressionKind::ParenthesizedExpression(b)) => a.content_eq(b),
+            (ExpressionKind::SequenceExpression(a), ExpressionKind::SequenceExpression(b)) => a.content_eq(b),
+            (ExpressionKind::TaggedTemplateExpression(a), ExpressionKind::TaggedTemplateExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ThisExpression(a), ExpressionKind::ThisExpression(b)) => a.content_eq(b),
+            (ExpressionKind::UnaryExpression(a), ExpressionKind::UnaryExpression(b)) => a.content_eq(b),
+            (ExpressionKind::UpdateExpression(a), ExpressionKind::UpdateExpression(b)) => a.content_eq(b),
+            (ExpressionKind::YieldExpression(a), ExpressionKind::YieldExpression(b)) => a.content_eq(b),
+            (ExpressionKind::PrivateInExpression(a), ExpressionKind::PrivateInExpression(b)) => a.content_eq(b),
+            (ExpressionKind::JSXElement(a), ExpressionKind::JSXElement(b)) => a.content_eq(b),
+            (ExpressionKind::JSXFragment(a), ExpressionKind::JSXFragment(b)) => a.content_eq(b),
+            (ExpressionKind::TSAsExpression(a), ExpressionKind::TSAsExpression(b)) => a.content_eq(b),
+            (ExpressionKind::TSSatisfiesExpression(a), ExpressionKind::TSSatisfiesExpression(b)) => a.content_eq(b),
+            (ExpressionKind::TSTypeAssertion(a), ExpressionKind::TSTypeAssertion(b)) => a.content_eq(b),
+            (ExpressionKind::TSNonNullExpression(a), ExpressionKind::TSNonNullExpression(b)) => a.content_eq(b),
+            (ExpressionKind::TSInstantiationExpression(a), ExpressionKind::TSInstantiationExpression(b)) => a.content_eq(b),
+            (ExpressionKind::V8IntrinsicExpression(a), ExpressionKind::V8IntrinsicExpression(b)) => a.content_eq(b),
+            (ExpressionKind::ComputedMemberExpression(a), ExpressionKind::ComputedMemberExpression(b)) => a.content_eq(b),
+            (ExpressionKind::StaticMemberExpression(a), ExpressionKind::StaticMemberExpression(b)) => a.content_eq(b),
+            (ExpressionKind::PrivateFieldExpression(a), ExpressionKind::PrivateFieldExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }

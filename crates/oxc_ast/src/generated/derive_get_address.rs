@@ -10,54 +10,11 @@ use crate::ast::jsx::*;
 use crate::ast::ts::*;
 
 impl GetAddress for Expression<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    /// Optimized: extract the untagged pointer directly from TaggedPtr.
     #[inline]
     fn address(&self) -> Address {
-        match self {
-            Self::BooleanLiteral(it) => GetAddress::address(it),
-            Self::NullLiteral(it) => GetAddress::address(it),
-            Self::NumericLiteral(it) => GetAddress::address(it),
-            Self::BigIntLiteral(it) => GetAddress::address(it),
-            Self::RegExpLiteral(it) => GetAddress::address(it),
-            Self::StringLiteral(it) => GetAddress::address(it),
-            Self::TemplateLiteral(it) => GetAddress::address(it),
-            Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
-            Self::Super(it) => GetAddress::address(it),
-            Self::ArrayExpression(it) => GetAddress::address(it),
-            Self::ArrowFunctionExpression(it) => GetAddress::address(it),
-            Self::AssignmentExpression(it) => GetAddress::address(it),
-            Self::AwaitExpression(it) => GetAddress::address(it),
-            Self::BinaryExpression(it) => GetAddress::address(it),
-            Self::CallExpression(it) => GetAddress::address(it),
-            Self::ChainExpression(it) => GetAddress::address(it),
-            Self::ClassExpression(it) => GetAddress::address(it),
-            Self::ConditionalExpression(it) => GetAddress::address(it),
-            Self::FunctionExpression(it) => GetAddress::address(it),
-            Self::ImportExpression(it) => GetAddress::address(it),
-            Self::LogicalExpression(it) => GetAddress::address(it),
-            Self::NewExpression(it) => GetAddress::address(it),
-            Self::ObjectExpression(it) => GetAddress::address(it),
-            Self::ParenthesizedExpression(it) => GetAddress::address(it),
-            Self::SequenceExpression(it) => GetAddress::address(it),
-            Self::TaggedTemplateExpression(it) => GetAddress::address(it),
-            Self::ThisExpression(it) => GetAddress::address(it),
-            Self::UnaryExpression(it) => GetAddress::address(it),
-            Self::UpdateExpression(it) => GetAddress::address(it),
-            Self::YieldExpression(it) => GetAddress::address(it),
-            Self::PrivateInExpression(it) => GetAddress::address(it),
-            Self::JSXElement(it) => GetAddress::address(it),
-            Self::JSXFragment(it) => GetAddress::address(it),
-            Self::TSAsExpression(it) => GetAddress::address(it),
-            Self::TSSatisfiesExpression(it) => GetAddress::address(it),
-            Self::TSTypeAssertion(it) => GetAddress::address(it),
-            Self::TSNonNullExpression(it) => GetAddress::address(it),
-            Self::TSInstantiationExpression(it) => GetAddress::address(it),
-            Self::V8IntrinsicExpression(it) => GetAddress::address(it),
-            Self::ComputedMemberExpression(it) => GetAddress::address(it),
-            Self::StaticMemberExpression(it) => GetAddress::address(it),
-            Self::PrivateFieldExpression(it) => GetAddress::address(it),
-        }
+        // SAFETY: as_ptr masks off tag bits to get the raw heap pointer.
+        unsafe { Address::from_ptr(self.0.as_ptr::<u8>().as_ptr()) }
     }
 }
 

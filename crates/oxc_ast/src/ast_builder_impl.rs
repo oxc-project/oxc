@@ -152,7 +152,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn void_0(self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
+        Expression::unary_expression(self.alloc(self.unary_expression(
             span,
             UnaryOperator::Void,
             num,

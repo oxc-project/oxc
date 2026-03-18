@@ -98,7 +98,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The boolean value itself
     #[inline]
     pub fn expression_boolean_literal(self, span: Span, value: bool) -> Expression<'a> {
-        Expression::BooleanLiteral(self.alloc_boolean_literal(span, value))
+        Expression::boolean_literal(self.alloc_boolean_literal(span, value))
     }
 
     /// Build an [`Expression::NullLiteral`].
@@ -109,7 +109,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code.
     #[inline]
     pub fn expression_null_literal(self, span: Span) -> Expression<'a> {
-        Expression::NullLiteral(self.alloc_null_literal(span))
+        Expression::null_literal(self.alloc_null_literal(span))
     }
 
     /// Build an [`Expression::NumericLiteral`].
@@ -129,7 +129,7 @@ impl<'a> AstBuilder<'a> {
         raw: Option<Atom<'a>>,
         base: NumberBase,
     ) -> Expression<'a> {
-        Expression::NumericLiteral(self.alloc_numeric_literal(span, value, raw, base))
+        Expression::numeric_literal(self.alloc_numeric_literal(span, value, raw, base))
     }
 
     /// Build an [`Expression::BigIntLiteral`].
@@ -152,7 +152,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
-        Expression::BigIntLiteral(self.alloc_big_int_literal(span, value, raw, base))
+        Expression::big_int_literal(self.alloc_big_int_literal(span, value, raw, base))
     }
 
     /// Build an [`Expression::RegExpLiteral`].
@@ -170,7 +170,7 @@ impl<'a> AstBuilder<'a> {
         regex: RegExp<'a>,
         raw: Option<Atom<'a>>,
     ) -> Expression<'a> {
-        Expression::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
+        Expression::reg_exp_literal(self.alloc_reg_exp_literal(span, regex, raw))
     }
 
     /// Build an [`Expression::StringLiteral`].
@@ -191,7 +191,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
-        Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
+        Expression::string_literal(self.alloc_string_literal(span, value, raw))
     }
 
     /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
@@ -214,7 +214,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Atom<'a>>,
     {
-        Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+        Expression::string_literal(self.alloc_string_literal_with_lone_surrogates(
             span,
             value,
             raw,
@@ -237,7 +237,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::TemplateLiteral(self.alloc_template_literal(span, quasis, expressions))
+        Expression::template_literal(self.alloc_template_literal(span, quasis, expressions))
     }
 
     /// Build an [`Expression::Identifier`].
@@ -252,7 +252,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
-        Expression::Identifier(self.alloc_identifier_reference(span, name))
+        Expression::identifier(self.alloc_identifier_reference(span, name))
     }
 
     /// Build an [`Expression::Identifier`] with `reference_id`.
@@ -273,7 +273,7 @@ impl<'a> AstBuilder<'a> {
     where
         A1: Into<Ident<'a>>,
     {
-        Expression::Identifier(self.alloc_identifier_reference_with_reference_id(
+        Expression::identifier(self.alloc_identifier_reference_with_reference_id(
             span,
             name,
             reference_id,
@@ -295,7 +295,7 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> Expression<'a> {
-        Expression::MetaProperty(self.alloc_meta_property(span, meta, property))
+        Expression::meta_property(self.alloc_meta_property(span, meta, property))
     }
 
     /// Build an [`Expression::Super`].
@@ -306,7 +306,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn expression_super(self, span: Span) -> Expression<'a> {
-        Expression::Super(self.alloc_super(span))
+        Expression::super_expr(self.alloc_super(span))
     }
 
     /// Build an [`Expression::ArrayExpression`].
@@ -322,7 +322,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
     ) -> Expression<'a> {
-        Expression::ArrayExpression(self.alloc_array_expression(span, elements))
+        Expression::array_expression(self.alloc_array_expression(span, elements))
     }
 
     /// Build an [`Expression::ArrowFunctionExpression`].
@@ -354,7 +354,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
-        Expression::ArrowFunctionExpression(self.alloc_arrow_function_expression(
+        Expression::arrow_function_expression(self.alloc_arrow_function_expression(
             span,
             expression,
             r#async,
@@ -400,7 +400,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
-        Expression::ArrowFunctionExpression(
+        Expression::arrow_function_expression(
             self.alloc_arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
@@ -433,7 +433,7 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::AssignmentExpression(
+        Expression::assignment_expression(
             self.alloc_assignment_expression(span, operator, left, right),
         )
     }
@@ -447,7 +447,7 @@ impl<'a> AstBuilder<'a> {
     /// * `argument`
     #[inline]
     pub fn expression_await(self, span: Span, argument: Expression<'a>) -> Expression<'a> {
-        Expression::AwaitExpression(self.alloc_await_expression(span, argument))
+        Expression::await_expression(self.alloc_await_expression(span, argument))
     }
 
     /// Build an [`Expression::BinaryExpression`].
@@ -467,7 +467,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::BinaryExpression(self.alloc_binary_expression(span, left, operator, right))
+        Expression::binary_expression(self.alloc_binary_expression(span, left, operator, right))
     }
 
     /// Build an [`Expression::CallExpression`].
@@ -492,7 +492,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Expression::CallExpression(self.alloc_call_expression(
+        Expression::call_expression(self.alloc_call_expression(
             span,
             callee,
             type_arguments,
@@ -525,7 +525,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Expression::CallExpression(self.alloc_call_expression_with_pure(
+        Expression::call_expression(self.alloc_call_expression_with_pure(
             span,
             callee,
             type_arguments,
@@ -544,7 +544,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`
     #[inline]
     pub fn expression_chain(self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
-        Expression::ChainExpression(self.alloc_chain_expression(span, expression))
+        Expression::chain_expression(self.alloc_chain_expression(span, expression))
     }
 
     /// Build an [`Expression::ClassExpression`].
@@ -583,7 +583,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
-        Expression::ClassExpression(self.alloc_class(
+        Expression::class_expression(self.alloc_class(
             span,
             r#type,
             decorators,
@@ -636,7 +636,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
-        Expression::ClassExpression(self.alloc_class_with_scope_id(
+        Expression::class_expression(self.alloc_class_with_scope_id(
             span,
             r#type,
             decorators,
@@ -669,7 +669,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::ConditionalExpression(
+        Expression::conditional_expression(
             self.alloc_conditional_expression(span, test, consequent, alternate),
         )
     }
@@ -712,7 +712,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Expression::FunctionExpression(self.alloc_function(
+        Expression::function_expression(self.alloc_function(
             span,
             r#type,
             id,
@@ -771,7 +771,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure_and_pife(
+        Expression::function_expression(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -806,7 +806,7 @@ impl<'a> AstBuilder<'a> {
         options: Option<Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc_import_expression(span, source, options, phase))
+        Expression::import_expression(self.alloc_import_expression(span, source, options, phase))
     }
 
     /// Build an [`Expression::LogicalExpression`].
@@ -826,7 +826,7 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::LogicalExpression(self.alloc_logical_expression(span, left, operator, right))
+        Expression::logical_expression(self.alloc_logical_expression(span, left, operator, right))
     }
 
     /// Build an [`Expression::NewExpression`].
@@ -849,7 +849,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Expression::NewExpression(self.alloc_new_expression(
+        Expression::new_expression(self.alloc_new_expression(
             span,
             callee,
             type_arguments,
@@ -879,7 +879,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Expression::NewExpression(self.alloc_new_expression_with_pure(
+        Expression::new_expression(self.alloc_new_expression_with_pure(
             span,
             callee,
             type_arguments,
@@ -901,7 +901,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
     ) -> Expression<'a> {
-        Expression::ObjectExpression(self.alloc_object_expression(span, properties))
+        Expression::object_expression(self.alloc_object_expression(span, properties))
     }
 
     /// Build an [`Expression::ParenthesizedExpression`].
@@ -917,7 +917,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::ParenthesizedExpression(self.alloc_parenthesized_expression(span, expression))
+        Expression::parenthesized_expression(self.alloc_parenthesized_expression(span, expression))
     }
 
     /// Build an [`Expression::SequenceExpression`].
@@ -933,7 +933,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::SequenceExpression(self.alloc_sequence_expression(span, expressions))
+        Expression::sequence_expression(self.alloc_sequence_expression(span, expressions))
     }
 
     /// Build an [`Expression::TaggedTemplateExpression`].
@@ -956,7 +956,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        Expression::TaggedTemplateExpression(self.alloc_tagged_template_expression(
+        Expression::tagged_template_expression(self.alloc_tagged_template_expression(
             span,
             tag,
             type_arguments,
@@ -972,7 +972,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     #[inline]
     pub fn expression_this(self, span: Span) -> Expression<'a> {
-        Expression::ThisExpression(self.alloc_this_expression(span))
+        Expression::this_expression(self.alloc_this_expression(span))
     }
 
     /// Build an [`Expression::UnaryExpression`].
@@ -990,7 +990,7 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::UnaryExpression(self.alloc_unary_expression(span, operator, argument))
+        Expression::unary_expression(self.alloc_unary_expression(span, operator, argument))
     }
 
     /// Build an [`Expression::UpdateExpression`].
@@ -1010,7 +1010,7 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> Expression<'a> {
-        Expression::UpdateExpression(self.alloc_update_expression(span, operator, prefix, argument))
+        Expression::update_expression(self.alloc_update_expression(span, operator, prefix, argument))
     }
 
     /// Build an [`Expression::YieldExpression`].
@@ -1028,7 +1028,7 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::YieldExpression(self.alloc_yield_expression(span, delegate, argument))
+        Expression::yield_expression(self.alloc_yield_expression(span, delegate, argument))
     }
 
     /// Build an [`Expression::PrivateInExpression`].
@@ -1046,7 +1046,7 @@ impl<'a> AstBuilder<'a> {
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
+        Expression::private_in_expression(self.alloc_private_in_expression(span, left, right))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -1070,7 +1070,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
-        Expression::JSXElement(self.alloc_jsx_element(
+        Expression::jsx_element(self.alloc_jsx_element(
             span,
             opening_element,
             children,
@@ -1095,7 +1095,7 @@ impl<'a> AstBuilder<'a> {
         children: Vec<'a, JSXChild<'a>>,
         closing_fragment: JSXClosingFragment,
     ) -> Expression<'a> {
-        Expression::JSXFragment(self.alloc_jsx_fragment(
+        Expression::jsx_fragment(self.alloc_jsx_fragment(
             span,
             opening_fragment,
             children,
@@ -1118,7 +1118,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
-        Expression::TSAsExpression(self.alloc_ts_as_expression(span, expression, type_annotation))
+        Expression::ts_as_expression(self.alloc_ts_as_expression(span, expression, type_annotation))
     }
 
     /// Build an [`Expression::TSSatisfiesExpression`].
@@ -1136,7 +1136,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
-        Expression::TSSatisfiesExpression(self.alloc_ts_satisfies_expression(
+        Expression::ts_satisfies_expression(self.alloc_ts_satisfies_expression(
             span,
             expression,
             type_annotation,
@@ -1158,7 +1158,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::TSTypeAssertion(self.alloc_ts_type_assertion(span, type_annotation, expression))
+        Expression::ts_type_assertion(self.alloc_ts_type_assertion(span, type_annotation, expression))
     }
 
     /// Build an [`Expression::TSNonNullExpression`].
@@ -1170,7 +1170,7 @@ impl<'a> AstBuilder<'a> {
     /// * `expression`
     #[inline]
     pub fn expression_ts_non_null(self, span: Span, expression: Expression<'a>) -> Expression<'a> {
-        Expression::TSNonNullExpression(self.alloc_ts_non_null_expression(span, expression))
+        Expression::ts_non_null_expression(self.alloc_ts_non_null_expression(span, expression))
     }
 
     /// Build an [`Expression::TSInstantiationExpression`].
@@ -1191,7 +1191,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
-        Expression::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
+        Expression::ts_instantiation_expression(self.alloc_ts_instantiation_expression(
             span,
             expression,
             type_arguments,
@@ -1213,7 +1213,7 @@ impl<'a> AstBuilder<'a> {
         name: IdentifierName<'a>,
         arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a> {
-        Expression::V8IntrinsicExpression(self.alloc_v8_intrinsic_expression(span, name, arguments))
+        Expression::v8_intrinsic_expression(self.alloc_v8_intrinsic_expression(span, name, arguments))
     }
 
     /// Build an [`IdentifierName`].

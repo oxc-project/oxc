@@ -34,9 +34,9 @@ impl<'a> Dummy<'a> for Program<'a> {
 impl<'a> Dummy<'a> for Expression<'a> {
     /// Create a dummy [`Expression`].
     ///
-    /// Has cost of making 1 allocation (16 bytes).
+    /// Has cost of making 1 allocation.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::NullLiteral(Dummy::dummy(allocator))
+        Expression::null_literal(Dummy::dummy(allocator))
     }
 }
 

@@ -181,61 +181,142 @@ macro_rules! inherit_variants {
             }
         }
 
-        $crate::ast::macros::shared_enum_variants!(
-            $ty,
-            Expression,
-            is_expression,
-            into_expression,
-            as_expression,
-            as_expression_mut,
-            to_expression,
-            to_expression_mut,
-            [
-                BooleanLiteral,
-                NullLiteral,
-                NumericLiteral,
-                BigIntLiteral,
-                RegExpLiteral,
-                StringLiteral,
-                TemplateLiteral,
-                Identifier,
-                MetaProperty,
-                Super,
-                ArrayExpression,
-                ArrowFunctionExpression,
-                AssignmentExpression,
-                AwaitExpression,
-                BinaryExpression,
-                CallExpression,
-                ChainExpression,
-                ClassExpression,
-                ConditionalExpression,
-                FunctionExpression,
-                ImportExpression,
-                LogicalExpression,
-                NewExpression,
-                ObjectExpression,
-                ParenthesizedExpression,
-                SequenceExpression,
-                TaggedTemplateExpression,
-                ThisExpression,
-                UnaryExpression,
-                UpdateExpression,
-                YieldExpression,
-                PrivateInExpression,
-                JSXElement,
-                JSXFragment,
-                TSAsExpression,
-                TSSatisfiesExpression,
-                TSTypeAssertion,
-                TSNonNullExpression,
-                TSInstantiationExpression,
-                V8IntrinsicExpression,
-                ComputedMemberExpression,
-                StaticMemberExpression,
-                PrivateFieldExpression,
-            ]
-        );
+        // Specialized Expression conversions (Expression is a tagged struct, not an enum).
+        // `as_expression`/`to_expression` return by VALUE since Expression (8 bytes) != parent enum (16 bytes).
+        impl<'a> $ty<'a> {
+            /// Return if this is an `Expression` variant.
+            #[inline]
+            pub fn is_expression(&self) -> bool {
+                matches!(
+                    self,
+                    Self::BooleanLiteral(_) | Self::NullLiteral(_) | Self::NumericLiteral(_)
+                    | Self::BigIntLiteral(_) | Self::RegExpLiteral(_) | Self::StringLiteral(_)
+                    | Self::TemplateLiteral(_) | Self::Identifier(_) | Self::MetaProperty(_) | Self::Super(_)
+                    | Self::ArrayExpression(_) | Self::ArrowFunctionExpression(_)
+                    | Self::AssignmentExpression(_) | Self::AwaitExpression(_)
+                    | Self::BinaryExpression(_) | Self::CallExpression(_)
+                    | Self::ChainExpression(_) | Self::ClassExpression(_)
+                    | Self::ConditionalExpression(_) | Self::FunctionExpression(_)
+                    | Self::ImportExpression(_) | Self::LogicalExpression(_)
+                    | Self::NewExpression(_) | Self::ObjectExpression(_)
+                    | Self::ParenthesizedExpression(_) | Self::SequenceExpression(_)
+                    | Self::TaggedTemplateExpression(_) | Self::ThisExpression(_)
+                    | Self::UnaryExpression(_) | Self::UpdateExpression(_)
+                    | Self::YieldExpression(_) | Self::PrivateInExpression(_)
+                    | Self::JSXElement(_) | Self::JSXFragment(_)
+                    | Self::TSAsExpression(_) | Self::TSSatisfiesExpression(_)
+                    | Self::TSTypeAssertion(_) | Self::TSNonNullExpression(_)
+                    | Self::TSInstantiationExpression(_) | Self::V8IntrinsicExpression(_)
+                    | Self::ComputedMemberExpression(_) | Self::StaticMemberExpression(_)
+                    | Self::PrivateFieldExpression(_)
+                )
+            }
+
+            /// Convert to `Expression`. Returns by value (Expression is 8 bytes).
+            #[inline]
+            pub fn as_expression(&self) -> Option<Expression<'a>> {
+                // SAFETY: Parent enum variants have same discriminant values and Box payloads as Expression.
+                // We extract the discriminant and pointer to construct a tagged Expression.
+                if self.is_expression() {
+                    let disc = unsafe { *(std::ptr::from_ref(self).cast::<u8>()) };
+                    let ptr = unsafe { *(std::ptr::from_ref(self).cast::<u8>().add(8) as *const std::ptr::NonNull<()>) };
+                    Some(Expression(unsafe { oxc_allocator::TaggedPtr::new(disc, ptr) }))
+                } else {
+                    None
+                }
+            }
+
+            /// Convert to `Expression`. Returns by value.
+            /// # Panic
+            /// Panics if not convertible.
+            #[inline]
+            pub fn to_expression(&self) -> Expression<'a> {
+                self.as_expression().unwrap()
+            }
+
+            /// Convert to `Expression`, consuming self.
+            /// # Panic
+            /// Panics if not convertible.
+            #[inline]
+            pub fn into_expression(self) -> Expression<'a> {
+                Expression::try_from(self).unwrap()
+            }
+        }
+
+        impl<'a> TryFrom<$ty<'a>> for Expression<'a> {
+            type Error = ();
+            #[inline]
+            fn try_from(value: $ty<'a>) -> Result<Self, Self::Error> {
+                // Extract discriminant and Box pointer from the #[repr(C, u8)] parent enum.
+                // SAFETY: Parent enum has u8 discriminant at offset 0 and Box<T> at offset 8.
+                let disc = unsafe { *(std::ptr::from_ref(&value).cast::<u8>()) };
+                match disc {
+                    0..=39 | 48..=50 => {
+                        let ptr = unsafe { *(std::ptr::from_ref(&value).cast::<u8>().add(8) as *const std::ptr::NonNull<()>) };
+                        std::mem::forget(value); // Don't drop the enum (we took ownership of the Box)
+                        Ok(Expression(unsafe { oxc_allocator::TaggedPtr::new(disc, ptr) }))
+                    }
+                    _ => Err(()),
+                }
+            }
+        }
+
+        impl<'a> From<Expression<'a>> for $ty<'a> {
+            #[inline]
+            fn from(value: Expression<'a>) -> Self {
+                // Reconstruct the parent enum from the tagged Expression.
+                // SAFETY: Expression's discriminant matches the parent enum's discriminant for these variants.
+                // We extract the raw pointer and reconstruct the Box for the enum variant.
+                let disc = value.discriminant();
+                // Use a match to construct the correct enum variant
+                match disc {
+                    0 => Self::BooleanLiteral(value.into_boolean_literal()),
+                    1 => Self::NullLiteral(value.into_null_literal()),
+                    2 => Self::NumericLiteral(value.into_numeric_literal()),
+                    3 => Self::BigIntLiteral(value.into_big_int_literal()),
+                    4 => Self::RegExpLiteral(value.into_reg_exp_literal()),
+                    5 => Self::StringLiteral(value.into_string_literal()),
+                    6 => Self::TemplateLiteral(value.into_template_literal()),
+                    7 => Self::Identifier(value.into_identifier()),
+                    8 => Self::MetaProperty(value.into_meta_property()),
+                    9 => Self::Super(value.into_super()),
+                    10 => Self::ArrayExpression(value.into_array_expression()),
+                    11 => Self::ArrowFunctionExpression(value.into_arrow_function_expression()),
+                    12 => Self::AssignmentExpression(value.into_assignment_expression()),
+                    13 => Self::AwaitExpression(value.into_await_expression()),
+                    14 => Self::BinaryExpression(value.into_binary_expression()),
+                    15 => Self::CallExpression(value.into_call_expression()),
+                    16 => Self::ChainExpression(value.into_chain_expression()),
+                    17 => Self::ClassExpression(value.into_class_expression()),
+                    18 => Self::ConditionalExpression(value.into_conditional_expression()),
+                    19 => Self::FunctionExpression(value.into_function_expression()),
+                    20 => Self::ImportExpression(value.into_import_expression()),
+                    21 => Self::LogicalExpression(value.into_logical_expression()),
+                    22 => Self::NewExpression(value.into_new_expression()),
+                    23 => Self::ObjectExpression(value.into_object_expression()),
+                    24 => Self::ParenthesizedExpression(value.into_parenthesized_expression()),
+                    25 => Self::SequenceExpression(value.into_sequence_expression()),
+                    26 => Self::TaggedTemplateExpression(value.into_tagged_template_expression()),
+                    27 => Self::ThisExpression(value.into_this_expression()),
+                    28 => Self::UnaryExpression(value.into_unary_expression()),
+                    29 => Self::UpdateExpression(value.into_update_expression()),
+                    30 => Self::YieldExpression(value.into_yield_expression()),
+                    31 => Self::PrivateInExpression(value.into_private_in_expression()),
+                    32 => Self::JSXElement(value.into_jsx_element()),
+                    33 => Self::JSXFragment(value.into_jsx_fragment()),
+                    34 => Self::TSAsExpression(value.into_ts_as_expression()),
+                    35 => Self::TSSatisfiesExpression(value.into_ts_satisfies_expression()),
+                    36 => Self::TSTypeAssertion(value.into_ts_type_assertion()),
+                    37 => Self::TSNonNullExpression(value.into_ts_non_null_expression()),
+                    38 => Self::TSInstantiationExpression(value.into_ts_instantiation_expression()),
+                    39 => Self::V8IntrinsicExpression(value.into_v8_intrinsic_expression()),
+                    48 => Self::ComputedMemberExpression(value.into_computed_member_expression()),
+                    49 => Self::StaticMemberExpression(value.into_static_member_expression()),
+                    50 => Self::PrivateFieldExpression(value.into_private_field_expression()),
+                    _ => unreachable!(),
+                }
+            }
+        }
     };
 
     // Inherit `MemberExpression`'s variants

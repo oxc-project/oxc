@@ -49,250 +49,100 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
     type Cloned = Expression<'new_alloc>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::BooleanLiteral(it) => {
-                Expression::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => Expression::NullLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NumericLiteral(it) => {
-                Expression::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => Expression::BigIntLiteral(CloneIn::clone_in(it, allocator)),
-            Self::RegExpLiteral(it) => Expression::RegExpLiteral(CloneIn::clone_in(it, allocator)),
-            Self::StringLiteral(it) => Expression::StringLiteral(CloneIn::clone_in(it, allocator)),
-            Self::TemplateLiteral(it) => {
-                Expression::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => Expression::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => Expression::MetaProperty(CloneIn::clone_in(it, allocator)),
-            Self::Super(it) => Expression::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                Expression::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                Expression::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                Expression::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                Expression::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                Expression::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                Expression::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                Expression::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                Expression::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                Expression::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                Expression::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                Expression::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                Expression::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => Expression::NewExpression(CloneIn::clone_in(it, allocator)),
-            Self::ObjectExpression(it) => {
-                Expression::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                Expression::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                Expression::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                Expression::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                Expression::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                Expression::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                Expression::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                Expression::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                Expression::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => Expression::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => Expression::JSXFragment(CloneIn::clone_in(it, allocator)),
-            Self::TSAsExpression(it) => {
-                Expression::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                Expression::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                Expression::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                Expression::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                Expression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::V8IntrinsicExpression(it) => {
-                Expression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                Expression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                Expression::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                Expression::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
+        use crate::ast::js::ExpressionKind;
+        match self.kind() {
+            ExpressionKind::BooleanLiteral(it) => Expression::boolean_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::NullLiteral(it) => Expression::null_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::NumericLiteral(it) => Expression::numeric_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::BigIntLiteral(it) => Expression::big_int_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::RegExpLiteral(it) => Expression::reg_exp_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::StringLiteral(it) => Expression::string_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TemplateLiteral(it) => Expression::template_literal(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::Identifier(it) => Expression::identifier(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::MetaProperty(it) => Expression::meta_property(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::Super(it) => Expression::super_expr(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ArrayExpression(it) => Expression::array_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ArrowFunctionExpression(it) => Expression::arrow_function_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::AssignmentExpression(it) => Expression::assignment_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::AwaitExpression(it) => Expression::await_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::BinaryExpression(it) => Expression::binary_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::CallExpression(it) => Expression::call_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ChainExpression(it) => Expression::chain_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ClassExpression(it) => Expression::class_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ConditionalExpression(it) => Expression::conditional_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::FunctionExpression(it) => Expression::function_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ImportExpression(it) => Expression::import_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::LogicalExpression(it) => Expression::logical_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::NewExpression(it) => Expression::new_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ObjectExpression(it) => Expression::object_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ParenthesizedExpression(it) => Expression::parenthesized_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::SequenceExpression(it) => Expression::sequence_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TaggedTemplateExpression(it) => Expression::tagged_template_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ThisExpression(it) => Expression::this_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::UnaryExpression(it) => Expression::unary_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::UpdateExpression(it) => Expression::update_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::YieldExpression(it) => Expression::yield_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::PrivateInExpression(it) => Expression::private_in_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::JSXElement(it) => Expression::jsx_element(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::JSXFragment(it) => Expression::jsx_fragment(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TSAsExpression(it) => Expression::ts_as_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TSSatisfiesExpression(it) => Expression::ts_satisfies_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TSTypeAssertion(it) => Expression::ts_type_assertion(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TSNonNullExpression(it) => Expression::ts_non_null_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::TSInstantiationExpression(it) => Expression::ts_instantiation_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::V8IntrinsicExpression(it) => Expression::v8_intrinsic_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::ComputedMemberExpression(it) => Expression::computed_member_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::StaticMemberExpression(it) => Expression::static_member_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
+            ExpressionKind::PrivateFieldExpression(it) => Expression::private_field_expression(oxc_allocator::Box::new_in(it.clone_in(allocator), allocator)),
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::BooleanLiteral(it) => {
-                Expression::BooleanLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NullLiteral(it) => {
-                Expression::NullLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NumericLiteral(it) => {
-                Expression::NumericLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                Expression::BigIntLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                Expression::RegExpLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                Expression::StringLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                Expression::TemplateLiteral(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Identifier(it) => {
-                Expression::Identifier(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::MetaProperty(it) => {
-                Expression::MetaProperty(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::Super(it) => {
-                Expression::Super(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrayExpression(it) => {
-                Expression::ArrayExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => Expression::ArrowFunctionExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::AssignmentExpression(it) => {
-                Expression::AssignmentExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                Expression::AwaitExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                Expression::BinaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                Expression::CallExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                Expression::ChainExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                Expression::ClassExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ConditionalExpression(it) => Expression::ConditionalExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::FunctionExpression(it) => {
-                Expression::FunctionExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                Expression::ImportExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                Expression::LogicalExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                Expression::NewExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                Expression::ObjectExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => Expression::ParenthesizedExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::SequenceExpression(it) => {
-                Expression::SequenceExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => Expression::TaggedTemplateExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ThisExpression(it) => {
-                Expression::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                Expression::UnaryExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                Expression::UpdateExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                Expression::YieldExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                Expression::PrivateInExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXElement(it) => {
-                Expression::JSXElement(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::JSXFragment(it) => {
-                Expression::JSXFragment(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSAsExpression(it) => {
-                Expression::TSAsExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => Expression::TSSatisfiesExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::TSTypeAssertion(it) => {
-                Expression::TSTypeAssertion(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                Expression::TSNonNullExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => Expression::TSInstantiationExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::V8IntrinsicExpression(it) => Expression::V8IntrinsicExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::ComputedMemberExpression(it) => Expression::ComputedMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::StaticMemberExpression(it) => Expression::StaticMemberExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
-            Self::PrivateFieldExpression(it) => Expression::PrivateFieldExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
+        use crate::ast::js::ExpressionKind;
+        match self.kind() {
+            ExpressionKind::BooleanLiteral(it) => Expression::boolean_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::NullLiteral(it) => Expression::null_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::NumericLiteral(it) => Expression::numeric_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::BigIntLiteral(it) => Expression::big_int_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::RegExpLiteral(it) => Expression::reg_exp_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::StringLiteral(it) => Expression::string_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TemplateLiteral(it) => Expression::template_literal(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::Identifier(it) => Expression::identifier(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::MetaProperty(it) => Expression::meta_property(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::Super(it) => Expression::super_expr(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ArrayExpression(it) => Expression::array_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ArrowFunctionExpression(it) => Expression::arrow_function_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::AssignmentExpression(it) => Expression::assignment_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::AwaitExpression(it) => Expression::await_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::BinaryExpression(it) => Expression::binary_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::CallExpression(it) => Expression::call_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ChainExpression(it) => Expression::chain_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ClassExpression(it) => Expression::class_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ConditionalExpression(it) => Expression::conditional_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::FunctionExpression(it) => Expression::function_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ImportExpression(it) => Expression::import_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::LogicalExpression(it) => Expression::logical_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::NewExpression(it) => Expression::new_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ObjectExpression(it) => Expression::object_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ParenthesizedExpression(it) => Expression::parenthesized_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::SequenceExpression(it) => Expression::sequence_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TaggedTemplateExpression(it) => Expression::tagged_template_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ThisExpression(it) => Expression::this_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::UnaryExpression(it) => Expression::unary_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::UpdateExpression(it) => Expression::update_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::YieldExpression(it) => Expression::yield_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::PrivateInExpression(it) => Expression::private_in_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::JSXElement(it) => Expression::jsx_element(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::JSXFragment(it) => Expression::jsx_fragment(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TSAsExpression(it) => Expression::ts_as_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TSSatisfiesExpression(it) => Expression::ts_satisfies_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TSTypeAssertion(it) => Expression::ts_type_assertion(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TSNonNullExpression(it) => Expression::ts_non_null_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::TSInstantiationExpression(it) => Expression::ts_instantiation_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::V8IntrinsicExpression(it) => Expression::v8_intrinsic_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::ComputedMemberExpression(it) => Expression::computed_member_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::StaticMemberExpression(it) => Expression::static_member_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
+            ExpressionKind::PrivateFieldExpression(it) => Expression::private_field_expression(oxc_allocator::Box::new_in(it.clone_in_with_semantic_ids(allocator), allocator)),
         }
     }
 }
