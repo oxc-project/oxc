@@ -419,6 +419,10 @@ export interface OxlintOverride {
    */
   globals?: OxlintGlobals;
   /**
+   * If a file matches any of these glob patterns, the overrides configuration won't apply.
+   */
+  ignores?: GlobSet;
+  /**
    * JS plugins for this override, allows usage of ESLint plugins with Oxlint.
    *
    * Read more about JS plugins in
