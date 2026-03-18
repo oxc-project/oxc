@@ -1048,24 +1048,14 @@ impl Backend {
                 return;
             }
         }
-
-        // Request workspace configuration before any lock so we don't block other tasks.
         let capabilities = self.capabilities.get();
-        let options = if capabilities.is_some_and(|c| c.workspace_configuration) {
-            let configs = self.request_workspace_configuration(vec![&parent_uri]).await;
-            configs.into_iter().next().unwrap_or(serde_json::Value::Null)
-        } else {
-            serde_json::Value::Null
-        };
-
         let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
 
         // Create and initialize the worker before acquiring the write lock to minimize
-        // contention: start_worker and init_watchers can be relatively expensive.
         debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
         let worker =
             WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builders), diagnostic_mode);
-        worker.start_worker(options).await;
+        worker.start_worker(Value::Null).await;
         let registrations = if capabilities.is_some_and(|c| c.dynamic_watchers) {
             worker.init_watchers().await
         } else {
@@ -1073,22 +1063,10 @@ impl Backend {
         };
 
         // Acquire the write lock to insert the worker.
-        let mut workers = self.workspace_workers.write().await;
-
-        // Re-check mode: a concurrent did_change_workspace_folders may have exited
-        // single-file mode while we were initializing the worker.
-        // Double-check: a concurrent did_open may have already created a worker for this URI.
-        if !self.single_file_mode.load(Ordering::Relaxed)
-            || Self::find_worker_for_uri(&workers, uri).is_some()
         {
-            // Discard the worker we created — shut it down to release its resources.
-            drop(workers);
-            worker.shutdown().await;
-            return;
+            let mut workers = self.workspace_workers.write().await;
+            workers.push(worker);
         }
-
-        workers.push(worker);
-        drop(workers);
 
         if !registrations.is_empty()
             && let Err(err) = self.client.register_capability(registrations).await
