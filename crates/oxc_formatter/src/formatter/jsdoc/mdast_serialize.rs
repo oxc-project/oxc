@@ -692,7 +692,7 @@ fn serialize_children(
 /// parser incorrectly extracted as a block-level element.
 ///
 /// In JSDoc descriptions, `<div>`, `<table>`, etc. are usually mentioned as
-/// tag names (e.g., "renders a <div> element") rather than actual HTML blocks.
+/// tag names (e.g., "renders a `<div>` element") rather than actual HTML blocks.
 /// The CommonMark parser treats these as HTML block starts, absorbing subsequent
 /// text into the Html node. This function detects such cases so they can be
 /// merged back into the surrounding paragraph.
