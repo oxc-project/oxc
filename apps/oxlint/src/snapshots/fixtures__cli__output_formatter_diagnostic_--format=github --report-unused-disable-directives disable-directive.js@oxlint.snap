@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-##########
+########## 
 arguments: --format=github --report-unused-disable-directives disable-directive.js
 working directory: fixtures/cli/output_formatter_diagnostic
 ----------

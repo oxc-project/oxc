@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-##########
+########## 
 arguments: --format=github parser-error.js
 working directory: fixtures/cli/output_formatter_diagnostic
 ----------
@@ -11,4 +11,3 @@ Found 0 warnings and 1 error.
 ----------
 CLI result: LintFoundErrors
 ----------
-o
