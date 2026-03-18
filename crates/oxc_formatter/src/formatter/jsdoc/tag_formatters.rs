@@ -455,7 +455,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -504,7 +503,6 @@ impl JsdocFormatter<'_, '_> {
                 0,
                 false,
                 Some(self.format_options),
-                Some(self.external_callbacks),
                 Some(self.allocator),
             );
             self.push_indented_desc(indent, desc);
@@ -530,7 +528,6 @@ impl JsdocFormatter<'_, '_> {
                 0,
                 false,
                 Some(self.format_options),
-                Some(self.external_callbacks),
                 Some(self.allocator),
             );
             // Skip leading blank line from wrap_text since we already added one
@@ -654,7 +651,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -708,7 +704,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -720,7 +715,6 @@ impl JsdocFormatter<'_, '_> {
                     tag_str_len,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 let mut iter = desc.split('\n');
@@ -755,8 +749,6 @@ impl JsdocFormatter<'_, '_> {
         let (type_part, comment_part) = tag.type_comment();
 
         let tag_prefix_len = 1 + normalized_kind.len();
-        #[expect(unused_assignments)]
-        let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
         let mut tag_line = String::with_capacity(tag_prefix_len + 32);
         tag_line.push('@');
         tag_line.push_str(normalized_kind);
@@ -769,7 +761,7 @@ impl JsdocFormatter<'_, '_> {
         if let Some(tp) = &type_part {
             let raw_type = tp.parsed();
             if !raw_type.is_empty() {
-                normalized_type_str = if preserve_quotes {
+                let mut normalized_type_str: Cow<'_, str> = if preserve_quotes {
                     normalize_type_preserve_quotes(raw_type)
                 } else {
                     normalize_type_return(raw_type)
@@ -783,10 +775,14 @@ impl JsdocFormatter<'_, '_> {
                     && !normalized_type_str.starts_with('{');
                 if !skip_formatter {
                     let was_multiline = raw_type.contains('\n');
-                    let formatter_input = if was_multiline {
-                        Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type))
+                    let star_stripped = if was_multiline {
+                        Some(strip_jsdoc_stars_preserve_newlines(raw_type))
                     } else {
-                        Cow::Borrowed(normalized_type_str.as_ref())
+                        None
+                    };
+                    let formatter_input = match &star_stripped {
+                        Some(s) => Cow::Borrowed(s.as_str()),
+                        None => Cow::Borrowed(normalized_type_str.as_ref()),
                     };
                     if let Some(formatted) = format_type_via_formatter(
                         &formatter_input,
@@ -795,13 +791,12 @@ impl JsdocFormatter<'_, '_> {
                     ) {
                         if was_multiline && !formatted.contains('\n') {
                             normalized_type_str =
-                                Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type));
+                                Cow::Owned(star_stripped.unwrap());
                         } else {
                             normalized_type_str = Cow::Owned(formatted);
                         }
-                    } else if was_multiline {
-                        normalized_type_str =
-                            Cow::Owned(strip_jsdoc_stars_preserve_newlines(raw_type));
+                    } else if let Some(stripped) = star_stripped {
+                        normalized_type_str = Cow::Owned(stripped);
                     }
                 }
                 // Preserve no-space only when the type isn't an object literal
@@ -874,7 +869,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -931,7 +925,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -942,7 +935,6 @@ impl JsdocFormatter<'_, '_> {
                     tag_str_len,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 let mut iter = desc.split('\n');
@@ -1079,7 +1071,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 if desc.starts_with('\n') {
@@ -1095,7 +1086,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 // Skip leading blank line from wrap_text since we already added one
@@ -1119,7 +1109,6 @@ impl JsdocFormatter<'_, '_> {
                 0,
                 false,
                 Some(self.format_options),
-                Some(self.external_callbacks),
                 Some(self.allocator),
             );
             self.push_indented_desc(indent, desc);
@@ -1150,7 +1139,6 @@ impl JsdocFormatter<'_, '_> {
                         0,
                         false,
                         Some(self.format_options),
-                        Some(self.external_callbacks),
                         Some(self.allocator),
                     );
                     self.push_indented_desc(indent, desc);
@@ -1245,7 +1233,6 @@ impl JsdocFormatter<'_, '_> {
                         tag_str_len,
                         false,
                         Some(self.format_options),
-                        Some(self.external_callbacks),
                         Some(self.allocator),
                     );
                     let mut iter = desc.split('\n');
@@ -1294,7 +1281,6 @@ impl JsdocFormatter<'_, '_> {
                     0,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 self.push_indented_desc(indent, desc);
@@ -1305,7 +1291,6 @@ impl JsdocFormatter<'_, '_> {
                     tag_str_len,
                     false,
                     Some(self.format_options),
-                    Some(self.external_callbacks),
                     Some(self.allocator),
                 );
                 let mut iter = desc.split('\n');

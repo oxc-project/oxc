@@ -5,7 +5,6 @@ use oxc_ast::Comment;
 use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
 
-use crate::ExternalCallbacks;
 use crate::FormatOptions;
 use crate::formatter::Formatter;
 use crate::formatter::prelude::*;
@@ -57,12 +56,11 @@ const LINE_PREFIX_LEN: usize = 3;
 /// reducing parameter passing across formatting functions.
 ///
 /// Uses two lifetimes: `'a` for the allocator (tied to output strings)
-/// and `'o` for options/callbacks (only need to live as long as the formatter).
+/// and `'o` for options (only need to live as long as the formatter).
 pub(super) struct JsdocFormatter<'a, 'o> {
     pub(super) options: &'o JsdocOptions,
     pub(super) format_options: &'o FormatOptions,
     pub(super) type_format_options: FormatOptions,
-    pub(super) external_callbacks: &'o ExternalCallbacks,
     pub(super) allocator: &'a Allocator,
     pub(super) wrap_width: usize,
     pub(super) content_lines: LineBuffer,
@@ -72,7 +70,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
     fn new(
         options: &'o JsdocOptions,
         format_options: &'o FormatOptions,
-        external_callbacks: &'o ExternalCallbacks,
         allocator: &'a Allocator,
         available_width: usize,
     ) -> Self {
@@ -94,7 +91,6 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             options,
             format_options,
             type_format_options,
-            external_callbacks,
             allocator,
             wrap_width,
             content_lines: LineBuffer::new(),
@@ -180,13 +176,13 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 0,
                 self.options.capitalize_descriptions,
                 Some(self.format_options),
-                Some(self.external_callbacks),
                 Some(self.allocator),
             );
             if self.options.description_tag {
                 // Emit as @description tag
-                let first_line = format!("@description {desc}");
-                self.content_lines.push(first_line);
+                let s = self.content_lines.begin_line();
+                s.push_str("@description ");
+                s.push_str(&desc);
             } else {
                 self.content_lines.push(desc);
             }
@@ -585,6 +581,9 @@ pub(super) fn is_type_comment_tag(tag_kind: &str) -> bool {
 /// Get the sort priority for a tag kind (lower number = higher priority).
 /// Uses only canonical tag names (synonyms resolved by `normalize_tag_kind()`).
 /// Weights are upstream values ×2 to handle 39.5 (@this) as integer 79.
+/// Priority for unknown/unrecognized tags (upstream "other" = 44, ×2 = 88).
+const UNKNOWN_TAG_PRIORITY: u32 = 88;
+
 fn tag_sort_priority(kind: &str) -> u32 {
     match kind {
         "import" => 0,
@@ -634,8 +633,7 @@ fn tag_sort_priority(kind: &str) -> u32 {
         "throws" => 86,
         "see" => 90,
         "todo" => 92,
-        // Unknown tags (upstream "other" = 44, ×2 = 88)
-        _ => 88,
+        _ => UNKNOWN_TAG_PRIORITY,
     }
 }
 
@@ -645,7 +643,7 @@ fn tag_sort_priority(kind: &str) -> u32 {
 pub(super) fn is_known_tag(kind: &str) -> bool {
     // link/linkcode/linkplain are not in TAGS_ORDER but are special inline tags;
     // for the purposes of capitalization they behave like unknown tags.
-    !matches!(tag_sort_priority(kind), 88)
+    tag_sort_priority(kind) != UNKNOWN_TAG_PRIORITY
 }
 
 /// Check if a tag kind is a group head (starts a new sorting group).
@@ -1072,7 +1070,6 @@ pub fn format_jsdoc_comment<'a>(
     let fmt = JsdocFormatter::new(
         options,
         f.options(),
-        f.context().external_callbacks(),
         f.allocator(),
         available_width,
     );

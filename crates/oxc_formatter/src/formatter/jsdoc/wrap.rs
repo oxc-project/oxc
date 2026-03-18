@@ -1,9 +1,8 @@
-/// Compute the display width of a string, matching JavaScript's `.length` (UTF-16 code units).
-/// For BMP characters (Latin, Cyrillic, CJK, etc.), this equals the character count.
-/// Supplementary characters (above U+FFFF) count as 2, matching JS surrogate pairs.
+/// Compute the width of a string matching JavaScript's `.length` (UTF-16 code units).
+/// This intentionally does NOT use `unicode_width::UnicodeWidthStr` because Prettier
+/// measures `printWidth` in JS string length (UTF-16 code units), not terminal columns.
 ///
-/// Fast path: for ASCII-only strings (99%+ of JSDoc content), `len()` equals UTF-16 count,
-/// so we skip the expensive `encode_utf16().count()` entirely.
+/// Fast path: for ASCII-only strings (99%+ of JSDoc content), `len()` equals UTF-16 count.
 #[inline]
 pub fn str_width(s: &str) -> usize {
     if s.is_ascii() { s.len() } else { s.encode_utf16().count() }
@@ -463,7 +462,6 @@ pub fn wrap_text(
     tag_string_length: usize,
     capitalize: bool,
     format_options: Option<&crate::FormatOptions>,
-    external_callbacks: Option<&crate::ExternalCallbacks>,
     allocator: Option<&oxc_allocator::Allocator>,
 ) -> String {
     if text.is_empty() {
@@ -475,7 +473,6 @@ pub fn wrap_text(
         tag_string_length,
         capitalize,
         format_options,
-        external_callbacks,
         allocator,
     )
 }
@@ -486,7 +483,7 @@ mod tests {
 
     #[test]
     fn test_wrap_simple_text() {
-        let result = wrap_text("This is a short line", 80, 0, false, None, None, None);
+        let result = wrap_text("This is a short line", 80, 0, false, None, None);
         assert_eq!(result, "This is a short line");
     }
 
@@ -497,7 +494,6 @@ mod tests {
             40,
             0,
             false,
-            None,
             None,
             None,
         );
@@ -512,7 +508,7 @@ mod tests {
     #[test]
     fn test_wrap_preserves_markdown_list() {
         let result =
-            wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None, None);
+            wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -523,7 +519,6 @@ mod tests {
             40,
             0,
             false,
-            None,
             None,
             None,
         );
@@ -542,7 +537,6 @@ mod tests {
             false,
             None,
             None,
-            None,
         );
         // Fenced code without language tag is converted to indented code block.
         assert_eq!(result, "Some text\n\n    code here\n      indented\n\nMore text");
@@ -557,20 +551,19 @@ mod tests {
             false,
             None,
             None,
-            None,
         );
         assert_eq!(result, "Some text\n\n```js\nconst x = 1;\n```\n\nMore text");
     }
 
     #[test]
     fn test_wrap_empty_lines() {
-        let result = wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None, None);
+        let result = wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None);
         assert_eq!(result, "Paragraph one\n\nParagraph two");
     }
 
     #[test]
     fn test_wrap_empty_text() {
-        let result = wrap_text("", 80, 0, false, None, None, None);
+        let result = wrap_text("", 80, 0, false, None, None);
         assert!(result.is_empty());
     }
 
@@ -579,7 +572,7 @@ mod tests {
         // Upstream prettier-plugin-jsdoc removes blank lines between list items
         // even when the source has them (spread lists).
         let result =
-            wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
+            wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None);
         assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
@@ -590,7 +583,6 @@ mod tests {
             77,
             0,
             false,
-            None,
             None,
             None,
         );
@@ -610,7 +602,6 @@ mod tests {
             false,
             None,
             None,
-            None,
         );
         assert_eq!(
             result,
@@ -626,7 +617,6 @@ mod tests {
             97,
             0,
             false,
-            None,
             None,
             None,
         );
@@ -649,7 +639,6 @@ mod tests {
             false,
             None,
             None,
-            None,
         );
         assert_eq!(
             result,
@@ -662,7 +651,6 @@ mod tests {
             77,
             0,
             false,
-            None,
             None,
             None,
         );
@@ -679,7 +667,6 @@ mod tests {
             false,
             None,
             None,
-            None,
         );
         assert!(
             result.contains('\n'),
@@ -692,7 +679,7 @@ mod tests {
         // Upstream prettier-plugin-jsdoc removes blank lines between list items
         // even when the source has them (spread lists).
         let result =
-            wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false, None, None, None);
+            wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false, None, None);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -702,7 +689,7 @@ mod tests {
         let input =
             "The options object:\n\n    const result = process(options);\n    console.log(result);";
         // Simulate @param {object} options: tag_str_len=22, indent_width=78
-        let result = wrap_text(input, 78, 22, false, None, None, None);
+        let result = wrap_text(input, 78, 22, false, None, None);
         // The indented code block should be preserved with 4-space indent
         assert!(
             result.contains("    const result = process(options);"),

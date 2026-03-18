@@ -4,7 +4,7 @@ use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
 use oxc_allocator::Allocator;
 
-use crate::{ExternalCallbacks, FormatOptions};
+use crate::FormatOptions;
 
 use super::embedded::{format_embedded_js, is_js_ts_lang};
 use super::line_buffer::LineBuffer;
@@ -175,7 +175,6 @@ pub fn format_description_mdast(
     tag_string_length: usize,
     capitalize: bool,
     format_options: Option<&FormatOptions>,
-    external_callbacks: Option<&ExternalCallbacks>,
     allocator: Option<&Allocator>,
 ) -> String {
     if text.trim().is_empty() {
@@ -205,24 +204,25 @@ pub fn format_description_mdast(
         // matching the mdast path's per-paragraph capitalization.
         // Also apply trailing dot if enabled.
         let mut out = String::with_capacity(result.len() + 1);
-        let lines_vec: Vec<&str> = result.split('\n').collect();
-        let total = lines_vec.len();
+        let mut iter = result.split('\n').peekable();
         let mut at_paragraph_start = true;
-        for (i, line) in lines_vec.iter().enumerate() {
-            if i > 0 {
+        let mut first = true;
+        while let Some(line) = iter.next() {
+            if !first {
                 out.push('\n');
             }
+            first = false;
             // A line is "last in paragraph" if it's the final line overall or
             // the next line is empty (paragraph boundary).
             let is_last_in_para =
-                i == total - 1 || lines_vec.get(i + 1).is_some_and(|next| next.is_empty());
+                iter.peek().is_none_or(|next| next.is_empty());
             if line.is_empty() {
                 at_paragraph_start = true;
             } else if at_paragraph_start {
                 let line = if capitalize {
                     super::normalize::capitalize_first(line)
                 } else {
-                    Cow::Borrowed(*line)
+                    Cow::Borrowed(line)
                 };
                 if description_with_dot && is_last_in_para {
                     out.push_str(&super::normalize::append_trailing_dot(&line));
@@ -284,7 +284,6 @@ pub fn format_description_mdast(
         line_wrapping_style,
         source: &protected,
         format_options,
-        external_callbacks,
         allocator,
     };
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
@@ -302,8 +301,6 @@ struct SerializeOptions<'a> {
     line_wrapping_style: crate::LineWrappingStyle,
     source: &'a str,
     format_options: Option<&'a FormatOptions>,
-    #[expect(dead_code)]
-    external_callbacks: Option<&'a ExternalCallbacks>,
     allocator: Option<&'a Allocator>,
 }
 
