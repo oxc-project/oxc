@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "vue-physical-plugin/report-template": "error"
+  }
+}

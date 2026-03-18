@@ -72,6 +72,14 @@ pub struct LoadPluginResult {
     pub rule_names: Vec<String>,
 }
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum DiagnosticRangeKind {
+    #[default]
+    Program,
+    Physical,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileResult {
@@ -79,6 +87,8 @@ pub struct LintFileResult {
     pub message: String,
     pub start: u32,
     pub end: u32,
+    #[serde(default)]
+    pub range_kind: DiagnosticRangeKind,
     pub fixes: Option<Vec<JsFix>>,
     pub suggestions: Option<Vec<JsSuggestion>>,
 }

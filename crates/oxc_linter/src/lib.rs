@@ -73,9 +73,10 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        DiagnosticRangeKind, ExternalLinter, ExternalLinterCreateWorkspaceCb,
+        ExternalLinterDestroyWorkspaceCb, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes},
@@ -111,6 +112,36 @@ fn size_asserts() {
 
 /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
 const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
+fn create_span_converter(source_text: &str) -> (&str, bool, Utf8ToUtf16) {
+    const BOM: &str = "\u{feff}";
+    #[expect(clippy::cast_possible_truncation)]
+    const BOM_LEN: u32 = BOM.len() as u32;
+
+    let mut stripped_source_text = source_text;
+    let has_bom = stripped_source_text.starts_with(BOM);
+    let span_converter = if has_bom {
+        stripped_source_text = &stripped_source_text[BOM.len()..];
+        Utf8ToUtf16::new_with_offset(stripped_source_text, BOM_LEN)
+    } else {
+        Utf8ToUtf16::new(stripped_source_text)
+    };
+
+    (stripped_source_text, has_bom, span_converter)
+}
+
+fn map_physical_span_to_section(span: Span, section_offset: u32, section_len: u32) -> Option<Span> {
+    if section_offset == 0 {
+        return Some(span);
+    }
+
+    let section_end = section_offset.saturating_add(section_len);
+    if span.start < section_offset || span.end > section_end {
+        return None;
+    }
+
+    Some(span.move_left(section_offset))
+}
 
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
@@ -599,38 +630,28 @@ impl Linter {
         tokens: &mut [Token],
         allocator: &Allocator,
     ) {
-        // If has BOM, remove it
-        const BOM: &str = "\u{feff}";
-        const BOM_LEN: usize = BOM.len();
-
-        let original_source_text = program.source_text;
-        let mut source_text = original_source_text;
-        let has_bom = source_text.starts_with(BOM);
-        if has_bom {
-            source_text = &source_text[BOM_LEN..];
-            program.source_text = source_text;
+        let program_original_source_text = program.source_text;
+        let (program_source_text, program_has_bom, program_span_converter) =
+            create_span_converter(program_original_source_text);
+        if program_has_bom {
+            program.source_text = program_source_text;
         }
 
-        // Convert spans to UTF-16.
-        // If source starts with BOM, create converter which ignores the BOM.
-        let span_converter = if has_bom {
-            #[expect(clippy::cast_possible_truncation)]
-            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
-        } else {
-            Utf8ToUtf16::new(source_text)
-        };
+        let physical_original_source_text = ctx_host.physical_source_text();
+        let (_physical_source_text, physical_has_bom, physical_span_converter) =
+            create_span_converter(physical_original_source_text);
 
         // Convert tokens for raw transfer
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
         let (tokens_offset, tokens_len) = if !tokens.is_empty() {
-            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            update_tokens(tokens, program, &program_span_converter, ESTreeTokenOptionsJS);
             (tokens.as_ptr() as u32, tokens.len() as u32)
         } else {
             (0, 0)
         };
 
-        span_converter.convert_program(program);
-        span_converter.convert_comments(&mut program.comments);
+        program_span_converter.convert_program(program);
+        program_span_converter.convert_comments(&mut program.comments);
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;
@@ -642,7 +663,7 @@ impl Linter {
             program_offset,
             is_ts,
             is_jsx,
-            has_bom,
+            program_has_bom,
             tokens_offset,
             tokens_len,
         );
@@ -689,7 +710,28 @@ impl Linter {
         );
         match result {
             Ok(diagnostics) => {
+                #[expect(clippy::cast_possible_truncation)]
+                let current_section_len =
+                    ctx_host.current_sub_host().semantic().source_text().len() as u32;
+                let current_section_offset = ctx_host.current_source_text_offset();
+
                 for diagnostic in diagnostics {
+                    let (source_text, has_bom, span_converter, use_physical_range) =
+                        match diagnostic.range_kind {
+                            DiagnosticRangeKind::Program => (
+                                program_original_source_text,
+                                program_has_bom,
+                                &program_span_converter,
+                                false,
+                            ),
+                            DiagnosticRangeKind::Physical => (
+                                physical_original_source_text,
+                                physical_has_bom,
+                                &physical_span_converter,
+                                true,
+                            ),
+                        };
+
                     // Convert UTF-16 offsets back to UTF-8.
                     // TODO: Validate span offsets are within bounds and `start <= end`.
                     // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
@@ -702,9 +744,20 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
-                    if ctx_host
-                        .disable_directives()
-                        .contains(&format!("{plugin_name}/{rule_name}"), span)
+                    let disable_directives_span = if use_physical_range {
+                        map_physical_span_to_section(
+                            span,
+                            current_section_offset,
+                            current_section_len,
+                        )
+                    } else {
+                        Some(span)
+                    };
+                    if let Some(disable_directives_span) = disable_directives_span
+                        && ctx_host.disable_directives().contains(
+                            &format!("{plugin_name}/{rule_name}"),
+                            disable_directives_span,
+                        )
                     {
                         continue;
                     }
@@ -712,8 +765,8 @@ impl Linter {
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
                     let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
                         fixes,
-                        original_source_text,
-                        &span_converter,
+                        source_text,
+                        span_converter,
                         has_bom,
                     ) {
                         Ok(fix) => Some(fix.with_kind(fix_kind)),
@@ -757,13 +810,18 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
+                    let message = Message::new(
                         OxcDiagnostic::error(diagnostic.message)
                             .with_label(span)
                             .with_error_code(plugin_name.to_string(), rule_name.to_string())
                             .with_severity(severity.into()),
                         possible_fixes,
-                    ));
+                    );
+                    if use_physical_range {
+                        ctx_host.push_diagnostic_without_offset(message);
+                    } else {
+                        ctx_host.push_diagnostic(message);
+                    }
                 }
             }
             Err(err) => {

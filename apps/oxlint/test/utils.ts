@@ -220,7 +220,13 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
   stdout = stdout.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\n+$/, "");
   if (stdout === "") return "";
 
+  // Normalize non-deterministic fields in JSON output.
+  stdout = stdout
+    .replace(/"threads_count":\s*\d+/g, '"threads_count": X')
+    .replace(/"start_time":\s*\d+(?:\.\d+)?/g, '"start_time": X');
+
   let lines = stdout.split("\n");
+  lines = lines.map((line) => line.replace(/[ \t]+$/u, ""));
 
   // Remove timing and thread count info which can vary between runs.
   //

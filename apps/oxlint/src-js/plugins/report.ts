@@ -11,19 +11,19 @@ import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 import type { RequireAtLeastOne } from "type-fest";
 import type { FixFn, FixReport } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
-import type { LineColumn, Ranged } from "./location.ts";
+import type { LineColumn, Range, Ranged } from "./location.ts";
 
 /**
  * Diagnostic object.
  * Passed to `Context#report()`.
  *
  * - Either `message` or `messageId` property must be provided.
- * - Either `node` or `loc` property must be provided.
+ * - Either `node`, `loc`, or `physicalRange` property must be provided.
  */
 // This is the type of the value passed to `Context#report()` by user.
 // `DiagnosticReport` (see below) is the type of diagnostics used internally on JS side, and sent to Rust.
 export type Diagnostic = RequireAtLeastOne<
-  RequireAtLeastOne<DiagnosticBase, "node" | "loc">,
+  RequireAtLeastOne<DiagnosticBase, "node" | "loc" | "physicalRange">,
   "message" | "messageId"
 >;
 
@@ -32,6 +32,7 @@ interface DiagnosticBase {
   messageId?: string | null | undefined;
   node?: Ranged;
   loc?: LocationWithOptionalEnd | LineColumn;
+  physicalRange?: Range;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[] | null | undefined;
@@ -72,6 +73,8 @@ export interface SuggestionReport {
   fixes: FixReport[];
 }
 
+type DiagnosticRangeKind = "program" | "physical";
+
 /**
  * Diagnostic in form sent to Rust.
  */
@@ -79,6 +82,7 @@ export interface DiagnosticReport {
   message: string;
   start: number;
   end: number;
+  rangeKind: DiagnosticRangeKind;
   ruleIndex: number;
   fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
@@ -120,10 +124,31 @@ export function report(
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
+  let rangeKind: DiagnosticRangeKind = "program";
   // We need the original location in conformance tests
   let conformedLoc: LocationWithOptionalEnd | null = null;
 
-  if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
+  if (Object.hasOwn(diagnostic, "physicalRange") && diagnostic.physicalRange != null) {
+    const { physicalRange } = diagnostic;
+    if (!Array.isArray(physicalRange) || physicalRange.length !== 2) {
+      throw new TypeError("`physicalRange` must be an array of length 2");
+    }
+
+    [start, end] = physicalRange;
+
+    if (
+      typeof start !== "number" ||
+      typeof end !== "number" ||
+      start < 0 ||
+      end < 0 ||
+      (start | 0) !== start ||
+      (end | 0) !== end
+    ) {
+      throw new TypeError("`physicalRange[0]` and `physicalRange[1]` must be non-negative integers");
+    }
+
+    rangeKind = "physical";
+  } else if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
     // Can be any of:
     // * `{ start: { line, column }, end: { line, column } }`
@@ -194,6 +219,7 @@ export function report(
     messageId,
     start,
     end,
+    rangeKind,
     ruleIndex: ruleDetails.ruleIndex,
     fixes: getFixes(diagnostic, ruleDetails),
     suggestions: getSuggestions(diagnostic, ruleDetails),
