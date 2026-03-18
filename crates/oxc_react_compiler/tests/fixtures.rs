@@ -1,8 +1,31 @@
-/// Test fixture runner for the React Compiler.
-///
-/// Reads test fixtures from the React git submodule, parses them with oxc_parser,
-/// and runs the full compilation pipeline, comparing output against
-/// the `.expect.md` files.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    clippy::disallowed_methods,
+    clippy::disallowed_types,
+    clippy::items_after_statements,
+    clippy::format_push_string,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::needless_range_loop,
+    clippy::manual_strip,
+    clippy::filetype_is_file,
+    clippy::needless_collect,
+    clippy::assigning_clones,
+    clippy::while_let_loop,
+    clippy::needless_continue,
+    clippy::no_effect_underscore_binding,
+    clippy::explicit_counter_loop,
+    clippy::unnecessary_sort_by,
+    clippy::manual_let_else,
+    clippy::doc_lazy_continuation
+)]
+// Test fixture runner for the React Compiler.
+//
+// Reads test fixtures from the React git submodule, parses them with oxc_parser,
+// and runs the full compilation pipeline, comparing output against
+// the `.expect.md` files.
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -43,7 +66,7 @@ struct OutlinedResult {
 /// Print a slice of AST statements to a string using oxc_codegen.
 fn print_stmts_to_string(stmts: &oxc_allocator::Vec<'_, oxc_ast::ast::Statement<'_>>) -> String {
     let mut codegen = oxc_codegen::Codegen::new();
-    for stmt in stmts.iter() {
+    for stmt in stmts {
         stmt.print(&mut codegen, Context::default());
     }
     codegen.into_source_text()
@@ -488,7 +511,7 @@ fn test_lower_fixture_pass_rate() {
     println!("  Lower failures      : {lower_fail}");
     println!("  Lower panicked      : {lower_panicked}");
     if attempted > 0 {
-        let pct = (lower_ok as f64 / attempted as f64) * 100.0;
+        let pct = (f64::from(lower_ok) / f64::from(attempted)) * 100.0;
         println!("  Lower pass rate     : {pct:.1}%");
     }
 
@@ -779,11 +802,9 @@ fn extract_expect_md_section<'a>(content: &'a str, section_heading: &str) -> Opt
         let mut found = None;
         let mut i = 0;
         while i + 3 <= bytes.len() {
-            if &bytes[i..i + 3] == b"```" {
-                if i == 0 || bytes[i - 1] == b'\n' {
-                    found = Some(i);
-                    break;
-                }
+            if &bytes[i..i + 3] == b"```" && (i == 0 || bytes[i - 1] == b'\n') {
+                found = Some(i);
+                break;
             }
             i += 1;
         }
@@ -1010,10 +1031,10 @@ fn run_pre_pipeline_checks(source: &str, source_type: oxc_span::SourceType) -> b
                 _ => None,
             };
 
-            if let Some(directives) = directives {
-                if has_invalid_dynamic_gating_directive(directives) {
-                    return true;
-                }
+            if let Some(directives) = directives
+                && has_invalid_dynamic_gating_directive(directives)
+            {
+                return true;
             }
         }
     }
@@ -1027,12 +1048,11 @@ fn run_pre_pipeline_checks(source: &str, source_type: oxc_span::SourceType) -> b
 fn has_invalid_dynamic_gating_directive(directives: &[oxc_ast::ast::Directive]) -> bool {
     for directive in directives {
         let value = directive.directive.as_str();
-        if let Some(rest) = value.strip_prefix("use memo if(") {
-            if let Some(ident) = rest.strip_suffix(')') {
-                if !is_valid_js_identifier(ident) {
-                    return true;
-                }
-            }
+        if let Some(rest) = value.strip_prefix("use memo if(")
+            && let Some(ident) = rest.strip_suffix(')')
+            && !is_valid_js_identifier(ident)
+        {
+            return true;
         }
     }
     false
@@ -1062,7 +1082,7 @@ fn is_valid_js_identifier(s: &str) -> bool {
     }
 
     // Must not be a reserved keyword
-    matches!(
+    !matches!(
         s,
         "break"
             | "case"
@@ -1109,7 +1129,7 @@ fn is_valid_js_identifier(s: &str) -> bool {
             | "null"
             | "true"
             | "false"
-    ) == false
+    )
 }
 
 /// Run the full pipeline (parse -> lower -> pipeline -> codegen) on a source
@@ -1190,12 +1210,11 @@ fn run_pipeline_for_codegen_impl(
                 Some(id.name.to_string())
             }
             Expression::StaticMemberExpression(member) => {
-                if let Expression::Identifier(obj) = &member.object {
-                    if obj.name == "React"
-                        && (member.property.name == "memo" || member.property.name == "forwardRef")
-                    {
-                        return Some(format!("React.{}", member.property.name));
-                    }
+                if let Expression::Identifier(obj) = &member.object
+                    && obj.name == "React"
+                    && (member.property.name == "memo" || member.property.name == "forwardRef")
+                {
+                    return Some(format!("React.{}", member.property.name));
                 }
                 None
             }
@@ -1210,26 +1229,21 @@ fn run_pipeline_for_codegen_impl(
         expr: &'a oxc_ast::ast::Expression<'a>,
     ) -> Option<(LowerableFunction<'a>, WrapperInfo)> {
         use oxc_ast::ast::Expression;
-        if let Expression::CallExpression(call) = expr {
-            if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee) {
-                if let Some(arg) = call.arguments.first() {
-                    return match arg.as_expression() {
-                        Some(Expression::ArrowFunctionExpression(arrow)) => Some((
-                            LowerableFunction::ArrowFunction(arrow),
-                            WrapperInfo { callee: callee_text, is_arrow: true, binding_name: None },
-                        )),
-                        Some(Expression::FunctionExpression(f)) => Some((
-                            LowerableFunction::Function(f),
-                            WrapperInfo {
-                                callee: callee_text,
-                                is_arrow: false,
-                                binding_name: None,
-                            },
-                        )),
-                        _ => None,
-                    };
-                }
-            }
+        if let Expression::CallExpression(call) = expr
+            && let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee)
+            && let Some(arg) = call.arguments.first()
+        {
+            return match arg.as_expression() {
+                Some(Expression::ArrowFunctionExpression(arrow)) => Some((
+                    LowerableFunction::ArrowFunction(arrow),
+                    WrapperInfo { callee: callee_text, is_arrow: true, binding_name: None },
+                )),
+                Some(Expression::FunctionExpression(f)) => Some((
+                    LowerableFunction::Function(f),
+                    WrapperInfo { callee: callee_text, is_arrow: false, binding_name: None },
+                )),
+                _ => None,
+            };
         }
         None
     }
@@ -1274,36 +1288,35 @@ fn run_pipeline_for_codegen_impl(
                         candidates.push((LowerableFunction::Function(f), name, None));
                     }
                     ExportDefaultDeclarationKind::CallExpression(call) => {
-                        if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee) {
-                            if let Some(arg) = call.arguments.first() {
-                                use oxc_ast::ast::Expression;
-                                match arg.as_expression() {
-                                    Some(Expression::ArrowFunctionExpression(arrow)) => {
-                                        candidates.push((
-                                            LowerableFunction::ArrowFunction(arrow),
-                                            None,
-                                            Some(WrapperInfo {
-                                                callee: callee_text,
-                                                is_arrow: true,
-                                                binding_name: None,
-                                            }),
-                                        ));
-                                    }
-                                    Some(Expression::FunctionExpression(f)) => {
-                                        let name =
-                                            get_func_name(&LowerableFunction::Function(f), None);
-                                        candidates.push((
-                                            LowerableFunction::Function(f),
-                                            name,
-                                            Some(WrapperInfo {
-                                                callee: callee_text,
-                                                is_arrow: false,
-                                                binding_name: None,
-                                            }),
-                                        ));
-                                    }
-                                    _ => {}
+                        if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee)
+                            && let Some(arg) = call.arguments.first()
+                        {
+                            use oxc_ast::ast::Expression;
+                            match arg.as_expression() {
+                                Some(Expression::ArrowFunctionExpression(arrow)) => {
+                                    candidates.push((
+                                        LowerableFunction::ArrowFunction(arrow),
+                                        None,
+                                        Some(WrapperInfo {
+                                            callee: callee_text,
+                                            is_arrow: true,
+                                            binding_name: None,
+                                        }),
+                                    ));
                                 }
+                                Some(Expression::FunctionExpression(f)) => {
+                                    let name = get_func_name(&LowerableFunction::Function(f), None);
+                                    candidates.push((
+                                        LowerableFunction::Function(f),
+                                        name,
+                                        Some(WrapperInfo {
+                                            callee: callee_text,
+                                            is_arrow: false,
+                                            binding_name: None,
+                                        }),
+                                    ));
+                                }
+                                _ => {}
                             }
                         }
                     }
@@ -1325,16 +1338,15 @@ fn run_pipeline_for_codegen_impl(
                 {
                     if let Some(d) = decl.declarations.first() {
                         let binding = get_binding_name(d);
-                        if let Some(init) = &d.init {
-                            if let Some((candidate, mut wrapper)) =
+                        if let Some(init) = &d.init
+                            && let Some((candidate, mut wrapper)) =
                                 extract_candidate_from_init(init)
-                            {
-                                let name = get_func_name(&candidate, binding.as_deref());
-                                if let Some(ref mut w) = wrapper {
-                                    w.binding_name = binding.clone();
-                                }
-                                candidates.push((candidate, name, wrapper));
+                        {
+                            let name = get_func_name(&candidate, binding.as_deref());
+                            if let Some(ref mut w) = wrapper {
+                                w.binding_name = binding.clone();
                             }
+                            candidates.push((candidate, name, wrapper));
                         }
                     }
                 }
@@ -1350,14 +1362,14 @@ fn run_pipeline_for_codegen_impl(
             {
                 if let Some(d) = decl.declarations.first() {
                     let binding = get_binding_name(d);
-                    if let Some(init) = &d.init {
-                        if let Some((candidate, mut wrapper)) = extract_candidate_from_init(init) {
-                            let name = get_func_name(&candidate, binding.as_deref());
-                            if let Some(ref mut w) = wrapper {
-                                w.binding_name = binding.clone();
-                            }
-                            candidates.push((candidate, name, wrapper));
+                    if let Some(init) = &d.init
+                        && let Some((candidate, mut wrapper)) = extract_candidate_from_init(init)
+                    {
+                        let name = get_func_name(&candidate, binding.as_deref());
+                        if let Some(ref mut w) = wrapper {
+                            w.binding_name = binding.clone();
                         }
+                        candidates.push((candidate, name, wrapper));
                     }
                 }
             }
@@ -1367,17 +1379,17 @@ fn run_pipeline_for_codegen_impl(
                 if let Some((candidate, wrapper)) = extract_fn_from_memo_call(&expr_stmt.expression)
                 {
                     candidates.push((candidate, None, Some(wrapper)));
-                } else if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
-                    if let Some((candidate, wrapper)) = extract_candidate_from_init(&assign.right) {
-                        let binding = match &assign.left {
-                            oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                                Some(id.name.to_string())
-                            }
-                            _ => None,
-                        };
-                        let name = get_func_name(&candidate, binding.as_deref());
-                        candidates.push((candidate, name, wrapper));
-                    }
+                } else if let Expression::AssignmentExpression(assign) = &expr_stmt.expression
+                    && let Some((candidate, wrapper)) = extract_candidate_from_init(&assign.right)
+                {
+                    let binding = match &assign.left {
+                        oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                            Some(id.name.to_string())
+                        }
+                        _ => None,
+                    };
+                    let name = get_func_name(&candidate, binding.as_deref());
+                    candidates.push((candidate, name, wrapper));
                 }
             }
             _ => {}
@@ -1492,10 +1504,8 @@ fn run_pipeline_for_codegen_impl(
     }
 
     // In error-fixture mode: if all candidates succeeded, return the last success.
-    if return_first_error {
-        if let Some((result, wrapper)) = last_success {
-            return Ok((result, wrapper));
-        }
+    if return_first_error && let Some((result, wrapper)) = last_success {
+        return Ok((result, wrapper));
     }
 
     Err(last_err)
@@ -1668,7 +1678,7 @@ fn normalize_code(s: &str) -> String {
     // Step 1: trim lines, drop empties, join.
     let joined = no_comments
         .lines()
-        .map(|line| line.trim())
+        .map(str::trim)
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
         .join("\n");
@@ -2129,12 +2139,12 @@ fn normalize_code(s: &str) -> String {
     // Our compiler doesn't implement this feature flag. Strip this block and renumber
     // cache slots and fix _c count afterwards.
     let stripped_refresh = strip_fast_refresh_reset_block(&normalized_jsx_str_attr);
-    let stripped_refresh = if stripped_refresh != normalized_jsx_str_attr {
+    let stripped_refresh = if stripped_refresh == normalized_jsx_str_attr {
+        stripped_refresh
+    } else {
         let re_slotted = renumber_cache_slots(&stripped_refresh);
         let re_counted = fix_cache_count(&re_slotted);
         renumber_plain_temps(&re_counted)
-    } else {
-        stripped_refresh
     };
 
     // Step 55: inline simple outlined _temp functions back at call sites.
@@ -2186,34 +2196,32 @@ fn normalize_unicode_escapes(s: &str) -> String {
         if chars[i] == '\\' && i + 5 <= len && chars[i + 1] == 'u' {
             // Check if the next 4 chars are hex digits
             let hex: String = chars[i + 2..i + 6].iter().collect();
-            if hex.chars().all(|c| c.is_ascii_hexdigit()) {
-                if let Ok(code) = u32::from_str_radix(&hex, 16) {
-                    // Check for UTF-16 high surrogate (0xD800–0xDBFF)
-                    if (0xD800..=0xDBFF).contains(&code) {
-                        // Try to consume a following low surrogate: `\uDCxx`
-                        if i + 11 <= len && chars[i + 6] == '\\' && chars[i + 7] == 'u' {
-                            let hex2: String = chars[i + 8..i + 12].iter().collect();
-                            if hex2.chars().all(|c| c.is_ascii_hexdigit()) {
-                                if let Ok(code2) = u32::from_str_radix(&hex2, 16) {
-                                    if (0xDC00..=0xDFFF).contains(&code2) {
-                                        // Decode surrogate pair to Unicode code point.
-                                        let codepoint =
-                                            0x10000 + ((code - 0xD800) << 10) + (code2 - 0xDC00);
-                                        if let Some(ch) = char::from_u32(codepoint) {
-                                            result.push(ch);
-                                            i += 12;
-                                            continue;
-                                        }
-                                    }
-                                }
+            if hex.chars().all(|c| c.is_ascii_hexdigit())
+                && let Ok(code) = u32::from_str_radix(&hex, 16)
+            {
+                // Check for UTF-16 high surrogate (0xD800–0xDBFF)
+                if (0xD800..=0xDBFF).contains(&code) {
+                    // Try to consume a following low surrogate: `\uDCxx`
+                    if i + 11 <= len && chars[i + 6] == '\\' && chars[i + 7] == 'u' {
+                        let hex2: String = chars[i + 8..i + 12].iter().collect();
+                        if hex2.chars().all(|c| c.is_ascii_hexdigit())
+                            && let Ok(code2) = u32::from_str_radix(&hex2, 16)
+                            && (0xDC00..=0xDFFF).contains(&code2)
+                        {
+                            // Decode surrogate pair to Unicode code point.
+                            let codepoint = 0x10000 + ((code - 0xD800) << 10) + (code2 - 0xDC00);
+                            if let Some(ch) = char::from_u32(codepoint) {
+                                result.push(ch);
+                                i += 12;
+                                continue;
                             }
                         }
-                        // High surrogate without matching low — emit literally.
-                    } else if let Some(ch) = char::from_u32(code) {
-                        result.push(ch);
-                        i += 6;
-                        continue;
                     }
+                    // High surrogate without matching low — emit literally.
+                } else if let Some(ch) = char::from_u32(code) {
+                    result.push(ch);
+                    i += 6;
+                    continue;
                 }
             }
         }
@@ -2290,7 +2298,8 @@ fn hoist_temp_assigns_from_scope(s: &str) -> String {
     }
 
     // Rebuild the token list: for each hoisted decl, insert before scope_if and remove from inside
-    let mut result_tokens: Vec<String> = tokens.iter().map(|t| t.to_string()).collect();
+    let mut result_tokens: Vec<String> =
+        tokens.iter().map(std::string::ToString::to_string).collect();
     // Process in reverse order so indices don't shift
     for (scope_if_idx, let_idx, decl_str) in hoisted_decls.into_iter().rev() {
         // Remove the 4 tokens: `let NAME = _tempN` at let_idx..let_idx+4
@@ -2734,7 +2743,7 @@ fn normalize_const_temporaries(s: &str) -> String {
     while let Some(pos) = remaining.find(pattern) {
         // Check if there is a digit immediately after "const t".
         let after_pattern = pos + pattern.len();
-        let has_digit = remaining.as_bytes().get(after_pattern).is_some_and(|b| b.is_ascii_digit());
+        let has_digit = remaining.as_bytes().get(after_pattern).is_some_and(u8::is_ascii_digit);
 
         // Check word boundary before "const": start of string or non-word char.
         let at_word_boundary = pos == 0 || {
@@ -2749,7 +2758,7 @@ fn normalize_const_temporaries(s: &str) -> String {
             remaining = &remaining[after_pattern..];
         } else {
             // Not a match — push up to and including the first char to advance.
-            result.push_str(&remaining[..pos + 1]);
+            result.push_str(&remaining[..=pos]);
             remaining = &remaining[pos + 1..];
         }
     }
@@ -3746,7 +3755,7 @@ fn remove_dead_expression_statements(s: &str) -> String {
                     | "do"
                     | "}"
                     | ""
-            ) || next.starts_with("t")
+            ) || next.starts_with('t')
                 && next[1..].chars().all(|c| c.is_ascii_digit());
             if prev_is_stmt_end && !prev_is_operator && next_is_stmt_start {
                 continue;
@@ -4828,12 +4837,10 @@ fn normalize_label_numbers(s: &str) -> String {
                 if j > i + 2 {
                     let at_end =
                         j >= len || (!bytes[j].is_ascii_alphanumeric() && bytes[j] != b'_');
-                    if at_end {
-                        if let Some(replacement) = mapping.get(&s[i..j]) {
-                            result.push_str(replacement);
-                            i = j;
-                            continue;
-                        }
+                    if at_end && let Some(replacement) = mapping.get(&s[i..j]) {
+                        result.push_str(replacement);
+                        i = j;
+                        continue;
                     }
                 }
             }
@@ -5182,8 +5189,8 @@ fn normalize_jsx_child_whitespace(s: &str) -> String {
     // This handles the difference between `<A> <B /> </A>` and `<A><B /></A>`.
     let r = r.replace("> <", "><");
     // Normalize `/> </` to `/></` (space between self-closing child and closing parent)
-    let r = r.replace("/> </", "/></");
-    r
+
+    r.replace("/> </", "/></")
 }
 
 /// Promote scope-output variables to temp placeholders.
@@ -5230,7 +5237,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
 
     fn is_temp_name(name: &str) -> bool {
         let b = name.as_bytes();
-        b.len() >= 2 && (b[0] == b't' || b[0] == b'T') && b[1..].iter().all(|c| c.is_ascii_digit())
+        b.len() >= 2 && (b[0] == b't' || b[0] == b'T') && b[1..].iter().all(u8::is_ascii_digit)
     }
 
     fn extract_ident(bytes: &[u8], pos: usize) -> Option<(String, usize)> {
@@ -5309,7 +5316,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
     // Step 1: Find all `let VARNAME` declarations (no initializer).
     struct LetDecl {
         name: String,
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         let_pos: usize,
         name_pos: usize,
         name_end: usize,
@@ -5324,19 +5331,20 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
                 let at_boundary = i == 0 || !is_ident_char(bytes[i - 1]);
                 if at_boundary {
                     let name_start = i + pat.len();
-                    if let Some((name, name_end)) = extract_ident(bytes, name_start) {
-                        if !is_temp_name(&name) && name != "$" {
-                            let is_uninit = name_end >= len
-                                || (bytes[name_end] == b' '
-                                    && (name_end + 1 >= len || bytes[name_end + 1] != b'='));
-                            if is_uninit {
-                                let_decls.push(LetDecl {
-                                    name,
-                                    let_pos: i,
-                                    name_pos: name_start,
-                                    name_end,
-                                });
-                            }
+                    if let Some((name, name_end)) = extract_ident(bytes, name_start)
+                        && !is_temp_name(&name)
+                        && name != "$"
+                    {
+                        let is_uninit = name_end >= len
+                            || (bytes[name_end] == b' '
+                                && (name_end + 1 >= len || bytes[name_end + 1] != b'='));
+                        if is_uninit {
+                            let_decls.push(LetDecl {
+                                name,
+                                let_pos: i,
+                                name_pos: name_start,
+                                name_end,
+                            });
                         }
                     }
                 }
@@ -5841,19 +5849,16 @@ fn disambiguate_reused_temps(s: &str) -> String {
                 match bytes[scope_end] {
                     b'{' => cur_depth += 1,
                     b'}' => {
-                        match cur_depth.checked_sub(1) {
-                            Some(new_depth) => {
-                                cur_depth = new_depth;
-                                if cur_depth < target_depth {
-                                    // This `}` closes our target scope
-                                    scope_end += 1;
-                                    break;
-                                }
+                        if let Some(new_depth) = cur_depth.checked_sub(1) {
+                            cur_depth = new_depth;
+                            if cur_depth < target_depth {
+                                // This `}` closes our target scope
+                                scope_end += 1;
+                                break;
                             }
-                            None => {
-                                // cur_depth is 0, can't go lower — unbalanced input,
-                                // scope extends to end of string. Don't break.
-                            }
+                        } else {
+                            // cur_depth is 0, can't go lower — unbalanced input,
+                            // scope extends to end of string. Don't break.
                         }
                     }
                     _ => {}
@@ -5944,17 +5949,15 @@ fn normalize_rest_param_temp_alias(s: &str) -> String {
             // Extract the rest name: the part after `...`, possibly with trailing `)`, `{`, etc.
             let after_dots = &tok[3..];
             // Strip any trailing `)` and `{`
-            let rest_name = after_dots.trim_end_matches(|c: char| c == ')' || c == '{');
+            let rest_name = after_dots.trim_end_matches([')', '{']);
             if !is_temp_identifier(rest_name) {
                 continue;
             }
             // After the rest param token, the next token must be `)` or start with `)`
             // OR the token itself ends with `)` (the paren is attached)
             let rest_is_closed = after_dots.contains(')');
-            if !rest_is_closed {
-                if i + 1 >= n || !tokens[i + 1].starts_with(')') {
-                    continue;
-                }
+            if !rest_is_closed && (i + 1 >= n || !tokens[i + 1].starts_with(')')) {
+                continue;
             }
 
             // Find `let/const NAME = tN` after the opening `{`
@@ -6043,30 +6046,27 @@ fn normalize_ternary_assignments(s: &str) -> String {
                 // Try to parse: `(NAME = VAL1) : (NAME = VAL2)`
                 if let Some((name1, val1, name2, val2, consumed)) =
                     parse_ternary_assignment_branches(&chars, i + 4)
+                    && name1 == name2
                 {
-                    if name1 == name2 {
-                        let suffix_check =
-                            if is_strict_eq { "=== undefined" } else { "!== undefined" };
+                    let suffix_check = if is_strict_eq { "=== undefined" } else { "!== undefined" };
 
-                        // Find the identifier before the check operator
-                        let test_start = result.len() - suffix_check.len();
-                        let trimmed_len = result[..test_start].trim_end().len();
-                        // Find the last word boundary
-                        let ident_start = result[..trimmed_len]
-                            .rfind(|c: char| {
-                                !c.is_ascii_alphanumeric() && c != '_' && c != '$' && c != '.'
-                            })
-                            .map(|p| p + 1)
-                            .unwrap_or(0);
-                        let test_ident = result[ident_start..trimmed_len].to_string();
-                        let full_test = format!("{test_ident} {suffix_check}");
-                        let prefix = result[..ident_start].to_string();
+                    // Find the identifier before the check operator
+                    let test_start = result.len() - suffix_check.len();
+                    let trimmed_len = result[..test_start].trim_end().len();
+                    // Find the last word boundary
+                    let ident_start = result[..trimmed_len]
+                        .rfind(|c: char| {
+                            !c.is_ascii_alphanumeric() && c != '_' && c != '$' && c != '.'
+                        })
+                        .map_or(0, |p| p + 1);
+                    let test_ident = result[ident_start..trimmed_len].to_string();
+                    let full_test = format!("{test_ident} {suffix_check}");
+                    let prefix = result[..ident_start].to_string();
 
-                        // Rebuild result
-                        result = format!("{prefix}{name1} = {full_test} ? {val1} : {val2}");
-                        i += 4 + consumed;
-                        continue;
-                    }
+                    // Rebuild result
+                    result = format!("{prefix}{name1} = {full_test} ? {val1} : {val2}");
+                    i += 4 + consumed;
+                    continue;
                 }
             }
         }
@@ -7510,7 +7510,7 @@ fn hoist_tagged_template_from_sentinel(s: &str) -> String {
                 rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
             if name_end > 0 {
                 let rest2 = rest[name_end..].trim_start();
-                if rest2.starts_with("= ") || rest2.starts_with("=") {
+                if rest2.starts_with("= ") || rest2.starts_with('=') {
                     let after_eq = rest2[rest2.find('=').unwrap() + 1..].trim_start();
                     // Check if the value is a tagged template literal
                     // A tagged template starts with an identifier followed by `
@@ -7733,8 +7733,8 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         let after_else = result[else_end + 1..].trim_start();
 
         // Look for `let VAR = useHOOK(tN, ...)` or `VAR = useHOOK(tN, ...)`
-        let _hook_call_prefix = format!("use");
-        let has_hook_call = after_else.contains(&format!("({}", temp_name));
+        let _hook_call_prefix = "use".to_string();
+        let has_hook_call = after_else.contains(&format!("({temp_name}"));
 
         if !has_hook_call {
             break;
@@ -7749,7 +7749,7 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
 
         // Find `let tN` before the `if`
         let before_if = result[..if_start].trim_end();
-        let decl_prefix = format!("let {}", temp_name);
+        let decl_prefix = format!("let {temp_name}");
         if !before_if.ends_with(&decl_prefix) {
             break;
         }
@@ -7769,9 +7769,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         let rest = &result[removal_end..];
         // Replace the temp name reference in the rest with the graphql expression
         let replaced_rest = rest
-            .replacen(&format!("({})", temp_name), &format!("({})", graphql_expr), 1)
-            .replacen(&format!("({}, ", temp_name), &format!("({}, ", graphql_expr), 1)
-            .replacen(&format!("({})", temp_name), &format!("({})", graphql_expr), 1);
+            .replacen(&format!("({temp_name})"), &format!("({graphql_expr})"), 1)
+            .replacen(&format!("({temp_name}, "), &format!("({graphql_expr}, "), 1)
+            .replacen(&format!("({temp_name})"), &format!("({graphql_expr})"), 1);
         new_result.push_str(&replaced_rest);
 
         result = new_result;
@@ -7801,14 +7801,16 @@ fn renumber_cache_slots(s: &str) -> String {
             while num_end < bytes.len() && bytes[num_end].is_ascii_digit() {
                 num_end += 1;
             }
-            if num_end > num_start && num_end < bytes.len() && bytes[num_end] == b']' {
-                if let Ok(n) = s[num_start..num_end].parse::<u32>() {
-                    slot_map.entry(n).or_insert_with(|| {
-                        let slot = next_slot;
-                        next_slot += 1;
-                        slot
-                    });
-                }
+            if num_end > num_start
+                && num_end < bytes.len()
+                && bytes[num_end] == b']'
+                && let Ok(n) = s[num_start..num_end].parse::<u32>()
+            {
+                slot_map.entry(n).or_insert_with(|| {
+                    let slot = next_slot;
+                    next_slot += 1;
+                    slot
+                });
             }
             i = num_end + 1;
         } else {
@@ -7831,14 +7833,15 @@ fn renumber_cache_slots(s: &str) -> String {
             while num_end < bytes.len() && bytes[num_end].is_ascii_digit() {
                 num_end += 1;
             }
-            if num_end > num_start && num_end < bytes.len() && bytes[num_end] == b']' {
-                if let Ok(n) = s[num_start..num_end].parse::<u32>() {
-                    if let Some(&mapped) = slot_map.get(&n) {
-                        result.push_str(&format!("$[{}]", mapped));
-                        i = num_end + 1;
-                        continue;
-                    }
-                }
+            if num_end > num_start
+                && num_end < bytes.len()
+                && bytes[num_end] == b']'
+                && let Ok(n) = s[num_start..num_end].parse::<u32>()
+                && let Some(&mapped) = slot_map.get(&n)
+            {
+                result.push_str(&format!("$[{mapped}]"));
+                i = num_end + 1;
+                continue;
             }
         }
         result.push(bytes[i] as char);
@@ -7863,10 +7866,12 @@ fn fix_cache_count(s: &str) -> String {
             while num_end < bytes.len() && bytes[num_end].is_ascii_digit() {
                 num_end += 1;
             }
-            if num_end > num_start && num_end < bytes.len() && bytes[num_end] == b']' {
-                if let Ok(n) = s[num_start..num_end].parse::<u32>() {
-                    max_slot = Some(max_slot.map_or(n, |m: u32| m.max(n)));
-                }
+            if num_end > num_start
+                && num_end < bytes.len()
+                && bytes[num_end] == b']'
+                && let Ok(n) = s[num_start..num_end].parse::<u32>()
+            {
+                max_slot = Some(max_slot.map_or(n, |m: u32| m.max(n)));
             }
             i = num_end + 1;
         } else {
@@ -7888,7 +7893,7 @@ fn fix_cache_count(s: &str) -> String {
         if num_end > num_start && num_end < bytes.len() && bytes[num_end] == b')' {
             let mut result = String::with_capacity(s.len());
             result.push_str(&s[..c_pos]);
-            result.push_str(&format!("_c({})", actual_count));
+            result.push_str(&format!("_c({actual_count})"));
             result.push_str(&s[num_end + 1..]);
             return result;
         }
@@ -7921,8 +7926,7 @@ fn strip_enum_declarations(s: &str) -> String {
         if tokens[i] == "enum" {
             // Check next token is an identifier (starts with uppercase or lowercase letter)
             let name = tokens[i + 1];
-            let is_ident =
-                name.chars().next().map_or(false, |c| c.is_ascii_alphabetic() || c == '_');
+            let is_ident = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_');
             if !is_ident {
                 i += 1;
                 continue;
@@ -8160,7 +8164,7 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
                 {
                     break Some(j);
                 }
-                if lt.starts_with(": ") || lt.starts_with("};") || lt.starts_with("}") {
+                if lt.starts_with(": ") || lt.starts_with("};") || lt.starts_with('}') {
                     // Skipped past the ternary branches
                     break None;
                 }
@@ -8267,10 +8271,10 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
 
 fn extract_function_from_expected(code: &str) -> Option<String> {
     // First check: if this is a gating code, extract only the compiled branch.
-    if is_gating_code(code) {
-        if let Some(compiled) = extract_compiled_from_gating(code) {
-            return Some(compiled);
-        }
+    if is_gating_code(code)
+        && let Some(compiled) = extract_compiled_from_gating(code)
+    {
+        return Some(compiled);
     }
 
     let lines: Vec<&str> = code.lines().collect();
@@ -8363,7 +8367,7 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
         let mut scan_pos = func_end;
         while scan_pos < lines.len() {
             // Skip blank lines between functions.
-            let trimmed = lines.get(scan_pos).map(|l| l.trim()).unwrap_or("");
+            let trimmed = lines.get(scan_pos).map_or("", |l| l.trim());
             if trimmed.is_empty() {
                 scan_pos += 1;
                 continue;
@@ -8406,13 +8410,11 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
     {
         let mut scan_pos = overall_end;
         while scan_pos < lines.len() {
-            let trimmed = lines.get(scan_pos).map(|l| l.trim()).unwrap_or("");
+            let trimmed = lines.get(scan_pos).map_or("", |l| l.trim());
             if trimmed.starts_with("function _") {
                 // Extract the function name (e.g. "_temp" from "function _temp(...)")
                 let name_part = &trimmed["function ".len()..];
-                let name_end = name_part
-                    .find(|c: char| c == '(' || c == ' ' || c == '<')
-                    .unwrap_or(name_part.len());
+                let name_end = name_part.find(['(', ' ', '<']).unwrap_or(name_part.len());
                 let func_name = &name_part[..name_end];
 
                 // Find the closing brace of this function.
@@ -8561,7 +8563,7 @@ fn codegen_conformance_inner() {
     for entry in walkdir::WalkDir::new(fixtures_dir)
         .into_iter()
         .filter_entry(|e| e.file_name() != "__snapshots__")
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path().to_path_buf();
@@ -8787,21 +8789,18 @@ fn codegen_conformance_inner() {
         let is_gating = is_gating_code(expected_code);
         let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
         let actual_full = format_full_function(&codegen_func, effective_wrapper);
-        let expected_func = match extract_function_from_expected(expected_code) {
-            Some(f) => f,
-            None => {
-                // If we cannot extract the function from expected, compare raw.
-                let actual_norm = normalize_code(&actual_full);
-                let expected_norm = normalize_code(expected_code);
-                if actual_norm == expected_norm
-                    || whitespace_compatible(&actual_norm, &expected_norm)
-                {
-                    passed += 1;
-                } else {
-                    failed.push((file_name, FailureCategory::OutputMismatch));
-                }
-                continue;
+        let expected_func = if let Some(f) = extract_function_from_expected(expected_code) {
+            f
+        } else {
+            // If we cannot extract the function from expected, compare raw.
+            let actual_norm = normalize_code(&actual_full);
+            let expected_norm = normalize_code(expected_code);
+            if actual_norm == expected_norm || whitespace_compatible(&actual_norm, &expected_norm) {
+                passed += 1;
+            } else {
+                failed.push((file_name, FailureCategory::OutputMismatch));
             }
+            continue;
         };
 
         let actual_norm = normalize_code(&actual_full);
@@ -8852,7 +8851,7 @@ fn codegen_conformance_inner() {
 
     let total_with_flow = fixture_pairs.len() as u32;
     let total = total_with_flow - flow_skipped - fbt_skipped;
-    let pct = if total > 0 { (passed as f64 / total as f64) * 100.0 } else { 0.0 };
+    let pct = if total > 0 { (f64::from(passed) / f64::from(total)) * 100.0 } else { 0.0 };
 
     // Build category breakdown.
     let mut parse_errors = 0u32;
@@ -8941,7 +8940,7 @@ fn error_fixture_conformance_inner() {
     for entry in walkdir::WalkDir::new(fixtures_dir)
         .into_iter()
         .filter_entry(|e| e.file_name() != "__snapshots__")
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path().to_path_buf();
@@ -9039,7 +9038,7 @@ fn error_fixture_conformance_inner() {
     }
 
     let total = fixture_pairs.len() as u32 - flow_skipped;
-    let pct = if total > 0 { (passed as f64 / total as f64) * 100.0 } else { 0.0 };
+    let pct = if total > 0 { (f64::from(passed) / f64::from(total)) * 100.0 } else { 0.0 };
 
     let mut unexpected_success = 0u32;
     let mut parse_errors = 0u32;
@@ -9072,9 +9071,8 @@ fn error_fixture_conformance_inner() {
 
 /// Diagnostic test: print near-miss fixtures with diffs to find low-hanging fixes.
 /// Run with: cargo test -p oxc_react_compiler --release -- --ignored --nocapture test_near_miss_diagnostic
-#[allow(dead_code)]
 #[test]
-#[ignore]
+#[ignore = "diagnostic tool, run manually with --ignored --nocapture"]
 fn test_near_miss_diagnostic() {
     let fixtures_dir = Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
@@ -9085,7 +9083,7 @@ fn test_near_miss_diagnostic() {
     for entry in walkdir::WalkDir::new(fixtures_dir)
         .into_iter()
         .filter_entry(|e| e.file_name() != "__snapshots__")
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path().to_path_buf();
@@ -9104,6 +9102,7 @@ fn test_near_miss_diagnostic() {
     }
     fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
 
+    #[expect(dead_code)]
     struct NearMiss {
         name: String,
         diff_lines: usize,
@@ -9210,15 +9209,15 @@ fn test_near_miss_diagnostic() {
             // Both have memoization — check if scope counts differ
             let a_c = a_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
             let e_c = e_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
-            if a_c != e_c {
+            if a_c == e_c {
+                // Same _c() count — likely temp renumbering or small codegen diff
+                temp_renumber_issues.push(&nm.name);
+            } else {
                 scope_structure_issues.push((
                     &nm.name,
                     a_c.unwrap_or("?").to_string(),
                     e_c.unwrap_or("?").to_string(),
                 ));
-            } else {
-                // Same _c() count — likely temp renumbering or small codegen diff
-                temp_renumber_issues.push(&nm.name);
             }
         } else {
             other_issues.push(&nm.name);
@@ -9229,26 +9228,26 @@ fn test_near_miss_diagnostic() {
     println!("Total near-miss fixtures: {}", near_misses.len());
     println!("\n--- NO MEMOIZATION (our output lacks _c()): {} fixtures ---", no_memo_issues.len());
     for name in &no_memo_issues[..no_memo_issues.len().min(20)] {
-        println!("  {}", name);
+        println!("  {name}");
     }
     println!(
         "\n--- FUNCTION OUTLINING (_temp missing): {} fixtures ---",
         function_outline_issues.len()
     );
     for name in &function_outline_issues[..function_outline_issues.len().min(20)] {
-        println!("  {}", name);
+        println!("  {name}");
     }
     println!("\n--- SAME _c() COUNT (close match): {} fixtures ---", temp_renumber_issues.len());
     for name in &temp_renumber_issues {
-        println!("  {}", name);
+        println!("  {name}");
     }
     println!("\n--- DIFFERENT _c() COUNT: {} fixtures ---", scope_structure_issues.len());
     for (name, a, e) in &scope_structure_issues[..scope_structure_issues.len().min(20)] {
-        println!("  {} (ours={}, expected={})", name, a, e);
+        println!("  {name} (ours={a}, expected={e})");
     }
     println!("\n--- OTHER: {} fixtures ---", other_issues.len());
     for name in &other_issues[..other_issues.len().min(20)] {
-        println!("  {}", name);
+        println!("  {name}");
     }
 
     // Print the same _c() count ones with full diffs — these are closest to passing
@@ -9270,9 +9269,8 @@ fn test_near_miss_diagnostic() {
 
 /// Token-level near-miss diagnostic: find fixtures where normalized output differs by only 1-5 tokens.
 /// Run with: cargo test -p oxc_react_compiler --release -- --ignored --nocapture test_token_near_miss 2>&1 | grep "NEAR-MISS"
-#[allow(dead_code)]
 #[test]
-#[ignore]
+#[ignore = "diagnostic tool, run manually with --ignored --nocapture"]
 fn test_token_near_miss() {
     let fixtures_dir = Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
@@ -9283,7 +9281,7 @@ fn test_token_near_miss() {
     for entry in walkdir::WalkDir::new(fixtures_dir)
         .into_iter()
         .filter_entry(|e| e.file_name() != "__snapshots__")
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path().to_path_buf();
@@ -9380,7 +9378,7 @@ fn test_token_near_miss() {
             // Print the first few differing tokens with context
             for (i, (a, e)) in a_tokens.iter().zip(e_tokens.iter()).enumerate() {
                 if a != e {
-                    let ctx_start = if i >= 3 { i - 3 } else { 0 };
+                    let ctx_start = i.saturating_sub(3);
                     let ctx_end = (i + 4).min(a_tokens.len()).min(e_tokens.len());
                     let a_ctx: Vec<&str> = a_tokens[ctx_start..ctx_end].to_vec();
                     let e_ctx: Vec<&str> = e_tokens[ctx_start..ctx_end].to_vec();
@@ -9456,7 +9454,7 @@ function Component(props) {
 /// should not cause "Expected continue target to be scheduled" error.
 #[test]
 fn test_pipeline_for_of_nonmutating_loop() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     const items = [];
     for (const i of props.list) {
@@ -9464,7 +9462,7 @@ function Component(props) {
     }
     return items;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(result.is_ok(), "Pipeline should succeed for for-of loop: {}", result.unwrap_err());
 }
@@ -9472,14 +9470,14 @@ function Component(props) {
 /// Regression test: for-of loop with early return in loop body.
 #[test]
 fn test_pipeline_for_of_with_return() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     for (const item of props.items) {
         if (item.match) return item;
     }
     return null;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9491,7 +9489,7 @@ function Component(props) {
 /// Regression test: sequence expression in while loop test.
 #[test]
 fn test_pipeline_sequence_expression_in_loop() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     let x = props.a;
     while (x > 0) {
@@ -9499,7 +9497,7 @@ function Component(props) {
     }
     return x;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9512,7 +9510,7 @@ function Component(props) {
 /// (matches the actual sequence-expression.js fixture)
 #[test]
 fn test_pipeline_sequence_expression_fixture() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     let x = (null, Math.max(1, 2), foo());
     while ((foo(), true)) {
@@ -9521,7 +9519,7 @@ function Component(props) {
     return x;
 }
 function foo() {}
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9533,7 +9531,7 @@ function foo() {}
 /// Regression test: for-of with useMemo (matches actual fixture)
 #[test]
 fn test_pipeline_for_of_usememo() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     const items = [];
     for (const i of props.x) {
@@ -9541,7 +9539,7 @@ function Component(props) {
     }
     return items;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9553,7 +9551,7 @@ function Component(props) {
 /// Regression test: for-of with conditional return (like repro-memoize-for-of fixture)
 #[test]
 fn test_pipeline_for_of_conditional_return() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     const node = props.nodeID != null ? props.graph[props.nodeID] : null;
     for (const key of Object.keys(node?.fields ?? {})) {
@@ -9563,7 +9561,7 @@ function Component(props) {
     }
     return null;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9575,14 +9573,14 @@ function Component(props) {
 /// Regression test: useMemo with for-of and early return
 #[test]
 fn test_pipeline_usememo_for_of_early_return() {
-    let source = r#"
+    let source = r"
 function Component(props) {
     for (let item of props.items) {
         if (item.match) return item;
     }
     return null;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     assert!(
         result.is_ok(),
@@ -9600,7 +9598,7 @@ function Component(props) {
 /// targets since they represent natural control flow, not explicit breaks.
 #[test]
 fn test_pipeline_switch_no_invalid_break_label() {
-    let source = r#"
+    let source = r"
 function Component(props) {
   let x = [];
   let y;
@@ -9619,7 +9617,7 @@ function Component(props) {
   y.push(props.p4);
   return <Component data={y}>{child}</Component>;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     // The pipeline may fail at later passes (e.g., scope instructions), but
     // it must NOT fail with "Unexpected break to invalid label".
@@ -9634,7 +9632,7 @@ function Component(props) {
 /// Regression test: switch with non-final default case.
 #[test]
 fn test_pipeline_switch_non_final_default() {
-    let source = r#"
+    let source = r"
 function Component(props) {
   let x = [];
   let y;
@@ -9658,7 +9656,7 @@ function Component(props) {
   y.push(props.p4);
   return <Component data={y}>{child}</Component>;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     if let Err(ref msg) = result {
         assert!(
@@ -9671,7 +9669,7 @@ function Component(props) {
 /// Regression test: switch with fallthrough cases.
 #[test]
 fn test_pipeline_switch_with_fallthrough() {
-    let source = r#"
+    let source = r"
 function foo(x) {
   let y;
   switch (x) {
@@ -9699,7 +9697,7 @@ function foo(x) {
     }
   }
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     if let Err(ref msg) = result {
         assert!(
@@ -9712,7 +9710,7 @@ function foo(x) {
 /// Regression test: reverse-postorder fixture with switch inside if.
 #[test]
 fn test_pipeline_reverse_postorder() {
-    let source = r#"
+    let source = r"
 function Component(props) {
   let x;
   if (props.cond) {
@@ -9740,7 +9738,7 @@ function Component(props) {
   }
   x;
 }
-"#;
+";
     let result = run_pipeline_on_source(source);
     if let Err(ref msg) = result {
         assert!(
@@ -9758,7 +9756,7 @@ function Component(props) {
 fn test_disambiguate_reused_temps_basic() {
     // The reference compiler reuses `t1` in two different scopes.
     // Verify disambiguation makes the two `let t1` declarations distinct.
-    let input = r#"let t0 = params
+    let input = r"let t0 = params
 let t1
 if ($[5] !== b) {
 t1 = [b]
@@ -9773,7 +9771,7 @@ t1 = [y]
 } else {
 t1 = $[8]
 }
-z = t1"#;
+z = t1";
 
     let disambiguated = disambiguate_reused_temps(input);
     let renumbered = renumber_plain_temps(&disambiguated);
@@ -9785,7 +9783,7 @@ z = t1"#;
 #[test]
 fn test_disambiguate_vs_unique_temps() {
     // Expected output (reference compiler, reuses t1):
-    let expected = r#"{
+    let expected = r"{
 let t1
 if ($[5] !== b) {
 t1 = [b]
@@ -9799,10 +9797,10 @@ if ($[7] !== y) {
 t1 = [y]
 } else {
 t1 = $[8]
-}"#;
+}";
 
     // Our output (unique temps):
-    let ours = r#"{
+    let ours = r"{
 let t1
 if ($[5] !== b) {
 t1 = [b]
@@ -9816,7 +9814,7 @@ if ($[7] !== y) {
 t2 = [y]
 } else {
 t2 = $[8]
-}"#;
+}";
 
     let expected_disamb = disambiguate_reused_temps(expected);
     let ours_disamb = disambiguate_reused_temps(ours);
@@ -9864,7 +9862,7 @@ fn test_disambiguate_collapsed_whitespace() {
 /// should NOT be outlined (it has non-empty context due to self-reference).
 #[test]
 fn test_recursive_arrow_not_outlined() {
-    let source = r#"function Foo(value) {
+    let source = r"function Foo(value) {
   const factorial = (x) => {
     if (x <= 1) {
       return 1;
@@ -9873,7 +9871,7 @@ fn test_recursive_arrow_not_outlined() {
     }
   };
   return factorial(value);
-}"#;
+}";
 
     let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
     match result {
@@ -10050,13 +10048,13 @@ fn find_matching_finally(s: &str, search_from: usize) -> Option<usize> {
             if depth == 0 {
                 // Check if followed by ` finally {`
                 let after = &s[i..];
-                let trimmed = after.strip_prefix('}').map(|s| s.trim_start());
-                if let Some(rest) = trimmed {
-                    if rest.starts_with("finally") {
-                        let after_finally = rest["finally".len()..].trim_start();
-                        if after_finally.starts_with('{') {
-                            return Some(i);
-                        }
+                let trimmed = after.strip_prefix('}').map(str::trim_start);
+                if let Some(rest) = trimmed
+                    && rest.starts_with("finally")
+                {
+                    let after_finally = rest["finally".len()..].trim_start();
+                    if after_finally.starts_with('{') {
+                        return Some(i);
                     }
                 }
                 // Not a finally — this try block doesn't have one at this level
@@ -10308,7 +10306,7 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
                     let expr = after_return[..semi_pos].trim();
                     // Also handle trailing comma after the IIFE: `})(),`
                     let after_iife = &result[start + end..];
-                    let skip_comma = if after_iife.starts_with(',') { 1 } else { 0 };
+                    let skip_comma = usize::from(after_iife.starts_with(','));
                     result = format!(
                         "{}{}{}",
                         &result[..start],
@@ -10463,9 +10461,8 @@ fn normalize_fbt_macro(s: &str) -> String {
     // to add spaces inside `{...}` expression containers.
     // Also, normalize `}>` to `} >` when the `}` is the end of a JSX expression
     // container and `>` is a tag close, to match Prettier's formatting.
-    let spaced = normalize_fbt_jsx_spacing(&converted);
 
-    spaced
+    normalize_fbt_jsx_spacing(&converted)
 }
 
 /// Normalize JSX attribute spacing around fbt/fbs calls.
@@ -10507,12 +10504,8 @@ fn strip_fbt_hash_keys(s: &str) -> String {
         let close_brace_pos = hk_pos + pattern.len() + close_quote + 1; // byte after closing `"`
 
         // Expect ` }` after the closing quote
-        if !result[close_brace_pos..].starts_with(" }") {
-            // Try without space: `"}`
-            if !result[close_brace_pos..].starts_with('}') {
-                break;
-            }
-            let brace_end = close_brace_pos + 1;
+        if result[close_brace_pos..].starts_with(" }") {
+            let brace_end = close_brace_pos + 2; // skip ` }`
             // Remove `, { hk: "..." }` - find the comma before `{`
             let before_hk = result[..hk_pos].trim_end();
             if before_hk.ends_with(',') {
@@ -10522,7 +10515,11 @@ fn strip_fbt_hash_keys(s: &str) -> String {
                 break;
             }
         } else {
-            let brace_end = close_brace_pos + 2; // skip ` }`
+            // Try without space: `"}`
+            if !result[close_brace_pos..].starts_with('}') {
+                break;
+            }
+            let brace_end = close_brace_pos + 1;
             // Remove `, { hk: "..." }` - find the comma before `{`
             let before_hk = result[..hk_pos].trim_end();
             if before_hk.ends_with(',') {
@@ -10549,7 +10546,7 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
     for tag in &["fbt", "fbs"] {
         loop {
             // Find `<fbt ` or `<fbs ` (with attributes like desc)
-            let open_tag = format!("<{} ", tag);
+            let open_tag = format!("<{tag} ");
             let Some(tag_start) = result.find(&open_tag) else { break };
 
             // Find the closing `>` of the opening tag (be careful with nested `>` in attributes)
@@ -10558,7 +10555,7 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             let content_start = tag_start + open_tag.len() + open_close + 1;
 
             // Find the closing `</fbt>` or `</fbs>` tag
-            let close_tag = format!("</{}>", tag);
+            let close_tag = format!("</{tag}>");
             // Need to handle nested fbt tags - find the MATCHING close tag
             let Some(close_start) = find_matching_close_tag(&result[content_start..], tag) else {
                 break;
@@ -10570,7 +10567,7 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             let content = &result[content_start..close_abs];
 
             // Parse the content to extract text and params
-            let param_tag = format!("{}:param", tag);
+            let param_tag = format!("{tag}:param");
             let (template_text, params) = parse_fbt_content(content, &param_tag);
 
             // Build the fbt._() call
@@ -10579,12 +10576,12 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             } else {
                 let param_strs: Vec<String> = params
                     .iter()
-                    .map(|(name, expr)| format!("{}._param(\"{}\", {})", tag, name, expr))
+                    .map(|(name, expr)| format!("{tag}._param(\"{name}\", {expr})"))
                     .collect();
                 format!(", [{}]", param_strs.join(", "))
             };
 
-            let call = format!("{}._(\"{}\"{params_str})", tag, template_text);
+            let call = format!("{tag}._(\"{template_text}\"{params_str})");
 
             // Replace the JSX tag with the call.
             // Ensure there's a space after the call if the next char is alphanumeric
@@ -10630,9 +10627,9 @@ fn find_unquoted_char(s: &str, c: char) -> Option<usize> {
 
 /// Find the matching close tag for a given tag name, handling nesting.
 fn find_matching_close_tag(s: &str, tag: &str) -> Option<usize> {
-    let open_pattern = format!("<{} ", tag); // `<fbt ` with attributes
-    let open_pattern2 = format!("<{}>", tag); // `<fbt>` self-closing style
-    let close_pattern = format!("</{}>", tag);
+    let open_pattern = format!("<{tag} "); // `<fbt ` with attributes
+    let open_pattern2 = format!("<{tag}>"); // `<fbt>` self-closing style
+    let close_pattern = format!("</{tag}>");
 
     let mut depth = 1i32;
     let mut i = 0;
@@ -10666,8 +10663,8 @@ fn parse_fbt_content(content: &str, param_tag: &str) -> (String, Vec<(String, St
     let mut template_text = String::new();
     let mut params: Vec<(String, String)> = Vec::new();
 
-    let open_pattern = format!("<{} ", param_tag);
-    let close_pattern = format!("</{}>", param_tag);
+    let open_pattern = format!("<{param_tag} ");
+    let close_pattern = format!("</{param_tag}>");
 
     let mut pos = 0;
     while pos < content.len() {
@@ -10740,26 +10737,26 @@ fn parse_fbt_content(content: &str, param_tag: &str) -> (String, Vec<(String, St
             let rest = &content[pos + 1..];
             let rest_trimmed = rest.trim_start();
             let mut matched = false;
-            if let Some(quote_char) = rest_trimmed.chars().next() {
-                if quote_char == '"' || quote_char == '\'' {
-                    let inner = &rest_trimmed[1..];
-                    if let Some(end_quote) = inner.find(quote_char) {
-                        let str_value = &inner[..end_quote];
-                        let after_quote = &inner[end_quote + 1..];
-                        let after_trimmed = after_quote.trim_start();
-                        if after_trimmed.starts_with('}') {
-                            template_text.push_str(str_value);
-                            // Calculate total bytes consumed
-                            let consumed = 1 // opening {
+            if let Some(quote_char) = rest_trimmed.chars().next()
+                && (quote_char == '"' || quote_char == '\'')
+            {
+                let inner = &rest_trimmed[1..];
+                if let Some(end_quote) = inner.find(quote_char) {
+                    let str_value = &inner[..end_quote];
+                    let after_quote = &inner[end_quote + 1..];
+                    let after_trimmed = after_quote.trim_start();
+                    if after_trimmed.starts_with('}') {
+                        template_text.push_str(str_value);
+                        // Calculate total bytes consumed
+                        let consumed = 1 // opening {
                                 + (rest.len() - rest_trimmed.len()) // spaces before quote
                                 + 1 // opening quote
                                 + end_quote // string content
                                 + 1 // closing quote
                                 + (after_quote.len() - after_trimmed.len()) // spaces before }
                                 + 1; // closing }
-                            pos += consumed;
-                            matched = true;
-                        }
+                        pos += consumed;
+                        matched = true;
                     }
                 }
             }
@@ -10804,15 +10801,13 @@ fn extract_fbt_param_name(attr_str: &str) -> Option<String> {
     // Skip optional `{` and whitespace to get to the quote char
     let inner = if after_name.starts_with('{') { after_name[1..].trim_start() } else { after_name };
 
-    if inner.starts_with('"') {
+    if let Some(rest) = inner.strip_prefix('"') {
         // Double-quoted value: find matching closing `"`
-        let rest = &inner[1..];
         let end_quote = rest.find('"')?;
         Some(rest[..end_quote].to_string())
-    } else if inner.starts_with('\'') {
+    } else if let Some(rest) = inner.strip_prefix('\'') {
         // Single-quoted value: find matching closing `'`
         // The value may contain double quotes (e.g., `'"user" name'`)
-        let rest = &inner[1..];
         let end_quote = rest.find('\'')?;
         Some(rest[..end_quote].to_string())
     } else {

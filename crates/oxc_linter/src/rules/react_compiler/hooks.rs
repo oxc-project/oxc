@@ -29,14 +29,14 @@ fn test() {
     use crate::tester::Tester;
     let pass = vec![
         // Basic hook usage
-        r#"
+        r"
         function Component() {
           useHook();
           return <div>Hello world</div>;
         }
-        "#,
+        ",
         // Invariant: defined after use (not surfaced)
-        r#"
+        r"
         function Component(props) {
           let y = function () {
             m(x);
@@ -45,39 +45,39 @@ fn test() {
           m(x);
           return y;
         }
-        "#,
+        ",
         // Classes don't throw
-        r#"
+        r"
         class Foo {
           #bar() {}
         }
-        "#,
+        ",
         // Cross-category: impure calls trigger Purity, not Hooks
-        r#"
+        r"
         function Component() {
           const date = Date.now();
           return <Foo date={date} />;
         }
-        "#,
+        ",
     ];
     let fail = vec![
         // Simple conditional hook violation
-        r#"
+        r"
         function Component() {
           if (cond) {
             useConditionalHook();
           }
           return <div />;
         }
-        "#,
+        ",
         // Multiple conditional hooks in same function
-        r#"
+        r"
         function Component() {
           cond ?? useConditionalHook();
           props.cond && useConditionalHook();
           return <div>Hello world</div>;
         }
-        "#,
+        ",
     ];
     Tester::new(Hooks::NAME, Hooks::PLUGIN, pass, fail).test_and_snapshot();
 }

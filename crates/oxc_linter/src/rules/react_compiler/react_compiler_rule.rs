@@ -360,19 +360,19 @@ fn test() {
         (r"export const Component = (props) => { return <div>{props.value}</div>; };", None),
         // 'use no forget' opts out of compilation (matching ESLint plugin behavior)
         (
-            r#"
+            r"
             let count = 0;
             function Component() {
               'use no forget';
               return cond ?? useConditionalHook();
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from eslint-plugin-react-compiler PluginTest ===
         // Invariants are only for the compiler team — not surfaced as lint errors
         (
-            r#"
+            r"
             function Component(props) {
               let y = function () {
                 m(x);
@@ -381,35 +381,35 @@ fn test() {
               m(x);
               return y;
             }
-            "#,
+            ",
             None,
         ),
         // Classes don't throw
         (
-            r#"
+            r"
             class Foo {
               #bar() {}
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from InvalidHooksRule ===
         (
-            r#"
+            r"
             function Component() {
               useHook();
               return <div>Hello world</div>;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from ReactCompilerRuleTypescript ===
         (
-            r#"
+            r"
             function Button(props) {
               return null;
             }
-            "#,
+            ",
             None,
         ),
         // === Validation alignment fix regression tests ===
@@ -420,7 +420,7 @@ fn test() {
         ),
         // Fix 12: Context variable assignment via IIFE should not panic
         (
-            r#"
+            r"
             function Component(props) {
               let x = {};
               (function () {
@@ -428,18 +428,18 @@ fn test() {
               })();
               return <div>{x}</div>;
             }
-            "#,
+            ",
             None,
         ),
         // Fix 14: useMemo with valid deps should not panic in preserved memoization validation
         (
-            r#"
+            r"
             import { useMemo } from 'react';
             function Component(props) {
               const x = useMemo(() => props.a + props.b, [props.a, props.b]);
               return <div>{x}</div>;
             }
-            "#,
+            ",
             None,
         ),
     ];
@@ -449,7 +449,7 @@ fn test() {
         // computations in effects" error (that was the fix), but lint mode has
         // validate_no_set_state_in_effects=true which catches setState in any effect.
         (
-            r#"
+            r"
             import { useState, useLayoutEffect } from 'react';
             function Component(props) {
               const [state, setState] = useState(props.initial);
@@ -458,23 +458,23 @@ fn test() {
               }, [props.value]);
               return <div>{state}</div>;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from eslint-plugin-react-compiler PluginTest ===
         // Conditional hook call
         (
-            r#"
+            r"
             function Component() {
               const result = cond ?? useConditionalHook();
               return <>{result}</>;
             }
-            "#,
+            ",
             None,
         ),
         // Multiple conditional hooks in same file
         (
-            r#"
+            r"
             function useConditional1() {
               'use memo';
               return cond ?? useConditionalHook();
@@ -483,12 +483,12 @@ fn test() {
               'use memo';
               return props.cond && useConditionalHook();
             }
-            "#,
+            ",
             None,
         ),
         // void useMemo + setState in useMemo
         (
-            r#"
+            r"
             import {useMemo, useState} from 'react';
 
             function Component({item, cond}) {
@@ -504,74 +504,74 @@ fn test() {
 
               return <Child x={state} />;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from InvalidHooksRule ===
         // Simple conditional hook violation
         (
-            r#"
+            r"
             function useConditional() {
               if (cond) {
                 useConditionalHook();
               }
             }
-            "#,
+            ",
             None,
         ),
         // Multiple conditional hooks in same function
         (
-            r#"
+            r"
             function useConditional() {
               cond ?? useConditionalHook();
               props.cond && useConditionalHook();
               return <div>Hello world</div>;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from NoCapitalizedCallsRule ===
         // Direct capitalized call
         (
-            r#"
+            r"
             import Child from './Child';
             function Component() {
               return <>
                 {Child()}
               </>;
             }
-            "#,
+            ",
             None,
         ),
         // Method call with capitalized name
         (
-            r#"
+            r"
             import myModule from './MyModule';
             function Component() {
               return <>
                 {myModule.Child()}
               </>;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from ImpureFunctionCallsRule ===
         // Known impure function calls
         (
-            r#"
+            r"
             function Component() {
               const date = Date.now();
               const now = performance.now();
               const rand = Math.random();
               return <Foo date={date} now={now} rand={rand} />;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from NoAmbiguousJsxRule ===
         // JSX in try blocks
         (
-            r#"
+            r"
             function Component(props) {
               let el;
               try {
@@ -581,25 +581,25 @@ fn test() {
               }
               return el;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from NoRefAccessInRender ===
         // Ref access during render
         (
-            r#"
+            r"
             function Component(props) {
               const ref = useRef(null);
               const value = ref.current;
               return value;
             }
-            "#,
+            ",
             None,
         ),
         // === Ported from ReactCompilerRuleTypescript ===
         // Mutating useState value
         (
-            r#"
+            r"
             import { useState } from 'react';
             function Component(props) {
               const x: `foo${1}` = 'foo1';
@@ -607,19 +607,19 @@ fn test() {
               state.a = 1;
               return <div>{props.foo}</div>;
             }
-            "#,
+            ",
             None,
         ),
         // === Validation alignment fix regression tests ===
         // Fix 15: Local reassignment in callback produces Immutability diagnostic (not a panic)
         (
-            r#"
+            r"
             function Component(props) {
               let x = props.value;
               const handler = () => { x = 1; };
               return <div onClick={handler}>{x}</div>;
             }
-            "#,
+            ",
             None,
         ),
     ];

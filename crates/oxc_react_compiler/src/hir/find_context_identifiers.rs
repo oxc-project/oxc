@@ -779,7 +779,7 @@ mod tests {
             ast::Statement::FunctionDeclaration(f) => Some(f),
             _ => None,
         });
-        let func = func.as_ref().map(|f| f.as_ref());
+        let func = func.as_ref().map(std::convert::AsRef::as_ref);
         assert!(func.is_some(), "No function found");
         let spans = find_context_identifiers(func.unwrap());
 
@@ -846,7 +846,7 @@ mod tests {
             ast::Statement::FunctionDeclaration(f) => Some(f),
             _ => None,
         });
-        let func = func.as_ref().map(|f| f.as_ref()).unwrap();
+        let func = func.as_ref().map(std::convert::AsRef::as_ref).unwrap();
         let spans = find_context_identifiers(func);
 
         // Should have exactly one context identifier (the inner x)

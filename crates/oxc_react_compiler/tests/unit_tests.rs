@@ -1,9 +1,11 @@
-/// Unit tests ported from the original React Compiler test suite.
-///
-/// Ports of:
-/// - `__tests__/Result-test.ts` -- tests for Result type (Rust native)
-/// - `__tests__/envConfig-test.ts` -- tests for environment config validation
-/// - `__tests__/Logger-test.ts` -- tests for compilation logging
+#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
+
+// Unit tests ported from the original React Compiler test suite.
+//
+// Ports of:
+//   - `__tests__/Result-test.ts` -- tests for Result type (Rust native)
+//   - `__tests__/envConfig-test.ts` -- tests for environment config validation
+//   - `__tests__/Logger-test.ts` -- tests for compilation logging
 
 /// Print codegen output body to a string using oxc_codegen.
 fn print_codegen_body(
@@ -11,7 +13,7 @@ fn print_codegen_body(
 ) -> String {
     use oxc_codegen::{Codegen, Context, Gen};
     let mut codegen = Codegen::new();
-    for stmt in output.body.iter() {
+    for stmt in &output.body {
         stmt.print(&mut codegen, Context::default());
     }
     codegen.into_source_text()
@@ -671,7 +673,7 @@ fn test_console_readonly_output() {
     };
 
     // Full test: all console methods including global.console.log
-    let source = r#"function Component(props) {
+    let source = r"function Component(props) {
   const x = [props.a, props.b];
   console.log(x);
   console.info(x);
@@ -681,7 +683,7 @@ fn test_console_readonly_output() {
   console.table(x);
   global.console.log(x);
   return x;
-}"#;
+}";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
@@ -726,7 +728,7 @@ fn test_console_readonly_output() {
     let mut console_before_cache = false;
     for line in &lines {
         let trimmed = line.trim();
-        if trimmed.starts_with("$[") && trimmed.contains("=") && !trimmed.contains("!==") {
+        if trimmed.starts_with("$[") && trimmed.contains('=') && !trimmed.contains("!==") {
             found_cache_store = true;
         }
         if trimmed.contains("console.log") {
@@ -762,7 +764,7 @@ fn test_context_variable_reactive_scopes() {
     // Based on the capturing-func-simple-alias-iife fixture.
     // The IIFE inlining converts `y` to a context variable (StoreContext).
     // The returned `y` must be memoized.
-    let source = r#"function component(a) {
+    let source = r"function component(a) {
   let x = {a};
   let y = {};
   (function () {
@@ -770,7 +772,7 @@ fn test_context_variable_reactive_scopes() {
   })();
   mutate(y);
   return y;
-}"#;
+}";
 
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
@@ -911,7 +913,7 @@ fn test_context_variable_debug() {
     use oxc_react_compiler::hir::print_hir::print_function;
     use oxc_react_compiler::hir::{InstructionValue, ReactFunctionType};
 
-    let source = r#"function Component(p) {
+    let source = r"function Component(p) {
   let x;
   const foo = () => {
     x = {};
@@ -919,7 +921,7 @@ fn test_context_variable_debug() {
   foo();
   return x;
 }
-"#;
+";
     let allocator = oxc_allocator::Allocator::default();
     let parser_result =
         oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::jsx()).parse();
@@ -1176,7 +1178,7 @@ mod alignment_fix_tests {
             .map_err(|e| format!("Codegen failed: {e:?}"))?;
 
         let mut codegen = oxc_codegen::Codegen::new();
-        for stmt in result.body.iter() {
+        for stmt in &result.body {
             stmt.print(&mut codegen, oxc_codegen::Context::default());
         }
         Ok(codegen.into_source_text())
@@ -1186,10 +1188,10 @@ mod alignment_fix_tests {
     /// A component returning a mutable array should have that array memoized.
     #[test]
     fn test_return_terminal_freeze() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const arr = [props.a, props.b];
   return arr;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
         let output = result.unwrap();
@@ -1200,7 +1202,7 @@ mod alignment_fix_tests {
     /// Fix 2: Try/catch aliasing — call results in try blocks are aliased to catch handler.
     #[test]
     fn test_try_catch_aliasing() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   let result;
   try {
     result = fetchData(props.id);
@@ -1208,7 +1210,7 @@ mod alignment_fix_tests {
     result = defaultValue;
   }
   return <div>{result}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
     }
@@ -1217,11 +1219,11 @@ mod alignment_fix_tests {
     /// should not cause pipeline failures.
     #[test]
     fn test_method_call_local_mutate_transitive() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const obj = { method() { return props.x; } };
   const result = obj.method();
   return <div>{result}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
     }
@@ -1231,10 +1233,10 @@ mod alignment_fix_tests {
     /// already frozen when captured by the outer JSX.
     #[test]
     fn test_freeze_effect_filtering_nested_jsx() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const inner = <span>{props.a}</span>;
   return <div>{inner}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
         let output = result.unwrap();
@@ -1245,10 +1247,10 @@ mod alignment_fix_tests {
     /// should not produce spurious effects.
     #[test]
     fn test_immutable_capture_global_primitive() {
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const x = Math.random();
   return <div>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
     }
@@ -1257,10 +1259,10 @@ mod alignment_fix_tests {
     /// should compile without panics.
     #[test]
     fn test_create_from_primitive_global() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const len = props.name.length;
   return <div>{len}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
     }
@@ -1269,11 +1271,11 @@ mod alignment_fix_tests {
     /// that freeze is an edge case; basic spread usage should compile.
     #[test]
     fn test_mutable_spreads_compute_effects() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const items = [props.a, props.b];
   const copy = [...items];
   return <div>{copy}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_ok(), "Pipeline should succeed: {}", result.unwrap_err());
     }
@@ -1284,13 +1286,13 @@ mod alignment_fix_tests {
     /// that go through validate_context_variable_lvalues.
     #[test]
     fn test_context_variable_store_context_lvalue() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   let x = {};
   (function () {
     x = { a: props.a };
   })();
   return <div>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1304,11 +1306,11 @@ mod alignment_fix_tests {
     /// duplicate errors when deps are invalid).
     #[test]
     fn test_preserved_manual_memoization_valid_deps() {
-        let source = r#"import { useMemo } from 'react';
+        let source = r"import { useMemo } from 'react';
 function Component(props) {
   const x = useMemo(() => props.a + props.b, [props.a, props.b]);
   return <div>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1323,11 +1325,11 @@ function Component(props) {
     /// ensures Effect.Unknown is handled gracefully instead of causing an invariant.
     #[test]
     fn test_locals_not_reassigned_after_render_no_panic() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   let x = props.value;
   const handler = () => { x = 1; };
   return <div onClick={handler}>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         // This should produce a controlled diagnostic (Immutability error), not a panic.
         // The key test is that compile_component returns at all (doesn't panic).
@@ -1347,14 +1349,14 @@ function Component(props) {
     /// a "derived computations in effects" error.
     #[test]
     fn test_use_layout_effect_no_derived_computation_error() {
-        let source = r#"import { useState, useLayoutEffect } from 'react';
+        let source = r"import { useState, useLayoutEffect } from 'react';
 function Component(props) {
   const [state, setState] = useState(props.initial);
   useLayoutEffect(() => {
     setState(derive(props.value));
   }, [props.value]);
   return <div>{state}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1367,11 +1369,11 @@ function Component(props) {
     /// This validates the basic "validateNoRefPassedToFunction" path.
     #[test]
     fn test_pass_ref_to_function_basic() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const ref = useRef(null);
   const x = foo(ref);
   return x;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_err(),
@@ -1453,7 +1455,7 @@ function Component(props) {
     /// (renderResults || ((results, config) => <div/>))(results, { onSelect: handler })
     #[test]
     fn test_ref_iife_typeahead_pattern() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const input = useRef(null);
   const [results, setResults] = useState([]);
   const handleSelection = useCallback((result) => {
@@ -1474,7 +1476,7 @@ function Component(props) {
       ) : null}
     </div>
   );
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_err(),
@@ -1638,12 +1640,12 @@ function Component(props) {
         // This component has:
         // 1. An immutability error (modifying props)
         // 2. A ref access error (reading ref.current in render)
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const ref = useRef(null);
   props.x = 1;
   const val = ref.current;
   return val;
-}"#;
+}";
         let result = compile_component(source);
         assert!(result.is_err(), "Should produce errors, got success");
         let err = result.unwrap_err();
@@ -1661,9 +1663,7 @@ function Component(props) {
     /// The TS compiler produces a specific message format for suppressed functions.
     #[test]
     fn test_suppression_error_message_format() {
-        use oxc_react_compiler::compiler_error::{
-            CompilerDiagnostic, CompilerDiagnosticDetail, CompilerSuggestion, ErrorCategory,
-        };
+        use oxc_react_compiler::compiler_error::{CompilerDiagnostic, ErrorCategory};
 
         // Verify the suppression diagnostic structure matches TS output
         let diagnostic = CompilerDiagnostic::create(
@@ -1693,10 +1693,10 @@ function Component(props) {
             ..EnvironmentConfig::default()
         };
         // Math.random(), Date.now(), performance.now() are impure
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const rand = Math.random();
   return <div>{rand}</div>;
-}"#;
+}";
         let result = compile_component_with_env(source, config);
         assert!(result.is_err(), "Should produce an error for Math.random(), got success");
         let err = result.unwrap_err();
@@ -1710,10 +1710,10 @@ function Component(props) {
     /// should NOT produce an error.
     #[test]
     fn test_impure_function_not_detected_when_disabled() {
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const rand = Math.random();
   return <div>{rand}</div>;
-}"#;
+}";
         let result = compile_component(source);
         // Default config has validate_no_impure_functions_in_render=false,
         // so Math.random() should not produce an impure error.
@@ -1731,10 +1731,10 @@ function Component(props) {
             validate_no_impure_functions_in_render: true,
             ..EnvironmentConfig::default()
         };
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const t = Date.now();
   return <div>{t}</div>;
-}"#;
+}";
         let result = compile_component_with_env(source, config);
         assert!(result.is_err(), "Should produce an error for Date.now(), got success");
         let err = result.unwrap_err();
@@ -1747,10 +1747,10 @@ function Component(props) {
     /// Date.now() should NOT produce an error when validateNoImpureFunctionsInRender is disabled.
     #[test]
     fn test_date_now_no_error_when_disabled() {
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const t = Date.now();
   return <div>{t}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1766,10 +1766,10 @@ function Component(props) {
             validate_no_impure_functions_in_render: true,
             ..EnvironmentConfig::default()
         };
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const t = performance.now();
   return <div>{t}</div>;
-}"#;
+}";
         let result = compile_component_with_env(source, config);
         assert!(result.is_err(), "Should produce an error for performance.now(), got success");
         let err = result.unwrap_err();
@@ -1782,10 +1782,10 @@ function Component(props) {
     /// performance.now() should NOT produce an error when validateNoImpureFunctionsInRender is disabled.
     #[test]
     fn test_performance_now_no_error_when_disabled() {
-        let source = r#"function Component() {
+        let source = r"function Component() {
   const t = performance.now();
   return <div>{t}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1835,10 +1835,10 @@ function Component(props) {
     /// should be inferred as the broader type (not cause a panic).
     #[test]
     fn test_type_inference_primitive_union() {
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   const x = props.cond ? 42 : props.obj;
   return <div>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         // Should not panic; should compile or produce a controlled error
         assert!(
@@ -1854,13 +1854,13 @@ function Component(props) {
     fn test_type_inference_recursive_unification() {
         // Pattern that creates recursive unification through phi nodes:
         // a loop where a variable changes type between iterations
-        let source = r#"function Component(props) {
+        let source = r"function Component(props) {
   let x = props.initial;
   for (let i = 0; i < 10; i++) {
     x = props.cond ? x : [x];
   }
   return <div>{x}</div>;
-}"#;
+}";
         let result = compile_component(source);
         // Should not panic or stack overflow; may compile or produce a controlled error
         let _ = result;
@@ -1899,9 +1899,9 @@ function Component(props) {
     /// should produce a Todo error, matching TS lowerReorderableExpression.
     #[test]
     fn test_destructuring_default_non_reorderable_arrow() {
-        let source = r#"function Component({ onComplete = () => void 0 }) {
+        let source = r"function Component({ onComplete = () => void 0 }) {
   return <div onClick={onComplete} />;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_err(),
@@ -1918,9 +1918,9 @@ function Component(props) {
     /// Destructuring default with a literal (reorderable) should compile fine.
     #[test]
     fn test_destructuring_default_reorderable_literal() {
-        let source = r#"function Component({ value = 0 }) {
+        let source = r"function Component({ value = 0 }) {
   return <div>{value}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1932,9 +1932,9 @@ function Component(props) {
     /// Destructuring default with unary `!` (reorderable) should compile fine.
     #[test]
     fn test_destructuring_default_reorderable_unary_not() {
-        let source = r#"function Component({ flag = !false }) {
+        let source = r"function Component({ flag = !false }) {
   return <div>{String(flag)}</div>;
-}"#;
+}";
         let result = compile_component(source);
         assert!(
             result.is_ok(),
@@ -1966,7 +1966,7 @@ function Component(props) {
     fn test_no_false_positive_preserve_memo_destructured_param() {
         // Regression: `player` (destructured from `unit`) was getting a wide mutable range
         // because Assign effects from LoadLocal weren't filtered for Primitive sources.
-        let source = r#"import { useMemo, useState, useEffect } from 'react';
+        let source = r"import { useMemo, useState, useEffect } from 'react';
 export default function useUnitState(unit, biome) {
   const { info, player } = unit;
   const [currentState, setUnitState] = useState({ type: 'idle' });
@@ -1990,7 +1990,7 @@ export default function useUnitState(unit, biome) {
   }, [currentState, entity, player]);
 
   return [entity, map, props];
-}"#;
+}";
         let config = EnvironmentConfig {
             validate_preserve_existing_memoization_guarantees: true,
             enable_preserve_existing_memoization_guarantees: true,
@@ -2042,15 +2042,18 @@ export default function useUnitState(unit, biome) {
         match pipeline_result {
             Ok(output) => {
                 if let Some(recorded) = output.recorded_errors {
-                    all_errors.push_str(&format!("{recorded:?}"));
+                    use std::fmt::Write;
+                    write!(all_errors, "{recorded:?}").unwrap();
                 }
             }
             Err(error) => {
-                all_errors.push_str(&format!("{error:?}"));
+                use std::fmt::Write;
+                write!(all_errors, "{error:?}").unwrap();
             }
         }
         for diag in hir_func.env.take_diagnostics() {
-            all_errors.push_str(&format!("{diag:?}"));
+            use std::fmt::Write;
+            write!(all_errors, "{diag:?}").unwrap();
         }
 
         // Regression test: previously produced a false positive PreserveManualMemo because

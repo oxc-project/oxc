@@ -29,31 +29,31 @@ fn test() {
     use crate::tester::Tester;
     let pass = vec![
         // Valid: non-impure function calls are fine
-        r#"
+        r"
         function Component(props) {
           const x = Math.max(props.a, props.b);
           return <div>{x}</div>;
         }
-        "#,
+        ",
         // Cross-category: conditional hook triggers Hooks, not Purity
-        r#"
+        r"
         function useConditional() {
           if (cond) {
             useConditionalHook();
           }
         }
-        "#,
+        ",
     ];
     let fail = vec![
         // Known impure function calls
-        r#"
+        r"
         function Component() {
           const date = Date.now();
           const now = performance.now();
           const rand = Math.random();
           return <Foo date={date} now={now} rand={rand} />;
         }
-        "#,
+        ",
     ];
     Tester::new(Purity::NAME, Purity::PLUGIN, pass, fail).test_and_snapshot();
 }

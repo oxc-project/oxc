@@ -438,7 +438,7 @@ mod tests {
             GatingOutput::Ternary { ref wrap, .. } => {
                 assert!(matches!(wrap, TernaryWrap::ConstDeclaration { name } if name == "Foo"));
             }
-            _ => panic!("Expected Ternary output"),
+            GatingOutput::Hoisted { .. } => panic!("Expected Ternary output"),
         }
     }
 
@@ -465,7 +465,7 @@ mod tests {
                 assert_eq!(optimized_name, "Foo_optimized");
                 assert_eq!(unoptimized_name, "Foo_unoptimized");
             }
-            _ => panic!("Expected Hoisted output"),
+            GatingOutput::Ternary { .. } => panic!("Expected Hoisted output"),
         }
         // Verify the import was added
         assert!(ctx.imports.contains_key("ReactForgetFeatureFlag"));
@@ -493,7 +493,7 @@ mod tests {
                     matches!(wrap, TernaryWrap::ExportDefaultThenConst { name } if name == "Foo")
                 );
             }
-            _ => panic!("Expected Ternary output"),
+            GatingOutput::Hoisted { .. } => panic!("Expected Ternary output"),
         }
     }
 
@@ -517,7 +517,7 @@ mod tests {
             GatingOutput::Ternary { ref wrap, .. } => {
                 assert!(matches!(wrap, TernaryWrap::Inline));
             }
-            _ => panic!("Expected Ternary output"),
+            GatingOutput::Hoisted { .. } => panic!("Expected Ternary output"),
         }
     }
 
@@ -543,6 +543,6 @@ mod tests {
         let name2 = ctx.add_import_specifier(&ext_fn);
         assert_eq!(name1, name2);
         // Should only have one import specifier
-        assert_eq!(ctx.imports.get("my-module").map(|v| v.len()), Some(1));
+        assert_eq!(ctx.imports.get("my-module").map(std::vec::Vec::len), Some(1));
     }
 }
