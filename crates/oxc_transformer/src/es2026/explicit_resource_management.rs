@@ -323,7 +323,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     | StatementKindMut::ExportAllDeclaration(_) => {
                         program_body.push(stmt);
                     }
-                    Statement::export_default_declaration(ref mut export_default_decl) => {
+                    StatementKindMut::ExportDefaultDeclaration(export_default_decl) => {
                         let (var_id, span) = match &mut export_default_decl.declaration {
                             ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
                                 if class_decl.id.is_some() =>
@@ -400,7 +400,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ),
                         ));
                     }
-                    Statement::export_named_declaration(ref mut export_named_declaration) => {
+                    StatementKindMut::ExportNamedDeclaration(export_named_declaration) => {
                         let Some(ref mut decl) = export_named_declaration.declaration else {
                             program_body.push(stmt);
                             return (program_body, inner_block);
@@ -487,7 +487,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                     StatementKindMut::ClassDeclaration(class_decl) => {
                         inner_block.push(Self::transform_class_decl(class_decl, ctx));
                     }
-                    Statement::variable_declaration(ref mut var_declaration) => {
+                    StatementKindMut::VariableDeclaration(var_declaration) => {
                         if var_declaration.kind == VariableDeclarationKind::Using {
                             self.top_level_using.insert(address, false);
                         } else if var_declaration.kind == VariableDeclarationKind::AwaitUsing {

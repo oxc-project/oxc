@@ -151,7 +151,6 @@ const DISALLOW_NEW_FOR_BUILTINS: [&str; 5] = ["BigInt", "Boolean", "Number", "Sy
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const foo = new Object()",

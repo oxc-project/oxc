@@ -1188,7 +1188,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(Expression<'a>, Expression<'a>)> {
-        let Some(chain_expr) = expr.as_chain_expression() else { unreachable!() };
+        let Some(chain_expr) = expr.as_chain_expression_mut() else { unreachable!() };
 
         let element = &mut chain_expr.expression;
         if matches!(element, ChainElement::PrivateFieldExpression(_)) {
@@ -1327,7 +1327,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Some(field_expr) = expr.as_private_field_expression() else { unreachable!() };
+        let Some(field_expr) = expr.as_private_field_expression_mut() else { unreachable!() };
 
         let is_optional = field_expr.optional;
         let object = &mut field_expr.object;
@@ -1347,6 +1347,28 @@ impl<'a> ClassProperties<'a> {
         }
 
         result
+    }
+
+    fn transform_member_expression_of_chain_expression_expr(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let (is_optional, object) = match expr.kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(m) => (m.optional, &mut m.object),
+            ExpressionKindMut::ComputedMemberExpression(m) => (m.optional, &mut m.object),
+            ExpressionKindMut::PrivateFieldExpression(m) => (m.optional, &mut m.object),
+            _ => unreachable!(),
+        };
+        let object = object.get_inner_expression_mut();
+        let result = self.transform_chain_element_recursively(object, ctx)?;
+        if is_optional && !object.is_identifier_reference() {
+            let owned_object = object.take_in(ctx.ast);
+            *object = Self::wrap_conditional_check(result, owned_object, ctx);
+            None
+        } else {
+            Some(result)
+        }
     }
 
     fn transform_member_expression_of_chain_expression(
@@ -1400,7 +1422,12 @@ impl<'a> ClassProperties<'a> {
         //
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
         let result = result?;
-        let object = callee.to_member_expression_mut().object_mut();
+        let object = match callee.kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(m) => &mut m.object,
+            ExpressionKindMut::ComputedMemberExpression(m) => &mut m.object,
+            ExpressionKindMut::PrivateFieldExpression(m) => &mut m.object,
+            _ => unreachable!(),
+        };
         let (assignment, context) = self.duplicate_object(object.take_in(ctx.ast), ctx);
         *object = assignment;
         let callee = call_expr.callee.take_in(ctx.ast);
@@ -1454,13 +1481,14 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Some(chain_expr) = expr.take_in(ctx.ast).as_chain_expression() else { unreachable!() };
-        match chain_expr.unbox().expression.kind() {
+        let chain_expr = expr.take_in(ctx.ast).into_chain_expression();
+        match chain_expr.unbox().expression {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
             }
             ChainElement::CallExpression(call) => Expression::call_expression(call),
             ChainElement::TSNonNullExpression(non_null) => non_null.unbox().expression,
+            ChainElement::PrivateFieldExpression(f) => Expression::private_field_expression(f),
         }
     }
 
@@ -1542,15 +1570,19 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Some(call) = expr.as_call_expression() else { unreachable!() };
+        let Some(call) = expr.as_call_expression_mut() else { unreachable!() };
 
         // `Foo?.bar()?.zoo?.()`
         // ^^^^^^^^^^^ object
         // ^^^^^^^^^^^^^^^^^ callee is a member expression
         let callee = &mut call.callee;
-        let callee_member = callee.to_member_expression_mut();
-        let is_optional_callee = callee_member.optional();
-        let object = callee_member.object_mut().get_inner_expression_mut();
+        let (is_optional_callee, object) = match callee.kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(m) => (m.optional, &mut m.object),
+            ExpressionKindMut::ComputedMemberExpression(m) => (m.optional, &mut m.object),
+            ExpressionKindMut::PrivateFieldExpression(m) => (m.optional, &mut m.object),
+            _ => unreachable!(),
+        };
+        let object = object.get_inner_expression_mut();
 
         let context = if let Some(result) = self.transform_chain_element_recursively(object, ctx) {
             if is_optional_callee {
@@ -1653,7 +1685,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(unary_expr) = expr.as_unary_expression() else { unreachable!() };
+        let Some(unary_expr) = expr.as_unary_expression_mut() else { unreachable!() };
 
         if unary_expr.operator == UnaryOperator::Delete && unary_expr.argument.is_chain_expression()
         {
@@ -1666,7 +1698,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(unary_expr) = expr.as_unary_expression() else { unreachable!() };
+        let Some(unary_expr) = expr.as_unary_expression_mut() else { unreachable!() };
         debug_assert!(unary_expr.operator == UnaryOperator::Delete);
         debug_assert!(unary_expr.argument.is_chain_expression());
 
@@ -1716,7 +1748,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(tagged_temp_expr) = expr.as_tagged_template_expression() else { unreachable!() };
+        let Some(tagged_temp_expr) = expr.as_tagged_template_expression_mut() else { unreachable!() };
         let Some(field_expr) = tagged_temp_expr.tag.as_private_field_expression_mut() else {
             return;
         };
@@ -1829,9 +1861,7 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(private_in) = expr.take_in(ctx.ast).as_private_in_expression() else {
-            unreachable!();
-        };
+        let private_in = expr.take_in(ctx.ast).into_private_in_expression();
 
         *expr = self.transform_private_in_expression_impl(private_in, ctx);
     }

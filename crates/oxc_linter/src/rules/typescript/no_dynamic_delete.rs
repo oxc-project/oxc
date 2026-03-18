@@ -73,7 +73,6 @@ impl Rule for NoDynamicDelete {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

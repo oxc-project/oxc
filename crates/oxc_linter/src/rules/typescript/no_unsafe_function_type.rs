@@ -94,7 +94,6 @@ fn handle_function_type<'a>(identifier: &'a IdentifierReference<'a>, ctx: &LintC
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "let value: () => void;",

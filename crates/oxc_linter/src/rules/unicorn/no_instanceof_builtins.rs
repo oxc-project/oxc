@@ -241,7 +241,6 @@ impl Rule for NoInstanceofBuiltins {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("fooExclude instanceof Function", Some(serde_json::json!([{"exclude": ["Function"]}]))),

@@ -66,7 +66,6 @@ impl Rule for NoNewArray {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const array = Array.from({length: 1})",

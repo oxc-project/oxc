@@ -1,7 +1,6 @@
 //! Utilities to computed key expressions.
 
-use oxc_ast::ast::Expression;
-use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::{Expression, ExpressionKind};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 
@@ -21,7 +20,7 @@ pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
     match key.kind() {
         // Literals cannot have side effects.
         // e.g. `let x = 'x'; class C { [x] = 1; }` or `class C { ['x'] = 1; }`.
-        Expression::boolean_literal(_)
+        ExpressionKind::BooleanLiteral(_)
         | ExpressionKind::NullLiteral(_)
         | ExpressionKind::NumericLiteral(_)
         | ExpressionKind::BigIntLiteral(_)

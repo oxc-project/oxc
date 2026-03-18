@@ -76,7 +76,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators {
     // without the cost of a function call.
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(assignment_expr) = expr.as_assignment_expression() else { return };
+        let Some(assignment_expr) = expr.as_assignment_expression_mut() else { return };
 
         // `&&=` `||=` `??=`
         let Some(operator) = assignment_expr.operator.to_logical_operator() else { return };
@@ -92,7 +92,7 @@ impl<'a> LogicalAssignmentOperators {
         operator: LogicalOperator,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assignment_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assignment_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
 
         // `a &&= c` -> `a && (a = c);`
         //               ^     ^ assign_target

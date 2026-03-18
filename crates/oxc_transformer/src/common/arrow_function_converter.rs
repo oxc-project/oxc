@@ -443,10 +443,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Some(arrow_function_expr) = expr.take_in(ctx.ast).as_arrow_function_expression()
-            else {
-                unreachable!()
-            };
+            let arrow_function_expr = expr.take_in(ctx.ast).into_arrow_function_expression();
 
             *expr = Self::transform_arrow_function_expression(arrow_function_expr, ctx);
         }
@@ -640,8 +637,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if arrow_function_expr.expression {
             assert!(body.statements.len() == 1);
             let stmt = body.statements.pop().unwrap();
-            let Some(stmt) = stmt.as_expression_statement() else { unreachable!() };
-            let stmt = stmt.unbox();
+            let stmt = stmt.into_expression_statement().unbox();
             let return_statement = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
             body.statements.push(return_statement);
         }
@@ -1282,9 +1278,9 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     /// `super();` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         for (index, stmt) in statements.iter_mut().enumerate() {
-            if let Some(expr_stmt) = stmt.as_expression_statement()
+            if let Some(expr_stmt) = stmt.as_expression_statement_mut()
                 && let Some(call_expr) = expr_stmt.expression.as_call_expression_mut()
-                && call_expr.callee.is_super_expr()
+                && call_expr.callee.is_super()
             {
                 // Visit arguments in `super(x, y, z)` call.
                 // Required to handle edge case `super(super(), f = () => this)`.

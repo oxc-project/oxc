@@ -628,7 +628,7 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
                 // We can avoid a `_super` function for this common case.
                 if let Some(expr_stmt) = stmt.as_expression_statement()
                     && let Some(call_expr) = expr_stmt.expression.as_call_expression_mut()
-                    && let Some(super_) = call_expr.callee.as_super_expr()
+                    && let Some(super_) = call_expr.callee.as_super()
                 {
                     let span = super_.span;
 
@@ -695,7 +695,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     // `#[inline]` to make hot path for all other function calls as cheap as possible.
     #[inline]
     fn visit_call_expression(&mut self, call_expr: &mut CallExpression<'a>) {
-        if let Some(super_) = call_expr.callee.as_super_expr() {
+        if let Some(super_) = call_expr.callee.as_super() {
             let span = super_.span;
             self.replace_super(call_expr, span);
         }

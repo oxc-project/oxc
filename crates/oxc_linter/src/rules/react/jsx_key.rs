@@ -462,8 +462,6 @@ fn check_duplicate_keys_in_children<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintCon
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         ("fn()", None, None),

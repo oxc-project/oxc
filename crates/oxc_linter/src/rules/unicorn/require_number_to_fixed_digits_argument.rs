@@ -92,7 +92,6 @@ impl Rule for RequireNumberToFixedDigitsArgument {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "number.toFixed(0)",

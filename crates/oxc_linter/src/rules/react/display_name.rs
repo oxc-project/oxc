@@ -865,7 +865,6 @@ fn class_contains_jsx(class: &oxc_ast::ast::Class) -> bool {
 fn test() {
     use crate::tester::Tester;
 use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         (

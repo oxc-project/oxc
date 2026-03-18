@@ -14,7 +14,7 @@ use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
     Expression, ExpressionKind, ExpressionStatement, IdentifierName, ObjectExpression,
     ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement, StatementKind,
-    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
+    StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;

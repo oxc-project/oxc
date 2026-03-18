@@ -103,9 +103,9 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
             VarDeclarationsStore::create_uid_var(&ident.name, ctx)
         }
         // Reading any of these cannot have side effects, so no need for temp var
-        Expression::this_expression(_)
-        | Expression::super_expr(_)
-        | Expression::boolean_literal(_)
+        ExpressionKind::ThisExpression(_)
+        | ExpressionKind::Super(_)
+        | ExpressionKind::BooleanLiteral(_)
         | ExpressionKind::NullLiteral(_)
         | ExpressionKind::NumericLiteral(_)
         | ExpressionKind::BigIntLiteral(_)

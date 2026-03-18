@@ -103,7 +103,6 @@ impl Rule for NoCloneElement {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "/* import { cloneElement } from 'react'; */",

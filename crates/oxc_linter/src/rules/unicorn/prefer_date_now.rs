@@ -159,7 +159,6 @@ fn is_new_date(expr: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const ts = Date.now()",

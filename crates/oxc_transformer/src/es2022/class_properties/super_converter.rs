@@ -370,9 +370,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::update_expression(mut update_expr) = expr.take_in(ctx.ast) else {
-            unreachable!()
-        };
+        let mut update_expr = expr.take_in(ctx.ast).into_update_expression().unbox();
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
         else {
             unreachable!()
@@ -433,9 +431,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::update_expression(mut update_expr) = expr.take_in(ctx.ast) else {
-            unreachable!()
-        };
+        let mut update_expr = expr.take_in(ctx.ast).into_update_expression().unbox();
         let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
         else {
             unreachable!()

@@ -191,7 +191,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         // Allow `{...x} = {}` and `[{...x}] = []`.
         if !Self::has_nested_target_rest(&assign_expr.left) {
             return;
@@ -393,7 +393,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assign_expr) = expr.as_assignment_expression() else {
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else {
             return;
         };
         let mut decls = vec![];
@@ -490,7 +490,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(obj_expr) = expr.as_object_expression() else { unreachable!() };
+        let Some(obj_expr) = expr.as_object_expression_mut() else { unreachable!() };
 
         if obj_expr.properties.iter().all(|prop| !prop.is_spread()) {
             return;
@@ -628,7 +628,7 @@ impl<'a> ObjectRestSpread<'a> {
         for declarator in &mut decl.declarations {
             if Self::has_nested_object_rest(&declarator.id) {
                 let new_scope_id = Self::try_replace_statement_with_block(body, scope_id, ctx);
-                let Some(block) = body.as_block_statement() else {
+                let Some(block) = body.as_block_statement_mut() else {
                     unreachable!();
                 };
                 let mut bound_names = vec![];
@@ -673,7 +673,7 @@ impl<'a> ObjectRestSpread<'a> {
         let decl = ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
         *left = ForStatementLeft::VariableDeclaration(decl);
         Self::try_replace_statement_with_block(body, scope_id, ctx);
-        let Some(block) = body.as_block_statement() else {
+        let Some(block) = body.as_block_statement_mut() else {
             unreachable!();
         };
         let operator = AssignmentOperator::Assign;

@@ -303,7 +303,7 @@ impl<'a> OptionalChaining<'a> {
         } else {
             // Unfortunately no way to get compiler to see that this branch is provably unreachable.
             // We don't want to inline this function, to keep `enter_expression` as small as possible.
-            let Some(unary_expr) = expr.as_unary_expression() else { unreachable!() };
+            let Some(unary_expr) = expr.as_unary_expression_mut() else { unreachable!() };
             self.transform_chain_expression_impl(true, &mut unary_expr.argument, ctx)
         }
     }
@@ -364,7 +364,7 @@ impl<'a> OptionalChaining<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // Find proper context
-        let context = if let Some(member) = expr.as_member_expression_mut() {
+        let context = if let Some(mut member) = expr.as_member_expression() {
             let object = member.object_mut().get_inner_expression_mut();
             let context = if ctx.state.assumptions.pure_getters {
                 // TODO: `clone_in` causes reference loss of reference id
@@ -638,11 +638,11 @@ impl<'a> OptionalChaining<'a> {
     }
 
     fn set_chain_call_context(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(member) = expr.as_member_expression_mut() {
+        if let Some(mut member) = expr.as_member_expression() {
             let object = member.object_mut();
             // If the [`MemberExpression::object`] is a global reference, we need to assign it to a temp binding.
             // i.e `foo` -> `(_foo = foo)`
-            if object.is_super_expr() || object.is_this_expression() {
+            if object.is_super() || object.is_this_expression() {
                 self.set_this_context();
             } else {
                 let binding = object

@@ -102,7 +102,6 @@ impl Rule for NoLengthAsSliceEnd {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo.slice?.(1, foo.length)",

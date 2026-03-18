@@ -253,7 +253,6 @@ const WINDOW_SPECIFIC_EVENTS: &[&str] = &[
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "globalThis",

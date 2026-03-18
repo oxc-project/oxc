@@ -172,7 +172,6 @@ fn is_ignorable_kind(kind: &AstKind<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "Promise.race([promise, anotherPromise])",

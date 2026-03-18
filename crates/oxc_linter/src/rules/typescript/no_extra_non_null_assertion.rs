@@ -122,7 +122,6 @@ impl Rule for NoExtraNonNullAssertion {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const foo: { bar: number } | null = null; const bar = foo!.bar; ",

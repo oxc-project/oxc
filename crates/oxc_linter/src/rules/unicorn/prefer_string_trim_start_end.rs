@@ -96,7 +96,6 @@ fn get_replacement(name: &str) -> &'static str {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo.trimStart()",

@@ -202,7 +202,6 @@ impl JsxBooleanValue {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("<App foo />;", Some(serde_json::json!(["never"]))),

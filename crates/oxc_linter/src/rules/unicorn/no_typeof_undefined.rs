@@ -134,7 +134,6 @@ fn generate_fix<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (r"typeof a.b", None),

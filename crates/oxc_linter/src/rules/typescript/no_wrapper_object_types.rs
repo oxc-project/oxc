@@ -112,7 +112,6 @@ impl Rule for NoWrapperObjectTypes {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "let value: NumberLike;",

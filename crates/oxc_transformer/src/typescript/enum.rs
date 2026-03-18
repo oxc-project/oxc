@@ -103,10 +103,10 @@ impl<'a> TypeScriptEnum<'a> {
         );
 
         let has_potential_side_effect = decl.body.members.iter().any(|member| {
-            matches!(
-                member.initializer,
-                Some(Expression::new_expression(_) | Expression::call_expression(_))
-            )
+            member
+                .initializer
+                .as_ref()
+                .is_some_and(|e| e.is_new_expression() || e.is_call_expression())
         });
 
         let statements = self.transform_ts_enum_members(

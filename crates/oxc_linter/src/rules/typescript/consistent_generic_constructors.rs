@@ -454,7 +454,6 @@ fn is_built_in_typed_array(name: &str) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("const a = new Foo();", None),

@@ -460,7 +460,6 @@ fn get_event_handler_name_from_arrow_function<'a>(
 fn test() {
     use crate::tester::Tester;
 use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         ("<TestComponent onChange={this.handleChange} />", None),

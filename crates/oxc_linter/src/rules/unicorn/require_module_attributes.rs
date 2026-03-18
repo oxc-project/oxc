@@ -198,7 +198,6 @@ fn fix_empty_with_property(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"import foo from "foo""#,

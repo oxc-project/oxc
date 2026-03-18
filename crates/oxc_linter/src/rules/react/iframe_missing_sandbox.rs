@@ -216,7 +216,6 @@ fn validate_sandbox_attribute(jsx_el: &JSXAttributeItem, ctx: &LintContext) {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"<div sandbox="__unknown__" />;"#,

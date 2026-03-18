@@ -157,7 +157,6 @@ fn is_react_pure_component<'a>(class: &'a Class<'a>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

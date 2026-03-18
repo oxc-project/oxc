@@ -8,7 +8,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
 use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
-use oxc_ast::ast::{Declaration, Program, Statement};
+use oxc_ast::ast::{Declaration, Program};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::{Atom, CompactStr, Ident, SourceType};

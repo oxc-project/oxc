@@ -141,7 +141,6 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "assert(foo)",

@@ -124,7 +124,6 @@ impl Rule for PreferLiteralEnumMember {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

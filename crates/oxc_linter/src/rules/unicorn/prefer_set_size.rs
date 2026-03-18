@@ -139,7 +139,6 @@ fn is_new_set(expr: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "new Set(foo).size",

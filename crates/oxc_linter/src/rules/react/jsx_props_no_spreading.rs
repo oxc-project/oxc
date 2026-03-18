@@ -173,7 +173,6 @@ fn get_member_expr_tag_name(member_expr: &JSXMemberExpression) -> CompactStr {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

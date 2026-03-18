@@ -281,7 +281,6 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 fn test() {
     use crate::tester::Tester;
 use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "array.flatMap",

@@ -111,7 +111,6 @@ fn get_non_negative_integer_argument(argument: &Argument<'_>) -> Option<f64> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const substr = foo.substr",

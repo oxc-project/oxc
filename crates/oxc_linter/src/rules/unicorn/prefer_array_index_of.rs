@@ -136,7 +136,6 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
 fn test() {
     use crate::tester::Tester;
 use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
     let pass = vec![
         "const findIndex = foo.findIndex",
         "foo.findIndex()",

@@ -273,7 +273,6 @@ fn is_empty_object(expr: &Expression) -> bool {
 fn test() {
     use crate::tester::Tester;
 use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         ("pairs.reduce(object => ({...object, key}));", None),

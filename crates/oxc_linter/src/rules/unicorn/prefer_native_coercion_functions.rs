@@ -245,8 +245,6 @@ const ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: [&str; 7] =
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "const foo = async v => String(v)",

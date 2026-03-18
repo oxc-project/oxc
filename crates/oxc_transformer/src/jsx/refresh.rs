@@ -194,7 +194,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let var_decl_index = program.body.len();
         program.body.extend(iter::once(var_decl).chain(calls));
 
-        let Statement::variable_declaration(var_decl) = &mut program.body[var_decl_index] else {
+        let Some(var_decl) = program.body[var_decl_index].as_variable_declaration_mut() else {
             unreachable!()
         };
         var_decl.declarations = variable_declarator_items;
@@ -876,9 +876,10 @@ impl<'a> ReactRefresh<'a> {
 
         arrow.expression = false;
 
-        let Some(Statement::expression_statement(statement)) = arrow.body.statements.pop() else {
+        let Some(statement) = arrow.body.statements.pop() else {
             unreachable!("arrow function body is never empty")
         };
+        let statement = statement.into_expression_statement();
 
         arrow
             .body

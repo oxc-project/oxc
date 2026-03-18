@@ -125,7 +125,7 @@ impl<'a> ExponentiationOperator<'a> {
     // `#[inline]` so compiler knows `expr` is an `AssignmentExpression` with `IdentifierReference` on left
     #[inline]
     fn convert_identifier_assignment(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
         let AssignmentTarget::AssignmentTargetIdentifier(ident) = &mut assign_expr.left else {
             unreachable!()
@@ -196,7 +196,7 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
         let AssignmentTarget::StaticMemberExpression(member_expr) = &mut assign_expr.left else {
             unreachable!()
@@ -296,7 +296,7 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
         let AssignmentTarget::ComputedMemberExpression(member_expr) = &mut assign_expr.left else {
             unreachable!()
@@ -378,7 +378,7 @@ impl<'a> ExponentiationOperator<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression_mut() else { unreachable!() };
         let span = assign_expr.span;
         let AssignmentTarget::PrivateFieldExpression(member_expr) = &mut assign_expr.left else {
             unreachable!()

@@ -377,7 +377,6 @@ impl Rule for PreferFunctionType {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
     let pass: Vec<&str> = vec![
         "interface Foo { (): void; bar: number; }",
         "type Foo = { (): void; bar: number; };",

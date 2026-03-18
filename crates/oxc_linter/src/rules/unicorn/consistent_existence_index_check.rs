@@ -217,7 +217,6 @@ fn is_negative_one(expression: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass: Vec<&str> = vec![
         // Skip checking if indexOf() method is not a method call from a object
