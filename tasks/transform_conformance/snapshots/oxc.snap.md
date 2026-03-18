@@ -1,6 +1,6 @@
 commit: 87a048db
 
-Passed: 206/339
+Passed: 206/342
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -555,7 +555,65 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (8/90)
+# legacy-decorators (8/93)
+* oxc/accessor/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2", "a", "dec", "foo"]
+rebuilt        : ScopeId(0): ["C", "_a", "_foo$bar", "_foo$bar2"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(5) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["PropertyDescriptor", "babelHelpers"]
+rebuilt        : ["a", "babelHelpers", "dec", "foo"]
+
+* oxc/accessor-with-class-properties/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
+rebuilt        : ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(4) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["PropertyDescriptor", "WeakMap", "babelHelpers"]
+rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
+
 * oxc/class-without-name-with-decorated_class/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["dec"]
@@ -1543,6 +1601,23 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
+
+* typescript/property/decoratorOnClassAccessorProperty1/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "dec"]
+rebuilt        : ScopeId(0): ["C"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["PropertyDescriptor", "babelHelpers"]
+rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/property/decoratorOnClassProperty1/input.ts
 Bindings mismatch:
