@@ -7119,7 +7119,7 @@ Bindings mismatch:
 after transform: ScopeId(3): []
 rebuilt        : ScopeId(3): ["_class"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(16): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(22), ReferenceId(23)]
+after transform: SymbolId(16): [ReferenceId(12), ReferenceId(13), ReferenceId(15), ReferenceId(16), ReferenceId(24), ReferenceId(25)]
 rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch for "dec":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
@@ -7128,7 +7128,7 @@ Symbol scope ID mismatch for "_class":
 after transform: SymbolId(8): ScopeId(0)
 rebuilt        : SymbolId(14): ScopeId(3)
 Unresolved references mismatch:
-after transform: ["DecoratorContext", "require"]
+after transform: ["DecoratorContext", "Object", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
@@ -20379,8 +20379,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["PropertyDescriptor", "WeakMap", "require"]
-rebuilt        : ["WeakMap", "dec", "require"]
+after transform: ["Object", "PropertyDescriptor", "WeakMap", "require"]
+rebuilt        : ["Object", "WeakMap", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
 Bindings mismatch:
@@ -21710,8 +21710,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor"]
-rebuilt        : ["dec"]
+after transform: ["Object", "TypedPropertyDescriptor"]
+rebuilt        : ["Object", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass1.es6.ts
 Bindings mismatch:
@@ -22239,13 +22239,13 @@ Symbol span mismatch for "D":
 after transform: SymbolId(3): Span { start: 137, end: 138 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(3): [ReferenceId(20), ReferenceId(22)]
-rebuilt        : SymbolId(9): [ReferenceId(17), ReferenceId(27), ReferenceId(30)]
+after transform: SymbolId(3): [ReferenceId(21), ReferenceId(23)]
+rebuilt        : SymbolId(9): [ReferenceId(18), ReferenceId(28), ReferenceId(31)]
 Symbol span mismatch for "D":
 after transform: SymbolId(14): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(10): Span { start: 137, end: 138 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(14): [ReferenceId(25)]
+after transform: SymbolId(14): [ReferenceId(26)]
 rebuilt        : SymbolId(10): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -22537,8 +22537,8 @@ Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(77), ReferenceId(82), ReferenceId(33), ReferenceId(37), ReferenceId(43), ReferenceId(47), ReferenceId(52), ReferenceId(54), ReferenceId(57), ReferenceId(63), ReferenceId(67), ReferenceId(73), ReferenceId(87), ReferenceId(89)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(46), ReferenceId(52), ReferenceId(60), ReferenceId(66), ReferenceId(74), ReferenceId(80), ReferenceId(86), ReferenceId(87), ReferenceId(92)]
+after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
+rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 Symbol span mismatch for "C":
 after transform: SymbolId(19): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(7): Span { start: 57, end: 58 }
@@ -22727,8 +22727,8 @@ Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 39, end: 40 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(77), ReferenceId(82), ReferenceId(33), ReferenceId(37), ReferenceId(43), ReferenceId(47), ReferenceId(52), ReferenceId(54), ReferenceId(57), ReferenceId(63), ReferenceId(67), ReferenceId(73), ReferenceId(87), ReferenceId(89)]
-rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(46), ReferenceId(52), ReferenceId(60), ReferenceId(66), ReferenceId(74), ReferenceId(80), ReferenceId(86), ReferenceId(87), ReferenceId(92)]
+after transform: SymbolId(1): [ReferenceId(80), ReferenceId(86), ReferenceId(33), ReferenceId(38), ReferenceId(44), ReferenceId(48), ReferenceId(54), ReferenceId(56), ReferenceId(59), ReferenceId(65), ReferenceId(70), ReferenceId(76), ReferenceId(91), ReferenceId(93)]
+rebuilt        : SymbolId(6): [ReferenceId(26), ReferenceId(33), ReferenceId(41), ReferenceId(47), ReferenceId(54), ReferenceId(62), ReferenceId(69), ReferenceId(77), ReferenceId(83), ReferenceId(90), ReferenceId(91), ReferenceId(96)]
 Symbol span mismatch for "C":
 after transform: SymbolId(19): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(7): Span { start: 39, end: 40 }
@@ -22833,8 +22833,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["WeakMap", "require"]
-rebuilt        : ["WeakMap", "dec", "require"]
+after transform: ["Object", "WeakMap", "require"]
+rebuilt        : ["Object", "WeakMap", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticPrivate.ts
 Bindings mismatch:
@@ -22855,8 +22855,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["WeakMap", "WeakSet", "require"]
-rebuilt        : ["WeakMap", "WeakSet", "dec", "require"]
+after transform: ["Object", "WeakMap", "WeakSet", "require"]
+rebuilt        : ["Object", "WeakMap", "WeakSet", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-static.ts
 Bindings mismatch:
@@ -22883,13 +22883,13 @@ Symbol span mismatch for "D":
 after transform: SymbolId(3): Span { start: 199, end: 200 }
 rebuilt        : SymbolId(13): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(3): [ReferenceId(42), ReferenceId(44)]
-rebuilt        : SymbolId(13): [ReferenceId(36), ReferenceId(39), ReferenceId(42)]
+after transform: SymbolId(3): [ReferenceId(45), ReferenceId(47)]
+rebuilt        : SymbolId(13): [ReferenceId(39), ReferenceId(42), ReferenceId(45)]
 Symbol span mismatch for "D":
 after transform: SymbolId(16): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(14): Span { start: 199, end: 200 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(16): [ReferenceId(47)]
+after transform: SymbolId(16): [ReferenceId(50)]
 rebuilt        : SymbolId(14): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -22907,8 +22907,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["dec", "require"]
+after transform: ["Object", "require"]
+rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivate.ts
 Bindings mismatch:
@@ -22947,13 +22947,13 @@ Symbol span mismatch for "D":
 after transform: SymbolId(2): Span { start: 85, end: 86 }
 rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(2): [ReferenceId(23), ReferenceId(25)]
-rebuilt        : SymbolId(10): [ReferenceId(13), ReferenceId(26), ReferenceId(29)]
+after transform: SymbolId(2): [ReferenceId(24), ReferenceId(26)]
+rebuilt        : SymbolId(10): [ReferenceId(14), ReferenceId(27), ReferenceId(30)]
 Symbol span mismatch for "D":
 after transform: SymbolId(16): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(11): Span { start: 85, end: 86 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(16): [ReferenceId(28)]
+after transform: SymbolId(16): [ReferenceId(29)]
 rebuilt        : SymbolId(11): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -22965,8 +22965,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["require"]
-rebuilt        : ["dec", "require"]
+after transform: ["Object", "require"]
+rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticPrivate.ts
 Bindings mismatch:
@@ -23103,7 +23103,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage", "_z_accessor_storage2", "dec"]
 rebuilt        : ScopeId(0): ["_C", "_assertClassBrand", "_classPrivateFieldInitSpec", "_decorateMetadata", "_defineProperty", "_get_x", "_get_z", "_method", "_set_x", "_set_z", "_y", "_z_accessor_storage2"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(17): [ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(37), ReferenceId(38), ReferenceId(40), ReferenceId(41), ReferenceId(42), ReferenceId(50), ReferenceId(51), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(57), ReferenceId(58), ReferenceId(60), ReferenceId(61), ReferenceId(62)]
+after transform: SymbolId(17): [ReferenceId(30), ReferenceId(31), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(38), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(52), ReferenceId(53), ReferenceId(54), ReferenceId(56), ReferenceId(57), ReferenceId(60), ReferenceId(61), ReferenceId(63), ReferenceId(65), ReferenceId(66)]
 rebuilt        : SymbolId(2): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"

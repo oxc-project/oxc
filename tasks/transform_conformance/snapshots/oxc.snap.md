@@ -786,8 +786,14 @@ rebuilt        : SymbolId(15): [ReferenceId(52)]
 
 * oxc/metadata/getter-setter-method/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Getter", "Setter", "dec"]
-rebuilt        : ScopeId(0): ["Getter", "Setter"]
+after transform: ScopeId(0): ["Getter", "Setter", "UntypedGetter", "UntypedSetter", "dec"]
+rebuilt        : ScopeId(0): ["Getter", "Setter", "UntypedGetter", "UntypedSetter"]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -801,8 +807,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Number", "PropertyDescriptor", "String", "babelHelpers"]
-rebuilt        : ["Function", "Number", "String", "babelHelpers", "dec"]
+after transform: ["Function", "Number", "Object", "PropertyDescriptor", "String", "babelHelpers"]
+rebuilt        : ["Function", "Number", "Object", "String", "babelHelpers", "dec"]
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
