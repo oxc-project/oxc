@@ -234,6 +234,27 @@ macro_rules! inherit_variants {
                 self.as_expression().unwrap()
             }
 
+            /// Get a mutable Expression view of this parent enum variant.
+            ///
+            /// Returns `Option<Expression<'a>>` by value. The Expression wraps a tagged pointer
+            /// to the same arena data as the parent enum's Box, so mutations through the
+            /// Expression are visible through the parent enum.
+            ///
+            /// NOTE: Changing the Expression's variant (discriminant) will NOT be reflected
+            /// in the parent enum. Only data mutations are propagated.
+            #[inline]
+            pub fn as_expression_mut(&mut self) -> Option<Expression<'a>> {
+                self.as_expression()
+            }
+
+            /// Get a mutable Expression view of this parent enum variant.
+            /// # Panic
+            /// Panics if not convertible.
+            #[inline]
+            pub fn to_expression_mut(&mut self) -> Expression<'a> {
+                self.as_expression().unwrap()
+            }
+
             /// Convert to `Expression`, consuming self.
             /// # Panic
             /// Panics if not convertible.

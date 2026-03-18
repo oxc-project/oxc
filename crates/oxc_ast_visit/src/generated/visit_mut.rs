@@ -16,6 +16,7 @@ use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKindMut;
 use oxc_ast::ast_kind::AstType;
 
 use walk_mut::*;
@@ -1372,56 +1373,62 @@ pub mod walk_mut {
 
     pub fn walk_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Expression<'a>) {
         // No `AstType` for this type
-        match it {
-            Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            Expression::NullLiteral(it) => visitor.visit_null_literal(it),
-            Expression::NumericLiteral(it) => visitor.visit_numeric_literal(it),
-            Expression::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            Expression::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
-            Expression::StringLiteral(it) => visitor.visit_string_literal(it),
-            Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
-            Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
-            Expression::Super(it) => visitor.visit_super(it),
-            Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => visitor.visit_await_expression(it),
-            Expression::BinaryExpression(it) => visitor.visit_binary_expression(it),
-            Expression::CallExpression(it) => visitor.visit_call_expression(it),
-            Expression::ChainExpression(it) => visitor.visit_chain_expression(it),
-            Expression::ClassExpression(it) => visitor.visit_class(it),
-            Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
+        match it.kind_mut() {
+            ExpressionKindMut::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
+            ExpressionKindMut::NullLiteral(it) => visitor.visit_null_literal(it),
+            ExpressionKindMut::NumericLiteral(it) => visitor.visit_numeric_literal(it),
+            ExpressionKindMut::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
+            ExpressionKindMut::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
+            ExpressionKindMut::StringLiteral(it) => visitor.visit_string_literal(it),
+            ExpressionKindMut::TemplateLiteral(it) => visitor.visit_template_literal(it),
+            ExpressionKindMut::Identifier(it) => visitor.visit_identifier_reference(it),
+            ExpressionKindMut::MetaProperty(it) => visitor.visit_meta_property(it),
+            ExpressionKindMut::Super(it) => visitor.visit_super(it),
+            ExpressionKindMut::ArrayExpression(it) => visitor.visit_array_expression(it),
+            ExpressionKindMut::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
+            ExpressionKindMut::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
+            ExpressionKindMut::AwaitExpression(it) => visitor.visit_await_expression(it),
+            ExpressionKindMut::BinaryExpression(it) => visitor.visit_binary_expression(it),
+            ExpressionKindMut::CallExpression(it) => visitor.visit_call_expression(it),
+            ExpressionKindMut::ChainExpression(it) => visitor.visit_chain_expression(it),
+            ExpressionKindMut::ClassExpression(it) => visitor.visit_class(it),
+            ExpressionKindMut::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
+            ExpressionKindMut::FunctionExpression(it) => {
                 let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
-            Expression::ImportExpression(it) => visitor.visit_import_expression(it),
-            Expression::LogicalExpression(it) => visitor.visit_logical_expression(it),
-            Expression::NewExpression(it) => visitor.visit_new_expression(it),
-            Expression::ObjectExpression(it) => visitor.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => visitor.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => {
+            ExpressionKindMut::ImportExpression(it) => visitor.visit_import_expression(it),
+            ExpressionKindMut::LogicalExpression(it) => visitor.visit_logical_expression(it),
+            ExpressionKindMut::NewExpression(it) => visitor.visit_new_expression(it),
+            ExpressionKindMut::ObjectExpression(it) => visitor.visit_object_expression(it),
+            ExpressionKindMut::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
+            ExpressionKindMut::SequenceExpression(it) => visitor.visit_sequence_expression(it),
+            ExpressionKindMut::TaggedTemplateExpression(it) => {
                 visitor.visit_tagged_template_expression(it)
             }
-            Expression::ThisExpression(it) => visitor.visit_this_expression(it),
-            Expression::UnaryExpression(it) => visitor.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
-            Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
-            Expression::JSXElement(it) => visitor.visit_jsx_element(it),
-            Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => {
+            ExpressionKindMut::ThisExpression(it) => visitor.visit_this_expression(it),
+            ExpressionKindMut::UnaryExpression(it) => visitor.visit_unary_expression(it),
+            ExpressionKindMut::UpdateExpression(it) => visitor.visit_update_expression(it),
+            ExpressionKindMut::YieldExpression(it) => visitor.visit_yield_expression(it),
+            ExpressionKindMut::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
+            ExpressionKindMut::JSXElement(it) => visitor.visit_jsx_element(it),
+            ExpressionKindMut::JSXFragment(it) => visitor.visit_jsx_fragment(it),
+            ExpressionKindMut::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
+            ExpressionKindMut::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
+            ExpressionKindMut::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
+            ExpressionKindMut::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
+            ExpressionKindMut::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
-            Expression::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
-            match_member_expression!(Expression) => {
-                visitor.visit_member_expression(it.to_member_expression_mut())
+            ExpressionKindMut::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
+            ExpressionKindMut::ComputedMemberExpression(it) => {
+                visitor.visit_computed_member_expression(it)
+            }
+            ExpressionKindMut::StaticMemberExpression(it) => {
+                visitor.visit_static_member_expression(it)
+            }
+            ExpressionKindMut::PrivateFieldExpression(it) => {
+                visitor.visit_private_field_expression(it)
             }
         }
     }
@@ -1497,7 +1504,7 @@ pub mod walk_mut {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                visitor.visit_expression(it.to_expression_mut())
+                { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); }
             }
         }
     }
@@ -1550,7 +1557,7 @@ pub mod walk_mut {
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
-            match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression_mut()),
+            match_expression!(PropertyKey) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
         }
     }
 
@@ -1702,7 +1709,7 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
-            match_expression!(Argument) => visitor.visit_expression(it.to_expression_mut()),
+            match_expression!(Argument) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
         }
     }
 
@@ -2226,7 +2233,7 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            match_expression!(ForStatementInit) => visitor.visit_expression(it.to_expression_mut()),
+            match_expression!(ForStatementInit) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
         }
     }
 
@@ -2994,7 +3001,7 @@ pub mod walk_mut {
                 visitor.visit_ts_interface_declaration(it)
             }
             match_expression!(ExportDefaultDeclarationKind) => {
-                visitor.visit_expression(it.to_expression_mut())
+                { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); }
             }
         }
     }
@@ -3222,7 +3229,7 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
-            match_expression!(JSXExpression) => visitor.visit_expression(it.to_expression_mut()),
+            match_expression!(JSXExpression) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
         }
     }
 
@@ -4529,7 +4536,7 @@ pub mod walk_mut {
                     visitor.visit_spread_element(spread);
                 }
                 _ => {
-                    visitor.visit_expression(el.to_expression_mut());
+                    { let mut expr = el.to_expression_mut(); visitor.visit_expression(&mut expr); }
                 }
             }
         }
