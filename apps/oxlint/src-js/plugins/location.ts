@@ -166,7 +166,7 @@ function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
     high = lineStartIndices.length,
     mid: number;
   do {
-    mid = ((low + high) / 2) | 0; // Use bitwise OR to floor the division
+    mid = (low + high) >>> 1;
     if (offset < lineStartIndices[mid]) {
       high = mid;
     } else {
