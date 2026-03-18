@@ -2,7 +2,7 @@ commit: dc0a3516
 
 minifier_test262 Summary:
 AST Parsed     : 44423/44423 (100.00%)
-Positive Passed: 44416/44423 (99.98%)
+Positive Passed: 44415/44423 (99.98%)
 Compress: tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toLocaleString/lone-options-accepted.js
 
 Compress: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toLocaleString/lone-options-accepted.js
@@ -16,4 +16,6 @@ Compress: tasks/coverage/test262/test/language/statements/class/elements/private
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-field-with-initialized-id-is-visible-in-computed-properties.js
 
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-method-is-visible-in-computed-properties.js
+
+Compress: tasks/coverage/test262/test/language/statements/function/S13.2.2_A4_T2.js
 

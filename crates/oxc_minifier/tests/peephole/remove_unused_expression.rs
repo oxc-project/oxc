@@ -356,8 +356,12 @@ fn no_side_effects() {
     check("export function f() {}");
     check("const f = function() {}");
     check("const f = () => {}");
-    check("async function f() {}");
-    check("function* f() {}");
+
+    // Generators and async functions have observable side effects (creating iterator objects),
+    // so they should NOT be marked as no_side_effects.
+    test_same("async function f() {} f()");
+    test_same("function* f() {} f()");
+    test_same("async function* f() {} f()");
 
     // Non-empty functions should NOT be marked as no_side_effects.
     test_same("function f() { foo() } f()");

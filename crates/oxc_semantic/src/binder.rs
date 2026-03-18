@@ -106,10 +106,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             && match init {
                 Expression::FunctionExpression(func) => {
                     func.pure
-                        || (func
-                            .body
-                            .as_ref()
-                            .is_some_and(|b| b.directives.is_empty() && b.statements.is_empty())
+                        || (!func.generator
+                            && !func.r#async
+                            && func
+                                .body
+                                .as_ref()
+                                .is_some_and(|b| {
+                                    b.directives.is_empty() && b.statements.is_empty()
+                                })
                             && func.params.is_simple_parameter_list())
                 }
                 Expression::ArrowFunctionExpression(func) => {
@@ -167,10 +171,14 @@ impl<'a> Binder<'a> for Function<'a> {
             ident.symbol_id.set(Some(symbol_id));
 
             // Save `@__NO_SIDE_EFFECTS__`, or mark empty functions with simple parameters.
-            let is_empty_fn = self
-                .body
-                .as_ref()
-                .is_some_and(|b| b.directives.is_empty() && b.statements.is_empty())
+            // Exclude generators and async functions as they have observable side effects
+            // (e.g., creating iterator/async iterator objects).
+            let is_empty_fn = !self.generator
+                && !self.r#async
+                && self
+                    .body
+                    .as_ref()
+                    .is_some_and(|b| b.directives.is_empty() && b.statements.is_empty())
                 && self.params.is_simple_parameter_list();
             if self.pure || is_empty_fn {
                 builder.scoping.no_side_effects.insert(symbol_id);
