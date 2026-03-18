@@ -352,6 +352,21 @@ fn no_side_effects() {
     check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
     check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+
+    // Empty functions with simple parameters are side-effect-free.
+    check("function f() {}");
+    check("function f(a) {}");
+    check("function f(a, b) {}");
+    check("export function f() {}");
+    check("const f = function() {}");
+    check("const f = () => {}");
+    check("async function f() {}");
+    check("function* f() {}");
+
+    // Non-empty functions should NOT be marked as no_side_effects.
+    test_same("function f() { foo() } f()");
+    // Calls to `new` on non-empty functions should not be removed.
+    test_same("function f() { foo() } new f()");
 }
 
 #[test]

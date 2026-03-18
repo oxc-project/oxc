@@ -98,13 +98,27 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             });
         }
 
-        // Save `@__NO_SIDE_EFFECTS__` for function initializers.
+        // Save `@__NO_SIDE_EFFECTS__` for function initializers,
+        // or mark empty functions with simple parameters as side-effect-free.
         if let BindingPattern::BindingIdentifier(id) = &self.id
             && let Some(symbol_id) = id.symbol_id.get()
             && let Some(init) = &self.init
             && match init {
-                Expression::FunctionExpression(func) => func.pure,
-                Expression::ArrowFunctionExpression(func) => func.pure,
+                Expression::FunctionExpression(func) => {
+                    func.pure
+                        || (func
+                            .body
+                            .as_ref()
+                            .is_some_and(|b| b.directives.is_empty() && b.statements.is_empty())
+                            && func.params.is_simple_parameter_list())
+                }
+                Expression::ArrowFunctionExpression(func) => {
+                    func.pure
+                        || (!func.expression
+                            && func.body.directives.is_empty()
+                            && func.body.statements.is_empty()
+                            && func.params.is_simple_parameter_list())
+                }
                 _ => false,
             }
         {
@@ -152,8 +166,13 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
-            // Save `@__NO_SIDE_EFFECTS__`
-            if self.pure {
+            // Save `@__NO_SIDE_EFFECTS__`, or mark empty functions with simple parameters.
+            let is_empty_fn = self
+                .body
+                .as_ref()
+                .is_some_and(|b| b.directives.is_empty() && b.statements.is_empty())
+                && self.params.is_simple_parameter_list();
+            if self.pure || is_empty_fn {
                 builder.scoping.no_side_effects.insert(symbol_id);
             }
         }
