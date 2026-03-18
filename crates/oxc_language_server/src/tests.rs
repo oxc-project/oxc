@@ -1950,8 +1950,16 @@ mod test_suite {
         assert_eq!(params.uri, file.parse().unwrap());
         assert_eq!(params.diagnostics.len(), 1);
 
-        // On close the workspace shuts down and clears the pushed diagnostics.
-        server.shutdown_with_diagnostic_clear(2, vec![file.parse().unwrap()]).await;
+        // Closing the file shuts down the dynamic workspace and clears the pushed diagnostics.
+        server.send_request(did_close(file)).await;
+        let clear_notification = server.recv_notification().await;
+        assert_eq!(clear_notification.method(), "textDocument/publishDiagnostics");
+        let clear_params: PublishDiagnosticsParams =
+            serde_json::from_value(clear_notification.params().unwrap().clone()).unwrap();
+        assert_eq!(clear_params.uri, file.parse().unwrap());
+        assert!(clear_params.diagnostics.is_empty(), "diagnostics should be cleared on close");
+
+        server.shutdown(2).await;
     }
 
     #[tokio::test]

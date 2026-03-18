@@ -523,89 +523,77 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWorkspaceFolders>
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
-        let mut workers = self.workspace_workers.write().await;
-        let mut cleared_diagnostics = vec![];
-        let mut added_registrations = vec![];
-        let mut removed_registrations = vec![];
+        let capabilities = self.capabilities.get();
+        let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
 
-        // When workspace folders are added while we are in single-file mode, exit that mode
-        // and shut down any dynamically-created single-file workers before the new
-        // explicit workspace workers are added.
-        if !params.event.added.is_empty() && self.single_file_mode.load(Ordering::Relaxed) {
-            self.single_file_mode.store(false, Ordering::Relaxed);
+        // === Phase 1: Update worker state (brief write lock, no async I/O) ===
+        // Extract workers that need to be shut down and update the mode flags.
+        let mut workers_to_shutdown: Vec<WorkspaceWorker> = vec![];
+        {
+            let mut workers = self.workspace_workers.write().await;
 
-            // Shut down all existing single-file workers.
-            for worker in workers.drain(..) {
-                let (uris, unregistrations) = worker.shutdown().await;
-                cleared_diagnostics.extend(uris);
-                removed_registrations.extend(unregistrations);
+            // When workspace folders are added while we are in single-file mode, exit that mode
+            // and collect all dynamically-created single-file workers for shutdown.
+            if !params.event.added.is_empty() && self.single_file_mode.load(Ordering::Relaxed) {
+                self.single_file_mode.store(false, Ordering::Relaxed);
+                workers_to_shutdown.extend(workers.drain(..));
             }
-        }
 
-        for folder in params.event.removed {
-            let Some((index, worker)) =
-                workers.iter().enumerate().find(|(_, worker)| worker.get_root_uri() == &folder.uri)
-            else {
-                continue;
-            };
+            for folder in &params.event.removed {
+                if let Some(idx) = workers.iter().position(|w| w.get_root_uri() == &folder.uri) {
+                    workers_to_shutdown.push(workers.swap_remove(idx));
+                }
+            }
+
+            // If all workspace folders have been removed, enter single-file mode so that
+            // subsequent file opens will create workers dynamically.
+            if workers.is_empty() && params.event.added.is_empty() {
+                self.single_file_mode.store(true, Ordering::Relaxed);
+            }
+        } // write lock released here
+
+        // === Phase 2: Shut down removed workers (no lock held) ===
+        let mut cleared_diagnostics = vec![];
+        let mut removed_registrations = vec![];
+        for worker in workers_to_shutdown {
             let (uris, unregistrations) = worker.shutdown().await;
             cleared_diagnostics.extend(uris);
             removed_registrations.extend(unregistrations);
-            workers.remove(index);
         }
 
-        // If all workspace folders have been removed, enter single-file mode so that
-        // subsequent file opens will create workers dynamically.
-        if workers.is_empty() && params.event.added.is_empty() {
-            self.single_file_mode.store(true, Ordering::Relaxed);
+        // === Phase 3: Request configuration and start new workers (no lock held) ===
+        let configurations = if capabilities.is_some_and(|c| c.workspace_configuration) {
+            self.request_workspace_configuration(
+                params.event.added.iter().map(|w| &w.uri).collect(),
+            )
+            .await
+        } else {
+            vec![]
+        };
+
+        let mut new_workers = vec![];
+        let mut added_registrations = vec![];
+        for (index, folder) in params.event.added.into_iter().enumerate() {
+            let worker = WorkspaceWorker::new(
+                folder.uri,
+                Arc::clone(&self.tool_builders),
+                diagnostic_mode.clone(),
+            );
+            let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
+            worker.start_worker(options.clone()).await;
+            added_registrations.extend(worker.init_watchers().await);
+            new_workers.push(worker);
         }
 
-        let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        // === Phase 4: Insert new workers (brief write lock, no async I/O) ===
+        self.workspace_workers.write().await.extend(new_workers);
 
+        // === Phase 5: Clear diagnostics and update client watchers (no lock held) ===
         if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
             self.clear_diagnostics(cleared_diagnostics).await;
         }
 
-        // client support `workspace/configuration` request
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
-        {
-            let configurations = self
-                .request_workspace_configuration(
-                    params.event.added.iter().map(|w| &w.uri).collect(),
-                )
-                .await;
-
-            for (index, folder) in params.event.added.into_iter().enumerate() {
-                let worker = WorkspaceWorker::new(
-                    folder.uri,
-                    Arc::clone(&self.tool_builders),
-                    diagnostic_mode.clone(),
-                );
-                // get the configuration from the response and init the linter
-                let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
-                worker.start_worker(options.clone()).await;
-
-                added_registrations.extend(worker.init_watchers().await);
-                workers.push(worker);
-            }
-        // client does not support the request
-        } else {
-            for folder in params.event.added {
-                let worker = WorkspaceWorker::new(
-                    folder.uri,
-                    Arc::clone(&self.tool_builders),
-                    diagnostic_mode.clone(),
-                );
-                // use default options
-                worker.start_worker(serde_json::Value::Null).await;
-                added_registrations.extend(worker.init_watchers().await);
-                workers.push(worker);
-            }
-        }
-
-        // tell client to stop / start watching for files
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+        if capabilities.is_some_and(|c| c.dynamic_watchers) {
             if !added_registrations.is_empty()
                 && let Err(err) = self.client.register_capability(added_registrations).await
             {
@@ -1061,8 +1049,7 @@ impl Backend {
             }
         }
 
-        // Request workspace configuration before acquiring the write lock so we don't
-        // block other readers for longer than necessary.
+        // Request workspace configuration before any lock so we don't block other tasks.
         let capabilities = self.capabilities.get();
         let options = if capabilities.is_some_and(|c| c.workspace_configuration) {
             let configs = self.request_workspace_configuration(vec![&parent_uri]).await;
@@ -1073,25 +1060,32 @@ impl Backend {
 
         let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
 
-        let mut workers = self.workspace_workers.write().await;
-
-        // Double-check: a concurrent did_open may have already created a worker.
-        if Self::find_worker_for_uri(&workers, uri).is_some() {
-            return;
-        }
-
+        // Create and initialize the worker before acquiring the write lock to minimize
+        // contention: start_worker and init_watchers can be relatively expensive.
         debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
-
         let worker =
             WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builders), diagnostic_mode);
-
         worker.start_worker(options).await;
-
         let registrations = if capabilities.is_some_and(|c| c.dynamic_watchers) {
             worker.init_watchers().await
         } else {
             vec![]
         };
+
+        // Acquire the write lock to insert the worker.
+        let mut workers = self.workspace_workers.write().await;
+
+        // Re-check mode: a concurrent did_change_workspace_folders may have exited
+        // single-file mode while we were initializing the worker.
+        // Double-check: a concurrent did_open may have already created a worker for this URI.
+        if !self.single_file_mode.load(Ordering::Relaxed)
+            || Self::find_worker_for_uri(&workers, uri).is_some()
+        {
+            // Discard the worker we created — shut it down to release its resources.
+            drop(workers);
+            worker.shutdown().await;
+            return;
+        }
 
         workers.push(worker);
         drop(workers);
@@ -1106,28 +1100,33 @@ impl Backend {
     /// In single file mode, shuts down and removes the [WorkspaceWorker] whose root URI
     /// matches `worker_root_uri` when no open files remain associated with that workspace.
     async fn try_shutdown_empty_workspace(&self, worker_root_uri: &Uri) {
-        let mut workers = self.workspace_workers.write().await;
+        // Check open files and extract the worker to shut down — all under the write lock
+        // but without performing any async I/O while the lock is held.
+        let worker = {
+            let mut workers = self.workspace_workers.write().await;
 
-        // Check whether any currently open file is still served by this worker.
-        let open_uris = self.file_system.read().await.keys();
-        let has_open_files = open_uris.iter().any(|open_uri| {
-            Self::find_worker_for_uri(&workers, open_uri)
-                .is_some_and(|w| w.get_root_uri() == worker_root_uri)
-        });
+            // Check whether any currently open file is still served by this worker.
+            let open_uris = self.file_system.read().await.keys();
+            let has_open_files = open_uris.iter().any(|open_uri| {
+                Self::find_worker_for_uri(&workers, open_uri)
+                    .is_some_and(|w| w.get_root_uri() == worker_root_uri)
+            });
 
-        if has_open_files {
-            return;
-        }
+            if has_open_files {
+                return;
+            }
 
-        let Some(idx) = workers.iter().position(|w| w.get_root_uri() == worker_root_uri) else {
-            return;
-        };
+            let Some(idx) = workers.iter().position(|w| w.get_root_uri() == worker_root_uri) else {
+                return;
+            };
 
-        debug!("single file mode: shutting down empty workspace {}", worker_root_uri.as_str());
+            debug!("single file mode: shutting down empty workspace {}", worker_root_uri.as_str());
 
-        let (uris, unregistrations) = workers[idx].shutdown().await;
-        workers.remove(idx);
-        drop(workers);
+            workers.swap_remove(idx)
+        }; // write lock released here
+
+        // Shut down the worker without holding the write lock.
+        let (uris, unregistrations) = worker.shutdown().await;
 
         let diagnostic_mode =
             self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
