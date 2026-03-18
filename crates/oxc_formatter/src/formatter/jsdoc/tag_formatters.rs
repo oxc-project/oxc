@@ -135,7 +135,7 @@ impl JsdocFormatter<'_, '_> {
                     // Reject pseudo-code that parses as valid JS but produces
                     // structurally different output (e.g., `{undefined}('popup', 'options')`
                     // parsed as block statement + expression). If the line count
-                    // more than doubles, the code was likely mis-interpreted.
+                    // more than doubles, the code was likely misinterpreted.
                     let input_lines = code.lines().count();
                     let output_lines = f.lines().count();
                     output_lines <= input_lines * 2 + 1

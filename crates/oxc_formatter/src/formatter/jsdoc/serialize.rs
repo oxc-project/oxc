@@ -1182,7 +1182,6 @@ mod tests {
         assert_eq!(fmt_type(""), None);
         // Quote conversion: single → double (default QuoteStyle::Double)
         let result = fmt_type("import('eslint').Linter.Config");
-        println!("Result: {:?}", result);
         assert_eq!(result, Some("import(\"eslint\").Linter.Config".to_string()));
     }
 

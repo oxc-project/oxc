@@ -55,3 +55,4 @@ consts = "consts"
 [default.extend-identifiers]
 IIFEs = "IIFEs"
 allowIIFEs = "allowIIFEs"
+TAGS_PEV_FORMATE_DESCRIPTION = "TAGS_PEV_FORMATE_DESCRIPTION"
