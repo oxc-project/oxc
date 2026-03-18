@@ -155,9 +155,9 @@ impl<'a> PeepholeOptimizations {
     pub fn extract_id_or_assign_to_id<'b>(
         expr: &'b Expression<'a>,
     ) -> Option<&'b IdentifierReference<'a>> {
-        match expr.kind_mut() {
-            ExpressionKindMut::Identifier(id) => Some(id),
-            ExpressionKindMut::AssignmentExpression(assign_expr) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(id) => Some(id),
+            ExpressionKind::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::Assign
                     && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
                 {
@@ -188,11 +188,10 @@ impl<'a> PeepholeOptimizations {
         // Since codes relying on the fact that function's name is undefined should be rare,
         // we do this compression even if `keep_names` is enabled.
 
-        let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::identifier(read_id_ref),
-        ) = (&expr.left, &logical_expr.left)
-        else {
+        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &expr.left else {
+            return;
+        };
+        let Some(read_id_ref) = logical_expr.left.as_identifier() else {
             return;
         };
         // It should also early return when the reference might refer to a reference value created by a with statement

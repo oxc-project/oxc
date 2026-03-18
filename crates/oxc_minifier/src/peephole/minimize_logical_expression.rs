@@ -1,5 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_ast::ast::{ExpressionKind, ExpressionKindMut};
 use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
@@ -85,11 +86,10 @@ impl<'a> PeepholeOptimizations {
             Undefined,
         }
 
-        let (
-            Expression::binary_expression(left_binary_expr),
-            Expression::binary_expression(right_binary_expr),
-        ) = (left, right)
-        else {
+        let (Some(left_binary_expr), Some(right_binary_expr)) = (
+            left.as_binary_expression_mut(),
+            right.as_binary_expression_mut(),
+        ) else {
             return None;
         };
         if left_binary_expr.operator != find_op || right_binary_expr.operator != find_op {
@@ -128,9 +128,7 @@ impl<'a> PeepholeOptimizations {
                 LeftPairValueResult::Null(_) => ctx.is_expression_undefined(a).then_some(None),
                 LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
             },
-            |b| {
-                if let Some(id) = b { Some(id) }.as_identifier_mut() else { None }
-            },
+            |b| b.as_identifier(),
         )?;
 
         if left_id_name != right_id.name {
@@ -165,27 +163,23 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::identifier(read_id_ref),
-        ) = (assignment_target, expr)
+        if let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = assignment_target
+            && let Some(read_id_ref) = expr.as_identifier()
         {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
             if let MemberExpression::ComputedMemberExpression(e) = write_expr
-                && !matches!(
-                    e.expression,
-                    Expression::string_literal(_) | Expression::numeric_literal(_)
-                )
+                && !e.expression.is_string_literal()
+                && !e.expression.is_numeric_literal()
             {
                 return false;
             }
-            let has_same_object = match &write_expr.object() {
+            let has_same_object = match write_expr.object().kind() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                Expression::identifier(ident) => !ctx.is_global_reference(ident),
-                Expression::this_expression(_) => {
+                ExpressionKind::Identifier(ident) => !ctx.is_global_reference(ident),
+                ExpressionKind::ThisExpression(_) => {
                     expr.as_member_expression().is_some_and(|read_expr| {
                         read_expr.object().is_this_expression()
                     })
@@ -213,10 +207,11 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(e) = expr.as_logical_expression_mut() else { return };
-        if let Some(sequence_expr) = e.right .as_sequence_expression(){
-            let Some(Expression::assignment_expression(assignment_expr)) =
-                sequence_expr.expressions.last()
-            else {
+        if let Some(sequence_expr) = e.right.as_sequence_expression() {
+            let Some(last) = sequence_expr.expressions.last() else {
+                return;
+            };
+            let Some(assignment_expr) = last.as_assignment_expression() else {
                 return;
             };
             if assignment_expr.operator != AssignmentOperator::Assign {
@@ -238,27 +233,24 @@ impl<'a> PeepholeOptimizations {
             }
 
             let Some(sequence_expr) = &mut e.right.as_sequence_expression_mut() else { return };
-            let Some(Expression::assignment_expression(mut assignment_expr)) =
-                sequence_expr.expressions.pop()
-            else {
-                unreachable!()
-            };
+            let last = sequence_expr.expressions.pop().unwrap();
+            let mut assignment_expr_box = last.into_assignment_expression();
 
-            Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+            Self::mark_assignment_target_as_read(&assignment_expr_box.left, ctx);
 
-            let assign_value = assignment_expr.right.take_in(ctx.ast);
+            let assign_value = assignment_expr_box.right.take_in(ctx.ast);
             sequence_expr.expressions.push(assign_value);
             *expr = ctx.ast.expression_assignment(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(ctx.ast),
+                assignment_expr_box.left.take_in(ctx.ast),
                 e.right.take_in(ctx.ast),
             );
             ctx.state.changed = true;
             return;
         }
 
-        let Some(assignment_expr) = &e.right.as_assignment_expression_mut() else {
+        let Some(assignment_expr) = e.right.as_assignment_expression() else {
             return;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {

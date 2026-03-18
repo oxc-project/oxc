@@ -1,5 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_ast::ast::StatementKind;
 
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
@@ -15,22 +16,23 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-        if let Some(expr_stmt) = if_stmt.consequent .as_expression_statement_mut(){
+        if let Some(expr_stmt) = if_stmt.consequent.as_expression_statement_mut() {
             if if_stmt.alternate.is_none() {
-                let (op, e) = match &mut if_stmt.test {
+                let (op, e) = if let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()
+                    && unary_expr.operator.is_not()
+                {
                     // "if (!a) b();" => "a || b();"
-                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
-                        (LogicalOperator::Or, &mut unary_expr.argument)
-                    }
+                    (LogicalOperator::Or, &mut unary_expr.argument)
+                } else {
                     // "if (a) b();" => "a && b();"
-                    e => (LogicalOperator::And, e),
+                    (LogicalOperator::And, &mut if_stmt.test)
                 };
                 let a = e.take_in(ctx.ast);
                 let b = expr_stmt.expression.take_in(ctx.ast);
                 let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(Statement::expression_statement(alternate_expr_stmt)) =
-                &mut if_stmt.alternate
+            } else if let Some(alternate_expr_stmt) = if_stmt.alternate.as_mut()
+                .and_then(|s| s.as_expression_statement_mut())
             {
                 // "if (a) b(); else c();" => "a ? b() : c();"
                 let test = if_stmt.test.take_in(ctx.ast);
@@ -48,14 +50,17 @@ impl<'a> PeepholeOptimizations {
                 let mut expr = if_stmt.test.take_in(ctx.ast);
                 Self::remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(Statement::expression_statement(expr_stmt)) = &mut if_stmt.alternate {
-                let (op, e) = match &mut if_stmt.test {
+            } else if let Some(expr_stmt) = if_stmt.alternate.as_mut()
+                .and_then(|s| s.as_expression_statement_mut())
+            {
+                let (op, e) = if let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()
+                    && unary_expr.operator.is_not()
+                {
                     // "if (!a) {} else b();" => "a && b();"
-                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
-                        (LogicalOperator::And, &mut unary_expr.argument)
-                    }
+                    (LogicalOperator::And, &mut unary_expr.argument)
+                } else {
                     // "if (a) {} else b();" => "a || b();"
-                    e => (LogicalOperator::Or, e),
+                    (LogicalOperator::Or, &mut if_stmt.test)
                 };
                 let a = e.take_in(ctx.ast);
                 let b = expr_stmt.expression.take_in(ctx.ast);
@@ -63,26 +68,25 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
-                match if_stmt.test.kind_mut() {
+                if let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()
+                    && unary_expr.operator.is_not()
+                {
                     // "if (!a) {} else return b;" => "if (a) return b;"
-                    ExpressionKindMut::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                        if_stmt.test = unary_expr.argument.take_in(ctx.ast);
-                        if_stmt.consequent = stmt.take_in(ctx.ast);
-                        if_stmt.alternate = None;
-                        ctx.state.changed = true;
-                    }
+                    if_stmt.test = unary_expr.argument.take_in(ctx.ast);
+                    if_stmt.consequent = stmt.take_in(ctx.ast);
+                    if_stmt.alternate = None;
+                    ctx.state.changed = true;
+                } else {
                     // "if (a) {} else return b;" => "if (!a) return b;"
-                    _ => {
-                        if_stmt.test = Self::minimize_not(
-                            if_stmt.test.span(),
-                            if_stmt.test.take_in(ctx.ast),
-                            ctx,
-                        );
-                        if_stmt.consequent = stmt.take_in(ctx.ast);
-                        if_stmt.alternate = None;
-                        Self::try_minimize_if(if_stmt, ctx);
-                        ctx.state.changed = true;
-                    }
+                    if_stmt.test = Self::minimize_not(
+                        if_stmt.test.span(),
+                        if_stmt.test.take_in(ctx.ast),
+                        ctx,
+                    );
+                    if_stmt.consequent = stmt.take_in(ctx.ast);
+                    if_stmt.alternate = None;
+                    Self::try_minimize_if(if_stmt, ctx);
+                    ctx.state.changed = true;
                 }
             }
         } else {
@@ -90,7 +94,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
                 if !alternate.is_if_statement()
-                    && let Expression::unary_expression(unary_expr) = &mut if_stmt.test
+                    && let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()
                     && unary_expr.operator.is_not()
                 {
                     // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
@@ -143,9 +147,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_statement_empty(stmt: &Statement<'a>) -> bool {
-        match stmt.kind_mut() {
-            StatementKindMut::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
-            StatementKindMut::EmptyStatement(_) => true,
+        match stmt.kind() {
+            StatementKind::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
+            StatementKind::EmptyStatement(_) => true,
             _ => false,
         }
     }
