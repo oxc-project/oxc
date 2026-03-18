@@ -131,12 +131,12 @@ impl<'a> ReactDisplayName {
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
     ) -> Option<&'b mut ObjectExpression<'a>> {
-        if match call_expr.callee.kind_mut() {
-            callee @ match_member_expression!(ExpressionKindMut) => {
-                !callee.to_member_expression().is_specific_member_access("React", "createClass")
-            }
-            ExpressionKindMut::Identifier(ident) => ident.name != "createReactClass",
-            _ => true,
+        if if let Some(member) = call_expr.callee.as_member_expression() {
+            !member.is_specific_member_access("React", "createClass")
+        } else if let Some(ident) = call_expr.callee.as_identifier() {
+            ident.name != "createReactClass"
+        } else {
+            true
         } {
             return None;
         }

@@ -113,13 +113,13 @@ impl<'a> TypeScript<'a> {
                             property_assignments.push(assignment);
                         }
                     } else if self.remove_class_fields_without_initializer
-                        && let Some(key) = prop.key.as_expression_mut()
+                        && let Some(mut key) = prop.key.as_expression_mut()
                     {
                         // `TypeScript` uses `isSimpleInlineableExpression` to check if the key needs to be kept.
                         // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
                         // `IdentifierReference` without symbol is not kept.
                         // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
-                        if key_needs_temp_var(key, ctx) {
+                        if key_needs_temp_var(&key, ctx) {
                             // When `remove_class_fields_without_initializer` is true, the property without initializer
                             // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
                             // keeps and is evaluated in the same order as the original class field in static block.
@@ -217,8 +217,8 @@ impl<'a> TypeScript<'a> {
                 && prop.value.is_none()
                 && !prop.key.is_private_identifier()
             {
-                if let Some(key) = prop.key.as_expression_mut() {
-                    return key_needs_temp_var(key, ctx);
+                if let Some(key) = prop.key.as_expression() {
+                    return key_needs_temp_var(&key, ctx);
                 }
                 return false;
             }
@@ -286,11 +286,11 @@ impl<'a> TypeScript<'a> {
                 unreachable!("PrivateIdentifier is skipped in transform_class_fields");
             }
             key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+                let mut key = key.to_expression_mut();
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
-                let new_key = if key_needs_temp_var(key, ctx) {
+                let new_key = if key_needs_temp_var(&key, ctx) {
                     let taken_key = key.take_in(ctx.ast);
                     let (assignment, ident) = create_computed_key_temp_var(taken_key, ctx);
                     computed_key_assignments.push(assignment);
@@ -362,17 +362,16 @@ impl<'a> TypeScript<'a> {
         if assignments.is_empty() {
             return;
         }
-        if let Some(key) = key.as_expression_mut() {
+        if let Some(original_key) = key.as_expression() {
             // If the key is already an expression, we need to create a new expression sequence
             // to insert the assignments into.
-            let original_key = key.take_in(ctx.ast);
             let new_key = ctx.ast.expression_sequence(
                 SPAN,
                 ctx.ast.vec_from_iter(
                     assignments.split_off(0).into_iter().chain(std::iter::once(original_key)),
                 ),
             );
-            *key = new_key;
+            *key = PropertyKey::from(new_key);
         }
     }
 

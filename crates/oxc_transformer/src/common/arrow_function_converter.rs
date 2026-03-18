@@ -732,30 +732,26 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         let mut argument = None;
         let mut property = "";
-        let init = match expr.to_member_expression() {
-            MemberExpression::ComputedMemberExpression(computed_member) => {
-                if !computed_member.object.is_super() {
-                    return None;
-                }
-
-                // The property will as a parameter to pass to the new arrow function.
-                // `super[property]` to `_superprop_get(property)`
-                argument = Some(computed_member.expression.take_in(ctx.ast));
-                computed_member.object.take_in(ctx.ast)
-            }
-            MemberExpression::StaticMemberExpression(static_member) => {
-                if !static_member.object.is_super() {
-                    return None;
-                }
-
-                // Used to generate the name of the arrow function.
-                property = static_member.property.name.as_str();
-                expr.take_in(ctx.ast)
-            }
-            MemberExpression::PrivateFieldExpression(_) => {
-                // Private fields can't be accessed by `super`.
+        let init = if expr.is_computed_member_expression() {
+            let mut computed_member = expr.take_in(ctx.ast).into_computed_member_expression().unbox();
+            if !computed_member.object.is_super() {
                 return None;
             }
+            // The property will as a parameter to pass to the new arrow function.
+            // `super[property]` to `_superprop_get(property)`
+            argument = Some(computed_member.expression.take_in(ctx.ast));
+            computed_member.object.take_in(ctx.ast)
+        } else if expr.is_static_member_expression() {
+            let static_member = expr.as_static_member_expression().unwrap();
+            if !static_member.object.is_super() {
+                return None;
+            }
+            // Used to generate the name of the arrow function.
+            property = static_member.property.name.as_str();
+            expr.take_in(ctx.ast)
+        } else {
+            // Private fields can't be accessed by `super`.
+            return None;
         };
 
         let is_assignment = assign_value.is_some();

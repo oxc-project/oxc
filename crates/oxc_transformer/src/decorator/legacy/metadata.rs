@@ -298,8 +298,8 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
         for member in members {
             if let Some(init) = &member.initializer {
-                match init.kind_mut() {
-                    ExpressionKindMut::StringLiteral(_) | ExpressionKindMut::TemplateLiteral(_)
+                match init.kind() {
+                    ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_)
                         if enum_type != EnumType::Number =>
                     {
                         enum_type = EnumType::String;
@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
                     // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
                     // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
-                    ExpressionKindMut::NumericLiteral(_) | ExpressionKindMut::UnaryExpression(_)
+                    ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_)
                         if enum_type != EnumType::String =>
                     {
                         enum_type = EnumType::Number;
@@ -586,14 +586,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         literal: &TSLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match literal.kind_mut() {
+        match literal {
             TSLiteral::BooleanLiteral(_) => Self::global_boolean(ctx),
             TSLiteral::NumericLiteral(_) => Self::global_number(ctx),
             TSLiteral::BigIntLiteral(_) => Self::global_bigint(ctx),
             TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_) => Self::global_string(ctx),
             TSLiteral::UnaryExpression(expr) => match expr.argument.kind() {
-                ExpressionKindMut::NumericLiteral(_) => Self::global_number(ctx),
-                ExpressionKindMut::StringLiteral(_) => Self::global_string(ctx),
+                ExpressionKind::NumericLiteral(_) => Self::global_number(ctx),
+                ExpressionKind::StringLiteral(_) => Self::global_string(ctx),
                 // Cannot be a type annotation
                 _ => unreachable!(),
             },

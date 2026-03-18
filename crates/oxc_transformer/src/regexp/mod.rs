@@ -124,7 +124,7 @@ impl<'a> RegExp {
         let Some(regexp) = expr.as_reg_exp_literal_mut() else {
             unreachable!();
         };
-        let regexp = regexp.as_mut();
+        // regexp is already &mut RegExpLiteral from as_reg_exp_literal_mut()
 
         let pattern_text = regexp.regex.pattern.text;
         let flags = regexp.regex.flags;

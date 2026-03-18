@@ -77,7 +77,7 @@ pub fn duplicate_expression_twice<'a>(
 /// Returns `N + 1` x `Expression`s. The first may be an `AssignmentExpression`,
 /// and must be inserted into output first.
 pub fn duplicate_expression_multiple<'a, const N: usize>(
-    expr: Expression<'a>,
+    mut expr: Expression<'a>,
     mutated_symbol_needs_temp_var: bool,
     ctx: &mut TraverseCtx<'a>,
 ) -> (Expression<'a>, [Expression<'a>; N]) {

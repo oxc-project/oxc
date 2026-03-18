@@ -464,7 +464,7 @@ impl<'a> ReactRefresh<'a> {
                 if allowed_callee {
                     let callee_span = call_expr.callee.span();
 
-                    let Some(argument_expr) =
+                    let Some(mut argument_expr) =
                         call_expr.arguments.first_mut().and_then(|e| e.as_expression_mut())
                     else {
                         return false;
@@ -477,7 +477,7 @@ impl<'a> ReactRefresh<'a> {
                             callee_span.source_text(ctx.state.source_text)
                         )
                         .as_str(),
-                        argument_expr,
+                        &mut argument_expr,
                         /* is_variable_declarator */ false,
                         ctx,
                     );
@@ -687,7 +687,7 @@ impl<'a> ReactRefresh<'a> {
             StatementKindMut::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
-                        let expression = declaration.to_expression_mut();
+                        let mut expression = declaration.to_expression_mut();
                         if !expression.is_call_expression() {
                             // For now, we only support possible HOC calls here.
                             // Named function declarations are handled in FunctionDeclaration.
@@ -704,7 +704,7 @@ impl<'a> ReactRefresh<'a> {
                         // export default memo(function Named() {})
                         self.replace_inner_components(
                             "%default%",
-                            expression,
+                            &mut expression,
                             /* is_variable_declarator */ false,
                             ctx,
                         );

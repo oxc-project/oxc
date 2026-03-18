@@ -85,12 +85,9 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Some(tagged) = expr.take_in(ctx.ast).as_tagged_template_expression_mut() else {
-            unreachable!();
-        };
-
+        let taken = expr.take_in(ctx.ast);
         let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments, .. } =
-            tagged.unbox();
+            taken.into_tagged_template_expression().unbox();
 
         let binding = self.create_top_level_binding(ctx);
         let arguments = self.transform_template_literal(&binding, template_lit, ctx);

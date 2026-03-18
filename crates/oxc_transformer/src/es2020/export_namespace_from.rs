@@ -53,7 +53,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
 
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
 
-        for stmt in program.body.take_in(ctx.ast) {
+        for mut stmt in program.body.take_in(ctx.ast) {
             match stmt.kind_mut() {
                 StatementKindMut::ExportAllDeclaration(export_all)
                     if export_all.exported.is_some() =>
@@ -61,9 +61,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     // Transform `export * as ns from "mod"` to:
                     // `import * as _ns from "mod"; export { _ns as ns };`
 
-                    let ExportAllDeclaration { span, exported, source, export_kind, .. } =
-                        *export_all;
-                    let exported_name = exported.unwrap();
+                    let span = export_all.span;
+                    let exported_name = export_all.exported.take().unwrap();
+                    let source = export_all.source.clone();
+                    let export_kind = export_all.export_kind;
 
                     // Create a unique binding for the import based on the exported name
                     let binding = ctx.generate_uid_based_on_node(

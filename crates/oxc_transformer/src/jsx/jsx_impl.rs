@@ -527,7 +527,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         }
         let taken = expr.take_in(ctx.ast);
         *expr = if taken.is_jsx_element() {
-            self.transform_jsx_element(taken.to_jsx_element(), ctx)
+            let e = taken.into_jsx_element();
+            self.transform_jsx_element(e, ctx)
         } else if taken.is_jsx_fragment() {
             let e = taken.into_jsx_fragment().unbox();
             self.transform_jsx(e.span, None, e.children, ctx)
@@ -661,15 +662,13 @@ impl<'a> JsxImpl<'a> {
                         }
 
                         // Add attribute to prop object
-                        match argument.kind_mut() {
-                            ExpressionKindMut::ObjectExpression(expr) if !has_proto(&expr) => {
-                                properties.extend(expr.unbox().properties);
-                            }
-                            argument => {
-                                let object_property =
-                                    ctx.ast.object_property_kind_spread_property(span, argument);
-                                properties.push(object_property);
-                            }
+                        if argument.is_object_expression() && !has_proto(argument.to_object_expression()) {
+                            let obj = argument.into_object_expression().unbox();
+                            properties.extend(obj.properties);
+                        } else {
+                            let object_property =
+                                ctx.ast.object_property_kind_spread_property(span, argument);
+                            properties.push(object_property);
                         }
                     }
                 }
@@ -800,7 +799,7 @@ impl<'a> JsxImpl<'a> {
         name: JSXElementName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match name.kind_mut() {
+        match name {
             JSXElementName::Identifier(ident) => {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
