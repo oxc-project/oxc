@@ -531,9 +531,7 @@ impl LanguageServer for Backend {
         // When workspace folders are added while we are in single-file mode, exit that mode
         // and shut down any dynamically-created single-file workers before the new
         // explicit workspace workers are added.
-        if !params.event.added.is_empty()
-            && self.single_file_mode.load(Ordering::Relaxed)
-        {
+        if !params.event.added.is_empty() && self.single_file_mode.load(Ordering::Relaxed) {
             self.single_file_mode.store(false, Ordering::Relaxed);
 
             // Shut down all existing single-file workers.
@@ -1073,8 +1071,7 @@ impl Backend {
             serde_json::Value::Null
         };
 
-        let diagnostic_mode =
-            capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+        let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
 
         let mut workers = self.workspace_workers.write().await;
 
@@ -1085,11 +1082,8 @@ impl Backend {
 
         debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
 
-        let worker = WorkspaceWorker::new(
-            parent_uri,
-            Arc::clone(&self.tool_builders),
-            diagnostic_mode,
-        );
+        let worker =
+            WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builders), diagnostic_mode);
 
         worker.start_worker(options).await;
 
@@ -1102,10 +1096,10 @@ impl Backend {
         workers.push(worker);
         drop(workers);
 
-        if !registrations.is_empty() {
-            if let Err(err) = self.client.register_capability(registrations).await {
-                warn!("registering file watchers for single-file workspace failed: {err}");
-            }
+        if !registrations.is_empty()
+            && let Err(err) = self.client.register_capability(registrations).await
+        {
+            warn!("registering file watchers for single-file workspace failed: {err}");
         }
     }
 
@@ -1144,10 +1138,9 @@ impl Backend {
 
         if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
             && !unregistrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(unregistrations).await
         {
-            if let Err(err) = self.client.unregister_capability(unregistrations).await {
-                warn!("unregistering file watchers for single-file workspace failed: {err}");
-            }
+            warn!("unregistering file watchers for single-file workspace failed: {err}");
         }
     }
 }
