@@ -241,7 +241,7 @@ fn is_arrow_function_variable_type_argument<'a>(
             if matches!(
                 &type_annotation.parent(),
                 AstNodes::VariableDeclarator(var_decl)
-                    if matches!(&var_decl.init, Some(Expression::ArrowFunctionExpression(_)))
+                    if var_decl.init.as_ref().is_some_and(Expression::is_arrow_function_expression)
             )
     )
 }

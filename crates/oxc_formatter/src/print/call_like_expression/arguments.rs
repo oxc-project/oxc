@@ -295,14 +295,14 @@ pub fn arguments_grouped_layout(
         // can never match the last arg's type (used for same-type checking in `should_group_last_argument_impl`).
         let first_expr = first.as_expression();
 
-        if can_group_expression_argument(second, f) {
+        if can_group_expression_argument(&second, f) {
             // Check if we should group the last argument (second)
-            return should_group_last_argument_impl(2, first_expr, second, f)
+            return should_group_last_argument_impl(2, first_expr.as_ref(), &second, f)
                 .then_some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
 
         // Only check first argument grouping if first is an expression (not SpreadElement)
-        should_group_first_argument(first_expr?, second, f)
+        should_group_first_argument(&first_expr?, &second, f)
             .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
     } else {
         // For other cases (not exactly 2 arguments), only check last argument grouping
@@ -317,13 +317,13 @@ fn should_group_first_argument(
     second: &Expression,
     f: &Formatter<'_, '_>,
 ) -> bool {
-    match first {
-        Expression::FunctionExpression(_) => {}
+    match first.kind() {
+        ExpressionKind::FunctionExpression(_) => {}
         // Arrow expressions that are a plain expression or are a chain
         // don't get grouped as the first argument, since they'll either
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
-        Expression::ArrowFunctionExpression(arrow) => {
+        ExpressionKind::ArrowFunctionExpression(arrow) => {
             if arrow.expression {
                 return false;
             }
@@ -332,10 +332,9 @@ fn should_group_first_argument(
     }
 
     if matches!(
-        second,
-        Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ConditionalExpression(_)
+        second.kind(), ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ConditionalExpression(_)
     ) {
         return false;
     }
@@ -371,13 +370,13 @@ fn should_group_last_argument_impl(
     // Check if penultimate and last are the same type (both Object or both Array)
     if let Some(penultimate) = penultimate
         && matches!(
-            (penultimate, last),
-            (Expression::ObjectExpression(_), Expression::ObjectExpression(_))
-                | (Expression::ArrayExpression(_), Expression::ArrayExpression(_))
-                | (Expression::TSAsExpression(_), Expression::TSAsExpression(_))
-                | (Expression::TSSatisfiesExpression(_), Expression::TSSatisfiesExpression(_))
-                | (Expression::ArrowFunctionExpression(_), Expression::ArrowFunctionExpression(_))
-                | (Expression::FunctionExpression(_), Expression::FunctionExpression(_))
+            (penultimate.kind(), last.kind()),
+            (ExpressionKind::ObjectExpression(_), ExpressionKind::ObjectExpression(_))
+                | (ExpressionKind::ArrayExpression(_), ExpressionKind::ArrayExpression(_))
+                | (ExpressionKind::TSAsExpression(_), ExpressionKind::TSAsExpression(_))
+                | (ExpressionKind::TSSatisfiesExpression(_), ExpressionKind::TSSatisfiesExpression(_))
+                | (ExpressionKind::ArrowFunctionExpression(_), ExpressionKind::ArrowFunctionExpression(_))
+                | (ExpressionKind::FunctionExpression(_), ExpressionKind::FunctionExpression(_))
         )
     {
         return false;
@@ -408,10 +407,10 @@ fn should_group_last_argument_impl(
         return false;
     }
 
-    match last {
-        Expression::ArrayExpression(array) if penultimate.is_some() => {
+    match last.kind() {
+        ExpressionKind::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if args_len == 2 && matches!(penultimate, Some(Expression::ArrowFunctionExpression(_)))
+            if args_len == 2 && penultimate.is_some_and(Expression::is_arrow_function_expression)
             {
                 return false;
             }
@@ -431,8 +430,8 @@ fn should_group_last_argument(args: &[Argument], f: &Formatter<'_, '_>) -> bool 
 
     let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
 
-    can_group_expression_argument(last, f)
-        && should_group_last_argument_impl(args.len(), penultimate, last, f)
+    can_group_expression_argument(&last, f)
+        && should_group_last_argument_impl(args.len(), penultimate.as_ref(), &last, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few
@@ -513,25 +512,25 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
 /// Checks if `argument` is "short" enough to be groupable. This aims to be
 /// logically similar to Prettier's [`isHopefullyShortCallArgument`](https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/print/call-arguments.js#L279),
 fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
-    match argument {
-        Expression::BinaryExpression(binary) => {
+    match argument.kind() {
+        ExpressionKind::BinaryExpression(binary) => {
             SimpleArgument::from(&binary.left).is_simple_with_depth(1)
                 && SimpleArgument::from(&binary.right).is_simple_with_depth(1)
         }
-        Expression::LogicalExpression(logical) => {
+        ExpressionKind::LogicalExpression(logical) => {
             SimpleArgument::from(&logical.left).is_simple_with_depth(1)
                 && SimpleArgument::from(&logical.right).is_simple_with_depth(1)
         }
-        Expression::TSAsExpression(expr) => {
+        ExpressionKind::TSAsExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
-        Expression::TSSatisfiesExpression(expr) => {
+        ExpressionKind::TSSatisfiesExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
-        Expression::RegExpLiteral(_) => true,
-        Expression::CallExpression(call) => match call.arguments.len() {
+        ExpressionKind::RegExpLiteral(_) => true,
+        ExpressionKind::CallExpression(call) => match call.arguments.len() {
             0 => true,
             1 => SimpleArgument::from(argument).is_simple(),
             _ => false,
@@ -542,28 +541,28 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 
 /// Checks if `argument` benefits from grouping in call arguments.
 fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
-    match argument {
-        Expression::ObjectExpression(object_expression) => {
+    match argument.kind() {
+        ExpressionKind::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
                 || f.comments().has_comment_in_span(object_expression.span)
         }
-        Expression::ArrayExpression(array_expression) => {
+        ExpressionKind::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
                 || f.comments().has_comment_in_span(array_expression.span)
         }
-        Expression::TSTypeAssertion(assertion_expression) => {
+        ExpressionKind::TSTypeAssertion(assertion_expression) => {
             can_group_expression_argument(&assertion_expression.expression, f)
         }
-        Expression::TSAsExpression(as_expression) => {
+        ExpressionKind::TSAsExpression(as_expression) => {
             can_group_expression_argument(&as_expression.expression, f)
         }
-        Expression::TSSatisfiesExpression(satisfies_expression) => {
+        ExpressionKind::TSSatisfiesExpression(satisfies_expression) => {
             can_group_expression_argument(&satisfies_expression.expression, f)
         }
-        Expression::ArrowFunctionExpression(arrow_function) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_function) => {
             can_group_arrow_function_expression_argument(arrow_function, false, f)
         }
-        Expression::FunctionExpression(_) => true,
+        ExpressionKind::FunctionExpression(_) => true,
         _ => false,
     }
 }
@@ -617,18 +616,18 @@ fn can_group_arrow_function_expression_argument(
         return false;
     }
 
-    arrow_function.get_expression().is_none_or(|expr| match expr {
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_) => true,
-        Expression::ArrowFunctionExpression(inner_arrow_function) => {
+    arrow_function.get_expression().is_none_or(|expr| match expr.kind() {
+        ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::JSXElement(_)
+        | ExpressionKind::JSXFragment(_) => true,
+        ExpressionKind::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
         }
-        Expression::ChainExpression(chain) => {
+        ExpressionKind::ChainExpression(chain) => {
             matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
         }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
+        ExpressionKind::CallExpression(_) | ExpressionKind::ConditionalExpression(_) => !is_arrow_recursion,
         _ => false,
     })
 }
@@ -985,14 +984,14 @@ pub fn is_simple_module_import(
     match arguments.parent() {
         AstNodes::ImportExpression(_) => {}
         AstNodes::CallExpression(call) => {
-            match &call.callee {
-                Expression::StaticMemberExpression(member) => match member.property.name.as_str() {
+            match &call.callee.kind() {
+                ExpressionKind::StaticMemberExpression(member) => match member.property.name.as_str() {
                     "resolve" => {
-                        match &member.object {
-                            Expression::Identifier(ident) if ident.name.as_str() == "require" => {
+                        match &member.object.kind() {
+                            ExpressionKind::Identifier(ident) if ident.name.as_str() == "require" => {
                                 // `require.resolve("foo")`
                             }
-                            Expression::MetaProperty(_) => {
+                            ExpressionKind::MetaProperty(_) => {
                                 // `import.meta.resolve("foo")`
                             }
                             _ => return false,
@@ -1000,8 +999,8 @@ pub fn is_simple_module_import(
                     }
                     "paths" => {
                         if !matches!(
-                        &member.object, Expression::StaticMemberExpression(member)
-                        if matches!(&member.object, Expression::Identifier(ident)
+                        &member.object.kind(), ExpressionKind::StaticMemberExpression(member)
+                        if matches!(&member.object.kind(), ExpressionKind::Identifier(ident)
                             if ident.name == "require") && member.property.name.as_str() == "resolve"
                         ) {
                             return false;
@@ -1027,7 +1026,7 @@ fn is_commonjs_or_amd_call(
     call: &AstNode<'_, CallExpression<'_>>,
     f: &Formatter<'_, '_>,
 ) -> bool {
-    let Expression::Identifier(ident) = &call.callee else {
+    let Some(ident) = call.callee.as_identifier() else {
         return false;
     };
 
@@ -1092,7 +1091,7 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
         .first()
         .unwrap()
         .as_expression()
-        .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
+        .is_some_and(|expr| is_multiline_template_starting_on_same_line(&expr, source_text))
 }
 
 /// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
@@ -1104,7 +1103,7 @@ fn is_graphql_call_with_single_template_arg<'a>(
     arguments.len() == 1
         && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
         && call.is_some_and(
-            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
+            |c| matches!(&c.callee.kind(), ExpressionKind::Identifier(id) if id.name.as_str() == "graphql"),
         )
 }
 
@@ -1189,17 +1188,16 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     }
 
-    let Expression::CallExpression(callee_call) = &parent_call.callee else {
+    let Some(callee_call) = parent_call.callee.as_call_expression() else {
         return false;
     };
 
     // Check if the decorator (callee.callee) is a simple identifier or member expression
     let decorator = &callee_call.callee;
-    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
+    let is_valid_decorator = matches!(decorator.kind(), ExpressionKind::Identifier(_))
         || matches!(
-            decorator,
-            Expression::StaticMemberExpression(member)
-            if matches!(&member.object, Expression::Identifier(_))
+            decorator.kind(), ExpressionKind::StaticMemberExpression(member)
+            if matches!(&member.object.kind(), ExpressionKind::Identifier(_))
         );
 
     if !is_valid_decorator {
@@ -1220,7 +1218,7 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
             matches!(
                 &assign.left,
                 AssignmentTarget::StaticMemberExpression(member)
-                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "module")
+                if matches!(&member.object.kind(), ExpressionKind::Identifier(ident) if ident.name == "module")
                     && member.property.name == "exports"
             )
         }

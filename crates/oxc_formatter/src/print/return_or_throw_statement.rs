@@ -92,7 +92,7 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
             // When we have leading comments and a sequence expression, we need inner parentheses
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
-                if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
+                if matches!(argument.as_ref().kind(), ExpressionKind::SequenceExpression(_)) {
                     write!(
                         f,
                         [
@@ -116,7 +116,7 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
                     if_group_breaks(&token(")"))
                 ))]
             );
-        } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
+        } else if matches!(argument.as_ref().kind(), ExpressionKind::SequenceExpression(_)) {
             write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))]);
         } else {
             write!(f, argument);
@@ -157,8 +157,8 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
         if let ExpressionLeftSide::Expression(left_side) = left_side {
-            let has_leading_own_line_comment = match left_side.as_ref() {
-                Expression::ChainExpression(chain) => {
+            let has_leading_own_line_comment = match left_side.as_ref().kind() {
+                ExpressionKind::ChainExpression(chain) => {
                     if let ChainElement::StaticMemberExpression(member) = &chain.expression {
                         let comments = f
                             .comments()
@@ -168,7 +168,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
                         false
                     }
                 }
-                Expression::StaticMemberExpression(member) => {
+                ExpressionKind::StaticMemberExpression(member) => {
                     let comments = f
                         .comments()
                         .comments_in_range(member.object.span().end, member.property.span.end);

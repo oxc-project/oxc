@@ -200,9 +200,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
     fn is_jsx_conditional_chain(&self) -> bool {
         #[inline]
         fn has_jsx_expression(expr: &Expression) -> bool {
-            match expr {
-                Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                Expression::ConditionalExpression(conditional) => recurse(conditional),
+            match expr.kind() {
+                ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => true,
+                ExpressionKind::ConditionalExpression(conditional) => recurse(conditional),
                 _ => false,
             }
         }
@@ -421,7 +421,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
             let is_nested_consequent = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
-                    matches!(conditional.consequent, Expression::ConditionalExpression(_))
+                    matches!(conditional.consequent.kind(), ExpressionKind::ConditionalExpression(_))
                 }
                 ConditionalLike::TSConditionalType(conditional) => {
                     matches!(conditional.true_type, TSType::TSConditionalType(_))
@@ -630,10 +630,10 @@ struct FormatJsxChainExpression<'a, 'b> {
 
 impl<'a> Format<'a> for FormatJsxChainExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let no_wrap = match self.expression.as_ref() {
-            Expression::Identifier(ident) => ident.name == "undefined",
-            Expression::NullLiteral(_) => true,
-            Expression::ConditionalExpression(_) if self.alternate => true,
+        let no_wrap = match self.expression.as_ref().kind() {
+            ExpressionKind::Identifier(ident) => ident.name == "undefined",
+            ExpressionKind::NullLiteral(_) => true,
+            ExpressionKind::ConditionalExpression(_) if self.alternate => true,
             _ => false,
         };
 

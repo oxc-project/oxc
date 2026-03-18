@@ -143,7 +143,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                if let Some(sequence) = arrow_expression.as_ref().and_then(Expression::as_sequence_expression) {
                     return if let Some(format_sequence) =
                         format_sequence_with_leading_comment(sequence.span(), &format_body, f)
                     {
@@ -167,13 +167,13 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 write!(f, formatted_signature);
 
                 let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
-                        Expression::ArrowFunctionExpression(_)
-                        | Expression::ArrayExpression(_)
-                        | Expression::ObjectExpression(_) => {
+                    arrow_expression.is_none_or(|expression| match expression.kind() {
+                        ExpressionKind::ArrowFunctionExpression(_)
+                        | ExpressionKind::ArrayExpression(_)
+                        | ExpressionKind::ObjectExpression(_) => {
                             !f.comments().has_leading_own_line_comment(body.span().start)
                         }
-                        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+                        ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => true,
                         _ => {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
                         }
@@ -356,9 +356,9 @@ pub fn is_multiline_template_starting_on_same_line(
     expression: &Expression,
     source_text: SourceText,
 ) -> bool {
-    let (start, template) = match expression {
-        Expression::TemplateLiteral(template) => (template.span.start, template.as_ref()),
-        Expression::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
+    let (start, template) = match expression.kind() {
+        ExpressionKind::TemplateLiteral(template) => (template.span.start, template),
+        ExpressionKind::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
         _ => return false,
     };
 
@@ -427,12 +427,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // in its entirety.
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
-                expression,
-                Expression::ObjectExpression(_)
-                    | Expression::ArrayExpression(_)
-                    | Expression::SequenceExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
+                expression.kind(), ExpressionKind::ObjectExpression(_)
+                    | ExpressionKind::ArrayExpression(_)
+                    | ExpressionKind::SequenceExpression(_)
+                    | ExpressionKind::JSXElement(_)
+                    | ExpressionKind::JSXFragment(_)
             )
         });
 
@@ -553,7 +552,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+            if let Some(sequence) = tail.get_expression().and_then(Expression::as_sequence_expression) {
                 if let Some(format_sequence) =
                     format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
                 {
@@ -648,12 +647,11 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+    if matches!(&stmt.expression.kind(), ExpressionKind::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
-            Expression::ObjectExpression(_)
-                | Expression::FunctionExpression(_)
-                | Expression::ClassExpression(_)
+            ExpressionLeftSide::leftmost(stmt.expression()).as_ref().kind(), ExpressionKind::ObjectExpression(_)
+                | ExpressionKind::FunctionExpression(_)
+                | ExpressionKind::ClassExpression(_)
         )
     } else {
         false

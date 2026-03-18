@@ -28,11 +28,11 @@ pub(super) fn try_format_embedded_template<'a>(
 
 fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     let expr = expr.get_inner_expression();
-    match expr {
-        Expression::Identifier(ident) => Some(ident.name.as_str()),
-        Expression::StaticMemberExpression(member) => get_tag_name(&member.object),
-        Expression::ComputedMemberExpression(exp) => get_tag_name(&exp.object),
-        Expression::CallExpression(call) => get_tag_name(&call.callee),
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => Some(ident.name.as_str()),
+        ExpressionKind::StaticMemberExpression(member) => get_tag_name(&member.object),
+        ExpressionKind::ComputedMemberExpression(exp) => get_tag_name(&exp.object),
+        ExpressionKind::CallExpression(call) => get_tag_name(&call.callee),
         _ => None,
     }
 }
@@ -48,7 +48,7 @@ pub(super) fn try_format_graphql_call<'a>(
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let AstNodes::CallExpression(call) = template.parent() else { return false };
-    let Expression::Identifier(ident) = &call.callee else { return false };
+    let Some(ident) = call.callee.as_identifier() else { return false };
     if ident.name.as_str() != "graphql" {
         return false;
     }
@@ -195,7 +195,7 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
     let AstNodes::CallExpression(call) = obj.parent() else {
         return None;
     };
-    let Expression::Identifier(ident) = &call.callee else {
+    let Some(ident) = call.callee.as_identifier() else {
         return None;
     };
     if ident.name.as_str() != "Component" {

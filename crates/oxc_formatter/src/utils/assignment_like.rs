@@ -157,11 +157,10 @@ fn format_left_trailing_comments(
 
 fn should_print_as_leading(expr: &Expression) -> bool {
     matches!(
-        expr,
-        Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::TaggedTemplateExpression(_)
+        expr.kind(), ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::TemplateLiteral(_)
+            | ExpressionKind::TaggedTemplateExpression(_)
     )
 }
 
@@ -450,11 +449,11 @@ impl<'a> AssignmentLike<'a, '_> {
     ) -> AssignmentLikeLayout {
         let right_expression = self.get_right_expression();
         if let Some(expr) = right_expression {
-            if let Some(layout) = self.chain_formatting_layout(expr) {
+            if let Some(layout) = self.chain_formatting_layout(expr.as_ref()) {
                 return layout;
             }
 
-            if let Expression::CallExpression(call_expression) = expr.as_ref()
+            if let Some(call_expression) = expr.as_ref().as_call_expression()
                 && call_expression
                     .callee
                     .get_identifier_reference()
@@ -479,16 +478,14 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if !left_may_break
             && (is_left_short
-                || matches!(
-                    right_expression.map(AsRef::as_ref),
-                    Some(
-                        Expression::ClassExpression(_)
-                            | Expression::TemplateLiteral(_)
-                            | Expression::TaggedTemplateExpression(_)
-                            | Expression::BooleanLiteral(_)
-                            | Expression::NumericLiteral(_)
-                    )
-                ))
+                || right_expression.is_some_and(|expr| {
+                    let expr = expr.as_ref();
+                    expr.is_class_expression()
+                        || expr.is_template_literal()
+                        || expr.is_tagged_template_expression()
+                        || expr.is_boolean_literal()
+                        || expr.is_numeric_literal()
+                }))
         {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
@@ -536,7 +533,7 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: &Expression,
     ) -> Option<AssignmentLikeLayout> {
-        let right_is_tail = !matches!(right_expression, Expression::AssignmentExpression(_));
+        let right_is_tail = !matches!(right_expression.kind(), ExpressionKind::AssignmentExpression(_));
 
         // The chain goes up two levels, by checking up to the great parent if all the conditions
         // are correctly met.
@@ -558,14 +555,14 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if upper_chain_is_eligible {
             if right_is_tail {
-                match right_expression {
-                    Expression::ArrowFunctionExpression(arrow) => {
+                match right_expression.kind() {
+                    ExpressionKind::ArrowFunctionExpression(arrow) => {
                         if arrow.expression {
                             let Statement::ExpressionStatement(stmt) = &arrow.body.statements[0]
                             else {
                                 unreachable!()
                             };
-                            if matches!(&stmt.expression, Expression::ArrowFunctionExpression(_)) {
+                            if matches!(&stmt.expression.kind(), ExpressionKind::ArrowFunctionExpression(_)) {
                                 return Some(AssignmentLikeLayout::ChainTailArrowFunction);
                             }
                         }
@@ -599,7 +596,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 && declarator
                     .init
                     .as_ref()
-                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))))
+                    .is_some_and(|expr| matches!(expr.kind(), ExpressionKind::ArrowFunctionExpression(_))))
     }
 
     /// Checks if the current assignment is eligible for [AssignmentLikeLayout::BreakAfterOperator]
@@ -725,28 +722,28 @@ fn should_break_after_operator<'a>(
         }
     }
 
-    match right.as_ref() {
+    match right.as_ref().kind() {
         // head is a long chain, meaning that right -> right are both assignment expressions
-        Expression::AssignmentExpression(assignment) => {
-            matches!(assignment.right, Expression::AssignmentExpression(_))
+        ExpressionKind::AssignmentExpression(assignment) => {
+            matches!(assignment.right.kind(), ExpressionKind::AssignmentExpression(_))
         }
-        Expression::BinaryExpression(_) | Expression::SequenceExpression(_) => true,
-        Expression::LogicalExpression(logical) => {
+        ExpressionKind::BinaryExpression(_) | ExpressionKind::SequenceExpression(_) => true,
+        ExpressionKind::LogicalExpression(logical) => {
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
-        Expression::ConditionalExpression(conditional) => match &conditional.test {
-            Expression::BinaryExpression(_) => true,
-            Expression::LogicalExpression(logical) => {
+        ExpressionKind::ConditionalExpression(conditional) => match conditional.test.kind() {
+            ExpressionKind::BinaryExpression(_) => true,
+            ExpressionKind::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)
             }
             _ => false,
         },
-        Expression::ClassExpression(class) => !class.decorators.is_empty(),
+        ExpressionKind::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
         _ => {
             let inner_expression = get_innermost_expression(right);
-            matches!(inner_expression.as_ref(), Expression::StringLiteral(_))
+            matches!(inner_expression.as_ref().kind(), ExpressionKind::StringLiteral(_))
                 || is_poorly_breakable_member_or_call_chain(inner_expression, f)
         }
     }
@@ -992,7 +989,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             1 => match args.iter().next() {
                 Some(first_argument) => first_argument
                     .as_expression()
-                    .is_none_or(|e| !is_short_argument(e, threshold, f)),
+                    .is_none_or(|e| !is_short_argument(&e, threshold, f)),
                 None => false,
             },
             _ => true,
@@ -1019,13 +1016,13 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
 fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bool {
-    match argument {
-        Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
-        Expression::UnaryExpression(unary_expression) => {
+    match argument.kind() {
+        ExpressionKind::Identifier(identifier) => identifier.name.len() <= threshold as usize,
+        ExpressionKind::UnaryExpression(unary_expression) => {
             is_short_argument(&unary_expression.argument, threshold, f)
         }
-        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
-        Expression::StringLiteral(literal) => {
+        ExpressionKind::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
+        ExpressionKind::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),
                 false,
@@ -1034,7 +1031,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 
             formatter.clean_text(f).width() <= threshold as usize
         }
-        Expression::TemplateLiteral(literal) => {
+        ExpressionKind::TemplateLiteral(literal) => {
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
             // It means that the elements of the template are empty or have only one `JsTemplateChunkElement` element
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
@@ -1043,15 +1040,15 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
                 raw.len() <= threshold as usize && !raw.contains('\n')
             }
         }
-        Expression::CallExpression(call) => {
+        ExpressionKind::CallExpression(call) => {
             call.arguments.is_empty()
-                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
+                && matches!(&call.callee.kind(), ExpressionKind::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
         }
-        Expression::ThisExpression(_)
-        | Expression::NullLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NumericLiteral(_) => true,
+        ExpressionKind::ThisExpression(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NumericLiteral(_) => true,
         _ => false,
     }
 }

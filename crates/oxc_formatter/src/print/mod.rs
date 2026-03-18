@@ -497,16 +497,15 @@ fn expression_statement_needs_semicolon<'a>(
     }
     // Arrow functions need semicolon only if they will have parentheses
     // e.g., `(a) => {}` needs `;(a) => {}` but `a => {}` doesn't need semicolon
-    if let Expression::ArrowFunctionExpression(arrow) = &stmt.expression {
+    if let Some(arrow) = &stmt.expression.as_arrow_function_expression(){
         return !can_avoid_parentheses(arrow, f);
     }
 
     // Expressions starting with keywords don't need ASI protection
     if matches!(
-        &stmt.expression,
-        Expression::NewExpression(_)
-            | Expression::AwaitExpression(_)
-            | Expression::YieldExpression(_)
+        &stmt.expression.kind(), ExpressionKind::NewExpression(_)
+            | ExpressionKind::AwaitExpression(_)
+            | ExpressionKind::YieldExpression(_)
     ) {
         return false;
     }
@@ -518,15 +517,15 @@ fn expression_statement_needs_semicolon<'a>(
     ExpressionLeftSide::from(expr).iter().any(|current| match current {
         ExpressionLeftSide::Expression(expr) => {
             expr.needs_parentheses(f)
-                || match expr.as_ref() {
-                    Expression::ArrayExpression(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::TSTypeAssertion(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
-                    | Expression::TemplateLiteral(_) => true,
-                    Expression::UnaryExpression(unary) => {
+                || match expr.as_ref().kind() {
+                    ExpressionKind::ArrayExpression(_)
+                    | ExpressionKind::RegExpLiteral(_)
+                    | ExpressionKind::TSTypeAssertion(_)
+                    | ExpressionKind::ArrowFunctionExpression(_)
+                    | ExpressionKind::JSXElement(_)
+                    | ExpressionKind::JSXFragment(_)
+                    | ExpressionKind::TemplateLiteral(_) => true,
+                    ExpressionKind::UnaryExpression(unary) => {
                         matches!(
                             unary.operator,
                             UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
@@ -1725,8 +1724,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let break_after_cast = !matches!(
-            self.expression,
-            Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+            self.expression.kind(), ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
         );
 
         let format_cast = format_with(|f| {

@@ -401,18 +401,18 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
                 // Determine if we should add indentation based on expression complexity
                 let indent = self.expression.as_expression().is_some_and(|e| {
                     has_comment_in_expression
-                        || match e.as_ref() {
-                            Expression::StaticMemberExpression(_)
-                            | Expression::ComputedMemberExpression(_)
-                            | Expression::PrivateFieldExpression(_)
-                            | Expression::ConditionalExpression(_)
-                            | Expression::SequenceExpression(_)
-                            | Expression::TSAsExpression(_)
-                            | Expression::TSSatisfiesExpression(_)
-                            | Expression::BinaryExpression(_)
-                            | Expression::LogicalExpression(_)
-                            | Expression::Identifier(_) => true,
-                            Expression::ChainExpression(chain) => {
+                        || match e.as_ref().kind() {
+                            ExpressionKind::StaticMemberExpression(_)
+                            | ExpressionKind::ComputedMemberExpression(_)
+                            | ExpressionKind::PrivateFieldExpression(_)
+                            | ExpressionKind::ConditionalExpression(_)
+                            | ExpressionKind::SequenceExpression(_)
+                            | ExpressionKind::TSAsExpression(_)
+                            | ExpressionKind::TSSatisfiesExpression(_)
+                            | ExpressionKind::BinaryExpression(_)
+                            | ExpressionKind::LogicalExpression(_)
+                            | ExpressionKind::Identifier(_) => true,
+                            ExpressionKind::ChainExpression(chain) => {
                                 chain.expression.is_member_expression()
                             }
                             _ => false,

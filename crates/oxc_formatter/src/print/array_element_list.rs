@@ -124,7 +124,7 @@ pub fn can_concisely_print_array_list(
                 let argument = &unary_expr.argument;
 
                 if !signed
-                    || !matches!(argument, Expression::NumericLiteral(_))
+                    || !matches!(argument.kind(), ExpressionKind::NumericLiteral(_))
                     || has_comment_inside_unary(&mut comments_iter, unary_expr.span)
                 {
                     return false;

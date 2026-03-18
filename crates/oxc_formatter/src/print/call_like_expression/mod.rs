@@ -46,13 +46,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
         let is_template_literal_single_arg = arguments.len() == 1
             && arguments.first().unwrap().as_expression().is_some_and(|expr| {
-                is_multiline_template_starting_on_same_line(expr, f.source_text())
+                is_multiline_template_starting_on_same_line(&expr, f.source_text())
             });
 
         if !is_template_literal_single_arg
             && matches!(
-                callee.as_ref(),
-                Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
+                callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_) | ExpressionKind::ComputedMemberExpression(_)
             )
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)
@@ -113,7 +112,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                     f.context_mut().pop_tailwind_context();
                 }
             });
-            if matches!(callee.as_ref(), Expression::CallExpression(_)) {
+            if matches!(callee.as_ref().kind(), ExpressionKind::CallExpression(_)) {
                 write!(f, [group(&format_inner)]);
             } else {
                 write!(f, [format_inner]);

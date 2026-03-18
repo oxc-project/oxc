@@ -343,8 +343,7 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
                 // when the leftmost expression is not a class expression or a function expression
                 callee_span != leftmost.span()
                     && matches!(
-                        leftmost.as_ref(),
-                        Expression::ClassExpression(_) | Expression::FunctionExpression(_)
+                        leftmost.as_ref().kind(), ExpressionKind::ClassExpression(_) | ExpressionKind::FunctionExpression(_)
                     )
             }
             _ => self.is_new_callee(),
@@ -993,14 +992,14 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 }
 
 fn member_chain_callee_needs_parens(e: &Expression) -> bool {
-    std::iter::successors(Some(e), |e| match e {
-        Expression::ComputedMemberExpression(e) => Some(&e.object),
-        Expression::StaticMemberExpression(e) => Some(&e.object),
-        Expression::TaggedTemplateExpression(e) => Some(&e.tag),
-        Expression::TSNonNullExpression(e) => Some(&e.expression),
+    std::iter::successors(Some(e), |e| match e.kind() {
+        ExpressionKind::ComputedMemberExpression(e) => Some(&e.object),
+        ExpressionKind::StaticMemberExpression(e) => Some(&e.object),
+        ExpressionKind::TaggedTemplateExpression(e) => Some(&e.tag),
+        ExpressionKind::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })
-    .any(|object| matches!(object, Expression::CallExpression(_)))
+    .any(|object| matches!(object.kind(), ExpressionKind::CallExpression(_)))
 }
 
 #[derive(Clone, Copy)]
@@ -1082,9 +1081,8 @@ fn is_first_in_statement(
                     if mode == FirstInStatementMode::ExpressionStatementOrArrow {
                         if is_not_first_iteration
                             && matches!(
-                                stmt.expression,
-                                Expression::SequenceExpression(_)
-                                    | Expression::AssignmentExpression(_)
+                                stmt.expression.kind(), ExpressionKind::SequenceExpression(_)
+                                    | ExpressionKind::AssignmentExpression(_)
                             )
                         {
                             // The original node doesn't need parens,
@@ -1180,7 +1178,7 @@ fn ts_as_or_satisfies_needs_parens(
         | AstNodes::BinaryExpression(_) => true,
         // `export default (function foo() {} as bar)` and `export default (class {} as bar)`
         AstNodes::ExportDefaultDeclaration(_) =>
-            matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
+            matches!(inner.kind(), ExpressionKind::FunctionExpression(_) | ExpressionKind::ClassExpression(_)),
         _ => {
             type_cast_like_needs_parens(span, parent)
         }

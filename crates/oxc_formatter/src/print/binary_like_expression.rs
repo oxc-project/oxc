@@ -111,9 +111,9 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
     /// can be flattened if its left hand side has the same operator-precedence
     fn can_flatten(&self) -> bool {
-        let left_operator = match self.left().as_ref() {
-            Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
-            Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
+        let left_operator = match self.left().as_ref().kind() {
+            ExpressionKind::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
+            ExpressionKind::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
         };
 
@@ -128,10 +128,10 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     }
 
     pub fn can_inline_logical_expr(logical: &LogicalExpression) -> bool {
-        match &logical.right {
-            Expression::ObjectExpression(object) => !object.properties.is_empty(),
-            Expression::ArrayExpression(array) => !array.elements.is_empty(),
-            Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+        match &logical.right.kind() {
+            ExpressionKind::ObjectExpression(object) => !object.properties.is_empty(),
+            ExpressionKind::ArrayExpression(array) => !array.elements.is_empty(),
+            ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => true,
             _ => false,
         }
     }
@@ -164,7 +164,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 // https://github.com/prettier/prettier/issues/18057#issuecomment-3472912112
                 call.arguments.len() == 1
-                    && matches!(&call.callee, Expression::Identifier(ident) if ident.name == "Boolean")
+                    && matches!(&call.callee.kind(), ExpressionKind::Identifier(ident) if ident.name == "Boolean")
             }
             _ => false,
         }

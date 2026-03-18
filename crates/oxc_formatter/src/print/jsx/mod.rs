@@ -286,18 +286,17 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         }
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
-                await_expression.argument,
-                Expression::ArrayExpression(_)
-                    | Expression::ObjectExpression(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::CallExpression(_)
-                    | Expression::ImportExpression(_)
-                    | Expression::MetaProperty(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::TemplateLiteral(_)
-                    | Expression::TaggedTemplateExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
+                await_expression.argument.kind(), ExpressionKind::ArrayExpression(_)
+                    | ExpressionKind::ObjectExpression(_)
+                    | ExpressionKind::ArrowFunctionExpression(_)
+                    | ExpressionKind::CallExpression(_)
+                    | ExpressionKind::ImportExpression(_)
+                    | ExpressionKind::MetaProperty(_)
+                    | ExpressionKind::FunctionExpression(_)
+                    | ExpressionKind::TemplateLiteral(_)
+                    | ExpressionKind::TaggedTemplateExpression(_)
+                    | ExpressionKind::JSXElement(_)
+                    | ExpressionKind::JSXFragment(_)
             )
         }
         _ => false,

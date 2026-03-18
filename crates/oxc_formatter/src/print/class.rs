@@ -481,7 +481,7 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
             .as_ref()
             .is_some_and(|super_class|
                 super_class.is_member_expression() ||
-                matches!(&super_class, Expression::ChainExpression(chain) if chain.expression.is_member_expression())
+                matches!(&super_class.kind(), ExpressionKind::ChainExpression(chain) if chain.expression.is_member_expression())
             ) && class.super_type_arguments.is_none()
         || class.implements.first().is_some_and(|implements| {
             implements.type_arguments.is_none() && implements.expression.is_qualified_name()

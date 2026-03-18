@@ -97,13 +97,13 @@ fn layout<'a>(
 
     let is_nested = match parent {
         AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
-            let no_break = match object {
-                Expression::CallExpression(call_expression) => {
+            let no_break = match object.kind() {
+                ExpressionKind::CallExpression(call_expression) => {
                     !call_expression.arguments.is_empty()
                 }
-                Expression::TSNonNullExpression(non_null_assertion) => {
-                    match &non_null_assertion.expression {
-                        Expression::CallExpression(call_expression) => {
+                ExpressionKind::TSNonNullExpression(non_null_assertion) => {
+                    match &non_null_assertion.expression.kind() {
+                        ExpressionKind::CallExpression(call_expression) => {
                             !call_expression.arguments.is_empty()
                         }
                         _ => false,
@@ -122,7 +122,7 @@ fn layout<'a>(
         _ => false,
     };
 
-    if !is_nested && matches!(object, Expression::Identifier(_)) {
+    if !is_nested && matches!(object.kind(), ExpressionKind::Identifier(_)) {
         return StaticMemberLayout::NoBreak;
     }
 

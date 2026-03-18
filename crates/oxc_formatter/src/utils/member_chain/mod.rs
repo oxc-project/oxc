@@ -87,15 +87,15 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         if self.head.members().len() == 1
             && let ChainMember::Node(node) = self.head.members()[0]
         {
-            match node.as_ref() {
-                Expression::Identifier(identifier) => {
+            match node.as_ref().kind() {
+                ExpressionKind::Identifier(identifier) => {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
                     (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
-                Expression::ThisExpression(_) => true,
+                ExpressionKind::ThisExpression(_) => true,
                 _ => false,
             }
         } else if let Some(ChainMember::StaticMember(expression)) = self.head.members().last() {
@@ -263,7 +263,7 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
         .position(|member| match member {
             ChainMember::CallExpression { .. } | ChainMember::TSNonNullExpression(_) => false,
             ChainMember::ComputedMember(expression) => {
-                !matches!(&expression.expression, Expression::NumericLiteral(_))
+                !matches!(&expression.expression.kind(), ExpressionKind::NumericLiteral(_))
             }
             _ => true,
         })
@@ -353,7 +353,7 @@ fn compute_remaining_groups<'a, 'b>(
 
 fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     matches!(member, ChainMember::ComputedMember(expression)
-        if matches!(&expression.expression, Expression::NumericLiteral(_))
+        if matches!(&expression.expression.kind(), ExpressionKind::NumericLiteral(_))
     )
 }
 
@@ -411,10 +411,9 @@ fn chain_members_iter<'a, 'b>(
                 let callee = expr.callee();
 
                 let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
+                    callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_)
+                        | ExpressionKind::ComputedMemberExpression(_)
+                        | ExpressionKind::CallExpression(_)
                 );
 
                 if is_chain {
@@ -439,10 +438,9 @@ fn chain_members_iter<'a, 'b>(
             AstNodes::CallExpression(expr) => {
                 let callee = expr.callee();
                 let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
+                    callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_)
+                        | ExpressionKind::ComputedMemberExpression(_)
+                        | ExpressionKind::CallExpression(_)
                 );
                 let position = if is_chain {
                     CallExpressionPosition::Middle

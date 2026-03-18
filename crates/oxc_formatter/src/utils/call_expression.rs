@@ -49,7 +49,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
             }
 
             if is_unit_test_set_up_callee(callee) {
-                return argument.as_expression().is_some_and(is_angular_test_wrapper_expression);
+                return argument.as_expression().is_some_and(|e| is_angular_test_wrapper_expression(&e));
             }
 
             false
@@ -66,7 +66,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                 return false;
             }
 
-            if second.as_expression().is_some_and(is_angular_test_wrapper_expression) {
+            if second.as_expression().is_some_and(|e| is_angular_test_wrapper_expression(&e)) {
                 return true;
             }
 
@@ -96,12 +96,11 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
 /// @returns {boolean}
 ///
 fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
-    matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
+    matches!(expression.kind(), ExpressionKind::CallExpression(call) if is_angular_test_wrapper(call))
 }
 
 pub fn is_angular_test_wrapper(call: &CallExpression) -> bool {
-    matches!(&call.callee,
-        Expression::Identifier(ident) if
+    matches!(&call.callee.kind(), ExpressionKind::Identifier(ident) if
         matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")
     )
 }
@@ -109,7 +108,7 @@ pub fn is_angular_test_wrapper(call: &CallExpression) -> bool {
 /// Tests if the callee is a `beforeEach`, `beforeAll`, `afterEach` or `afterAll` identifier
 /// that is commonly used in test frameworks.
 fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
-    matches!(callee, Expression::Identifier(ident) if {
+    matches!(callee.kind(), ExpressionKind::Identifier(ident) if {
         matches!(ident.name.as_str(), "beforeEach" | "beforeAll" | "afterEach" | "afterAll")
     })
 }
@@ -138,12 +137,13 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> Option<impl Iterato
     let mut current = Some(expr);
 
     for index in 0..5 {
-        match current {
-            Some(Expression::Identifier(ident)) => {
+        let Some(expr) = current else { break };
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 names[index] = Some(ident.name.as_str());
                 return Some(names.into_iter().rev().flatten());
             }
-            Some(Expression::StaticMemberExpression(member)) => {
+            ExpressionKind::StaticMemberExpression(member) => {
                 current = Some(&member.object);
                 names[index] = Some(member.property.name.as_str());
             }

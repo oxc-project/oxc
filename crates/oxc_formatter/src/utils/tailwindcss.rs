@@ -91,17 +91,17 @@ pub fn is_tailwind_function_call(
     let mut node = callee;
 
     loop {
-        match node {
-            Expression::CallExpression(call) => {
+        match node.kind() {
+            ExpressionKind::CallExpression(call) => {
                 node = &call.callee;
             }
-            Expression::StaticMemberExpression(member) => {
+            ExpressionKind::StaticMemberExpression(member) => {
                 node = &member.object;
             }
-            Expression::ComputedMemberExpression(member) => {
+            ExpressionKind::ComputedMemberExpression(member) => {
                 node = &member.object;
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 return options.functions.iter().any(|f| f == ident.name.as_str());
             }
             _ => return false,
