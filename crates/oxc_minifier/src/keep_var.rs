@@ -14,30 +14,30 @@ pub struct KeepVar<'a> {
 impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_statement(&mut self, it: &Statement<'a>) {
         // Only visit blocks where vars could be hoisted
-        match it {
-            Statement::BlockStatement(it) => self.visit_block_statement(it),
-            Statement::BreakStatement(it) => self.visit_break_statement(it),
-            Statement::ContinueStatement(it) => self.visit_continue_statement(it),
+        match it.kind_mut() {
+            StatementKindMut::BlockStatement(it) => self.visit_block_statement(it),
+            StatementKindMut::BreakStatement(it) => self.visit_break_statement(it),
+            StatementKindMut::ContinueStatement(it) => self.visit_continue_statement(it),
             // Statement::DebuggerStatement(it) => self.visit_debugger_statement(it),
-            Statement::DoWhileStatement(it) => self.visit_do_while_statement(it),
+            StatementKindMut::DoWhileStatement(it) => self.visit_do_while_statement(it),
             // Statement::EmptyStatement(it) => self.visit_empty_statement(it),
             // Statement::ExpressionStatement(it) => self.visit_expression_statement(it),
-            Statement::ForInStatement(it) => self.visit_for_in_statement(it),
-            Statement::ForOfStatement(it) => self.visit_for_of_statement(it),
-            Statement::ForStatement(it) => self.visit_for_statement(it),
-            Statement::IfStatement(it) => self.visit_if_statement(it),
-            Statement::LabeledStatement(it) => self.visit_labeled_statement(it),
+            StatementKindMut::ForInStatement(it) => self.visit_for_in_statement(it),
+            StatementKindMut::ForOfStatement(it) => self.visit_for_of_statement(it),
+            StatementKindMut::ForStatement(it) => self.visit_for_statement(it),
+            StatementKindMut::IfStatement(it) => self.visit_if_statement(it),
+            StatementKindMut::LabeledStatement(it) => self.visit_labeled_statement(it),
             // Statement::ReturnStatement(it) => self.visit_return_statement(it),
-            Statement::SwitchStatement(it) => self.visit_switch_statement(it),
+            StatementKindMut::SwitchStatement(it) => self.visit_switch_statement(it),
             // Statement::ThrowStatement(it) => self.visit_throw_statement(it),
-            Statement::TryStatement(it) => self.visit_try_statement(it),
-            Statement::WhileStatement(it) => self.visit_while_statement(it),
-            Statement::WithStatement(it) => self.visit_with_statement(it),
+            StatementKindMut::TryStatement(it) => self.visit_try_statement(it),
+            StatementKindMut::WhileStatement(it) => self.visit_while_statement(it),
+            StatementKindMut::WithStatement(it) => self.visit_with_statement(it),
             // match_declaration!(Statement) => visitor.visit_declaration(it.to_declaration()),
             // match_module_declaration!(Statement) => {
             // visitor.visit_module_declaration(it.to_module_declaration())
             // }
-            Statement::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
+            StatementKindMut::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             _ => {}
         }
     }
@@ -80,6 +80,6 @@ impl<'a> KeepVar<'a> {
     }
 
     pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
-        self.get_variable_declaration().map(Statement::VariableDeclaration)
+        self.get_variable_declaration().map(Statement::variable_declaration)
     }
 }

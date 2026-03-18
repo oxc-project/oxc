@@ -19,7 +19,7 @@ impl<'a> PeepholeOptimizations {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) b();" => "a || b();"
-                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
                         (LogicalOperator::Or, &mut unary_expr.argument)
                     }
                     // "if (a) b();" => "a && b();"
@@ -48,10 +48,10 @@ impl<'a> PeepholeOptimizations {
                 let mut expr = if_stmt.test.take_in(ctx.ast);
                 Self::remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
+            } else if let Some(Some(expr_stmt)) = if_stmt.alternate.as_expression_statement_mut() {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) {} else b();" => "a && b();"
-                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                    Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
                         (LogicalOperator::And, &mut unary_expr.argument)
                     }
                     // "if (a) {} else b();" => "a || b();"
@@ -63,9 +63,9 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
-                match &mut if_stmt.test {
+                match if_stmt.test.kind_mut() {
                     // "if (!a) {} else return b;" => "if (a) return b;"
-                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                    ExpressionKindMut::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                         if_stmt.test = unary_expr.argument.take_in(ctx.ast);
                         if_stmt.consequent = stmt.take_in(ctx.ast);
                         if_stmt.alternate = None;
@@ -90,8 +90,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
                 if !alternate.is_if_statement()
-                    && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
-                    && unary_expr.operator.is_not()
+                    && let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()                    && unary_expr.operator.is_not()
                 {
                     // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                     if_stmt.test = unary_expr.argument.take_in(ctx.ast);
@@ -133,7 +132,7 @@ impl<'a> PeepholeOptimizations {
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
             if_stmt.consequent =
-                Statement::BlockStatement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
+                Statement::block_statement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
                     if_stmt.consequent.span(),
                     ctx.ast.vec1(if_stmt.consequent.take_in(ctx.ast)),
                     scope_id,
@@ -143,9 +142,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_statement_empty(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
-            Statement::EmptyStatement(_) => true,
+        match stmt.kind_mut() {
+            StatementKindMut::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
+            StatementKindMut::EmptyStatement(_) => true,
             _ => false,
         }
     }

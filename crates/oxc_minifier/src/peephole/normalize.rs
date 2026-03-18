@@ -57,7 +57,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
-            !(matches!(stmt, Statement::EmptyStatement(_))
+            !(stmt.is_empty_statement()
                 || Self::drop_debugger(stmt, ctx)
                 || Self::drop_console(stmt, ctx))
         });
@@ -74,8 +74,8 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
+        match stmt.kind_mut() {
+            StatementKindMut::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
             _ => {}
@@ -83,23 +83,23 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::ParenthesizedExpression(paren_expr) = expr {
+        if let Some(paren_expr) = expr.as_parenthesized_expression_mut() {
             *expr = paren_expr.expression.take_in(ctx.ast);
         }
         if let Some(e) = match expr {
-            Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
-            Expression::UnaryExpression(e) if e.operator.is_void() => {
+            Expression::identifier(ident) => Self::try_compress_identifier(ident, ctx),
+            Expression::unary_expression(e) if e.operator.is_void() => {
                 Self::fold_void_ident(e, ctx);
                 None
             }
-            Expression::ArrowFunctionExpression(e) => {
+            Expression::arrow_function_expression(e) => {
                 Self::recover_arrow_expression_after_drop_console(e, ctx);
                 None
             }
-            Expression::CallExpression(_) if ctx.state.options.drop_console => {
+            Expression::call_expression(_) if ctx.state.options.drop_console => {
                 Self::compress_console(expr, ctx)
             }
-            Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
+            Expression::static_member_expression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
         } {
             *expr = e;
@@ -130,7 +130,7 @@ impl<'a> Normalize {
     ///
     /// Enabled by `compress.drop_debugger`
     fn drop_debugger(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
+        stmt.is_debugger_statement() && ctx.state.options.drop_debugger
     }
 
     fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
@@ -140,7 +140,7 @@ impl<'a> Normalize {
 
     fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.options.drop_console
-            && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
+            && stmt.as_expression_statement().is_some_and(|expr| Self::is_console(&expr.expression)
     }
 
     fn recover_arrow_expression_after_drop_console(
@@ -153,7 +153,7 @@ impl<'a> Normalize {
     }
 
     fn is_console(expr: &Expression<'_>) -> bool {
-        let Expression::CallExpression(call_expr) = &expr else { return false };
+        let Some(call_expr) = expr.as_call_expression() else { return false };
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return false };
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
@@ -161,7 +161,7 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::WhileStatement(while_stmt) = stmt.take_in(ctx.ast) else { return };
+        let Some(while_stmt) = stmt.take_in(ctx.ast).as_while_statement() else { return };
         let while_stmt = while_stmt.unbox();
         let for_stmt = ctx.ast.alloc_for_statement_with_scope_id(
             while_stmt.span,
@@ -255,7 +255,7 @@ impl<'a> Normalize {
 
     fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
-        let Expression::Identifier(ident) = &e.argument else { return };
+        let Some(ident) = e.argument.as_identifier() else { return };
         if ident.is_global_reference(ctx.scoping()) {
             return;
         }
@@ -266,7 +266,7 @@ impl<'a> Normalize {
         e: &StaticMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Expression::Identifier(ident) = &e.object else { return None };
+        let Some(ident) = e.object.as_identifier() else { return None };
         if ident.name != "Number" {
             return None;
         }
@@ -378,11 +378,11 @@ impl<'a> Normalize {
         if match len {
             0 if !zero_arg_throws_error => true,
             1 => match new_expr.arguments[0].as_expression() {
-                Some(Expression::ArrayExpression(array_expr)) => {
+                Some(array_expr) = >.and_then(|__s| __s.as_array_expression()) {
                     array_expr.elements.is_empty() && !one_arg_array_throws_error
                 }
                 Some(e) => {
-                    if let Expression::NewExpression(new_expr) = e {
+                    if let Some(new_expr) = e.as_new_expression_mut() {
                         new_expr.pure
                     } else {
                         let value_type = e.value_type(&ctx);

@@ -690,8 +690,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         let arguments_id = {
-            let Expression::ComputedMemberExpression(rhs_member_expr) = &mut body_assign_expr.right
-            else {
+            let Some(rhs_member_expr) = body_assign_expr.right.as_computed_member_expression_mut()            else {
                 return;
             };
             let ComputedMemberExpression { object, expression, .. } = rhs_member_expr.as_mut();
@@ -1060,7 +1059,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<&'a str> {
         match callee.kind() {
             ExpressionKind::StaticMemberExpression(e) => {
-                if !&e.object.as_identifier().is_some_and(|ident| ident.name == "window") {) {
+                if !e.object.as_identifier().is_some_and(|ident| ident.name == "window") {
                     return None;
                 }
                 Some(e.property.name.as_str())

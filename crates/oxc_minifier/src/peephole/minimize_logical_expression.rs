@@ -86,8 +86,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         let (
-            Expression::BinaryExpression(left_binary_expr),
-            Expression::BinaryExpression(right_binary_expr),
+            Expression::binary_expression(left_binary_expr),
+            Expression::binary_expression(right_binary_expr),
         ) = (left, right)
         else {
             return None;
@@ -167,16 +167,15 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
+            Expression::identifier(read_id_ref),
         ) = (assignment_target, expr)
         {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberExpression::ComputedMemberExpression(e) = write_expr
-                && !matches!(
+            if let MemberSome(e) = write_expr.as_computed_member_expression_mut()                && !matches!(
                     e.expression,
-                    Expression::StringLiteral(_) | Expression::NumericLiteral(_)
+                    Expression::string_literal(_) | Expression::NumericLiteral(_)
                 )
             {
                 return false;
@@ -184,8 +183,8 @@ impl<'a> PeepholeOptimizations {
             let has_same_object = match &write_expr.object() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                Expression::Identifier(ident) => !ctx.is_global_reference(ident),
-                Expression::ThisExpression(_) => {
+                Expression::identifier(ident) => !ctx.is_global_reference(ident),
+                Expression::this_expression(_) => {
                     expr.as_member_expression().is_some_and(|read_expr| {
                         read_expr.object().is_this_expression()
                     })

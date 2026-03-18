@@ -82,18 +82,18 @@ impl AsyncToGenerator<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr.kind() {
-            ExpressionKind::AwaitExpression(await_expr) => {
+        let new_expr = match expr.kind_mut() {
+            ExpressionKindMut::AwaitExpression(await_expr) => {
                 Self::transform_await_expression(await_expr, ctx)
             }
-            ExpressionKind::FunctionExpression(func) => {
+            ExpressionKindMut::FunctionExpression(func) => {
                 if func.r#async && !func.generator && !func.is_typescript_syntax() {
                     Some(self.executor.transform_function_expression(func, ctx))
                 } else {
                     None
                 }
             }
-            ExpressionKind::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 if arrow.r#async {
                     Some(self.executor.transform_arrow_function(arrow, ctx))
                 } else {

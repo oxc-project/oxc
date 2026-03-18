@@ -91,8 +91,8 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        match expr {
-            Expression::Identifier(id) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     ctx.scoping().symbol_is_mutated(symbol_id)
@@ -100,7 +100,7 @@ impl<'a> PeepholeOptimizations {
                     true
                 }
             }
-            Expression::ThisExpression(_) => false,
+            ExpressionKindMut::ThisExpression(_) => false,
             _ => true,
         }
     }
@@ -140,58 +140,57 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.dce {
-            match stmt {
-                Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
-                Statement::IfStatement(_) => Self::try_fold_if(stmt, ctx),
-                Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
-                Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
-                Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+            match stmt.kind_mut() {
+                StatementKindMut::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
+                StatementKindMut::IfStatement(_) => Self::try_fold_if(stmt, ctx),
+                StatementKindMut::ForStatement(_) => Self::try_fold_for(stmt, ctx),
+                StatementKindMut::TryStatement(_) => Self::try_fold_try(stmt, ctx),
+                StatementKindMut::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                StatementKindMut::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => {
+                StatementKindMut::ClassDeclaration(_) => {
                     Self::remove_unused_class_declaration(stmt, ctx);
                 }
-                Statement::ExpressionStatement(_) => {
+                StatementKindMut::ExpressionStatement(_) => {
                     Self::try_fold_expression_stmt(stmt, ctx);
                 }
-                Statement::ImportDeclaration(_) => {
+                StatementKindMut::ImportDeclaration(_) => {
                     Self::remove_unused_import_specifiers(stmt, ctx);
                 }
                 _ => {}
             }
         } else {
-            match stmt {
-                Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
-                Statement::IfStatement(s) => {
+            match stmt.kind_mut() {
+                StatementKindMut::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
+                StatementKindMut::IfStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                     Self::try_fold_if(stmt, ctx);
-                    if let Statement::IfStatement(if_stmt) = stmt
-                        && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
+                    if let Some(if_stmt) = stmt.as_if_statement_mut()                        && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
                     {
                         *stmt = folded_stmt;
                         ctx.state.changed = true;
                     }
                 }
-                Statement::WhileStatement(s) => {
+                StatementKindMut::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 }
-                Statement::ForStatement(s) => {
+                StatementKindMut::ForStatement(s) => {
                     if let Some(test) = &mut s.test {
                         Self::minimize_expression_in_boolean_context(test, ctx);
                     }
                     Self::try_fold_for(stmt, ctx);
                 }
-                Statement::DoWhileStatement(s) => {
+                StatementKindMut::DoWhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 }
-                Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
-                Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::FunctionDeclaration(_) => {
+                StatementKindMut::TryStatement(_) => Self::try_fold_try(stmt, ctx),
+                StatementKindMut::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                StatementKindMut::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
-                Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
+                StatementKindMut::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+                StatementKindMut::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
                 _ => {}
             }
             Self::try_fold_expression_stmt(stmt, ctx);
@@ -234,48 +233,48 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.state.dce {
-            match expr {
-                Expression::TemplateLiteral(t) => {
+            match expr.kind_mut() {
+                ExpressionKindMut::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
                 }
-                Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
-                Expression::BinaryExpression(_) => {
+                ExpressionKindMut::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
+                ExpressionKindMut::BinaryExpression(_) => {
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
                 }
-                Expression::UnaryExpression(_) => Self::fold_unary_expr(expr, ctx),
-                Expression::StaticMemberExpression(_) => {
+                ExpressionKindMut::UnaryExpression(_) => Self::fold_unary_expr(expr, ctx),
+                ExpressionKindMut::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
                 }
-                Expression::ComputedMemberExpression(_) => {
+                ExpressionKindMut::ComputedMemberExpression(_) => {
                     Self::fold_computed_member_expr(expr, ctx);
                 }
-                Expression::LogicalExpression(_) => Self::fold_logical_expr(expr, ctx),
-                Expression::ChainExpression(_) => Self::fold_chain_expr(expr, ctx),
-                Expression::CallExpression(_) => {
+                ExpressionKindMut::LogicalExpression(_) => Self::fold_logical_expr(expr, ctx),
+                ExpressionKindMut::ChainExpression(_) => Self::fold_chain_expr(expr, ctx),
+                ExpressionKindMut::CallExpression(_) => {
                     Self::fold_call_expression(expr, ctx);
                     Self::substitute_iife_call(expr, ctx);
                     Self::remove_dead_code_call_expression(expr, ctx);
                 }
-                Expression::ConditionalExpression(_) => {
+                ExpressionKindMut::ConditionalExpression(_) => {
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
-                Expression::SequenceExpression(_) => {
+                ExpressionKindMut::SequenceExpression(_) => {
                     Self::remove_sequence_expression(expr, ctx);
                 }
-                Expression::AssignmentExpression(_) => {
+                ExpressionKindMut::AssignmentExpression(_) => {
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
                 _ => {}
             }
         } else {
-            match expr {
-                Expression::TemplateLiteral(t) => {
+            match expr.kind_mut() {
+                ExpressionKindMut::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
                     Self::substitute_template_literal(expr, ctx);
                 }
-                Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
-                Expression::BinaryExpression(e) => {
+                ExpressionKindMut::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
+                ExpressionKindMut::BinaryExpression(e) => {
                     Self::substitute_swap_binary_expressions(e);
                     Self::fold_binary_expr(expr, ctx);
                     Self::fold_binary_typeof_comparison(expr, ctx);
@@ -285,30 +284,30 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_typeof_undefined(expr, ctx);
                     Self::substitute_rotate_binary_expression(expr, ctx);
                 }
-                Expression::UnaryExpression(_) => {
+                ExpressionKindMut::UnaryExpression(_) => {
                     Self::fold_unary_expr(expr, ctx);
                     Self::minimize_unary(expr, ctx);
                     Self::substitute_unary_plus(expr, ctx);
                 }
-                Expression::StaticMemberExpression(_) => {
+                ExpressionKindMut::StaticMemberExpression(_) => {
                     Self::fold_static_member_expr(expr, ctx);
                     Self::replace_known_property_access(expr, ctx);
                 }
-                Expression::ComputedMemberExpression(_) => {
+                ExpressionKindMut::ComputedMemberExpression(_) => {
                     Self::fold_computed_member_expr(expr, ctx);
                     Self::replace_known_property_access(expr, ctx);
                 }
-                Expression::LogicalExpression(_) => {
+                ExpressionKindMut::LogicalExpression(_) => {
                     Self::fold_logical_expr(expr, ctx);
                     Self::minimize_logical_expression(expr, ctx);
                     Self::substitute_is_object_and_not_null(expr, ctx);
                     Self::substitute_rotate_logical_expression(expr, ctx);
                 }
-                Expression::ChainExpression(_) => {
+                ExpressionKindMut::ChainExpression(_) => {
                     Self::fold_chain_expr(expr, ctx);
                     Self::substitute_chain_expression(expr, ctx);
                 }
-                Expression::CallExpression(_) => {
+                ExpressionKindMut::CallExpression(_) => {
                     Self::fold_call_expression(expr, ctx);
                     Self::substitute_iife_call(expr, ctx);
                     Self::remove_dead_code_call_expression(expr, ctx);
@@ -317,7 +316,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_simple_function_call(expr, ctx);
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
-                Expression::ConditionalExpression(logical_expr) => {
+                ExpressionKindMut::ConditionalExpression(logical_expr) => {
                     Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
@@ -326,24 +325,24 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     }
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
-                Expression::AssignmentExpression(e) => {
+                ExpressionKindMut::AssignmentExpression(e) => {
                     Self::minimize_normal_assignment_to_combined_logical_assignment(e, ctx);
                     Self::minimize_normal_assignment_to_combined_assignment(e, ctx);
                     Self::minimize_assignment_to_update_expression(expr, ctx);
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
-                Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
-                Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
-                Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
-                Expression::NewExpression(e) => {
+                ExpressionKindMut::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
+                ExpressionKindMut::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
+                ExpressionKindMut::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
+                ExpressionKindMut::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
+                ExpressionKindMut::NewExpression(e) => {
                     Self::substitute_typed_array_constructor(e, ctx);
                     Self::substitute_global_new_expression(expr, ctx);
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
-                Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                Expression::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
-                Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
+                ExpressionKindMut::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
+                ExpressionKindMut::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
+                ExpressionKindMut::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }
         }

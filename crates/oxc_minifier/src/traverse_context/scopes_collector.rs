@@ -41,42 +41,42 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     fn visit_expression(&mut self, it: &Expression<'a>) {
         match it {
-            Expression::TemplateLiteral(it) => self.visit_template_literal(it),
-            Expression::ArrayExpression(it) => self.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => self.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => self.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => self.visit_await_expression(it),
-            Expression::BinaryExpression(it) => self.visit_binary_expression(it),
-            Expression::CallExpression(it) => self.visit_call_expression(it),
-            Expression::ChainExpression(it) => self.visit_chain_expression(it),
-            Expression::ClassExpression(it) => self.visit_class(it),
-            Expression::ConditionalExpression(it) => self.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
+            ExpressionKind::TemplateLiteral(it) => self.visit_template_literal(it),
+            ExpressionKind::ArrayExpression(it) => self.visit_array_expression(it),
+            ExpressionKind::ArrowFunctionExpression(it) => self.visit_arrow_function_expression(it),
+            ExpressionKind::AssignmentExpression(it) => self.visit_assignment_expression(it),
+            ExpressionKind::AwaitExpression(it) => self.visit_await_expression(it),
+            ExpressionKind::BinaryExpression(it) => self.visit_binary_expression(it),
+            ExpressionKind::CallExpression(it) => self.visit_call_expression(it),
+            ExpressionKind::ChainExpression(it) => self.visit_chain_expression(it),
+            ExpressionKind::ClassExpression(it) => self.visit_class(it),
+            ExpressionKind::ConditionalExpression(it) => self.visit_conditional_expression(it),
+            ExpressionKind::FunctionExpression(it) => {
                 let flags = ScopeFlags::Function;
                 self.visit_function(it, flags)
             }
-            Expression::ImportExpression(it) => self.visit_import_expression(it),
-            Expression::LogicalExpression(it) => self.visit_logical_expression(it),
-            Expression::NewExpression(it) => self.visit_new_expression(it),
-            Expression::ObjectExpression(it) => self.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => self.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => self.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => self.visit_tagged_template_expression(it),
-            Expression::UnaryExpression(it) => self.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => self.visit_update_expression(it),
-            Expression::YieldExpression(it) => self.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => self.visit_private_in_expression(it),
-            Expression::JSXElement(it) => self.visit_jsx_element(it),
-            Expression::JSXFragment(it) => self.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
-            Expression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
-            Expression::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
-            Expression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
-            Expression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
+            ExpressionKind::ImportExpression(it) => self.visit_import_expression(it),
+            ExpressionKind::LogicalExpression(it) => self.visit_logical_expression(it),
+            ExpressionKind::NewExpression(it) => self.visit_new_expression(it),
+            ExpressionKind::ObjectExpression(it) => self.visit_object_expression(it),
+            ExpressionKind::ParenthesizedExpression(it) => self.visit_parenthesized_expression(it),
+            ExpressionKind::SequenceExpression(it) => self.visit_sequence_expression(it),
+            ExpressionKind::TaggedTemplateExpression(it) => self.visit_tagged_template_expression(it),
+            ExpressionKind::UnaryExpression(it) => self.visit_unary_expression(it),
+            ExpressionKind::UpdateExpression(it) => self.visit_update_expression(it),
+            ExpressionKind::YieldExpression(it) => self.visit_yield_expression(it),
+            ExpressionKind::PrivateInExpression(it) => self.visit_private_in_expression(it),
+            ExpressionKind::JSXElement(it) => self.visit_jsx_element(it),
+            ExpressionKind::JSXFragment(it) => self.visit_jsx_fragment(it),
+            ExpressionKind::TSAsExpression(it) => self.visit_ts_as_expression(it),
+            ExpressionKind::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
+            ExpressionKind::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            ExpressionKind::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
+            ExpressionKind::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
+            ExpressionKind::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
+            ExpressionKind::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
+            ExpressionKind::StaticMemberExpression(it) => self.visit_static_member_expression(it),
+            ExpressionKind::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `BooleanLiteral`
@@ -591,34 +591,34 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     fn visit_statement(&mut self, it: &Statement<'a>) {
         match it {
-            Statement::BlockStatement(it) => self.visit_block_statement(it),
-            Statement::DoWhileStatement(it) => self.visit_do_while_statement(it),
-            Statement::ExpressionStatement(it) => self.visit_expression_statement(it),
-            Statement::ForInStatement(it) => self.visit_for_in_statement(it),
-            Statement::ForOfStatement(it) => self.visit_for_of_statement(it),
-            Statement::ForStatement(it) => self.visit_for_statement(it),
-            Statement::IfStatement(it) => self.visit_if_statement(it),
-            Statement::LabeledStatement(it) => self.visit_labeled_statement(it),
-            Statement::ReturnStatement(it) => self.visit_return_statement(it),
-            Statement::SwitchStatement(it) => self.visit_switch_statement(it),
-            Statement::ThrowStatement(it) => self.visit_throw_statement(it),
-            Statement::TryStatement(it) => self.visit_try_statement(it),
-            Statement::WhileStatement(it) => self.visit_while_statement(it),
-            Statement::WithStatement(it) => self.visit_with_statement(it),
-            Statement::VariableDeclaration(it) => self.visit_variable_declaration(it),
-            Statement::FunctionDeclaration(it) => {
+            StatementKind::BlockStatement(it) => self.visit_block_statement(it),
+            StatementKind::DoWhileStatement(it) => self.visit_do_while_statement(it),
+            StatementKind::ExpressionStatement(it) => self.visit_expression_statement(it),
+            StatementKind::ForInStatement(it) => self.visit_for_in_statement(it),
+            StatementKind::ForOfStatement(it) => self.visit_for_of_statement(it),
+            StatementKind::ForStatement(it) => self.visit_for_statement(it),
+            StatementKind::IfStatement(it) => self.visit_if_statement(it),
+            StatementKind::LabeledStatement(it) => self.visit_labeled_statement(it),
+            StatementKind::ReturnStatement(it) => self.visit_return_statement(it),
+            StatementKind::SwitchStatement(it) => self.visit_switch_statement(it),
+            StatementKind::ThrowStatement(it) => self.visit_throw_statement(it),
+            StatementKind::TryStatement(it) => self.visit_try_statement(it),
+            StatementKind::WhileStatement(it) => self.visit_while_statement(it),
+            StatementKind::WithStatement(it) => self.visit_with_statement(it),
+            StatementKind::VariableDeclaration(it) => self.visit_variable_declaration(it),
+            StatementKind::FunctionDeclaration(it) => {
                 let flags = ScopeFlags::Function;
                 self.visit_function(it, flags)
             }
-            Statement::ClassDeclaration(it) => self.visit_class(it),
-            Statement::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
-            Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
-            Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
-            Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
-            Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
-            Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
-            Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
+            StatementKind::ClassDeclaration(it) => self.visit_class(it),
+            StatementKind::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
+            StatementKind::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
+            StatementKind::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
+            StatementKind::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            StatementKind::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
+            StatementKind::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
+            StatementKind::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
+            StatementKind::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `BreakStatement`
@@ -1332,49 +1332,49 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     fn visit_jsx_expression(&mut self, it: &JSXExpression<'a>) {
-        match it {
-            JSXExpression::TemplateLiteral(it) => self.visit_template_literal(it),
-            JSXExpression::ArrayExpression(it) => self.visit_array_expression(it),
-            JSXExpression::ArrowFunctionExpression(it) => self.visit_arrow_function_expression(it),
-            JSXExpression::AssignmentExpression(it) => self.visit_assignment_expression(it),
-            JSXExpression::AwaitExpression(it) => self.visit_await_expression(it),
-            JSXExpression::BinaryExpression(it) => self.visit_binary_expression(it),
-            JSXExpression::CallExpression(it) => self.visit_call_expression(it),
-            JSXExpression::ChainExpression(it) => self.visit_chain_expression(it),
-            JSXExpression::ClassExpression(it) => self.visit_class(it),
-            JSXExpression::ConditionalExpression(it) => self.visit_conditional_expression(it),
-            JSXExpression::FunctionExpression(it) => {
+        match it.kind_mut() {
+            JSXExpressionKindMut::TemplateLiteral(it) => self.visit_template_literal(it),
+            JSXExpressionKindMut::ArrayExpression(it) => self.visit_array_expression(it),
+            JSXExpressionKindMut::ArrowFunctionExpression(it) => self.visit_arrow_function_expression(it),
+            JSXExpressionKindMut::AssignmentExpression(it) => self.visit_assignment_expression(it),
+            JSXExpressionKindMut::AwaitExpression(it) => self.visit_await_expression(it),
+            JSXExpressionKindMut::BinaryExpression(it) => self.visit_binary_expression(it),
+            JSXExpressionKindMut::CallExpression(it) => self.visit_call_expression(it),
+            JSXExpressionKindMut::ChainExpression(it) => self.visit_chain_expression(it),
+            JSXExpressionKindMut::ClassExpression(it) => self.visit_class(it),
+            JSXExpressionKindMut::ConditionalExpression(it) => self.visit_conditional_expression(it),
+            JSXExpressionKindMut::FunctionExpression(it) => {
                 let flags = ScopeFlags::Function;
                 self.visit_function(it, flags)
             }
-            JSXExpression::ImportExpression(it) => self.visit_import_expression(it),
-            JSXExpression::LogicalExpression(it) => self.visit_logical_expression(it),
-            JSXExpression::NewExpression(it) => self.visit_new_expression(it),
-            JSXExpression::ObjectExpression(it) => self.visit_object_expression(it),
-            JSXExpression::ParenthesizedExpression(it) => self.visit_parenthesized_expression(it),
-            JSXExpression::SequenceExpression(it) => self.visit_sequence_expression(it),
-            JSXExpression::TaggedTemplateExpression(it) => {
+            JSXExpressionKindMut::ImportExpression(it) => self.visit_import_expression(it),
+            JSXExpressionKindMut::LogicalExpression(it) => self.visit_logical_expression(it),
+            JSXExpressionKindMut::NewExpression(it) => self.visit_new_expression(it),
+            JSXExpressionKindMut::ObjectExpression(it) => self.visit_object_expression(it),
+            JSXExpressionKindMut::ParenthesizedExpression(it) => self.visit_parenthesized_expression(it),
+            JSXExpressionKindMut::SequenceExpression(it) => self.visit_sequence_expression(it),
+            JSXExpressionKindMut::TaggedTemplateExpression(it) => {
                 self.visit_tagged_template_expression(it)
             }
-            JSXExpression::UnaryExpression(it) => self.visit_unary_expression(it),
-            JSXExpression::UpdateExpression(it) => self.visit_update_expression(it),
-            JSXExpression::YieldExpression(it) => self.visit_yield_expression(it),
-            JSXExpression::PrivateInExpression(it) => self.visit_private_in_expression(it),
-            JSXExpression::JSXElement(it) => self.visit_jsx_element(it),
-            JSXExpression::JSXFragment(it) => self.visit_jsx_fragment(it),
-            JSXExpression::TSAsExpression(it) => self.visit_ts_as_expression(it),
-            JSXExpression::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
-            JSXExpression::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
-            JSXExpression::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            JSXExpression::TSInstantiationExpression(it) => {
+            JSXExpressionKindMut::UnaryExpression(it) => self.visit_unary_expression(it),
+            JSXExpressionKindMut::UpdateExpression(it) => self.visit_update_expression(it),
+            JSXExpressionKindMut::YieldExpression(it) => self.visit_yield_expression(it),
+            JSXExpressionKindMut::PrivateInExpression(it) => self.visit_private_in_expression(it),
+            JSXExpressionKindMut::JSXElement(it) => self.visit_jsx_element(it),
+            JSXExpressionKindMut::JSXFragment(it) => self.visit_jsx_fragment(it),
+            JSXExpressionKindMut::TSAsExpression(it) => self.visit_ts_as_expression(it),
+            JSXExpressionKindMut::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
+            JSXExpressionKindMut::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            JSXExpressionKindMut::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
+            JSXExpressionKindMut::TSInstantiationExpression(it) => {
                 self.visit_ts_instantiation_expression(it)
             }
-            JSXExpression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
-            JSXExpression::ComputedMemberExpression(it) => {
+            JSXExpressionKindMut::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
+            JSXExpressionKindMut::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
-            JSXExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
-            JSXExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
+            JSXExpressionKindMut::StaticMemberExpression(it) => self.visit_static_member_expression(it),
+            JSXExpressionKindMut::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `EmptyExpression`

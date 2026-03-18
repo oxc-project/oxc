@@ -11,11 +11,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        match expr {
-            Expression::ArrayExpression(_)
-            | Expression::StringLiteral(_)
-            | Expression::TemplateLiteral(_) => true,
-            Expression::Identifier(ident) => {
+        match expr.kind_mut() {
+            Expression::array_expression(_)
+            | ExpressionKindMut::StringLiteral(_)
+            | ExpressionKindMut::TemplateLiteral(_) => true,
+            ExpressionKindMut::Identifier(ident) => {
                 ident.name == "arguments"
                     && ctx.is_global_reference(ident)
                     // arguments can be reassigned in non-strict mode

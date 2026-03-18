@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 """
-Robust transformation of Expression/Statement enum patterns to tagged pointer patterns.
+Final transformation script. Handles:
+1. matches! patterns
+2. let-else / if-let patterns
+3. match blocks (arms + headers)
+4. construction patterns
+5. Some() patterns
+6. Function reference patterns
 
-Categories of transformations:
-1. matches!(expr, Expression::Variant(_)) -> expr.is_variant()
-2. matches!(expr, Expression::Variant(v) if cond) -> expr.as_variant().is_some_and(|v| cond)
-3. let Expression::Variant(x) = expr else { ... } -> let Some(x) = expr.as_variant_mut() else { ... }
-4. if let Expression::Variant(x) = &expr -> if let Some(x) = expr.as_variant()
-5. Match blocks: match expr { Expression::Variant(x) => } -> match expr.kind() { ExpressionKind::Variant(x) => }
-6. Construction: Expression::Variant(alloc) -> Expression::snake(alloc) (outside pattern contexts)
-7. Some(Expression::Variant(x)) -> .and_then(|s| s.as_variant())
-8. Expression::Variant as function ref -> Expression::snake
+For owned match blocks, marks them with TODO for manual fixing.
 """
-import os, re, sys
+import os, sys
 
 BASE = "/Users/boshen/oxc/oxc/crates/oxc_minifier/src"
 
@@ -98,32 +96,127 @@ STMT = {
     'TSNamespaceExportDeclaration': 'ts_namespace_export_declaration',
 }
 
-ALL_EXPR = set(EXPR.keys())
-ALL_STMT = set(STMT.keys())
-
 
 def get_files():
-    result = []
+    r = []
     for root, dirs, files in os.walk(BASE):
-        if 'generated' in root:
-            continue
+        if 'generated' in root: continue
         for f in files:
-            if f.endswith('.rs'):
-                result.append(os.path.join(root, f))
-    return sorted(result)
+            if f.endswith('.rs'): r.append(os.path.join(root, f))
+    return sorted(r)
 
 
-def has_expr_variant(s):
+def has_variant(line, ty='both'):
+    """Check if line has Expression:: or Statement:: variants."""
+    types = []
+    if ty in ('both', 'Expression'): types.append(('Expression', EXPR))
+    if ty in ('both', 'Statement'): types.append(('Statement', STMT))
+    for t, variants in types:
+        for v in variants:
+            if f'{t}::{v}' in line:
+                return True
+    return False
+
+
+def which_type(line):
+    """Return 'Expression' or 'Statement' based on which is in the line."""
     for v in EXPR:
-        if f'Expression::{v}' in s:
-            return True
-    return False
-
-def has_stmt_variant(s):
+        if f'Expression::{v}' in line: return 'Expression'
     for v in STMT:
-        if f'Statement::{v}' in s:
-            return True
-    return False
+        if f'Statement::{v}' in line: return 'Statement'
+    return None
+
+
+def find_match_blocks(lines):
+    """Find match blocks and categorize them.
+    Returns: dict of {header_idx: (ty, ref_type, arm_indices)}
+    where ref_type is 'ref', 'mut', or 'owned'
+    """
+    blocks = {}
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if not s.startswith('match ') or not s.endswith('{'):
+            continue
+
+        match_expr = s[6:].rstrip('{').strip()
+
+        # Look ahead to find arms with Expression/Statement variants
+        ty = None
+        arm_indices = []
+        depth = 1
+        j = i + 1
+        while j < len(lines) and depth > 0:
+            js = lines[j].strip()
+            # Track brace depth
+            for ch in js:
+                if ch == '{': depth += 1
+                elif ch == '}': depth -= 1
+            if depth <= 0: break
+
+            # Check if this line is a match arm with our variant
+            line_ty = which_type(lines[j])
+            if line_ty and ('=>' in lines[j] or js.startswith('| ') or js.endswith('|')):
+                if ty is None: ty = line_ty
+                arm_indices.append(j)
+            j += 1
+
+        if not ty or not arm_indices:
+            continue
+
+        # Determine ref type
+        if match_expr.startswith('&mut '):
+            ref_type = 'mut'
+        elif match_expr.startswith('&'):
+            ref_type = 'ref'
+        else:
+            # Need to determine from context
+            # If the match expression involves .take_in(), .pop(), it's owned
+            if '.take_in(' in match_expr or '.pop()' in match_expr:
+                ref_type = 'owned'
+            else:
+                # Assume the variable is &mut (most common in this codebase)
+                ref_type = 'mut'
+
+        blocks[i] = (ty, ref_type, arm_indices)
+
+    return blocks
+
+
+def transform_match_header(line, ty, ref_type, match_expr):
+    """Transform match header line."""
+    indent = line[:len(line) - len(line.lstrip())]
+
+    if ref_type == 'mut':
+        if match_expr.startswith('&mut '):
+            expr = match_expr[5:].strip()
+        else:
+            expr = match_expr
+        return f'{indent}match {expr}.kind_mut() {{\n'
+    elif ref_type == 'ref':
+        if match_expr.startswith('&'):
+            expr = match_expr[1:].strip()
+        else:
+            expr = match_expr
+        return f'{indent}match {expr}.kind() {{\n'
+    else:  # owned
+        # For owned, we use .kind() but note this borrows
+        return f'{indent}match {match_expr}.kind() {{\n'
+
+
+def transform_match_arm(line, ty, ref_type):
+    """Transform match arm: replace Type::Variant with TypeKind[Mut]::Variant."""
+    variants = EXPR if ty == 'Expression' else STMT
+    if ref_type == 'mut':
+        kind_ty = f'{ty}KindMut'
+    else:
+        kind_ty = f'{ty}Kind'
+
+    for v in variants:
+        old = f'{ty}::{v}'
+        new = f'{kind_ty}::{v}'
+        if old in line:
+            line = line.replace(old, new)
+    return line
 
 
 def process_file(filepath):
@@ -131,110 +224,44 @@ def process_file(filepath):
         lines = f.readlines()
     original = ''.join(lines)
 
-    # First pass: identify match blocks that match on Expression/Statement
-    # A match block starts with "match EXPR {" and its arms use Expression::/Statement::
-    match_blocks = []  # [(header_line_idx, ty, is_mut, arm_line_indices)]
+    # Step 1: Find all match blocks
+    match_blocks = find_match_blocks(lines)
 
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if not stripped.startswith('match ') or not stripped.endswith('{'):
-            continue
-        # Don't process if this doesn't look like matching on Expression/Statement
-        # Look ahead at arms
-        ty = None
-        is_mut = False
-        arm_indices = []
+    # Build lookup tables
+    arm_lines = {}  # line_idx -> (ty, ref_type)
+    header_lines = {}  # line_idx -> (ty, ref_type, match_expr)
+    for h_idx, (ty, ref_type, arms) in match_blocks.items():
+        s = lines[h_idx].strip()
+        match_expr = s[6:].rstrip('{').strip()
+        header_lines[h_idx] = (ty, ref_type, match_expr)
+        for a_idx in arms:
+            arm_lines[a_idx] = (ty, ref_type)
 
-        # Extract match expression
-        match_expr_part = stripped[6:].rstrip('{').strip()
-
-        # Check arms for Expression::/Statement:: patterns
-        depth = 1
-        j = i + 1
-        while j < len(lines) and depth > 0:
-            arm_stripped = lines[j].strip()
-            depth += arm_stripped.count('{') - arm_stripped.count('}')
-            if depth <= 0:
-                break
-
-            for v in EXPR:
-                if f'Expression::{v}' in lines[j] and ('=>' in lines[j] or lines[j].strip().startswith('|') or lines[j].strip().endswith('|')):
-                    if ty is None:
-                        ty = 'Expression'
-                    arm_indices.append(j)
-                    break
-            for v in STMT:
-                if f'Statement::{v}' in lines[j] and ('=>' in lines[j] or lines[j].strip().startswith('|') or lines[j].strip().endswith('|')):
-                    if ty is None:
-                        ty = 'Statement'
-                    arm_indices.append(j)
-                    break
-            j += 1
-
-        if ty and arm_indices:
-            # Determine ref type from match expression
-            if match_expr_part.startswith('&mut '):
-                is_mut = True
-            elif match_expr_part.startswith('&'):
-                is_mut = False
-            else:
-                # Bare expression - need to determine from context
-                # Heuristic: if any arm body mutates, it's mut
-                # For simplicity, assume non-mut (kind()) unless explicitly &mut
-                is_mut = False
-
-            match_blocks.append((i, ty, is_mut, arm_indices))
-
-    # Build set of arm lines for quick lookup
-    all_arm_lines = set()
-    arm_info = {}  # line_idx -> (ty, is_mut)
-    header_lines = {}  # line_idx -> (ty, is_mut)
-    for header_idx, ty, is_mut, arm_indices in match_blocks:
-        header_lines[header_idx] = (ty, is_mut)
-        for arm_idx in arm_indices:
-            all_arm_lines.add(arm_idx)
-            arm_info[arm_idx] = (ty, is_mut)
-
-    # Second pass: transform lines
+    # Step 2: Process each line
     new_lines = []
     for i, line in enumerate(lines):
-        stripped = line.strip()
+        s = line.strip()
 
         # Skip comments
-        if stripped.startswith('//') or stripped.startswith('///') or stripped.startswith('*') or stripped.startswith('/*'):
+        if s.startswith('//') or s.startswith('///') or s.startswith('*') or s.startswith('/*'):
             new_lines.append(line)
             continue
 
         # Transform match headers
         if i in header_lines:
-            ty, is_mut = header_lines[i]
-            kind_method = 'kind_mut()' if is_mut else 'kind()'
-            # Modify the match expression
-            s = stripped
-            match_expr = s[6:].rstrip('{').strip()
-            if match_expr.startswith('&mut '):
-                new_match_expr = match_expr[5:].strip() + f'.{kind_method}'
-            elif match_expr.startswith('&'):
-                new_match_expr = match_expr[1:].strip() + f'.{kind_method}'
-            else:
-                new_match_expr = match_expr + f'.{kind_method}'
-            indent = line[:len(line) - len(line.lstrip())]
-            line = f'{indent}match {new_match_expr} {{\n'
+            ty, ref_type, match_expr = header_lines[i]
+            line = transform_match_header(line, ty, ref_type, match_expr)
 
         # Transform match arms
-        if i in all_arm_lines:
-            ty, is_mut = arm_info[i]
-            kind_ty = f'{ty}Kind' if not is_mut else f'{ty}KindMut'
-            variants = EXPR if ty == 'Expression' else STMT
-            for v in variants:
-                old = f'{ty}::{v}'
-                new = f'{kind_ty}::{v}'
-                if old in line:
-                    line = line.replace(old, new)
+        if i in arm_lines:
+            ty, ref_type = arm_lines[i]
+            line = transform_match_arm(line, ty, ref_type)
+            new_lines.append(line)
+            continue
 
-        # Transform non-match patterns (only if not a match arm)
-        if i not in all_arm_lines and i not in header_lines:
-            line = transform_non_match_patterns(line, stripped)
+        # Transform non-match patterns
+        if has_variant(line):
+            line = transform_other(line, s, lines, i)
 
         new_lines.append(line)
 
@@ -246,12 +273,8 @@ def process_file(filepath):
     return False
 
 
-def transform_non_match_patterns(line, stripped):
-    """Transform non-match patterns: matches!, let-else, if-let, construction, Some()."""
-
-    # Skip if no Expression/Statement variant present
-    if not has_expr_variant(line) and not has_stmt_variant(line):
-        return line
+def transform_other(line, s, lines, idx):
+    """Transform non-match-arm patterns."""
 
     for ty, variants in [('Expression', EXPR), ('Statement', STMT)]:
         for v, snake in variants.items():
@@ -259,321 +282,231 @@ def transform_non_match_patterns(line, stripped):
             if old not in line:
                 continue
 
-            # === matches! patterns ===
-            if 'matches!(' in line and old in line:
-                line = transform_matches_pattern(line, ty, v, snake)
-                if old not in line:
+            # === 1. matches! patterns ===
+            if 'matches!(' in line:
+                # Simple: matches!(X, Type::Variant(_))
+                simple_pat = f'{old}(_))'
+                if simple_pat in line:
+                    # Find the expression being matched
+                    mi = line.find('matches!(')
+                    rest = line[mi+9:]
+                    ci = rest.find(',')
+                    if ci >= 0:
+                        expr_str = rest[:ci].strip()
+                        if expr_str.startswith('&'):
+                            expr_str = expr_str[1:]
+                        after = line[line.index(simple_pat) + len(simple_pat):]
+                        line = line[:mi] + f'{expr_str}.is_{snake}()' + after
+                        continue
+
+                # Guard: matches!(..., Type::Variant(var) if cond)
+                if f'{old}(' in line and ' if ' in line:
+                    mi = line.find('matches!(')
+                    if mi >= 0:
+                        rest = line[mi+9:]
+                        ci = rest.find(',')
+                        if ci >= 0:
+                            expr_str = rest[:ci].strip()
+                            if expr_str.startswith('&'):
+                                expr_str = expr_str[1:]
+                            after_comma = rest[ci+1:].strip()
+                            # Find Type::Variant(binding)
+                            vi = after_comma.find(f'{old}(')
+                            if vi >= 0:
+                                bi = vi + len(old) + 1
+                                be = after_comma.find(')', bi)
+                                if be >= 0:
+                                    binding = after_comma[bi:be]
+                                    gi = after_comma.find(' if ', be)
+                                    if gi >= 0:
+                                        guard = after_comma[gi+4:].rstrip().rstrip(')')
+                                        after_matches = line[line.rindex(')') + 1:]
+                                        line = line[:mi] + f'{expr_str}.as_{snake}().is_some_and(|{binding}| {guard})' + after_matches
+                                        continue
+
+                # Multi-variant matches with |
+                if '|' in line and f'{old}(_)' in line:
+                    # matches!(expr, Type::A(_) | Type::B(_))
+                    # -> expr.is_a() || expr.is_b()
+                    # Complex - skip for simple cases, handle in specific fixups
+                    pass
+
+                # Some(Type::Variant(v)) if guard inside matches!
+                if f'Some({old}(' in line:
+                    mi = line.find('matches!(')
+                    if mi >= 0:
+                        rest = line[mi+9:]
+                        ci = rest.find(',')
+                        if ci >= 0:
+                            expr_str = rest[:ci].strip()
+                            if expr_str.startswith('&'):
+                                expr_str = expr_str[1:]
+                            after_comma = rest[ci+1:].strip()
+                            svi = after_comma.find(f'Some({old}(')
+                            if svi >= 0:
+                                bi = svi + len(f'Some({old}(')
+                                # Find matching ))
+                                depth = 2
+                                k = bi
+                                while k < len(after_comma) and depth > 0:
+                                    if after_comma[k] == '(': depth += 1
+                                    elif after_comma[k] == ')': depth -= 1
+                                    k += 1
+                                binding = after_comma[bi:k-2]
+                                gi = after_comma.find(' if ', k)
+                                if gi >= 0:
+                                    guard = after_comma[gi+4:].rstrip().rstrip(')')
+                                    after_matches = line[line.rindex(')') + 1:]
+                                    line = line[:mi] + f'{expr_str}.as_{snake}().is_some_and(|{binding}| {guard})' + after_matches
+                                    continue
+
+                continue  # Skip further processing for this variant
+
+            # === 2. let/if-let patterns ===
+            if ('let ' in s or 'if let ' in s or '&& let ' in s or 'while let ' in s) and f'{old}(' in line:
+                # Find the pattern: Type::Variant(binding) = rhs
+                pi = line.find(f'{old}(')
+                # Get binding
+                bi = pi + len(old) + 1
+                depth = 1; k = bi
+                while k < len(line) and depth > 0:
+                    if line[k] == '(': depth += 1
+                    elif line[k] == ')': depth -= 1
+                    k += 1
+                binding = line[bi:k-1]
+                after_pat = line[k:]
+                before_pat = line[:pi]
+
+                # Find =
+                eq_pos = after_pat.find('= ')
+                if eq_pos < 0:
+                    # Maybe multiline
                     continue
 
-            # === let-else and if-let patterns ===
-            if ('let ' in stripped or 'if let ' in stripped or '&& let ' in stripped) and old + '(' in line:
-                line = transform_let_pattern(line, ty, v, snake)
-                if old not in line:
+                rhs = after_pat[eq_pos+2:]
+
+                # Determine ref type from rhs
+                rhs_stripped = rhs.lstrip()
+                if rhs_stripped.startswith('&mut '):
+                    method = f'as_{snake}_mut()'
+                    rhs_expr = rhs_stripped[5:]
+                elif rhs_stripped.startswith('&'):
+                    method = f'as_{snake}()'
+                    rhs_expr = rhs_stripped[1:]
+                else:
+                    # Check if it's owned (.take_in, .pop, .unbox etc)
+                    if '.take_in(' in rhs or '.pop()' in rhs or '.unbox()' in rhs:
+                        # Owned - need special handling
+                        # For let-else with owned, use is_ + into_
+                        if ' else ' in rhs:
+                            expr_part = rhs_stripped.split(' else ')[0].strip()
+                            else_part = ' else ' + rhs_stripped.split(' else ', 1)[1]
+                            # Can't use as_ on owned. Need to check + into
+                            # If binding has 'mut', it's taking ownership of Box
+                            if binding.startswith('mut '):
+                                actual_binding = binding[4:]
+                                line = f'{before_pat}Some(mut {actual_binding}) = {expr_part}.as_{snake}_mut(){else_part}'
+                                continue
+                            else:
+                                line = f'{before_pat}Some({binding}) = {expr_part}.as_{snake}(){else_part}'
+                                continue
+                        else:
+                            method = f'as_{snake}_mut()'
+                            rhs_expr = rhs_stripped
+                    else:
+                        # Assume mutable context (common in minifier)
+                        method = f'as_{snake}_mut()'
+                        rhs_expr = rhs_stripped
+
+                # Build new line
+                if ' else {' in rhs_expr:
+                    expr_part = rhs_expr[:rhs_expr.index(' else {')].strip()
+                    rest = rhs_expr[rhs_expr.index(' else {'):]
+                    line = f'{before_pat}Some({binding}){after_pat[:eq_pos]}= {expr_part}.{method}{rest}'
+                elif rhs_expr.rstrip().rstrip('\n').endswith('{'):
+                    expr_part = rhs_expr.rstrip().rstrip('\n').rstrip('{').strip()
+                    nl = '\n' if line.endswith('\n') else ''
+                    line = f'{before_pat}Some({binding}){after_pat[:eq_pos]}= {expr_part}.{method} {{{nl}'
+                else:
+                    expr_part = rhs_expr.rstrip()
+                    line = f'{before_pat}Some({binding}){after_pat[:eq_pos]}= {expr_part}.{method}'
+                continue
+
+            # === 3. Some(Type::Variant(x)) patterns (outside matches!) ===
+            if f'Some({old}(' in line and 'matches!(' not in line:
+                si = line.find(f'Some({old}(')
+                bi = si + len(f'Some({old}(')
+                depth = 1; k = bi
+                while k < len(line) and depth > 0:
+                    if line[k] == '(': depth += 1
+                    elif line[k] == ')': depth -= 1
+                    k += 1
+                binding = line[bi:k-1]
+                # Skip outer )
+                if k < len(line) and line[k] == ')': k += 1
+                after = line[k:]
+                before = line[:si]
+
+                if after.lstrip().startswith('='):
+                    ei = after.index('=')
+                    rhs = after[ei+1:].strip()
+                    is_mut = '_mut()' in rhs or '.pop()' in rhs or '.last_mut()' in rhs
+                    method = f'as_{snake}_mut' if is_mut else f'as_{snake}'
+
+                    if ' else {' in rhs:
+                        expr_part = rhs[:rhs.index(' else {')].strip()
+                        rest = rhs[rhs.index(' else {'):]
+                    elif rhs.rstrip().rstrip('\n').endswith('{'):
+                        expr_part = rhs.rstrip().rstrip('\n').rstrip('{').strip()
+                        rest = ' {'
+                    else:
+                        expr_part = rhs.strip().rstrip('\n')
+                        rest = ''
+
+                    nl = '\n' if line.endswith('\n') else ''
+                    line = f'{before}Some({binding}){after[:ei]}= {expr_part}.and_then(|__s| __s.{method}()){rest}{nl}'
+                elif after.lstrip().startswith('=>'):
+                    # Match arm with Some() - convert arm
+                    pass
+                continue
+
+            # === 4. Construction patterns ===
+            if f'{old}(' in line:
+                # Skip if in pattern context
+                pi = line.find(f'{old}(')
+                before = line[:pi].rstrip()
+
+                # Pattern context indicators
+                if 'let ' in line[:pi] and ' = ' not in line[:pi]:
+                    continue
+                if s.startswith('let ') and f'{old}(' in s.split(' = ')[0] if ' = ' in s else '':
+                    continue
+                if 'matches!(' in line:
                     continue
 
-            # === Some(Type::Variant(x)) patterns ===
-            if f'Some({old}(' in line:
-                line = transform_some_pattern(line, ty, v, snake)
-                if old not in line:
+                # Check it's construction: after = , push(, return, , || etc
+                if (before.endswith('=') or before.endswith('(') or before.endswith(',')
+                    or before.endswith('||') or before.endswith('&&') or before.endswith('return')
+                    or before.endswith('=>') or before.endswith('push(')
+                    or s.startswith(f'{old}(') or before.endswith('.map(')
+                    or before.endswith('Some(')
+                ):
+                    line = line.replace(f'{old}(', f'{ty}::{snake}(', 1)
                     continue
 
-            # === while let ===
-            if 'while let ' in stripped and old + '(' in line:
-                line = transform_let_pattern(line, ty, v, snake)
-                if old not in line:
-                    continue
-
-            # === Tuple destructuring: (Expression::Variant(a), Expression::Variant(b)) ===
-            if '(' + old + '(' in line and '), ' in line:
-                line = transform_tuple_pattern(line, ty, v, snake)
-                if old not in line:
-                    continue
-
-            # === Function reference: .map(Statement::VariableDeclaration) ===
-            for sep in [')', ',', ';', ' ']:
-                ref_pat = old + sep
-                if ref_pat in line and '(' + old not in line.replace(ref_pat, ''):
-                    # This might be a function reference (no parens after variant name)
-                    # Only if there's no ( after the variant name
-                    idx = line.index(ref_pat)
-                    # Check if this is preceded by map(, .map(, etc
-                    before = line[:idx].rstrip()
+            # === 5. Function reference: Type::Variant without ( ===
+            for sep in [')', ',', ';']:
+                ref_pat = f'{old}{sep}'
+                if ref_pat in line and f'{old}(' not in line:
+                    before = line[:line.index(ref_pat)].rstrip()
                     if before.endswith('(') or before.endswith(',') or before.endswith('.map('):
                         line = line.replace(ref_pat, f'{ty}::{snake}{sep}')
                         break
 
-            if old not in line:
-                continue
-
-            # === Construction: Expression::Variant(box) -> Expression::snake(box) ===
-            if old + '(' in line:
-                # Check this is NOT in a pattern context
-                if not is_pattern_context(stripped, old):
-                    line = line.replace(old + '(', f'{ty}::{snake}(')
-
-    return line
-
-
-def is_pattern_context(stripped, old):
-    """Check if old appears in a pattern matching context."""
-    # Pattern contexts:
-    # - let X = ...
-    # - if let X = ...
-    # - match arm (handled separately)
-    # - matches!(...)
-    idx = stripped.find(old)
-    if idx < 0:
-        return False
-    before = stripped[:idx].rstrip()
-    if before.endswith('let') or before.endswith('Some(') or before.endswith('(') and 'let ' in stripped:
-        return True
-    if 'matches!(' in stripped:
-        return True
-    return False
-
-
-def transform_matches_pattern(line, ty, v, snake):
-    """Transform matches! patterns."""
-    old = f'{ty}::{v}'
-
-    # matches!(expr, Type::Variant(_)) -> expr.is_variant()
-    # Handle various expr forms
-    pat = f'{old}(_))'
-    if pat in line:
-        # Find matches!( before it
-        idx = line.find('matches!(')
-        if idx >= 0:
-            after_open = line[idx + 9:]
-            comma_idx = after_open.find(',')
-            if comma_idx >= 0:
-                expr_part = after_open[:comma_idx].strip()
-                # Remove & prefix if present
-                if expr_part.startswith('&'):
-                    expr_part = expr_part[1:]
-                rest_after = line[line.find(pat) + len(pat):]
-                line = line[:idx] + f'{expr_part}.is_{snake}()' + rest_after
-                return line
-
-    # matches!(expr, Type::Variant(_) | Type2::Variant2(_)) - multi-variant
-    # These need special handling - convert each one to is_variant() with ||
-    # Skip for now, handle manually
-
-    # matches!(expr, Type::Variant(v) if cond) -> expr.as_variant().is_some_and(|v| cond)
-    if old + '(' in line and ' if ' in line and 'matches!(' in line:
-        idx = line.find('matches!(')
-        if idx >= 0:
-            after_open = line[idx + 9:]
-            comma_idx = after_open.find(',')
-            if comma_idx >= 0:
-                expr_part = after_open[:comma_idx].strip()
-                if expr_part.startswith('&'):
-                    expr_part = expr_part[1:]
-                # Find the binding and guard
-                rest = after_open[comma_idx + 1:].strip()
-                # rest should be like: Type::Variant(var) if cond)
-                var_start = rest.find(old + '(')
-                if var_start >= 0:
-                    inner_start = var_start + len(old) + 1
-                    inner_end = rest.find(')', inner_start)
-                    if inner_end >= 0:
-                        binding = rest[inner_start:inner_end]
-                        guard_start = rest.find(' if ', inner_end)
-                        if guard_start >= 0:
-                            # Find matching closing paren
-                            guard_content = rest[guard_start + 4:]
-                            # Remove trailing )
-                            if guard_content.rstrip().endswith(')'):
-                                guard_content = guard_content.rstrip()[:-1]
-                            rest_after_matches = line[line.rfind(')') + 1:]
-                            line = line[:idx] + f'{expr_part}.as_{snake}().is_some_and(|{binding}| {guard_content})' + rest_after_matches
-                            return line
-
-    # matches!(expr, Some(Type::Variant(v)) if cond) -> ...
-    if f'Some({old}' in line and 'matches!(' in line:
-        idx = line.find('matches!(')
-        if idx >= 0:
-            after_open = line[idx + 9:]
-            comma_idx = after_open.find(',')
-            if comma_idx >= 0:
-                expr_part = after_open[:comma_idx].strip()
-                if expr_part.startswith('&'):
-                    expr_part = expr_part[1:]
-                rest = after_open[comma_idx + 1:].strip()
-                # Some(Type::Variant(binding)) if guard
-                some_pat = f'Some({old}('
-                some_idx = rest.find(some_pat)
-                if some_idx >= 0:
-                    inner_start = some_idx + len(some_pat)
-                    # Find matching ))
-                    depth = 2
-                    i = inner_start
-                    while i < len(rest) and depth > 0:
-                        if rest[i] == '(':
-                            depth += 1
-                        elif rest[i] == ')':
-                            depth -= 1
-                        i += 1
-                    binding = rest[inner_start:i-2]  # -2 for ))
-                    after_close = rest[i:]
-                    if after_close.strip().startswith('if '):
-                        guard = after_close.strip()[3:].rstrip(')')
-                        rest_after_matches = line[line.rfind(')') + 1:]
-                        line = line[:idx] + f'{expr_part}.as_ref().and_then(|e| e.as_{snake}()).is_some_and(|{binding}| {guard})' + rest_after_matches
-                        return line
-
-    return line
-
-
-def transform_let_pattern(line, ty, v, snake):
-    """Transform let/if-let patterns."""
-    old = f'{ty}::{v}'
-    pat = old + '('
-
-    if pat not in line:
-        return line
-
-    idx = line.find(pat)
-
-    # Find the binding
-    inner_start = idx + len(pat)
-    depth = 1
-    i = inner_start
-    while i < len(line) and depth > 0:
-        if line[i] == '(':
-            depth += 1
-        elif line[i] == ')':
-            depth -= 1
-        i += 1
-    binding = line[inner_start:i-1]
-    after_close = line[i:]
-    before = line[:idx]
-
-    # Determine context: is there = before?
-    eq_match = before.rstrip()
-
-    # Check for "let Type::Variant(binding) = expr"
-    if 'let ' in before:
-        # Find = after the pattern
-        if after_close.lstrip().startswith('='):
-            eq_pos = after_close.index('=')
-            rhs = after_close[eq_pos + 1:].lstrip()
-
-            # Determine ref type
-            if rhs.startswith('&mut '):
-                method = f'as_{snake}_mut()'
-                rhs = rhs[5:]
-            elif rhs.startswith('&'):
-                method = f'as_{snake}()'
-                rhs = rhs[1:]
-            else:
-                # No explicit ref - could be &mut (most common in minifier)
-                method = f'as_{snake}_mut()'
-
-            # Split at else { or {
-            if ' else {' in rhs:
-                expr_part = rhs[:rhs.index(' else {')].strip()
-                rest_part = rhs[rhs.index(' else {'):]
-            elif rhs.rstrip().endswith('{'):
-                expr_part = rhs.rstrip()[:-1].strip()
-                rest_part = ' {'
-            else:
-                expr_part = rhs.strip()
-                rest_part = ''
-
-            # Check for 'mut' in binding (owned pattern)
-            if binding.startswith('mut '):
-                # This is an owned destructure - use into_variant after check
-                # But for simplicity in most cases we can use as_variant_mut
-                pass
-
-            line = f'{before}Some({binding}) = {expr_part}.{method}{rest_part}\n' if line.endswith('\n') else f'{before}Some({binding}) = {expr_part}.{method}{rest_part}'
-            return line
-
-    return line
-
-
-def transform_some_pattern(line, ty, v, snake):
-    """Transform Some(Type::Variant(x)) patterns."""
-    old = f'{ty}::{v}'
-    pat = f'Some({old}('
-
-    if pat not in line:
-        return line
-
-    idx = line.find(pat)
-    inner_start = idx + len(pat)
-    depth = 1
-    i = inner_start
-    while i < len(line) and depth > 0:
-        if line[i] == '(':
-            depth += 1
-        elif line[i] == ')':
-            depth -= 1
-        i += 1
-    binding = line[inner_start:i-1]
-    # Skip the outer )
-    if i < len(line) and line[i] == ')':
-        i += 1
-
-    after = line[i:]
-    before = line[:idx]
-
-    # Check for = after
-    if after.lstrip().startswith('='):
-        eq_pos = after.index('=')
-        rhs = after[eq_pos + 1:].strip()
-
-        # Determine mut
-        is_mut = '_mut()' in rhs or '.pop()' in rhs or '.last_mut()' in rhs
-        method = f'as_{snake}_mut' if is_mut else f'as_{snake}'
-
-        if ' else {' in rhs:
-            expr_part = rhs[:rhs.index(' else {')].strip()
-            rest = rhs[rhs.index(' else {'):]
-        elif rhs.rstrip().rstrip('\n').endswith('{'):
-            expr_part = rhs.rstrip().rstrip('\n').rstrip('{').strip()
-            rest = ' {'
-        else:
-            expr_part = rhs.strip().rstrip('\n')
-            rest = ''
-
-        nl = '\n' if line.endswith('\n') else ''
-        line = f'{before}Some({binding}){after[:eq_pos]}= {expr_part}.and_then(|__s| __s.{method}()){rest}{nl}'
-
-    return line
-
-
-def transform_tuple_pattern(line, ty, v, snake):
-    """Transform tuple destructuring patterns like (Expression::Variant(a), Expression::Variant(b))."""
-    old = f'{ty}::{v}'
-    # Replace Type::Variant(x) with Some(x) and change the = side to use as_variant()
-    # This is complex - for now, replace individual parts
-    # (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) = (&e.left, &e.right)
-    # -> (Some(left), Some(right)) = (e.left.as_numeric_literal(), e.right.as_numeric_literal())
-    # But this changes the semantics since now we need both to be Some
-
-    # Actually, the tuple pattern like:
-    # if let (Expression::Variant(a), Expression::Variant(b)) = (&e.left, &e.right)
-    # should become:
-    # if let (Some(a), Some(b)) = (e.left.as_variant(), e.right.as_variant())
-
-    line = line.replace(f'{old}(', f'Some(')
     return line
 
 
 for f in get_files():
     if process_file(f):
         print(f"Changed: {os.path.relpath(f, BASE)}")
-
-# Count remaining
-import subprocess
-result = subprocess.run(['grep', '-rn', 'Expression::[A-Z]', BASE, '--include=*.rs'],
-                       capture_output=True, text=True)
-expr_count = len([l for l in result.stdout.split('\n') if l and 'generated' not in l and '//' not in l.split(':', 2)[2] if len(l.split(':', 2)) > 2])
-
-result = subprocess.run(['grep', '-rn', 'Statement::[A-Z]', BASE, '--include=*.rs'],
-                       capture_output=True, text=True)
-stmt_count = len([l for l in result.stdout.split('\n') if l and 'generated' not in l and '//' not in l.split(':', 2)[2] if len(l.split(':', 2)) > 2])
-
-print(f"\nRemaining uppercase patterns: Expression={expr_count}, Statement={stmt_count}")
 print("Done.")

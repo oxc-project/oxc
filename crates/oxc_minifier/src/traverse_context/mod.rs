@@ -536,7 +536,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::identifier(self.ast.alloc(ident))
     }
 
     /// Create an unbound reference.
@@ -570,7 +570,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_unbound_ident_reference(span, name, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::identifier(self.ast.alloc(ident))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.

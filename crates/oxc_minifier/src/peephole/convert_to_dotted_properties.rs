@@ -15,7 +15,7 @@ impl<'a> PeepholeOptimizations {
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
     pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
-        let MemberExpression::ComputedMemberExpression(e) = expr else { return };
+        let MemberSome(e) = expr.as_computed_member_expression_mut() else { return };
         let Some(s) = &e.expression.as_string_literal_mut() else { return };
         if is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);

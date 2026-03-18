@@ -30,13 +30,13 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // "(a, b) op c" => "a, b op c"
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
+        if let Some(mut sequence_expr) = a.as_sequence_expression_mut() {
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
                     .push(Self::join_with_left_associative_op(span, op, right, b, ctx));
             }
-            return Expression::SequenceExpression(sequence_expr);
+            return Expression::sequence_expression(sequence_expr);
         }
         let mut a = a;
         let mut b = b;
@@ -154,9 +154,9 @@ impl<'a> PeepholeOptimizations {
     pub fn extract_id_or_assign_to_id<'b>(
         expr: &'b Expression<'a>,
     ) -> Option<&'b IdentifierReference<'a>> {
-        match expr {
-            Expression::Identifier(id) => Some(id),
-            Expression::AssignmentExpression(assign_expr) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::Identifier(id) => Some(id),
+            ExpressionKindMut::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::Assign
                     && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
                 {
@@ -189,7 +189,7 @@ impl<'a> PeepholeOptimizations {
 
         let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
+            Expression::identifier(read_id_ref),
         ) = (&expr.left, &logical_expr.left)
         else {
             return;
