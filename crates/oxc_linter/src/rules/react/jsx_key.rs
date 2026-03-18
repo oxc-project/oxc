@@ -479,116 +479,123 @@ fn test() {
         (r"foo(() => <></>);", None, None),
         (r"<></>;", None, None),
         (r"<App {...{}} />;", None, None),
-(r#"<App key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
-(r#"<div key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
-(r#"
-                    const spans = [
-                      <span key="notunique"/>,
-                      <span key="notunique"/>,
-                    ];
-                  "#, None, None),
-(r#"
-                    function Component(props) {
-                      return hasPayment ? (
-                        <div className="stuff">
-                          <BookingDetailSomething {...props} />
-                          {props.modal && props.calculatedPrice && (
-                            <SomeOtherThing items={props.something} discount={props.discount} />
-                          )}
-                        </div>
-                      ) : null;
-                    }
-                  "#, None, None),
-(r#"
-                    import React, { FC, useRef, useState } from 'react';
+        (r#"<App key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
+        (r#"<div key="keyBeforeSpread" {...{}} />;"#, Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])), None),
+        (r#"
+        const spans = [
+            <span key="notunique"/>,
+            <span key="notunique"/>,
+        ];
+        "#, None, None),
+        (r#"
+        function Component(props) {
+            return hasPayment ? (
+            <div className="stuff">
+                <BookingDetailSomething {...props} />
+                {props.modal && props.calculatedPrice && (
+                <SomeOtherThing items={props.something} discount={props.discount} />
+                )}
+            </div>
+            ) : null;
+        }
+        "#, None, None),
+        (r#"
+        import React, { FC, useRef, useState } from 'react';
 
-                    import './ResourceVideo.sass';
-                    import VimeoVideoPlayInModal from '../vimeoVideoPlayInModal/VimeoVideoPlayInModal';
+        import './ResourceVideo.sass';
+        import VimeoVideoPlayInModal from '../vimeoVideoPlayInModal/VimeoVideoPlayInModal';
 
-                    type Props = {
-                      videoUrl: string;
-                      videoTitle: string;
-                    };
-                    const ResourceVideo: FC<Props> = ({
-                      videoUrl,
-                      videoTitle,
-                    }: Props): JSX.Element => {
-                      return (
-                        <div className="resource-video">
-                          <VimeoVideoPlayInModal videoUrl={videoUrl} />
-                          <h3>{videoTitle}</h3>
-                        </div>
-                      );
-                    };
+        type Props = {
+            videoUrl: string;
+            videoTitle: string;
+        };
+        const ResourceVideo: FC<Props> = ({
+            videoUrl,
+            videoTitle,
+        }: Props): JSX.Element => {
+            return (
+            <div className="resource-video">
+                <VimeoVideoPlayInModal videoUrl={videoUrl} />
+                <h3>{videoTitle}</h3>
+            </div>
+            );
+        };
 
-                    export default ResourceVideo;
-                  "#, None, None),
-("
-                    // testrule.jsx
-                    const trackLink = () => {};
-                    const getAnalyticsUiElement = () => {};
+        export default ResourceVideo;
+        "#, None, None),
+        ("
+        // testrule.jsx
+        const trackLink = () => {};
+        const getAnalyticsUiElement = () => {};
 
-                    const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
-                  ", None, None),
-(r#"
-                    function Component({ allRatings }) {
-                      return (
-                        <RatingDetailsStyles>
-                          {Object.entries(allRatings)?.map(([key, value], index) => {
-                            const rate = value?.split(/(?=[%, /])/);
+        const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
+        ", None, None),
+        (r#"
+        function Component({ allRatings }) {
+            return (
+            <RatingDetailsStyles>
+                {Object.entries(allRatings)?.map(([key, value], index) => {
+                const rate = value?.split(/(?=[%, /])/);
 
-                            if (!rate) return null;
+                if (!rate) return null;
 
-                            return (
-                              <li key={`${entertainment.tmdbId}${index}`}>
-                                <img src={`/assets/rating/${key}.png`} />
-                                <span className="rating-details--rate">{rate?.[0]}</span>
-                                <span className="rating-details--rate-suffix">{rate?.[1]}</span>
-                              </li>
-                            );
-                          })}
-                        </RatingDetailsStyles>
-                      );
-                    }
-                  "#, None, None),
-("
-                    const baz = foo?.bar?.()?.[1] ?? 'qux';
+                return (
+                    <li key={`${entertainment.tmdbId}${index}`}>
+                    <img src={`/assets/rating/${key}.png`} />
+                    <span className="rating-details--rate">{rate?.[0]}</span>
+                    <span className="rating-details--rate-suffix">{rate?.[1]}</span>
+                    </li>
+                );
+                })}
+            </RatingDetailsStyles>
+            );
+        }
+        "#, None, None),
+        ("
+        const baz = foo?.bar?.()?.[1] ?? 'qux';
 
-                    qux()?.map()
+        qux()?.map()
 
-                    const directiveRanges = comments?.map(tryParseTSDirective)
-                  ", None, None),
-(r#"
-                    import { observable } from "mobx";
+        const directiveRanges = comments?.map(tryParseTSDirective)
+        ", None, None),
+        (r#"
+        import { observable } from "mobx";
 
-                    export interface ClusterFrameInfo {
-                      frameId: number;
-                      processId: number;
-                    }
+        export interface ClusterFrameInfo {
+            frameId: number;
+            processId: number;
+        }
 
-                    export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
-                  "#, None, None),
-("React.Children.toArray([1, 2 ,3].map(x => <App />));", None, None),
-(r#"
-                    import { Children } from "react";
-                    Children.toArray([1, 2 ,3].map(x => <App />));
-                  "#, None, None),
-("
-                    import Act from 'react';
-                    import { Children as ReactChildren } from 'react';
+        export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
+        "#, None, None),
+        ("React.Children.toArray([1, 2 ,3].map(x => <App />));", None, None),
+        (r#"import { Children } from "react";
+            Children.toArray([1, 2 ,3].map(x => <App />));"#,
+            None, None),
+        ("import Act from 'react';
+          import { Children as ReactChildren } from 'react';
 
-                    const { Children } = Act;
-                    const { toArray } = Children;
+          const { Children } = Act;
+          const { toArray } = Children;
 
-                    Act.Children.toArray([1, 2 ,3].map(x => <App />));
-                    Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
-                    Children.toArray([1, 2 ,3].map(x => <App />));
-                    Children.toArray(Array.from([1, 2 ,3], x => <App />));
-                    // ReactChildren.toArray([1, 2 ,3].map(x => <App />));
-                    // ReactChildren.toArray(Array.from([1, 2 ,3], x => <App />));
-                    // toArray([1, 2 ,3].map(x => <App />));
-                    // toArray(Array.from([1, 2 ,3], x => <App />));
-                  ", None, Some(serde_json::json!({ "settings": { "react": { "pragma": "Act", "fragment": "Frag" } }})))
+          Act.Children.toArray([1, 2 ,3].map(x => <App />));
+          Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
+          Children.toArray([1, 2 ,3].map(x => <App />));
+          Children.toArray(Array.from([1, 2 ,3], x => <App />));
+          // ReactChildren.toArray([1, 2 ,3].map(x => <App />));
+          // ReactChildren.toArray(Array.from([1, 2 ,3], x => <App />));
+          // toArray([1, 2 ,3].map(x => <App />));
+          // toArray(Array.from([1, 2 ,3], x => <App />));
+          ", None, Some(
+            serde_json::json!({ "settings": { "react": { "pragma": "Act", "fragment": "Frag" } }}
+        ))),
+        ("[1, 2, 3].map(x => { return x && <App key={x} />; });", None, None),
+        ("[1, 2, 3].map(x => { return x && y && <App key={x} />; });", None, None),
+        ("[1, 2, 3].map(x => { return x && foo(); });", None, None),
+        ("[1, 2, 3].map((item) => {
+            return item === 'bar' ? <div key={item}>{item}</div> : <span key={item}>{item}</span>;
+          })", None, None
+        )
     ];
 
     let fail = vec![
@@ -734,6 +741,46 @@ fn test() {
                     };
                   ",
             Some(serde_json::json!([{ "checkKeyMustBeforeSpread": true }])),
+            None,
+        ),
+        ("[1, 2, 3].map(x => { return x && <App />; });", None, None),
+        ("[1, 2, 3].map(x => { return x || y || <App />; });", None, None),
+        (
+            "[1, 2, 3].map((item) => {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "[1, 2, 3].map(function(item) {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "Array.from([1, 2, 3], (item) => {
+               return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+             })",
+            None,
+            None,
+        ),
+        (
+            "import { Fragment } from 'react';
+
+             const ITEMS = ['bar', 'foo'];
+
+             export default function BugIssue() {
+               return (
+                 <Fragment>
+                   {ITEMS.map((item) => {
+                     return item === 'bar' ? <div>{item}</div> : <span>{item}</span>;
+                   })}
+                 </Fragment>
+               );
+             }",
+            None,
             None,
         ),
     ];
