@@ -57,7 +57,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let expr =
             self.ast.alloc_import_expression(self.end_span(span), expression, arguments, phase);
         self.module_record_builder.visit_import_expression(&expr);
-        Expression::ImportExpression(expr)
+        Expression::import_expression(expr)
     }
 
     /// Section 16.2.2 Import Declaration

@@ -393,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             FormalParameterKind::FormalParameter,
             &Modifiers::empty(),
         );
-        Expression::FunctionExpression(function)
+        Expression::function_expression(function)
     }
 
     /// Section 15.4 Method Definitions

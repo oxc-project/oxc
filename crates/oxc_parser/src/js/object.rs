@@ -80,7 +80,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.end_span(span),
                 PropertyKind::Init,
                 key,
-                Expression::FunctionExpression(method),
+                Expression::function_expression(method),
                 /* method */ true,
                 /* shorthand */ false,
                 computed,
@@ -100,7 +100,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let PropertyKey::StaticIdentifier(identifier_name) = key {
                 let identifier_reference =
                     self.ast.identifier_reference(identifier_name.span, identifier_name.name);
-                let value = Expression::Identifier(self.alloc(identifier_reference.clone()));
+                let value = Expression::identifier(self.alloc(identifier_reference.clone()));
                 // CoverInitializedName ({ foo = bar })
                 if self.eat(Kind::Eq) {
                     let right = self.parse_assignment_expression_or_higher();

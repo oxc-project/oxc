@@ -80,7 +80,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
             if expecting_directives {
                 if let Statement::ExpressionStatement(expr) = &stmt
-                    && let Expression::StringLiteral(string) = &expr.expression
+                    && let Some(string) = expr.expression.as_string_literal()
                 {
                     // span start will mismatch if they are parenthesized when `preserve_parens = false`
                     if expr.span.start == string.span.start {
@@ -216,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         let expr = self.parse_expr();
-        if let Expression::Identifier(ident) = &expr {
+        if let Some(ident) = expr.as_identifier() {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {

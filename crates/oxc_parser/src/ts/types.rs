@@ -1048,11 +1048,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let expression = self.parse_literal_expression();
         let span = self.end_span(span);
-        let literal = match expression {
-            Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
-            Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
-            Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-            Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
+        let literal = match expression.kind() {
+            ExpressionKind::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
+            ExpressionKind::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
+            ExpressionKind::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
+            ExpressionKind::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
             _ => return self.unexpected(),
         };
         self.ast.ts_type_literal_type(span, literal)
@@ -1145,7 +1145,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Parse the value - if it's an object literal, validate it
         let value = if self.at(Kind::LCurly) {
             let inner_object = self.parse_ts_import_type_attributes();
-            Expression::ObjectExpression(self.alloc(inner_object))
+            Expression::object_expression(self.alloc(inner_object))
         } else {
             // Allow any expression (e.g., super.foo)
             self.parse_assignment_expression_or_higher()

@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Expression<'a> {
         let class = self.parse_class(span, ClassType::ClassExpression, modifiers, decorators);
-        Expression::ClassExpression(class)
+        Expression::class_expression(class)
     }
 
     fn parse_class(
@@ -175,7 +175,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher();
             let type_argument;
-            if let Expression::TSInstantiationExpression(expr) = extend {
+            if let Some(expr) = extend.as_ts_instantiation_expression() {
                 let expr = expr.unbox();
                 extend = expr.expression;
                 type_argument = Some(expr.type_arguments);

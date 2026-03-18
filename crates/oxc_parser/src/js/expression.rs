@@ -1,6 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Ident, Span};
@@ -57,7 +58,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
         let ident = self.parse_identifier_reference();
-        Expression::Identifier(self.alloc(ident))
+        Expression::identifier(self.alloc(ident))
     }
 
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
@@ -172,7 +173,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.expect(Kind::In);
         let right = self.parse_binary_expression_or_higher(Precedence::Compare);
-        if let Expression::PrivateInExpression(private_in_expr) = right {
+        if let Some(private_in_expr) = right.as_private_in_expression() {
             return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
         }
         self.ast.expression_private_in(self.end_span(lhs_span), left, right)
@@ -208,7 +209,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
-            Kind::LCurly => Expression::ObjectExpression(self.parse_object_expression()),
+            Kind::LCurly => Expression::object_expression(self.parse_object_expression()),
             // ClassExpression
             Kind::Class => {
                 self.parse_class_expression(self.start_span(), &Modifiers::empty(), self.ast.vec())
@@ -228,7 +229,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LParen => self.parse_parenthesized_expression(),
             Kind::Slash | Kind::SlashEq => {
                 let literal = self.parse_literal_regexp();
-                Expression::RegExpLiteral(self.alloc(literal))
+                Expression::reg_exp_literal(self.alloc(literal))
             }
             Kind::At => self.parse_decorated_expression(),
             // Literal, RegularExpressionLiteral
@@ -278,20 +279,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.expression_sequence(expr_span, expressions)
         };
 
-        match &mut expression {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                arrow_expr.pife = true;
-                if has_no_side_effects_comment {
-                    arrow_expr.pure = true;
-                }
+        if let Some(arrow_expr) = expression.as_arrow_function_expression_mut() {
+            arrow_expr.pife = true;
+            if has_no_side_effects_comment {
+                arrow_expr.pure = true;
             }
-            Expression::FunctionExpression(func_expr) => {
-                func_expr.pife = true;
-                if has_no_side_effects_comment {
-                    func_expr.pure = true;
-                }
+        } else if let Some(func_expr) = expression.as_function_expression_mut() {
+            func_expr.pife = true;
+            if has_no_side_effects_comment {
+                func_expr.pure = true;
             }
-            _ => {}
         }
 
         if self.options.preserve_parens {
@@ -315,23 +312,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match kind {
             Kind::Str => {
                 let lit = self.parse_literal_string();
-                Expression::StringLiteral(self.alloc(lit))
+                Expression::string_literal(self.alloc(lit))
             }
             Kind::True | Kind::False => {
                 let lit = self.parse_literal_boolean();
-                Expression::BooleanLiteral(self.alloc(lit))
+                Expression::boolean_literal(self.alloc(lit))
             }
             Kind::Null => {
                 let lit = self.parse_literal_null();
-                Expression::NullLiteral(self.alloc(lit))
+                Expression::null_literal(self.alloc(lit))
             }
             Kind::DecimalBigInt | Kind::BinaryBigInt | Kind::OctalBigInt | Kind::HexBigInt => {
                 let lit = self.parse_literal_bigint();
-                Expression::BigIntLiteral(self.alloc(lit))
+                Expression::big_int_literal(self.alloc(lit))
             }
             kind if kind.is_number() => {
                 let lit = self.parse_literal_number();
-                Expression::NumericLiteral(self.alloc(lit))
+                Expression::numeric_literal(self.alloc(lit))
             }
             _ => self.unexpected(),
         }
@@ -574,7 +571,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_template_literal_expression(&mut self, tagged: bool) -> Expression<'a> {
         let template_lit = self.parse_template_literal(tagged);
-        Expression::TemplateLiteral(self.alloc(template_lit))
+        Expression::template_literal(self.alloc(template_lit))
     }
 
     fn parse_tagged_template(
@@ -726,10 +723,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::decorator_optional(lhs.span()));
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
-        if let Expression::TSInstantiationExpression(mut expr) = lhs {
+        if let Some(expr) = lhs.as_ts_instantiation_expression_mut() {
             expr.expression = self
                 .map_to_chain_expression(expr.expression.span(), expr.expression.take_in(self.ast));
-            Expression::TSInstantiationExpression(expr)
+            lhs
         } else {
             let span = self.end_span(span);
             self.map_to_chain_expression(span, lhs)
@@ -737,18 +734,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
-        match expr {
-            match_member_expression!(Expression) => {
+        match expr.kind() {
+            match_member_expression!(ExpressionKind) => {
                 let member_expr = expr.into_member_expression();
                 self.ast.expression_chain(span, ChainElement::from(member_expr))
             }
-            Expression::CallExpression(e) => {
+            ExpressionKind::CallExpression(e) => {
                 self.ast.expression_chain(span, ChainElement::CallExpression(e))
             }
-            Expression::TSNonNullExpression(e) => {
+            ExpressionKind::TSNonNullExpression(e) => {
                 self.ast.expression_chain(span, ChainElement::TSNonNullExpression(e))
             }
-            expr => expr,
+            _ => expr,
         }
     }
 
@@ -830,7 +827,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             if is_property_access {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                if lhs.is_ts_instantiation_expression() {
                     self.error(
                         diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                             self.end_span(lhs_span),
@@ -842,7 +839,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
-                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                if lhs.is_ts_instantiation_expression() {
                     self.error(
                         diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
                             self.end_span(lhs_span),
@@ -855,7 +852,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             if self.cur_kind().is_template_start_of_tagged_template() {
                 let (expr, type_arguments) =
-                    if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
+                    if let Some(instantiation_expr) = lhs.as_ts_instantiation_expression() {
                         let expr = instantiation_expr.unbox();
                         (expr.expression, Some(expr.type_arguments))
                     } else {
@@ -961,7 +958,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         let mut type_arguments = None;
-        if let Expression::TSInstantiationExpression(instantiation_expr) = callee {
+        if let Some(instantiation_expr) = callee.as_ts_instantiation_expression() {
             let instantiation_expr = instantiation_expr.unbox();
             type_arguments.replace(instantiation_expr.type_arguments);
             callee = instantiation_expr.expression;
@@ -992,11 +989,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ast.vec()
         };
 
-        if is_import && matches!(callee, Expression::ImportExpression(_)) {
+        if is_import && callee.is_import_expression() {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
-        if matches!(callee, Expression::Super(_)) {
+        if callee.is_super() {
             self.error(diagnostics::new_super(self.end_span(rhs_span)));
         }
 
@@ -1051,7 +1048,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot && let Expression::TSInstantiationExpression(expr) = lhs {
+                if !question_dot && let Some(expr) = lhs.as_ts_instantiation_expression() {
                     let expr = expr.unbox();
                     type_arguments.replace(expr.type_arguments);
                     lhs = expr.expression;
@@ -1274,11 +1271,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // check mixed coalesce
                 if op == LogicalOperator::Coalesce {
                     let mut maybe_mixed_coalesce_expr = None;
-                    if let Expression::LogicalExpression(rhs) = &rhs {
+                    if let Some(rhs) = rhs.as_logical_expression() {
                         if !rhs_parenthesized {
                             maybe_mixed_coalesce_expr = Some(rhs);
                         }
-                    } else if let Expression::LogicalExpression(lhs) = &lhs
+                    } else if let Some(lhs) = lhs.as_logical_expression()
                         && !lhs_parenthesized
                     {
                         maybe_mixed_coalesce_expr = Some(lhs);
@@ -1295,9 +1292,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let op = map_binary_operator(kind);
                 if op == BinaryOperator::Exponential
                     && !lhs_parenthesized
-                    && let Some(key) = match lhs {
-                        Expression::AwaitExpression(_) => Some("await"),
-                        Expression::UnaryExpression(_) => Some("unary"),
+                    && let Some(key) = match lhs.kind() {
+                        ExpressionKind::AwaitExpression(_) => Some("await"),
+                        ExpressionKind::UnaryExpression(_) => Some("unary"),
                         _ => None,
                     }
                 {
@@ -1360,7 +1357,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let Some(func) = arrow_expr.as_arrow_function_expression_mut()
             {
                 func.pure = true;
             }
@@ -1371,7 +1368,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let Some(func) = arrow_expr.as_arrow_function_expression_mut()
             {
                 func.pure = true;
             }
@@ -1386,7 +1383,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // `x => {}`
         if kind == Kind::Arrow
-            && let Expression::Identifier(ident) = &lhs
+            && let Some(ident) = lhs.as_identifier()
         {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
@@ -1395,7 +1392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 allow_return_type_in_arrow_function,
             );
             if has_no_side_effects_comment
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                && let Some(func) = arrow_expr.as_arrow_function_expression_mut()
             {
                 func.pure = true;
             }
@@ -1426,40 +1423,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) {
-        match &mut expr.get_inner_expression_mut() {
-            Expression::CallExpression(call_expr) => {
+        let inner = expr.get_inner_expression_mut();
+        if let Some(call_expr) = inner.as_call_expression_mut() {
+            call_expr.pure = true;
+        } else if let Some(new_expr) = inner.as_new_expression_mut() {
+            new_expr.pure = true;
+        } else if let Some(binary_expr) = inner.as_binary_expression_mut() {
+            Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
+        } else if let Some(logical_expr) = inner.as_logical_expression_mut() {
+            Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
+        } else if let Some(conditional_expr) = inner.as_conditional_expression_mut() {
+            Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
+        } else if let Some(chain_expr) = inner.as_chain_expression_mut() {
+            if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
                 call_expr.pure = true;
             }
-            Expression::NewExpression(new_expr) => {
-                new_expr.pure = true;
-            }
-            Expression::BinaryExpression(binary_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
-            }
-            Expression::LogicalExpression(logical_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
-            }
-            Expression::ConditionalExpression(conditional_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
-            }
-            Expression::ChainExpression(chain_expr) => {
-                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
-                    call_expr.pure = true;
-                }
-            }
-            _ => {}
         }
     }
 
     pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) {
-        match expr {
-            Expression::FunctionExpression(func) => {
-                func.pure = true;
-            }
-            Expression::ArrowFunctionExpression(func) => {
-                func.pure = true;
-            }
-            _ => {}
+        if let Some(func) = expr.as_function_expression_mut() {
+            func.pure = true;
+        } else if let Some(func) = expr.as_arrow_function_expression_mut() {
+            func.pure = true;
         }
     }
 
@@ -1479,7 +1465,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //    ArrayAssignmentPattern
         if let Some(span) = left_parenthesized_span {
             //  `({}) = x;`, `([]) = x;`
-            if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
+            if lhs.is_object_expression() || lhs.is_array_expression() {
                 self.error(diagnostics::invalid_assignment(span));
             }
         }

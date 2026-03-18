@@ -706,7 +706,7 @@ mod test {
         let source_type = SourceType::default();
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
-        assert!(matches!(expr, Expression::Identifier(_)));
+        assert!(expr.is_identifier());
     }
 
     #[test]
@@ -767,7 +767,7 @@ mod test {
             assert!(ret.errors.is_empty());
 
             if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
-                if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
+                if let Some(expr) = expr_stmt.expression.as_v8_intrinsic_expression() {
                     assert_eq!(expr.span().source_text(source), source);
                 } else {
                     panic!("Expected V8IntrinsicExpression");

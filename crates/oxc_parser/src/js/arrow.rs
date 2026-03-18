@@ -38,7 +38,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
-            let Expression::Identifier(ident) = &expr else {
+            let Some(ident) = expr.as_identifier() else {
                 return self.unexpected();
             };
             // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.

@@ -1,6 +1,7 @@
 //! Cover Grammar for Destructuring Assignment
 
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 use oxc_span::GetSpan;
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics};
@@ -11,12 +12,12 @@ pub trait CoverGrammar<'a, T, C: Config>: Sized {
 
 impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTarget<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        match expr {
-            Expression::ArrayExpression(array_expr) => {
+        match expr.kind() {
+            ExpressionKind::ArrayExpression(array_expr) => {
                 let pat = ArrayAssignmentTarget::cover(array_expr.unbox(), p);
                 AssignmentTarget::ArrayAssignmentTarget(p.alloc(pat))
             }
-            Expression::ObjectExpression(object_expr) => {
+            ExpressionKind::ObjectExpression(object_expr) => {
                 let pat = ObjectAssignmentTarget::cover(object_expr.unbox(), p);
                 AssignmentTarget::ObjectAssignmentTarget(p.alloc(pat))
             }
@@ -27,65 +28,72 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTarget<'a>
 
 impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarget<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)
             }
-            match_member_expression!(Expression) => {
+            match_member_expression!(ExpressionKind) => {
                 let member_expr = expr.into_member_expression();
                 SimpleAssignmentTarget::from(member_expr)
             }
-            Expression::ParenthesizedExpression(expr) => {
-                let span = expr.span;
-                match expr.unbox().expression {
-                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        p.fatal_error(diagnostics::invalid_assignment(span))
-                    }
-                    expr => SimpleAssignmentTarget::cover(expr, p),
+            ExpressionKind::ParenthesizedExpression(paren) => {
+                let span = paren.span;
+                if paren.expression.is_object_expression()
+                    || paren.expression.is_array_expression()
+                {
+                    p.fatal_error(diagnostics::invalid_assignment(span))
+                } else {
+                    SimpleAssignmentTarget::cover(paren.expression, p)
                 }
             }
-            Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
-                    SimpleAssignmentTarget::TSAsExpression(expr)
+            ExpressionKind::TSAsExpression(expr) => {
+                match expr.expression.get_inner_expression().kind() {
+                    ExpressionKind::Identifier(_)
+                    | ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::ComputedMemberExpression(_)
+                    | ExpressionKind::PrivateFieldExpression(_) => {
+                        SimpleAssignmentTarget::TSAsExpression(expr)
+                    }
+                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
-            Expression::TSSatisfiesExpression(expr) => {
-                match expr.expression.get_inner_expression() {
-                    Expression::Identifier(_)
-                    | Expression::StaticMemberExpression(_)
-                    | Expression::ComputedMemberExpression(_)
-                    | Expression::PrivateFieldExpression(_) => {
+            }
+            ExpressionKind::TSSatisfiesExpression(expr) => {
+                match expr.expression.get_inner_expression().kind() {
+                    ExpressionKind::Identifier(_)
+                    | ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::ComputedMemberExpression(_)
+                    | ExpressionKind::PrivateFieldExpression(_) => {
                         SimpleAssignmentTarget::TSSatisfiesExpression(expr)
                     }
                     _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
                 }
             }
-            Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
-                    SimpleAssignmentTarget::TSNonNullExpression(expr)
+            ExpressionKind::TSNonNullExpression(expr) => {
+                match expr.expression.get_inner_expression().kind() {
+                    ExpressionKind::Identifier(_)
+                    | ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::ComputedMemberExpression(_)
+                    | ExpressionKind::PrivateFieldExpression(_) => {
+                        SimpleAssignmentTarget::TSNonNullExpression(expr)
+                    }
+                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
-            Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
-                    SimpleAssignmentTarget::TSTypeAssertion(expr)
+            }
+            ExpressionKind::TSTypeAssertion(expr) => {
+                match expr.expression.get_inner_expression().kind() {
+                    ExpressionKind::Identifier(_)
+                    | ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::ComputedMemberExpression(_)
+                    | ExpressionKind::PrivateFieldExpression(_) => {
+                        SimpleAssignmentTarget::TSTypeAssertion(expr)
+                    }
+                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
-            Expression::TSInstantiationExpression(expr) => {
+            }
+            ExpressionKind::TSInstantiationExpression(expr) => {
                 p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
             }
-            expr => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
         }
     }
 }
@@ -108,13 +116,13 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                         let span = elem.span;
                         let argument = elem.unbox().argument;
                         if !matches!(
-                            argument.get_inner_expression(),
-                            Expression::Identifier(_)
-                                | Expression::ArrayExpression(_)
-                                | Expression::ObjectExpression(_)
-                                | Expression::StaticMemberExpression(_)
-                                | Expression::ComputedMemberExpression(_)
-                                | Expression::PrivateFieldExpression(_)
+                            argument.get_inner_expression().kind(),
+                            ExpressionKind::Identifier(_)
+                                | ExpressionKind::ArrayExpression(_)
+                                | ExpressionKind::ObjectExpression(_)
+                                | ExpressionKind::StaticMemberExpression(_)
+                                | ExpressionKind::ComputedMemberExpression(_)
+                                | ExpressionKind::PrivateFieldExpression(_)
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
@@ -138,8 +146,8 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
 
 impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMaybeDefault<'a> {
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        match expr {
-            Expression::AssignmentExpression(assignment_expr) => {
+        match expr.kind() {
+            ExpressionKind::AssignmentExpression(assignment_expr) => {
                 if assignment_expr.operator != AssignmentOperator::Assign {
                     p.error(diagnostics::invalid_assignment_target_default_value_operator(
                         assignment_expr.span,
@@ -148,7 +156,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMayb
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
                 AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
             }
-            expr => {
+            _ => {
                 let target = AssignmentTarget::cover(expr, p);
                 AssignmentTargetMaybeDefault::from(target)
             }
@@ -181,11 +189,11 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                         let span = spread.span;
                         let argument = spread.unbox().argument;
                         if !matches!(
-                            argument.get_inner_expression(),
-                            Expression::Identifier(_)
-                                | Expression::StaticMemberExpression(_)
-                                | Expression::ComputedMemberExpression(_)
-                                | Expression::PrivateFieldExpression(_)
+                            argument.get_inner_expression().kind(),
+                            ExpressionKind::Identifier(_)
+                                | ExpressionKind::StaticMemberExpression(_)
+                                | ExpressionKind::ComputedMemberExpression(_)
+                                | ExpressionKind::PrivateFieldExpression(_)
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
