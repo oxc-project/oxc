@@ -23,7 +23,7 @@ pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
     let mut i = 0;
     // Track nested `${...}` expression brace depth as a stack.
     // Each entry represents the brace nesting depth within a template expression.
-    let mut expr_brace_depth: Vec<u32> = Vec::new();
+    let mut expr_brace_depth: smallvec::SmallVec<[u32; 4]> = smallvec::SmallVec::new();
     while i < bytes.len() {
         if bytes[i] == b'\\' {
             i += 2; // skip escaped character

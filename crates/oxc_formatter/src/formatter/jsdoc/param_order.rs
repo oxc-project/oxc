@@ -233,7 +233,48 @@ fn find_function_params_start(text: &str) -> Option<usize> {
 
 /// Find matching closing angle bracket `>` for TypeScript generics.
 fn find_matching_angle(text: &str, start: usize) -> Option<usize> {
-    let bytes = text.as_bytes();
+    find_matching_angle_bytes(text.as_bytes(), start)
+}
+
+/// Advance `i` past the current parameter (type annotation, default value, etc.)
+/// until the next comma delimiter, handling balanced parens, angles, and string literals.
+fn skip_to_comma(bytes: &[u8], len: usize, i: &mut usize) {
+    while *i < len && bytes[*i] != b',' {
+        match bytes[*i] {
+            b'(' => {
+                if let Some(end) = find_matching_paren_bytes(bytes, *i) {
+                    *i = end + 1;
+                } else {
+                    *i += 1;
+                }
+            }
+            b'<' => {
+                if let Some(end) = find_matching_angle_bytes(bytes, *i) {
+                    *i = end + 1;
+                } else {
+                    *i += 1;
+                }
+            }
+            b'\'' | b'"' | b'`' => {
+                let quote = bytes[*i];
+                *i += 1;
+                while *i < len && bytes[*i] != quote {
+                    if bytes[*i] == b'\\' {
+                        *i += 1;
+                    }
+                    *i += 1;
+                }
+                if *i < len {
+                    *i += 1;
+                }
+            }
+            _ => *i += 1,
+        }
+    }
+}
+
+/// Find matching closing angle bracket `>`, operating on raw bytes.
+fn find_matching_angle_bytes(bytes: &[u8], start: usize) -> Option<usize> {
     let mut depth = 0;
     let mut i = start;
     while i < bytes.len() {
@@ -252,9 +293,8 @@ fn find_matching_angle(text: &str, start: usize) -> Option<usize> {
     None
 }
 
-/// Find matching closing `)` given position of opening `(`.
-fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
-    let bytes = text.as_bytes();
+/// Find matching closing `)`, operating on raw bytes.
+fn find_matching_paren_bytes(bytes: &[u8], start: usize) -> Option<usize> {
     let mut depth = 0;
     let mut i = start;
     while i < bytes.len() {
@@ -267,7 +307,6 @@ fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
                 }
             }
             b'\'' | b'"' | b'`' => {
-                // Skip string literals
                 let quote = bytes[i];
                 i += 1;
                 while i < bytes.len() && bytes[i] != quote {
@@ -282,6 +321,11 @@ fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
         i += 1;
     }
     None
+}
+
+/// Find matching closing `)` given position of opening `(`.
+fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
+    find_matching_paren_bytes(text.as_bytes(), start)
 }
 
 /// Parse parameter names from a function parameter list string.
@@ -301,7 +345,11 @@ fn parse_param_names(params_str: &str) -> Vec<&str> {
             break;
         }
 
-        // Handle destructuring — skip the whole `{...}` or `[...]` structure
+        // Handle destructuring — skip the whole `{...}` or `[...]` structure.
+        // Destructured params have no single name to match against @param tags,
+        // so we skip them entirely. The reorder will bail out at the length
+        // check above because the extracted fn_params won't include an entry
+        // for the destructured position, making the counts differ.
         if bytes[i] == b'{' || bytes[i] == b'[' {
             let (open, close) = if bytes[i] == b'{' { (b'{', b'}') } else { (b'[', b']') };
             let mut depth = 0;
@@ -318,38 +366,7 @@ fn parse_param_names(params_str: &str) -> Vec<&str> {
                 i += 1;
             }
             // Skip type annotation, default value, and comma (bracket-aware)
-            while i < len && bytes[i] != b',' {
-                match bytes[i] {
-                    b'(' => {
-                        if let Some(end) = find_matching_paren(params_str, i) {
-                            i = end + 1;
-                        } else {
-                            i += 1;
-                        }
-                    }
-                    b'<' => {
-                        if let Some(end) = find_matching_angle(params_str, i) {
-                            i = end + 1;
-                        } else {
-                            i += 1;
-                        }
-                    }
-                    b'\'' | b'"' => {
-                        let quote = bytes[i];
-                        i += 1;
-                        while i < len && bytes[i] != quote {
-                            if bytes[i] == b'\\' {
-                                i += 1;
-                            }
-                            i += 1;
-                        }
-                        if i < len {
-                            i += 1;
-                        }
-                    }
-                    _ => i += 1,
-                }
-            }
+            skip_to_comma(bytes, len, &mut i);
             if i < len {
                 i += 1; // skip comma
             }
@@ -372,38 +389,7 @@ fn parse_param_names(params_str: &str) -> Vec<&str> {
         }
 
         // Skip type annotation (`: Type`), which may include nested parens/angles
-        while i < len && bytes[i] != b',' {
-            match bytes[i] {
-                b'(' => {
-                    if let Some(end) = find_matching_paren(params_str, i) {
-                        i = end + 1;
-                    } else {
-                        i += 1;
-                    }
-                }
-                b'<' => {
-                    if let Some(end) = find_matching_angle(params_str, i) {
-                        i = end + 1;
-                    } else {
-                        i += 1;
-                    }
-                }
-                b'\'' | b'"' => {
-                    let quote = bytes[i];
-                    i += 1;
-                    while i < len && bytes[i] != quote {
-                        if bytes[i] == b'\\' {
-                            i += 1;
-                        }
-                        i += 1;
-                    }
-                    if i < len {
-                        i += 1;
-                    }
-                }
-                _ => i += 1,
-            }
-        }
+        skip_to_comma(bytes, len, &mut i);
         if i < len {
             i += 1; // skip comma
         }
