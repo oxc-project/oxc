@@ -90,14 +90,14 @@ impl AsyncGeneratorFunctions<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr.kind() {
-            ExpressionKind::AwaitExpression(await_expr) => {
+        let new_expr = match expr.kind_mut() {
+            ExpressionKindMut::AwaitExpression(await_expr) => {
                 self.transform_await_expression(await_expr, ctx)
             }
-            ExpressionKind::YieldExpression(yield_expr) => {
+            ExpressionKindMut::YieldExpression(yield_expr) => {
                 self.transform_yield_expression(yield_expr, ctx)
             }
-            ExpressionKind::FunctionExpression(func) => {
+            ExpressionKindMut::FunctionExpression(func) => {
                 if func.r#async && func.generator {
                     Some(self.executor.transform_function_expression(func, ctx))
                 } else {

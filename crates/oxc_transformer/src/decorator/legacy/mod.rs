@@ -655,7 +655,7 @@ impl<'a> LegacyDecorator<'a> {
         stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(export) = stmt.as_export_default_declaration() else { unreachable!() };
+        let Some(export) = stmt.as_export_default_declaration_mut() else { unreachable!() };
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
@@ -708,7 +708,7 @@ impl<'a> LegacyDecorator<'a> {
         stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(export) = stmt.as_export_named_declaration() else { unreachable!() };
+        let Some(export) = stmt.as_export_named_declaration_mut() else { unreachable!() };
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
         let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()

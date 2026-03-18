@@ -115,14 +115,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
-                    Some(func)
+                    Some(func.as_mut())
                 } else {
                     None
                 }
             }
             StatementKindMut::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
-                    Some(func)
+                    Some(func.as_mut())
                 } else {
                     None
                 }

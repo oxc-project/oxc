@@ -540,7 +540,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     /// }
     /// ```
     fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(block_stmt) = stmt.as_block_statement() else { unreachable!() };
+        let Some(block_stmt) = stmt.as_block_statement_mut() else { unreachable!() };
         let span = block_stmt.span;
 
         if let Some((new_stmts, needs_await, using_ctx)) =
@@ -594,7 +594,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         let mut needs_await = false;
         let current_scope_id = ctx.current_scope_id();
 
-        let Some(switch_stmt) = stmt.as_switch_statement() else { unreachable!() };
+        let Some(switch_stmt) = stmt.as_switch_statement_mut() else { unreachable!() };
         let span = switch_stmt.span;
         let switch_stmt_scope_id = switch_stmt.scope_id();
 

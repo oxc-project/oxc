@@ -146,7 +146,7 @@ impl ClassStaticBlock {
         // TODO(improve-on-babel): If block has no statements, could remove it entirely.
         let stmts = &mut block.body;
         if stmts.len() == 1
-            && let Some(stmt) = stmts.first_mut.as_expression_statement()().unwrap()
+            && let Some(stmt) = stmts.first_mut.as_expression_statement_mut()().unwrap()
         {
             return Self::convert_block_with_single_expression_to_expression(
                 &mut stmt.expression,

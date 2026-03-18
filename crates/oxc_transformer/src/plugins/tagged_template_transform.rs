@@ -85,7 +85,7 @@ impl<'a> TaggedTemplateTransform {
             return;
         }
 
-        let Some(tagged) = expr.take_in(ctx.ast).as_tagged_template_expression() else {
+        let Some(tagged) = expr.take_in(ctx.ast).as_tagged_template_expression_mut() else {
             unreachable!();
         };
 

@@ -589,7 +589,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             // };
             // ```
             for stmt in statements.iter_mut().rev() {
-                let Some(expr_stmt) = stmt.as_expression_statement() else {
+                let Some(expr_stmt) = stmt.as_expression_statement_mut() else {
                     continue;
                 };
                 let expression = Some(expr_stmt.expression.take_in(ctx.ast));

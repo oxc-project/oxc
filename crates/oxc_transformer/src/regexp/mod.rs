@@ -121,7 +121,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp {
 impl<'a> RegExp {
     /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Some(regexp) = expr.as_reg_exp_literal() else {
+        let Some(regexp) = expr.as_reg_exp_literal_mut() else {
             unreachable!();
         };
         let regexp = regexp.as_mut();
