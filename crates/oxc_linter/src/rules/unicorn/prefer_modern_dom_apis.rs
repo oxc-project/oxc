@@ -87,7 +87,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
+        let Some(member_expr) = call_expr.callee.as_static_member_expression() else {
             return;
         };
         let method = member_expr.property.name.as_str();
@@ -102,7 +102,7 @@ impl Rule for PreferModernDomApis {
             .arguments
             .iter()
             .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
-            && matches!(member_expr.object, Expression::Identifier(_))
+            && matches!(member_expr.object.kind(), ExpressionKind::Identifier(_))
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
@@ -164,6 +164,7 @@ impl Rule for PreferModernDomApis {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "oldChildNode.replaceWith(newChildNode);",

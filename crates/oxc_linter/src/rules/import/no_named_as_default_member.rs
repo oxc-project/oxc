@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, IdentifierReference},
+    ast::{BindingPattern, Expression, IdentifierReference, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -123,7 +123,7 @@ impl Rule for NoNamedAsDefaultMember {
                     let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
                         continue;
                     };
-                    let Expression::Identifier(ident) = member_expr_kind.object() else {
+                    let Some(ident) = member_expr_kind.object().as_identifier() else {
                         continue;
                     };
                     let Some(prop_str) =
@@ -143,7 +143,7 @@ impl Rule for NoNamedAsDefaultMember {
                     }
                 }
                 AstKind::VariableDeclarator(decl) => {
-                    let Some(Expression::Identifier(ident)) = &decl.init else {
+                    let Some(ident) = decl.init.and_then(|e| e.as_identifier()) else {
                         continue;
                     };
                     let BindingPattern::ObjectPattern(object_pattern) = &decl.id else {

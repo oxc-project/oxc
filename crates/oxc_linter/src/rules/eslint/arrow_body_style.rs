@@ -230,7 +230,7 @@ impl ArrowBodyStyle {
         let should_report = *mode == Mode::Always
             || (*mode == Mode::AsNeeded
                 && config.require_return_for_object_literal
-                && matches!(inner_expr, Some(Expression::ObjectExpression(_))));
+                && matches!(inner_expr, Some(ExpressionKind::ObjectExpression(_))));
 
         if !should_report {
             return;
@@ -265,7 +265,7 @@ impl ArrowBodyStyle {
 
                 // Check if we can fix (single return with argument)
                 if body.statements.len() == 1
-                    && let Statement::ReturnStatement(return_statement) = &body.statements[0]
+                    && let StatementKind::ReturnStatement(return_statement) = &body.statements[0]
                     && let Some(return_arg) = &return_statement.argument
                 {
                     ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {
@@ -278,12 +278,12 @@ impl ArrowBodyStyle {
                 ctx.diagnostic(unexpected_block_with_unknown_help_diagnostic(body.span));
             }
             Mode::AsNeeded if body.statements.len() == 1 => {
-                if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
+                if let Some(return_statement) = body.statements[0].as_return_statement() {
                     // Skip if requireReturnForObjectLiteral and returning an object
                     if self.1.require_return_for_object_literal
                         && matches!(
                             return_statement.argument,
-                            Some(Expression::ObjectExpression(_))
+                            Some(ExpressionKind::ObjectExpression(_))
                         )
                     {
                         return;
@@ -325,7 +325,7 @@ impl ArrowBodyStyle {
         // In that case, we need to remove the outer parens when converting to block:
         // `() => ({ ... })` → `() => { return { ... } }`
         let inner_expr = expr.get_inner_expression();
-        if matches!(inner_expr, Expression::ObjectExpression(_)) {
+        if inner_expr.is_object_expression() {
             let inner_text = ctx.source_range(inner_expr.span());
             return fixer.replace(body.span, format!("{{return {inner_text}}}"));
         }
@@ -349,11 +349,11 @@ impl ArrowBodyStyle {
         // Get the inner expression to handle cases like `return ({ ... })`
         // where the return value is already parenthesized
         let inner_expr = return_arg.get_inner_expression();
-        let is_already_parenthesized = matches!(return_arg, Expression::ParenthesizedExpression(_));
+        let is_already_parenthesized = return_arg.is_parenthesized_expression();
 
         // Check if expression starts with `{` - needs parens to avoid ambiguity with blocks
         let starts_with_object_literal = Self::starts_with_object_literal(inner_expr);
-        let is_sequence_expr = matches!(inner_expr, Expression::SequenceExpression(_));
+        let is_sequence_expr = inner_expr.is_sequence_expression();
 
         if starts_with_object_literal {
             if is_already_parenthesized {
@@ -393,23 +393,23 @@ impl ArrowBodyStyle {
     /// This includes direct ObjectExpression and expressions that have an
     /// object literal as their leftmost child (e.g., `{ a: 1 }.b`, `{a: 1}.b + c`)
     fn starts_with_object_literal(expr: &Expression) -> bool {
-        match expr {
-            Expression::ObjectExpression(_) => true,
-            Expression::StaticMemberExpression(member) => {
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(_) => true,
+            ExpressionKind::StaticMemberExpression(member) => {
                 Self::starts_with_object_literal(&member.object)
             }
-            Expression::ComputedMemberExpression(member) => {
+            ExpressionKind::ComputedMemberExpression(member) => {
                 Self::starts_with_object_literal(&member.object)
             }
-            Expression::CallExpression(call) => Self::starts_with_object_literal(&call.callee),
-            Expression::TaggedTemplateExpression(tagged) => {
+            ExpressionKind::CallExpression(call) => Self::starts_with_object_literal(&call.callee),
+            ExpressionKind::TaggedTemplateExpression(tagged) => {
                 Self::starts_with_object_literal(&tagged.tag)
             }
             // Binary/logical expressions: check the leftmost operand
-            Expression::BinaryExpression(bin) => Self::starts_with_object_literal(&bin.left),
-            Expression::LogicalExpression(log) => Self::starts_with_object_literal(&log.left),
+            ExpressionKind::BinaryExpression(bin) => Self::starts_with_object_literal(&bin.left),
+            ExpressionKind::LogicalExpression(log) => Self::starts_with_object_literal(&log.left),
             // Conditional expression: check the test (leftmost part)
-            Expression::ConditionalExpression(cond) => Self::starts_with_object_literal(&cond.test),
+            ExpressionKind::ConditionalExpression(cond) => Self::starts_with_object_literal(&cond.test),
             _ => false,
         }
     }
@@ -433,23 +433,23 @@ impl ArrowBodyStyle {
 
     /// Recursively check if an expression contains the `in` binary operator
     fn contains_in_operator(expr: &Expression) -> bool {
-        match expr.get_inner_expression() {
-            Expression::BinaryExpression(bin) => {
+        match expr.get_inner_expression().kind() {
+            ExpressionKind::BinaryExpression(bin) => {
                 if bin.operator == BinaryOperator::In {
                     return true;
                 }
                 Self::contains_in_operator(&bin.left) || Self::contains_in_operator(&bin.right)
             }
-            Expression::ConditionalExpression(cond) => {
+            ExpressionKind::ConditionalExpression(cond) => {
                 Self::contains_in_operator(&cond.test)
                     || Self::contains_in_operator(&cond.consequent)
                     || Self::contains_in_operator(&cond.alternate)
             }
-            Expression::LogicalExpression(log) => {
+            ExpressionKind::LogicalExpression(log) => {
                 Self::contains_in_operator(&log.left) || Self::contains_in_operator(&log.right)
             }
-            Expression::AssignmentExpression(assign) => Self::contains_in_operator(&assign.right),
-            Expression::SequenceExpression(seq) => {
+            ExpressionKind::AssignmentExpression(assign) => Self::contains_in_operator(&assign.right),
+            ExpressionKind::SequenceExpression(seq) => {
                 seq.expressions.iter().any(Self::contains_in_operator)
             }
             _ => false,

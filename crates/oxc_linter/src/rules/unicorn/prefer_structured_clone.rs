@@ -100,7 +100,7 @@ impl Rule for PreferStructuredClone {
                 return;
             };
 
-            let Expression::CallExpression(inner_call_expr) = first_argument.without_parentheses()
+            let Some(inner_call_expr) = first_argument.without_parentheses().as_call_expression()
             else {
                 return;
             };
@@ -165,6 +165,7 @@ fn replace_with_structured_clone(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("structuredClone(foo)", None),

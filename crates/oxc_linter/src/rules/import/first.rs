@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Statement, TSModuleReference};
+use oxc_ast::ast::{Statement, TSModuleReference, StatementKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -101,8 +101,8 @@ impl Rule for First {
         let program = ctx.nodes().program();
 
         for statement in &program.body {
-            match statement {
-                Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+            match statement.kind() {
+                StatementKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                             if is_relative_path(mod_ref.expression.value.as_str()) {
@@ -118,7 +118,7 @@ impl Rule for First {
                     TSModuleReference::IdentifierReference(_)
                     | TSModuleReference::QualifiedName(_) => {}
                 },
-                Statement::ImportDeclaration(decl) => {
+                StatementKind::ImportDeclaration(decl) => {
                     if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
                         if is_relative_path(decl.source.value.as_str()) {
                             any_relative = true;

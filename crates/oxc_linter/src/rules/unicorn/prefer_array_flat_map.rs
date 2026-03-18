@@ -62,7 +62,7 @@ impl Rule for PreferArrayFlatMap {
         let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
             return;
         };
-        let Expression::CallExpression(call_expr) = &member_expr.object().without_parentheses()
+        let Some(call_expr) = member_expr.object().without_parentheses().as_call_expression()
         else {
             return;
         };
@@ -109,9 +109,9 @@ fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return false;
     };
-    match member_expr.object().get_inner_expression() {
-        Expression::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
-        Expression::StaticMemberExpression(mem) => {
+    match member_expr.object().get_inner_expression().kind() {
+        ExpressionKind::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
+        ExpressionKind::StaticMemberExpression(mem) => {
             IGNORE_OBJECTS.contains(&mem.property.name.as_str())
         }
         _ => false,
@@ -121,6 +121,7 @@ fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const bar = [1,2,3].map()",

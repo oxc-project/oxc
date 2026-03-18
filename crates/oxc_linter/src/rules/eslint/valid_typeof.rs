@@ -115,13 +115,13 @@ impl Rule for ValidTypeof {
             _ => return,
         };
 
-        let ((Expression::UnaryExpression(_), sibling) | (sibling, Expression::UnaryExpression(_))) =
+        let ((ExpressionKind::UnaryExpression(_), sibling) | (sibling, ExpressionKind::UnaryExpression(_))) =
             (&binary_expr.left, &binary_expr.right)
         else {
             return;
         };
 
-        if let Expression::StringLiteral(lit) = sibling {
+        if let Some(lit) = sibling.as_string_literal() {
             if !VALID_TYPES.contains(&lit.value.as_str()) {
                 let help = get_typo_suggestion(lit.value.as_str())
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
@@ -130,7 +130,7 @@ impl Rule for ValidTypeof {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = sibling
+        if let Some(template) = sibling.as_template_literal()
             && let Some(quasi) = template.single_quasi()
         {
             if !VALID_TYPES.contains(&quasi.as_str()) {
@@ -141,7 +141,7 @@ impl Rule for ValidTypeof {
             return;
         }
 
-        if let Expression::Identifier(ident) = sibling
+        if let Some(ident) = sibling.as_identifier()
             && ident.name == "undefined"
             && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
         {
@@ -160,7 +160,7 @@ impl Rule for ValidTypeof {
         }
 
         if self.require_string_literals
-            && !matches!(sibling, Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
+            && !matches!(sibling, ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
         {
             ctx.diagnostic(not_string(None, sibling.span()));
         }

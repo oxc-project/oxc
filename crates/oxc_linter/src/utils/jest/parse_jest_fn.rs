@@ -46,13 +46,13 @@ pub fn parse_jest_fn_call<'a>(
         if last.is_name_equal("each")
             && !matches!(
                 callee,
-                Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
+                ExpressionKind::CallExpression(_) | ExpressionKind::TaggedTemplateExpression(_)
             )
         {
             return None;
         }
 
-        if matches!(callee, Expression::TaggedTemplateExpression(_)) && last.is_name_unequal("each")
+        if callee.is_tagged_template_expression() && last.is_name_unequal("each")
         {
             return None;
         }
@@ -165,7 +165,7 @@ fn parse_jest_expect_fn_call<'a>(
 
     let kind = if is_type_of { JestFnKind::ExpectTypeOf } else { JestFnKind::Expect };
     let expect_arguments = head.parent.and_then(|parent| {
-        if let Expression::CallExpression(parent) = parent {
+        if let Some(parent) = parent.as_call_expression() {
             return Some(&parent.arguments);
         }
         None
@@ -345,13 +345,13 @@ fn resolve_to_jest_fn<'a>(
 }
 
 fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
-    match expr {
-        Expression::Identifier(ident) => Some(ident),
-        match_member_expression!(Expression) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => Some(ident),
+        match_member_expression!(ExpressionKind) => {
             resolve_first_ident(expr.to_member_expression().object())
         }
-        Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
-        Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
+        ExpressionKind::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
+        ExpressionKind::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
         _ => None,
     }
 }
@@ -445,12 +445,12 @@ pub struct KnownMemberExpressionProperty<'a> {
 impl<'a> KnownMemberExpressionProperty<'a> {
     pub fn name(&self) -> Option<Cow<'a, str>> {
         match &self.element {
-            MemberExpressionElement::Expression(expr) => match expr {
-                Expression::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-                Expression::StringLiteral(string_literal) => {
+            MemberExpressionElement::Expression(expr) => match expr.kind() {
+                ExpressionKind::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+                ExpressionKind::StringLiteral(string_literal) => {
                     Some(Cow::Borrowed(string_literal.value.as_str()))
                 }
-                Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
+                ExpressionKind::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
                     template_literal.single_quasi().expect("get string content").as_str(),
                 )),
                 _ => None,
@@ -505,7 +505,7 @@ impl<'a> MemberExpressionElement<'a> {
     pub fn is_string_literal(&self) -> bool {
         matches!(
             self,
-            Self::Expression(Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+            Self::Expression(ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
         )
     }
 }
@@ -531,7 +531,7 @@ fn recurse_extend_node_chain<'a>(
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
 
     match expr {
-        match_member_expression!(Expression) => {
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             let params = NodeChainParams {
                 expr: member_expr.object(),
@@ -551,7 +551,7 @@ fn recurse_extend_node_chain<'a>(
                 });
             }
         }
-        Expression::Identifier(ident) => {
+        ExpressionKind::Identifier(ident) => {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
                 parent: *parent,
@@ -560,7 +560,7 @@ fn recurse_extend_node_chain<'a>(
                 span: ident.span,
             });
         }
-        Expression::CallExpression(call_expr) => {
+        ExpressionKind::CallExpression(call_expr) => {
             let params = NodeChainParams {
                 expr: &call_expr.callee,
                 parent: Some(expr),
@@ -569,7 +569,7 @@ fn recurse_extend_node_chain<'a>(
             };
             recurse_extend_node_chain(&params, chain);
         }
-        Expression::TaggedTemplateExpression(tagged_expr) => {
+        ExpressionKind::TaggedTemplateExpression(tagged_expr) => {
             let params = NodeChainParams {
                 expr: &tagged_expr.tag,
                 parent: Some(expr),
@@ -578,7 +578,7 @@ fn recurse_extend_node_chain<'a>(
             };
             recurse_extend_node_chain(&params, chain);
         }
-        Expression::StringLiteral(string_literal) => {
+        ExpressionKind::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
                 parent: *parent,
@@ -587,7 +587,7 @@ fn recurse_extend_node_chain<'a>(
                 span: string_literal.span,
             });
         }
-        Expression::TemplateLiteral(template_literal)
+        ExpressionKind::TemplateLiteral(template_literal)
             if template_literal.is_no_substitution_template() =>
         {
             chain.push(KnownMemberExpressionProperty {

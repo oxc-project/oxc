@@ -83,8 +83,8 @@ impl Rule for NoThrowLiteral {
 
         let expr = &stmt.argument;
 
-        match expr.get_inner_expression() {
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+        match expr.get_inner_expression().kind() {
+            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => {
                 let span = expr.span();
                 ctx.diagnostic_with_suggestion(no_throw_literal_diagnostic(span, false), |fixer| {
                     fixer.replace(
@@ -93,7 +93,7 @@ impl Rule for NoThrowLiteral {
                     )
                 });
             }
-            Expression::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
+            ExpressionKind::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
                 ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
             }
             expr if !could_be_error(ctx, expr) => {

@@ -120,11 +120,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptRewriteExtensions {
         node: &mut ImportExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match &mut node.source {
-            Expression::StringLiteral(source) => {
+        match node.source.kind() {
+            ExpressionKind::StringLiteral(source) => {
                 self.rewrite_extensions(source, ctx);
             }
-            Expression::TemplateLiteral(template) => {
+            ExpressionKind::TemplateLiteral(template) => {
                 self.rewrite_template_literal(template, ctx);
             }
             _ => {}

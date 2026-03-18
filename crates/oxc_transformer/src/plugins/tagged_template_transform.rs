@@ -62,7 +62,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TaggedTemplateTransform {
     // so we want this inlined to handle the common case without a function call
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if matches!(expr, Expression::TaggedTemplateExpression(_)) {
+        if expr.is_tagged_template_expression() {
             self.transform_tagged_template(expr, ctx);
         }
     }
@@ -76,14 +76,14 @@ impl<'a> TaggedTemplateTransform {
     /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function.
     #[cold] // Tagged template expressions are rare
     fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(matches!(expr, Expression::TaggedTemplateExpression(_)));
+        debug_assert!(expr.is_tagged_template_expression());
 
-        if !matches!(expr, Expression::TaggedTemplateExpression(tagged) if Self::contains_closing_script_tag(&tagged.quasi))
+        if !expr.as_tagged_template_expression().is_some_and(|tagged| Self::contains_closing_script_tag(&tagged.quasi))
         {
             return;
         }
 
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+        let Some(tagged) = expr.take_in(ctx.ast).as_tagged_template_expression() else {
             unreachable!();
         };
 

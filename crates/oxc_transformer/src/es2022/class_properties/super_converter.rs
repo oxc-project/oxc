@@ -52,7 +52,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::StaticMemberExpression(member) = expr else { unreachable!() };
+        let Some(member) = expr.as_static_member_expression() else { unreachable!() };
         if member.object.is_super() {
             *expr = self.transform_static_member_expression_impl(member, false, ctx);
         }
@@ -80,7 +80,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ComputedMemberExpression(member) = expr else { unreachable!() };
+        let Some(member) = expr.as_computed_member_expression() else { unreachable!() };
         if member.object.is_super() {
             *expr = self.transform_computed_member_expression_impl(member, false, ctx);
         }
@@ -110,11 +110,11 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match &call_expr.callee {
-            Expression::StaticMemberExpression(member) if member.object.is_super() => {
+        match call_expr.callee.kind() {
+            ExpressionKind::StaticMemberExpression(member) if member.object.is_super() => {
                 self.transform_call_expression_for_super_static_member_expr(call_expr, ctx);
             }
-            Expression::ComputedMemberExpression(member) if member.object.is_super() => {
+            ExpressionKind::ComputedMemberExpression(member) if member.object.is_super() => {
                 self.transform_call_expression_for_super_computed_member_expr(call_expr, ctx);
             }
             _ => {}
@@ -127,7 +127,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let callee = &mut call_expr.callee;
-        let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+        let Some(member) = callee.as_static_member_expression() else { unreachable!() };
         *callee = self.transform_static_member_expression_impl(member, true, ctx);
         Self::transform_super_call_expression_arguments(&mut call_expr.arguments, ctx);
     }
@@ -138,7 +138,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let callee = &mut call_expr.callee;
-        let Expression::ComputedMemberExpression(member) = callee else { unreachable!() };
+        let Some(member) = callee.as_computed_member_expression() else { unreachable!() };
         *callee = self.transform_computed_member_expression_impl(member, true, ctx);
         Self::transform_super_call_expression_arguments(&mut call_expr.arguments, ctx);
     }
@@ -178,7 +178,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
         match &assign_expr.left {
             AssignmentTarget::StaticMemberExpression(member) if member.object.is_super() => {
                 self.transform_assignment_expression_for_super_static_member_expr(expr, ctx);
@@ -207,7 +207,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Some(assign_expr) = expr.take_in(ctx.ast).as_assignment_expression() else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
@@ -235,7 +235,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
+        let Some(assign_expr) = expr.take_in(ctx.ast).as_assignment_expression() else {
             unreachable!()
         };
         let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
@@ -313,7 +313,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
+        let Some(update_expr) = expr.as_update_expression() else { unreachable!() };
 
         match &update_expr.argument {
             SimpleAssignmentTarget::StaticMemberExpression(member) if member.object.is_super() => {
@@ -370,7 +370,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::update_expression(mut update_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
@@ -433,7 +433,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::UpdateExpression(mut update_expr) = expr.take_in(ctx.ast) else {
+        let Expression::update_expression(mut update_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
         let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
@@ -508,7 +508,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let prefix = update_expr.prefix;
         update_expr.span = SPAN;
         update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
-        let update_expr = Expression::UpdateExpression(update_expr);
+        let update_expr = Expression::update_expression(update_expr);
 
         if prefix {
             // Source = `++super$prop` (prefix `++`)

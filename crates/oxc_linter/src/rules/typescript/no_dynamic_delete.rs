@@ -54,13 +54,13 @@ impl Rule for NoDynamicDelete {
             return;
         }
 
-        let Expression::ComputedMemberExpression(computed_expr) = &expr.argument else { return };
+        let Some(computed_expr) = expr.argument.as_computed_member_expression() else { return };
         let inner_expression = computed_expr.expression.get_inner_expression();
         if inner_expression.is_string_literal() || inner_expression.is_number_literal() {
             return;
         }
 
-        if let Expression::UnaryExpression(unary_expr) = &inner_expression
+        if let Some(unary_expr) = inner_expression.as_unary_expression()
             && unary_expr.operator == UnaryOperator::UnaryNegation
             && unary_expr.argument.is_number_literal()
         {
@@ -73,6 +73,7 @@ impl Rule for NoDynamicDelete {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

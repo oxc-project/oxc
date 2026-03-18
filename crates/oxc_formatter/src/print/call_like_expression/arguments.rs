@@ -592,9 +592,9 @@ fn can_group_arrow_function_expression_argument(
                 if arrow_function.expression {
                     return false;
                 }
-                body.statements.iter().any(|statement| match statement {
+                body.statements.iter().any(|statement| match statement.kind() {
                     #[expect(clippy::match_same_arms)]
-                    Statement::EmptyStatement(_) => {
+                    StatementKind::EmptyStatement(_) => {
                         // When the body contains an empty statement, comments in
                         // the body will get attached to that statement rather than
                         // the body itself, so they need to be checked for comments

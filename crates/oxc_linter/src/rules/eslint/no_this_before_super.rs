@@ -157,7 +157,7 @@ impl NoThisBeforeSuper {
 
             let class = parent_3.kind().as_class()?;
             let super_class = class.super_class.as_ref()?;
-            return Some(!matches!(super_class, Expression::NullLiteral(_)));
+            return Some(!super_class.is_null_literal());
         }
 
         Some(false)
@@ -258,17 +258,17 @@ impl NoThisBeforeSuper {
     }
 
     fn contains_this_or_super(arg: &Argument) -> bool {
-        match arg {
+        match arg.kind() {
             Argument::Super(_) | Argument::ThisExpression(_) => true,
             Argument::CallExpression(call_expr) => {
-                matches!(&call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
+                matches!(&call_expr.callee, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
                     || matches!(&call_expr.callee,
-                    Expression::StaticMemberExpression(static_member) if
-                    matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
+                    ExpressionKind::StaticMemberExpression(static_member) if
+                    matches!(static_member.object, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_)))
                     || Self::contains_this_or_super_in_args(&call_expr.arguments)
             }
             Argument::StaticMemberExpression(call_expr) => {
-                matches!(&call_expr.object, Expression::Super(_) | Expression::ThisExpression(_))
+                matches!(&call_expr.object, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
             }
             _ => false,
         }

@@ -1596,7 +1596,7 @@ impl<'a> Format<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if !matches!(self.inner, Statement::ExpressionStatement(_))
+        if !self.inner.is_expression_statement()
             && f.comments().has_trailing_suppression_comment(self.span().end)
         {
             format_leading_comments(self.span()).fmt(f);
@@ -1611,8 +1611,8 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
         }
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
-            Statement::BlockStatement(inner) => {
+        match self.inner.kind() {
+            StatementKind::BlockStatement(inner) => {
                 allocator
                     .alloc(AstNode::<BlockStatement> {
                         inner,
@@ -1622,7 +1622,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::BreakStatement(inner) => {
+            StatementKind::BreakStatement(inner) => {
                 allocator
                     .alloc(AstNode::<BreakStatement> {
                         inner,
@@ -1632,7 +1632,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ContinueStatement(inner) => {
+            StatementKind::ContinueStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ContinueStatement> {
                         inner,
@@ -1642,7 +1642,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::DebuggerStatement(inner) => {
+            StatementKind::DebuggerStatement(inner) => {
                 allocator
                     .alloc(AstNode::<DebuggerStatement> {
                         inner,
@@ -1652,7 +1652,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::DoWhileStatement(inner) => {
+            StatementKind::DoWhileStatement(inner) => {
                 allocator
                     .alloc(AstNode::<DoWhileStatement> {
                         inner,
@@ -1662,7 +1662,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::EmptyStatement(inner) => {
+            StatementKind::EmptyStatement(inner) => {
                 allocator
                     .alloc(AstNode::<EmptyStatement> {
                         inner,
@@ -1672,7 +1672,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ExpressionStatement(inner) => {
+            StatementKind::ExpressionStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ExpressionStatement> {
                         inner,
@@ -1682,7 +1682,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ForInStatement(inner) => {
+            StatementKind::ForInStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ForInStatement> {
                         inner,
@@ -1692,7 +1692,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ForOfStatement(inner) => {
+            StatementKind::ForOfStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ForOfStatement> {
                         inner,
@@ -1702,7 +1702,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ForStatement(inner) => {
+            StatementKind::ForStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ForStatement> {
                         inner,
@@ -1712,7 +1712,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::IfStatement(inner) => {
+            StatementKind::IfStatement(inner) => {
                 allocator
                     .alloc(AstNode::<IfStatement> {
                         inner,
@@ -1722,7 +1722,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::LabeledStatement(inner) => {
+            StatementKind::LabeledStatement(inner) => {
                 allocator
                     .alloc(AstNode::<LabeledStatement> {
                         inner,
@@ -1732,7 +1732,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ReturnStatement(inner) => {
+            StatementKind::ReturnStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ReturnStatement> {
                         inner,
@@ -1742,7 +1742,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::SwitchStatement(inner) => {
+            StatementKind::SwitchStatement(inner) => {
                 allocator
                     .alloc(AstNode::<SwitchStatement> {
                         inner,
@@ -1752,7 +1752,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::ThrowStatement(inner) => {
+            StatementKind::ThrowStatement(inner) => {
                 allocator
                     .alloc(AstNode::<ThrowStatement> {
                         inner,
@@ -1762,7 +1762,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::TryStatement(inner) => {
+            StatementKind::TryStatement(inner) => {
                 allocator
                     .alloc(AstNode::<TryStatement> {
                         inner,
@@ -1772,7 +1772,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::WhileStatement(inner) => {
+            StatementKind::WhileStatement(inner) => {
                 allocator
                     .alloc(AstNode::<WhileStatement> {
                         inner,
@@ -1782,7 +1782,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            Statement::WithStatement(inner) => {
+            StatementKind::WithStatement(inner) => {
                 allocator
                     .alloc(AstNode::<WithStatement> {
                         inner,
@@ -1792,8 +1792,8 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_declaration!(Statement) => {
-                let inner = it.to_declaration();
+            _ if self.inner.is_declaration() => {
+                let inner = allocator.alloc(self.inner.to_declaration());
                 allocator
                     .alloc(AstNode::<'a, Declaration> {
                         inner,
@@ -1803,8 +1803,8 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_module_declaration!(Statement) => {
-                let inner = it.to_module_declaration();
+            _ => {
+                let inner = allocator.alloc(self.inner.to_module_declaration());
                 allocator
                     .alloc(AstNode::<'a, ModuleDeclaration> {
                         inner,

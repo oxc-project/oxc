@@ -48,13 +48,13 @@ impl NullishCoalescingOperator {
 impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
-        if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
+        if !expr.as_logical_expression().is_some_and(|logical_expr| logical_expr.operator == LogicalOperator::Coalesce)
         {
             return;
         }
 
         // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
+        let Some(logical_expr) = expr.take_in(ctx.ast).as_logical_expression() else {
             unreachable!()
         };
 
@@ -72,8 +72,8 @@ impl<'a> NullishCoalescingOperator {
         let logical_expr = logical_expr.unbox();
 
         // Skip creating extra reference when `left` is static
-        match &logical_expr.left {
-            Expression::ThisExpression(this) => {
+        match logical_expr.left.kind() {
+            ExpressionKind::ThisExpression(this) => {
                 let this_span = this.span;
                 return Self::create_conditional_expression(
                     logical_expr.left,
@@ -84,7 +84,7 @@ impl<'a> NullishCoalescingOperator {
                     ctx,
                 );
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // Check binding is not mutated.

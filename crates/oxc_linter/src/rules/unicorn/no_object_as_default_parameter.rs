@@ -56,7 +56,7 @@ impl Rule for NoObjectAsDefaultParameter {
 
         let init = init.get_inner_expression();
 
-        let Expression::ObjectExpression(object_expr) = init else {
+        let Some(object_expr) = init.as_object_expression() else {
             return;
         };
 
@@ -76,6 +76,7 @@ impl Rule for NoObjectAsDefaultParameter {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const abc = {};",

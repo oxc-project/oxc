@@ -30,11 +30,11 @@ pub fn as_endpoint_registration<'a, 'n>(
         return None;
     }
     let first = call.arguments[0].as_expression()?;
-    match first {
-        Expression::StringLiteral(path) => {
+    match first.kind() {
+        ExpressionKind::StringLiteral(path) => {
             Some((Some(path.value), &call.arguments.as_slice()[1..]))
         }
-        Expression::TemplateLiteral(template) => {
+        ExpressionKind::TemplateLiteral(template) => {
             template.single_quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))
         }
         _ => Some((None, call.arguments.as_slice())),
@@ -46,9 +46,9 @@ pub fn as_endpoint_registration<'a, 'n>(
 /// This will yield a lot of false positives if not called on the results of
 /// [`as_endpoint_registration`].
 pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
-    let params = match maybe_handler {
-        Expression::FunctionExpression(f) => &f.params,
-        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
+ match maybe_handler.kind() {
+        ExpressionKind::FunctionExpression(f) => &f.params,
+        ExpressionKind::ArrowFunctionExpression(arrow) => &arrow.params,
         _ => return false,
     };
 

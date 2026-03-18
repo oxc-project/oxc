@@ -3,7 +3,7 @@ use std::ops::Deref;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrowFunctionExpression, Expression, Function},
+    ast::{Argument, ArrowFunctionExpression, Expression, Function, ExpressionKind},
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
@@ -232,8 +232,8 @@ impl NoAsyncEndpointHandlers {
             return;
         }
 
-        match arg {
-            Expression::Identifier(handler) => {
+        match arg.kind() {
+            ExpressionKind::Identifier(handler) => {
                 // Unresolved reference? Nothing we can do.
                 let Some(symbol_id) =
                     ctx.scoping().get_reference(handler.reference_id()).symbol_id()
@@ -256,7 +256,7 @@ impl NoAsyncEndpointHandlers {
                     }
                     AstKind::VariableDeclarator(decl) => {
                         if let Some(init) = &decl.init {
-                            if let Expression::Identifier(id) = &init
+                            if let Some(id) = init.as_identifier()
                                 && decl
                                     .id
                                     .get_identifier_name()
@@ -278,12 +278,12 @@ impl NoAsyncEndpointHandlers {
                 }
             }
             func if utils::is_endpoint_handler(func) => {
-                match func {
+                match func.kind() {
                     // `app.get('/', (async?) function (req, res) {}`
-                    Expression::FunctionExpression(f) => {
+                    ExpressionKind::FunctionExpression(f) => {
                         self.check_function(ctx, endpoint, registered_at, id_name, f);
                     }
-                    Expression::ArrowFunctionExpression(f) => {
+                    ExpressionKind::ArrowFunctionExpression(f) => {
                         self.check_arrow(ctx, endpoint, registered_at, id_name, f);
                     }
                     _ => unreachable!(),

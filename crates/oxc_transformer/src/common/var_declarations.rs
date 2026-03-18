@@ -237,7 +237,7 @@ impl<'a> VarDeclarationsStore<'a> {
         declarators: ArenaVec<'a, VariableDeclarator<'a>>,
         ast: AstBuilder<'a>,
     ) -> Statement<'a> {
-        Statement::VariableDeclaration(ast.alloc_variable_declaration(
+        Statement::variable_declaration(ast.alloc_variable_declaration(
             SPAN,
             kind,
             declarators,

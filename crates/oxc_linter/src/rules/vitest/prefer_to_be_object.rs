@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryOperator, Expression},
+    ast::{Argument, BinaryOperator, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -101,8 +101,7 @@ impl PreferToBeObject {
         }
 
         if matches!(matcher.name().as_deref(), Some("toBeTruthy" | "toBeFalsy")) {
-            let Some(Expression::CallExpression(parent_call_expr)) = parsed_expect_call.head.parent
-            else {
+            let Some(parent_call_expr) = parsed_expect_call.head.parent.and_then(|e| e.as_call_expression()) else {
                 return;
             };
 
@@ -115,7 +114,7 @@ impl PreferToBeObject {
                 _ => arg.to_expression(),
             };
 
-            let Expression::BinaryExpression(binary_expr) = expr else {
+            let Some(binary_expr) = expr.as_binary_expression() else {
                 return;
             };
 
@@ -123,7 +122,7 @@ impl PreferToBeObject {
                 return;
             }
 
-            let Expression::Identifier(id) = &binary_expr.right else {
+            let Some(id) = binary_expr.right.as_identifier() else {
                 return;
             };
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -96,7 +96,7 @@ impl BadMinMaxFunc {
         let CallExpression { callee, arguments, .. } = node;
 
         let member_expr = callee.get_member_expr()?;
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let Some(ident) = member_expr.object().as_identifier() else {
             return None;
         };
         if ident.name != "Math" {

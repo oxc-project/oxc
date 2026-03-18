@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody, Statement},
+    ast::{Argument, Expression, FunctionBody, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -152,10 +152,10 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
             if arrow_expr.expression && !arrow_expr.body.statements.is_empty() {
                 let stmt = &arrow_expr.body.statements[0];
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                let Some(expr_stmt) = stmt.as_expression_statement() else {
                     return;
                 };
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                if let Some(call_expr) = expr_stmt.expression.as_call_expression() {
                     diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                 }
             }
@@ -170,7 +170,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
 fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {
     function_body.statements.iter().find_map(|stmt| {
-        if let Statement::ReturnStatement(return_stmt) = stmt {
+        if let Some(return_stmt) = stmt.as_return_statement() {
             Some(return_stmt.span)
         } else {
             None

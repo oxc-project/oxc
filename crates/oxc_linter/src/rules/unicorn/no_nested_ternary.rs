@@ -55,14 +55,14 @@ impl Rule for NoNestedTernary {
             return;
         };
 
-        if matches!(&cond_expr.test.get_inner_expression(), Expression::ConditionalExpression(_))
+        if matches!(cond_expr.test.get_inner_expression().kind(), ExpressionKind::ConditionalExpression(_))
             || matches!(
                 &cond_expr.consequent.get_inner_expression(),
-                Expression::ConditionalExpression(_)
+                ExpressionKind::ConditionalExpression(_)
             )
             || matches!(
                 &cond_expr.alternate.get_inner_expression(),
-                Expression::ConditionalExpression(_)
+                ExpressionKind::ConditionalExpression(_)
             )
         {
             return;
@@ -106,6 +106,7 @@ impl Rule for NoNestedTernary {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const foo = i > 5 ? true : false;",

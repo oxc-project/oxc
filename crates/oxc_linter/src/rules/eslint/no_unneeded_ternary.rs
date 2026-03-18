@@ -88,11 +88,11 @@ impl Rule for NoUnneededTernary {
         let AstKind::ConditionalExpression(expr) = node.kind() else {
             return;
         };
-        if matches!(expr.consequent, Expression::BooleanLiteral(_))
-            && matches!(expr.alternate, Expression::BooleanLiteral(_))
+        if expr.consequent.is_boolean_literal()
+            && expr.alternate.is_boolean_literal()
         {
             ctx.diagnostic_with_dangerous_fix(no_unneeded_ternary_diagnostic(expr.span), |fixer| {
-                let (Expression::BooleanLiteral(left), Expression::BooleanLiteral(right)) =
+                let (ExpressionKind::BooleanLiteral(left), ExpressionKind::BooleanLiteral(right)) =
                     (&expr.consequent, &expr.alternate)
                 else {
                     return fixer.noop();
@@ -102,8 +102,8 @@ impl Rule for NoUnneededTernary {
                 }
                 let replacement;
                 let test_expr_source = ctx.source_range(expr.test.span());
-                match &expr.test {
-                    Expression::BinaryExpression(binary) => {
+                match expr.test.kind() {
+                    ExpressionKind::BinaryExpression(binary) => {
                         if left.value {
                             replacement = test_expr_source.to_string();
                         } else {
@@ -140,7 +140,7 @@ impl Rule for NoUnneededTernary {
                             };
                         }
                     }
-                    Expression::UnaryExpression(unary) if left.value && unary.operator.is_not() => {
+                    ExpressionKind::UnaryExpression(unary) if left.value && unary.operator.is_not() => {
                         // !x ? true : false => !x
                         replacement = test_expr_source.to_string();
                     }
@@ -184,15 +184,15 @@ impl Rule for NoUnneededTernary {
 fn without_parenthesize(node: &Expression) -> bool {
     matches!(
         node,
-        Expression::Identifier(_)
-            | Expression::UnaryExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::AwaitExpression(_)
-            | Expression::UpdateExpression(_)
-            | Expression::CallExpression(_)
-            | Expression::ChainExpression(_)
-            | Expression::ImportExpression(_)
-            | Expression::NewExpression(_)
+        ExpressionKind::Identifier(_)
+            | ExpressionKind::UnaryExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::AwaitExpression(_)
+            | ExpressionKind::UpdateExpression(_)
+            | ExpressionKind::CallExpression(_)
+            | ExpressionKind::ChainExpression(_)
+            | ExpressionKind::ImportExpression(_)
+            | ExpressionKind::NewExpression(_)
     )
 }
 

@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -175,7 +176,7 @@ impl ValidExpect {
             None => {}
         }
 
-        let Some(Expression::CallExpression(call_expr)) = jest_fn_call.head.parent else {
+        let Some(call_expr) = jest_fn_call.head.parent.and_then(|e| e.as_call_expression()) else {
             return;
         };
 
@@ -302,7 +303,7 @@ fn should_skip_parent_node(node: &AstNode, parent: &AstNode) -> bool {
         AstKind::CallExpression(call) => {
             // Don't skip arguments to Promise methods - they're semantically important for await detection
             if let Some(member_expr) = call.callee.as_member_expression()
-                && let Expression::Identifier(ident) = member_expr.object()
+                && let Some(ident) = member_expr.object().as_identifier()
                 && ident.name == "Promise"
             {
                 return false; // Never skip Promise method arguments
@@ -368,7 +369,7 @@ fn find_promise_call_expression_node<'a, 'b>(
 
     if let AstKind::CallExpression(call_expr) = parent.kind()
         && let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let Expression::Identifier(ident) = member_expr.object()
+        && let Some(ident) = member_expr.object().as_identifier()
         && matches!(ident.name.as_str(), "Promise")
         && !matches!(parent.kind(), AstKind::Program(_))
     {

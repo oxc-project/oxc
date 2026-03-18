@@ -15,7 +15,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-        if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
+        if let Some(expr_stmt) = if_stmt.consequent.as_expression_statement_mut() {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
                     // "if (!a) b();" => "a || b();"
@@ -89,7 +89,7 @@ impl<'a> PeepholeOptimizations {
             // "yes" is not missing (and is not an expression)
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
-                if !matches!(alternate, Statement::IfStatement(_))
+                if !alternate.is_if_statement()
                     && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
                     && unary_expr.operator.is_not()
                 {
@@ -103,7 +103,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
             } else {
                 // "no" is missing
-                if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
+                if let Some(if2_stmt) = if_stmt.consequent.as_if_statement_mut()
                     && if2_stmt.alternate.is_none()
                 {
                     // "if (a) if (b) return c;" => "if (a && b) return c;"
@@ -127,7 +127,7 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent
+        if let Some(if2) = if_stmt.consequent.as_if_statement_mut()
             && if2.consequent.is_jump_statement()
             && if2.alternate.is_some()
         {

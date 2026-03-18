@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, RegExpFlags},
+    ast::{Expression, RegExpFlags, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,18 +85,18 @@ fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<(RegExpFlags, Span)> {
-    match expr.without_parentheses() {
-        Expression::RegExpLiteral(regexp_literal) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::RegExpLiteral(regexp_literal) => {
             Some((regexp_literal.regex.flags, regexp_literal.span))
         }
-        Expression::NewExpression(new_expr) => {
+        ExpressionKind::NewExpression(new_expr) => {
             if new_expr.callee.is_specific_id("RegExp") {
                 extract_regex_flags(&new_expr.arguments).map(|flags| (flags, new_expr.span))
             } else {
                 None
             }
         }
-        Expression::Identifier(ident) => {
+        ExpressionKind::Identifier(ident) => {
             let decl = get_declaration_of_variable(ident, ctx)?;
             let var_decl = decl.kind().as_variable_declarator()?;
             if let Some(init) = &var_decl.init {

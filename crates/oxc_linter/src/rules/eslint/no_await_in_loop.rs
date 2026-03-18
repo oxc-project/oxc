@@ -105,9 +105,9 @@ impl Rule for NoAwaitInLoop {
 
 impl NoAwaitInLoop {
     fn node_matches_stmt_span(span: Span, stmt: &Statement) -> bool {
-        match stmt {
-            Statement::BlockStatement(block) => block.span.contains_inclusive(span),
-            Statement::ExpressionStatement(expr_statement) => {
+        match stmt.kind() {
+            StatementKind::BlockStatement(block) => block.span.contains_inclusive(span),
+            StatementKind::ExpressionStatement(expr_statement) => {
                 expr_statement.span.contains_inclusive(span)
             }
             _ => false,
@@ -115,30 +115,30 @@ impl NoAwaitInLoop {
     }
 
     fn node_matches_expr_span(span: Span, expr: &Expression) -> bool {
-        match expr {
-            Expression::TemplateLiteral(expr) => expr.span.contains_inclusive(span),
-            Expression::ArrayExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ArrowFunctionExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::AssignmentExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::AwaitExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::BinaryExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::CallExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ChainExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ClassExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ConditionalExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::FunctionExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ImportExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::LogicalExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::NewExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ObjectExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ParenthesizedExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::SequenceExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::TaggedTemplateExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::ThisExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::UnaryExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::UpdateExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::YieldExpression(expr) => expr.span.contains_inclusive(span),
-            Expression::PrivateInExpression(expr) => expr.span.contains_inclusive(span),
+        match expr.kind() {
+            ExpressionKind::TemplateLiteral(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ArrayExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ArrowFunctionExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::AssignmentExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::AwaitExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::BinaryExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::CallExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ChainExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ClassExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ConditionalExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::FunctionExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ImportExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::LogicalExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::NewExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ObjectExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ParenthesizedExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::SequenceExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::TaggedTemplateExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::ThisExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::UnaryExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::UpdateExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::YieldExpression(expr) => expr.span.contains_inclusive(span),
+            ExpressionKind::PrivateInExpression(expr) => expr.span.contains_inclusive(span),
             _ => false,
         }
     }

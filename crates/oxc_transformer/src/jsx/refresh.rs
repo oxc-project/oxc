@@ -194,20 +194,20 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let var_decl_index = program.body.len();
         program.body.extend(iter::once(var_decl).chain(calls));
 
-        let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
+        let Statement::variable_declaration(var_decl) = &mut program.body[var_decl_index] else {
             unreachable!()
         };
         var_decl.declarations = variable_declarator_items;
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let signature = match expr {
-            Expression::FunctionExpression(func) => self.create_signature_call_expression(
+        let signature = match expr.kind() {
+            ExpressionKind::FunctionExpression(func) => self.create_signature_call_expression(
                 func.scope_id(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 let call_fn =
                     self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
 
@@ -218,9 +218,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                 call_fn
             }
             // hoc(_c = function() { })
-            Expression::AssignmentExpression(_) => return,
+            ExpressionKind::AssignmentExpression(_) => return,
             // hoc1(hoc2(...))
-            Expression::CallExpression(_) => self.last_signature.take(),
+            ExpressionKind::CallExpression(_) => self.last_signature.take(),
             _ => None,
         };
 
@@ -229,7 +229,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         };
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
 
-        if !matches!(expr, Expression::CallExpression(_)) {
+        if !expr.is_call_expression() {
             // Try to get binding from parent VariableDeclarator
             if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
                 && let Some(ident) = declarator.id().get_binding_identifier()
@@ -318,9 +318,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             return;
         }
 
-        let hook_name: Atom = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name.into(),
-            Expression::StaticMemberExpression(member) => member.property.name.into(),
+        let hook_name: Atom = match call_expr.callee.kind() {
+            ExpressionKind::Identifier(ident) => ident.name.into(),
+            ExpressionKind::StaticMemberExpression(member) => member.property.name.into(),
             _ => return,
         };
 
@@ -330,10 +330,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression): (Option<Ident>, _) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), false),
-                Expression::StaticMemberExpression(member) => {
-                    if let Expression::Identifier(object) = &member.object {
+            let (binding_name, is_member_expression): (Option<Ident>, _) = match call_expr.callee.kind() {
+                ExpressionKind::Identifier(ident) => (Some(ident.name), false),
+                ExpressionKind::StaticMemberExpression(member) => {
+                    if let Some(object) = member.object.as_identifier() {
                         (Some(object.name), true)
                     } else {
                         (None, false)
@@ -440,31 +440,26 @@ impl<'a> ReactRefresh<'a> {
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
                 // Instead we assume it's registered at definition.
                 return is_componentish_name(&ident.name);
             }
-            Expression::FunctionExpression(_) => {}
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::FunctionExpression(_) => {}
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // Don't transform `() => () => {}`
                 if arrow
                     .get_expression()
-                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_)))
+                    .is_some_and(|expr| expr.is_arrow_function_expression())
                 {
                     return false;
                 }
             }
-            Expression::CallExpression(call_expr) => {
-                let allowed_callee = matches!(
-                    call_expr.callee,
-                    Expression::Identifier(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::StaticMemberExpression(_)
-                );
+            ExpressionKind::CallExpression(call_expr) => {
+                let allowed_callee = call_expr.callee.is_identifier() || call_expr.callee.is_computed_member_expression() || call_expr.callee.is_static_member_expression();
 
                 if allowed_callee {
                     let callee_span = call_expr.callee.span();
@@ -667,12 +662,12 @@ impl<'a> ReactRefresh<'a> {
         statement: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        match statement {
-            Statement::VariableDeclaration(variable) => {
+        match statement.kind() {
+            StatementKind::VariableDeclaration(variable) => {
                 self.handle_variable_declaration(variable, ctx)
             }
-            Statement::FunctionDeclaration(func) => self.handle_function_declaration(func, ctx),
-            Statement::ExportNamedDeclaration(export_decl) => {
+            StatementKind::FunctionDeclaration(func) => self.handle_function_declaration(func, ctx),
+            StatementKind::ExportNamedDeclaration(export_decl) => {
                 if let Some(declaration) = &mut export_decl.declaration {
                     match declaration {
                         Declaration::FunctionDeclaration(func) => {
@@ -687,11 +682,11 @@ impl<'a> ReactRefresh<'a> {
                     None
                 }
             }
-            Statement::ExportDefaultDeclaration(stmt_decl) => {
+            StatementKind::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
                         let expression = declaration.to_expression_mut();
-                        if !matches!(expression, Expression::CallExpression(_)) {
+                        if !expression.is_call_expression() {
                             // For now, we only support possible HOC calls here.
                             // Named function declarations are handled in FunctionDeclaration.
                             // Anonymous direct exports like export default function() {}
@@ -765,17 +760,17 @@ impl<'a> ReactRefresh<'a> {
             return None;
         }
 
-        match init {
+        match init.kind() {
             // Likely component definitions.
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // () => () => {}
-                if arrow.get_expression().is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))) {
+                if arrow.get_expression().is_some_and(|expr| expr.is_arrow_function_expression()) {
                     return None;
                 }
             }
-            Expression::FunctionExpression(_)
+            ExpressionKind::FunctionExpression(_)
             // Maybe something like styled.div`...`
-            | Expression::TaggedTemplateExpression(_) => {
+            | ExpressionKind::TaggedTemplateExpression(_) => {
                 // Special case when a variable would get an inferred name:
                 // let Foo = () => {}
                 // let Foo = function() {}
@@ -785,12 +780,12 @@ impl<'a> ReactRefresh<'a> {
                 // (eg: with @babel/plugin-transform-react-display-name or
                 // babel-plugin-styled-components)
             }
-            Expression::CallExpression(call_expr) => {
-                let is_import_expression = match call_expr.callee.get_inner_expression() {
-                    Expression::ImportExpression(_) => {
+            ExpressionKind::CallExpression(call_expr) => {
+                let is_import_expression = match call_expr.callee.get_inner_expression().kind() {
+                    ExpressionKind::ImportExpression(_) => {
                         true
                     }
-                    Expression::Identifier(ident) => {
+                    ExpressionKind::Identifier(ident) => {
                         ident.name.starts_with("require")
                     },
                     _ => false
@@ -879,7 +874,7 @@ impl<'a> ReactRefresh<'a> {
 
         arrow.expression = false;
 
-        let Some(Statement::ExpressionStatement(statement)) = arrow.body.statements.pop() else {
+        let Some(Statement::expression_statement(statement)) = arrow.body.statements.pop() else {
             unreachable!("arrow function body is never empty")
         };
 
@@ -936,9 +931,9 @@ impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
         walk_call_expression(self, it);
 
-        let is_jsx_call = match &it.callee {
-            Expression::Identifier(ident) => Self::is_jsx_like_call(&ident.name),
-            Expression::StaticMemberExpression(member) => {
+        let is_jsx_call = match it.callee.kind() {
+            ExpressionKind::Identifier(ident) => Self::is_jsx_like_call(&ident.name),
+            ExpressionKind::StaticMemberExpression(member) => {
                 Self::is_jsx_like_call(&member.property.name)
             }
             _ => false,

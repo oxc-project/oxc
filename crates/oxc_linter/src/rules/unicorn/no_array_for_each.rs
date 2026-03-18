@@ -82,8 +82,8 @@ impl Rule for NoArrayForEach {
 
             let object = member_expr.object();
 
-            match object {
-                Expression::Identifier(ident) => {
+            match object.kind() {
+                ExpressionKind::Identifier(ident) => {
                     if IGNORED_OBJECTS.contains(&ident.name.as_str()) {
                         return;
                     }
@@ -112,6 +112,7 @@ pub const IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "new foo.forEach(element => bar())",

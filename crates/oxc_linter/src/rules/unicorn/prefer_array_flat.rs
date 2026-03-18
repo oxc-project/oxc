@@ -153,13 +153,13 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(Statement::ExpressionStatement(expr_stmt)) = first_argument.body.statements.first()
+    let Some(expr_stmt) = first_argument.body.statements.first().as_expression_statement()
     else {
         return;
     };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression
+    if let Some(concat_call_expr) = expr_stmt.expression.as_call_expression()
         && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
         && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
     {
@@ -167,8 +167,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             return;
         }
 
-        let Expression::Identifier(second_argument_ident) =
-            concat_call_expr.callee.get_member_expr().unwrap().object()
+        let Some(second_argument_ident) = concat_call_expr.callee.get_member_expr().unwrap().object().as_identifier()
         else {
             return;
         };
@@ -195,20 +194,20 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
-    if let Expression::ArrayExpression(array_expr) = &expr_stmt.expression {
+    if let Some(array_expr) = expr_stmt.expression.as_array_expression() {
         if array_expr.elements.len() != 2 {
             return;
         }
 
         let Some((first_element, second_element)) = ({
-            match (&array_expr.elements[0], &array_expr.elements[1]) {
+            match (&array_expr.elements[0], &array_expr.elements[1]).kind() {
                 (
                     ArrayExpressionElement::SpreadElement(first_element),
                     ArrayExpressionElement::SpreadElement(second_element),
                 ) => match (&first_element.argument, &second_element.argument) {
                     (
-                        Expression::Identifier(first_element),
-                        Expression::Identifier(second_element),
+                        ExpressionKind::Identifier(first_element),
+                        ExpressionKind::Identifier(second_element),
                     ) => Some((first_element, second_element)),
                     _ => None,
                 },
@@ -245,8 +244,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     if is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
         // `array.concat(maybeArray)`
-        if let Expression::ArrayExpression(array_expr) =
-            call_expr.callee.get_member_expr().unwrap().object()
+        if let Some(array_expr) = call_expr.callee.get_member_expr().unwrap().object().as_array_expression()
         {
             if !array_expr.elements.is_empty() {
                 return;
@@ -282,6 +280,8 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "array.flatMap",

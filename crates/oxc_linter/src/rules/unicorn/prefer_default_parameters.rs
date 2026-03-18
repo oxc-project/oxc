@@ -108,7 +108,7 @@ fn check_expression<'a>(
     is_assignment: bool,
     stmt_span: Span,
 ) {
-    let Expression::LogicalExpression(logical_expr) = right.without_parentheses() else {
+    let Some(logical_expr) = right.without_parentheses().as_logical_expression() else {
         return;
     };
 
@@ -116,7 +116,7 @@ fn check_expression<'a>(
         return;
     }
 
-    let Expression::Identifier(param_ident) = logical_expr.left.without_parentheses() else {
+    let Some(param_ident) = logical_expr.left.without_parentheses().as_identifier() else {
         return;
     };
 
@@ -211,8 +211,8 @@ fn has_no_side_effects_before<'a>(
 
     for stmt in &body.statements {
         let stmt_matches = match stmt {
-            Statement::ExpressionStatement(expr_stmt) => expr_stmt.expression.span() == node_span,
-            Statement::VariableDeclaration(var_decl) => var_decl.span == node_span,
+            StatementKind::ExpressionStatement(expr_stmt) => expr_stmt.expression.span() == node_span,
+            StatementKind::VariableDeclaration(var_decl) => var_decl.span == node_span,
             _ => stmt.span() == node_span,
         };
 
@@ -229,37 +229,37 @@ fn has_no_side_effects_before<'a>(
 }
 
 fn is_side_effect_free_statement(stmt: &oxc_ast::ast::Statement, param_name: &str) -> bool {
-    use oxc_ast::ast::Statement;
+    use oxc_ast::ast::{Statement, StatementKind};
 
-    match stmt {
-        Statement::VariableDeclaration(var_decl) => var_decl.declarations.iter().all(|decl| {
+    match stmt.kind() {
+        StatementKind::VariableDeclaration(var_decl) => var_decl.declarations.iter().all(|decl| {
             if let Some(init) = &decl.init {
                 is_side_effect_free_expression(init, param_name)
             } else {
                 true
             }
         }),
-        Statement::ExpressionStatement(expr_stmt) => {
+        StatementKind::ExpressionStatement(expr_stmt) => {
             is_side_effect_free_expression(&expr_stmt.expression, param_name)
         }
-        Statement::FunctionDeclaration(_) => true,
+        StatementKind::FunctionDeclaration(_) => true,
         _ => false,
     }
 }
 
 fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
-    match expr.without_parentheses() {
-        Expression::NumericLiteral(_)
-        | Expression::StringLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::FunctionExpression(_)
-        | Expression::ArrowFunctionExpression(_) => true,
-        Expression::Identifier(ident) => ident.name.as_str() != param_name,
-        Expression::AssignmentExpression(assign) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_) => true,
+        ExpressionKind::Identifier(ident) => ident.name.as_str() != param_name,
+        ExpressionKind::AssignmentExpression(assign) => {
             let target_ok = match &assign.left {
                 AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     ident.name.as_str() != param_name
@@ -268,11 +268,11 @@ fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
             };
             target_ok && is_side_effect_free_expression(&assign.right, param_name)
         }
-        Expression::BinaryExpression(bin) => {
+        ExpressionKind::BinaryExpression(bin) => {
             is_side_effect_free_expression(&bin.left, param_name)
                 && is_side_effect_free_expression(&bin.right, param_name)
         }
-        Expression::UnaryExpression(unary) => {
+        ExpressionKind::UnaryExpression(unary) => {
             !matches!(unary.operator, oxc_ast::ast::UnaryOperator::Delete)
                 && is_side_effect_free_expression(&unary.argument, param_name)
         }
@@ -334,6 +334,7 @@ fn check_no_extra_references_assignment<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "function abc(foo = { bar: 123 }) { }",

@@ -317,7 +317,7 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
     fn visit_expression(&mut self, expression: &Expression<'a>) {
         let is_group_expression = matches!(
             expression,
-            Expression::BinaryExpression(_) | Expression::ConditionalExpression(_)
+            ExpressionKind::BinaryExpression(_) | ExpressionKind::ConditionalExpression(_)
         );
         if is_group_expression {
             self.group_stack.push(expression.span());
@@ -325,13 +325,13 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
 
         if matches!(
             expression,
-            Expression::CallExpression(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_)
-                | Expression::NewExpression(_)
-                | Expression::TaggedTemplateExpression(_)
-                | Expression::YieldExpression(_)
+            ExpressionKind::CallExpression(_)
+                | ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::ComputedMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_)
+                | ExpressionKind::NewExpression(_)
+                | ExpressionKind::TaggedTemplateExpression(_)
+                | ExpressionKind::YieldExpression(_)
         ) {
             if let Some(group_span) = self.group_stack.first().copied() {
                 self.dynamic_groups.insert(group_span);
@@ -344,9 +344,9 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
 
         if matches!(
             expression,
-            Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::ClassExpression(_)
+            ExpressionKind::FunctionExpression(_)
+                | ExpressionKind::ArrowFunctionExpression(_)
+                | ExpressionKind::ClassExpression(_)
         ) {
             if is_group_expression {
                 self.group_stack.pop();

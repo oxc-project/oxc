@@ -69,7 +69,7 @@ impl Rule for NoDangerWithChildren {
                 if call_expr.arguments.len() <= 1 {
                     return;
                 }
-                let Expression::StaticMemberExpression(callee) = &call_expr.callee else {
+                let Some(callee) = call_expr.callee.as_static_member_expression() else {
                     return;
                 };
 
@@ -86,11 +86,11 @@ impl Rule for NoDangerWithChildren {
                 // If there are three arguments, then it is a JSX element with children.
                 // If it's just two arguments, it only has children if the props object has a children property.
                 let has_children = if call_expr.arguments.len() == 2 {
-                    match props {
-                        Expression::ObjectExpression(obj_expr) => {
+                    match props.kind() {
+                        ExpressionKind::ObjectExpression(obj_expr) => {
                             is_object_with_prop_name(&obj_expr.properties, "children")
                         }
-                        Expression::Identifier(ident) => {
+                        ExpressionKind::Identifier(ident) => {
                             does_object_var_have_prop_name(ctx, node, ident.name, "children")
                         }
                         _ => false,
@@ -104,10 +104,10 @@ impl Rule for NoDangerWithChildren {
                 }
 
                 let has_danger_prop = match props {
-                    Expression::ObjectExpression(obj_expr) => {
+                    ExpressionKind::ObjectExpression(obj_expr) => {
                         is_object_with_prop_name(&obj_expr.properties, "dangerouslySetInnerHTML")
                     }
-                    Expression::Identifier(ident) => does_object_var_have_prop_name(
+                    ExpressionKind::Identifier(ident) => does_object_var_have_prop_name(
                         ctx,
                         node,
                         ident.name,
@@ -128,6 +128,7 @@ impl Rule for NoDangerWithChildren {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "<div>Children</div>",
@@ -295,7 +296,7 @@ fn does_object_var_have_prop_name(
         return false;
     };
 
-    let Expression::ObjectExpression(obj_expr) = init else {
+    let Some(obj_expr) = init.as_object_expression() else {
         return false;
     };
 

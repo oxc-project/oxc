@@ -334,7 +334,7 @@ fn get_if_branches_from_statement<'a>(
     let mut current_statement = &stmt.alternate;
 
     while let Some(statement) = current_statement {
-        if let Statement::IfStatement(node) = statement {
+        if let Some(node) = statement.as_if_statement() {
             branches.push(IfBranch {
                 statement: &node.consequent,
                 is_else: false,
@@ -370,7 +370,7 @@ fn is_else_if(node: &AstNode, stmt: &IfStatement, ctx: &LintContext) -> bool {
 }
 
 fn has_braces(body: &Statement) -> bool {
-    matches!(body, Statement::BlockStatement(_))
+    body.is_block_statement()
 }
 
 fn should_have_braces<'a>(
@@ -380,7 +380,7 @@ fn should_have_braces<'a>(
 ) -> Option<bool> {
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    if let Statement::BlockStatement(block) = body
+    if let Some(block) = body.as_block_statement()
         && (block.body.len() != 1 || braces_necessary)
     {
         return Some(true);
@@ -396,7 +396,7 @@ fn should_have_braces<'a>(
             }
         }
         CurlyType::MultiOrNest => {
-            let Statement::BlockStatement(block) = body else {
+            let Some(block) = body.as_block_statement() else {
                 return Some(!is_one_liner(body, ctx));
             };
 
@@ -479,7 +479,7 @@ fn is_collapsed_one_liner(stmt: &Statement, ctx: &LintContext) -> bool {
 }
 
 fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
-    if matches!(node, Statement::EmptyStatement(_)) {
+    if node.is_empty_statement() {
         return true;
     }
 
@@ -490,7 +490,7 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 }
 
 pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
-    let Statement::BlockStatement(block) = node else {
+    let Some(block) = node.as_block_statement() else {
         return false;
     };
 
@@ -503,9 +503,9 @@ pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
 }
 
 fn is_lexical_declaration(node: &Statement) -> bool {
-    match node {
-        Statement::VariableDeclaration(decl) => decl.kind.is_lexical(),
-        Statement::FunctionDeclaration(_) | Statement::ClassDeclaration(_) => true,
+    match node.kind() {
+        StatementKind::VariableDeclaration(decl) => decl.kind.is_lexical(),
+        StatementKind::FunctionDeclaration(_) | StatementKind::ClassDeclaration(_) => true,
         _ => false,
     }
 }
@@ -549,16 +549,16 @@ fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
 }
 
 fn has_unsafe_if(node: &Statement) -> bool {
-    match node {
-        Statement::IfStatement(if_stmt) => {
+    match node.kind() {
+        StatementKind::IfStatement(if_stmt) => {
             if_stmt.alternate.as_ref().is_none_or(|alt| has_unsafe_if(alt))
         }
-        Statement::ForStatement(for_stmt) => has_unsafe_if(&for_stmt.body),
-        Statement::ForInStatement(for_in_stmt) => has_unsafe_if(&for_in_stmt.body),
-        Statement::ForOfStatement(for_of_stmt) => has_unsafe_if(&for_of_stmt.body),
-        Statement::LabeledStatement(labeled_stmt) => has_unsafe_if(&labeled_stmt.body),
-        Statement::WithStatement(with_stmt) => has_unsafe_if(&with_stmt.body),
-        Statement::WhileStatement(while_stmt) => has_unsafe_if(&while_stmt.body),
+        StatementKind::ForStatement(for_stmt) => has_unsafe_if(&for_stmt.body),
+        StatementKind::ForInStatement(for_in_stmt) => has_unsafe_if(&for_in_stmt.body),
+        StatementKind::ForOfStatement(for_of_stmt) => has_unsafe_if(&for_of_stmt.body),
+        StatementKind::LabeledStatement(labeled_stmt) => has_unsafe_if(&labeled_stmt.body),
+        StatementKind::WithStatement(with_stmt) => has_unsafe_if(&with_stmt.body),
+        StatementKind::WhileStatement(while_stmt) => has_unsafe_if(&while_stmt.body),
         _ => false,
     }
 }

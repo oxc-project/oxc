@@ -41,8 +41,8 @@ pub struct AstNodeIterator<'a, T> {
 /// Custom span getter for Statement that handles decorated exports.
 /// <https://github.com/oxc-project/oxc/issues/10409>
 fn get_statement_span(stmt: &Statement<'_>) -> u32 {
-    match stmt {
-        Statement::ExportDefaultDeclaration(export) => {
+    match stmt.kind() {
+        StatementKind::ExportDefaultDeclaration(export) => {
             if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &export.declaration
                 && let Some(decorator) = class.decorators.first()
             {
@@ -51,7 +51,7 @@ fn get_statement_span(stmt: &Statement<'_>) -> u32 {
                 export.span.start
             }
         }
-        Statement::ExportNamedDeclaration(export) => {
+        StatementKind::ExportNamedDeclaration(export) => {
             if let Some(Declaration::ClassDeclaration(class)) = &export.declaration
                 && let Some(decorator) = class.decorators.first()
             {

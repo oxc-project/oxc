@@ -27,7 +27,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt {
+        if let Some(decl) = stmt.as_export_named_declaration() {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -635,7 +635,7 @@ pub fn check_function_declaration<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     // Function declaration not allowed in statement position
-    if let Statement::FunctionDeclaration(decl) = stmt {
+    if let Some(decl) = stmt.as_function_declaration() {
         if ctx.strict_mode() {
             ctx.error(diagnostics::function_declaration_strict(decl.span));
         } else if !is_if_stmt_or_labeled_stmt {
@@ -649,7 +649,7 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
     body: &Statement<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Statement::FunctionDeclaration(decl) = body {
+    if let Some(decl) = body.as_function_declaration() {
         if ctx.strict_mode() {
             ctx.error(diagnostics::function_declaration_strict(decl.span));
         } else {
@@ -887,15 +887,13 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             }
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
+                    if labeled_statement.body.is_labeled_statement()
+                            || labeled_statement.body.is_do_while_statement()
+                            || labeled_statement.body.is_while_statement()
+                            || labeled_statement.body.is_for_statement()
+                            || labeled_statement.body.is_for_in_statement()
+                            || labeled_statement.body.is_for_of_statement()
+                    {
                         break;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(

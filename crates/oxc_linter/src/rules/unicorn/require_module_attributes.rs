@@ -69,7 +69,7 @@ impl Rule for RequireModuleAttributes {
             AstKind::ImportExpression(import_expr) => {
                 let Some(options) = &import_expr.options else { return };
 
-                let Expression::ObjectExpression(obj_expr) = options.get_inner_expression() else {
+                let Some(obj_expr) = options.get_inner_expression().as_object_expression() else {
                     return;
                 };
 
@@ -198,6 +198,7 @@ fn fix_empty_with_property(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"import foo from "foo""#,

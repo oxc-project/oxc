@@ -82,18 +82,18 @@ impl AsyncToGenerator<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr {
-            Expression::AwaitExpression(await_expr) => {
+        let new_expr = match expr.kind() {
+            ExpressionKind::AwaitExpression(await_expr) => {
                 Self::transform_await_expression(await_expr, ctx)
             }
-            Expression::FunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => {
                 if func.r#async && !func.generator && !func.is_typescript_syntax() {
                     Some(self.executor.transform_function_expression(func, ctx))
                 } else {
                     None
                 }
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 if arrow.r#async {
                     Some(self.executor.transform_arrow_function(arrow, ctx))
                 } else {
@@ -109,9 +109,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let function = match stmt {
-            Statement::FunctionDeclaration(func) => Some(func),
-            Statement::ExportDefaultDeclaration(decl) => {
+        let function = match stmt.kind() {
+            StatementKind::FunctionDeclaration(func) => Some(func),
+            StatementKind::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
@@ -120,7 +120,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
                     None
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
+            StatementKind::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
                     Some(func)
                 } else {
@@ -369,7 +369,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                     id.symbol_id(),
                     ReferenceFlags::Read,
                 );
-                let func_decl = Statement::FunctionDeclaration(caller_function);
+                let func_decl = Statement::function_declaration(caller_function);
                 let statement_return = ctx.ast.statement_return(SPAN, Some(reference));
                 ctx.ast.vec_from_array([async_to_gen_decl, func_decl, statement_return])
             } else {
@@ -377,7 +377,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 // `function() { ... }` -> `return function() { ... };`
                 let statement_return = ctx
                     .ast
-                    .statement_return(SPAN, Some(Expression::FunctionExpression(caller_function)));
+                    .statement_return(SPAN, Some(Expression::function_expression(caller_function)));
                 ctx.ast.vec_from_array([async_to_gen_decl, statement_return])
             };
             debug_assert!(wrapper_function.body.is_none());
@@ -391,7 +391,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         }
 
         // Construct the IIFE
-        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
+        let callee = Expression::function_expression(wrapper_function.take_in_box(ctx.ast));
         ctx.ast.expression_call_with_pure(span, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -456,7 +456,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
             let caller_function = Self::create_function(id, params, body, scope_id, ctx);
-            Statement::FunctionDeclaration(caller_function)
+            Statement::function_declaration(caller_function)
         }
     }
 
@@ -472,8 +472,8 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
-            let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
+            let expression = match statement.kind() {
+                StatementKind::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
@@ -511,7 +511,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                     .create_binding_identifier(ctx)
             });
             let function = Self::create_function(id, params, body, scope_id, ctx);
-            let argument = Some(Expression::FunctionExpression(function));
+            let argument = Some(Expression::function_expression(function));
             ctx.ast.statement_return(SPAN, argument)
         };
 
@@ -529,7 +529,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
             // Construct the IIFE
-            let callee = Expression::FunctionExpression(wrapper_function);
+            let callee = Expression::function_expression(wrapper_function);
             ctx.ast.expression_call(arrow_span, callee, NONE, ctx.ast.vec(), false)
         }
     }
@@ -837,16 +837,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     /// Check whether the expression could potentially throw an error.
     #[inline]
     fn could_potentially_throw_error_expression(expr: &Expression<'a>) -> bool {
-        !(matches!(
-            expr,
-            Expression::NullLiteral(_)
-                | Expression::BooleanLiteral(_)
-                | Expression::NumericLiteral(_)
-                | Expression::StringLiteral(_)
-                | Expression::BigIntLiteral(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::FunctionExpression(_)
-        ) || expr.is_undefined())
+        !(expr.is_null_literal() || expr.is_boolean_literal() || expr.is_numeric_literal() || expr.is_string_literal() || expr.is_big_int_literal() || expr.is_arrow_function_expression() || expr.is_function_expression() || expr.is_undefined())
     }
 
     #[inline]

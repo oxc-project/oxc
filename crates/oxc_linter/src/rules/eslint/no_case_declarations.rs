@@ -79,18 +79,18 @@ impl Rule for NoCaseDeclarations {
             let consequent = &switch_case.consequent;
 
             for stmt in consequent {
-                match stmt {
-                    Statement::FunctionDeclaration(d) => {
+                match stmt.kind() {
+                    StatementKind::FunctionDeclaration(d) => {
                         let start = d.span.start;
                         let end = start + 8;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
-                    Statement::ClassDeclaration(d) => {
+                    StatementKind::ClassDeclaration(d) => {
                         let start = d.span.start;
                         let end = start + 5;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
-                    Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
+                    StatementKind::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
                         let len = match var.kind {
                             VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,

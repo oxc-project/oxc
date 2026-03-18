@@ -190,7 +190,7 @@ impl Rule for NoImplicitCoercion {
                 if self.boolean
                     && unary_expr.operator == UnaryOperator::LogicalNot
                     && !self.is_allowed(AllowedOperators::DOUBLE_NOT)
-                    && let Expression::UnaryExpression(inner) = &unary_expr.argument
+                    && let ExpressionKind::UnaryExpression(inner) = &unary_expr.argument
                     && inner.operator == UnaryOperator::LogicalNot
                 {
                     let operand = get_operand_text(ctx, &inner.argument);
@@ -214,7 +214,7 @@ impl Rule for NoImplicitCoercion {
                 if self.number
                     && unary_expr.operator == UnaryOperator::UnaryNegation
                     && !self.is_allowed(AllowedOperators::DOUBLE_MINUS)
-                    && let Expression::UnaryExpression(inner) =
+                    && let ExpressionKind::UnaryExpression(inner) =
                         unary_expr.argument.without_parentheses()
                     && inner.operator == UnaryOperator::UnaryNegation
                     && !is_numeric_literal(&inner.argument)
@@ -359,14 +359,14 @@ fn get_operand_text<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> &'a str
 fn is_numeric_literal(expr: &Expression) -> bool {
     matches!(
         expr.without_parentheses(),
-        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
+        ExpressionKind::NumericLiteral(_) | ExpressionKind::BigIntLiteral(_)
     )
 }
 
 fn is_empty_string(expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::StringLiteral(lit) => lit.value.is_empty(),
-        Expression::TemplateLiteral(template) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::StringLiteral(lit) => lit.value.is_empty(),
+        ExpressionKind::TemplateLiteral(template) => {
             template.expressions.is_empty()
                 && template.quasis.len() == 1
                 && template.quasis[0].value.raw.is_empty()
@@ -378,15 +378,15 @@ fn is_empty_string(expr: &Expression) -> bool {
 /// Checks if an expression already evaluates to a number, meaning
 /// implicit coercion patterns like `* 1` or `- 0` would be redundant.
 fn is_already_numeric(expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::CallExpression(call) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::CallExpression(call) => {
             call.callee.is_specific_id("Number")
                 || call.callee.is_specific_id("parseInt")
                 || call.callee.is_specific_id("parseFloat")
         }
-        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_) => true,
+        ExpressionKind::NumericLiteral(_) | ExpressionKind::BigIntLiteral(_) => true,
         // Binary arithmetic operations always return numbers
-        Expression::BinaryExpression(bin) => {
+        ExpressionKind::BinaryExpression(bin) => {
             matches!(
                 bin.operator,
                 BinaryOperator::Multiplication
@@ -397,7 +397,7 @@ fn is_already_numeric(expr: &Expression) -> bool {
             )
         }
         // Unary +/- already return numbers
-        Expression::UnaryExpression(unary) => {
+        ExpressionKind::UnaryExpression(unary) => {
             matches!(unary.operator, UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation)
         }
         _ => false,
@@ -405,21 +405,21 @@ fn is_already_numeric(expr: &Expression) -> bool {
 }
 
 fn is_string_literal_or_string_call(expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
-        Expression::CallExpression(call) => call.callee.is_specific_id("String"),
+    match expr.without_parentheses().kind() {
+        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => true,
+        ExpressionKind::CallExpression(call) => call.callee.is_specific_id("String"),
         _ => false,
     }
 }
 
 fn is_indexof_call(expr: &Expression) -> bool {
-    match expr.without_parentheses() {
-        Expression::CallExpression(call) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::CallExpression(call) => {
             let callee = call.callee.without_parentheses();
-            if let Expression::StaticMemberExpression(member) = callee {
+            if let Some(member) = callee.as_static_member_expression() {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
-            if let Expression::ChainExpression(chain) = callee
+            if let Some(chain) = callee.as_chain_expression()
                 && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
                     &chain.expression
             {
@@ -427,9 +427,9 @@ fn is_indexof_call(expr: &Expression) -> bool {
             }
             false
         }
-        Expression::ChainExpression(chain) => {
+        ExpressionKind::ChainExpression(chain) => {
             if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
-                && let Expression::StaticMemberExpression(member) =
+                && let ExpressionKind::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");

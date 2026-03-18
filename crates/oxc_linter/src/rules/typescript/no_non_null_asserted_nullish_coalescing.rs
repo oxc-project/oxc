@@ -71,8 +71,8 @@ declare_oxc_lint!(
 impl Rule for NoNonNullAssertedNullishCoalescing {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
-        let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
-        if let Expression::Identifier(ident) = &ts_non_null_expr.expression
+        let Some(ts_non_null_expr) = expr.left.as_t_s_non_null_expression() else { return };
+        if let Some(ident) = ts_non_null_expr.expression.as_identifier()
             && let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), ident.name)
             && !has_assignment_before_node(symbol_id, ctx, expr.span.end)
         {
@@ -110,6 +110,7 @@ fn has_assignment_before_node(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo ?? bar;",

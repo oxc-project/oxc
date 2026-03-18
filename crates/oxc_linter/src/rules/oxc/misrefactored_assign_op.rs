@@ -1,7 +1,7 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget, match_member_expression},
+    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -62,7 +62,7 @@ impl Rule for MisrefactoredAssignOp {
             return;
         };
 
-        if let Expression::BinaryExpression(binary_expr) = &assignment_expr.right {
+        if let Some(binary_expr) = assignment_expr.right.as_binary_expression() {
             if !are_matching_operators(assignment_expr.operator, binary_expr.operator) {
                 return;
             }
@@ -111,7 +111,7 @@ fn assignment_target_eq_expr<'a>(
     if let Some(simple_assignment_target) = assignment_target.as_simple_assignment_target() {
         return match simple_assignment_target {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                if let Expression::Identifier(right_ident) = right_expr {
+                if let Some(right_ident) = right_expr.as_identifier() {
                     ident.name == right_ident.name
                 } else {
                     false

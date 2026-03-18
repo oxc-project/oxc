@@ -167,6 +167,7 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"foo.replace(/a/, bar)",

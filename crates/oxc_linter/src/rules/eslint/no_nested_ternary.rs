@@ -52,10 +52,10 @@ impl Rule for NoNestedTernary {
         if let AstKind::ConditionalExpression(node) = node.kind()
             && (matches!(
                 node.consequent.get_inner_expression(),
-                Expression::ConditionalExpression(_)
+                ExpressionKind::ConditionalExpression(_)
             ) || matches!(
                 node.alternate.get_inner_expression(),
-                Expression::ConditionalExpression(_)
+                ExpressionKind::ConditionalExpression(_)
             ))
         {
             ctx.diagnostic(no_nested_ternary_diagnostic(node.span));

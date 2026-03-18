@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression},
+    ast::{ExportDefaultDeclarationKind, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -181,7 +181,7 @@ impl Rule for NoAnonymousDefaultExport {
             _ => {
                 if let Some(expr) = export_decl.declaration.as_expression()
                     && !self.allow_literal
-                    && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
+                    && (expr.is_literal() || expr.is_template_literal())
                 {
                     ctx.diagnostic(no_anonymous_default_export_diagnostic(
                         export_decl.span,

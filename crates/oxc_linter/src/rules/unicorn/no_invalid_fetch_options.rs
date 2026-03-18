@@ -118,10 +118,10 @@ fn is_invalid_fetch_options<'a>(
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
-            match &obj_prop.value {
-                Expression::StaticMemberExpression(s) => {
+            match obj_prop.value.kind() {
+                ExpressionKind::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
-                    let Expression::Identifier(ident_ref) = &s.object else {
+                    let Some(ident_ref) = s.object.as_identifier() else {
                         method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };
@@ -138,8 +138,7 @@ fn is_invalid_fetch_options<'a>(
                             AstKind::TSEnumDeclaration(enum_decl) => {
                                 let member_string_lit: Option<CompactStr> =
                                     enum_decl.body.members.iter().find_map(|m| {
-                                        if let Some(Expression::StringLiteral(str_lit)) =
-                                            &m.initializer
+                                        if let Some(str_lit) = m.initializer.as_string_literal()
                                         {
                                             Some(str_lit.value.to_compact_str())
                                         } else {
@@ -158,13 +157,13 @@ fn is_invalid_fetch_options<'a>(
                         method_name = UNKNOWN_METHOD_NAME;
                     }
                 }
-                Expression::StringLiteral(value_ident) => {
+                ExpressionKind::StringLiteral(value_ident) => {
                     method_name = value_ident.value.cow_to_ascii_uppercase();
                 }
-                Expression::TemplateLiteral(template_lit) => {
+                ExpressionKind::TemplateLiteral(template_lit) => {
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
-                Expression::Identifier(value_ident) => {
+                ExpressionKind::Identifier(value_ident) => {
                     let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
@@ -176,11 +175,11 @@ fn is_invalid_fetch_options<'a>(
                     let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
 
                     match decl.kind() {
-                        AstKind::VariableDeclarator(declarator) => match &declarator.init {
-                            Some(Expression::StringLiteral(str_lit)) => {
+                        AstKind::VariableDeclarator(declarator) => match declarator.init.as_ref().map(|e| e.kind()) {
+                            Some(ExpressionKind::StringLiteral(str_lit)) => {
                                 method_name = str_lit.value.cow_to_ascii_uppercase();
                             }
-                            Some(Expression::TemplateLiteral(template_lit)) => {
+                            Some(ExpressionKind::TemplateLiteral(template_lit)) => {
                                 method_name =
                                     extract_method_name_from_template_literal(template_lit);
                             }
@@ -253,6 +252,7 @@ fn extract_method_name_from_template_literal<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"fetch(url, {method: "POST", body})"#,

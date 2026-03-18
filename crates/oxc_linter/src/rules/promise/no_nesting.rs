@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -142,14 +142,14 @@ fn can_safely_unnest(
             continue;
         };
         // Check if our nested child callback references one of these args and return early if so.
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+        match arg_expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                 let scope = arrow_expr.scope_id();
                 if uses_closest_cb_vars(scope, cb_span, ctx) {
                     return false; // Not safe to unnest.
                 }
             }
-            Expression::FunctionExpression(func_expr) => {
+            ExpressionKind::FunctionExpression(func_expr) => {
                 let scope = func_expr.scope_id();
                 if uses_closest_cb_vars(scope, cb_span, ctx) {
                     return false; // Not safe to unnest.

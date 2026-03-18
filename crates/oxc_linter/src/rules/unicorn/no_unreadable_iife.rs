@@ -58,8 +58,7 @@ impl Rule for NoUnreadableIife {
             return;
         };
 
-        let Expression::ArrowFunctionExpression(arrow_expr) =
-            &call_expr.callee.without_parentheses()
+        let Some(arrow_expr) = call_expr.callee.without_parentheses().as_arrow_function_expression()
         else {
             return;
         };
@@ -67,10 +66,10 @@ impl Rule for NoUnreadableIife {
         if !arrow_expr.expression {
             return;
         }
-        let Statement::ExpressionStatement(expr_stmt) = &arrow_expr.body.statements[0] else {
+        let Some(expr_stmt) = arrow_expr.body.statements.as_expression_statement()[0] else {
             return;
         };
-        if matches!(expr_stmt.expression, Expression::ParenthesizedExpression(_)) {
+        if matches!(expr_stmt.expression.kind(), ExpressionKind::ParenthesizedExpression(_)) {
             ctx.diagnostic(no_unreadable_iife_diagnostic(expr_stmt.span));
         }
     }
@@ -79,6 +78,8 @@ impl Rule for NoUnreadableIife {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "const foo = (bar => bar)();",

@@ -237,8 +237,8 @@ fn remove_double_not<'a, 'b>(expr: &'b Expression<'a>) -> &'b Expression<'a> {
 }
 
 fn without_not<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
-    match expr.without_parentheses() {
-        Expression::UnaryExpression(expr) if expr.operator == UnaryOperator::LogicalNot => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::UnaryExpression(expr) if expr.operator == UnaryOperator::LogicalNot => {
             Some(&expr.argument)
         }
         _ => None,

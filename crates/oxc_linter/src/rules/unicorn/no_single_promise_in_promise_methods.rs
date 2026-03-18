@@ -71,7 +71,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             return;
         };
         let first_argument = first_argument.get_inner_expression();
-        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
+        let Some(first_argument_array_expr) = first_argument.as_array_expression() else {
             return;
         };
 
@@ -172,6 +172,7 @@ fn is_ignorable_kind(kind: &AstKind<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "Promise.race([promise, anotherPromise])",

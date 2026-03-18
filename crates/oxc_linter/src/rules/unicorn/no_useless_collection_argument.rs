@@ -83,8 +83,7 @@ impl Rule for NoUselessCollectionArgument {
 
         let first_arg_expr_inner = first_arg_expr.get_inner_expression();
 
-        let (useless_expr, logical_expr) = if let Expression::LogicalExpression(logical_expr) =
-            first_arg_expr_inner
+        let (useless_expr, logical_expr) = if let Some(logical_expr) = first_arg_expr_inner.as_logical_expression()
             && logical_expr.operator.is_coalesce()
         {
             (logical_expr.right.get_inner_expression(), Some(logical_expr))
@@ -192,6 +191,7 @@ fn remove_fallback(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "new Set()",

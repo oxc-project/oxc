@@ -76,7 +76,7 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         }
 
-        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parentheses() else {
+        let Some(regex) = member_expr.object().without_parentheses().as_reg_exp_literal() else {
             return;
         };
 
@@ -130,13 +130,13 @@ fn can_replace(call_expr: &CallExpression) -> Option<Span> {
 
     let arg = &call_expr.arguments[0];
     let expr = arg.as_expression()?;
-    match expr.without_parentheses() {
-        Expression::StringLiteral(s) => Some(s.span),
-        Expression::TemplateLiteral(s) => Some(s.span),
-        Expression::Identifier(ident) => Some(ident.span),
-        Expression::StaticMemberExpression(m) => Some(m.span),
-        Expression::ComputedMemberExpression(m) => Some(m.span),
-        Expression::CallExpression(c) => Some(c.span),
+    match expr.without_parentheses().kind() {
+        ExpressionKind::StringLiteral(s) => Some(s.span),
+        ExpressionKind::TemplateLiteral(s) => Some(s.span),
+        ExpressionKind::Identifier(ident) => Some(ident.span),
+        ExpressionKind::StaticMemberExpression(m) => Some(m.span),
+        ExpressionKind::ComputedMemberExpression(m) => Some(m.span),
+        ExpressionKind::CallExpression(c) => Some(c.span),
         _ => None,
     }
 }
@@ -199,6 +199,7 @@ fn is_useless_case_sensitive_regex_flag(pattern_text: &str) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Unicorn Tests

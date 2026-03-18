@@ -169,12 +169,13 @@ impl Rule for NoThisAlias {
 
 #[inline]
 fn rhs_is_this_reference(rhs_expression: &Expression) -> bool {
-    matches!(rhs_expression, Expression::ThisExpression(_))
+    matches!(rhs_expression.kind(), ExpressionKind::ThisExpression(_))
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // allow destructuring

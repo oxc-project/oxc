@@ -91,8 +91,8 @@ fn check_forward_ref_inner<'a>(
     ctx: &LintContext<'a>,
 ) {
     let (params, span) = match exp {
-        Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
-        Expression::FunctionExpression(f) => (&f.params, f.span),
+        ExpressionKind::ArrowFunctionExpression(f) => (&f.params, f.span),
+        ExpressionKind::FunctionExpression(f) => (&f.params, f.span),
         _ => return,
     };
     if params.parameters_count() != 1 || params.rest.is_some() {
@@ -100,7 +100,7 @@ fn check_forward_ref_inner<'a>(
     }
 
     let can_remove_forward_ref = match exp {
-        Expression::FunctionExpression(f) if f.id.is_none() => !matches!(
+        ExpressionKind::FunctionExpression(f) if f.id.is_none() => !matches!(
             outermost_paren_parent(node, ctx.semantic()).map(AstNode::kind),
             Some(AstKind::ExpressionStatement(_))
         ),
@@ -140,6 +140,7 @@ fn check_forward_ref_inner<'a>(
 #[test]
 fn test() {
     use crate::tester::{ExpectFixTestCase, Tester};
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

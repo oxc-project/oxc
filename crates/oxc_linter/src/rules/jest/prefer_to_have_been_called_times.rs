@@ -10,7 +10,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{CallExpression, Expression, MemberExpression, ExpressionKind},
     match_member_expression,
 };
 
@@ -108,7 +108,7 @@ impl PreferToHaveBeenCalledTimes {
 
         let expect_argument_mem_expr =
             expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg {
-                expr @ match_member_expression!(Expression) => Some(expr.to_member_expression()),
+                expr @ match_member_expression!(ExpressionKind) => Some(expr.to_member_expression()),
                 _ => None,
             });
 
@@ -116,7 +116,7 @@ impl PreferToHaveBeenCalledTimes {
             let is_last_member_calls = mem_expr.static_property_name() == Some("calls");
 
             let is_reversed_second_member_mock = match mem_expr.object() {
-                expr_inner @ match_member_expression!(Expression) => {
+                expr_inner @ match_member_expression!(ExpressionKind) => {
                     let inner_mem_expr = expr_inner.to_member_expression();
                     inner_mem_expr.static_property_name() == Some("mock")
                 }

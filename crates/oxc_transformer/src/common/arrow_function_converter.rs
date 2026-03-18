@@ -386,22 +386,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             return;
         }
 
-        let new_expr = match expr {
-            Expression::ThisExpression(this) => {
-                self.get_this_identifier(this.span, ctx).map(Expression::Identifier)
+        let new_expr = match expr.kind() {
+            ExpressionKind::ThisExpression(this) => {
+                self.get_this_identifier(this.span, ctx).map(Expression::identifier)
             }
-            Expression::Super(_) => {
+            ExpressionKind::Super(_) => {
                 *self.constructor_super_stack.last_mut() = true;
                 return;
             }
-            Expression::CallExpression(call) => self.transform_call_expression_for_super(call, ctx),
-            Expression::AssignmentExpression(assignment) => {
+            ExpressionKind::CallExpression(call) => self.transform_call_expression_for_super(call, ctx),
+            ExpressionKind::AssignmentExpression(assignment) => {
                 self.transform_assignment_expression_for_super(assignment, ctx)
             }
-            match_member_expression!(Expression) => {
+            match_member_expression!(ExpressionKind) => {
                 self.transform_member_expression_for_super(expr, None, ctx)
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
                     && arrow.r#async
@@ -439,15 +439,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             return;
         }
 
-        if let Expression::ArrowFunctionExpression(arrow_function_expr) = expr {
+        if let Some(arrow_function_expr) = expr.as_arrow_function_expression() {
             // TODO: Here should return early as long as the async-to-generator plugin is enabled,
             // but currently we don't know which plugin is enabled.
             if self.is_async_only() || arrow_function_expr.r#async {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx.ast)
-            else {
+            let Some(arrow_function_expr) = expr.take_in(ctx.ast).as_arrow_function_expression() else {
                 unreachable!()
             };
 
@@ -643,7 +642,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if arrow_function_expr.expression {
             assert!(body.statements.len() == 1);
             let stmt = body.statements.pop().unwrap();
-            let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
+            let Some(stmt) = stmt.as_expression_statement() else { unreachable!() };
             let stmt = stmt.unbox();
             let return_statement = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
             body.statements.push(return_statement);
@@ -739,8 +738,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         let mut argument = None;
         let mut property = "";
-        let init = match expr.to_member_expression_mut() {
-            MemberExpression::ComputedMemberExpression(computed_member) => {
+        let init = match expr.to_member_expression_mut().kind() {
+            MemberExpressionKind::ComputedMemberExpression(computed_member) => {
                 if !computed_member.object.is_super() {
                     return None;
                 }
@@ -750,7 +749,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 argument = Some(computed_member.expression.take_in(ctx.ast));
                 computed_member.object.take_in(ctx.ast)
             }
-            MemberExpression::StaticMemberExpression(static_member) => {
+            MemberExpressionKind::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
                     return None;
                 }
@@ -759,7 +758,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 property = static_member.property.name.as_str();
                 expr.take_in(ctx.ast)
             }
-            MemberExpression::PrivateFieldExpression(_) => {
+            MemberExpressionKind::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
                 return None;
             }
@@ -1212,7 +1211,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             false,
         );
 
-        let stmt = Statement::VariableDeclaration(stmt);
+        let stmt = Statement::variable_declaration(stmt);
 
         statements.insert(0, stmt);
     }
@@ -1285,9 +1284,9 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     /// `super();` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         for (index, stmt) in statements.iter_mut().enumerate() {
-            if let Statement::ExpressionStatement(expr_stmt) = stmt
-                && let Expression::CallExpression(call_expr) = &mut expr_stmt.expression
-                && matches!(&call_expr.callee, Expression::Super(_))
+            if let Some(expr_stmt) = stmt.as_expression_statement()
+                && let Some(call_expr) = expr_stmt.expression.as_call_expression_mut()
+                && call_expr.callee.is_super_expr()
             {
                 // Visit arguments in `super(x, y, z)` call.
                 // Required to handle edge case `super(super(), f = () => this)`.

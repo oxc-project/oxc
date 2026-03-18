@@ -235,26 +235,26 @@ impl ExplicitModuleBoundaryTypes {
         inside_export: bool,
     ) {
         let mut checker = ExplicitTypesChecker::new(self, ctx);
-        match get_typed_inner_expression(expr) {
-            Expression::Identifier(id) => {
+        match get_typed_inner_expression(expr).kind() {
+            ExpressionKind::Identifier(id) => {
                 Self::run_on_identifier_reference(ctx, id, &mut checker);
             }
-            Expression::ArrowFunctionExpression(arrow) => {
+            ExpressionKind::ArrowFunctionExpression(arrow) => {
                 checker.visit_arrow_function_expression(arrow);
             }
-            Expression::FunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => {
                 checker.visit_function(func, ScopeFlags::Function);
             }
             // const foo = arg => arg;
             // export default [foo];
-            Expression::ArrayExpression(arr) if inside_export => {
+            ExpressionKind::ArrayExpression(arr) if inside_export => {
                 for el in arr.elements.iter().filter_map(ArrayExpressionElement::as_expression) {
                     self.run_on_exported_expression_inner(ctx, el, false);
                 }
             }
             // const foo = arg => arg;
             // export default { foo };
-            Expression::ObjectExpression(obj) if inside_export => {
+            ExpressionKind::ObjectExpression(obj) if inside_export => {
                 for el in obj.properties.iter().filter_map(ObjectPropertyKind::as_property) {
                     self.run_on_exported_expression_inner(ctx, &el.value, false);
                 }
@@ -437,20 +437,20 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
             let mut curr = get_typed_inner_expression(expr);
             loop {
-                match curr {
+                match curr.kind() {
                     // `export const foo = () => 1 as const`
-                    Expression::TSAsExpression(as_expr)
+                    ExpressionKind::TSAsExpression(as_expr)
                         if self.rule.allow_direct_const_assertion_in_arrow_functions
                             && as_expr.type_annotation.is_const_type_reference() =>
                     {
                         return;
                     }
-                    Expression::TSSatisfiesExpression(satisfies) => {
+                    ExpressionKind::TSSatisfiesExpression(satisfies) => {
                         curr = get_typed_inner_expression(&satisfies.expression);
                     }
 
                     // `export const foo = () => () => (): number => 1`
-                    Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+                    ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
                         walk::walk_function_body(self, &arrow.body);
                         return;
@@ -477,10 +477,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         returns.iter().any(|ret| {
-            matches!(
-                ret.argument,
-                Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-            )
+            ret.argument.as_ref().is_some_and(|a| a.is_function_expression() || a.is_arrow_function_expression())
         })
     }
 }
@@ -531,14 +528,14 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
     fn visit_statements(&mut self, it: &oxc_allocator::Vec<'a, Statement<'a>>) {
         for stmt in it {
-            match stmt {
-                Statement::ReturnStatement(_) => {
+            match stmt.kind() {
+                StatementKind::ReturnStatement(_) => {
                     self.visit_statement(stmt);
                 }
                 // Only process expression statements when they are the sole statement in the block.
                 // This is typically to handle cases like concise arrow functions or modules with a single expression.
                 // If this logic needs to be expanded to handle more cases, revisit this condition.
-                Statement::ExpressionStatement(_) if it.len() == 1 => {
+                StatementKind::ExpressionStatement(_) if it.len() == 1 => {
                     self.visit_statement(stmt);
                 }
                 _ => {}
@@ -560,11 +557,11 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
 
-        match get_typed_inner_expression(init) {
+        match get_typed_inner_expression(init).kind() {
             // we consider these well-typed
-            Expression::TSAsExpression(_)
-            | Expression::TSTypeAssertion(_)
-            | Expression::TSSatisfiesExpression(_) => {}
+            ExpressionKind::TSAsExpression(_)
+            | ExpressionKind::TSTypeAssertion(_)
+            | ExpressionKind::TSSatisfiesExpression(_) => {}
             expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
@@ -729,9 +726,9 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 
 /// like [`Expression::get_inner_expression`], but does not skip over most ts syntax
 fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expression<'a> {
-    match expr {
-        Expression::ParenthesizedExpression(expr) => get_typed_inner_expression(&expr.expression),
-        Expression::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
+    match expr.kind() {
+        ExpressionKind::ParenthesizedExpression(expr) => get_typed_inner_expression(&expr.expression),
+        ExpressionKind::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
         _ => expr,
     }
 }
@@ -739,7 +736,7 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
 fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
     matches!(
         get_typed_inner_expression(expr),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }
 
@@ -749,6 +746,8 @@ mod test {
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
     use serde_json::{Value, json};
     use std::path::PathBuf;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     #[test]
     fn config() {

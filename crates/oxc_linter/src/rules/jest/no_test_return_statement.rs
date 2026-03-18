@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, FunctionBody, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -98,11 +98,11 @@ fn check_call_expression<'a>(
         let Some(arg_expr) = argument.as_expression() else {
             continue;
         };
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+        match arg_expr.kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                 check_test_return_statement(&arrow_expr.body, ctx);
             }
-            Expression::FunctionExpression(func_expr) => {
+            ExpressionKind::FunctionExpression(func_expr) => {
                 let Some(func_body) = &func_expr.body else {
                     continue;
                 };
@@ -115,24 +115,24 @@ fn check_call_expression<'a>(
 
 fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
     let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
+        func_body.statements.iter().find(|stmt| stmt.is_return_statement())
     else {
         return;
     };
 
-    let Statement::ReturnStatement(stmt) = return_stmt else {
+    let Some(stmt) = return_stmt.as_return_statement() else {
         return;
     };
-    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
+    let Some(call_expr) = stmt.argument.and_then(|e| e.as_call_expression()) else {
         return;
     };
     let Some(mem_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
-    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
+    let Some(mem_call_expr) = mem_expr.object().as_call_expression() else {
         return;
     };
-    let Expression::Identifier(ident) = &mem_call_expr.callee else {
+    let Some(ident) = mem_call_expr.callee.as_identifier() else {
         return;
     };
 

@@ -47,7 +47,7 @@ impl Rule for NoNewArray {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee else {
+        let Some(ident) = new_expr.callee.as_identifier() else {
             return;
         };
 
@@ -66,6 +66,7 @@ impl Rule for NoNewArray {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const array = Array.from({length: 1})",

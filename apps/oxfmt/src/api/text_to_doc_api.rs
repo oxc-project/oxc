@@ -250,7 +250,9 @@ fn run_fragment(
     let formatted = match kind {
         FragmentKind::VueForBindingLeft | FragmentKind::VueBindings => {
             let params = {
-                let Some(Statement::FunctionDeclaration(func)) = program.body.first() else {
+                let Some(func) =
+                    program.body.first().and_then(|s| s.as_function_declaration())
+                else {
                     unreachable!("Prettier wraps v-for/v-slot as `function _(...) {{}}`");
                 };
                 &*func.params
@@ -272,7 +274,9 @@ fn run_fragment(
         }
         FragmentKind::VueScriptGeneric => {
             let type_params = {
-                let Some(Statement::TSTypeAliasDeclaration(decl)) = program.body.first() else {
+                let Some(decl) =
+                    program.body.first().and_then(|s| s.as_ts_type_alias_declaration())
+                else {
                     unreachable!("Prettier wraps script-generic as `type T<...> = any`");
                 };
                 let Some(type_params) = decl.type_parameters.as_deref() else {

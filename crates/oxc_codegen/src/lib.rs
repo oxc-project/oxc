@@ -7,7 +7,7 @@ use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
 
-use oxc_ast::ast::*;
+use oxc_ast::ast::{*, StatementKind};
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
@@ -581,17 +581,17 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
-        match stmt {
-            Statement::BlockStatement(stmt) => {
+        match stmt.kind() {
+            StatementKind::BlockStatement(stmt) => {
                 self.print_soft_space();
                 self.print_block_statement(stmt, ctx);
                 self.print_soft_newline();
             }
-            Statement::EmptyStatement(_) => {
+            StatementKind::EmptyStatement(_) => {
                 self.print_semicolon();
                 self.print_soft_newline();
             }
-            stmt => {
+            _ => {
                 if need_space && self.options.minify {
                     self.print_hard_space();
                 }
@@ -628,7 +628,7 @@ impl<'a> Codegen<'a> {
         let mut first_needs_parens = false;
         if directives.is_empty()
             && !self.options.minify
-            && let Statement::ExpressionStatement(s) = first
+            && let Some(s) = first.as_expression_statement()
         {
             let s = s.expression.without_parentheses();
             if s.is_string_literal() {

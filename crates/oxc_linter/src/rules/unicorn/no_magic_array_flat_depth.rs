@@ -63,8 +63,7 @@ impl Rule for NoMagicArrayFlatDepth {
         }
 
         let first_arg = call_expression.arguments.first().expect("missing argument");
-        let Some(Expression::NumericLiteral(arg)) =
-            first_arg.as_expression().map(Expression::without_parentheses)
+        let Some(arg) = first_arg.as_expression().map.as_numeric_literal()(Expression::without_parentheses)
         else {
             return;
         };
@@ -115,6 +114,7 @@ fn get_call_expression_parentheses_pos<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "array.flat(1)",

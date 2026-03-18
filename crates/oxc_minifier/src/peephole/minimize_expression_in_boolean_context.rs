@@ -18,7 +18,7 @@ impl<'a> PeepholeOptimizations {
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
-                if let Expression::UnaryExpression(u2) = &mut u1.argument
+                if let Some(u2) = u1.argument.as_unary_expression_mut()
                     && u2.operator.is_not()
                 {
                     let mut e = u2.argument.take_in(ctx.ast);
@@ -29,7 +29,7 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
-                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
+                    && e.right.as_numeric_literal().is_some_and(|lit| lit.value == 0.0)
                     && e.left.is_int32_or_uint32(ctx) =>
             {
                 let argument = e.left.take_in(ctx.ast);

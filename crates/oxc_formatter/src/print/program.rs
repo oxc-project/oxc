@@ -57,12 +57,12 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
         for stmt in
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+            self.iter().filter(|stmt| !stmt.as_ref().is_empty_statement())
         {
-            let span = match stmt.as_ref() {
+            let span = match stmt.as_ref().kind() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.
-                Statement::ExportNamedDeclaration(export) => {
+                StatementKind::ExportNamedDeclaration(export) => {
                     if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
                         && let Some(decorator) = decl.decorators.first()
                         && decorator.span().start < export.span.start
@@ -74,7 +74,7 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 }
                 // `@decorator export default class A {}`
                 // Get the span of the decorator.
-                Statement::ExportDefaultDeclaration(export) => {
+                StatementKind::ExportDefaultDeclaration(export) => {
                     if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
                         &export.declaration
                         && let Some(decorator) = decl.decorators.first()

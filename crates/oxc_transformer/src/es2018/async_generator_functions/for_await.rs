@@ -28,16 +28,16 @@ impl<'a> AsyncGeneratorFunctions<'a> {
     }
 
     pub(crate) fn transform_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let (for_of, label) = match stmt {
-            Statement::LabeledStatement(labeled) => {
+        let (for_of, label) = match stmt.kind() {
+            StatementKind::LabeledStatement(labeled) => {
                 let LabeledStatement { label, body, .. } = labeled.as_mut();
-                if let Statement::ForOfStatement(for_of) = body {
+                if let Some(for_of) = body.as_for_of_statement() {
                     (for_of, Some(label))
                 } else {
                     return;
                 }
             }
-            Statement::ForOfStatement(for_of) => (for_of, None),
+            StatementKind::ForOfStatement(for_of) => (for_of, None),
             _ => return,
         };
 
@@ -66,7 +66,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
 
         // If it's a labeled statement, we need to wrap the ForStatement with a labeled statement.
         if let Some(label) = label {
-            let Statement::TryStatement(try_statement) = &mut new_stmt else {
+            let Some(try_statement) = new_stmt.as_try_statement_mut() else {
                 unreachable!(
                     "The last statement should be a try statement, please see the `build_for_await` function"
                 );
@@ -117,7 +117,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 // for await (let i of test)
                 let mut declarator = variable.declarations.pop().unwrap();
                 declarator.init = Some(step_value);
-                Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+                Statement::variable_declaration(ctx.ast.alloc_variable_declaration(
                     SPAN,
                     declarator.kind,
                     ctx.ast.vec1(declarator),
@@ -141,7 +141,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let mut statements = ctx.ast.vec_with_capacity(2);
             statements.push(assignment_statement);
             let stmt_body = &mut stmt.body;
-            if let Statement::BlockStatement(block) = stmt_body
+            if let Some(block) = stmt_body.as_block_statement()
                 && !block.body.is_empty()
             {
                 statements.push(stmt_body.take_in(ctx.ast));

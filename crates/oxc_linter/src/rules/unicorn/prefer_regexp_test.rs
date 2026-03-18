@@ -86,7 +86,7 @@ impl Rule for PreferRegexpTest {
             AstKind::ForStatement(for_stmt) => {
                 let Some(test) = &for_stmt.test else { return };
 
-                let Expression::CallExpression(call_expr2) = test else {
+                let Some(call_expr2) = test.as_call_expression() else {
                     return;
                 };
 
@@ -96,7 +96,7 @@ impl Rule for PreferRegexpTest {
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                let Expression::CallExpression(call_expr2) = &conditional_expr.test else {
+                let Some(call_expr2) = conditional_expr.test.as_call_expression() else {
                     return;
                 };
 
@@ -106,7 +106,7 @@ impl Rule for PreferRegexpTest {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
+                let Some(ident) = call_expr.callee.as_identifier() else {
                     return;
                 };
 
@@ -121,24 +121,24 @@ impl Rule for PreferRegexpTest {
             _ => return,
         }
 
-        match name.as_str() {
+        match name.as_str().kind() {
             "match" => {
                 if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+                    && !matches!(member_expr.object().kind(), ExpressionKind::RegExpLiteral(_))
                 {
                     return;
                 }
 
                 if let Some(expr) = call_expr.arguments[0].as_expression()
                     && expr.is_literal()
-                    && !matches!(expr, Expression::RegExpLiteral(_))
+                    && !matches!(expr.kind(), ExpressionKind::RegExpLiteral(_))
                 {
                     return;
                 }
             }
             "exec" => {
                 if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+                    && !matches!(member_expr.object().kind(), ExpressionKind::RegExpLiteral(_))
                 {
                     return;
                 }
@@ -164,6 +164,7 @@ impl Rule for PreferRegexpTest {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const bar = !re.test(foo)",

@@ -271,8 +271,8 @@ impl PreferKeyboardEventKey {
         symbol_id: oxc_semantic::SymbolId,
         ctx: &LintContext,
     ) -> bool {
-        match expr {
-            Expression::Identifier(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) => {
                 ctx.scoping().get_reference(ident.reference_id()).symbol_id() == Some(symbol_id)
             }
             _ => false,
@@ -393,7 +393,7 @@ impl PreferKeyboardEventKey {
 
         // Get the numeric literal from the comparison
         let number_value = match (&binary.left, &binary.right) {
-            (_, Expression::NumericLiteral(num)) | (Expression::NumericLiteral(num), _) => {
+            (_, ExpressionKind::NumericLiteral(num)) | (ExpressionKind::NumericLiteral(num), _) => {
                 Some((num.value, num.span))
             }
             _ => None,
@@ -514,6 +514,7 @@ fn get_key_from_code(code: f64) -> Option<String> {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "window.addEventListener('click', e => {

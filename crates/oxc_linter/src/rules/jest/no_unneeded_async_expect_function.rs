@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement},
+    ast::{Argument, Expression, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,8 +87,7 @@ impl Rule for NoUnneededAsyncExpectFunction {
         }
 
         // Get the expect() CallExpression from head.parent
-        let Some(Expression::CallExpression(expect_call_expr)) = parsed_expect_call.head.parent
-        else {
+        let Some(expect_call_expr) = parsed_expect_call.head.parent.and_then(|e| e.as_call_expression()) else {
             return;
         };
 
@@ -135,9 +134,9 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     // Case 1: Arrow function with expression body (async () => await doSomething())
     if arrow.expression {
         if let Some(first) = arrow.body.statements.first()
-            && let Statement::ExpressionStatement(expr_stmt) = first
-            && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
-            && let Expression::CallExpression(call) = &await_expr.argument
+            && let Some(expr_stmt) = first.as_expression_statement()
+            && let Some(await_expr) = expr_stmt.expression.as_await_expression()
+            && let Some(call) = await_expr.argument.as_call_expression()
         {
             return Some(call.span);
         }
@@ -151,9 +150,9 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
 fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
-        && let Statement::ExpressionStatement(expr_stmt) = stmt
-        && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
-        && let Expression::CallExpression(call) = &await_expr.argument
+        && let Some(expr_stmt) = stmt.as_expression_statement()
+        && let Some(await_expr) = expr_stmt.expression.as_await_expression()
+        && let Some(call) = await_expr.argument.as_call_expression()
     {
         return Some(call.span);
     }

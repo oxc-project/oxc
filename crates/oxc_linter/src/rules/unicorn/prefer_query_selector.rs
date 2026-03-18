@@ -105,8 +105,8 @@ impl Rule for PreferQuerySelector {
             }
 
             let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
-                Expression::TemplateLiteral(literal) => {
+                ExpressionKind::StringLiteral(literal) => Some(literal.value.trim()),
+                ExpressionKind::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
                         literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
                     } else {
@@ -150,7 +150,7 @@ impl Rule for PreferQuerySelector {
             // Only apply this fix for simple identifiers so we avoid nested template literals
             // and complex expressions like member/call expressions or template literals
             if property_name == "getElementById"
-                && matches!(argument_expr, Expression::Identifier(_))
+                && matches!(argument_expr.kind(), ExpressionKind::Identifier(_))
             {
                 return ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     let source_text = fixer.source_range(argument_expr.span());
@@ -167,6 +167,7 @@ impl Rule for PreferQuerySelector {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "new document.getElementById(foo);",

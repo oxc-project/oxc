@@ -73,13 +73,13 @@ impl Rule for PreferLiteralEnumMember {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = initializer
+        if let Some(template) = initializer.as_template_literal()
             && template.expressions.is_empty()
         {
             return;
         }
 
-        if let Expression::UnaryExpression(unary_expr) = initializer
+        if let Some(unary_expr) = initializer.as_unary_expression()
             && unary_expr.argument.is_literal()
         {
             if matches!(
@@ -97,7 +97,7 @@ impl Rule for PreferLiteralEnumMember {
         }
 
         if self.allow_bitwise_expressions
-            && let Expression::BinaryExpression(binary_expr) = initializer
+            && let Some(binary_expr) = initializer.as_binary_expression()
             && matches!(
                 binary_expr.operator,
                 BinaryOperator::BitwiseOR
@@ -124,6 +124,7 @@ impl Rule for PreferLiteralEnumMember {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

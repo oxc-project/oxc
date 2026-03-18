@@ -602,7 +602,7 @@ fn get_type_only_named_import<'a>(
     let program = ctx.nodes().program();
 
     for stmt in &program.body {
-        let Statement::ImportDeclaration(import_decl) = stmt else {
+        let Some(import_decl) = stmt.as_import_declaration() else {
             return None;
         };
         if import_decl.import_kind.is_type()
@@ -947,6 +947,7 @@ fn fix_remove_type_specifier_from_import_specifier(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::StatementKind;
 
     fn remove_common_prefix_space(str: &str) -> String {
         let first_content_line = str.lines().find(|line| line.trim() != "").unwrap();

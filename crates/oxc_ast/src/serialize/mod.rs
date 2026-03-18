@@ -216,22 +216,18 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
     };
 
     let start = first_stmt.span().start;
-    match first_stmt {
-        Statement::ExportNamedDeclaration(decl) => {
-            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
-                && let Some(decorator) = class.decorators.first()
-            {
-                return cmp::min(start, decorator.span.start);
-            }
+    if let Some(decl) = first_stmt.as_export_named_declaration() {
+        if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
+            && let Some(decorator) = class.decorators.first()
+        {
+            return cmp::min(start, decorator.span.start);
         }
-        Statement::ExportDefaultDeclaration(decl) => {
-            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
-                && let Some(decorator) = class.decorators.first()
-            {
-                return cmp::min(start, decorator.span.start);
-            }
+    } else if let Some(decl) = first_stmt.as_export_default_declaration() {
+        if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
+            && let Some(decorator) = class.decorators.first()
+        {
+            return cmp::min(start, decorator.span.start);
         }
-        _ => {}
     }
     start
 }

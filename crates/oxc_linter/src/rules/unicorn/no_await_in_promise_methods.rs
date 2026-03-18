@@ -84,13 +84,13 @@ impl Rule for NoAwaitInPromiseMethods {
             return;
         };
         let first_argument = first_argument.without_parentheses();
-        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
+        let Some(first_argument_array_expr) = first_argument.as_array_expression() else {
             return;
         };
 
         for element in &first_argument_array_expr.elements {
             if let Some(element_expr) = element.as_expression()
-                && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
+                && let Some(await_expr) = element_expr.without_parentheses().as_await_expression()
             {
                 let property_name =
                     member_expr.static_property_name().expect("callee is a static property");
@@ -122,6 +122,7 @@ impl Rule for NoAwaitInPromiseMethods {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "Promise.all([promise1, promise2, promise3, promise4])",

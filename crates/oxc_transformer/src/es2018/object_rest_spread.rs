@@ -93,7 +93,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a> {
             let declarators = ctx.ast.vec_from_iter(self.excluded_variable_declarators.drain(..));
             let kind = VariableDeclarationKind::Const;
             let declaration = ctx.ast.alloc_variable_declaration(SPAN, kind, declarators, false);
-            let statement = Statement::VariableDeclaration(declaration);
+            let statement = Statement::variable_declaration(declaration);
             ctx.state.top_level_statements.insert_statement(statement);
         }
     }
@@ -103,11 +103,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a> {
     // `([{ x, ..y }] = foo)`.
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::ObjectExpression(_) => {
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(_) => {
                 Self::transform_object_expression(self.options, expr, ctx);
             }
-            Expression::AssignmentExpression(_) => {
+            ExpressionKind::AssignmentExpression(_) => {
                 self.transform_assignment_expression(expr, ctx);
             }
             _ => {}
@@ -191,7 +191,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        let Some(assign_expr) = expr.as_assignment_expression() else { unreachable!() };
         // Allow `{...x} = {}` and `[{...x}] = []`.
         if !Self::has_nested_target_rest(&assign_expr.left) {
             return;
@@ -236,7 +236,7 @@ impl<'a> ObjectRestSpread<'a> {
                     ctx.ast.vec_from_iter(new_decls),
                     false,
                 );
-                let statement = Statement::VariableDeclaration(declaration);
+                let statement = Statement::variable_declaration(declaration);
                 ctx.state.statement_injector.insert_before(&address, statement);
             }
         }
@@ -393,7 +393,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assign_expr) = expr else {
+        let Some(assign_expr) = expr.as_assignment_expression() else {
             return;
         };
         let mut decls = vec![];
@@ -410,7 +410,7 @@ impl<'a> ObjectRestSpread<'a> {
             let kind = VariableDeclarationKind::Var;
             let declaration =
                 ctx.ast.alloc_variable_declaration(SPAN, kind, ctx.ast.vec_from_iter(decls), false);
-            let statement = Statement::VariableDeclaration(declaration);
+            let statement = Statement::variable_declaration(declaration);
             ctx.state.statement_injector.insert_before(&address, statement);
         }
         let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
@@ -490,7 +490,7 @@ impl<'a> ObjectRestSpread<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
+        let Some(obj_expr) = expr.as_object_expression() else { unreachable!() };
 
         if obj_expr.properties.iter().all(|prop| !prop.is_spread()) {
             return;
@@ -516,7 +516,7 @@ impl<'a> ObjectRestSpread<'a> {
 
         let mut final_call = call_expr.unwrap();
         final_call.span = span;
-        *expr = Expression::CallExpression(final_call);
+        *expr = Expression::call_expression(final_call);
     }
 
     fn make_object_spread(
@@ -531,7 +531,7 @@ impl<'a> ObjectRestSpread<'a> {
             mem::replace(props, ctx.ast.vec_with_capacity(props.capacity() - props.len())),
         );
         let arguments = if let Some(call_expr) = expr.take() {
-            let arg = Expression::CallExpression(call_expr);
+            let arg = Expression::call_expression(call_expr);
             let arg = Argument::from(arg);
             if had_props {
                 let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec());
@@ -576,8 +576,7 @@ impl<'a> ObjectRestSpread<'a> {
 
                     debug_assert!(arrow.body.statements.len() == 1);
 
-                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
-                    else {
+                    let Some(stmt) = arrow.body.statements.pop().unwrap().as_expression_statement() else {
                         unreachable!(
                             "`arrow.expression` is true, which means it has only one ExpressionStatement."
                         );
@@ -628,7 +627,7 @@ impl<'a> ObjectRestSpread<'a> {
         for declarator in &mut decl.declarations {
             if Self::has_nested_object_rest(&declarator.id) {
                 let new_scope_id = Self::try_replace_statement_with_block(body, scope_id, ctx);
-                let Statement::BlockStatement(block) = body else {
+                let Some(block) = body.as_block_statement() else {
                     unreachable!();
                 };
                 let mut bound_names = vec![];
@@ -673,7 +672,7 @@ impl<'a> ObjectRestSpread<'a> {
         let decl = ctx.ast.alloc_variable_declaration(SPAN, kind, declarations, false);
         *left = ForStatementLeft::VariableDeclaration(decl);
         Self::try_replace_statement_with_block(body, scope_id, ctx);
-        let Statement::BlockStatement(block) = body else {
+        let Some(block) = body.as_block_statement() else {
             unreachable!();
         };
         let operator = AssignmentOperator::Assign;
@@ -688,11 +687,11 @@ impl<'a> ObjectRestSpread<'a> {
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> ScopeId {
-        if let Statement::BlockStatement(block) = stmt {
+        if let Some(block) = stmt.as_block_statement() {
             return block.scope_id();
         }
         let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-        let (span, stmts) = if let Statement::EmptyStatement(empty_stmt) = stmt {
+        let (span, stmts) = if let Some(empty_stmt) = stmt.as_empty_statement() {
             (empty_stmt.span, ctx.ast.vec())
         } else {
             let span = stmt.span();
@@ -765,7 +764,7 @@ impl<'a> ObjectRestSpread<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let decl = Self::create_temporary_reference_for_binding(kind, pat, scope_id, ctx);
-        body.insert(0, Statement::VariableDeclaration(ctx.ast.alloc(decl)));
+        body.insert(0, Statement::variable_declaration(ctx.ast.alloc(decl)));
     }
 
     fn create_temporary_reference_for_binding(
@@ -1032,7 +1031,7 @@ impl<'a> ObjectRestSpread<'a> {
                     return Some(ArrayExpressionElement::from(expr));
                 }
                 *all_primitives = false;
-                if let Expression::Identifier(ident) = expr {
+                if let Some(ident) = expr.as_identifier() {
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
                     if let Some(binding) = binding.to_bound_identifier() {
                         let expr = binding.create_read_expression(ctx);
@@ -1158,7 +1157,7 @@ impl<'a> SpreadPair<'a> {
                 // map to `toPropertyKey` to handle the possible non-string values
                 // `[_ref].map(babelHelpers.toPropertyKey))`
                 let property = ctx.ast.identifier_name(SPAN, "map");
-                let callee = Expression::StaticMemberExpression(
+                let callee = Expression::static_member_expression(
                     ctx.ast.alloc_static_member_expression(SPAN, key_expression, property, false),
                 );
                 let arguments =
@@ -1192,8 +1191,8 @@ impl<'a> ReferenceBuilder<'a> {
         let expr = expr.take_in(ctx.ast);
         let binding;
         let maybe_bound_identifier;
-        match &expr {
-            Expression::Identifier(ident) if !force_create_binding => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) if !force_create_binding => {
                 binding = None;
                 maybe_bound_identifier =
                     MaybeBoundIdentifier::from_identifier_reference(ident, ctx);

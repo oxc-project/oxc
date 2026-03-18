@@ -52,14 +52,14 @@ impl Rule for NoUnnecessaryAwait {
             }
             if {
                 // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
-                matches!(expr.argument, Expression::FunctionExpression(_))
-                    || matches!(expr.argument, Expression::ClassExpression(_))
+                matches!(expr.argument.kind(), ExpressionKind::FunctionExpression(_))
+                    || matches!(expr.argument.kind(), ExpressionKind::ClassExpression(_))
             } || {
                 // `+await +1` -> `++1`
                 let parent = ctx.nodes().parent_node(node.id());
                 if let (
                     AstKind::UnaryExpression(parent_unary),
-                    Expression::UnaryExpression(inner_unary),
+                    ExpressionKind::UnaryExpression(inner_unary),
                 ) = (parent.kind(), &expr.argument)
                 {
                     parent_unary.operator == inner_unary.operator
@@ -79,26 +79,26 @@ impl Rule for NoUnnecessaryAwait {
 }
 
 fn not_promise(expr: &Expression) -> bool {
-    match expr {
-        Expression::ArrayExpression(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::AwaitExpression(_)
-        | Expression::BinaryExpression(_)
-        | Expression::ClassExpression(_)
-        | Expression::FunctionExpression(_)
-        | Expression::JSXElement(_)
-        | Expression::JSXFragment(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::UnaryExpression(_)
-        | Expression::UpdateExpression(_) => true,
-        Expression::SequenceExpression(expr) => not_promise(expr.expressions.last().unwrap()),
-        Expression::ParenthesizedExpression(expr) => not_promise(&expr.expression),
+    match expr.kind() {
+        ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::AwaitExpression(_)
+        | ExpressionKind::BinaryExpression(_)
+        | ExpressionKind::ClassExpression(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::JSXElement(_)
+        | ExpressionKind::JSXFragment(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::StringLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::UnaryExpression(_)
+        | ExpressionKind::UpdateExpression(_) => true,
+        ExpressionKind::SequenceExpression(expr) => not_promise(expr.expressions.last().unwrap()),
+        ExpressionKind::ParenthesizedExpression(expr) => not_promise(&expr.expression),
         _ => false,
     }
 }
@@ -106,6 +106,7 @@ fn not_promise(expr: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "await {then}",

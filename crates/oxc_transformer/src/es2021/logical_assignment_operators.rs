@@ -76,7 +76,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators {
     // without the cost of a function call.
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::AssignmentExpression(assignment_expr) = expr else { return };
+        let Some(assignment_expr) = expr.as_assignment_expression() else { return };
 
         // `&&=` `||=` `??=`
         let Some(operator) = assignment_expr.operator.to_logical_operator() else { return };
@@ -92,7 +92,7 @@ impl<'a> LogicalAssignmentOperators {
         operator: LogicalOperator,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::AssignmentExpression(assignment_expr) = expr else { unreachable!() };
+        let Some(assignment_expr) = expr.as_assignment_expression() else { unreachable!() };
 
         // `a &&= c` -> `a && (a = c);`
         //               ^     ^ assign_target
@@ -140,7 +140,7 @@ impl<'a> LogicalAssignmentOperators {
         let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
         *reference.flags_mut() = ReferenceFlags::Read;
         let symbol_id = reference.symbol_id();
-        let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
+        let left_expr = Expression::identifier(ctx.alloc(ident.clone()));
 
         let ident = ctx.create_ident_reference(SPAN, ident.name, symbol_id, ReferenceFlags::Write);
         let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));

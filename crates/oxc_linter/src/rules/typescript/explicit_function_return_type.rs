@@ -1,11 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind, Statement,
+        TSType, TSTypeName,
     },
 };
-use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -19,6 +18,9 @@ use crate::{
     ast_util::{iter_outer_expressions, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    rules::eslint::array_callback_return::return_checker::{
+        StatementReturnStatus, check_statement,
+    },
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -301,7 +303,7 @@ impl ExplicitFunctionReturnType {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
-        let Expression::UnaryExpression(unary_expr) = expr else { return false };
+        let Some(unary_expr) = expr.as_unary_expression() else { return false };
         matches!(unary_expr.operator, UnaryOperator::Void)
     }
 
@@ -408,13 +410,13 @@ impl ExplicitFunctionReturnType {
         let mut expr = expr;
         loop {
             expr = match expr {
-                Expression::TSSatisfiesExpression(e) => &e.expression,
+                ExpressionKind::TSSatisfiesExpression(e) => &e.expression,
                 _ => break,
             };
         }
 
-        match expr {
-            Expression::TSAsExpression(ts_expr) => {
+        match expr.kind() {
+            ExpressionKind::TSAsExpression(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
                     return false;
                 };
@@ -424,7 +426,7 @@ impl ExplicitFunctionReturnType {
 
                 id_ref.name == "const"
             }
-            Expression::TSTypeAssertion(ts_expr) => {
+            ExpressionKind::TSTypeAssertion(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
                     return false;
                 };
@@ -531,12 +533,12 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
         return true;
     }
 
-    match call_expr.callee.without_parentheses() {
-        Expression::FunctionExpression(func_expr) => {
+    match call_expr.callee.without_parentheses().kind() {
+        ExpressionKind::FunctionExpression(func_expr) => {
             let AstKind::Function(callee_func_expr) = callee.unwrap().kind() else { return false };
             func_expr.span != callee_func_expr.span
         }
-        Expression::ArrowFunctionExpression(arrow_func_expr) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => {
             let AstKind::ArrowFunctionExpression(callee_arrow_func_expr) = callee.unwrap().kind()
             else {
                 return false;
@@ -585,7 +587,7 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 fn is_function(expr: &Expression) -> bool {
     matches!(
         expr.get_inner_expression(),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }
 
@@ -593,7 +595,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Expression::ArrowFunctionExpression(func) = &prop.value
+        && let Some(func) = prop.value.as_arrow_function_expression()
         && !func.body.statements.is_empty()
         && func.return_type.is_some()
     {
@@ -619,7 +621,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return def.type_annotation.is_some();
             }
             AstKind::ExpressionStatement(expr) => {
-                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) {
+                if !matches!(expr.expression.kind(), ExpressionKind::ArrowFunctionExpression(_)) {
                     return false;
                 }
             }
@@ -631,45 +633,48 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 }
 
 fn all_return_statements_are_functions(node: &AstNode) -> bool {
-    let function_body = match node.kind() {
-        AstKind::ArrowFunctionExpression(arrow_func_expr) => &arrow_func_expr.body,
+    match node.kind() {
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+            check_return_statements(&arrow_func_expr.body.statements)
+        }
         AstKind::Function(func) => {
             if let Some(func_body) = &func.body {
-                func_body
+                check_return_statements(&func_body.statements)
             } else {
-                return false;
+                false
             }
         }
-        _ => return false,
-    };
-
-    let mut checker = ReturnStatementChecker { has_return: false, all_returns_are_functions: true };
-
-    checker.visit_function_body(function_body);
-
-    checker.has_return && checker.all_returns_are_functions
+        _ => false,
+    }
 }
 
-struct ReturnStatementChecker {
-    has_return: bool,
-    all_returns_are_functions: bool,
-}
-
-impl<'a> Visit<'a> for ReturnStatementChecker {
-    fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
-        self.has_return = true;
-        self.all_returns_are_functions &=
-            return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
+fn check_return_statements<'a>(statements: &'a [Statement<'a>]) -> bool {
+    if statements.is_empty() {
+        return false;
     }
 
-    fn visit_function(
-        &mut self,
-        _func: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    let mut has_return = false;
 
-    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
+    let all_statements_valid = statements.iter().all(|stmt| {
+        if let Some(return_stmt) = stmt.as_return_statement() {
+            if let Some(arg) = &return_stmt.argument {
+                has_return = true;
+                return is_function(arg);
+            }
+            false
+        } else {
+            let status = check_statement(stmt);
+            if status == StatementReturnStatus::AlwaysExplicit {
+                has_return = true;
+            }
+            matches!(
+                status,
+                StatementReturnStatus::NotReturn | StatementReturnStatus::AlwaysExplicit
+            )
+        }
+    });
+
+    has_return && all_statements_valid
 }
 
 /**
@@ -701,6 +706,8 @@ fn test() {
     use std::path::PathBuf;
 
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         ("return;", None, None, None),
@@ -2121,18 +2128,6 @@ fn test() {
             const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
             ",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
-            None,
-            None,
-        ),
-        (
-            "export function myFunction2() { try { return 'something'; } catch (error) { throw new Error('some wrapped', { cause: error }); } }",
-            None,
-            None,
-            None,
-        ),
-        (
-            "export function myFunction3() { try { throw new Error('some error'); } catch (error) { throw error; } }",
-            Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
         ),

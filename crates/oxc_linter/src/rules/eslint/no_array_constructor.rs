@@ -71,7 +71,7 @@ impl Rule for NoArrayConstructor {
             _ => return,
         };
 
-        let Expression::Identifier(ident) = &callee else {
+        let Some(ident) = callee.as_identifier() else {
             return;
         };
 

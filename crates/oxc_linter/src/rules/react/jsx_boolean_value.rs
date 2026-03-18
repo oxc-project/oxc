@@ -135,7 +135,7 @@ impl Rule for JsxBooleanValue {
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if let Some(expr) = container.expression.as_expression()
-                        && let Expression::BooleanLiteral(expr) = expr.without_parentheses()
+                        && let Some(expr) = expr.without_parentheses().as_boolean_literal()
                     {
                         if expr.value && Self::is_never(mode, options, ident.name.as_str()) {
                             let span = Span::new(ident.span.end, jsx_attr.span.end);
@@ -202,6 +202,7 @@ impl JsxBooleanValue {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("<App foo />;", Some(serde_json::json!(["never"]))),

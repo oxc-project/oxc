@@ -100,8 +100,8 @@ impl Rule for NoDuplicateEnumValues {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
             };
-            match initializer {
-                Expression::NumericLiteral(num) => {
+            match initializer.kind() {
+                ExpressionKind::NumericLiteral(num) => {
                     if let Some((_, old_span)) =
                         seen_number_values.iter().find(|(v, _)| *v == num.value)
                     {
@@ -114,7 +114,7 @@ impl Rule for NoDuplicateEnumValues {
                         seen_number_values.push((num.value, num.span));
                     }
                 }
-                Expression::StringLiteral(s) => {
+                ExpressionKind::StringLiteral(s) => {
                     if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
                         // Formatting here for prettier messages. This makes it
                         // look like "Duplicate enum value 'A'"
@@ -139,6 +139,7 @@ impl Rule for NoDuplicateEnumValues {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

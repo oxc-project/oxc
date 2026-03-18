@@ -34,11 +34,11 @@ impl TypeScriptEnum<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_stmt = match stmt {
-            Statement::TSEnumDeclaration(ts_enum_decl) => {
+        let new_stmt = match stmt.kind() {
+            StatementKind::TSEnumDeclaration(ts_enum_decl) => {
                 self.transform_ts_enum(ts_enum_decl, None, ctx)
             }
-            Statement::ExportNamedDeclaration(decl) => {
+            StatementKind::ExportNamedDeclaration(decl) => {
                 let span = decl.span;
                 if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &mut decl.declaration {
                     self.transform_ts_enum(ts_enum_decl, Some(span), ctx)
@@ -105,7 +105,7 @@ impl<'a> TypeScriptEnum<'a> {
         let has_potential_side_effect = decl.body.members.iter().any(|member| {
             matches!(
                 member.initializer,
-                Some(Expression::NewExpression(_) | Expression::CallExpression(_))
+                Some(Expression::new_expression(_) | Expression::call_expression(_))
             )
         });
 
@@ -199,7 +199,7 @@ impl<'a> TypeScriptEnum<'a> {
             let declaration = ctx
                 .ast
                 .plain_export_named_declaration_declaration(export_span, variable_declaration);
-            Statement::ExportNamedDeclaration(declaration)
+            Statement::export_named_declaration(declaration)
         } else {
             Statement::from(variable_declaration)
         };
@@ -377,15 +377,15 @@ impl<'a> TypeScriptEnum<'a> {
         expr: &Expression<'a>,
         prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue<'a>> {
-        match expr {
-            match_member_expression!(Expression) => {
+        match expr.kind() {
+            match_member_expression!(ExpressionKind) => {
                 let expr = expr.to_member_expression();
-                let Expression::Identifier(ident) = expr.object() else { return None };
+                let Some(ident) = expr.object().as_identifier() else { return None };
                 let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
                 *members.get(property)?
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 if ident.name == "Infinity" {
                     return Some(ConstantValue::Number(f64::INFINITY));
                 } else if ident.name == "NaN" {
@@ -413,20 +413,20 @@ impl<'a> TypeScriptEnum<'a> {
         prev_members: &PrevMembers<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<ConstantValue<'a>> {
-        match expr {
-            Expression::Identifier(_)
-            | Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => self.evaluate_ref(expr, prev_members),
-            Expression::BinaryExpression(expr) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(_)
+            | ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => self.evaluate_ref(expr, prev_members),
+            ExpressionKind::BinaryExpression(expr) => {
                 self.eval_binary_expression(expr, prev_members, ctx)
             }
-            Expression::UnaryExpression(expr) => {
+            ExpressionKind::UnaryExpression(expr) => {
                 self.eval_unary_expression(expr, prev_members, ctx)
             }
-            Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
-            Expression::TemplateLiteral(lit) => {
+            ExpressionKind::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+            ExpressionKind::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
+            ExpressionKind::TemplateLiteral(lit) => {
                 let value = if let Some(quasi) = lit.single_quasi() {
                     quasi
                 } else {
@@ -444,7 +444,7 @@ impl<'a> TypeScriptEnum<'a> {
                 };
                 Some(ConstantValue::String(value))
             }
-            Expression::ParenthesizedExpression(expr) => {
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 self.evaluate(&expr.expression, prev_members, ctx)
             }
             _ => None,
@@ -642,8 +642,8 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_, '_> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) if self.should_reference_enum_member(ident) => {
                 let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
                 let property = self.ctx.ast.identifier_name(SPAN, ident.name);
                 *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();

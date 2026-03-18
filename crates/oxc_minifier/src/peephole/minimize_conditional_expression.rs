@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
                 if sequence_expr.expressions.len() > 1 {
                     let span = expr.span();
                     let mut sequence = expr.test.take_in(ctx.ast);
-                    let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
+                    let Some(sequence_expr) = sequence.as_sequence_expression_mut() else {
                         unreachable!()
                     };
                     let expr = Self::minimize_conditional(
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
-                if let Expression::Identifier(id2) = &expr.consequent
+                if let Some(id2) = expr.consequent.as_identifier()
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
                 // "a ? b : a" => "a && b"
-                if let Expression::Identifier(id2) = &expr.alternate
+                if let Some(id2) = expr.alternate.as_identifier()
                     && id.name == id2.name
                 {
                     return Some(Self::join_with_left_associative_op(
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
-        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
+        if let Some(consequent) = expr.consequent.as_conditional_expression_mut()
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
             return Some(ctx.ast.expression_conditional(
@@ -122,7 +122,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b : c ? b : d" => "a || c ? b : d"
-        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
+        if let Some(alternate) = expr.alternate.as_conditional_expression_mut()
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
             return Some(ctx.ast.expression_conditional(
@@ -140,7 +140,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? c : (b, c)" => "(a || b), c"
-        if let Expression::SequenceExpression(alternate) = &mut expr.alternate
+        if let Some(alternate) = expr.alternate.as_sequence_expression_mut()
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
         {
@@ -160,7 +160,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
-        if let Expression::SequenceExpression(consequent) = &mut expr.consequent
+        if let Some(consequent) = expr.consequent.as_sequence_expression_mut()
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
         {
@@ -180,7 +180,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b || c : c" => "(a && b) || c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent
+        if let Some(logical_expr) = expr.consequent.as_logical_expression_mut()
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
@@ -199,7 +199,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? c : b && c" => "(a || b) && c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
+        if let Some(logical_expr) = expr.alternate.as_logical_expression_mut()
             && logical_expr.operator == LogicalOperator::And
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
@@ -469,7 +469,7 @@ impl<'a> PeepholeOptimizations {
             expr,
             ctx,
         ) {
-            if !matches!(expr, Expression::ChainExpression(_)) {
+            if !expr.is_chain_expression() {
                 *expr = ctx.ast.expression_chain(
                     expr.span(),
                     expr.take_in(ctx.ast).into_chain_element().unwrap(),

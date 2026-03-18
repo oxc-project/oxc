@@ -14,7 +14,7 @@
 use std::{cell::Cell, marker::PhantomData};
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::ast::{*, StatementKindMut};
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
@@ -1322,76 +1322,76 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_statement(&mut *node, ctx);
-    match &mut *node {
-        Statement::BlockStatement(node) => {
-            walk_block_statement(traverser, (&mut **node) as *mut _, ctx)
+    match (*node).kind_mut() {
+        StatementKindMut::BlockStatement(node) => {
+            walk_block_statement(traverser, node as *mut _, ctx)
         }
-        Statement::BreakStatement(node) => {
-            walk_break_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::BreakStatement(node) => {
+            walk_break_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ContinueStatement(node) => {
-            walk_continue_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ContinueStatement(node) => {
+            walk_continue_statement(traverser, node as *mut _, ctx)
         }
-        Statement::DebuggerStatement(node) => {
-            walk_debugger_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::DebuggerStatement(node) => {
+            walk_debugger_statement(traverser, node as *mut _, ctx)
         }
-        Statement::DoWhileStatement(node) => {
-            walk_do_while_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::DoWhileStatement(node) => {
+            walk_do_while_statement(traverser, node as *mut _, ctx)
         }
-        Statement::EmptyStatement(node) => {
-            walk_empty_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::EmptyStatement(node) => {
+            walk_empty_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ExpressionStatement(node) => {
-            walk_expression_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ExpressionStatement(node) => {
+            walk_expression_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ForInStatement(node) => {
-            walk_for_in_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ForInStatement(node) => {
+            walk_for_in_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ForOfStatement(node) => {
-            walk_for_of_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ForOfStatement(node) => {
+            walk_for_of_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ForStatement(node) => {
-            walk_for_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ForStatement(node) => {
+            walk_for_statement(traverser, node as *mut _, ctx)
         }
-        Statement::IfStatement(node) => walk_if_statement(traverser, (&mut **node) as *mut _, ctx),
-        Statement::LabeledStatement(node) => {
-            walk_labeled_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::IfStatement(node) => walk_if_statement(traverser, node as *mut _, ctx),
+        StatementKindMut::LabeledStatement(node) => {
+            walk_labeled_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ReturnStatement(node) => {
-            walk_return_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ReturnStatement(node) => {
+            walk_return_statement(traverser, node as *mut _, ctx)
         }
-        Statement::SwitchStatement(node) => {
-            walk_switch_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::SwitchStatement(node) => {
+            walk_switch_statement(traverser, node as *mut _, ctx)
         }
-        Statement::ThrowStatement(node) => {
-            walk_throw_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::ThrowStatement(node) => {
+            walk_throw_statement(traverser, node as *mut _, ctx)
         }
-        Statement::TryStatement(node) => {
-            walk_try_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::TryStatement(node) => {
+            walk_try_statement(traverser, node as *mut _, ctx)
         }
-        Statement::WhileStatement(node) => {
-            walk_while_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::WhileStatement(node) => {
+            walk_while_statement(traverser, node as *mut _, ctx)
         }
-        Statement::WithStatement(node) => {
-            walk_with_statement(traverser, (&mut **node) as *mut _, ctx)
+        StatementKindMut::WithStatement(node) => {
+            walk_with_statement(traverser, node as *mut _, ctx)
         }
-        Statement::VariableDeclaration(_)
-        | Statement::FunctionDeclaration(_)
-        | Statement::ClassDeclaration(_)
-        | Statement::TSTypeAliasDeclaration(_)
-        | Statement::TSInterfaceDeclaration(_)
-        | Statement::TSEnumDeclaration(_)
-        | Statement::TSModuleDeclaration(_)
-        | Statement::TSGlobalDeclaration(_)
-        | Statement::TSImportEqualsDeclaration(_) => {
+        StatementKindMut::VariableDeclaration(_)
+        | StatementKindMut::FunctionDeclaration(_)
+        | StatementKindMut::ClassDeclaration(_)
+        | StatementKindMut::TSTypeAliasDeclaration(_)
+        | StatementKindMut::TSInterfaceDeclaration(_)
+        | StatementKindMut::TSEnumDeclaration(_)
+        | StatementKindMut::TSModuleDeclaration(_)
+        | StatementKindMut::TSGlobalDeclaration(_)
+        | StatementKindMut::TSImportEqualsDeclaration(_) => {
             walk_declaration(traverser, node as *mut _, ctx)
         }
-        Statement::ImportDeclaration(_)
-        | Statement::ExportAllDeclaration(_)
-        | Statement::ExportDefaultDeclaration(_)
-        | Statement::ExportNamedDeclaration(_)
-        | Statement::TSExportAssignment(_)
-        | Statement::TSNamespaceExportDeclaration(_) => {
+        StatementKindMut::ImportDeclaration(_)
+        | StatementKindMut::ExportAllDeclaration(_)
+        | StatementKindMut::ExportDefaultDeclaration(_)
+        | StatementKindMut::ExportNamedDeclaration(_)
+        | StatementKindMut::TSExportAssignment(_)
+        | StatementKindMut::TSNamespaceExportDeclaration(_) => {
             walk_module_declaration(traverser, node as *mut _, ctx)
         }
     }

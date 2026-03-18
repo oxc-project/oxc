@@ -101,11 +101,11 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
         return false;
     };
 
-    match expression {
-        Expression::StringLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::TemplateLiteral(_) => true,
-        Expression::Identifier(ident) => {
+    match expression.kind() {
+        ExpressionKind::StringLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::TemplateLiteral(_) => true,
+        ExpressionKind::Identifier(ident) => {
             let Some(node) = get_declaration_of_variable(ident, ctx) else {
                 return false;
             };
@@ -188,8 +188,8 @@ impl Rule for StylePropObject {
                 };
 
                 let name = match expr {
-                    Expression::StringLiteral(literal) => literal.value.as_str(),
-                    Expression::Identifier(identifier) => identifier.name.as_str(),
+                    ExpressionKind::StringLiteral(literal) => literal.value.as_str(),
+                    ExpressionKind::Identifier(identifier) => identifier.name.as_str(),
                     _ => return,
                 };
 
@@ -227,6 +227,7 @@ impl Rule for StylePropObject {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (r#"<div style={{ color: "blue" }} />"#, None),

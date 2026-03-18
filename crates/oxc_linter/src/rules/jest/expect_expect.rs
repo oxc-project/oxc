@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
+    ast::{CallExpression, Expression, FormalParameter, Function, Statement, ExpressionKind, StatementKind},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -218,25 +218,25 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
             return;
         }
 
-        match expr {
-            Expression::FunctionExpression(fn_expr) => {
+        match expr.kind() {
+            ExpressionKind::FunctionExpression(fn_expr) => {
                 if let Some(body) = &fn_expr.body {
                     self.visit_function_body(body);
                 }
             }
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
                 self.visit_function_body(&arrow_expr.body);
             }
-            Expression::CallExpression(call_expr) => {
+            ExpressionKind::CallExpression(call_expr) => {
                 self.visit_call_expression(call_expr);
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 self.check_identifier(ident);
             }
-            Expression::AwaitExpression(expr) => {
+            ExpressionKind::AwaitExpression(expr) => {
                 self.check_expression(&expr.argument);
             }
-            Expression::ArrayExpression(array_expr) => {
+            ExpressionKind::ArrayExpression(array_expr) => {
                 for element in &array_expr.elements {
                     if let Some(element_expr) = element.as_expression() {
                         self.check_expression(element_expr);
@@ -300,7 +300,7 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     }
 
     fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
-        if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
+        if let Some(block_stmt) = if_stmt.consequent.as_block_statement() {
             self.visit_block_statement(block_stmt);
         }
         if self.found_assertion {

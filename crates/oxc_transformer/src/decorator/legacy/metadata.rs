@@ -171,7 +171,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
         // Collect enum types here instead of in `enter_ts_enum_declaration` because the TypeScript
         // plugin transforms enum declarations in `enter_statement`, and we need to collect the
         // enum type before it gets transformed.
-        if let Statement::TSEnumDeclaration(decl) = stmt {
+        if let Some(decl) = stmt.as_ts_enum_declaration() {
             self.collect_enum_type(decl, ctx);
         }
     }
@@ -298,8 +298,8 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
         for member in members {
             if let Some(init) = &member.initializer {
-                match init {
-                    Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
+                match init.kind() {
+                    ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_)
                         if enum_type != EnumType::Number =>
                     {
                         enum_type = EnumType::String;
@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
                     // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
                     // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
-                    Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+                    ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_)
                         if enum_type != EnumType::String =>
                     {
                         enum_type = EnumType::Number;
@@ -556,7 +556,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     let mut left =
                         self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx)?;
                     let binding = VarDeclarationsStore::create_uid_var_based_on_node(&left, ctx);
-                    let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
+                    let Some(logical) = left.as_logical_expression_mut() else { unreachable!() };
                     let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
@@ -586,14 +586,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
         literal: &TSLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match literal {
+        match literal.kind() {
             TSLiteral::BooleanLiteral(_) => Self::global_boolean(ctx),
             TSLiteral::NumericLiteral(_) => Self::global_number(ctx),
             TSLiteral::BigIntLiteral(_) => Self::global_bigint(ctx),
             TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_) => Self::global_string(ctx),
-            TSLiteral::UnaryExpression(expr) => match expr.argument {
-                Expression::NumericLiteral(_) => Self::global_number(ctx),
-                Expression::StringLiteral(_) => Self::global_string(ctx),
+            TSLiteral::UnaryExpression(expr) => match expr.argument.kind() {
+                ExpressionKind::NumericLiteral(_) => Self::global_number(ctx),
+                ExpressionKind::StringLiteral(_) => Self::global_string(ctx),
                 // Cannot be a type annotation
                 _ => unreachable!(),
             },
@@ -641,7 +641,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
-            if matches!(&serialized_constituent, Expression::Identifier(ident) if ident.name == "Object")
+            if serialized_constituent.as_identifier().is_some_and(|ident| ident.name == "Object")
             {
                 // One of the individual is global object, return immediately
                 return serialized_constituent;

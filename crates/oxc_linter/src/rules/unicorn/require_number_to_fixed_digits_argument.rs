@@ -53,7 +53,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
         }
 
         if let Some(member) = expr.callee.get_member_expr() {
-            if let Expression::NewExpression(_) = member.object() {
+            if let Some(_) = member.object().as_new_expression() {
                 return;
             }
 
@@ -92,6 +92,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "number.toFixed(0)",

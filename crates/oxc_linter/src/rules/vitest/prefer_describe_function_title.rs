@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,7 +111,7 @@ impl PreferDescribeFunctionTitle {
 
         match title_arg {
             Argument::StaticMemberExpression(title_expression) => {
-                let Expression::Identifier(identifier) = &title_expression.object else {
+                let Some(identifier) = title_expression.object.as_identifier() else {
                     return;
                 };
 

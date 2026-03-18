@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression},
+    ast::{Argument, BinaryExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -481,8 +481,8 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
         return true;
     }
 
-    match &expr.left {
-        Expression::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
+    match expr.left.kind() {
+        ExpressionKind::BinaryExpression(left) => does_binary_expression_contain_string_node(left),
         _ => false,
     }
 }

@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Statement, TSModuleReference};
+use oxc_ast::ast::{Statement, StatementKind, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -131,8 +131,8 @@ impl Rule for TripleSlashReference {
 
         if !refs_for_import.is_empty() {
             for stmt in &program.body {
-                match stmt {
-                    Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                match stmt.kind() {
+                    StatementKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                         TSModuleReference::ExternalModuleReference(mod_ref) => {
                             if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
                             {
@@ -145,7 +145,7 @@ impl Rule for TripleSlashReference {
                         TSModuleReference::IdentifierReference(_)
                         | TSModuleReference::QualifiedName(_) => {}
                     },
-                    Statement::ImportDeclaration(decl) => {
+                    StatementKind::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
                             ctx.diagnostic(triple_slash_reference_diagnostic(
                                 &decl.source.value,

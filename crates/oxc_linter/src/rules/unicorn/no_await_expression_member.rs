@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind,
+    AstKind, MemberExpression,
     ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -54,11 +54,11 @@ impl Rule for NoAwaitExpressionMember {
             return;
         };
 
-        let Expression::ParenthesizedExpression(paren_expr) = member_expr.object() else {
+        let Some(paren_expr) = member_expr.object().as_parenthesized_expression() else {
             return;
         };
 
-        if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
+        if matches!(paren_expr.expression.kind(), ExpressionKind::AwaitExpression(_)) {
             let node_span = member_expr.span();
             ctx.diagnostic_with_dangerous_fix(
                 no_await_expression_member_diagnostic(node_span),
@@ -85,10 +85,10 @@ impl Rule for NoAwaitExpressionMember {
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(5);
 
-                    match member_expr {
+                    match member_expr.kind() {
                         // e.g. "const a = (await b())[0]" => "const {a} = await b()"
-                        MemberExpressionKind::Computed(computed_member_expr) => {
-                            let Expression::NumericLiteral(prop) = &computed_member_expr.expression
+                        MemberExpression::Computed(computed_member_expr) => {
+                            let Some(prop) = computed_member_expr.expression.as_numeric_literal()
                             else {
                                 return fixer.noop();
                             };
@@ -106,7 +106,7 @@ impl Rule for NoAwaitExpressionMember {
                             };
                             rule_fixes.push(fixer.replace(id.span, replacement));
                         }
-                        MemberExpressionKind::Static(static_member_expr)
+                        MemberExpression::Static(static_member_expr)
                             if static_member_expr.property.name.as_str() == name =>
                         {
                             // e.g. "const a = (await b()).a" => "const {a} = await b()"

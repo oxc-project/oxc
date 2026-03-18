@@ -129,7 +129,7 @@ fn span_contains_symbol_reference(ctx: &LintContext, symbol_id: SymbolId, span: 
 fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<SymbolId> {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
-            let Expression::StaticMemberExpression(expr) = &call_expr.callee else {
+            let Some(expr) = call_expr.callee.as_static_member_expression() else {
                 continue;
             };
 
@@ -201,6 +201,7 @@ impl Rule for NoArrayIndexKey {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"things.map((thing) => (

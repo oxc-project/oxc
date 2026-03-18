@@ -45,7 +45,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Early return if there's no `export * as ns from "mod"` to transform
         let has_export_namespace = program.body.iter().any(
-            |stmt| matches!(stmt, Statement::ExportAllDeclaration(decl) if decl.exported.is_some()),
+            |stmt| stmt.as_export_all_declaration().is_some_and(|decl| decl.exported.is_some()),
         );
         if !has_export_namespace {
             return;
@@ -54,8 +54,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
 
         for stmt in program.body.take_in(ctx.ast) {
-            match stmt {
-                Statement::ExportAllDeclaration(export_all) if export_all.exported.is_some() => {
+            match stmt.kind() {
+                StatementKind::ExportAllDeclaration(export_all) if export_all.exported.is_some() => {
                     // Transform `export * as ns from "mod"` to:
                     // `import * as _ns from "mod"; export { _ns as ns };`
 
@@ -86,7 +86,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         NONE,
                         export_kind,
                     );
-                    new_statements.push(Statement::ImportDeclaration(import_decl));
+                    new_statements.push(Statement::import_declaration(import_decl));
 
                     // Create `export { _ns as ns }`
                     let local =
@@ -102,7 +102,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         export_kind,
                         NONE,
                     );
-                    new_statements.push(Statement::ExportNamedDeclaration(export_named_decl));
+                    new_statements.push(Statement::export_named_declaration(export_named_decl));
                 }
                 _ => {
                     new_statements.push(stmt);

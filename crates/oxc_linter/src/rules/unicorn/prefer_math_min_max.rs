@@ -65,7 +65,7 @@ impl Rule for PreferMathMinMax {
             return;
         };
 
-        let Expression::BinaryExpression(test_expr) = &conditional_expr.test else {
+        let Some(test_expr) = conditional_expr.test.as_binary_expression() else {
             return;
         };
 
@@ -100,9 +100,9 @@ impl Rule for PreferMathMinMax {
 }
 
 fn get_expr_value(expr: &Expression) -> Option<String> {
-    match expr {
-        Expression::NumericLiteral(lit) => Some(lit.to_string()),
-        Expression::UnaryExpression(lit) => {
+    match expr.kind() {
+        ExpressionKind::NumericLiteral(lit) => Some(lit.to_string()),
+        ExpressionKind::UnaryExpression(lit) => {
             let mut unary_str: String = String::from(lit.operator.as_str());
 
             let Some(unary_lit) = get_expr_value(&lit.argument) else {
@@ -113,7 +113,7 @@ fn get_expr_value(expr: &Expression) -> Option<String> {
 
             Some(unary_str.clone())
         }
-        Expression::Identifier(identifier) => Some(identifier.name.to_string()),
+        ExpressionKind::Identifier(identifier) => Some(identifier.name.to_string()),
         _ => None,
     }
 }
@@ -126,10 +126,10 @@ fn is_min_max(
 ) -> TypeOptions {
     let is_matched = matches!(
         (condition.left.get_inner_expression(), condition.right.get_inner_expression()),
-        (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
+        (ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_), ExpressionKind::Identifier(_))
             | (
-                Expression::Identifier(_),
-                Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+                ExpressionKind::Identifier(_),
+                ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_)
             )
     );
 
@@ -159,6 +159,7 @@ fn is_min_max(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"const foo = height ? height : 50;",

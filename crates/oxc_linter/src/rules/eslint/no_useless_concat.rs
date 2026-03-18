@@ -84,7 +84,7 @@ impl Rule for NoUselessConcat {
 fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut left = &expr.left;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = left
+        if let Some(binary_expr) = left.as_binary_expression()
             && binary_expr.operator == BinaryOperator::Addition
         {
             left = &binary_expr.right;
@@ -98,7 +98,7 @@ fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
 fn get_right<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     let mut right = &expr.right;
     loop {
-        if let Expression::BinaryExpression(binary_expr) = right
+        if let Some(binary_expr) = right.as_binary_expression()
             && binary_expr.operator == BinaryOperator::Addition
         {
             right = &binary_expr.left;

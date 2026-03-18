@@ -240,7 +240,7 @@ fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
 fn expression_uses_optional_chain(expr: &Expression) -> bool {
     let expr = expr.get_inner_expression();
 
-    if matches!(expr, Expression::ChainExpression(_)) {
+    if matches!(expr.kind(), ExpressionKind::ChainExpression(_)) {
         return true;
     }
 
@@ -248,7 +248,7 @@ fn expression_uses_optional_chain(expr: &Expression) -> bool {
         return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
     }
 
-    if let Expression::CallExpression(call_expr) = expr {
+    if let Some(call_expr) = expr.as_call_expression() {
         return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
     }
 
@@ -327,6 +327,7 @@ fn fix_to_has_own(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "element.dataset.unicorn = '🦄';",

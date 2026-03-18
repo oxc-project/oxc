@@ -110,14 +110,14 @@ fn check_function<'a>(
         return None;
     }
 
-    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
+    if is_arrow && let Some(expr_stmt) = function_body.statements.as_expression_statement()[0] {
         return is_matching_native_coercion_function_call(
             &expr_stmt.expression,
             first_parameter_name,
         );
     }
 
-    if let Statement::ReturnStatement(return_statement) = &function_body.statements[0]
+    if let Some(return_statement) = function_body.statements.as_return_statement()[0]
         && let Some(return_expr) = &return_statement.argument
     {
         return is_matching_native_coercion_function_call(return_expr, first_parameter_name);
@@ -127,7 +127,7 @@ fn check_function<'a>(
 }
 
 fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str> {
-    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &stmt {
+    if is_arrow && let Some(expr_stmt) = stmt.as_expression_statement() {
         return expr_stmt
             .expression
             .without_parentheses()
@@ -135,13 +135,13 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
             .map(|v| v.name.as_str());
     }
 
-    if let Statement::BlockStatement(block_stmt) = &stmt {
+    if let Some(block_stmt) = stmt.as_block_statement() {
         if block_stmt.body.len() != 1 {
             return None;
         }
         return get_returned_ident(&block_stmt.body[0], is_arrow);
     }
-    if let Statement::ReturnStatement(return_statement) = &stmt
+    if let Some(return_statement) = stmt.as_return_statement()
         && let Some(return_expr) = &return_statement.argument
     {
         return return_expr
@@ -157,7 +157,7 @@ fn is_matching_native_coercion_function_call<'a>(
     expr: &'a Expression,
     first_arg_name: &'a str,
 ) -> Option<&'a str> {
-    let Expression::CallExpression(call_expr) = expr else {
+    let Some(call_expr) = expr.as_call_expression() else {
         return None;
     };
 
@@ -165,7 +165,7 @@ fn is_matching_native_coercion_function_call<'a>(
         return None;
     }
 
-    let Expression::Identifier(callee_ident) = &call_expr.callee else {
+    let Some(callee_ident) = call_expr.callee.as_identifier() else {
         return None;
     };
 
@@ -245,6 +245,8 @@ const ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: [&str; 7] =
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "const foo = async v => String(v)",

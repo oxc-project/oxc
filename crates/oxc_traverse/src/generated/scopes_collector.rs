@@ -11,7 +11,7 @@
 
 use std::cell::Cell;
 
-use oxc_ast::ast::*;
+use oxc_ast::ast::{*, StatementKind};
 use oxc_ast_visit::Visit;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
@@ -590,35 +590,35 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     fn visit_statement(&mut self, it: &Statement<'a>) {
-        match it {
-            Statement::BlockStatement(it) => self.visit_block_statement(it),
-            Statement::DoWhileStatement(it) => self.visit_do_while_statement(it),
-            Statement::ExpressionStatement(it) => self.visit_expression_statement(it),
-            Statement::ForInStatement(it) => self.visit_for_in_statement(it),
-            Statement::ForOfStatement(it) => self.visit_for_of_statement(it),
-            Statement::ForStatement(it) => self.visit_for_statement(it),
-            Statement::IfStatement(it) => self.visit_if_statement(it),
-            Statement::LabeledStatement(it) => self.visit_labeled_statement(it),
-            Statement::ReturnStatement(it) => self.visit_return_statement(it),
-            Statement::SwitchStatement(it) => self.visit_switch_statement(it),
-            Statement::ThrowStatement(it) => self.visit_throw_statement(it),
-            Statement::TryStatement(it) => self.visit_try_statement(it),
-            Statement::WhileStatement(it) => self.visit_while_statement(it),
-            Statement::WithStatement(it) => self.visit_with_statement(it),
-            Statement::VariableDeclaration(it) => self.visit_variable_declaration(it),
-            Statement::FunctionDeclaration(it) => {
+        match it.kind() {
+            StatementKind::BlockStatement(it) => self.visit_block_statement(it),
+            StatementKind::DoWhileStatement(it) => self.visit_do_while_statement(it),
+            StatementKind::ExpressionStatement(it) => self.visit_expression_statement(it),
+            StatementKind::ForInStatement(it) => self.visit_for_in_statement(it),
+            StatementKind::ForOfStatement(it) => self.visit_for_of_statement(it),
+            StatementKind::ForStatement(it) => self.visit_for_statement(it),
+            StatementKind::IfStatement(it) => self.visit_if_statement(it),
+            StatementKind::LabeledStatement(it) => self.visit_labeled_statement(it),
+            StatementKind::ReturnStatement(it) => self.visit_return_statement(it),
+            StatementKind::SwitchStatement(it) => self.visit_switch_statement(it),
+            StatementKind::ThrowStatement(it) => self.visit_throw_statement(it),
+            StatementKind::TryStatement(it) => self.visit_try_statement(it),
+            StatementKind::WhileStatement(it) => self.visit_while_statement(it),
+            StatementKind::WithStatement(it) => self.visit_with_statement(it),
+            StatementKind::VariableDeclaration(it) => self.visit_variable_declaration(it),
+            StatementKind::FunctionDeclaration(it) => {
                 let flags = ScopeFlags::Function;
                 self.visit_function(it, flags)
             }
-            Statement::ClassDeclaration(it) => self.visit_class(it),
-            Statement::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
-            Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
-            Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
-            Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
-            Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
-            Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
-            Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
+            StatementKind::ClassDeclaration(it) => self.visit_class(it),
+            StatementKind::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
+            StatementKind::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
+            StatementKind::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
+            StatementKind::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            StatementKind::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
+            StatementKind::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
+            StatementKind::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
+            StatementKind::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `BreakStatement`

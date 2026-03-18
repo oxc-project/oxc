@@ -54,7 +54,7 @@ pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
     path: &Path,
 ) {
     debug_assert!(
-        !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
+        !(expr.is_parenthesized_expression() || expr.is_typescript_syntax()),
         "Should not be: {expr:?} in {}",
         path.display()
     );

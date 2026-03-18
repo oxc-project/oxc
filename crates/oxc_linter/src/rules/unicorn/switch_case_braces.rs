@@ -113,7 +113,7 @@ impl Rule for SwitchCaseBraces {
                 continue;
             }
             let missing_braces = match &case.consequent[0] {
-                Statement::BlockStatement(block_stmt) if case.consequent.len() == 1 => {
+                StatementKind::BlockStatement(block_stmt) if case.consequent.len() == 1 => {
                     if block_stmt.body.is_empty() {
                         ctx.diagnostic_with_fix(
                             switch_case_braces_diagnostic_empty_clause(block_stmt.span),
@@ -125,8 +125,8 @@ impl Rule for SwitchCaseBraces {
                         && !block_stmt.body.iter().any(|stmt| {
                             matches!(
                                 stmt,
-                                Statement::VariableDeclaration(_)
-                                    | Statement::FunctionDeclaration(_)
+                                StatementKind::VariableDeclaration(_)
+                                    | StatementKind::FunctionDeclaration(_)
                             )
                         })
                     {
@@ -184,6 +184,7 @@ impl Rule for SwitchCaseBraces {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "switch(something) { case 1: case 2: {console.log('something'); break;}}",

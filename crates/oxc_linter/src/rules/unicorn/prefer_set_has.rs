@@ -75,11 +75,11 @@ fn is_array_of_or_from(callee: &MemberExpression) -> bool {
 }
 
 fn is_kind_of_array_expr(expr: &Expression) -> bool {
-    match expr {
-        Expression::NewExpression(new_expr) => {
+    match expr.kind() {
+        ExpressionKind::NewExpression(new_expr) => {
             new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Array")
         }
-        Expression::CallExpression(call_expr) => {
+        ExpressionKind::CallExpression(call_expr) => {
             let Some(callee) = call_expr.callee.get_member_expr() else {
                 return call_expr.callee_name().is_some_and(|name| name == "Array");
             };
@@ -92,7 +92,7 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 
             is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }
-        Expression::ArrayExpression(_) => true,
+        ExpressionKind::ArrayExpression(_) => true,
         _ => false,
     }
 }
@@ -229,13 +229,13 @@ impl Rule for PreferSetHas {
             let array_end_string = format!("]{set_end_string}");
             let array_parenthesis_len = 6; // Array( => 6
             let new_space_len = 4; // new  => 4
-            match init {
-                Expression::ArrayExpression(init_node) => {
+            match init.kind() {
+                ExpressionKind::ArrayExpression(init_node) => {
                     declaration_fix
                         .push(fixer.insert_text_before(&init_node.span, new_set_start_string));
                     declaration_fix.push(fixer.insert_text_after(&init_node.span, set_end_string));
                 }
-                Expression::CallExpression(call_expr) => {
+                ExpressionKind::CallExpression(call_expr) => {
                     if call_expr.callee.is_identifier_reference() {
                         let start = call_expr.span.start;
                         let end = start + 6;
@@ -252,7 +252,7 @@ impl Rule for PreferSetHas {
                             .push(fixer.insert_text_after(&call_expr.span, set_end_string));
                     }
                 }
-                Expression::NewExpression(new_expr) => {
+                ExpressionKind::NewExpression(new_expr) => {
                     let start = new_expr.span.start + new_space_len;
                     let end = start + array_parenthesis_len;
                     let span = Span::new(start, end);
@@ -287,6 +287,7 @@ impl Rule for PreferSetHas {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

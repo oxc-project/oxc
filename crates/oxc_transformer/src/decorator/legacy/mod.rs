@@ -177,12 +177,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::ClassDeclaration(_) => self.transform_class_statement(stmt, ctx),
-            Statement::ExportNamedDeclaration(_) => {
+        match stmt.kind() {
+            StatementKind::ClassDeclaration(_) => self.transform_class_statement(stmt, ctx),
+            StatementKind::ExportNamedDeclaration(_) => {
                 self.transform_export_named_class(stmt, ctx);
             }
-            Statement::ExportDefaultDeclaration(_) => {
+            StatementKind::ExportDefaultDeclaration(_) => {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
@@ -608,7 +608,7 @@ impl<'a> LegacyDecorator<'a> {
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ClassDeclaration`.
     #[inline]
     fn transform_class_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
+        let Some(class) = stmt.as_class_declaration() else { unreachable!() };
 
         let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
         else {
@@ -655,7 +655,7 @@ impl<'a> LegacyDecorator<'a> {
         stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Statement::ExportDefaultDeclaration(export) = stmt else { unreachable!() };
+        let Some(export) = stmt.as_export_default_declaration() else { unreachable!() };
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
@@ -708,7 +708,7 @@ impl<'a> LegacyDecorator<'a> {
         stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
+        let Some(export) = stmt.as_export_named_declaration() else { unreachable!() };
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
         let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
@@ -979,7 +979,7 @@ impl<'a> LegacyDecorator<'a> {
         let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(class.take_in_box(ctx.ast)),
+            Expression::class_expression(class.take_in_box(ctx.ast)),
             alias_binding,
             ctx,
         );
@@ -1336,10 +1336,10 @@ impl<'a> LegacyDecorator<'a> {
             PropertyKey::PrivateIdentifier(_) => ctx.ast.expression_string_literal(SPAN, "", None),
             // Copiable literals
             PropertyKey::NumericLiteral(literal) => {
-                Expression::NumericLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::numeric_literal(ctx.ast.alloc(literal.clone()))
             }
             PropertyKey::StringLiteral(literal) => {
-                Expression::StringLiteral(ctx.ast.alloc(literal.clone()))
+                Expression::string_literal(ctx.ast.alloc(literal.clone()))
             }
             PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
                 let quasis = ctx.ast.vec_from_iter(literal.quasis.iter().cloned());

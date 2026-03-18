@@ -10,7 +10,7 @@ use std::{cell::RefCell, iter::repeat_with, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_ast::{AstBuilder, NONE, ast::*, ast::StatementKind};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, IdentHashSet, SPAN, SourceType};
@@ -204,8 +204,8 @@ impl<'a> IsolatedDeclarations<'a> {
         // 4. Collect transformed indexes
         for (idx, &stmt) in stmts.iter().enumerate() {
             match stmt {
-                match_declaration!(Statement) => {
-                    if let Statement::TSModuleDeclaration(decl) = stmt {
+                _ if stmt.is_declaration() => {
+                    if let Some(decl) = stmt.as_ts_module_declaration() {
                         // `declare module "foo" { ... }`
                         // We need to emit it anyway
                         if decl.id.is_string_literal() {
@@ -220,21 +220,21 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We need to visit the module declaration to collect all references
                             self.scope.visit_ts_module_declaration(decl.as_ref());
 
-                            transformed_stmts[idx] = Some(Statement::TSModuleDeclaration(decl));
+                            transformed_stmts[idx] = Some(Statement::ts_module_declaration(decl));
                             transformed_count += 1;
                         }
-                    } else if let Statement::TSGlobalDeclaration(decl) = stmt {
+                    } else if let Some(decl) = stmt.as_ts_global_declaration() {
                         // `declare global { ... }`
                         // We need to emit it anyway
                         let decl = decl.clone_in(self.ast.allocator);
                         // We need to visit the module declaration to collect all references
                         self.scope.visit_ts_global_declaration(decl.as_ref());
 
-                        transformed_stmts[idx] = Some(Statement::TSGlobalDeclaration(decl));
+                        transformed_stmts[idx] = Some(Statement::ts_global_declaration(decl));
                         transformed_count += 1;
                     }
                 }
-                match_module_declaration!(Statement) => {
+                _ if stmt.is_module_declaration() => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::TSExportAssignment(decl) => {
                             if let Some((var_decl, new_decl)) =
@@ -346,7 +346,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.is_declare(),
                         );
                         transformed_stmts[idx] =
-                            Some(Statement::VariableDeclaration(self.ast.alloc(decl)));
+                            Some(Statement::variable_declaration(self.ast.alloc(decl)));
                         transformed_count += 1;
                     }
                 } else if let Some(new_decl) = self.transform_declaration(decl, true) {
@@ -371,26 +371,24 @@ impl<'a> IsolatedDeclarations<'a> {
         );
         for (idx, stmt) in stmts.into_iter().enumerate() {
             if let Some(new_stmt) = transformed_stmts[idx].take() {
-                if matches!(
-                    new_stmt,
-                    Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
-                ) && let Some(export_external_var_statement) = extra_export_var_statement.take()
+                if (new_stmt.is_export_default_declaration() || new_stmt.is_ts_export_assignment())
+                    && let Some(export_external_var_statement) = extra_export_var_statement.take()
                 {
                     new_stmts.push(export_external_var_statement);
                 }
                 new_stmts.push(new_stmt);
                 continue;
             }
-            match stmt {
-                Statement::ImportDeclaration(decl) => {
+            match stmt.kind() {
+                StatementKind::ImportDeclaration(decl) => {
                     // We must transform this in the end, because we need to know all references
                     if decl.specifiers.is_none() {
                         new_stmts.push(stmt.clone_in(self.ast.allocator));
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
-                        new_stmts.push(Statement::ImportDeclaration(new_decl));
+                        new_stmts.push(Statement::import_declaration(new_decl));
                     }
                 }
-                Statement::VariableDeclaration(decl) => {
+                StatementKind::VariableDeclaration(decl) => {
                     if decl.declarations.len() > 1 {
                         // Remove unreferenced declarations
                         let declarations = self.ast.vec_from_iter(
@@ -401,7 +399,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if declarations.is_empty() {
                             continue;
                         }
-                        new_stmts.push(Statement::VariableDeclaration(
+                        new_stmts.push(Statement::variable_declaration(
                             self.ast.alloc_variable_declaration(
                                 decl.span,
                                 decl.kind,
@@ -435,8 +433,8 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
-        stmts.retain(move |&stmt| match stmt {
-            Statement::FunctionDeclaration(func) => {
+        stmts.retain(move |&stmt| match stmt.kind() {
+            StatementKind::FunctionDeclaration(func) => {
                 let name: Atom<'a> = func
                     .id
                     .as_ref()
@@ -457,7 +455,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 true
             }
-            Statement::ExportNamedDeclaration(decl) => {
+            StatementKind::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
                     let name: Atom<'a> = func
                         .id
@@ -481,7 +479,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     true
                 }
             }
-            Statement::ExportDefaultDeclaration(decl) => {
+            StatementKind::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
                     if is_export_default_function_overloads && func.body.is_some() {
                         is_export_default_function_overloads = false;
@@ -509,7 +507,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let TSModuleDeclarationName::Identifier(ident) = &decl.id else { return };
         let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body else { return };
         for stmt in &block.body {
-            let Statement::ExportNamedDeclaration(decl) = stmt else { continue };
+            let Some(decl) = stmt.as_export_named_declaration() else { continue };
             match &decl.declaration {
                 Some(Declaration::VariableDeclaration(var)) => {
                     for declarator in &var.declarations {
@@ -552,8 +550,8 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         let mut can_expando_function_names = IdentHashSet::default();
         for stmt in stmts {
-            match stmt {
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
+            match stmt.kind() {
+                StatementKind::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
                     Some(Declaration::FunctionDeclaration(func)) => {
                         if func.body.is_some()
                             && let Some(id) = func.id.as_ref()
@@ -579,7 +577,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                     _ => (),
                 },
-                Statement::ExportDefaultDeclaration(decl) => {
+                StatementKind::ExportDefaultDeclaration(decl) => {
                     if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                         &decl.declaration
                         && func.body.is_some()
@@ -588,7 +586,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         can_expando_function_names.insert(name);
                     }
                 }
-                Statement::FunctionDeclaration(func) => {
+                StatementKind::FunctionDeclaration(func) => {
                     if func.body.is_some()
                         && let Some(name) = func.name()
                         && self.scope.has_value_reference(&name)
@@ -596,7 +594,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         can_expando_function_names.insert(name);
                     }
                 }
-                Statement::VariableDeclaration(decl) => {
+                StatementKind::VariableDeclaration(decl) => {
                     for declarator in &decl.declarations {
                         if declarator.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
@@ -607,13 +605,13 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                 }
-                Statement::TSModuleDeclaration(decl) => {
+                StatementKind::TSModuleDeclaration(decl) => {
                     Self::collect_namespace_properties(
                         decl,
                         &mut assignable_properties_for_namespace,
                     );
                 }
-                Statement::ExpressionStatement(stmt) => {
+                StatementKind::ExpressionStatement(stmt) => {
                     if let Some(assignment) = stmt.expression.as_assignment_expression()
                         && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
                             &assignment.left

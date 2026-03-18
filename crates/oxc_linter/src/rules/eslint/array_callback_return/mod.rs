@@ -31,12 +31,12 @@ fn guess_missing_return_hint(
     function_body: &FunctionBody<'_>,
 ) -> Option<(Span, MissingReturnHint)> {
     let last_statement = function_body.statements.last()?;
-    match last_statement {
-        Statement::SwitchStatement(stmt) => {
+    match last_statement.kind() {
+        StatementKind::SwitchStatement(stmt) => {
             let has_default = stmt.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
             (!has_default).then_some((stmt.span, MissingReturnHint::SwitchWithoutDefault))
         }
-        Statement::IfStatement(stmt) => {
+        StatementKind::IfStatement(stmt) => {
             (stmt.alternate.is_none()).then_some((stmt.span, MissingReturnHint::IfWithoutElse))
         }
         _ => None,
@@ -325,7 +325,7 @@ pub fn get_array_method_info<'a>(
                 let callee = call.callee.get_inner_expression();
                 let callee = if let Some(member) = callee.as_member_expression() {
                     member
-                } else if let Expression::ChainExpression(chain) = callee {
+                } else if let Some(chain) = callee.as_chain_expression() {
                     chain.expression.as_member_expression()?
                 } else {
                     return None;

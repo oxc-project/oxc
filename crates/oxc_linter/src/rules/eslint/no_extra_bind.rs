@@ -73,8 +73,8 @@ impl Rule for NoExtraBind {
 
         let expr = call_expr.callee.get_inner_expression();
 
-        let Some(member_expr) = (match expr {
-            Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+match expr.kind() {
+            ExpressionKind::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
             _ => expr.as_member_expression(),
         }) else {
             return;
@@ -83,8 +83,8 @@ impl Rule for NoExtraBind {
             return;
         };
         let obj = member_expr.object().get_inner_expression();
-        match obj {
-            Expression::FunctionExpression(func_expr) => {
+        match obj.kind() {
+            ExpressionKind::FunctionExpression(func_expr) => {
                 let Some(body) = &func_expr.body else {
                     return;
                 };
@@ -95,7 +95,7 @@ impl Rule for NoExtraBind {
                     ctx.diagnostic(no_extra_bind_diagnostic(span));
                 }
             }
-            Expression::ArrowFunctionExpression(_) => {
+            ExpressionKind::ArrowFunctionExpression(_) => {
                 ctx.diagnostic(no_extra_bind_diagnostic(span));
             }
             _ => {}

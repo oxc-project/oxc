@@ -11,7 +11,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
-        if let Statement::BlockStatement(block_stmt) = first {
+        if let Some(block_stmt) = first.as_block_statement_mut() {
             if let Some(b) = block_stmt.body.first() {
                 first = b;
             } else {
@@ -19,7 +19,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        let Statement::IfStatement(if_stmt) = first else {
+        let Some(if_stmt) = first.as_if_statement_mut() else {
             return;
         };
         // "for (;;) if (x) break;" => "for (; !x;) ;"
@@ -40,7 +40,7 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Some(mut if_stmt) = first.as_if_statement_mut() else { unreachable!() };
 
             let expr = match if_stmt.test.take_in(ctx.ast) {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
@@ -82,7 +82,7 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Some(mut if_stmt) = first.as_if_statement_mut() else { unreachable!() };
 
             let expr = if_stmt.test.take_in(ctx.ast);
 

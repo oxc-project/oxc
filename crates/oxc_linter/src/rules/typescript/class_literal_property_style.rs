@@ -121,7 +121,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && method.kind == MethodDefinitionKind::Get
             && !method.r#override
             && let Some(body) = &method.value.body
-            && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
+            && let Some(return_statement) = body.statements.first().as_return_statement()
             && let Some(argument) = &return_statement.argument
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
@@ -186,11 +186,11 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
         return true;
     }
 
-    match expression {
-        Expression::TaggedTemplateExpression(tagged_template) => {
+    match expression.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged_template) => {
             tagged_template.quasi.is_no_substitution_template()
         }
-        Expression::TemplateLiteral(template_literal) => {
+        ExpressionKind::TemplateLiteral(template_literal) => {
             template_literal.is_no_substitution_template()
         }
         _ => false,
@@ -200,8 +200,8 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
 fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     match (a.name(), b.name()) {
         (Some(a_name), Some(b_name)) => a_name == b_name,
-        _ => match (a.as_expression(), b.as_expression()) {
-            (Some(Expression::Identifier(a_ident)), Some(Expression::Identifier(b_ident))) => {
+        _ => match (a.as_expression().and_then(|e| e.as_identifier()), b.as_expression().and_then(|e| e.as_identifier())) {
+            (Some(a_ident), Some(b_ident)) => {
                 a_ident.name == b_ident.name
             }
             _ => false,
@@ -211,7 +211,7 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
 
 fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     let is_this_object =
-        |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
+        |expr: &Expression<'_>| matches!(expr.without_parentheses().kind(), ExpressionKind::ThisExpression(_));
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
@@ -250,6 +250,8 @@ impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         (

@@ -390,6 +390,7 @@ fn get_parenthesized_node<'a, 'b>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Async functions returning normal values/throwing values

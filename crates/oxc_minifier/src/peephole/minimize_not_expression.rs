@@ -20,7 +20,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::UnaryExpression(e) = expr else { return };
+        let Some(e) = expr.as_unary_expression_mut() else { return };
         if !e.operator.is_not() {
             return;
         }

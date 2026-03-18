@@ -105,7 +105,7 @@ impl Rule for ForDirection {
             return;
         };
 
-        let Some(Expression::BinaryExpression(test)) = &for_loop.test else {
+        let Some(ExpressionKind::BinaryExpression(test)) = &for_loop.test else {
             return;
         };
 
@@ -140,9 +140,9 @@ fn extract_counter<'a>(
     left: &'a Expression<'a>,
     right: &'a Expression<'a>,
 ) -> Option<(&'a IdentifierReference<'a>, CounterPosition)> {
-    match (left, right) {
-        (Expression::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
-        (_, Expression::Identifier(counter)) => Some((counter, CounterPosition::Right)),
+    match (left, right).kind() {
+        (ExpressionKind::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
+        (_, ExpressionKind::Identifier(counter)) => Some((counter, CounterPosition::Right)),
         _ => None,
     }
 }
@@ -165,12 +165,12 @@ fn get_expected_update_direction(
 }
 
 fn get_fixer_replace_operator(update: &Expression) -> &'static str {
-    match update {
-        Expression::UpdateExpression(update) => match update.operator {
+    match update.kind() {
+        ExpressionKind::UpdateExpression(update) => match update.operator {
             UpdateOperator::Increment => "--",
             UpdateOperator::Decrement => "++",
         },
-        Expression::AssignmentExpression(update) => match update.operator {
+        ExpressionKind::AssignmentExpression(update) => match update.operator {
             AssignmentOperator::Addition => "-=",
             AssignmentOperator::Subtraction => "+=",
             _ => "",
@@ -180,8 +180,8 @@ fn get_fixer_replace_operator(update: &Expression) -> &'static str {
 }
 
 fn get_fixer_replace_span(update: &Expression) -> Span {
-    match update {
-        Expression::UpdateExpression(update) => {
+    match update.kind() {
+        ExpressionKind::UpdateExpression(update) => {
             let arg_span = update.argument.span();
             let upd_span = update.span();
 
@@ -191,7 +191,7 @@ fn get_fixer_replace_span(update: &Expression) -> Span {
                 Span::new(upd_span.start, arg_span.start)
             }
         }
-        Expression::AssignmentExpression(update) => {
+        ExpressionKind::AssignmentExpression(update) => {
             Span::new(update.left.span().end, update.right.span().start)
         }
         _ => Span::new(0, 0),
@@ -209,9 +209,9 @@ fn get_update_direction(
     update: &Expression,
     counter: &IdentifierReference,
 ) -> Option<UpdateDirection> {
-    match update {
+    match update.kind() {
         // match increment or decrement
-        Expression::UpdateExpression(update) => match &update.argument {
+        ExpressionKind::UpdateExpression(update) => match &update.argument {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(id) if id.name == counter.name => {
                 Some(match update.operator {
                     UpdateOperator::Increment => UpdateDirection::Forward,
@@ -221,7 +221,7 @@ fn get_update_direction(
             _ => None,
         },
         // match add assign or subtract assign
-        Expression::AssignmentExpression(assign) => match &assign.left {
+        ExpressionKind::AssignmentExpression(assign) => match &assign.left {
             AssignmentTarget::AssignmentTargetIdentifier(id) if id.name == counter.name => {
                 get_assignment_direction(assign)
             }
@@ -233,9 +233,9 @@ fn get_update_direction(
 }
 
 fn get_update_span(update: &Expression) -> Span {
-    match update {
-        Expression::UpdateExpression(update) => update.span,
-        Expression::AssignmentExpression(assign) => assign.span,
+    match update.kind() {
+        ExpressionKind::UpdateExpression(update) => update.span,
+        ExpressionKind::AssignmentExpression(assign) => assign.span,
         _ => unreachable!(
             "get_update_span should only be called with UpdateExpression or AssignmentExpression"
         ),
@@ -245,9 +245,9 @@ fn get_update_span(update: &Expression) -> Span {
 fn get_assignment_direction(assign: &AssignmentExpression) -> Option<UpdateDirection> {
     let operator = &assign.operator;
     let right = &assign.right;
-    let is_positive = match right {
-        Expression::NumericLiteral(r) if r.value != 0.0 => r.value.is_sign_positive(),
-        Expression::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
+ match right.kind() {
+        ExpressionKind::NumericLiteral(r) if r.value != 0.0 => r.value.is_sign_positive(),
+        ExpressionKind::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
         _ => return None,
     };
 

@@ -82,7 +82,7 @@ impl Rule for ConsistentExistenceIndexCheck {
         let right = binary_expression.right.get_inner_expression();
         let operator = binary_expression.operator;
 
-        let Expression::Identifier(identifier) = left else {
+        let Some(identifier) = left.as_identifier() else {
             return;
         };
 
@@ -99,7 +99,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(Expression::CallExpression(call)) = &variables_declarator.init else {
+            let Some(call) = variables_declarator.init.as_call_expression() else {
                 return;
             };
 
@@ -204,9 +204,9 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 }
 
 fn is_negative_one(expression: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary_expression) = expression
+    if let Some(unary_expression) = expression.as_unary_expression()
         && unary_expression.operator == UnaryOperator::UnaryNegation
-        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
+        && let Some(value) = unary_expression.argument.get_inner_expression().as_numeric_literal()
     {
         return value.raw.as_ref().unwrap() == "1";
     }
@@ -217,6 +217,7 @@ fn is_negative_one(expression: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass: Vec<&str> = vec![
         // Skip checking if indexOf() method is not a method call from a object

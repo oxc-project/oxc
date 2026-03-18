@@ -18,14 +18,14 @@ use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
-    match &call_expr.callee {
-        Expression::StaticMemberExpression(member_expr) => {
+    match call_expr.callee.kind() {
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             member_expr.property.name == "createElement"
         }
-        Expression::ComputedMemberExpression(member_expr) => {
+        ExpressionKind::ComputedMemberExpression(member_expr) => {
             member_expr.static_property_name().is_some_and(|name| name == "createElement")
         }
-        Expression::Identifier(ident) => ident.name == "createElement",
+        ExpressionKind::Identifier(ident) => ident.name == "createElement",
         _ => false,
     }
 }
@@ -373,7 +373,7 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let Expression::Identifier(ident) = member_expr.object()
+        && let ExpressionKind::Identifier(ident) = member_expr.object()
     {
         return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
     }
@@ -394,7 +394,7 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     };
     if let Some(super_class) = &class_expr.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object()
         {
             return ident.name == PRAGMA
                 && member_expr
@@ -496,11 +496,11 @@ pub fn is_react_hook_name(name: &str) -> bool {
 ///
 /// Identifies `use(...)` as a valid hook.
 pub fn is_react_hook(expr: &Expression) -> bool {
-    match expr {
-        Expression::StaticMemberExpression(static_expr) => {
+    match expr.kind() {
+        ExpressionKind::StaticMemberExpression(static_expr) => {
             let is_valid_property = is_react_hook_name(&static_expr.property.name);
-            let is_valid_namespace = match &static_expr.object {
-                Expression::Identifier(ident) => {
+ match static_expr.object.kind() {
+                ExpressionKind::Identifier(ident) => {
                     // TODO: test PascalCase
                     ident.name.chars().next().is_some_and(char::is_uppercase)
                 }
@@ -508,7 +508,7 @@ pub fn is_react_hook(expr: &Expression) -> bool {
             };
             is_valid_namespace && is_valid_property
         }
-        Expression::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
+        ExpressionKind::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
         _ => false,
     }
 }
@@ -562,7 +562,7 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
 
 // check current node is this.state.xx
 pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Expression::ThisExpression(_) = &expression.object {
+    if let Some(_) = expression.object.as_this_expression() {
         return expression.property.name == "state";
     }
 
@@ -593,8 +593,8 @@ pub fn find_innermost_function_with_jsx<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'_>,
 ) -> Option<InnermostFunction<'a>> {
-    match expr {
-        Expression::CallExpression(call) => {
+    match expr.kind() {
+        ExpressionKind::CallExpression(call) => {
             // Check if this is a HOC call
             if let Some(callee_name) = call.callee_name()
                 && is_hoc_call(callee_name, ctx)
@@ -608,11 +608,11 @@ pub fn find_innermost_function_with_jsx<'a>(
             }
             None
         }
-        Expression::FunctionExpression(func) => {
+        ExpressionKind::FunctionExpression(func) => {
             // Check if this function contains JSX
             if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
         }
-        Expression::ArrowFunctionExpression(arrow_func) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             // Check if this arrow function contains JSX
             if expression_contains_jsx(expr) {
                 Some(InnermostFunction::ArrowFunction)
@@ -621,7 +621,7 @@ pub fn find_innermost_function_with_jsx<'a>(
                 if arrow_func.expression {
                     // Expression-bodied arrow function: () => () => <div />
                     if arrow_func.body.statements.len() == 1
-                        && let Statement::ExpressionStatement(expr_stmt) =
+                        && let StatementKind::ExpressionStatement(expr_stmt) =
                             &arrow_func.body.statements[0]
                     {
                         return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
@@ -629,7 +629,7 @@ pub fn find_innermost_function_with_jsx<'a>(
                 } else {
                     // Block-bodied arrow function: () => { return () => <div /> }
                     for stmt in &arrow_func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt
+                        if let Some(ret_stmt) = stmt.as_return_statement()
                             && let Some(expr) = &ret_stmt.argument
                         {
                             return find_innermost_function_with_jsx(expr, ctx);
@@ -698,9 +698,9 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
 
 /// Checks if a function-like expression (function or arrow function) contains JSX
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
-    match expr {
-        Expression::FunctionExpression(func) => function_contains_jsx(func),
-        Expression::ArrowFunctionExpression(arrow_func) => {
+    match expr.kind() {
+        ExpressionKind::FunctionExpression(func) => function_contains_jsx(func),
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,

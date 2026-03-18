@@ -120,7 +120,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         if function.expression
-            && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
+            && let Some(stmt) = function.body.statements.first().and_then(|s| s.as_expression_statement())
         {
             return self
                 .infer_type_from_expression(&stmt.expression)

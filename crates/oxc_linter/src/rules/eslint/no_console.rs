@@ -100,7 +100,7 @@ impl Rule for NoConsole {
             _ => return,
         };
 
-        let Expression::Identifier(ident) = object else {
+        let Some(ident) = object.as_identifier() else {
             return;
         };
 

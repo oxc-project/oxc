@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -165,11 +165,11 @@ impl Rule for NoCommonjs {
                         AstKind::ExpressionStatement(expr_statement)
                             if matches!(
                                 expr_statement.expression,
-                                Expression::AssignmentExpression(_)
+                                ExpressionKind::AssignmentExpression(_)
                             ) =>
                         {
-                            match &expr_statement.expression {
-                                Expression::AssignmentExpression(assign_expr) => {
+                            match expr_statement.expression.kind() {
+                                ExpressionKind::AssignmentExpression(assign_expr) => {
                                     if !assign_expr.right.is_function()
                                         && !assign_expr.right.is_string_literal()
                                     {
@@ -186,8 +186,7 @@ impl Rule for NoCommonjs {
                             }
                         }
                         AstKind::AssignmentExpression(assignment_expr) => {
-                            if let Expression::ObjectExpression(_object_expr) =
-                                &assignment_expr.right.without_parentheses()
+                            if let Some(_object_expr) = assignment_expr.right.without_parentheses().as_object_expression()
                             {
                                 ctx.diagnostic(no_commonjs_diagnostic(
                                     member_expr_kind.span(),

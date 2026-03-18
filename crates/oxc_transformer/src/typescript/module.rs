@@ -39,7 +39,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::TSExportAssignment(export_assignment) = stmt {
+        if let Some(export_assignment) = stmt.as_ts_export_assignment() {
             *stmt = self.transform_ts_export_assignment(export_assignment, ctx);
         }
     }
@@ -73,7 +73,7 @@ impl<'a> TypeScriptModule {
                 .create_reference_in_current_scope(ctx.ast.ident("module"), ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
-            let object = Expression::Identifier(reference);
+            let object = Expression::identifier(reference);
             let property = ctx.ast.identifier_name(SPAN, "exports");
             ctx.ast.member_expression_static(SPAN, object, property, false)
         };
@@ -123,7 +123,7 @@ impl<'a> TypeScriptModule {
                 let ident = ident.clone();
                 let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
                 *reference.flags_mut() = ReferenceFlags::Read;
-                (VariableDeclarationKind::Var, Expression::Identifier(ctx.alloc(ident)))
+                (VariableDeclarationKind::Var, Expression::identifier(ctx.alloc(ident)))
             }
             TSModuleReference::QualifiedName(qualified_name) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
@@ -175,7 +175,7 @@ impl<'a> TypeScriptModule {
                 let ident = ident.clone();
                 let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
                 *reference.flags_mut() = ReferenceFlags::Read;
-                Expression::Identifier(ctx.alloc(ident))
+                Expression::identifier(ctx.alloc(ident))
             }
             TSTypeName::QualifiedName(qualified_name) => ctx
                 .ast
@@ -221,7 +221,7 @@ impl<'a> TypeScriptModule {
         }
 
         for stmt in stmts.iter().rev() {
-            if let Statement::TSImportEqualsDeclaration(import_equals) = stmt {
+            if let Some(import_equals) = stmt.as_ts_import_equals_declaration() {
                 Self::mark_module_reference_as_type_if_binding_unused(import_equals, ctx);
             }
         }

@@ -97,7 +97,7 @@ impl Rule for PreferNumberProperties {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                let Expression::Identifier(ident_name) = member_expr.object() else {
+                let Some(ident_name) = member_expr.object().as_identifier() else {
                     return;
                 };
 
@@ -174,14 +174,14 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
-                    if let Expression::Identifier(ident) = &call_expr.callee
+                    if let Some(ident) = call_expr.callee.as_identifier()
                         && !ctx.is_reference_to_global_variable(ident)
                     {
                         return;
                     }
 
                     let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {
-                        Expression::Identifier(ident) => {
+                        ExpressionKind::Identifier(ident) => {
                             // Use replace on the full call expression span instead of insert_text_before.
                             // This ensures the fix span overlaps with prefer_numeric_literals fixes,
                             // so the fixer's conflict resolution will skip one of them instead of
@@ -239,11 +239,11 @@ fn find_ancestor_unary<'a>(
 }
 
 fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
-    match expr {
-        Expression::Identifier(ident_name) => Some(ident_name.name.as_str()),
+    match expr.kind() {
+        ExpressionKind::Identifier(ident_name) => Some(ident_name.name.as_str()),
         match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
-            let Expression::Identifier(ident_name) = member_expr.object() else {
+            let Some(ident_name) = member_expr.object().as_identifier() else {
                 return None;
             };
 
@@ -261,6 +261,7 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
 fn test() {
     use crate::tester::Tester;
     use serde_json::json;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (r#"Number.parseInt("10", 2);"#, None),

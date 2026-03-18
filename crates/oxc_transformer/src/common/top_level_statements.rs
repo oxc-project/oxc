@@ -47,7 +47,7 @@ impl<'a> TopLevelStatementsStore<'a> {
         let index = program
             .body
             .iter()
-            .position(|stmt| !matches!(stmt, Statement::ImportDeclaration(_)))
+            .position(|stmt| !stmt.is_import_declaration())
             .unwrap_or(program.body.len());
 
         program.body.splice(index..index, self.stmts.drain(..));

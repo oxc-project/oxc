@@ -115,8 +115,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             false,
         ));
 
-        let scope_id = match &mut for_of_stmt.body {
-            Statement::BlockStatement(block) => block.scope_id(),
+        let scope_id = match for_of_stmt.body.kind() {
+            StatementKind::BlockStatement(block) => block.scope_id(),
             _ => ctx.insert_scope_below_statement_from_scope_id(
                 &for_of_stmt.body,
                 for_of_stmt.scope_id(),
@@ -126,7 +126,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
         ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, for_of_init_name);
 
-        if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
+        if let Some(body) = for_of_stmt.body.as_block_statement_mut() {
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
             body.body.insert(0, using_stmt);
         } else {
@@ -237,9 +237,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     // a function call.
     #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
-            Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
+        match stmt.kind() {
+            StatementKind::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
+            StatementKind::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
             _ => {}
         }
     }
@@ -298,8 +298,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// allowing `enter_statement` to transform them.
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.top_level_using.clear();
-        if !program.body.iter().any(|stmt| match stmt {
-            Statement::VariableDeclaration(var_decl) => matches!(
+        if !program.body.iter().any(|stmt| match stmt.kind() {
+            StatementKind::VariableDeclaration(var_decl) => matches!(
                 var_decl.kind,
                 VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
             ),
@@ -317,13 +317,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             (ctx.ast.vec(), ctx.ast.vec()),
             |(mut program_body, mut inner_block), mut stmt| {
                 let address = stmt.address();
-                match stmt {
-                    Statement::FunctionDeclaration(_)
-                    | Statement::ImportDeclaration(_)
-                    | Statement::ExportAllDeclaration(_) => {
+                match stmt.kind() {
+                    StatementKind::FunctionDeclaration(_)
+                    | StatementKind::ImportDeclaration(_)
+                    | StatementKind::ExportAllDeclaration(_) => {
                         program_body.push(stmt);
                     }
-                    Statement::ExportDefaultDeclaration(ref mut export_default_decl) => {
+                    Statement::export_default_declaration(ref mut export_default_decl) => {
                         let (var_id, span) = match &mut export_default_decl.declaration {
                             ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
                                 if class_decl.id.is_some() =>
@@ -357,16 +357,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                         let expr = match decl {
                             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
-                                Expression::FunctionExpression(decl)
+                                Expression::function_expression(decl)
                             }
                             ExportDefaultDeclarationKind::ClassDeclaration(mut decl) => {
                                 decl.r#type = ClassType::ClassExpression;
-                                Expression::ClassExpression(decl)
+                                Expression::class_expression(decl)
                             }
                             _ => decl.into_expression(),
                         };
 
-                        inner_block.push(Statement::VariableDeclaration(
+                        inner_block.push(Statement::variable_declaration(
                             ctx.ast.alloc_variable_declaration(
                                 span,
                                 VariableDeclarationKind::Var,
@@ -382,7 +382,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ),
                         ));
 
-                        program_body.push(Statement::ExportNamedDeclaration(
+                        program_body.push(Statement::export_named_declaration(
                             ctx.ast.alloc_export_named_declaration(
                                 SPAN,
                                 None,
@@ -400,7 +400,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ),
                         ));
                     }
-                    Statement::ExportNamedDeclaration(ref mut export_named_declaration) => {
+                    Statement::export_named_declaration(ref mut export_named_declaration) => {
                         let Some(ref mut decl) = export_named_declaration.declaration else {
                             program_body.push(stmt);
                             return (program_body, inner_block);
@@ -467,13 +467,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                         ),
                                     );
                                 });
-                                inner_block.push(Statement::VariableDeclaration(var_decl));
+                                inner_block.push(Statement::variable_declaration(var_decl));
                                 export_specifiers
                             }
                             _ => unreachable!(),
                         };
 
-                        program_body.push(Statement::ExportNamedDeclaration(
+                        program_body.push(Statement::export_named_declaration(
                             ctx.ast.alloc_export_named_declaration(
                                 SPAN,
                                 None,
@@ -484,10 +484,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ),
                         ));
                     }
-                    Statement::ClassDeclaration(class_decl) => {
+                    StatementKind::ClassDeclaration(class_decl) => {
                         inner_block.push(Self::transform_class_decl(class_decl, ctx));
                     }
-                    Statement::VariableDeclaration(ref mut var_declaration) => {
+                    Statement::variable_declaration(ref mut var_declaration) => {
                         if var_declaration.kind == VariableDeclarationKind::Using {
                             self.top_level_using.insert(address, false);
                         } else if var_declaration.kind == VariableDeclarationKind::AwaitUsing {
@@ -540,7 +540,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     /// }
     /// ```
     fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::BlockStatement(block_stmt) = stmt else { unreachable!() };
+        let Some(block_stmt) = stmt.as_block_statement() else { unreachable!() };
         let span = block_stmt.span;
 
         if let Some((new_stmts, needs_await, using_ctx)) =
@@ -594,13 +594,13 @@ impl<'a> ExplicitResourceManagement<'a> {
         let mut needs_await = false;
         let current_scope_id = ctx.current_scope_id();
 
-        let Statement::SwitchStatement(switch_stmt) = stmt else { unreachable!() };
+        let Some(switch_stmt) = stmt.as_switch_statement() else { unreachable!() };
         let span = switch_stmt.span;
         let switch_stmt_scope_id = switch_stmt.scope_id();
 
         for case in &mut switch_stmt.cases {
             for case_stmt in &mut case.consequent {
-                let Statement::VariableDeclaration(var_decl) = case_stmt else { continue };
+                let Some(var_decl) = case_stmt.as_variable_declaration() else { continue };
                 if !matches!(
                     var_decl.kind,
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
@@ -719,7 +719,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         for stmt in stmts.iter_mut() {
             let address = stmt.address();
-            let Statement::VariableDeclaration(variable_declaration) = stmt else { continue };
+            let Some(variable_declaration) = stmt.as_variable_declaration() else { continue };
             if !matches!(
                 variable_declaration.kind,
                 VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
@@ -889,11 +889,11 @@ impl<'a> ExplicitResourceManagement<'a> {
         let id = class_decl.id.take().expect("ClassDeclaration should have an id");
 
         class_decl.r#type = ClassType::ClassExpression;
-        let class_expr = Expression::ClassExpression(class_decl);
+        let class_expr = Expression::class_expression(class_decl);
 
         *ctx.scoping_mut().symbol_flags_mut(id.symbol_id()) = SymbolFlags::FunctionScopedVariable;
 
-        Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+        Statement::variable_declaration(ctx.ast.alloc_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec1(ctx.ast.variable_declarator(

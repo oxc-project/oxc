@@ -254,10 +254,10 @@ fn match_href_expression(
     is_external_link: &mut bool,
     is_dynamic_link: &mut bool,
 ) {
-    match expr {
-        Expression::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
-        Expression::Identifier(_) => *is_dynamic_link = true,
-        Expression::ConditionalExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
+        ExpressionKind::Identifier(_) => *is_dynamic_link = true,
+        ExpressionKind::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
             match_href_expression(&expr.alternate, is_external_link, is_dynamic_link);
         }
@@ -321,12 +321,12 @@ fn match_rel_expression<'a>(
     allow_referrer: bool,
 ) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
-    match expr {
-        Expression::StringLiteral(str) => (check_rel_val(str, allow_referrer), "", false, false),
-        Expression::ConditionalExpression(expr) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => (check_rel_val(str, allow_referrer), "", false, false),
+        ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);
-            if let Expression::Identifier(identifier) = &expr.test {
+            if let Some(identifier) = expr.test.as_identifier() {
                 return (
                     consequent.0 && alternate.0,
                     identifier.name.as_str(),
@@ -361,14 +361,14 @@ fn check_rel<'a>(
 
 fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
-    match expr {
-        Expression::StringLiteral(str) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(str) => {
             (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
-            if let Expression::Identifier(identifier) = &expr.test {
+            if let Some(identifier) = expr.test.as_identifier() {
                 return (
                     consequent.0 || alternate.0,
                     identifier.name.as_str(),
@@ -402,6 +402,7 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (r#"<a href="foobar"></a>"#, None, None),

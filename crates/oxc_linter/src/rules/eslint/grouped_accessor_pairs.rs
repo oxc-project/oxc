@@ -406,13 +406,13 @@ fn get_key_name_and_check_literal<'a>(
         } else {
             matches!(
                 prop_key.as_expression().unwrap(),
-                Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::StringLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::TemplateLiteral(_)
+                ExpressionKind::BooleanLiteral(_)
+                    | ExpressionKind::NullLiteral(_)
+                    | ExpressionKind::StringLiteral(_)
+                    | ExpressionKind::RegExpLiteral(_)
+                    | ExpressionKind::BigIntLiteral(_)
+                    | ExpressionKind::NumericLiteral(_)
+                    | ExpressionKind::TemplateLiteral(_)
             )
         };
     (key_name, is_literal)

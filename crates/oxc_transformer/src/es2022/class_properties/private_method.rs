@@ -76,7 +76,7 @@ impl<'a> ClassProperties<'a> {
         PrivateMethodVisitor::new(*r#static, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
-        Some(Statement::FunctionDeclaration(function))
+        Some(Statement::function_declaration(function))
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
@@ -124,27 +124,27 @@ impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
 impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
+        match expr.kind() {
             // `super.prop`
-            Expression::StaticMemberExpression(_) => {
+            ExpressionKind::StaticMemberExpression(_) => {
                 self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            Expression::ComputedMemberExpression(_) => {
+            ExpressionKind::ComputedMemberExpression(_) => {
                 self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            Expression::CallExpression(call_expr) => {
+            ExpressionKind::CallExpression(call_expr) => {
                 self.super_converter
                     .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            Expression::AssignmentExpression(_) => {
+            ExpressionKind::AssignmentExpression(_) => {
                 self.super_converter
                     .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            Expression::UpdateExpression(_) => {
+            ExpressionKind::UpdateExpression(_) => {
                 self.super_converter
                     .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }

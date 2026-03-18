@@ -134,7 +134,7 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
         return;
     }
     let left = &expr.left;
-    let Expression::BinaryExpression(binary_expr) = &expr.right.without_parentheses() else {
+    let Some(binary_expr) = expr.right.without_parentheses().as_binary_expression() else {
         return;
     };
     let binary_operator = binary_expr.operator;
@@ -212,20 +212,20 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                 let right_text = {
                     let right_expr_text = right_expr.span().source_text(ctx.source_text());
                     let former = Span::new(operator_span.end, right_expr.span().start).source_text(ctx.source_text());
-                    match right_expr {
+                    match right_expr.kind() {
                         // For some special cases, we need to wrap the expression in a pair of ()
                         // e.g. "x += y + 1" => "x = x + (y + 1)"
                         // "x += () => {}" => "x = x + (() => {})"
                         // "x += y = 1" => "x = x + (y = 1)"
                         // "x += yield foo()" => "x = x + (yield foo())"
                         // "x += y || 3" => "x = x + (y || 3)"
-                        Expression::BinaryExpression(binary_expr) if binary_expr.operator.precedence() <= new_operator.precedence() => {
+                        ExpressionKind::BinaryExpression(binary_expr) if binary_expr.operator.precedence() <= new_operator.precedence() => {
                             format!("{former}({right_expr_text})")
                         }
-                        Expression::AssignmentExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::YieldExpression(_)
-                        | Expression::LogicalExpression(_) => {
+                        ExpressionKind::AssignmentExpression(_)
+                        | ExpressionKind::ArrowFunctionExpression(_)
+                        | ExpressionKind::YieldExpression(_)
+                        | ExpressionKind::LogicalExpression(_) => {
                             format!("{former}({right_expr_text})")
                         }
                         // For the rest
@@ -242,18 +242,18 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                                         first_comment.span.start == operator_span.end
                                     } else {
                                         // e.g. x /=/^abc/
-                                        matches!(right_expr, Expression::RegExpLiteral(regex_literal) if regex_literal.span.start == operator_span.end)
+                                        matches!(right_expr, ExpressionKind::RegExpLiteral(regex_literal) if regex_literal.span.start == operator_span.end)
                                     }
                                 }
                                 // x+=+y => x=x+ +y;
                                 BinaryOperator::Addition if no_gap => {
-                                    matches!(right_expr, Expression::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryPlus)
-                                        || matches!(right_expr, Expression::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Increment)
+                                    matches!(right_expr, ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryPlus)
+                                        || matches!(right_expr, ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Increment)
                                 }
                                 // x-=-y => x= x- -y
                                 BinaryOperator::Subtraction if no_gap => {
-                                    matches!(right_expr, Expression::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryNegation)
-                                        || matches!(right_expr, Expression::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Decrement)
+                                    matches!(right_expr, ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryNegation)
+                                        || matches!(right_expr, ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Decrement)
                                 }
                                 _ => false,
                             };
@@ -277,15 +277,15 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     let Some(expr) = simple_assignment_target.as_member_expression() else {
         return false;
     };
-    match expr {
+    match expr.kind() {
         MemberExpression::ComputedMemberExpression(computed_expr) => {
             matches!(
                 computed_expr.object,
-                Expression::Identifier(_) | Expression::ThisExpression(_)
+                ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_)
             ) && computed_expr.expression.is_literal()
         }
         MemberExpression::StaticMemberExpression(static_expr) => {
-            matches!(static_expr.object, Expression::Identifier(_) | Expression::ThisExpression(_))
+            matches!(static_expr.object, ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_))
         }
         MemberExpression::PrivateFieldExpression(_) => false,
     }
@@ -301,7 +301,7 @@ fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
     let Some(simple_assignment_target) = left.as_simple_assignment_target() else { return false };
     if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
-        return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
+        return matches!(right, ExpressionKind::Identifier(id2) if id2.name == id1.name);
     }
 
     let Some(left_member_expr) = simple_assignment_target.as_member_expression() else {

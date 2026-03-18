@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use cow_utils::CowUtils;
 
-use oxc_ast::ast::*;
+use oxc_ast::ast::{*, StatementKind};
 use oxc_span::GetSpan;
 use oxc_syntax::{
     operator::UnaryOperator,
@@ -104,22 +104,22 @@ impl Gen for Directive<'_> {
 
 impl Gen for Statement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
+        match self.kind() {
             // Most common statements first (based on parser order and frequency)
-            Self::BlockStatement(stmt) => {
+            StatementKind::BlockStatement(stmt) => {
                 p.print_comments_at(stmt.span.start);
                 stmt.print(p, ctx);
             }
-            Self::ExpressionStatement(stmt) => stmt.print(p, ctx),
-            Self::VariableDeclaration(decl) => {
+            StatementKind::ExpressionStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::VariableDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
-            Self::IfStatement(stmt) => stmt.print(p, ctx),
-            Self::ReturnStatement(stmt) => stmt.print(p, ctx),
-            Self::FunctionDeclaration(decl) => {
+            StatementKind::IfStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ReturnStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::FunctionDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 if decl.pure && p.options.print_annotation_comment() {
                     p.print_indent();
@@ -129,64 +129,64 @@ impl Gen for Statement<'_> {
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::ForStatement(stmt) => stmt.print(p, ctx),
-            Self::WhileStatement(stmt) => stmt.print(p, ctx),
-            Self::DoWhileStatement(stmt) => stmt.print(p, ctx),
-            Self::SwitchStatement(stmt) => stmt.print(p, ctx),
-            Self::BreakStatement(stmt) => stmt.print(p, ctx),
-            Self::ContinueStatement(stmt) => stmt.print(p, ctx),
-            Self::TryStatement(stmt) => stmt.print(p, ctx),
-            Self::ThrowStatement(stmt) => stmt.print(p, ctx),
-            Self::ForInStatement(stmt) => stmt.print(p, ctx),
-            Self::ForOfStatement(stmt) => stmt.print(p, ctx),
-            Self::ClassDeclaration(decl) => {
+            StatementKind::ForStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::WhileStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::DoWhileStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::SwitchStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::BreakStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ContinueStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::TryStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ThrowStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ForInStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ForOfStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ClassDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::LabeledStatement(stmt) => stmt.print(p, ctx),
-            Self::EmptyStatement(stmt) => stmt.print(p, ctx),
-            Self::ImportDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportNamedDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportDefaultDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportAllDeclaration(decl) => decl.print(p, ctx),
-            Self::WithStatement(stmt) => stmt.print(p, ctx),
-            Self::DebuggerStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::LabeledStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::EmptyStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::ImportDeclaration(decl) => decl.print(p, ctx),
+            StatementKind::ExportNamedDeclaration(decl) => decl.print(p, ctx),
+            StatementKind::ExportDefaultDeclaration(decl) => decl.print(p, ctx),
+            StatementKind::ExportAllDeclaration(decl) => decl.print(p, ctx),
+            StatementKind::WithStatement(stmt) => stmt.print(p, ctx),
+            StatementKind::DebuggerStatement(stmt) => stmt.print(p, ctx),
             // TypeScript-specific (less common)
-            Self::TSModuleDeclaration(decl) => {
+            StatementKind::TSModuleDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSGlobalDeclaration(decl) => {
+            StatementKind::TSGlobalDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSTypeAliasDeclaration(decl) => {
+            StatementKind::TSTypeAliasDeclaration(decl) => {
                 p.print_indent();
                 p.print_comments_at(decl.span.start);
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
-            Self::TSInterfaceDeclaration(decl) => {
+            StatementKind::TSInterfaceDeclaration(decl) => {
                 p.print_indent();
                 p.print_comments_at(decl.span.start);
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSEnumDeclaration(decl) => {
+            StatementKind::TSEnumDeclaration(decl) => {
                 p.print_indent();
                 p.print_comments_at(decl.span.start);
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSExportAssignment(decl) => decl.print(p, ctx),
-            Self::TSNamespaceExportDeclaration(decl) => decl.print(p, ctx),
-            Self::TSImportEqualsDeclaration(decl) => {
+            StatementKind::TSExportAssignment(decl) => decl.print(p, ctx),
+            StatementKind::TSNamespaceExportDeclaration(decl) => decl.print(p, ctx),
+            StatementKind::TSImportEqualsDeclaration(decl) => {
                 p.print_indent();
                 p.print_comments_at(decl.span.start);
                 decl.print(p, ctx);
@@ -226,8 +226,8 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     p.print_expression(&if_stmt.test);
     p.print_ascii_byte(b')');
 
-    match &if_stmt.consequent {
-        Statement::BlockStatement(block) => {
+    match if_stmt.consequent.kind() {
+        StatementKind::BlockStatement(block) => {
             p.print_soft_space();
             p.print_block_statement(block, ctx);
             if if_stmt.alternate.is_some() {
@@ -259,17 +259,17 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
         p.print_semicolon_if_needed();
         p.print_space_before_identifier();
         p.print_str("else");
-        match alternate {
-            Statement::BlockStatement(block) => {
+        match alternate.kind() {
+            StatementKind::BlockStatement(block) => {
                 p.print_soft_space();
                 p.print_block_statement(block, ctx);
                 p.print_soft_newline();
             }
-            Statement::IfStatement(if_stmt) => {
+            StatementKind::IfStatement(if_stmt) => {
                 p.print_hard_space();
                 print_if(if_stmt, p, ctx);
             }
-            stmt => p.print_body(stmt, true, ctx),
+            _ => p.print_body(alternate, true, ctx),
         }
     }
 }
@@ -278,20 +278,20 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
 fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
     let mut current = stmt;
     loop {
-        current = match current {
-            Statement::IfStatement(if_stmt) => {
+        current = match current.kind() {
+            StatementKind::IfStatement(if_stmt) => {
                 if let Some(stmt) = &if_stmt.alternate {
                     stmt
                 } else {
                     return true;
                 }
             }
-            Statement::ForStatement(for_stmt) => &for_stmt.body,
-            Statement::ForOfStatement(for_of_stmt) => &for_of_stmt.body,
-            Statement::ForInStatement(for_in_stmt) => &for_in_stmt.body,
-            Statement::WhileStatement(while_stmt) => &while_stmt.body,
-            Statement::WithStatement(with_stmt) => &with_stmt.body,
-            Statement::LabeledStatement(labeled_stmt) => &labeled_stmt.body,
+            StatementKind::ForStatement(for_stmt) => &for_stmt.body,
+            StatementKind::ForOfStatement(for_of_stmt) => &for_of_stmt.body,
+            StatementKind::ForInStatement(for_in_stmt) => &for_in_stmt.body,
+            StatementKind::WhileStatement(while_stmt) => &while_stmt.body,
+            StatementKind::WithStatement(with_stmt) => &with_stmt.body,
+            StatementKind::LabeledStatement(labeled_stmt) => &labeled_stmt.body,
             _ => return false,
         }
     }
@@ -427,13 +427,13 @@ impl Gen for DoWhileStatement<'_> {
         p.print_indent();
         p.print_space_before_identifier();
         p.print_str("do");
-        match &self.body {
-            Statement::BlockStatement(block) => {
+        match self.body.kind() {
+            StatementKind::BlockStatement(block) => {
                 p.print_soft_space();
                 p.print_block_statement(block, ctx);
                 p.print_soft_space();
             }
-            Statement::EmptyStatement(s) => s.print(p, ctx),
+            StatementKind::EmptyStatement(s) => s.print(p, ctx),
             _ => {
                 p.print_soft_newline();
                 p.indent();
@@ -1759,7 +1759,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             p.print_str("=>");
             p.print_soft_space();
             if self.expression {
-                if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
+                if let Some(stmt) = self.body.statements.first().and_then(|s| s.as_expression_statement()) {
                     p.start_of_arrow_expr = p.code_len();
                     stmt.expression.print_expr(p, Precedence::Comma, ctx);
                 }

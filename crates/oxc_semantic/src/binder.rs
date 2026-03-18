@@ -1,7 +1,7 @@
 //! Declare symbol for `BindingIdentifier`s
 
 use oxc_allocator::{GetAddress, UnstableAddress};
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, ast::*, ast::StatementKind};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
@@ -501,30 +501,30 @@ fn get_module_instance_state_for_statement<'a, 'b>(
         return *state;
     }
 
-    let state = match stmt {
+    let state = match stmt.kind() {
             // 1. interface declarations, type alias declarations
-            Statement::TSInterfaceDeclaration(_)
-            | Statement::TSTypeAliasDeclaration(_)
+            StatementKind::TSInterfaceDeclaration(_)
+            | StatementKind::TSTypeAliasDeclaration(_)
             // 3. non-exported import declarations
-            | Statement::TSImportEqualsDeclaration(_) => {
+            | StatementKind::TSImportEqualsDeclaration(_) => {
                 ModuleInstanceState::NonInstantiated
             }
             // 2. const enum declarations
-            Statement::TSEnumDeclaration(enum_decl) => {
+            StatementKind::TSEnumDeclaration(enum_decl) => {
                 if enum_decl.r#const {
                     ModuleInstanceState::ConstEnumOnly
                 } else {
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportDefaultDeclaration(export_decl)  => {
+            StatementKind::ExportDefaultDeclaration(export_decl)  => {
                 if matches!(export_decl.declaration, ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)) {
                     ModuleInstanceState::NonInstantiated
                 } else {
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) if export_decl.declaration.is_some() => {
+            StatementKind::ExportNamedDeclaration(export_decl) if export_decl.declaration.is_some() => {
                 match export_decl.declaration.as_ref().unwrap() {
                     Declaration::TSModuleDeclaration(module_decl) => {
                         get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
@@ -537,7 +537,7 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                 }
             }
             // 4. Export alias declarations pointing at uninstantiated modules
-            Statement::ExportNamedDeclaration(export_decl) => {
+            StatementKind::ExportNamedDeclaration(export_decl) => {
                 if export_decl.source.is_none() {
                     let mut export_state = ModuleInstanceState::NonInstantiated;
                     for specifier in &export_decl.specifiers {
@@ -552,7 +552,7 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                 }
             }
             // 5. other module declarations
-            Statement::TSModuleDeclaration(module_decl) => {
+            StatementKind::TSModuleDeclaration(module_decl) => {
                 get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
             }
             // Any other type of statement means the module is instantiated
@@ -583,20 +583,20 @@ fn get_module_instance_state_for_alias_target<'a>(
     loop {
         let mut found = false;
         for stmt in &current_block_stmts {
-            match stmt {
-                Statement::VariableDeclaration(decl) => {
+            match stmt.kind() {
+                StatementKind::VariableDeclaration(decl) => {
                     decl.bound_names(&mut |id| {
                         if id.name == name {
                             found = true;
                         }
                     });
                 }
-                match_declaration!(Statement) => {
+                _ if stmt.is_declaration() => {
                     if stmt.to_declaration().id().is_some_and(|id| id.name == name) {
                         found = true;
                     }
                 }
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
+                StatementKind::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
                     Some(Declaration::VariableDeclaration(decl)) => {
                         decl.bound_names(&mut |id| {
                             if id.name == name {
@@ -613,7 +613,7 @@ fn get_module_instance_state_for_alias_target<'a>(
                         continue;
                     }
                 },
-                Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
+                StatementKind::ExportDefaultDeclaration(decl) => match &decl.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
                         if decl.id.as_ref().is_some_and(|id| id.name == name) {
                             found = true;
@@ -635,7 +635,7 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
 
             if found {
-                if matches!(stmt, Statement::TSImportEqualsDeclaration(_)) {
+                if stmt.is_ts_import_equals_declaration() {
                     // Treat re-exports of import aliases as instantiated,
                     // since they're ambiguous. This is consistent with
                     // `export import x = mod.x` being treated as instantiated:

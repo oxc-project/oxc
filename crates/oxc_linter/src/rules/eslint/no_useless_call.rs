@@ -96,7 +96,7 @@ impl Rule for NoUselessCall {
 
 fn validate_this_argument(this_arg: &Expression, applied: &Expression) -> bool {
     if this_arg.is_null_or_undefined() {
-        return matches!(applied, Expression::Identifier(_));
+        return applied.is_identifier();
     }
 
     let Some(applied_member) = as_member_expression_without_chain_expression(applied) else {
@@ -130,7 +130,7 @@ fn is_apply_function(call_expr: &CallExpression, callee: &MemberExpression) -> b
             .arguments
             .get(1)
             .and_then(|arg| arg.as_expression())
-            .is_some_and(|expr| matches!(expr, Expression::ArrayExpression(_)))
+            .is_some_and(|expr| expr.is_array_expression())
 }
 
 fn is_call_or_non_variadic_apply(call_expr: &CallExpression, callee: &MemberExpression) -> bool {
@@ -141,15 +141,15 @@ fn is_call_or_non_variadic_apply(call_expr: &CallExpression, callee: &MemberExpr
 fn as_member_expression_without_chain_expression<'a>(
     expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain_expr) => {
+    match expr.kind() {
+        ExpressionKind::ChainExpression(chain_expr) => {
             if let match_member_expression!(ChainElement) = chain_expr.expression {
                 chain_expr.expression.as_member_expression()
             } else {
                 None
             }
         }
-        match_member_expression!(Expression) => expr.as_member_expression(),
+        match_member_expression!(ExpressionKind) => expr.as_member_expression(),
         _ => None,
     }
 }

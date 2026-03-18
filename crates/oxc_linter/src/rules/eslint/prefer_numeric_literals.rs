@@ -68,28 +68,28 @@ impl Rule for PreferNumericLiterals {
             return;
         };
 
-        match &call_expr.callee.without_parentheses() {
-            Expression::Identifier(ident) if ident.name == "parseInt" => {
+        match &call_expr.callee.without_parentheses().kind() {
+            ExpressionKind::Identifier(ident) if ident.name == "parseInt" => {
                 if is_parse_int_call(ctx, ident, None) {
                     check_arguments(call_expr, ctx);
                 }
             }
-            Expression::StaticMemberExpression(member_expr) => {
-                if let Expression::Identifier(ident) = &member_expr.object {
+            ExpressionKind::StaticMemberExpression(member_expr) => {
+                if let Some(ident) = member_expr.object.as_identifier() {
                     if is_parse_int_call(ctx, ident, Some(member_expr)) {
                         check_arguments(call_expr, ctx);
                     }
-                } else if let Expression::ParenthesizedExpression(paren_expr) = &member_expr.object
-                    && let Expression::Identifier(ident) = &paren_expr.expression
+                } else if let Some(paren_expr) = member_expr.object.as_parenthesized_expression()
+                    && let ExpressionKind::Identifier(ident) = &paren_expr.expression
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);
                 }
             }
-            Expression::ChainExpression(chain_expr) => {
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
                     chain_expr.expression.as_member_expression()
-                    && let Expression::Identifier(ident) = &member_expr.object
+                    && let ExpressionKind::Identifier(ident) = &member_expr.object
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);
@@ -133,7 +133,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     }
 
     let radix_arg = &call_expr.arguments[1];
-    let Expression::NumericLiteral(numeric_lit) = &radix_arg.to_expression() else {
+    let Some(numeric_lit) = radix_arg.to_expression().as_numeric_literal() else {
         return;
     };
 

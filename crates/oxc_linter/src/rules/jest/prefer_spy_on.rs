@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
-        SimpleAssignmentTarget,
-    },
+        SimpleAssignmentTarget,, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -92,13 +91,13 @@ impl Rule for PreferSpyOn {
             return;
         };
 
-        match &assign_expr.right {
-            Expression::CallExpression(call_expr) => {
+        match assign_expr.right.kind() {
+            ExpressionKind::CallExpression(call_expr) => {
                 Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
             }
             _ => {
                 if let Some(mem_expr) = assign_expr.right.as_member_expression() {
-                    let Expression::CallExpression(call_expr) = mem_expr.object() else {
+                    let Some(call_expr) = mem_expr.object().as_call_expression() else {
                         return;
                     };
                     Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
@@ -171,21 +170,21 @@ impl PreferSpyOn {
         let mut formatter = fixer.codegen();
         formatter.print_str(framework_spy);
 
-        match left_assign {
-            MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
+        match left_assign.kind() {
+            MemberExpressionKind::ComputedMemberExpression(cmp_mem_expr) => {
                 formatter.print_expression(&cmp_mem_expr.object);
                 formatter.print_ascii_byte(b',');
                 formatter.print_ascii_byte(b' ');
                 formatter.print_expression(&cmp_mem_expr.expression);
             }
-            MemberExpression::StaticMemberExpression(static_mem_expr) => {
+            MemberExpressionKind::StaticMemberExpression(static_mem_expr) => {
                 let name = &static_mem_expr.property.name;
                 formatter.print_expression(&static_mem_expr.object);
                 formatter.print_ascii_byte(b',');
                 formatter.print_ascii_byte(b' ');
                 formatter.print_str(format!("\'{name}\'").as_str());
             }
-            MemberExpression::PrivateFieldExpression(_) => (),
+            MemberExpressionKind::PrivateFieldExpression(_) => (),
         }
 
         formatter.print_ascii_byte(b')');
@@ -218,7 +217,7 @@ impl PreferSpyOn {
             return (framework_spy, call_expr.arguments.first().and_then(Argument::as_expression));
         }
 
-        match &call_expr.callee {
+        match call_expr.callee.kind() {
             expr if expr.is_member_expression() => {
                 let mem_expr = expr.to_member_expression();
                 if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
@@ -226,7 +225,7 @@ impl PreferSpyOn {
                 }
                 ("", None)
             }
-            Expression::CallExpression(call_expr) => Self::get_test_fn_call(call_expr),
+            ExpressionKind::CallExpression(call_expr) => Self::get_test_fn_call(call_expr),
             _ => ("", None),
         }
     }
@@ -234,7 +233,7 @@ impl PreferSpyOn {
     fn find_mem_expr<'a>(mut mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
         loop {
             let object = mem_expr.object();
-            if let Expression::CallExpression(call_expr) = object {
+            if let Some(call_expr) = object.as_call_expression() {
                 return Some(call_expr);
             }
             if let Some(object_mem_expr) = object.as_member_expression() {

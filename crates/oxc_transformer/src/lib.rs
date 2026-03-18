@@ -589,7 +589,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             // };
             // ```
             for stmt in statements.iter_mut().rev() {
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                let Some(expr_stmt) = stmt.as_expression_statement() else {
                     continue;
                 };
                 let expression = Some(expr_stmt.expression.take_in(ctx.ast));

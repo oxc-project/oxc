@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
-        Statement, TaggedTemplateExpression, VariableDeclarationKind,
-    },
+        Statement, TaggedTemplateExpression, VariableDeclarationKind,, ExpressionKind, StatementKind},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -122,7 +121,7 @@ impl Rule for PreferMockReturnShorthand {
             return;
         };
 
-        if let Expression::UpdateExpression(_) = return_expression {
+        if let Some(_) = return_expression.as_update_expression() {
             return;
         }
 
@@ -185,8 +184,8 @@ impl PreferMockReturnShorthand {
 }
 
 fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    match argument_expression {
-        Expression::ArrowFunctionExpression(arrow_func) => {
+    match argument_expression.kind() {
+        ExpressionKind::ArrowFunctionExpression(arrow_func) => {
             if arrow_func.r#async
                 || arrow_func.body.statements.len() > 1
                 || arrow_func.params.has_parameter()
@@ -196,9 +195,9 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
 
             let stmt = arrow_func.body.statements.first()?;
 
-            match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
-                Statement::ReturnStatement(return_statement) => {
+            match stmt.kind() {
+                StatementKind::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
+                StatementKind::ReturnStatement(return_statement) => {
                     let Some(arg_expr) = &return_statement.argument else {
                         return None;
                     };
@@ -208,7 +207,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
                 _ => None,
             }
         }
-        Expression::FunctionExpression(function) => {
+        ExpressionKind::FunctionExpression(function) => {
             if function.r#async || function.params.has_parameter() {
                 return None;
             }
@@ -223,9 +222,9 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
 
             let stmt = body.statements.first()?;
 
-            match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
-                Statement::ReturnStatement(return_statement) => {
+            match stmt.kind() {
+                StatementKind::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
+                StatementKind::ReturnStatement(return_statement) => {
                     let Some(arg_expr) = &return_statement.argument else {
                         return None;
                     };

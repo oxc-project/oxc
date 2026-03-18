@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MemberExpression},
+    ast::{AssignmentTarget, Expression, MemberExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -90,7 +90,7 @@ impl Rule for NoExportsAssign {
             return;
         }
 
-        if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right
+        if let Some(assign_expr) = assign_expr.right.as_assignment_expression()
             && is_module_exports(assign_expr.left.as_member_expression(), ctx)
         {
             return;

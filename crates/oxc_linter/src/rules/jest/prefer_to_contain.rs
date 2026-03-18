@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -108,7 +108,7 @@ impl PreferToContain {
         else {
             return;
         };
-        let Expression::CallExpression(expect_call_expr) = parent else {
+        let Some(expect_call_expr) = parent.as_call_expression() else {
             return;
         };
 
@@ -116,7 +116,7 @@ impl PreferToContain {
         if expect_call_expr.arguments.is_empty()
             || !matches!(
                 jest_expect_first_arg.get_inner_expression(),
-                Expression::BooleanLiteral(_)
+                ExpressionKind::BooleanLiteral(_)
             )
         {
             return;

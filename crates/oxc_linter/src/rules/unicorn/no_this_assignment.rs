@@ -66,7 +66,7 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                if !matches!(init.without_parentheses(), Expression::ThisExpression(_)) {
+                if !matches!(init.without_parentheses().kind(), ExpressionKind::ThisExpression(_)) {
                     return;
                 }
 
@@ -82,7 +82,7 @@ impl Rule for NoThisAssignment {
             AstKind::AssignmentExpression(assignment_expr) => {
                 if !matches!(
                     assignment_expr.right.without_parentheses(),
-                    Expression::ThisExpression(_)
+                    ExpressionKind::ThisExpression(_)
                 ) {
                     return;
                 }
@@ -105,6 +105,7 @@ impl Rule for NoThisAssignment {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const {property} = this;",

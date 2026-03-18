@@ -10,7 +10,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::LogicalExpression(e) = expr else { return };
+        let Some(e) = expr.as_logical_expression_mut() else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
             *expr = changed;
             ctx.state.changed = true;
@@ -49,7 +49,7 @@ impl<'a> PeepholeOptimizations {
         ) {
             return Some(new_expr);
         }
-        let Expression::LogicalExpression(left) = &mut expr.left else {
+        let Some(left) = expr.left.as_logical_expression_mut() else {
             return None;
         };
         if left.operator != op {
@@ -129,7 +129,7 @@ impl<'a> PeepholeOptimizations {
                 LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
             },
             |b| {
-                if let Expression::Identifier(id) = b { Some(id) } else { None }
+                if let Some(id) = b.as_identifier_mut() { Some(id) } else { None }
             },
         )?;
 
@@ -187,7 +187,7 @@ impl<'a> PeepholeOptimizations {
                 Expression::Identifier(ident) => !ctx.is_global_reference(ident),
                 Expression::ThisExpression(_) => {
                     expr.as_member_expression().is_some_and(|read_expr| {
-                        matches!(read_expr.object(), Expression::ThisExpression(_))
+                        read_expr.object().is_this_expression()
                     })
                 }
                 _ => false,
@@ -212,8 +212,8 @@ impl<'a> PeepholeOptimizations {
         if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators) {
             return;
         }
-        let Expression::LogicalExpression(e) = expr else { return };
-        if let Expression::SequenceExpression(sequence_expr) = &e.right {
+        let Some(e) = expr.as_logical_expression_mut() else { return };
+        if let Some(sequence_expr) = e.right.as_sequence_expression() {
             let Some(Expression::AssignmentExpression(assignment_expr)) =
                 sequence_expr.expressions.last()
             else {
@@ -237,7 +237,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
+            let Some(sequence_expr) = e.right.as_sequence_expression_mut() else { return };
             let Some(Expression::AssignmentExpression(mut assignment_expr)) =
                 sequence_expr.expressions.pop()
             else {
@@ -258,7 +258,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let Expression::AssignmentExpression(assignment_expr) = &e.right else {
+        let Some(assignment_expr) = &e.right.as_assignment_expression_mut() else {
             return;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {
@@ -273,7 +273,7 @@ impl<'a> PeepholeOptimizations {
         Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
 
         let span = e.span;
-        let Expression::AssignmentExpression(assignment_expr) = &mut e.right else {
+        let Some(assignment_expr) = e.right.as_assignment_expression_mut() else {
             return;
         };
         assignment_expr.span = span;

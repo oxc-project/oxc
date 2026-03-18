@@ -128,7 +128,7 @@ impl Rule for JsxPropsNoSpreading {
         }
 
         if self.explicit_spread == IgnoreEnforceOption::Ignore
-            && let Expression::ObjectExpression(obj_expr) = &spread_attr.argument
+            && let Some(obj_expr) = spread_attr.argument.as_object_expression()
             && obj_expr.properties.iter().all(|prop| !prop.is_spread())
         {
             return;
@@ -173,6 +173,7 @@ fn get_member_expr_tag_name(member_expr: &JSXMemberExpression) -> CompactStr {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

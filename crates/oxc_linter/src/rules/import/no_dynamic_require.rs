@@ -1,4 +1,5 @@
 use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -91,9 +92,9 @@ impl Rule for NoDynamicRequire {
 }
 
 fn is_static_value(expr: &Expression) -> bool {
-    match expr {
-        Expression::StringLiteral(_) => true,
-        Expression::TemplateLiteral(t) => t.is_no_substitution_template(),
+    match expr.kind() {
+        ExpressionKind::StringLiteral(_) => true,
+        ExpressionKind::TemplateLiteral(t) => t.is_no_substitution_template(),
         _ => false,
     }
 }

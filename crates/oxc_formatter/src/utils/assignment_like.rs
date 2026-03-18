@@ -558,7 +558,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 match right_expression.kind() {
                     ExpressionKind::ArrowFunctionExpression(arrow) => {
                         if arrow.expression {
-                            let Statement::ExpressionStatement(stmt) = &arrow.body.statements[0]
+                            let StatementKind::ExpressionStatement(stmt) =
+                                arrow.body.statements[0].kind()
                             else {
                                 unreachable!()
                             };

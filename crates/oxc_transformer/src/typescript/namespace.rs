@@ -41,8 +41,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
         let mut new_stmts = ctx.ast.vec();
 
         for stmt in program.body.take_in(ctx.ast) {
-            match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+            match stmt.kind() {
+                StatementKind::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -50,13 +50,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                     continue;
                 }
-                Statement::TSGlobalDeclaration(decl) => {
+                StatementKind::TSGlobalDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
                     continue;
                 }
-                Statement::ExportNamedDeclaration(export_decl)
+                Statement::export_named_declaration(export_decl)
                     if export_decl.declaration.as_ref().is_some_and(|declaration| {
                         // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
                         debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
@@ -188,7 +188,7 @@ impl<'a> TypeScriptNamespace {
                 let declaration = Declaration::TSModuleDeclaration(declaration);
                 let export_named_decl =
                     ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
-                let stmt = Statement::ExportNamedDeclaration(export_named_decl);
+                let stmt = Statement::export_named_declaration(export_named_decl);
                 directives = ctx.ast.vec();
                 namespace_top_level = ctx.ast.vec1(stmt);
             }
@@ -197,16 +197,16 @@ impl<'a> TypeScriptNamespace {
         let mut new_stmts = ctx.ast.vec();
 
         for stmt in namespace_top_level {
-            match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+            match stmt.kind() {
+                StatementKind::TSModuleDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
-                Statement::TSGlobalDeclaration(_) => {
+                StatementKind::TSGlobalDeclaration(_) => {
                     // Remove it.
                     // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
                     // where identifier is a string literal: `declare module 'foo' { global {} }`
                 }
-                Statement::ExportNamedDeclaration(export_decl) => {
+                StatementKind::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
                     // legal syntax in TS namespaces
                     let export_decl = export_decl.unbox();
@@ -284,7 +284,7 @@ impl<'a> TypeScriptNamespace {
             if is_export {
                 let export_named_decl =
                     ctx.ast.plain_export_named_declaration_declaration(span, declaration);
-                let stmt = Statement::ExportNamedDeclaration(export_named_decl);
+                let stmt = Statement::export_named_declaration(export_named_decl);
                 parent_stmts.push(stmt);
             } else {
                 parent_stmts.push(Statement::from(declaration));
@@ -338,7 +338,7 @@ impl<'a> TypeScriptNamespace {
                 ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
             };
             let function_expr =
-                Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
+                Expression::function_expression(ctx.ast.alloc_plain_function_with_scope_id(
                     FunctionType::FunctionExpression,
                     span,
                     None,
@@ -470,7 +470,7 @@ impl<'a> TypeScriptNamespace {
                     );
                 }
             });
-            return ctx.ast.vec1(Statement::VariableDeclaration(var_decl));
+            return ctx.ast.vec1(Statement::variable_declaration(var_decl));
         }
 
         // Now we have pattern in declarators
@@ -485,7 +485,7 @@ impl<'a> TypeScriptNamespace {
         });
 
         ctx.ast.vec_from_array([
-            Statement::VariableDeclaration(var_decl),
+            Statement::variable_declaration(var_decl),
             ctx.ast.statement_expression(SPAN, ctx.ast.expression_sequence(SPAN, assignments)),
         ])
     }
@@ -501,9 +501,9 @@ impl<'a> TypeScriptNamespace {
 
 /// Check if the statements contain a namespace declaration
 fn has_namespace(stmts: &[Statement]) -> bool {
-    stmts.iter().any(|stmt| match stmt {
-        Statement::TSModuleDeclaration(_) | Statement::TSGlobalDeclaration(_) => true,
-        Statement::ExportNamedDeclaration(decl) => {
+    stmts.iter().any(|stmt| match stmt.kind() {
+        StatementKind::TSModuleDeclaration(_) | StatementKind::TSGlobalDeclaration(_) => true,
+        StatementKind::ExportNamedDeclaration(decl) => {
             matches!(decl.declaration, Some(Declaration::TSModuleDeclaration(_)))
         }
         _ => false,

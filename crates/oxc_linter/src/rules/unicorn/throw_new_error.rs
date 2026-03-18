@@ -67,8 +67,8 @@ impl Rule for ThrowNewError {
         };
 
         let name = match call_expr.callee.without_parentheses() {
-            Expression::Identifier(v) => v.name,
-            Expression::StaticMemberExpression(v) => v.property.name,
+            ExpressionKind::Identifier(v) => v.name,
+            ExpressionKind::StaticMemberExpression(v) => v.property.name,
             _ => return,
         };
 
@@ -83,6 +83,7 @@ impl Rule for ThrowNewError {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "throw new Error()",

@@ -68,7 +68,7 @@ impl Rule for PreferResponseStaticJson {
             return;
         };
 
-        let Expression::CallExpression(call_expr) = argument_expr.get_inner_expression() else {
+        let Some(call_expr) = argument_expr.get_inner_expression().as_call_expression() else {
             return;
         };
 
@@ -137,7 +137,7 @@ fn should_add_semicolon(node: &AstNode, new_expr: &NewExpression, ctx: &LintCont
     let parent = ctx.nodes().parent_node(node.id());
     let new_expr_is_parenthesized = matches!(parent.kind(), AstKind::ParenthesizedExpression(_));
 
-    let callee_is_parenthesized = !matches!(new_expr.callee, Expression::Identifier(_));
+    let callee_is_parenthesized = !matches!(new_expr.callee.kind(), ExpressionKind::Identifier(_));
 
     !new_expr_is_parenthesized && callee_is_parenthesized && could_be_asi_hazard(node, ctx)
 }
@@ -149,6 +149,7 @@ fn stringify_has_spread_arguments(call_expr: &CallExpression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "Response.json(data)",

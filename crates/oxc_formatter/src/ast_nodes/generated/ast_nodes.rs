@@ -2923,159 +2923,159 @@ impl<'a> AstNode<'a, Statement<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Statement::BlockStatement(s) => {
+        let node = match self.inner.kind() {
+            StatementKind::BlockStatement(s) => {
                 AstNodes::BlockStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::BreakStatement(s) => {
+            StatementKind::BreakStatement(s) => {
                 AstNodes::BreakStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ContinueStatement(s) => {
+            StatementKind::ContinueStatement(s) => {
                 AstNodes::ContinueStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::DebuggerStatement(s) => {
+            StatementKind::DebuggerStatement(s) => {
                 AstNodes::DebuggerStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::DoWhileStatement(s) => {
+            StatementKind::DoWhileStatement(s) => {
                 AstNodes::DoWhileStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::EmptyStatement(s) => {
+            StatementKind::EmptyStatement(s) => {
                 AstNodes::EmptyStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ExpressionStatement(s) => {
+            StatementKind::ExpressionStatement(s) => {
                 AstNodes::ExpressionStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ForInStatement(s) => {
+            StatementKind::ForInStatement(s) => {
                 AstNodes::ForInStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ForOfStatement(s) => {
+            StatementKind::ForOfStatement(s) => {
                 AstNodes::ForOfStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ForStatement(s) => AstNodes::ForStatement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            StatementKind::ForStatement(s) => AstNodes::ForStatement(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Statement::IfStatement(s) => AstNodes::IfStatement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            StatementKind::IfStatement(s) => AstNodes::IfStatement(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Statement::LabeledStatement(s) => {
+            StatementKind::LabeledStatement(s) => {
                 AstNodes::LabeledStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ReturnStatement(s) => {
+            StatementKind::ReturnStatement(s) => {
                 AstNodes::ReturnStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::SwitchStatement(s) => {
+            StatementKind::SwitchStatement(s) => {
                 AstNodes::SwitchStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::ThrowStatement(s) => {
+            StatementKind::ThrowStatement(s) => {
                 AstNodes::ThrowStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::TryStatement(s) => AstNodes::TryStatement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            StatementKind::TryStatement(s) => AstNodes::TryStatement(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            Statement::WhileStatement(s) => {
+            StatementKind::WhileStatement(s) => {
                 AstNodes::WhileStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
+                    inner: s,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            Statement::WithStatement(s) => AstNodes::WithStatement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
+            StatementKind::WithStatement(s) => AstNodes::WithStatement(self.allocator.alloc(AstNode {
+                inner: s,
                 parent,
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
-            it @ match_declaration!(Statement) => {
+            _ if self.inner.is_declaration() => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_declaration(),
+                        inner: self.allocator.alloc(self.inner.to_declaration()),
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,
                     })
                     .as_ast_nodes();
             }
-            it @ match_module_declaration!(Statement) => {
+            _ => {
                 return self
                     .allocator
                     .alloc(AstNode {
-                        inner: it.to_module_declaration(),
+                        inner: self.allocator.alloc(self.inner.to_module_declaration()),
                         parent,
                         allocator: self.allocator,
                         following_span_start: self.following_span_start,

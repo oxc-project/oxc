@@ -93,7 +93,7 @@ impl Rule for NoInvalidRemoveEventListener {
         }
 
         if let Argument::CallExpression(call_expr) = listener {
-            match call_expr.callee.get_member_expr() {
+            match call_expr.callee.get_member_expr().kind() {
                 Some(MemberExpression::StaticMemberExpression(v)) => {
                     if v.property.name != "bind" {
                         return;
@@ -129,6 +129,7 @@ impl Rule for NoInvalidRemoveEventListener {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"new el.removeEventListener("click", () => {})"#,

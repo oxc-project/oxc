@@ -112,7 +112,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp {
     // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if matches!(expr, Expression::RegExpLiteral(_)) {
+        if expr.is_reg_exp_literal() {
             self.transform_regexp(expr, ctx);
         }
     }
@@ -121,7 +121,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp {
 impl<'a> RegExp {
     /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::RegExpLiteral(regexp) = expr else {
+        let Some(regexp) = expr.as_reg_exp_literal() else {
             unreachable!();
         };
         let regexp = regexp.as_mut();

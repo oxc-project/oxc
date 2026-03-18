@@ -17,21 +17,21 @@ use crate::{context::TraverseCtx, utils::ast_builder::create_assignment};
 // TODO(improve-on-babel): Can avoid the temp var if key is for a static prop/method,
 // as in that case the usage of `this` stays outside the class.
 pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
-    match key {
+    match key.kind() {
         // Literals cannot have side effects.
         // e.g. `let x = 'x'; class C { [x] = 1; }` or `class C { ['x'] = 1; }`.
-        Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::StringLiteral(_) => false,
+        Expression::boolean_literal(_)
+        | ExpressionKind::NullLiteral(_)
+        | ExpressionKind::NumericLiteral(_)
+        | ExpressionKind::BigIntLiteral(_)
+        | ExpressionKind::RegExpLiteral(_)
+        | ExpressionKind::StringLiteral(_) => false,
         // Template literal cannot have side effects if it has no expressions.
         // If it *does* have expressions, but they're all literals, then also cannot have side effects,
         // but don't bother checking for that as it shouldn't occur in real world code.
         // Why would you write "`x${9}z`" when you can just write "`x9z`"?
         // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
-        Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+        ExpressionKind::TemplateLiteral(lit) => !lit.expressions.is_empty(),
         // `IdentifierReference`s can have side effects if is unbound.
         //
         // If var is mutated, it also needs a temp var, because of cases like
@@ -42,7 +42,7 @@ pub fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
         // TODO: Add an exec test for this odd case.
         // TODO(improve-on-babel): That case is rare.
         // Test for it in first pass over class elements, and avoid temp vars where possible.
-        Expression::Identifier(ident) => {
+        ExpressionKind::Identifier(ident) => {
             match ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
                 Some(symbol_id) => ctx.scoping().symbol_is_mutated(symbol_id),
                 None => true,

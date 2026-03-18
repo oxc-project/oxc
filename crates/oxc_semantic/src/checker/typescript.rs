@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, ast::*, ast::StatementKind};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan, Span};
 
@@ -385,18 +385,18 @@ fn check_ts_export_assignment_in_statements<'a>(
     let mut has_other_exports = false;
 
     for stmt in statements {
-        match stmt {
-            Statement::TSExportAssignment(export_assignment) => {
+        match stmt.kind() {
+            StatementKind::TSExportAssignment(export_assignment) => {
                 export_assignment_spans.push(export_assignment.span);
             }
-            Statement::ExportNamedDeclaration(export_decl) => {
+            StatementKind::ExportNamedDeclaration(export_decl) => {
                 // ignore `export {}`
                 if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
                     continue;
                 }
                 has_other_exports = true;
             }
-            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+            StatementKind::ExportDefaultDeclaration(_) | StatementKind::ExportAllDeclaration(_) => {
                 has_other_exports = true;
             }
             _ => {}

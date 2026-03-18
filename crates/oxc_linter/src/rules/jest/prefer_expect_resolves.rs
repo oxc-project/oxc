@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -104,7 +104,7 @@ impl Rule for PreferExpectResolves {
         else {
             return;
         };
-        let Some(Expression::CallExpression(call_expr)) = jest_expect_fn_call.head.parent else {
+        let Some(call_expr) = jest_expect_fn_call.head.parent.and_then(|e| e.as_call_expression()) else {
             return;
         };
         let Some(argument) = call_expr.arguments.first() else {

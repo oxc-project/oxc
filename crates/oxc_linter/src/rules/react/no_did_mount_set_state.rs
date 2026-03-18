@@ -92,7 +92,7 @@ impl Rule for NoDidMountSetState {
 
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
-        if !matches!(member_expr.object(), Expression::ThisExpression(_))
+        if !matches!(member_expr.object().kind(), ExpressionKind::ThisExpression(_))
             || member_expr.static_property_name().is_none_or(|name| name != "setState")
         {
             return;
@@ -334,6 +334,7 @@ fn test() {
 #[test]
 fn test_disallow_in_func() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

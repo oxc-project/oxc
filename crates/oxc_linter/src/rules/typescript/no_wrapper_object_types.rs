@@ -78,7 +78,7 @@ impl Rule for NoWrapperObjectTypes {
                 }
             }
             AstKind::TSInterfaceHeritage(ts_interface_heritage) => {
-                if let Expression::Identifier(extends) = &ts_interface_heritage.expression {
+                if let Some(extends) = ts_interface_heritage.expression.as_identifier() {
                     (extends.name.as_str(), extends.span, extends.reference_id())
                 } else {
                     return;
@@ -112,6 +112,7 @@ impl Rule for NoWrapperObjectTypes {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "let value: NumberLike;",

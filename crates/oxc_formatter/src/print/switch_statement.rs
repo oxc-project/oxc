@@ -100,11 +100,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         // parsing depending on if the input code includes certain newlines.
         let first_statement = consequent.first().unwrap();
         let is_single_block_statement =
-            matches!(first_statement.as_ref(), Statement::BlockStatement(_))
+            first_statement.as_ref().is_block_statement()
                 && consequent
                     .iter()
                     .skip(1)
-                    .all(|statement| matches!(statement.as_ref(), Statement::EmptyStatement(_)));
+                    .all(|statement| statement.as_ref().is_empty_statement());
 
         // Format dangling comments before default case body.
         if is_default {

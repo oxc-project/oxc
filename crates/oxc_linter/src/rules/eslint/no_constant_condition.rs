@@ -140,10 +140,10 @@ impl Rule for NoConstantCondition {
 
 impl NoConstantCondition {
     fn check_loop<'a>(&self, ctx: &LintContext<'a>, test: &'a Expression<'_>, is_while: bool) {
-        match self.check_loops {
+        match self.check_loops.kind() {
             CheckLoops::None => return,
-            CheckLoops::AllExceptWhileTrue if is_while => match test {
-                Expression::BooleanLiteral(bool) if bool.value => return,
+ match test.kind() {
+                ExpressionKind::BooleanLiteral(bool) if bool.value => return,
                 _ => {}
             },
             _ => {}

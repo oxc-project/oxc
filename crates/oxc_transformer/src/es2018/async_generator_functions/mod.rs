@@ -90,14 +90,14 @@ impl AsyncGeneratorFunctions<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr {
-            Expression::AwaitExpression(await_expr) => {
+        let new_expr = match expr.kind() {
+            ExpressionKind::AwaitExpression(await_expr) => {
                 self.transform_await_expression(await_expr, ctx)
             }
-            Expression::YieldExpression(yield_expr) => {
+            ExpressionKind::YieldExpression(yield_expr) => {
                 self.transform_yield_expression(yield_expr, ctx)
             }
-            Expression::FunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => {
                 if func.r#async && func.generator {
                     Some(self.executor.transform_function_expression(func, ctx))
                 } else {
@@ -117,9 +117,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let function = match stmt {
-            Statement::FunctionDeclaration(func) => Some(func),
-            Statement::ExportDefaultDeclaration(decl) => {
+        let function = match stmt.kind() {
+            StatementKind::FunctionDeclaration(func) => Some(func),
+            StatementKind::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
@@ -128,7 +128,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
                     None
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
+            StatementKind::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
                     Some(func)
                 } else {

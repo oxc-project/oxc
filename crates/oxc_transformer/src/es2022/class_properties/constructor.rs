@@ -505,7 +505,7 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     // `#[inline]` to make hot path for all other expressions as cheap as possible.
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Expression::CallExpression(call_expr) = expr
+        if let Some(call_expr) = expr.as_call_expression()
             && call_expr.callee.is_super()
         {
             // Walk `CallExpression`'s arguments here rather than falling through to `walk_expression`
@@ -626,9 +626,9 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
             for (index, stmt) in body_stmts.iter_mut().enumerate() {
                 // If statement is standalone `super()`, insert inits after `super()`.
                 // We can avoid a `_super` function for this common case.
-                if let Statement::ExpressionStatement(expr_stmt) = stmt
-                    && let Expression::CallExpression(call_expr) = &mut expr_stmt.expression
-                    && let Expression::Super(super_) = &call_expr.callee
+                if let Some(expr_stmt) = stmt.as_expression_statement()
+                    && let Some(call_expr) = expr_stmt.expression.as_call_expression_mut()
+                    && let Some(super_) = call_expr.callee.as_super_expr()
                 {
                     let span = super_.span;
 
@@ -695,7 +695,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     // `#[inline]` to make hot path for all other function calls as cheap as possible.
     #[inline]
     fn visit_call_expression(&mut self, call_expr: &mut CallExpression<'a>) {
-        if let Expression::Super(super_) = &call_expr.callee {
+        if let Some(super_) = call_expr.callee.as_super_expr() {
             let span = super_.span;
             self.replace_super(call_expr, span);
         }

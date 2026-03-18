@@ -121,12 +121,12 @@ fn is_match_ignore_func_name(name: &str) -> bool {
 }
 
 fn should_ignore(callee: &Expression) -> bool {
-    match callee {
-        Expression::Identifier(identifier) => {
+    match callee.kind() {
+        ExpressionKind::Identifier(identifier) => {
             let name = identifier.name.as_str();
             is_match_ignore_func_name(name)
         }
-        Expression::StaticMemberExpression(static_assertions) => {
+        ExpressionKind::StaticMemberExpression(static_assertions) => {
             let name = static_assertions.property.name.as_str();
             is_match_ignore_func_name(name)
         }
@@ -143,7 +143,7 @@ fn is_undefined(arg: &Argument) -> bool {
         return false;
     }
     let expr: &Expression = arg.to_expression();
-    if let Expression::Identifier(_) = expr {
+    if let Some(_) = expr.as_identifier() {
         return expr.is_undefined();
     }
     false
@@ -752,6 +752,7 @@ fn test_config_array_format() {
 #[test]
 fn test_issue_14368() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

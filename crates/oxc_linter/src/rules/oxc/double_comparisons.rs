@@ -1,4 +1,5 @@
 use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -55,8 +56,8 @@ impl Rule for DoubleComparisons {
         let (lkind, llhs, lrhs, rkind, rlhs, rrhs) = match (&logical_expr.left, &logical_expr.right)
         {
             (
-                Expression::BinaryExpression(left_bin_expr),
-                Expression::BinaryExpression(right_bin_expr),
+                ExpressionKind::BinaryExpression(left_bin_expr),
+                ExpressionKind::BinaryExpression(right_bin_expr),
             ) => (
                 left_bin_expr.operator,
                 &left_bin_expr.left,

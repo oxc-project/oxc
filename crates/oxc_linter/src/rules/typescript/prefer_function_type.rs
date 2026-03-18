@@ -96,7 +96,7 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
     }
 
     let expr = &decl.extends[0].expression;
-    if let Expression::Identifier(identifier) = expr {
+    if let Some(identifier) = expr.as_identifier() {
         return &identifier.name != "Function";
     }
 
@@ -377,6 +377,7 @@ impl Rule for PreferFunctionType {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
     let pass: Vec<&str> = vec![
         "interface Foo { (): void; bar: number; }",
         "type Foo = { (): void; bar: number; };",

@@ -66,7 +66,7 @@ impl<'a> ClassProperties<'a> {
         // TODO(improve-on-babel): If block has no statements, could remove it entirely.
         let stmts = &mut block.body;
         if stmts.len() == 1
-            && let Statement::ExpressionStatement(stmt) = stmts.first_mut().unwrap()
+            && let Some(stmt) = stmts.first_mut.as_expression_statement()().unwrap()
         {
             return self.convert_static_block_with_single_expression_to_expression(
                 &mut stmt.expression,
@@ -246,17 +246,17 @@ impl<'a, 'v> StaticVisitor<'a, 'v> {
 impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
+        match expr.kind() {
             // `this`
-            Expression::ThisExpression(this_expr) => {
+            ExpressionKind::ThisExpression(this_expr) => {
                 let span = this_expr.span;
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
             // `delete this`
-            Expression::UnaryExpression(unary_expr) => {
+            ExpressionKind::UnaryExpression(unary_expr) => {
                 if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
+                    && unary_expr.argument.is_this_expression()
                 {
                     let span = unary_expr.span;
                     self.replace_delete_this_with_true(expr, span);
@@ -264,25 +264,25 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                 }
             }
             // `super.prop`
-            Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionKind::StaticMemberExpression(_) if self.this_depth == 0 => {
                 self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            Expression::ComputedMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionKind::ComputedMemberExpression(_) if self.this_depth == 0 => {
                 self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            Expression::CallExpression(call_expr) if self.this_depth == 0 => {
+            ExpressionKind::CallExpression(call_expr) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            Expression::AssignmentExpression(_) if self.this_depth == 0 => {
+            ExpressionKind::AssignmentExpression(_) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            Expression::UpdateExpression(_) if self.this_depth == 0 => {
+            ExpressionKind::UpdateExpression(_) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }

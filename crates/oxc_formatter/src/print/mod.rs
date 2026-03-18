@@ -579,7 +579,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
-        if matches!(body.as_ref(), Statement::BlockStatement(_)) {
+        if body.as_ref().is_block_statement() {
             write!(f, space());
         } else {
             write!(f, hard_line_break());
@@ -790,7 +790,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                         == "else"
                 });
 
-            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
+            let else_on_same_line = consequent.as_ref().is_block_statement()
                 && (!has_line_comment || !has_dangling_comments);
 
             if else_on_same_line {
@@ -819,10 +819,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 [
                     "else",
                     line_suffix_boundary(),
-                    group(&FormatStatementBody::new(alternate).with_forced_space(matches!(
-                        alternate.as_ref(),
-                        Statement::IfStatement(_)
-                    )))
+                    group(&FormatStatementBody::new(alternate).with_forced_space(
+                        alternate.as_ref().is_if_statement()
+                    ))
                 ]
             );
         }
@@ -873,7 +872,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
         let label = self.label();
         let body = self.body();
         write!(f, [label, ":"]);
-        if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
+        if body.as_ref().is_empty_statement() {
             let empty_comments = f.context().comments().comments_before(self.span.end);
             write!(
                 f,

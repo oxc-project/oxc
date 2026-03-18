@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -504,7 +504,7 @@ impl Rule for Extensions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Process require() calls
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Expression::Identifier(ident) = &call_expr.callee else { return };
+        let Some(ident) = call_expr.callee.as_identifier() else { return };
         if ident.name.as_str() != "require" {
             return;
         }

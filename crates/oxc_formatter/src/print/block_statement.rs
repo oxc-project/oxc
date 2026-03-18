@@ -12,7 +12,7 @@ use crate::{
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
+            self.iter().filter(|stmt| !stmt.as_ref().is_empty_statement()),
         );
     }
 }
@@ -65,7 +65,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
 }
 
 pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
-    block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
+    block.is_empty() || block.iter().all(|s| s.is_empty_statement())
 }
 
 /// Formatting of curly braces for an:

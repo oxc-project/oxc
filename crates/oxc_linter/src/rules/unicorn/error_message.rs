@@ -58,13 +58,13 @@ impl Rule for ErrorMessage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (callee, span, args) = match node.kind() {
             AstKind::NewExpression(NewExpression {
-                callee: Expression::Identifier(id),
+                callee: ExpressionKind::Identifier(id),
                 span,
                 arguments,
                 ..
             })
             | AstKind::CallExpression(CallExpression {
-                callee: Expression::Identifier(id),
+                callee: ExpressionKind::Identifier(id),
                 span,
                 arguments,
                 ..
@@ -108,6 +108,7 @@ impl Rule for ErrorMessage {
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "throw new Error('error')",

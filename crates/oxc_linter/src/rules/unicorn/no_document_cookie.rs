@@ -94,8 +94,8 @@ fn is_document_cookie_reference<'a, 'b>(
     expr: &'a Expression<'b>,
     ctx: &'a LintContext<'b>,
 ) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => {
             if ident.name.as_str() != "document" {
                 let Some(var_decl) = get_declaration_of_variable(ident, ctx) else {
                     return false;
@@ -122,7 +122,7 @@ fn is_document_cookie_reference<'a, 'b>(
                 return false;
             }
 
-            if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
+            if let Some(ident) = member_expr.object().without_parentheses().as_identifier()
                 && !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
             {
                 return false;
@@ -136,6 +136,7 @@ fn is_document_cookie_reference<'a, 'b>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "document.cookie",

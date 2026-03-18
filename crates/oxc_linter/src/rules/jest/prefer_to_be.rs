@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -214,30 +214,30 @@ impl PreferToBe {
     fn should_use_tobe(first_matcher_arg: &Expression) -> bool {
         let mut expr = first_matcher_arg;
 
-        if let Expression::UnaryExpression(unary_expr) = expr
+        if let Some(unary_expr) = expr.as_unary_expression()
             && unary_expr.operator.as_str() == "-"
         {
             expr = &unary_expr.argument;
         }
 
-        if matches!(expr, Expression::RegExpLiteral(_)) {
+        if expr.is_reg_exp_literal() {
             return false;
         }
 
         matches!(
-            expr,
-            Expression::BigIntLiteral(_)
-                | Expression::BooleanLiteral(_)
-                | Expression::NumericLiteral(_)
-                | Expression::NullLiteral(_)
-                | Expression::TemplateLiteral(_)
-                | Expression::StringLiteral(_)
+            expr.kind(),
+            ExpressionKind::BigIntLiteral(_)
+                | ExpressionKind::BooleanLiteral(_)
+                | ExpressionKind::NumericLiteral(_)
+                | ExpressionKind::NullLiteral(_)
+                | ExpressionKind::TemplateLiteral(_)
+                | ExpressionKind::StringLiteral(_)
         )
     }
 
     fn should_skip_float(expr: &Expression, ctx: &LintContext) -> bool {
         // Check if this is a float literal by examining the source text
-        if let Expression::NumericLiteral(num) = expr {
+        if let Some(num) = expr.as_numeric_literal() {
             let source = ctx.source_range(num.span);
             return source.contains('.');
         }
@@ -254,7 +254,7 @@ impl PreferToBe {
     ) -> (u32, String) {
         if let Some(&not_modifier) = not_modifier {
             let not_is_computed =
-                matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
+                not_modifier.parent.as_ref().is_some_and(|e| e.is_computed_member_expression());
 
             if not_is_computed {
                 // ["not"]["toBe"](value) -> ["not"]["toBeMatcher"]()
@@ -294,9 +294,9 @@ impl PreferToBe {
         let span = matcher.span;
         let end = call_expr.span.end;
 
-        let is_cmp_mem_expr = match matcher.parent {
-            Some(Expression::ComputedMemberExpression(_)) => true,
-            Some(Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_)) => {
+        let is_cmp_mem_expr = match matcher.parent.map(|e| e.kind()) {
+            Some(ExpressionKind::ComputedMemberExpression(_)) => true,
+            Some(ExpressionKind::StaticMemberExpression(_) | ExpressionKind::PrivateFieldExpression(_)) => {
                 false
             }
             _ => return,

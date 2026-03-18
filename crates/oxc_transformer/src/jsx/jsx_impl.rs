@@ -525,9 +525,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         if !expr.is_jsx() {
             return;
         }
-        *expr = match expr.take_in(ctx.ast) {
-            Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
-            Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
+        *expr = match expr.take_in(ctx.ast).kind() {
+            ExpressionKind::JSXElement(e) => self.transform_jsx_element(e, ctx),
+            ExpressionKind::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
         };
     }
@@ -543,7 +543,7 @@ impl<'a> JsxImpl<'a> {
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
         if self.bindings.is_classic() || ctx.state.source_type.is_module() {
             // Insert before imports - add to `top_level_statements` immediately
-            let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+            let stmt = Statement::variable_declaration(ctx.ast.alloc_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
                 ctx.ast.vec1(declarator),
@@ -650,7 +650,7 @@ impl<'a> JsxImpl<'a> {
                             && !(self.options.jsx_self_plugin || self.options.jsx_source_plugin)
                         {
                             // deopt if spreading an object with `__proto__` key
-                            if !matches!(&argument, Expression::ObjectExpression(o) if has_proto(o))
+                            if !argument.as_object_expression().is_some_and(|o| has_proto(o))
                             {
                                 arguments.push(Argument::from(argument));
                                 continue;
@@ -658,8 +658,8 @@ impl<'a> JsxImpl<'a> {
                         }
 
                         // Add attribute to prop object
-                        match argument {
-                            Expression::ObjectExpression(expr) if !has_proto(&expr) => {
+                        match argument.kind() {
+                            ExpressionKind::ObjectExpression(expr) if !has_proto(&expr) => {
                                 properties.extend(expr.unbox().properties);
                             }
                             argument => {
@@ -797,11 +797,11 @@ impl<'a> JsxImpl<'a> {
         name: JSXElementName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match name {
+        match name.kind() {
             JSXElementName::Identifier(ident) => {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
-            JSXElementName::IdentifierReference(ident) => Expression::Identifier(ident),
+            JSXElementName::IdentifierReference(ident) => Expression::identifier(ident),
             JSXElementName::MemberExpression(member_expr) => {
                 Self::transform_jsx_member_expression(member_expr, ctx)
             }
@@ -830,7 +830,7 @@ impl<'a> JsxImpl<'a> {
             }
             Bindings::AutomaticModule(bindings) => {
                 let ident = bindings.import_fragment(ctx);
-                Expression::Identifier(ctx.alloc(ident))
+                Expression::identifier(ctx.alloc(ident))
             }
         }
     }
@@ -866,7 +866,7 @@ impl<'a> JsxImpl<'a> {
                 } else {
                     bindings.import_jsx(ctx)
                 };
-                Expression::Identifier(ctx.alloc(ident))
+                Expression::identifier(ctx.alloc(ident))
             }
         }
     }
@@ -877,7 +877,7 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         let JSXMemberExpression { span, object, property, .. } = expr.unbox();
         let object = match object {
-            JSXMemberExpressionObject::IdentifierReference(ident) => Expression::Identifier(ident),
+            JSXMemberExpressionObject::IdentifierReference(ident) => Expression::identifier(ident),
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 Self::transform_jsx_member_expression(expr, ctx)
             }
@@ -1219,7 +1219,7 @@ fn get_read_identifier_reference<'a>(
     let name = Ident::from(name);
     let reference_id = ctx.create_reference_in_current_scope(name, ReferenceFlags::Read);
     let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
-    Expression::Identifier(ident)
+    Expression::identifier(ident)
 }
 
 fn create_static_member_expression<'a>(
@@ -1227,7 +1227,7 @@ fn create_static_member_expression<'a>(
     property_name: Atom<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let object = Expression::Identifier(ctx.alloc(object_ident));
+    let object = Expression::identifier(ctx.alloc(object_ident));
     let property = ctx.ast.identifier_name(SPAN, property_name);
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }
@@ -1284,8 +1284,8 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
-        let Expression::Identifier(object) = &member.object else { panic!() };
+        let Some(member) = expr.as_static_member_expression() else { panic!() };
+        let Some(object) = member.object.as_identifier() else { panic!() };
         assert_eq!(object.name, "React");
         assert_eq!(member.property.name, "createElement");
     }
@@ -1298,7 +1298,7 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::Identifier(ident) = &expr else { panic!() };
+        let Some(ident) = expr.as_identifier() else { panic!() };
         assert_eq!(ident.name, "single");
     }
 
@@ -1310,8 +1310,8 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
-        let Expression::Identifier(object) = &member.object else { panic!() };
+        let Some(member) = expr.as_static_member_expression() else { panic!() };
+        let Some(object) = member.object.as_identifier() else { panic!() };
         assert_eq!(object.name, "first");
         assert_eq!(member.property.name, "second");
     }
@@ -1324,11 +1324,11 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
-        let Expression::StaticMemberExpression(inner_member) = &outer_member.object else {
+        let Some(outer_member) = expr.as_static_member_expression() else { panic!() };
+        let Some(inner_member) = outer_member.object.as_static_member_expression() else {
             panic!()
         };
-        let Expression::Identifier(object) = &inner_member.object else { panic!() };
+        let Some(object) = inner_member.object.as_identifier() else { panic!() };
         assert_eq!(object.name, "first");
         assert_eq!(inner_member.property.name, "second");
         assert_eq!(outer_member.property.name, "third");
@@ -1342,7 +1342,7 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        assert!(matches!(&expr, Expression::ThisExpression(_)));
+        assert!(expr.is_this_expression());
     }
 
     #[test]
@@ -1353,11 +1353,11 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
-        let Expression::StaticMemberExpression(inner_member) = &outer_member.object else {
+        let Some(outer_member) = expr.as_static_member_expression() else { panic!() };
+        let Some(inner_member) = outer_member.object.as_static_member_expression() else {
             panic!()
         };
-        assert!(matches!(&inner_member.object, Expression::ThisExpression(_)));
+        assert!(inner_member.object.is_this_expression());
         assert_eq!(inner_member.property.name, "a");
         assert_eq!(outer_member.property.name, "b");
     }
@@ -1370,7 +1370,7 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::MetaProperty(meta_prop) = &expr else { panic!() };
+        let Some(meta_prop) = expr.as_meta_property() else { panic!() };
         assert_eq!(&meta_prop.meta.name, "import");
         assert_eq!(&meta_prop.property.name, "meta");
     }
@@ -1383,8 +1383,8 @@ mod test {
         let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &mut transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
-        let Expression::MetaProperty(meta_prop) = &member.object else { panic!() };
+        let Some(member) = expr.as_static_member_expression() else { panic!() };
+        let Some(meta_prop) = member.object.as_meta_property() else { panic!() };
         assert_eq!(&meta_prop.meta.name, "import");
         assert_eq!(&meta_prop.property.name, "meta");
         assert_eq!(member.property.name, "prop");
@@ -1398,8 +1398,8 @@ mod test {
         let pragma = Pragma::parse_no_ctx(pragma, "Fragment", traverse_ctx.ast);
         let expr = pragma.create_expression(traverse_ctx);
 
-        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
-        let Expression::Identifier(object) = &member.object else { panic!() };
+        let Some(member) = expr.as_static_member_expression() else { panic!() };
+        let Some(object) = member.object.as_identifier() else { panic!() };
         assert_eq!(object.name, "React");
         assert_eq!(member.property.name, "Fragment");
     }

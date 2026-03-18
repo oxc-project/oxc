@@ -69,7 +69,7 @@ impl Rule for NoUnnecessarySliceEnd {
         else {
             return;
         };
-        if matches!(member_expr.object, Expression::CallExpression(_))
+        if matches!(member_expr.object.kind(), ExpressionKind::CallExpression(_))
             || call_expr.arguments.iter().any(|arg| matches!(arg, Argument::SpreadElement(_)))
         {
             return;
@@ -80,8 +80,8 @@ impl Rule for NoUnnecessarySliceEnd {
         let Some(arg_expr) = second_arg.as_expression().map(Expression::without_parentheses) else {
             return;
         };
-        match arg_expr {
-            Expression::Identifier(ident) if ident.name.as_str() == "Infinity" => {
+        match arg_expr.kind() {
+            ExpressionKind::Identifier(ident) if ident.name.as_str() == "Infinity" => {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_slice_end_diagnostic(second_arg.span(), "Infinity"),
                     |fixer| {
@@ -89,7 +89,7 @@ impl Rule for NoUnnecessarySliceEnd {
                     },
                 );
             }
-            Expression::ChainExpression(chain_expr) => {
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(expr) = chain_expr.expression.as_member_expression()
                     && let Some(msg) =
                         check_expression_and_get_diagnostic(member_expr, expr, true, ctx)
@@ -140,7 +140,7 @@ fn check_expression_and_get_diagnostic<'a>(
         return Some("Number.POSITIVE_INFINITY".into());
     }
     if property == "length" && is_same_expression(&left.object, &right.object, ctx) {
-        if matches!(left.object, Expression::Identifier(_)) {
+        if matches!(left.object.kind(), ExpressionKind::Identifier(_)) {
             return Some(ctx.source_range(right.span()).into());
         }
         let operator = if is_chain_expr { "?." } else { "." };
@@ -152,6 +152,7 @@ fn check_expression_and_get_diagnostic<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
+use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("const foo = string.slice(1)"),
