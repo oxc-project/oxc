@@ -56,9 +56,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
         }
 
         // Take ownership of the `LogicalExpression`
-        let Some(logical_expr) = expr.take_in(ctx.ast).as_logical_expression_mut() else {
-            unreachable!()
-        };
+        let logical_expr = expr.take_in(ctx.ast).into_logical_expression();
 
         *expr = self.transform_logical_expression(logical_expr, ctx);
     }
@@ -71,7 +69,7 @@ impl<'a> NullishCoalescingOperator {
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let logical_expr = logical_expr.unbox();
+        let mut logical_expr = logical_expr.unbox();
 
         // Skip creating extra reference when `left` is static
         match logical_expr.left.kind_mut() {

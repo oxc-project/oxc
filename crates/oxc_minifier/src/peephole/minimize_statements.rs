@@ -1083,9 +1083,7 @@ impl<'a> PeepholeOptimizations {
                 && let BindingPattern::BindingIdentifier(decl_id) = &prev_var_decl_item.id
                 && id.name == decl_id.name
             {
-                let Some(Some(prev_var_decl) = result.pop().as_variable_declaration() else {
-                    unreachable!()
-                };
+                let prev_var_decl = result.pop().unwrap().into_variable_declaration();
                 for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
                 ctx.state.changed = true;
             }

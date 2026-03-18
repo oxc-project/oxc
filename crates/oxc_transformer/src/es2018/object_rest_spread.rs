@@ -1184,20 +1184,23 @@ impl<'a> ReferenceBuilder<'a> {
         force_create_binding: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
-        let expr = expr.take_in(ctx.ast);
+        let mut expr = expr.take_in(ctx.ast);
         let binding;
         let maybe_bound_identifier;
-        match expr.kind_mut() {
-            ExpressionKindMut::Identifier(ident) if !force_create_binding => {
+        if let Some(ident) = expr.as_identifier_mut() {
+            if !force_create_binding {
                 binding = None;
                 maybe_bound_identifier =
                     MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-            }
-            expr => {
-                let bound_identifier = ctx.generate_uid_based_on_node(expr, scope_id, symbol_flags);
+            } else {
+                let bound_identifier = ctx.generate_uid_based_on_node(&expr, scope_id, symbol_flags);
                 binding = Some(bound_identifier.create_binding_pattern(ctx));
                 maybe_bound_identifier = bound_identifier.to_maybe_bound_identifier();
             }
+        } else {
+            let bound_identifier = ctx.generate_uid_based_on_node(&expr, scope_id, symbol_flags);
+            binding = Some(bound_identifier.create_binding_pattern(ctx));
+            maybe_bound_identifier = bound_identifier.to_maybe_bound_identifier();
         }
         Self { expr: Some(expr), binding, maybe_bound_identifier }
     }

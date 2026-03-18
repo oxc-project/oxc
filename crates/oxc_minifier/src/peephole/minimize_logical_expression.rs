@@ -173,10 +173,9 @@ impl<'a> PeepholeOptimizations {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberSome(e) = write_expr.as_computed_member_expression_mut()                && !matches!(
-                    e.expression,
-                    Expression::string_literal(_) | Expression::NumericLiteral(_)
-                )
+            if let MemberExpression::ComputedMemberExpression(e) = write_expr
+                && !e.expression.is_string_literal()
+                && !e.expression.is_numeric_literal()
             {
                 return false;
             }

@@ -40,31 +40,30 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in program.body.take_in(ctx.ast) {
-            match stmt.kind_mut() {
-                StatementKindMut::TSModuleDeclaration(decl) => {
-                    if !self.allow_namespaces {
-                        ctx.state.error(namespace_not_supported(decl.span));
-                    }
+        for mut stmt in program.body.take_in(ctx.ast) {
+            if stmt.is_ts_module_declaration() {
+                let decl = stmt.into_ts_module_declaration();
+                if !self.allow_namespaces {
+                    ctx.state.error(namespace_not_supported(decl.span));
+                }
 
-                    self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
-                    continue;
+                self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
+                continue;
+            }
+            if stmt.is_ts_global_declaration() {
+                let decl = stmt.to_ts_global_declaration();
+                if !self.allow_namespaces {
+                    ctx.state.error(namespace_not_supported(decl.span));
                 }
-                StatementKindMut::TSGlobalDeclaration(decl) => {
-                    if !self.allow_namespaces {
-                        ctx.state.error(namespace_not_supported(decl.span));
-                    }
-                    continue;
-                }
-                StatementKindMut::ExportNamedDeclaration(export_decl)
-                    if export_decl.declaration.as_ref().is_some_and(|declaration| {
-                        // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
-                        debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
-                        matches!(declaration, Declaration::TSModuleDeclaration(module_decl) if !module_decl.declare)
-                    }) =>
-                {
+                continue;
+            }
+            if let Some(export_decl) = stmt.as_export_named_declaration() {
+                if export_decl.declaration.as_ref().is_some_and(|declaration| {
+                    debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
+                    matches!(declaration, Declaration::TSModuleDeclaration(module_decl) if !module_decl.declare)
+                }) {
                     let Some(Declaration::TSModuleDeclaration(decl)) =
-                        export_decl.unbox().declaration
+                        stmt.to_export_named_declaration_mut().declaration.take()
                     else {
                         unreachable!()
                     };
@@ -76,7 +75,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                     self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
                     continue;
                 }
-                _ => {}
             }
 
             new_stmts.push(stmt);
@@ -197,19 +195,22 @@ impl<'a> TypeScriptNamespace {
         let mut new_stmts = ctx.ast.vec();
 
         for stmt in namespace_top_level {
-            match stmt.kind_mut() {
-                StatementKindMut::TSModuleDeclaration(decl) => {
-                    self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
-                }
-                StatementKindMut::TSGlobalDeclaration(_) => {
-                    // Remove it.
-                    // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
-                    // where identifier is a string literal: `declare module 'foo' { global {} }`
-                }
-                StatementKindMut::ExportNamedDeclaration(export_decl) => {
+            if stmt.is_ts_module_declaration() {
+                let decl = stmt.into_ts_module_declaration();
+                self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
+                continue;
+            }
+            if stmt.is_ts_global_declaration() {
+                // Remove it.
+                // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
+                // where identifier is a string literal: `declare module 'foo' { global {} }`
+                continue;
+            }
+            if stmt.is_export_named_declaration() {
+                {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
                     // legal syntax in TS namespaces
-                    let export_decl = export_decl.unbox();
+                    let export_decl = stmt.into_export_named_declaration().unbox();
                     if let Some(decl) = export_decl.declaration {
                         if decl.declare() {
                             continue;
@@ -275,8 +276,9 @@ impl<'a> TypeScriptNamespace {
                         }
                     }
                 }
-                _ => new_stmts.push(stmt),
+                continue;
             }
+            new_stmts.push(stmt);
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {

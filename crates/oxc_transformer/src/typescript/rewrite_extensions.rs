@@ -6,8 +6,8 @@
 //! Based on Babel's [plugin-rewrite-ts-imports](https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-preset-typescript/src/plugin-rewrite-ts-imports.ts)
 
 use oxc_ast::ast::{
-    ExportAllDeclaration, ExportNamedDeclaration, Expression, ExpressionKind, ImportDeclaration,
-    ImportExpression, StringLiteral, TemplateLiteral,
+    ExportAllDeclaration, ExportNamedDeclaration, ExpressionKind, ExpressionKindMut,
+    ImportDeclaration, ImportExpression, StringLiteral, TemplateLiteral,
 };
 use oxc_span::Atom;
 use oxc_traverse::Traverse;
