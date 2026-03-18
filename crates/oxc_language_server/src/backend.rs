@@ -1,4 +1,10 @@
-use std::{borrow::Cow, sync::Arc};
+use std::{
+    borrow::Cow,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
 
 use futures::future::join_all;
 use rustc_hash::FxBuildHasher;
@@ -70,6 +76,10 @@ pub struct Backend {
     // The client will send the content of in-memory files on `textDocument/didOpen` and `textDocument/didChange`.
     // This is only needed when the client supports `textDocument/formatting` request.
     file_system: Arc<RwLock<LSPFileSystem>>,
+    // Whether the server is in single file mode (no workspace folders or root URI were provided during initialize).
+    // In this mode, workspace workers are created dynamically when files are opened
+    // using the file's parent directory as the workspace root.
+    single_file_mode: AtomicBool,
 }
 
 impl LanguageServer for Backend {
@@ -143,8 +153,10 @@ impl LanguageServer for Backend {
                 Arc::clone(&self.tool_builders),
                 capabilities.diagnostic_mode.clone(),
             )]
-        // client is in single file mode, create no workers
+        // client is in single file mode, create no workers initially.
+        // Workers will be created dynamically in did_open.
         } else {
+            self.single_file_mode.store(true, Ordering::Relaxed);
             vec![]
         };
 
@@ -656,9 +668,19 @@ impl LanguageServer for Backend {
     /// It will add the in-memory file content if the client supports dynamic formatting.
     /// It will lint the file and send diagnostics, if necessary.
     ///
+    /// In single file mode (no workspace was configured during initialize), a new
+    /// [WorkspaceWorker] is created dynamically using the file's parent directory as
+    /// the workspace root if no existing worker covers the URI.
+    ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didOpen>
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
+
+        // In single file mode, dynamically create a workspace worker for file:// URIs.
+        if self.single_file_mode.load(Ordering::Relaxed) && uri.scheme().as_str() == "file" {
+            self.ensure_worker_for_file_uri(&uri).await;
+        }
+
         let workers = self.workspace_workers.read().await;
         let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
             return;
@@ -694,6 +716,9 @@ impl LanguageServer for Backend {
     /// It will remove the in-memory file content if the client supports dynamic formatting.
     /// It will clear the diagnostics (internally) for the closed file.
     ///
+    /// In single file mode, if no other open files are associated with the worker's
+    /// workspace after this close, the workspace worker is shut down and removed.
+    ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didClose>
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
@@ -702,8 +727,23 @@ impl LanguageServer for Backend {
             return;
         };
 
+        // Clone the root URI now so we can use it after dropping the read lock.
+        let worker_root_uri = if self.single_file_mode.load(Ordering::Relaxed) {
+            Some(worker.get_root_uri().clone())
+        } else {
+            None
+        };
+
         self.file_system.write().await.remove(uri);
         worker.remove_uri_cache(&params.text_document.uri).await;
+
+        // Drop the read lock before potentially acquiring the write lock in
+        // try_shutdown_empty_workspace.
+        drop(workers);
+
+        if let Some(root_uri) = worker_root_uri {
+            self.try_shutdown_empty_workspace(&root_uri).await;
+        }
     }
 
     /// It will return code actions or commands for the given range.
@@ -865,6 +905,7 @@ impl Backend {
             workspace_workers: Arc::new(RwLock::new(vec![])),
             capabilities: OnceCell::new(),
             file_system: Arc::new(RwLock::new(LSPFileSystem::default())),
+            single_file_mode: AtomicBool::new(false),
         }
     }
 
@@ -966,6 +1007,121 @@ impl Backend {
             })
             .max_by_key(|(_, len)| *len)
             .map(|(worker, _)| worker)
+    }
+
+    /// Get the URI for the parent directory of a `file://` URI.
+    /// Returns `None` if the URI has no parent or the path cannot be determined.
+    fn get_parent_dir_uri(file_uri: &Uri) -> Option<Uri> {
+        let file_path = file_uri.to_file_path()?;
+        let parent = file_path.parent()?;
+        Uri::from_file_path(parent)
+    }
+
+    /// In single file mode, ensures a [WorkspaceWorker] exists for the parent directory
+    /// of the given `file://` URI.  If no worker currently covers the URI, a new one is
+    /// created, started, and (if the client supports dynamic watchers) its file-system
+    /// watchers are registered with the client.
+    ///
+    /// The method is a no-op when a suitable worker already exists.
+    async fn ensure_worker_for_file_uri(&self, uri: &Uri) {
+        let Some(parent_uri) = Self::get_parent_dir_uri(uri) else {
+            return;
+        };
+
+        // Fast path: check with a read lock first to avoid taking a write lock when not needed.
+        {
+            let workers = self.workspace_workers.read().await;
+            if Self::find_worker_for_uri(&workers, uri).is_some() {
+                return;
+            }
+        }
+
+        // Request workspace configuration before acquiring the write lock so we don't
+        // block other readers for longer than necessary.
+        let capabilities = self.capabilities.get();
+        let options = if capabilities.is_some_and(|c| c.workspace_configuration) {
+            let configs = self.request_workspace_configuration(vec![&parent_uri]).await;
+            configs.into_iter().next().unwrap_or(serde_json::Value::Null)
+        } else {
+            serde_json::Value::Null
+        };
+
+        let diagnostic_mode =
+            capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+
+        let mut workers = self.workspace_workers.write().await;
+
+        // Double-check: a concurrent did_open may have already created a worker.
+        if Self::find_worker_for_uri(&workers, uri).is_some() {
+            return;
+        }
+
+        debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
+
+        let worker = WorkspaceWorker::new(
+            parent_uri,
+            Arc::clone(&self.tool_builders),
+            diagnostic_mode,
+        );
+
+        worker.start_worker(options).await;
+
+        let registrations = if capabilities.is_some_and(|c| c.dynamic_watchers) {
+            worker.init_watchers().await
+        } else {
+            vec![]
+        };
+
+        workers.push(worker);
+        drop(workers);
+
+        if !registrations.is_empty() {
+            if let Err(err) = self.client.register_capability(registrations).await {
+                warn!("registering file watchers for single-file workspace failed: {err}");
+            }
+        }
+    }
+
+    /// In single file mode, shuts down and removes the [WorkspaceWorker] whose root URI
+    /// matches `worker_root_uri` when no open files remain associated with that workspace.
+    async fn try_shutdown_empty_workspace(&self, worker_root_uri: &Uri) {
+        let mut workers = self.workspace_workers.write().await;
+
+        // Check whether any currently open file is still served by this worker.
+        let open_uris = self.file_system.read().await.keys();
+        let has_open_files = open_uris.iter().any(|open_uri| {
+            Self::find_worker_for_uri(&workers, open_uri)
+                .is_some_and(|w| w.get_root_uri() == worker_root_uri)
+        });
+
+        if has_open_files {
+            return;
+        }
+
+        let Some(idx) = workers.iter().position(|w| w.get_root_uri() == worker_root_uri) else {
+            return;
+        };
+
+        debug!("single file mode: shutting down empty workspace {}", worker_root_uri.as_str());
+
+        let (uris, unregistrations) = workers[idx].shutdown().await;
+        workers.remove(idx);
+        drop(workers);
+
+        let diagnostic_mode =
+            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+
+        if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
+            self.clear_diagnostics(uris).await;
+        }
+
+        if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
+            && !unregistrations.is_empty()
+        {
+            if let Err(err) = self.client.unregister_capability(unregistrations).await {
+                warn!("unregistering file watchers for single-file workspace failed: {err}");
+            }
+        }
     }
 }
 
@@ -1155,5 +1311,24 @@ mod tests {
         let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
+    }
+
+    #[test]
+    fn test_get_parent_dir_uri() {
+        // Typical file URI
+        let file: Uri = "file:///path/to/dir/file.js".parse().unwrap();
+        let parent = Backend::get_parent_dir_uri(&file).unwrap();
+        assert_eq!(parent.as_str(), "file:///path/to/dir");
+
+        // File directly under root
+        let root_file: Uri = "file:///file.js".parse().unwrap();
+        let parent = Backend::get_parent_dir_uri(&root_file).unwrap();
+        // Parent of /file.js is /
+        assert_eq!(parent.to_file_path().unwrap().to_string_lossy(), "/");
+
+        // Non-file URI (should still work, we only skip calling this for non-file URIs at the call site)
+        let no_path_file: Uri = "file:///".parse().unwrap();
+        // Path is "/", parent is None
+        assert!(Backend::get_parent_dir_uri(&no_path_file).is_none());
     }
 }

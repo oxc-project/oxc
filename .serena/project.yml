@@ -3,7 +3,7 @@
 #  * For JavaScript, use typescript
 # Special requirements:
 #  * csharp: Requires the presence of a .sln file in the project folder.
-language: typescript
+language: rust
 
 # whether to use the project's gitignore file to ignore files
 # Added on 2025-04-07
