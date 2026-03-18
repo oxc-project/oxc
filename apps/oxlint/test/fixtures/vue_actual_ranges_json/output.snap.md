@@ -10,7 +10,6 @@
               "threads_count": X,
               "start_time": X
             }
-
 ```
 
 # stderr
