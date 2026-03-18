@@ -45,9 +45,9 @@ const baz = 42;
 function qux(paramA) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Bug D: @param description with 4-space indented code block
 /**
  * @param {object} options The options object:
@@ -90,9 +90,9 @@ const baz = 42;
  */
 function qux(paramA) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Bug D: @param description with 4-space indented code block
 /**
  * @param {object} options The options object:

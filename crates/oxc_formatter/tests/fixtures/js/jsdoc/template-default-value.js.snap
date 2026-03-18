@@ -28,9 +28,9 @@ function qux(x) {}
 function wrapping(x) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @template {string} [T=string] - The type parameter with a default. */
 function foo() {}
 
@@ -49,9 +49,9 @@ function qux(x) {}
  */
 function wrapping(x) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @template {string} [T=string] - The type parameter with a default. */
 function foo() {}
 

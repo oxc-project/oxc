@@ -18,9 +18,9 @@ const a = 1;
 const b = 2;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix D: Bare URLs should not be converted to markdown links
 /**
  * Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a See
@@ -34,9 +34,9 @@ const a = 1;
 /** @see https://example.com/docs for more */
 const b = 2;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix D: Bare URLs should not be converted to markdown links
 /**
  * Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a See

@@ -15,9 +15,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 const x = 1;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @typedef {Object} Foo
  * @property {string} name
@@ -30,9 +30,9 @@ const x = 1;
  */
 const x = 1;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * @typedef {Object} Foo
  * @property {string} name

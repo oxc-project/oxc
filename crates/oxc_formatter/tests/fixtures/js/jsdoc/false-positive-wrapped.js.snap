@@ -22,9 +22,9 @@ const b = 2;
 const c = 3;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * Spacing = (max - min) / count Ticks are generated as [min, min + spacing,
  * ..., max] setting is respected in this scenario.
@@ -44,9 +44,9 @@ const b = 2;
  */
 const c = 3;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * Spacing = (max - min) / count Ticks are generated as [min, min + spacing, ..., max] setting is
  * respected in this scenario.

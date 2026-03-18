@@ -38,9 +38,9 @@ function inlineCast() {
 }
 
 ==================== Output ====================
-----------------------------------------------
-{ jsdoc: true, printWidth: 80, useTabs: true }
-----------------------------------------------
+--------------------------------------------
+{ jsdoc: {}, printWidth: 80, useTabs: true }
+--------------------------------------------
 /**
  * @param {string | number | boolean | null | undefined | object | symbol} value -
  *   The value
@@ -77,9 +77,9 @@ function inlineCast() {
 			: fn;
 }
 
------------------------------------------------
-{ jsdoc: true, printWidth: 100, useTabs: true }
------------------------------------------------
+---------------------------------------------
+{ jsdoc: {}, printWidth: 100, useTabs: true }
+---------------------------------------------
 /** @param {string | number | boolean | null | undefined | object | symbol} value - The value */
 function longUnion(value) {}
 

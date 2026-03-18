@@ -59,9 +59,9 @@ function handleSelect() {}
 function renderDiv() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @param {string} [name] - Optional param */
 function a(name) {}
 
@@ -105,9 +105,9 @@ function handleSelect() {}
 /** Renders a <div> element with the given props. */
 function renderDiv() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @param {string} [name] - Optional param */
 function a(name) {}
 

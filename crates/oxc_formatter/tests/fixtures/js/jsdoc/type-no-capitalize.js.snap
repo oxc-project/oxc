@@ -24,9 +24,9 @@ const z = /** @type {string | null} lastPart */ (undefined);
  */
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Inline type casts — description is an identifier, not prose
 const x = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 const y = /** @type {Element} node */ (someNode);
@@ -42,9 +42,9 @@ const z = /** @type {string | null} lastPart */ (undefined);
 // @satisfies should also skip capitalization
 /** @satisfies {Record<string, boolean>} config */
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Inline type casts — description is an identifier, not prose
 const x = /** @type {ARIARoleDefinitionKey} current_role */ (c_r);
 const y = /** @type {Element} node */ (someNode);

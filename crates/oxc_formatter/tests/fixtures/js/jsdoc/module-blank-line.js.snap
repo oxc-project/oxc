@@ -12,9 +12,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
  */
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 16: @module with blank line between name and continuation paragraph
 
 /**
@@ -24,9 +24,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
  * internal utilities.
  */
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 16: @module with blank line between name and continuation paragraph
 
 /**

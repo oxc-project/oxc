@@ -22,7 +22,7 @@ The migration tool also handles: `.prettierignore` → `ignorePatterns`, `pretti
 
 1. If the repo has an existing `.prettierrc` / `prettier.config.*` / `package.json` prettier config → use `npx oxfmt@latest --migrate prettier` to generate `.oxfmtrc.json`
 2. If no Prettier config exists → create minimal: `{"printWidth": 80, "sortPackageJson": false}`
-3. Then add `"jsdoc": false` for Step B, `"jsdoc": true` for Step C
+3. Then omit `"jsdoc"` for Step B, add `"jsdoc": {}` for Step C
 
 ## Prerequisites
 
@@ -50,13 +50,13 @@ The migration tool also handles: `.prettierignore` → `ignorePatterns`, `pretti
 
 10. Run `node .../oxfmt/dist/cli.js --migrate prettier` to generate `.oxfmtrc.json` from the repo's Prettier config
     - If no Prettier config exists, create `{"printWidth": 80, "sortPackageJson": false}`
-11. Add `"jsdoc": false` to the generated `.oxfmtrc.json`
+11. Ensure `"jsdoc"` is not present in the generated `.oxfmtrc.json`
 12. Run `node .../oxfmt/dist/cli.js --write`
 13. `git add -A && git commit -m "oxfmt no-jsdoc baseline"`
 
 ### Step C: oxfmt With JSDoc
 
-14. Change `"jsdoc": false` → `"jsdoc": true` in `.oxfmtrc.json`
+14. Add `"jsdoc": {}` to `.oxfmtrc.json`
 15. Run `node .../oxfmt/dist/cli.js --write`
 16. `git diff --stat` — shows ONLY JSDoc-related differences
 17. `git diff` — capture actual diffs if any exist
@@ -92,8 +92,8 @@ The migration tool also handles: `.prettierignore` → `ignorePatterns`, `pretti
 
 21. Reset to step B state: `git checkout .`
 22. Copy the migrated `.oxfmtrc.json` to two variants:
-    - `no-jsdoc.json`: same config with `"jsdoc": false`
-    - `with-jsdoc.json`: same config with `"jsdoc": true`
+    - `no-jsdoc.json`: same config without `"jsdoc"` key
+    - `with-jsdoc.json`: same config with `"jsdoc": {}`
 23. `hyperfine --warmup 3` comparing both configs with `--check -c <config>`
 24. Record: files, time without/with JSDoc, overhead
 
@@ -476,3 +476,51 @@ After fixing 2 bugs: inline comment width measurement for adjacent whitespace (c
 ### Bugs Found (round 6)
 
 See `tasks/prettier_conformance/jsdoc/diffs/` for full diffs per repository.
+
+## Results (2026-03-18, round 7)
+
+After fixing 6 bugs from code review: camelCase config deserialization keys, `contains_top_level_arrow` depth tracking for `=>`, `format_default_value` escape detection for double-backslash, `update_template_depth` nested `${...}` expressions, invalid enum value validation, dead code removal. 145/145 conformance maintained.
+
+### Correctness
+
+| Repository | JSDoc Tags | Files with Diffs | Change from round 6 |
+| ---------- | ---------- | ---------------- | ------------------- |
+| evolu      | 134        | 13               | 0                   |
+| wxt        | 1,183      | 1                | 0                   |
+| typedoc    | 792        | 11               | -2                  |
+| Chart.js   | 1,276      | 4                | 0                   |
+| svelte     | 4,157      | 5                | -3                  |
+| **Total**  | **7,542**  | **34**           | **-5**              |
+
+### Improvements
+
+- **svelte -3**: `@type`/`@satisfies` capitalization skip fix (commit `4815c40524`) eliminated 3 false capitalization diffs.
+- **typedoc -2**: Two files no longer show differences.
+
+### Remaining Diff Categories (all design differences or upstream bugs)
+
+1. **`{@link}` wrapping** (~11 files across evolu, typedoc, chartjs): oxfmt keeps `{@link Foo}` atomic. Design difference.
+2. **`{@includeCode}` placement** (typedoc 3 files): Each `{@includeCode}` on own line. Design difference.
+3. **Sub-list indent normalization** (evolu 2, wxt 1, typedoc 2): 4-space vs content-aligned. Design difference / improvement.
+4. **`?Type` expansion** (chartjs 1 file): `?{ ... }` → `{ ... } | null`. Design difference.
+5. **Comment re-wrapping** (svelte 3, typedoc 1, chartjs 1): Minor line-break position differences.
+6. **Double-space normalization** (svelte 1 file): Collapses double space to single space in `@returns`.
+7. **Fenced code block indent** (svelte 1 file): Tab/space alignment difference.
+
+### Performance
+
+Measured using `hyperfine --warmup 3 --runs 10 -i` with `oxfmt --check -c <config>` on each repo (step B state, multi-threaded, 16 threads):
+
+| Repository | Without JSDoc | With JSDoc | Overhead    |
+| ---------- | ------------- | ---------- | ----------- |
+| evolu      | 434ms         | 427ms      | ~0% (noise) |
+| wxt        | 410ms         | 410ms      | ~0% (noise) |
+| typedoc    | 532ms         | 567ms      | ~7%         |
+| Chart.js   | 497ms         | 479ms      | ~0% (noise) |
+| svelte     | 510ms         | 549ms      | ~8%         |
+
+typedoc and svelte (highest JSDoc density) show measurable 7-8% wall-clock overhead. The rest are within noise. CPU time overhead is ~1-2% (work parallelizes across threads).
+
+### Bugs Found (round 7)
+
+No new bugs. All remaining diffs are known design differences.

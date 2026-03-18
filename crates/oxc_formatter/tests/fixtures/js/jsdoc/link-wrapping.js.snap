@@ -57,9 +57,9 @@ const h = 8;
 const i = 9;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** Returns a promise that resolves with the value from {@link Storage.getItem}. */
 const a = 1;
 
@@ -119,9 +119,9 @@ const h = 8;
  */
 const i = 9;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** Returns a promise that resolves with the value from {@link Storage.getItem}. */
 const a = 1;
 

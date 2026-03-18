@@ -42,9 +42,9 @@ const b = 2;
 const c = 3;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Spread (loose) lists: blank lines between items should be preserved
 
 /**
@@ -82,9 +82,9 @@ const b = 2;
  */
 const c = 3;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Spread (loose) lists: blank lines between items should be preserved
 
 /**

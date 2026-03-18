@@ -17,9 +17,9 @@ class LineElement {
 }
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 4: @returns with long description should wrap at printWidth
 
 class LineElement {
@@ -36,9 +36,9 @@ class LineElement {
   isVisible() {}
 }
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 4: @returns with long description should wrap at printWidth
 
 class LineElement {

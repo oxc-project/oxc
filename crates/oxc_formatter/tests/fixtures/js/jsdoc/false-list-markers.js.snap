@@ -43,9 +43,9 @@ function paramMinus(value) {}
 function paramPlus(value) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * This function handles the case where something wraps and the continuation
  * line starts with a character that looks like a list marker — like `await a +
@@ -89,9 +89,9 @@ function paramMinus(value) {}
  */
 function paramPlus(value) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * This function handles the case where something wraps and the continuation line starts with a
  * character that looks like a list marker — like `await a + b` or some em-dash — prefix.

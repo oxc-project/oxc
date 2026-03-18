@@ -31,9 +31,9 @@ function jsonLike() {}
 function validObject() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Code starting with curly braces in @example should be treated as
 // JSON-like, not JS. Upstream (utils.ts:248-274) tries JSON parser for
 // brace-starting code and falls back to keeping original if it fails.
@@ -62,9 +62,9 @@ function jsonLike() {}
  */
 function validObject() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Code starting with curly braces in @example should be treated as
 // JSON-like, not JS. Upstream (utils.ts:248-274) tries JSON parser for
 // brace-starting code and falls back to keeping original if it fails.

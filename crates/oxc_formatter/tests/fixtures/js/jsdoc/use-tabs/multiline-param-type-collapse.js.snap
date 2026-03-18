@@ -21,9 +21,9 @@ class Renderer {
 }
 
 ==================== Output ====================
-----------------------------------------------
-{ jsdoc: true, printWidth: 80, useTabs: true }
-----------------------------------------------
+--------------------------------------------
+{ jsdoc: {}, printWidth: 80, useTabs: true }
+--------------------------------------------
 // Multi-line @param type with double braces should NOT be collapsed
 // when collapsing would cause an overlong line or merge with next tag.
 // Reproduces svelte renderer.js issue with tab indentation.
@@ -42,9 +42,9 @@ class Renderer {
 	boundary(props, children_fn) {}
 }
 
------------------------------------------------
-{ jsdoc: true, printWidth: 100, useTabs: true }
------------------------------------------------
+---------------------------------------------
+{ jsdoc: {}, printWidth: 100, useTabs: true }
+---------------------------------------------
 // Multi-line @param type with double braces should NOT be collapsed
 // when collapsing would cause an overlong line or merge with next tag.
 // Reproduces svelte renderer.js issue with tab indentation.

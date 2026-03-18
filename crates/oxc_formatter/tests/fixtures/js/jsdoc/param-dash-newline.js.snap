@@ -15,9 +15,9 @@ function longTypeParamDash(type) {}
 function longImportParamDash(value) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 25: @param dash preserved when description wraps to new line
 
 /**
@@ -32,9 +32,9 @@ function longTypeParamDash(type) {}
  */
 function longImportParamDash(value) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 25: @param dash preserved when description wraps to new line
 
 /** @param {"component" | "if" | "each" | "await" | "key" | "render"} type - Type of block/component */

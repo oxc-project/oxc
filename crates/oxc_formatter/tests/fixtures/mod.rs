@@ -130,9 +130,7 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                 }
             }
             "jsdoc" => {
-                if let Some(b) = value.as_bool()
-                    && b
-                {
+                if value.is_object() {
                     options.jsdoc = Some(JsdocOptions::default());
                 }
             }

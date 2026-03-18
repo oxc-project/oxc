@@ -22,9 +22,9 @@ function serialize(format) {}
 function withExistingDefault(timeout) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 8: Default value should be appended inline in multi-line @param descriptions
 
 /**
@@ -44,9 +44,9 @@ function serialize(format) {}
 /** @param {number} [timeout=3000] The timeout. Default is `3000` */
 function withExistingDefault(timeout) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 8: Default value should be appended inline in multi-line @param descriptions
 
 /**

@@ -19,9 +19,9 @@ function internalHelper() {}
 function anotherHelper() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 15: @ignore with blank-line separator should not apply named-tag capitalization
 
 /**
@@ -38,9 +38,9 @@ function internalHelper() {}
  */
 function anotherHelper() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 15: @ignore with blank-line separator should not apply named-tag capitalization
 
 /**

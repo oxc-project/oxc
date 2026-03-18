@@ -30,9 +30,9 @@ function bar() {}
 function baz() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fenced code block immediately before @returns — no extra blank line
 /**
  * @param paramA This is a **parameter** pointing to an interface.
@@ -60,9 +60,9 @@ function bar() {}
  */
 function baz() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fenced code block immediately before @returns — no extra blank line
 /**
  * @param paramA This is a **parameter** pointing to an interface.

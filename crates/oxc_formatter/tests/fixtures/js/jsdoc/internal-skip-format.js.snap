@@ -34,9 +34,9 @@ function internalB() {}
 function oldFunc() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 1: @internal should skip description formatting (no continuation indent)
 
 /**
@@ -71,9 +71,9 @@ function internalB() {}
  */
 function oldFunc() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 1: @internal should skip description formatting (no continuation indent)
 
 /**

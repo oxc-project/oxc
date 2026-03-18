@@ -85,11 +85,11 @@ export interface Oxfmtrc {
    * tag aliases are canonicalized, descriptions are capitalized,
    * long lines are wrapped, and short comments are collapsed to single-line.
    *
-   * Can be `true` (enable with defaults), `false` (disable), or an object with options.
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
    *
    * - Default: Disabled
    */
-  jsdoc?: JsdocConfig | null;
+  jsdoc?: JsdocConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
@@ -217,20 +217,20 @@ export interface Oxfmtrc {
   [k: string]: unknown;
 }
 /**
- * JSDoc configuration: either `true`/`false` or an object with fine-grained options.
+ * JSDoc configuration object with fine-grained options.
  */
 export interface JsdocConfig {
-  add_default_to_description?: boolean | null;
-  bracket_spacing?: boolean | null;
-  capitalize_descriptions?: boolean | null;
-  comment_line_strategy?: string | null;
-  description_tag?: boolean | null;
-  description_with_dot?: boolean | null;
-  keep_unparsable_example_indent?: boolean | null;
-  line_wrapping_style?: string | null;
-  prefer_code_fences?: boolean | null;
-  separate_returns_from_param?: boolean | null;
-  separate_tag_groups?: boolean | null;
+  addDefaultToDescription?: boolean;
+  bracketSpacing?: boolean;
+  capitalizeDescriptions?: boolean;
+  commentLineStrategy?: string;
+  descriptionTag?: boolean;
+  descriptionWithDot?: boolean;
+  keepUnparsableExampleIndent?: boolean;
+  lineWrappingStyle?: string;
+  preferCodeFences?: boolean;
+  separateReturnsFromParam?: boolean;
+  separateTagGroups?: boolean;
   [k: string]: unknown;
 }
 export interface OxfmtOverrideConfig {
@@ -306,11 +306,11 @@ export interface FormatConfig {
    * tag aliases are canonicalized, descriptions are capitalized,
    * long lines are wrapped, and short comments are collapsed to single-line.
    *
-   * Can be `true` (enable with defaults), `false` (disable), or an object with options.
+   * Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
    *
    * - Default: Disabled
    */
-  jsdoc?: JsdocConfig | null;
+  jsdoc?: JsdocConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *

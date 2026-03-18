@@ -14,9 +14,9 @@ function foo() {}
 function bar() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @see
  * - The "[right](https://frontendmasters.com/)" way to animate modals
@@ -26,9 +26,9 @@ function foo() {}
 /** @see https://example.com */
 function bar() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * @see
  * - The "[right](https://frontendmasters.com/)" way to animate modals

@@ -17,9 +17,9 @@ function update(lastActive) {}
 function greet(name) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 17: @param with dash separator and description on next line
 
 /**
@@ -32,9 +32,9 @@ function update(lastActive) {}
 /** @param {string} name - The user name */
 function greet(name) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 17: @param with dash separator and description on next line
 
 /**

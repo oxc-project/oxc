@@ -32,9 +32,9 @@ function realTable() {}
 function mixedContent() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 3: Single pipe in prose should not be misidentified as a table
 
 /**
@@ -64,9 +64,9 @@ function realTable() {}
  */
 function mixedContent() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 3: Single pipe in prose should not be misidentified as a table
 
 /**

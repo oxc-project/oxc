@@ -35,9 +35,9 @@ const y = 2;
 const z = 3;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Case-insensitive sorting: Sha256Source should come before SSRContext
 /**
  * @import {
@@ -80,9 +80,9 @@ const y = 2;
  */
 const z = 3;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Case-insensitive sorting: Sha256Source should come before SSRContext
 /**
  * @import {

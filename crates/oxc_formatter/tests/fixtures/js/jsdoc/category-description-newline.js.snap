@@ -29,9 +29,9 @@ function c() {}
 function d() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 14: @categoryDescription/@groupDescription preserve description on next line
 
 /**
@@ -56,9 +56,9 @@ function c() {}
 /** @categoryDescription Component React Components */
 function d() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 14: @categoryDescription/@groupDescription preserve description on next line
 
 /**

@@ -15,9 +15,9 @@ function foo(x) {}
 const a = 1;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @param {number} x - Supports 64-bit integers and 1--->a--->2 style arrows. */
 function foo(x) {}
 
@@ -29,9 +29,9 @@ function foo(x) {}
  */
 const a = 1;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @param {number} x - Supports 64-bit integers and 1--->a--->2 style arrows. */
 function foo(x) {}
 

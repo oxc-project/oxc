@@ -26,9 +26,9 @@ function baz() {}
 function qux() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @internal
  * Abort the abort controller and execute all `onInvalidated` listeners.
@@ -50,9 +50,9 @@ function baz() {}
  */
 function qux() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * @internal
  * Abort the abort controller and execute all `onInvalidated` listeners.

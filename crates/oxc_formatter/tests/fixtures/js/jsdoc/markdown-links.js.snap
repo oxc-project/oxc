@@ -9,18 +9,18 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 function foo() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * See [https://example.com](https://example.com) for details. Also check
  * [docs](https://docs.example.com) for more info.
  */
 function foo() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * See [https://example.com](https://example.com) for details. Also check
  * [docs](https://docs.example.com) for more info.

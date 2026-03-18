@@ -10,9 +10,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 const a = 1;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * 1. Determine the initial value by taking the data range and calculating min
  *
@@ -21,9 +21,9 @@ const a = 1;
  */
 const a = 1;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * 1. Determine the initial value by taking the data range and calculating min
  *

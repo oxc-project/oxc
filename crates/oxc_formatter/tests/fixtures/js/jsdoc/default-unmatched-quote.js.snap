@@ -18,9 +18,9 @@ const greeting = undefined;
 const matched = undefined;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @default 'circle; */
 const shape = undefined;
 
@@ -30,9 +30,9 @@ const greeting = undefined;
 /** @default "circle" */
 const matched = undefined;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @default 'circle; */
 const shape = undefined;
 

@@ -19,9 +19,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 	function createEventDispatcher() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 2: Spaces inside fenced code blocks should not be converted to tabs
 
 /**
@@ -38,9 +38,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
  */
 function createEventDispatcher() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 2: Spaces inside fenced code blocks should not be converted to tabs
 
 /**

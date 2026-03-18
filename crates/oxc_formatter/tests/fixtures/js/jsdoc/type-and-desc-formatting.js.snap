@@ -67,9 +67,9 @@ function attach() {}
 function withCodeBlock() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Bug C: Long union types should NOT be wrapped inside {type} annotations
 /**
  * @param {Compiler.AST.SvelteNode} node
@@ -135,9 +135,9 @@ function attach() {}
  */
 function withCodeBlock() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Bug C: Long union types should NOT be wrapped inside {type} annotations
 /**
  * @param {Compiler.AST.SvelteNode} node

@@ -26,9 +26,9 @@ function withParamBlank(name) {}
 const b = 2;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 7: @typedef with blank line between tag+type+name and description
 
 /**
@@ -54,9 +54,9 @@ function withParamBlank(name) {}
  */
 const b = 2;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 7: @typedef with blank line between tag+type+name and description
 
 /**

@@ -21,9 +21,9 @@ function multiLineType(props, children_fn) {}
 function withDesc(options) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 4: Multi-line @param type expression should not collapse
 
 /**
@@ -43,9 +43,9 @@ function multiLineType(props, children_fn) {}
  */
 function withDesc(options) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 4: Multi-line @param type expression should not collapse
 
 /**

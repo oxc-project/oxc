@@ -22,9 +22,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 function parseNumber(x, int) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @typedef {Int8Array | Uint8Array} TypedArray A union type representing all
  *   possible TypedArrays.
@@ -44,9 +44,9 @@ function parseNumber(x, int) {}
  */
 function parseNumber(x, int) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @typedef {Int8Array | Uint8Array} TypedArray A union type representing all possible TypedArrays. */
 
 /**

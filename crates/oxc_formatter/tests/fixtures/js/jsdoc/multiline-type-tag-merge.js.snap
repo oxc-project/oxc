@@ -13,9 +13,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 function svelte_options_invalid_customelement_props(node) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Bug: when description wraps to multiple lines and ends right before a tag,
 // the tag gets merged onto the same line as the description.
 
@@ -29,9 +29,9 @@ function svelte_options_invalid_customelement_props(node) {}
  */
 function svelte_options_invalid_customelement_props(node) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Bug: when description wraps to multiple lines and ends right before a tag,
 // the tag gets merged onto the same line as the description.
 

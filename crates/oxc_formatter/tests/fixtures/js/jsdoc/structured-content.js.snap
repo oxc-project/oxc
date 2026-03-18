@@ -20,9 +20,9 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 function features() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * Features:
  *
@@ -41,9 +41,9 @@ function features() {}
  */
 function features() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * Features:
  *

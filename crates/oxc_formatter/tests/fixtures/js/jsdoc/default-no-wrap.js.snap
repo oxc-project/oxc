@@ -20,9 +20,9 @@ var outDirTemplate;
 var anotherDefault;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // @default values on the same line should NOT be wrapped at printWidth.
 // Upstream (stringify.ts:131-136) preserves description as-is for
 // TAGS_PEV_FORMATE_DESCRIPTION tags.
@@ -37,9 +37,9 @@ var outDirTemplate;
 /** @default { object: "value", nestingTest: { obj: "nested", anotherKey: "something" } } */
 var anotherDefault;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // @default values on the same line should NOT be wrapped at printWidth.
 // Upstream (stringify.ts:131-136) preserves description as-is for
 // TAGS_PEV_FORMATE_DESCRIPTION tags.

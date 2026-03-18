@@ -15,9 +15,9 @@ function oldFunction() {}
 function anotherOld() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 27: @deprecated description should NOT be capitalized
 
 /** @deprecated in ARIA 1.1 */
@@ -26,9 +26,9 @@ function oldFunction() {}
 /** @deprecated use newFunction instead */
 function anotherOld() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 27: @deprecated description should NOT be capitalized
 
 /** @deprecated in ARIA 1.1 */

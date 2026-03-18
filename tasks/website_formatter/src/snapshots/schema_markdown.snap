@@ -111,12 +111,12 @@ When enabled, JSDoc comments are normalized and reformatted:
 tag aliases are canonicalized, descriptions are capitalized,
 long lines are wrapped, and short comments are collapsed to single-line.
 
-Can be `true` (enable with defaults), `false` (disable), or an object with options.
+Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
 
 - Default: Disabled
 
 
-### jsdoc.add_default_to_description
+### jsdoc.addDefaultToDescription
 
 type: `boolean`
 
@@ -124,7 +124,7 @@ type: `boolean`
 
 
 
-### jsdoc.bracket_spacing
+### jsdoc.bracketSpacing
 
 type: `boolean`
 
@@ -132,7 +132,7 @@ type: `boolean`
 
 
 
-### jsdoc.capitalize_descriptions
+### jsdoc.capitalizeDescriptions
 
 type: `boolean`
 
@@ -140,7 +140,7 @@ type: `boolean`
 
 
 
-### jsdoc.comment_line_strategy
+### jsdoc.commentLineStrategy
 
 type: `string`
 
@@ -148,7 +148,7 @@ type: `string`
 
 
 
-### jsdoc.description_tag
+### jsdoc.descriptionTag
 
 type: `boolean`
 
@@ -156,7 +156,7 @@ type: `boolean`
 
 
 
-### jsdoc.description_with_dot
+### jsdoc.descriptionWithDot
 
 type: `boolean`
 
@@ -164,7 +164,7 @@ type: `boolean`
 
 
 
-### jsdoc.keep_unparsable_example_indent
+### jsdoc.keepUnparsableExampleIndent
 
 type: `boolean`
 
@@ -172,7 +172,7 @@ type: `boolean`
 
 
 
-### jsdoc.line_wrapping_style
+### jsdoc.lineWrappingStyle
 
 type: `string`
 
@@ -180,7 +180,7 @@ type: `string`
 
 
 
-### jsdoc.prefer_code_fences
+### jsdoc.preferCodeFences
 
 type: `boolean`
 
@@ -188,7 +188,7 @@ type: `boolean`
 
 
 
-### jsdoc.separate_returns_from_param
+### jsdoc.separateReturnsFromParam
 
 type: `boolean`
 
@@ -196,7 +196,7 @@ type: `boolean`
 
 
 
-### jsdoc.separate_tag_groups
+### jsdoc.separateTagGroups
 
 type: `boolean`
 
@@ -359,12 +359,12 @@ When enabled, JSDoc comments are normalized and reformatted:
 tag aliases are canonicalized, descriptions are capitalized,
 long lines are wrapped, and short comments are collapsed to single-line.
 
-Can be `true` (enable with defaults), `false` (disable), or an object with options.
+Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
 
 - Default: Disabled
 
 
-###### overrides[n].options.jsdoc.add_default_to_description
+###### overrides[n].options.jsdoc.addDefaultToDescription
 
 type: `boolean`
 
@@ -372,7 +372,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.bracket_spacing
+###### overrides[n].options.jsdoc.bracketSpacing
 
 type: `boolean`
 
@@ -380,7 +380,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.capitalize_descriptions
+###### overrides[n].options.jsdoc.capitalizeDescriptions
 
 type: `boolean`
 
@@ -388,7 +388,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.comment_line_strategy
+###### overrides[n].options.jsdoc.commentLineStrategy
 
 type: `string`
 
@@ -396,7 +396,7 @@ type: `string`
 
 
 
-###### overrides[n].options.jsdoc.description_tag
+###### overrides[n].options.jsdoc.descriptionTag
 
 type: `boolean`
 
@@ -404,7 +404,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.description_with_dot
+###### overrides[n].options.jsdoc.descriptionWithDot
 
 type: `boolean`
 
@@ -412,7 +412,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.keep_unparsable_example_indent
+###### overrides[n].options.jsdoc.keepUnparsableExampleIndent
 
 type: `boolean`
 
@@ -420,7 +420,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.line_wrapping_style
+###### overrides[n].options.jsdoc.lineWrappingStyle
 
 type: `string`
 
@@ -428,7 +428,7 @@ type: `string`
 
 
 
-###### overrides[n].options.jsdoc.prefer_code_fences
+###### overrides[n].options.jsdoc.preferCodeFences
 
 type: `boolean`
 
@@ -436,7 +436,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.separate_returns_from_param
+###### overrides[n].options.jsdoc.separateReturnsFromParam
 
 type: `boolean`
 
@@ -444,7 +444,7 @@ type: `boolean`
 
 
 
-###### overrides[n].options.jsdoc.separate_tag_groups
+###### overrides[n].options.jsdoc.separateTagGroups
 
 type: `boolean`
 

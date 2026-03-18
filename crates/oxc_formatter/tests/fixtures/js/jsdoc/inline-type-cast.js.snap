@@ -15,9 +15,9 @@ const y = /** @type {string} */ (value);
 let z;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix 26: Inline @type cast comments should not be expanded to multi-line
 
 const x =
@@ -31,9 +31,9 @@ const y = /** @type {string} */ (value);
 /** @type {string} */
 let z;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix 26: Inline @type cast comments should not be expanded to multi-line
 
 const x = /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init);

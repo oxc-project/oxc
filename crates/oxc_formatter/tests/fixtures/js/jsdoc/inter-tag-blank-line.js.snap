@@ -24,9 +24,9 @@ function b(x, y) {}
 function c(x, y) {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @categoryDescription Output
  * These functions provide the output.
@@ -47,9 +47,9 @@ function b(x, y) {}
  */
 function c(x, y) {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * @categoryDescription Output
  * These functions provide the output.

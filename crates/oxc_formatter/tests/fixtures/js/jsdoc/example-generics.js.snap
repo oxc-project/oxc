@@ -15,9 +15,9 @@ function foo() {}
 function bar() {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /**
  * @example
  *   await storage.getItem<number>("key");
@@ -30,9 +30,9 @@ function foo() {}
  */
 function bar() {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /**
  * @example
  *   await storage.getItem<number>("key");

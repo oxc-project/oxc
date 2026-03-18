@@ -28,9 +28,9 @@ class Bar {}
 class Baz {}
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @fires {CustomEvent<{ id: string }>} */
 function foo() {}
 
@@ -46,9 +46,9 @@ class Bar {}
 /** @augments {CustomEvent<{ id: string }>} Some description here */
 class Baz {}
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @fires {CustomEvent<{ id: string }>} */
 function foo() {}
 

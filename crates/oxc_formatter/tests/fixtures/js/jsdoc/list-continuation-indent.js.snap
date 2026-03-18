@@ -18,9 +18,9 @@ const a = 1;
 const b = 2;
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 // Fix E: List continuation lines should align with text after marker
 /**
  * - Short item
@@ -42,9 +42,9 @@ const a = 1;
  */
 const b = 2;
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 // Fix E: List continuation lines should align with text after marker
 /**
  * - Short item

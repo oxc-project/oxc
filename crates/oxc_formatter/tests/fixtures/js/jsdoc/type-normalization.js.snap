@@ -95,9 +95,9 @@ function outer() {
 }
 
 ==================== Output ====================
--------------------------------
-{ jsdoc: true, printWidth: 80 }
--------------------------------
+-----------------------------
+{ jsdoc: {}, printWidth: 80 }
+-----------------------------
 /** @param {string | number} x - The value */
 function a(x) {}
 
@@ -175,9 +175,9 @@ function outer() {
   }
 }
 
---------------------------------
-{ jsdoc: true, printWidth: 100 }
---------------------------------
+------------------------------
+{ jsdoc: {}, printWidth: 100 }
+------------------------------
 /** @param {string | number} x - The value */
 function a(x) {}
 

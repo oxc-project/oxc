@@ -230,19 +230,16 @@ pub struct FormatConfig {
     /// tag aliases are canonicalized, descriptions are capitalized,
     /// long lines are wrapped, and short comments are collapsed to single-line.
     ///
-    /// Can be `true` (enable with defaults), `false` (disable), or an object with options.
+    /// Pass an object (`jsdoc: {}`) to enable with defaults, or omit to disable.
     ///
     /// - Default: Disabled
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "deserialize_jsdoc_config",
-        default
-    )]
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub jsdoc: Option<JsdocConfig>,
 }
 
-/// JSDoc configuration: either `true`/`false` or an object with fine-grained options.
-#[derive(Debug, Clone, Default, Serialize, JsonSchema)]
+/// JSDoc configuration object with fine-grained options.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct JsdocConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capitalize_descriptions: Option<bool>,
@@ -266,46 +263,6 @@ pub struct JsdocConfig {
     pub description_tag: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_unparsable_example_indent: Option<bool>,
-}
-
-fn deserialize_jsdoc_config<'de, D>(deserializer: D) -> Result<Option<JsdocConfig>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let value = Option::<Value>::deserialize(deserializer)?;
-    match value {
-        Some(Value::Bool(true)) => Ok(Some(JsdocConfig::default())),
-        None | Some(Value::Bool(false)) => Ok(None),
-        Some(Value::Object(map)) => {
-            let config = JsdocConfig {
-                capitalize_descriptions: map.get("capitalizeDescriptions").and_then(Value::as_bool),
-                description_with_dot: map.get("descriptionWithDot").and_then(Value::as_bool),
-                add_default_to_description: map
-                    .get("addDefaultToDescription")
-                    .and_then(Value::as_bool),
-                prefer_code_fences: map.get("preferCodeFences").and_then(Value::as_bool),
-                line_wrapping_style: map
-                    .get("lineWrappingStyle")
-                    .and_then(Value::as_str)
-                    .map(String::from),
-                comment_line_strategy: map
-                    .get("commentLineStrategy")
-                    .and_then(Value::as_str)
-                    .map(String::from),
-                separate_tag_groups: map.get("separateTagGroups").and_then(Value::as_bool),
-                separate_returns_from_param: map
-                    .get("separateReturnsFromParam")
-                    .and_then(Value::as_bool),
-                bracket_spacing: map.get("bracketSpacing").and_then(Value::as_bool),
-                description_tag: map.get("descriptionTag").and_then(Value::as_bool),
-                keep_unparsable_example_indent: map
-                    .get("keepUnparsableExampleIndent")
-                    .and_then(Value::as_bool),
-            };
-            Ok(Some(config))
-        }
-        Some(_) => Err(serde::de::Error::custom("jsdoc must be a boolean or an object")),
-    }
 }
 
 impl FormatConfig {
