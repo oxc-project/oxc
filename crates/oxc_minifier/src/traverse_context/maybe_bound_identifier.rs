@@ -296,7 +296,7 @@ impl<'a> MaybeBoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
-        Expression::Identifier(ctx.alloc(ident))
+        Expression::identifier(ctx.alloc(ident))
     }
 
     /// Create `AssignmentTarget::AssignmentTargetIdentifier` referencing this binding,

@@ -5,6 +5,7 @@ use cow_utils::CowUtils;
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn};
 use oxc_ast::{NONE, ast::*};
+use oxc_ast::ast::{ExpressionKind, ExpressionKindMut};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
@@ -36,12 +37,11 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Handle special cases not suitable for constant evaluation
-        let CallExpression { span, callee, arguments, .. } = ce.as_mut();
-        let (name, object) = match &callee {
-            Expression::static_member_expression(member) if !member.optional => {
+        let (name, object) = match ce.callee.kind() {
+            ExpressionKind::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object)
             }
-            Expression::computed_member_expression(member) if !member.optional => {
+            ExpressionKind::ComputedMemberExpression(member) if !member.optional => {
                 match member.expression.kind() {
                     ExpressionKind::StringLiteral(s) => (s.value.as_str(), &member.object),
                     _ => return,
@@ -49,10 +49,11 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return,
         };
+        let span = ce.span;
         let replacement = match name {
-            "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
-            "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
-            "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
+            "concat" => Self::try_fold_concat(span, &mut ce.arguments, &mut ce.callee, ctx),
+            "pow" => Self::try_fold_pow(span, &mut ce.arguments, object, ctx),
+            "of" => Self::try_fold_array_of(span, &mut ce.arguments, name, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -78,9 +79,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         let mut second_arg = arguments.pop().expect("checked len above");
-        let second_arg = second_arg.to_expression_mut(); // checked above
+        let mut second_arg = second_arg.to_expression_mut(); // checked above
         let mut first_arg = arguments.pop().expect("checked len above");
-        let first_arg = first_arg.to_expression_mut(); // checked above
+        let mut first_arg = first_arg.to_expression_mut(); // checked above
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(ctx).is_number() {
@@ -95,7 +96,7 @@ impl<'a> PeepholeOptimizations {
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
             first_arg.take_in(ctx.ast),
             BinaryOperator::Exponential,
-            wrap_with_unary_plus_if_needed(second_arg),
+            wrap_with_unary_plus_if_needed(&mut second_arg),
         ))
     }
 
@@ -121,7 +122,7 @@ impl<'a> PeepholeOptimizations {
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
     pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let original_span = if let Some(root_call_expr) = node .as_call_expression_mut(){
+        let original_span = if let Some(root_call_expr) = node.as_call_expression_mut() {
             root_call_expr.span
         } else {
             return;
@@ -139,7 +140,7 @@ impl<'a> PeepholeOptimizations {
             let Some(ce) = current_node.as_call_expression_mut() else {
                 return;
             };
-            let Some(member) = &ce.callee.as_static_member_expression_mut() else {
+            let Some(member) = ce.callee.as_static_member_expression_mut() else {
                 return;
             };
             if member.optional || member.property.name != "concat" {
@@ -164,23 +165,19 @@ impl<'a> PeepholeOptimizations {
             //
             // The error that has to be thrown in the second step before the compression will be thrown in the third step.
 
-            let CallExpression { callee, arguments, .. } = ce.as_mut();
-            collected_arguments.push(arguments);
+            collected_arguments.push(&mut ce.arguments);
 
             // [].concat() or "".concat()
             let is_root_expr_concat = {
-                let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
-                matches!(
-                    &member.object,
-                    Expression::array_expression(_) | Expression::string_literal(_)
-                )
+                let Some(member) = ce.callee.as_static_member_expression_mut() else { unreachable!() };
+                member.object.is_array_expression() || member.object.is_string_literal()
             };
             if is_root_expr_concat {
-                new_root_callee = callee;
+                new_root_callee = &mut ce.callee;
                 break;
             }
 
-            let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
+            let Some(member) = ce.callee.as_static_member_expression_mut() else { unreachable!() };
             current_node = &mut member.object;
         }
 
@@ -215,9 +212,9 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        let object = match callee {
-            Expression::static_member_expression(member) => &mut member.object,
-            Expression::computed_member_expression(member) => &mut member.object,
+        let object = match callee.kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(member) => &mut member.object,
+            ExpressionKindMut::ComputedMemberExpression(member) => &mut member.object,
             _ => unreachable!(),
         };
         match object.kind_mut() {
@@ -232,7 +229,7 @@ impl<'a> PeepholeOptimizations {
                             if argument.is_literal() {
                                 true
                             } else {
-                                matches!(argument, ExpressionKindMut::ArrayExpression(_))
+                                argument.is_array_expression()
                             }
                         }
                     })
@@ -245,9 +242,7 @@ impl<'a> PeepholeOptimizations {
                         if argument.is_literal() {
                             array_expr.elements.push(ArrayExpressionElement::from(argument));
                         } else {
-                            let ExpressionKindMut::ArrayExpression(mut argument_array) = argument else {
-                                unreachable!()
-                            };
+                            let mut argument_array = argument.into_array_expression();
                             array_expr.elements.append(&mut argument_array.elements);
                         }
                     }
@@ -276,7 +271,7 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let expression_count =
-                    args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
+                    args.iter().filter(|arg| !arg.is_expression() || !arg.to_expression().is_string_literal()).count();
                 let string_count = args.len() - expression_count;
 
                 // whether it is shorter to use `String::concat`
@@ -291,7 +286,8 @@ impl<'a> PeepholeOptimizations {
                 let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
-                    if let Argument::StringLiteral(str_lit) = argument {
+                    let arg_expr = argument.into_expression();
+                    if let Some(str_lit) = arg_expr.as_string_literal() {
                         if pushed_quasi {
                             let last_quasi = quasi_strs
                                 .last_mut()
@@ -307,7 +303,7 @@ impl<'a> PeepholeOptimizations {
                             quasi_strs.push(Cow::Borrowed(""));
                         }
                         // checked that all the arguments are expression above
-                        expressions.push(argument.into_expression());
+                        expressions.push(arg_expr);
                         pushed_quasi = false;
                     }
                 }
@@ -370,12 +366,12 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let (name, object, span) = match node {
-            Expression::static_member_expression(member) if !member.optional => {
+        let (name, object, span) = match node.kind_mut() {
+            ExpressionKindMut::StaticMemberExpression(member) if !member.optional => {
                 let span = member.span;
                 (member.property.name.as_str(), &mut member.object, span)
             }
-            Expression::computed_member_expression(member) if !member.optional => {
+            ExpressionKindMut::ComputedMemberExpression(member) if !member.optional => {
                 match member.expression.kind() {
                     ExpressionKind::StringLiteral(s) => {
                         let span = member.span;
@@ -420,8 +416,8 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
 
-        let replacement = match object {
-            Expression::identifier(ident) => {
+        let replacement = match object.kind() {
+            ExpressionKind::Identifier(ident) => {
                 if !ctx.is_global_reference(ident) {
                     return;
                 }
@@ -430,7 +426,7 @@ impl<'a> PeepholeOptimizations {
                     _ => None,
                 }
             }
-            Expression::reg_exp_literal(regex) => match name {
+            ExpressionKind::RegExpLiteral(regex) => match name {
                 "source" => {
                     const ES2015_UNSUPPORTED_FLAGS: RegExpFlags = RegExpFlags::G
                         .union(RegExpFlags::I)
@@ -446,25 +442,34 @@ impl<'a> PeepholeOptimizations {
                             pattern_modifiers: true,
                         };
 
-                    if regex.regex.pattern.pattern.is_none()
-                        && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
+                    if regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty()
                     {
-                        regex.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
-                    }
-                    if let Some(pattern) = &regex.regex.pattern.pattern
-                        // for now, only replace regexes that are supported by ES2015 to preserve the syntax error
-                        // we can check whether each feature is supported for the target range to improve this
-                        && regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty()
-                        && !has_unsupported_regular_expression_pattern(
-                            pattern,
-                            &ES2015_UNSUPPORTED_PATTERNS,
-                        )
-                    {
-                        Some(ctx.ast.expression_string_literal(
-                            span,
-                            regex.regex.pattern.text,
-                            None,
-                        ))
+                        // Need mutable access to parse the pattern
+                        let object_mut = match node.kind_mut() {
+                            ExpressionKindMut::StaticMemberExpression(member) => &mut member.object,
+                            ExpressionKindMut::ComputedMemberExpression(member) => &mut member.object,
+                            _ => unreachable!(),
+                        };
+                        let regex_mut = object_mut.as_reg_exp_literal_mut().unwrap();
+                        if regex_mut.regex.pattern.pattern.is_none()
+                            && let Ok(pattern) = regex_mut.parse_pattern(ctx.ast.allocator)
+                        {
+                            regex_mut.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
+                        }
+                        if let Some(pattern) = &regex_mut.regex.pattern.pattern
+                            && !has_unsupported_regular_expression_pattern(
+                                pattern,
+                                &ES2015_UNSUPPORTED_PATTERNS,
+                            )
+                        {
+                            Some(ctx.ast.expression_string_literal(
+                                span,
+                                regex_mut.regex.pattern.text,
+                                None,
+                            ))
+                        } else {
+                            None
+                        }
                     } else {
                         // the pattern might be invalid, keep it as-is to preserve the error
                         None
@@ -594,7 +599,7 @@ impl<'a> PeepholeOptimizations {
         target: &str,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let Some(ident) = expr.as_identifier_mut() else { return false };
+        let Some(ident) = expr.as_identifier() else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }
 

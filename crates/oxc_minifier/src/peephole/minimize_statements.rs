@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
             let stmt = old_stmts[i].take_in(ctx.ast);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
-                && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
+                && !stmt.is_function_declaration()
             {
                 keep_var.visit_statement(&stmt);
                 continue;
@@ -99,8 +99,7 @@ impl<'a> PeepholeOptimizations {
                 'return_loop: while stmts.len() >= 2 {
                     let prev_index = stmts.len() - 2;
                     let prev_stmt = &stmts[prev_index];
-                    match prev_stmt.kind_mut() {
-                        StatementKindMut::ExpressionStatement(_) => {
+                    if prev_stmt.is_expression_statement() {
                             if let Some(last_return) = stmts.last().and_then(|s| s.as_return_statement())
                                 && last_return.argument.is_none()
                             {
@@ -118,9 +117,10 @@ impl<'a> PeepholeOptimizations {
                             let last_return_stmt =
                                 ctx.ast.statement_return(right_span, Some(argument));
                             stmts.push(last_return_stmt);
-                        }
+                    } else if prev_stmt.is_if_statement() {
                         // Merge the last two statements
-                        StatementKindMut::IfStatement(if_stmt) => {
+                        {
+                            let if_stmt = stmts[prev_index].as_if_statement().unwrap();
                             // The previous statement must be an if statement with no else clause
                             if if_stmt.alternate.is_some() {
                                 break 'return_loop;
@@ -128,7 +128,8 @@ impl<'a> PeepholeOptimizations {
                             // The then clause must be a return
                             if !if_stmt.consequent.is_return_statement() {
                                 break 'return_loop;
-                            };
+                            }
+                        }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -185,16 +186,15 @@ impl<'a> PeepholeOptimizations {
                             let last_return_stmt =
                                 ctx.ast.statement_return(right_span, Some(argument));
                             stmts.push(last_return_stmt);
-                        }
-                        _ => break 'return_loop,
+                    } else {
+                        break 'return_loop;
                     }
                 }
             } else if stmts.last().is_some_and(|s| s.is_throw_statement()) {
                 'throw_loop: while stmts.len() >= 2 {
                     let prev_index = stmts.len() - 2;
                     let prev_stmt = &stmts[prev_index];
-                    match prev_stmt.kind_mut() {
-                        StatementKindMut::ExpressionStatement(_) => {
+                    if prev_stmt.is_expression_statement() {
                             ctx.state.changed = true;
                             // "a(); throw b;" => "throw a(), b;"
                             let last_stmt = stmts.pop().unwrap();
@@ -209,9 +209,10 @@ impl<'a> PeepholeOptimizations {
                             let right_span = last_throw.span;
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
                             stmts.push(last_throw_stmt);
-                        }
+                    } else if prev_stmt.is_if_statement() {
                         // Merge the last two statements
-                        StatementKindMut::IfStatement(if_stmt) => {
+                        {
+                            let if_stmt = stmts[prev_index].as_if_statement().unwrap();
                             // The previous statement must be an if statement with no else clause
                             if if_stmt.alternate.is_some() {
                                 break 'throw_loop;
@@ -219,7 +220,8 @@ impl<'a> PeepholeOptimizations {
                             // The then clause must be a throw
                             if !if_stmt.consequent.is_throw_statement() {
                                 break 'throw_loop;
-                            };
+                            }
+                        }
 
                             ctx.state.changed = true;
                             let last_stmt = stmts.pop().unwrap();
@@ -266,8 +268,8 @@ impl<'a> PeepholeOptimizations {
                             };
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
                             stmts.push(last_throw_stmt);
-                        }
-                        _ => break 'throw_loop,
+                    } else {
+                        break 'throw_loop;
                     }
                 }
             }
@@ -326,15 +328,16 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         let a = a.take_in(ctx.ast);
         let b = b.take_in(ctx.ast);
-        if let Some(mut sequence_expr) = a .as_sequence_expression_mut(){
+        if a.is_sequence_expression() {
             // `(a, b); c`
+            let mut sequence_expr = a.into_sequence_expression();
             sequence_expr.expressions.push(b);
             return Expression::sequence_expression(sequence_expr);
         }
         let span = a.span();
-        let exprs = if let Some(sequence_expr) = b .as_sequence_expression_mut(){
+        let exprs = if b.is_sequence_expression() {
             // `a; (b, c)`
-            ctx.ast.vec_from_iter(std::iter::once(a).chain(sequence_expr.unbox().expressions))
+            ctx.ast.vec_from_iter(std::iter::once(a).chain(b.into_sequence_expression().unbox().expressions))
         } else {
             // `a; b`
             ctx.ast.vec_from_array([a, b])
@@ -487,6 +490,7 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
+            _ => {}
         }
 
         result.push(Statement::expression_statement(expr_stmt));
@@ -738,8 +742,8 @@ impl<'a> PeepholeOptimizations {
                             && if_stmt.consequent.is_jump_statement()
                             && let Some(stmt) = if_stmt.alternate.take()
                         {
-                            if let Some(block_stmt) = stmt .as_block_statement_mut(){
-                                Self::handle_block(result, block_stmt, ctx);
+                            if stmt.is_block_statement() {
+                                Self::handle_block(result, stmt.into_block_statement(), ctx);
                             } else {
                                 result.push(stmt);
                                 ctx.state.changed = true;
@@ -875,9 +879,9 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
                 match_expression!(ForStatementInit) => {
-                    let init = init.to_expression_mut();
+                    let init_expr = init.to_expression_mut();
                     let changed =
-                        Self::substitute_single_use_symbol_in_statement(&mut *init, result, ctx, false);
+                        Self::substitute_single_use_symbol_in_statement(init_expr, result, ctx, false);
                     if changed {
                         ctx.state.changed = true;
                     }
@@ -900,40 +904,38 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.options().sequences {
-            if result.last().is_some_and(|s| s.is_expression_statement()) {
-                {
-                    if let Some(init) = &mut for_stmt.init {
-                        if let Some(init) = init.as_expression_mut() {
-                            let a = &mut prev_expr_stmt.expression;
-                            *init = Self::join_sequence(a, init, ctx);
-                            result.pop();
-                            ctx.state.changed = true;
-                        }
-                    } else {
-                        for_stmt.init = Some(ForStatementInit::from(
-                            prev_expr_stmt.expression.take_in(ctx.ast),
-                        ));
+            if let Some(prev_expr_stmt) = result.last_mut().and_then(|s| s.as_expression_statement_mut()) {
+                if let Some(init) = &mut for_stmt.init {
+                    if let Some(init_expr) = init.as_expression_mut() {
+                        let a = &mut prev_expr_stmt.expression;
+                        let joined = Self::join_sequence(a, init_expr, ctx);
+                        *init = ForStatementInit::from(joined);
                         result.pop();
                         ctx.state.changed = true;
                     }
+                } else {
+                    for_stmt.init = Some(ForStatementInit::from(
+                        prev_expr_stmt.expression.take_in(ctx.ast),
+                    ));
+                    result.pop();
+                    ctx.state.changed = true;
                 }
-                Some(StatementKindMut::VariableDeclaration(prev_var_decl)) => {
-                    if let Some(init) = &mut for_stmt.init {
-                        if prev_var_decl.kind.is_var()
-                            && let ForStatementInit::VariableDeclaration(var_decl) = init
-                            && var_decl.kind.is_var()
-                        {
-                            var_decl
-                                .declarations
-                                .splice(0..0, prev_var_decl.declarations.drain(..));
-                            result.pop();
-                            ctx.state.changed = true;
-                        }
-                    } else if prev_var_decl.kind.is_var() {
-                        let prev_var_decl = result.pop().unwrap().into_variable_declaration();
-                        for_stmt.init = Some(ForStatementInit::VariableDeclaration(prev_var_decl));
+            } else if let Some(prev_var_decl) = result.last_mut().and_then(|s| s.as_variable_declaration_mut()) {
+                if let Some(init) = &mut for_stmt.init {
+                    if prev_var_decl.kind.is_var()
+                        && let ForStatementInit::VariableDeclaration(var_decl) = init
+                        && var_decl.kind.is_var()
+                    {
+                        var_decl
+                            .declarations
+                            .splice(0..0, prev_var_decl.declarations.drain(..));
+                        result.pop();
                         ctx.state.changed = true;
                     }
+                } else if prev_var_decl.kind.is_var() {
+                    let prev_var_decl = result.pop().unwrap().into_variable_declaration();
+                    for_stmt.init = Some(ForStatementInit::VariableDeclaration(prev_var_decl));
+                    ctx.state.changed = true;
                 }
             }
         }
@@ -964,69 +966,62 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.options().sequences {
-            // match on result.last_mut()
-            {
+            if let Some(prev_expr_stmt) = result.last_mut().and_then(|s| s.as_expression_statement_mut()) {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
-                Some(_ if result.last().is_some_and(|s| s.is_expression_statement())) => {
-                    // Annex B.3.5 allows initializers in non-strict mode
-                    // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                    // If there's a side-effectful initializer, we should not move the previous statement inside.
-                    let has_side_effectful_initializer = {
-                        if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
-                            if var_decl.declarations.len() == 1 {
-                                // only var can have a initializer
-                                var_decl.kind.is_var()
-                                    && var_decl.declarations[0]
-                                        .init
-                                        .as_ref()
-                                        .is_some_and(|init| init.may_have_side_effects(ctx))
-                            } else {
-                                // the spec does not allow multiple declarations though
-                                true
-                            }
+                // Annex B.3.5 allows initializers in non-strict mode
+                // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+                // If there's a side-effectful initializer, we should not move the previous statement inside.
+                let has_side_effectful_initializer = {
+                    if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
+                        if var_decl.declarations.len() == 1 {
+                            // only var can have a initializer
+                            var_decl.kind.is_var()
+                                && var_decl.declarations[0]
+                                    .init
+                                    .as_ref()
+                                    .is_some_and(|init| init.may_have_side_effects(ctx))
                         } else {
-                            false
+                            // the spec does not allow multiple declarations though
+                            true
+                        }
+                    } else {
+                        false
+                    }
+                };
+                // Only allow inlining when the for-in variable is declared with `var`.
+                // Block-scoped declarations (let/const) can cause variable shadowing issues
+                // where the inlined expression might reference a variable with the same name
+                // as the for-in variable, but after inlining, it would incorrectly refer to
+                // the shadowed for-in variable instead.
+                // See: https://github.com/oxc-project/oxc/issues/18650
+                let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+                if !has_side_effectful_initializer && !is_block_scoped {
+                    let a = &mut prev_expr_stmt.expression;
+                    for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
+                    result.pop();
+                    ctx.state.changed = true;
+                }
+            } else if let Some(prev_var_decl) = result.last_mut().and_then(|s| s.as_variable_declaration_mut()) {
+                // "var a; for (a in b) c" => "for (var a in b) c"
+                if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_in_stmt.left {
+                    let prev_var_decl_no_init_item = {
+                        if prev_var_decl.kind.is_var()
+                            && prev_var_decl.declarations.len() == 1
+                            && prev_var_decl.declarations[0].init.is_none()
+                        {
+                            Some(&prev_var_decl.declarations[0])
+                        } else {
+                            None
                         }
                     };
-                    // Only allow inlining when the for-in variable is declared with `var`.
-                    // Block-scoped declarations (let/const) can cause variable shadowing issues
-                    // where the inlined expression might reference a variable with the same name
-                    // as the for-in variable, but after inlining, it would incorrectly refer to
-                    // the shadowed for-in variable instead.
-                    // See: https://github.com/oxc-project/oxc/issues/18650
-                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-                    if !has_side_effectful_initializer && !is_block_scoped {
-                        let a = &mut prev_expr_stmt.expression;
-                        for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
-                        result.pop();
+                    if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
+                        && let BindingPattern::BindingIdentifier(decl_id) =
+                            &prev_var_decl_item.id
+                        && id.name == decl_id.name
+                    {
+                        let prev_var_decl = result.pop().unwrap().into_variable_declaration();
+                        for_in_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
                         ctx.state.changed = true;
-                    }
-                }
-                // "var a; for (a in b) c" => "for (var a in b) c"
-                Some(StatementKindMut::VariableDeclaration(prev_var_decl)) => {
-                    if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_in_stmt.left {
-                        let prev_var_decl_no_init_item = {
-                            if prev_var_decl.kind.is_var()
-                                && prev_var_decl.declarations.len() == 1
-                                && prev_var_decl.declarations[0].init.is_none()
-                            {
-                                Some(&prev_var_decl.declarations[0])
-                            } else {
-                                None
-                            }
-                        };
-                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
-                            && let BindingPattern::BindingIdentifier(decl_id) =
-                                &prev_var_decl_item.id
-                            && id.name == decl_id.name
-                        {
-                            let prev_var_decl = result.pop().map(|s| s.into_variable_declaration()); let Some(prev_var_decl) = prev_var_decl
-                            else {
-                                unreachable!()
-                            };
-                            for_in_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
-                            ctx.state.changed = true;
-                        }
                     }
                 }
             }
@@ -1093,26 +1088,26 @@ impl<'a> PeepholeOptimizations {
 
     /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
     pub fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
-        match stmt.kind_mut() {
-            StatementKindMut::BlockStatement(_)
-            | StatementKindMut::EmptyStatement(_)
-            | StatementKindMut::DebuggerStatement(_)
-            | StatementKindMut::ExpressionStatement(_)
-            | StatementKindMut::IfStatement(_)
-            | StatementKindMut::ForStatement(_)
-            | StatementKindMut::ForInStatement(_)
-            | StatementKindMut::ForOfStatement(_)
-            | StatementKindMut::DoWhileStatement(_)
-            | StatementKindMut::WhileStatement(_)
-            | StatementKindMut::WithStatement(_)
-            | StatementKindMut::TryStatement(_)
-            | StatementKindMut::SwitchStatement(_)
-            | StatementKindMut::ReturnStatement(_)
-            | StatementKindMut::ThrowStatement(_)
-            | StatementKindMut::BreakStatement(_)
-            | StatementKindMut::ContinueStatement(_)
-            | StatementKindMut::LabeledStatement(_) => false,
-            StatementKindMut::VariableDeclaration(decl) => !decl.kind.is_var(),
+        match stmt.kind() {
+            StatementKind::BlockStatement(_)
+            | StatementKind::EmptyStatement(_)
+            | StatementKind::DebuggerStatement(_)
+            | StatementKind::ExpressionStatement(_)
+            | StatementKind::IfStatement(_)
+            | StatementKind::ForStatement(_)
+            | StatementKind::ForInStatement(_)
+            | StatementKind::ForOfStatement(_)
+            | StatementKind::DoWhileStatement(_)
+            | StatementKind::WhileStatement(_)
+            | StatementKind::WithStatement(_)
+            | StatementKind::TryStatement(_)
+            | StatementKind::SwitchStatement(_)
+            | StatementKind::ReturnStatement(_)
+            | StatementKind::ThrowStatement(_)
+            | StatementKind::BreakStatement(_)
+            | StatementKind::ContinueStatement(_)
+            | StatementKind::LabeledStatement(_) => false,
+            StatementKind::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }
     }
@@ -1551,7 +1546,7 @@ impl<'a> PeepholeOptimizations {
             ExpressionKindMut::CallExpression(call_expr) => {
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
-                    || matches!(replacement, ExpressionKindMut::ChainExpression(_)))
+                    || replacement.is_chain_expression())
                     && call_expr.callee.is_identifier_reference())
                 {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1605,7 +1600,7 @@ impl<'a> PeepholeOptimizations {
             ExpressionKindMut::NewExpression(new_expr) => {
                 // Don't substitute something into a call target that could change "this"
                 if !((replacement.is_member_expression()
-                    || matches!(replacement, ExpressionKindMut::ChainExpression(_)))
+                    || replacement.is_chain_expression())
                     && new_expr.callee.is_identifier_reference())
                 {
                     if let Some(changed) = Self::substitute_single_use_symbol_in_expression(

@@ -88,7 +88,7 @@ impl<'a> PeepholeOptimizations {
                 right: logical_right,
                 operator: logical_op,
                 ..
-            } = logical_expr.as_mut();
+            } = logical_expr;
             if let Some(binary_expr) = logical_left .as_binary_expression_mut(){
                 match (logical_op, binary_expr.operator) {
                     // "a != null && a.b()" => "a?.b()"
@@ -136,8 +136,7 @@ impl<'a> PeepholeOptimizations {
                             };
                             if let Some(new_left_hand_expr) = new_left_hand_expr {
                                 if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
-                                    && let Expression::assignment_expression(assignment_expr) =
-                                        logical_right
+                                    && let Some(assignment_expr) = logical_right.as_assignment_expression_mut()
                                     && assignment_expr.operator == AssignmentOperator::Assign
                                     && Self::has_no_side_effect_for_evaluation_same_target(
                                         &assignment_expr.left,
@@ -149,7 +148,7 @@ impl<'a> PeepholeOptimizations {
                                     // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
                                     && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
                                 {
-                                    assignment_expr.span = *logical_span;
+                                    assignment_expr.span = logical_span;
                                     assignment_expr.operator = AssignmentOperator::LogicalNullish;
                                     *e = logical_right.take_in(ctx.ast);
                                     ctx.state.changed = true;
@@ -157,7 +156,7 @@ impl<'a> PeepholeOptimizations {
                                 }
 
                                 *e = ctx.ast.expression_logical(
-                                    *logical_span,
+                                    logical_span,
                                     new_left_hand_expr.take_in(ctx.ast),
                                     LogicalOperator::Coalesce,
                                     logical_right.take_in(ctx.ast),
@@ -189,8 +188,8 @@ impl<'a> PeepholeOptimizations {
             ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(ctx),
             ArrayExpressionElement::Elision(_) => false,
             match_expression!(ArrayExpressionElement) => {
-                let el_expr = el.to_expression_mut();
-                !Self::remove_unused_expression(el_expr, ctx)
+                let mut el_expr = el.to_expression_mut();
+                !Self::remove_unused_expression(&mut el_expr, ctx)
             }
         });
         if array_expr.elements.len() != old_len {
@@ -702,7 +701,7 @@ impl<'a> PeepholeOptimizations {
                     ClassElement::PropertyDefinition(def) => Some(&mut def.key),
                     ClassElement::AccessorProperty(def) => Some(&mut def.key),
                 }
-                && let Some(expr) = key.as_expression_mut()
+                && let Some(mut expr) = key.as_expression_mut()
                 && expr.may_have_side_effects(ctx)
             {
                 exprs.push(expr.take_in(ctx.ast));

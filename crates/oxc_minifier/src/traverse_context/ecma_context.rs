@@ -203,9 +203,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     }
 
     pub fn is_expression_undefined(&self, expr: &Expression) -> bool {
-        match expr {
-            Expression::Identifier(ident) if self.is_identifier_undefined(ident) => true,
-            Expression::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
+        match expr.kind() {
+            ExpressionKind::Identifier(ident) if self.is_identifier_undefined(ident) => true,
+            ExpressionKind::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
                 true
             }
             _ => false,
@@ -316,7 +316,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if !expr.is_anonymous_function_definition() {
             return false;
         }
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = matches!(expr.without_parentheses().kind(), ExpressionKind::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
 }
