@@ -14,6 +14,7 @@ import {
 } from "../generated/constants.ts";
 import { computeLoc } from "./location.ts";
 import { FLAG_NOT_DESERIALIZED, FLAG_DESERIALIZED } from "./tokens.ts";
+import { EMPTY_UINT8_ARRAY, EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
@@ -67,16 +68,12 @@ let activeCommentsWithLocCount = 0;
 // If all comments have been deserialized (`allCommentsDeserialized === true`), `deserializedCommentsLen` is 0,
 // and no further indexes are written to `deserializedCommentIndexes`. `resetComments` will reset all comments,
 // up to `commentsLen`.
-let deserializedCommentIndexes = new Uint32Array(0);
+let deserializedCommentIndexes = EMPTY_UINT32_ARRAY;
 let deserializedCommentsLen = 0;
 
 // Empty comments array.
 // Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
 const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentType[];
-
-// Empty typed arrays, reused for files with no comments.
-const EMPTY_UINT8_ARRAY = new Uint8Array(0);
-const EMPTY_UINT32_ARRAY = new Uint32Array(0);
 
 const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
 debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);

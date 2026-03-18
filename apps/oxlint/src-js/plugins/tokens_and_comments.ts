@@ -25,6 +25,7 @@ import {
   tokensUint32,
 } from "./tokens.ts";
 import { COMMENT_SIZE } from "../generated/constants.ts";
+import { EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment } from "./comments.ts";
@@ -90,7 +91,7 @@ export let tokensAndCommentsLen = 0;
 // Backing buffer reused across files.
 // Grows when needed (doubled), never shrinks.
 // `tokensAndCommentsUint32` is a view over this buffer's prefix.
-let tokensAndCommentsBackingUint32 = new Uint32Array(0);
+let tokensAndCommentsBackingUint32 = EMPTY_UINT32_ARRAY;
 
 /**
  * Initialize tokens-and-comments buffer.

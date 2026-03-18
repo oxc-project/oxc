@@ -10,6 +10,7 @@ import {
   TOKENS_OFFSET_POS_32,
   TOKENS_LEN_POS_32,
 } from "../generated/constants.ts";
+import { EMPTY_UINT32_ARRAY } from "../utils/typed_arrays.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Location, Span } from "./location.ts";
@@ -130,7 +131,7 @@ const regexObjects: Regex[] = [];
 // `Uint32Array` rather than `Array` to avoid GC tracing and write barriers.
 // `activeTokensWithRegexCount` also serves as the index into `regexObjects`
 // for the next regex descriptor object which can be reused.
-let tokensWithRegexIndexes = new Uint32Array(0);
+let tokensWithRegexIndexes = EMPTY_UINT32_ARRAY;
 let activeTokensWithRegexCount = 0;
 
 // Minimum capacity of `tokensWithRegexIndexes` array when not empty.
@@ -147,7 +148,7 @@ const REGEX_INDEXES_MIN_CAPACITY = 16;
 // If all tokens have been deserialized (`allTokensDeserialized === true`), `deserializedTokensLen` is 0,
 // and no further indexes are written to `deserializedTokenIndexes`. `resetTokens` will reset all tokens,
 // up to `tokensLen`.
-let deserializedTokenIndexes = new Uint32Array(0);
+let deserializedTokenIndexes = EMPTY_UINT32_ARRAY;
 let deserializedTokensLen = 0;
 
 // Reset `#loc` field on a `Token` class instance
