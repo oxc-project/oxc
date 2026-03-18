@@ -124,27 +124,27 @@ impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
 impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr.kind() {
+        match expr.kind_mut() {
             // `super.prop`
-            ExpressionKind::StaticMemberExpression(_) => {
+            ExpressionKindMut::StaticMemberExpression(_) => {
                 self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            ExpressionKind::ComputedMemberExpression(_) => {
+            ExpressionKindMut::ComputedMemberExpression(_) => {
                 self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            ExpressionKind::CallExpression(call_expr) => {
+            ExpressionKindMut::CallExpression(call_expr) => {
                 self.super_converter
                     .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            ExpressionKind::AssignmentExpression(_) => {
+            ExpressionKindMut::AssignmentExpression(_) => {
                 self.super_converter
                     .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            ExpressionKind::UpdateExpression(_) => {
+            ExpressionKindMut::UpdateExpression(_) => {
                 self.super_converter
                     .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }

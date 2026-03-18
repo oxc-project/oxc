@@ -281,12 +281,12 @@ impl<'a> ClassProperties<'a> {
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
             key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+                let mut key = key.to_expression_mut();
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                let key = self.create_computed_key_temp_var_if_required(key, is_static, ctx);
+                let key = self.create_computed_key_temp_var_if_required(&mut key, is_static, ctx);
                 ctx.ast.member_expression_computed(SPAN, assignee, key, false)
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -317,12 +317,12 @@ impl<'a> ClassProperties<'a> {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             key @ match_expression!(PropertyKey) => {
-                let key = key.to_expression_mut();
+                let mut key = key.to_expression_mut();
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                self.create_computed_key_temp_var_if_required(key, is_static, ctx)
+                self.create_computed_key_temp_var_if_required(&mut key, is_static, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 // Handled in `convert_instance_property` and `convert_static_property`

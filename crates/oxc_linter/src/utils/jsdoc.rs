@@ -247,7 +247,7 @@ pub fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
 
                 ParamKind::Nested(collected)
             }
- match assign_pat.right.kind() {
+            match assign_pat.right.kind() {
                 ExpressionKind::Identifier(_) => get_param_name(&assign_pat.left, false),
                 _ => {
                     // TODO: If `config.useDefaultObjectProperties` = true,

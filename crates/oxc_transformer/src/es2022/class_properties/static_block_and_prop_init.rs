@@ -246,15 +246,15 @@ impl<'a, 'v> StaticVisitor<'a, 'v> {
 impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr.kind() {
+        match expr.kind_mut() {
             // `this`
-            ExpressionKind::ThisExpression(this_expr) => {
+            ExpressionKindMut::ThisExpression(this_expr) => {
                 let span = this_expr.span;
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
             // `delete this`
-            ExpressionKind::UnaryExpression(unary_expr) => {
+            ExpressionKindMut::UnaryExpression(unary_expr) => {
                 if unary_expr.operator == UnaryOperator::Delete
                     && unary_expr.argument.is_this_expression()
                 {
@@ -264,25 +264,25 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
                 }
             }
             // `super.prop`
-            ExpressionKind::StaticMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionKindMut::StaticMemberExpression(_) if self.this_depth == 0 => {
                 self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            ExpressionKind::ComputedMemberExpression(_) if self.this_depth == 0 => {
+            ExpressionKindMut::ComputedMemberExpression(_) if self.this_depth == 0 => {
                 self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            ExpressionKind::CallExpression(call_expr) if self.this_depth == 0 => {
+            ExpressionKindMut::CallExpression(call_expr) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            ExpressionKind::AssignmentExpression(_) if self.this_depth == 0 => {
+            ExpressionKindMut::AssignmentExpression(_) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            ExpressionKind::UpdateExpression(_) if self.this_depth == 0 => {
+            ExpressionKindMut::UpdateExpression(_) if self.this_depth == 0 => {
                 self.super_converter
                     .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }

@@ -178,7 +178,7 @@ impl Rule for ClassMethodsUseThis {
                 {
                     return;
                 }
- match value.kind() {
+                accessor.value.as_ref().and_then(|value| match value.kind() {
                     ExpressionKind::ArrowFunctionExpression(arrow_function) => {
                         Some((&arrow_function.body, &accessor.key))
                     }
@@ -217,7 +217,7 @@ impl Rule for ClassMethodsUseThis {
                 {
                     return;
                 }
- match value.kind() {
+                property_definition.value.as_ref().and_then(|value| match value.kind() {
                     ExpressionKind::ArrowFunctionExpression(arrow_function) => {
                         Some((&arrow_function.body, &property_definition.key))
                     }

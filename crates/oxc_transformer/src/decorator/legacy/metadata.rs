@@ -298,8 +298,8 @@ impl<'a> LegacyDecoratorMetadata<'a> {
 
         for member in members {
             if let Some(init) = &member.initializer {
-                match init.kind() {
-                    ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_)
+                match init.kind_mut() {
+                    ExpressionKindMut::StringLiteral(_) | ExpressionKindMut::TemplateLiteral(_)
                         if enum_type != EnumType::Number =>
                     {
                         enum_type = EnumType::String;
@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
                     // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
                     // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
                     // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
-                    ExpressionKind::NumericLiteral(_) | ExpressionKind::UnaryExpression(_)
+                    ExpressionKindMut::NumericLiteral(_) | ExpressionKindMut::UnaryExpression(_)
                         if enum_type != EnumType::String =>
                     {
                         enum_type = EnumType::Number;

@@ -348,37 +348,37 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
             return;
         }
 
-        match expr.kind() {
+        match expr.kind_mut() {
             // `object.#prop`
-            ExpressionKind::PrivateFieldExpression(_) => {
+            ExpressionKindMut::PrivateFieldExpression(_) => {
                 self.transform_private_field_expression(expr, ctx);
             }
             // `object.#prop()`
-            ExpressionKind::CallExpression(_) => {
+            ExpressionKindMut::CallExpression(_) => {
                 self.transform_call_expression(expr, ctx);
             }
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
-            ExpressionKind::AssignmentExpression(_) => {
+            ExpressionKindMut::AssignmentExpression(_) => {
                 self.transform_assignment_expression(expr, ctx);
             }
             // `object.#prop++`, `--object.#prop`
-            ExpressionKind::UpdateExpression(_) => {
+            ExpressionKindMut::UpdateExpression(_) => {
                 self.transform_update_expression(expr, ctx);
             }
             // `object?.#prop`
-            ExpressionKind::ChainExpression(_) => {
+            ExpressionKindMut::ChainExpression(_) => {
                 self.transform_chain_expression(expr, ctx);
             }
             // `delete object?.#prop.xyz`
-            ExpressionKind::UnaryExpression(_) => {
+            ExpressionKindMut::UnaryExpression(_) => {
                 self.transform_unary_expression(expr, ctx);
             }
             // "object.#prop`xyz`"
-            ExpressionKind::TaggedTemplateExpression(_) => {
+            ExpressionKindMut::TaggedTemplateExpression(_) => {
                 self.transform_tagged_template_expression(expr, ctx);
             }
             // "#prop in object"
-            ExpressionKind::PrivateInExpression(_) => {
+            ExpressionKindMut::PrivateInExpression(_) => {
                 self.transform_private_in_expression(expr, ctx);
             }
             _ => {}

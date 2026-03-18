@@ -1520,26 +1520,26 @@ impl<'a> ClassProperties<'a> {
     fn has_optional_expression(expr: &Expression<'a>) -> bool {
         let mut expr = expr;
         loop {
-            match expr.kind() {
-                ExpressionKind::CallExpression(call) => {
+            match expr.kind_mut() {
+                ExpressionKindMut::CallExpression(call) => {
                     if call.optional {
                         return true;
                     }
                     expr = call.callee.get_inner_expression();
                 }
-                ExpressionKind::StaticMemberExpression(member) => {
+                ExpressionKindMut::StaticMemberExpression(member) => {
                     if member.optional {
                         return true;
                     }
                     expr = &member.object;
                 }
-                ExpressionKind::ComputedMemberExpression(member) => {
+                ExpressionKindMut::ComputedMemberExpression(member) => {
                     if member.optional {
                         return true;
                     }
                     expr = &member.object;
                 }
-                ExpressionKind::PrivateFieldExpression(member) => {
+                ExpressionKindMut::PrivateFieldExpression(member) => {
                     if member.optional {
                         return true;
                     }

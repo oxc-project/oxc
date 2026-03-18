@@ -1192,8 +1192,8 @@ impl<'a> ReferenceBuilder<'a> {
         let expr = expr.take_in(ctx.ast);
         let binding;
         let maybe_bound_identifier;
-        match expr.kind() {
-            ExpressionKind::Identifier(ident) if !force_create_binding => {
+        match expr.kind_mut() {
+            ExpressionKindMut::Identifier(ident) if !force_create_binding => {
                 binding = None;
                 maybe_bound_identifier =
                     MaybeBoundIdentifier::from_identifier_reference(ident, ctx);

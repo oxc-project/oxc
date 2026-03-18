@@ -331,9 +331,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, is_member_expression): (Option<Ident>, _) =
-                match call_expr.callee.kind() {
-                    ExpressionKind::Identifier(ident) => (Some(ident.name), false),
-                    ExpressionKind::StaticMemberExpression(member) => {
+                match call_expr.callee.kind_mut() {
+                    ExpressionKindMut::Identifier(ident) => (Some(ident.name), false),
+                    ExpressionKindMut::StaticMemberExpression(member) => {
                         if let Some(object) = member.object.as_identifier() {
                             (Some(object.name), true)
                         } else {
@@ -441,22 +441,22 @@ impl<'a> ReactRefresh<'a> {
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        match expr.kind() {
-            ExpressionKind::Identifier(ident) => {
+        match expr.kind_mut() {
+            ExpressionKindMut::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
                 // Instead we assume it's registered at definition.
                 return is_componentish_name(&ident.name);
             }
-            ExpressionKind::FunctionExpression(_) => {}
-            ExpressionKind::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::FunctionExpression(_) => {}
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 // Don't transform `() => () => {}`
                 if arrow.get_expression().is_some_and(|expr| expr.is_arrow_function_expression()) {
                     return false;
                 }
             }
-            ExpressionKind::CallExpression(call_expr) => {
+            ExpressionKindMut::CallExpression(call_expr) => {
                 let allowed_callee = call_expr.callee.is_identifier()
                     || call_expr.callee.is_computed_member_expression()
                     || call_expr.callee.is_static_member_expression();
@@ -762,17 +762,17 @@ impl<'a> ReactRefresh<'a> {
             return None;
         }
 
-        match init.kind() {
+        match init.kind_mut() {
             // Likely component definitions.
-            ExpressionKind::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 // () => () => {}
                 if arrow.get_expression().is_some_and(|expr| expr.is_arrow_function_expression()) {
                     return None;
                 }
             }
-            ExpressionKind::FunctionExpression(_)
+            ExpressionKindMut::FunctionExpression(_)
             // Maybe something like styled.div`...`
-            | ExpressionKind::TaggedTemplateExpression(_) => {
+            | ExpressionKindMut::TaggedTemplateExpression(_) => {
                 // Special case when a variable would get an inferred name:
                 // let Foo = () => {}
                 // let Foo = function() {}
@@ -782,7 +782,7 @@ impl<'a> ReactRefresh<'a> {
                 // (eg: with @babel/plugin-transform-react-display-name or
                 // babel-plugin-styled-components)
             }
-            ExpressionKind::CallExpression(call_expr) => {
+            ExpressionKindMut::CallExpression(call_expr) => {
                 let is_import_expression = match call_expr.callee.get_inner_expression().kind() {
                     ExpressionKind::ImportExpression(_) => {
                         true

@@ -82,8 +82,8 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
     ctx: &mut TraverseCtx<'a>,
 ) -> (Expression<'a>, [Expression<'a>; N]) {
     // TODO: Handle if in a function's params
-    let temp_var_binding = match expr.kind() {
-        ExpressionKind::Identifier(ident) => {
+    let temp_var_binding = match expr.kind_mut() {
+        ExpressionKindMut::Identifier(ident) => {
             let reference_id = ident.reference_id();
             let reference = ctx.scoping().get_reference(reference_id);
             if let Some(symbol_id) = reference.symbol_id()
@@ -103,14 +103,14 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
             VarDeclarationsStore::create_uid_var(&ident.name, ctx)
         }
         // Reading any of these cannot have side effects, so no need for temp var
-        ExpressionKind::ThisExpression(_)
-        | ExpressionKind::Super(_)
-        | ExpressionKind::BooleanLiteral(_)
-        | ExpressionKind::NullLiteral(_)
-        | ExpressionKind::NumericLiteral(_)
-        | ExpressionKind::BigIntLiteral(_)
-        | ExpressionKind::RegExpLiteral(_)
-        | ExpressionKind::StringLiteral(_) => {
+        ExpressionKindMut::ThisExpression(_)
+        | ExpressionKindMut::Super(_)
+        | ExpressionKindMut::BooleanLiteral(_)
+        | ExpressionKindMut::NullLiteral(_)
+        | ExpressionKindMut::NumericLiteral(_)
+        | ExpressionKindMut::BigIntLiteral(_)
+        | ExpressionKindMut::RegExpLiteral(_)
+        | ExpressionKindMut::StringLiteral(_) => {
             let references = array::from_fn(|_| expr.clone_in(ctx.ast.allocator));
             return (expr, references);
         }
@@ -119,7 +119,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         // but don't bother checking for that as it shouldn't occur in real world code.
         // Why would you write "`x${9}z`" when you can just write "`x9z`"?
         // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
-        ExpressionKind::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+        ExpressionKindMut::TemplateLiteral(lit) if lit.expressions.is_empty() => {
             let references = array::from_fn(|_| {
                 ctx.ast.expression_template_literal(
                     lit.span,

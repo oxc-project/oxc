@@ -74,8 +74,8 @@ impl<'a> NullishCoalescingOperator {
         let logical_expr = logical_expr.unbox();
 
         // Skip creating extra reference when `left` is static
-        match logical_expr.left.kind() {
-            ExpressionKind::ThisExpression(this) => {
+        match logical_expr.left.kind_mut() {
+            ExpressionKindMut::ThisExpression(this) => {
                 let this_span = this.span;
                 return Self::create_conditional_expression(
                     logical_expr.left,
@@ -86,7 +86,7 @@ impl<'a> NullishCoalescingOperator {
                     ctx,
                 );
             }
-            ExpressionKind::Identifier(ident) => {
+            ExpressionKindMut::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // Check binding is not mutated.

@@ -28,8 +28,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
     }
 
     pub(crate) fn transform_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let (for_of, label) = match stmt.kind() {
-            StatementKind::LabeledStatement(labeled) => {
+        let (for_of, label) = match stmt.kind_mut() {
+            StatementKindMut::LabeledStatement(labeled) => {
                 let LabeledStatement { label, body, .. } = labeled.as_mut();
                 if let Some(for_of) = body.as_for_of_statement() {
                     (for_of, Some(label))
@@ -37,7 +37,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                     return;
                 }
             }
-            StatementKind::ForOfStatement(for_of) => (for_of, None),
+            StatementKindMut::ForOfStatement(for_of) => (for_of, None),
             _ => return,
         };
 

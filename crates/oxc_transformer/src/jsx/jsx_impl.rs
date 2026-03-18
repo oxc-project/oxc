@@ -661,8 +661,8 @@ impl<'a> JsxImpl<'a> {
                         }
 
                         // Add attribute to prop object
-                        match argument.kind() {
-                            ExpressionKind::ObjectExpression(expr) if !has_proto(&expr) => {
+                        match argument.kind_mut() {
+                            ExpressionKindMut::ObjectExpression(expr) if !has_proto(&expr) => {
                                 properties.extend(expr.unbox().properties);
                             }
                             argument => {
@@ -800,7 +800,7 @@ impl<'a> JsxImpl<'a> {
         name: JSXElementName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match name.kind() {
+        match name.kind_mut() {
             JSXElementName::Identifier(ident) => {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }

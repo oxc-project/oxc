@@ -479,9 +479,9 @@ impl<'a> ExponentiationOperator<'a> {
         // If the object reference that we need to save is locally declared, evaluating it multiple times
         // will not trigger getters or setters. `super` cannot be directly assigned, so use it directly too.
         // TODO(improve-on-babel): We could also skip creating a temp var for `this.x **= 2`.
-        match obj.kind() {
-            ExpressionKind::Super(super_) => return ctx.ast.expression_super(super_.span),
-            ExpressionKind::Identifier(ident) => {
+        match obj.kind_mut() {
+            ExpressionKindMut::Super(super_) => return ctx.ast.expression_super(super_.span),
+            ExpressionKindMut::Identifier(ident) => {
                 let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
