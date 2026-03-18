@@ -80,7 +80,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(member) = expr.as_computed_member_expression() else { unreachable!() };
+        let Some(member) = expr.as_computed_member_expression_mut() else { unreachable!() };
         if member.object.is_super() {
             *expr = self.transform_computed_member_expression_impl(member, false, ctx);
         }
@@ -138,7 +138,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let callee = &mut call_expr.callee;
-        let Some(member) = callee.as_computed_member_expression() else { unreachable!() };
+        let Some(member) = callee.as_computed_member_expression_mut() else { unreachable!() };
         *callee = self.transform_computed_member_expression_impl(member, true, ctx);
         Self::transform_super_call_expression_arguments(&mut call_expr.arguments, ctx);
     }
