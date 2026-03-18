@@ -11,7 +11,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
-        if let Statement::BlockStatement(block_stmt) = first {
+        if let Some(block_stmt) = first .as_block_statement_mut(){
             if let Some(b) = block_stmt.body.first() {
                 first = b;
             } else {
@@ -19,31 +19,31 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        let Statement::IfStatement(if_stmt) = first else {
+        let Some(if_stmt) = first.as_if_statement_mut() else {
             return;
         };
         // "for (;;) if (x) break;" => "for (; !x;) ;"
         // "for (; a;) if (x) break;" => "for (; a && !x;) ;"
         // "for (;;) if (x) break; else y();" => "for (; !x;) y();"
         // "for (; a;) if (x) break; else y();" => "for (; a && !x;) y();"
-        if let Some(Statement::BreakStatement(break_stmt)) = if_stmt.consequent.get_one_child() {
+        if let Some(Statement::break_statement(break_stmt)) = if_stmt.consequent.get_one_child() {
             if break_stmt.label.is_some() {
                 return;
             }
 
             let span = for_stmt.body.span();
             let (first, body) = match for_stmt.body.take_in(ctx.ast) {
-                Statement::BlockStatement(mut block_stmt) => (
+                Statement::block_statement(mut block_stmt) => (
                     block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast),
-                    Some(Statement::BlockStatement(block_stmt)),
+                    Some(Statement::block_statement(block_stmt)),
                 ),
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Some(mut if_stmt) = first.as_if_statement_mut() else { unreachable!() };
 
             let expr = match if_stmt.test.take_in(ctx.ast) {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                Expression::unary_expression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
                 e => Self::minimize_not(e.span(), e, ctx),
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
                 *test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    .unwrap_or_else(|| Expression::logical_expression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -66,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
         // "for (; a;) if (x) y(); else break;" => "for (; a && x;) y();"
-        if let Some(Statement::BreakStatement(break_stmt)) =
+        if let Some(Statement::break_statement(break_stmt)) =
             if_stmt.alternate.as_ref().and_then(|stmt| stmt.get_one_child())
         {
             if break_stmt.label.is_some() {
@@ -75,14 +75,14 @@ impl<'a> PeepholeOptimizations {
 
             let span = for_stmt.body.span();
             let (first, body) = match for_stmt.body.take_in(ctx.ast) {
-                Statement::BlockStatement(mut block_stmt) => (
+                Statement::block_statement(mut block_stmt) => (
                     block_stmt.body.get_mut(0).unwrap().take_in(ctx.ast),
-                    Some(Statement::BlockStatement(block_stmt)),
+                    Some(Statement::block_statement(block_stmt)),
                 ),
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Some(mut if_stmt) = first.as_if_statement_mut() else { unreachable!() };
 
             let expr = if_stmt.test.take_in(ctx.ast);
 
@@ -91,7 +91,7 @@ impl<'a> PeepholeOptimizations {
                 let mut logical_expr =
                     ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
                 *test = Self::try_fold_and_or(&mut logical_expr, ctx)
-                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
+                    .unwrap_or_else(|| Expression::logical_expression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -108,8 +108,8 @@ impl<'a> PeepholeOptimizations {
         replace: Option<Statement<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
-        match body {
-            Some(Statement::BlockStatement(mut block_stmt)) if !block_stmt.body.is_empty() => {
+        match body.kind_mut() {
+            Some(StatementKindMut::BlockStatement(mut block_stmt)) if !block_stmt.body.is_empty() => {
                 if let Some(replace) = replace {
                     block_stmt.body[0] = replace;
                 } else if block_stmt.body.len() == 2
@@ -119,7 +119,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     block_stmt.body.remove(0);
                 }
-                Statement::BlockStatement(block_stmt)
+                StatementKindMut::BlockStatement(block_stmt)
             }
             _ => replace.unwrap_or_else(|| ctx.ast.statement_empty(span)),
         }

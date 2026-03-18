@@ -22,7 +22,7 @@ impl<'a> PeepholeOptimizations {
     /// Remove block from single line blocks
     /// `{ block } -> block`
     pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::BlockStatement(s) = stmt else { return };
+        let Some(s) = stmt.as_block_statement_mut() else { return };
         match s.body.len() {
             0 => {
                 let parent = ctx.parent();
@@ -41,9 +41,9 @@ impl<'a> PeepholeOptimizations {
             }
             1 => {
                 let first = &s.body[0];
-                if matches!(first, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
-                    || matches!(first, Statement::ClassDeclaration(_))
-                    || matches!(first, Statement::FunctionDeclaration(_))
+                if matches!(first, Statement::variable_declaration(decl) if !decl.kind.is_var())
+                    || first.is_class_declaration()
+                    || first.is_function_declaration()
                 {
                     return;
                 }
@@ -55,16 +55,16 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::IfStatement(if_stmt) = stmt else { return };
+        let Some(if_stmt) = stmt.as_if_statement_mut() else { return };
         // Descend and remove `else` blocks first.
-        match &mut if_stmt.alternate {
-            Some(Statement::IfStatement(_)) => {
+        match if_stmt.alternate.kind_mut() {
+            Some(StatementKindMut::IfStatement(_)) => {
                 Self::try_fold_if(if_stmt.alternate.as_mut().unwrap(), ctx);
             }
-            Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
+            Some(StatementKindMut::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
             }
-            Some(Statement::EmptyStatement(_)) => {
+            Some(StatementKindMut::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
             }
             _ => {}
@@ -124,7 +124,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::ForStatement(for_stmt) = stmt else { return };
+        let Some(for_stmt) = stmt.as_for_statement_mut() else { return };
         if let Some(init) = &mut for_stmt.init
             && let Some(init) = init.as_expression_mut()
             && Self::remove_unused_expression(init, ctx)
@@ -195,7 +195,7 @@ impl<'a> PeepholeOptimizations {
     /// a: break a;
     /// ```
     pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::LabeledStatement(s) = stmt else { return };
+        let Some(s) = stmt.as_labeled_statement_mut() else { return };
         let id = s.label.name.as_str();
 
         if ctx.options().drop_labels.contains(id) {
@@ -206,11 +206,11 @@ impl<'a> PeepholeOptimizations {
 
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
-        match &mut s.body {
-            Statement::BreakStatement(break_stmt)
+        match s.body.kind_mut() {
+            StatementKindMut::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
-            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
-            Statement::EmptyStatement(_) => {
+            StatementKindMut::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, StatementKindMut::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            StatementKindMut::EmptyStatement(_) => {
                 *stmt = ctx.ast.statement_empty(s.span);
                 ctx.state.changed = true;
                 return;
@@ -225,7 +225,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
+        let Some(expr_stmt) = stmt.as_expression_statement_mut() else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
         if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
@@ -241,7 +241,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::TryStatement(s) = stmt else { return };
+        let Some(s) = stmt.as_try_statement_mut() else { return };
         if let Some(handler) = &s.handler
             && s.block.body.is_empty()
         {
@@ -267,7 +267,7 @@ impl<'a> PeepholeOptimizations {
             *stmt = if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
-                Statement::BlockStatement(ctx.ast.alloc(block))
+                Statement::block_statement(ctx.ast.alloc(block))
             } else {
                 ctx.ast.statement_empty(s.span)
             };
@@ -277,7 +277,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ConditionalExpression(e) = expr else { return };
+        let Some(e) = expr.as_conditional_expression_mut() else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         ctx.state.changed = true;
         *expr = if e.test.may_have_side_effects(ctx) {
@@ -311,7 +311,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::SequenceExpression(e) = expr else { return };
+        let Some(e) = expr.as_sequence_expression_mut() else { return };
         let should_keep_as_sequence_expr = e
             .expressions
             .last()
@@ -353,8 +353,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn keep_track_of_pure_functions(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::FunctionDeclaration(f) => {
+        match stmt.kind_mut() {
+            StatementKindMut::FunctionDeclaration(f) => {
                 if let Some(body) = &f.body {
                     Self::try_save_pure_function(
                         f.id.as_ref(),
@@ -366,11 +366,11 @@ impl<'a> PeepholeOptimizations {
                     );
                 }
             }
-            Statement::VariableDeclaration(decl) => {
+            StatementKindMut::VariableDeclaration(decl) => {
                 for d in &decl.declarations {
                     if let BindingPattern::BindingIdentifier(id) = &d.id {
-                        match &d.init {
-                            Some(Expression::ArrowFunctionExpression(a)) => {
+                        match d.init.kind() {
+                            Some(ExpressionKind::ArrowFunctionExpression(a)) => {
                                 Self::try_save_pure_function(
                                     Some(id),
                                     &a.params,
@@ -380,7 +380,7 @@ impl<'a> PeepholeOptimizations {
                                     ctx,
                                 );
                             }
-                            Some(Expression::FunctionExpression(f)) => {
+                            Some(ExpressionKind::FunctionExpression(f)) => {
                                 if let Some(body) = &f.body {
                                     Self::try_save_pure_function(
                                         Some(id),
@@ -429,8 +429,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::CallExpression(e) = expr else { return };
-        if let Expression::Identifier(ident) = &e.callee {
+        let Some(e) = expr.as_call_expression_mut() else { return };
+        if let Some(ident) = e.callee .as_identifier(){
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
                 && matches!(
@@ -462,32 +462,32 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
-                match access_value {
-                    Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
-                    match_member_expression!(Expression) => true,
+                match access_value.kind_mut() {
+                    ExpressionKindMut::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+                    match_member_expression!(ExpressionKind) => true,
                     _ => false,
                 }
             }
             Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
                 UnaryOperator::Typeof => {
                     // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
-                    if let Expression::Identifier(id) = access_value {
+                    if let Some(id) = access_value .as_identifier_mut(){
                         ctx.is_global_reference(id)
                     } else {
                         false
                     }
                 }
                 UnaryOperator::Delete => {
-                    match access_value {
+                    match access_value.kind_mut() {
                         // Example case: `delete (0, foo)` (no error) -> `delete foo` (error)
-                        Expression::Identifier(_)
+                        ExpressionKindMut::Identifier(_)
                         // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
-                        | Expression::PrivateFieldExpression(_)
+                        | ExpressionKindMut::PrivateFieldExpression(_)
                         // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::StaticMemberExpression(_) => true,
+                        | ExpressionKindMut::ComputedMemberExpression(_)
+                        | ExpressionKindMut::StaticMemberExpression(_) => true,
                         // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
-                        Expression::ChainExpression(chain) => {
+                        ExpressionKindMut::ChainExpression(chain) => {
                             matches!(&chain.expression, match_member_expression!(ChainElement))
                         }
                         _ => false,
@@ -508,7 +508,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Argument::SpreadElement(e) = &args[0] else { return };
-        let Expression::ArrayExpression(e) = &e.argument else { return };
+        let Some(e) = &e.argument.as_array_expression_mut() else { return };
         if e.elements.is_empty() {
             args.drain(..);
         }

@@ -26,7 +26,7 @@ type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
     pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::CallExpression(ce) = node else { return };
+        let Some(ce) = node.as_call_expression_mut() else { return };
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
@@ -38,12 +38,12 @@ impl<'a> PeepholeOptimizations {
         // Handle special cases not suitable for constant evaluation
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
-            Expression::StaticMemberExpression(member) if !member.optional => {
+            Expression::static_member_expression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object)
             }
-            Expression::ComputedMemberExpression(member) if !member.optional => {
-                match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+            Expression::computed_member_expression(member) if !member.optional => {
+                match member.expression.kind() {
+                    ExpressionKind::StringLiteral(s) => (s.value.as_str(), &member.object),
                     _ => return,
                 }
             }
@@ -121,7 +121,7 @@ impl<'a> PeepholeOptimizations {
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
     pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let original_span = if let Expression::CallExpression(root_call_expr) = node {
+        let original_span = if let Some(root_call_expr) = node .as_call_expression_mut(){
             root_call_expr.span
         } else {
             return;
@@ -136,10 +136,10 @@ impl<'a> PeepholeOptimizations {
         let mut collected_arguments = ctx.ast.vec();
         let new_root_callee: &mut Expression<'a>;
         loop {
-            let Expression::CallExpression(ce) = current_node else {
+            let Some(ce) = current_node.as_call_expression_mut() else {
                 return;
             };
-            let Expression::StaticMemberExpression(member) = &ce.callee else {
+            let Some(member) = &ce.callee.as_static_member_expression_mut() else {
                 return;
             };
             if member.optional || member.property.name != "concat" {
@@ -169,10 +169,10 @@ impl<'a> PeepholeOptimizations {
 
             // [].concat() or "".concat()
             let is_root_expr_concat = {
-                let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+                let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
                 matches!(
                     &member.object,
-                    Expression::ArrayExpression(_) | Expression::StringLiteral(_)
+                    Expression::array_expression(_) | Expression::string_literal(_)
                 )
             };
             if is_root_expr_concat {
@@ -180,7 +180,7 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
 
-            let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+            let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
             current_node = &mut member.object;
         }
 
@@ -216,12 +216,12 @@ impl<'a> PeepholeOptimizations {
         }
 
         let object = match callee {
-            Expression::StaticMemberExpression(member) => &mut member.object,
-            Expression::ComputedMemberExpression(member) => &mut member.object,
+            Expression::static_member_expression(member) => &mut member.object,
+            Expression::computed_member_expression(member) => &mut member.object,
             _ => unreachable!(),
         };
-        match object {
-            Expression::ArrayExpression(array_expr) => {
+        match object.kind_mut() {
+            ExpressionKindMut::ArrayExpression(array_expr) => {
                 let can_merge_until = args
                     .iter()
                     .enumerate()
@@ -232,7 +232,7 @@ impl<'a> PeepholeOptimizations {
                             if argument.is_literal() {
                                 true
                             } else {
-                                matches!(argument, Expression::ArrayExpression(_))
+                                matches!(argument, ExpressionKindMut::ArrayExpression(_))
                             }
                         }
                     })
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
                         if argument.is_literal() {
                             array_expr.elements.push(ArrayExpressionElement::from(argument));
                         } else {
-                            let Expression::ArrayExpression(mut argument_array) = argument else {
+                            let ExpressionKindMut::ArrayExpression(mut argument_array) = argument else {
                                 unreachable!()
                             };
                             array_expr.elements.append(&mut argument_array.elements);
@@ -267,7 +267,7 @@ impl<'a> PeepholeOptimizations {
                     None
                 }
             }
-            Expression::StringLiteral(base_str) => {
+            ExpressionKindMut::StringLiteral(base_str) => {
                 if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
                     || args.is_empty()
                     || !args.iter().all(Argument::is_expression)
@@ -371,17 +371,17 @@ impl<'a> PeepholeOptimizations {
         }
 
         let (name, object, span) = match node {
-            Expression::StaticMemberExpression(member) if !member.optional => {
+            Expression::static_member_expression(member) if !member.optional => {
                 let span = member.span;
                 (member.property.name.as_str(), &mut member.object, span)
             }
-            Expression::ComputedMemberExpression(member) if !member.optional => {
-                match &member.expression {
-                    Expression::StringLiteral(s) => {
+            Expression::computed_member_expression(member) if !member.optional => {
+                match member.expression.kind() {
+                    ExpressionKind::StringLiteral(s) => {
                         let span = member.span;
                         (s.value.as_str(), &mut member.object, span)
                     }
-                    Expression::NumericLiteral(n) => {
+                    ExpressionKind::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
                             let span = member.span;
                             if let Some(replacement) = Self::try_fold_integer_index_access(
@@ -396,7 +396,7 @@ impl<'a> PeepholeOptimizations {
                         }
                         return;
                     }
-                    Expression::BigIntLiteral(b) => {
+                    ExpressionKind::BigIntLiteral(b) => {
                         if !b.is_negative()
                             && let Some(integer_index) =
                                 b.to_big_int(ctx).and_then(ToIntegerIndex::to_integer_index)
@@ -421,7 +421,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         let replacement = match object {
-            Expression::Identifier(ident) => {
+            Expression::identifier(ident) => {
                 if !ctx.is_global_reference(ident) {
                     return;
                 }
@@ -430,7 +430,7 @@ impl<'a> PeepholeOptimizations {
                     _ => None,
                 }
             }
-            Expression::RegExpLiteral(regex) => match name {
+            Expression::reg_exp_literal(regex) => match name {
                 "source" => {
                     const ES2015_UNSUPPORTED_FLAGS: RegExpFlags = RegExpFlags::G
                         .union(RegExpFlags::I)
@@ -556,8 +556,8 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        match object {
-            Expression::StringLiteral(s) => {
+        match object.kind_mut() {
+            ExpressionKindMut::StringLiteral(s) => {
                 if let StringCharAtResult::Value(c) =
                     s.value.as_str().char_at(Some(property.into()))
                 {
@@ -569,7 +569,7 @@ impl<'a> PeepholeOptimizations {
                     None
                 }
             }
-            Expression::ArrayExpression(array_expr) => {
+            ExpressionKindMut::ArrayExpression(array_expr) => {
                 let length_until_spread =
                     array_expr.elements.iter().take_while(|el| !el.is_spread()).count();
                 if (property as usize) < length_until_spread {
@@ -594,7 +594,7 @@ impl<'a> PeepholeOptimizations {
         target: &str,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let Expression::Identifier(ident) = expr else { return false };
+        let Some(ident) = expr.as_identifier_mut() else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }
 
