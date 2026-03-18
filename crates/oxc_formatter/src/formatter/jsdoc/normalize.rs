@@ -788,13 +788,17 @@ fn contains_top_level_arrow(type_str: &str) -> bool {
     }
     let bytes = type_str.as_bytes();
     let mut depth = 0i32;
+    let mut prev = 0u8;
     for (i, &b) in bytes.iter().enumerate() {
         match b {
             b'(' | b'<' | b'[' | b'{' => depth += 1,
-            b')' | b'>' | b']' | b'}' => depth -= 1,
+            b')' | b']' | b'}' => depth -= 1,
+            // Skip `>` when preceded by `=` (part of `=>` arrow, not a closing bracket)
+            b'>' if prev != b'=' => depth -= 1,
             b'=' if depth == 0 && i + 1 < bytes.len() && bytes[i + 1] == b'>' => return true,
             _ => {}
         }
+        prev = b;
     }
     false
 }

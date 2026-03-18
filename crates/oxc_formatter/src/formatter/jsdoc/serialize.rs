@@ -793,6 +793,22 @@ fn should_remove_empty_tag(kind: &str) -> bool {
     )
 }
 
+/// Check if the byte at `pos` is escaped by counting preceding backslashes.
+/// An odd number of preceding backslashes means the character is escaped.
+fn is_escaped(bytes: &[u8], pos: usize) -> bool {
+    let mut count = 0;
+    let mut j = pos;
+    while j > 0 {
+        j -= 1;
+        if bytes[j] == b'\\' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    count % 2 != 0
+}
+
 /// Format a `@default` / `@defaultValue` value.
 /// Handles JSON-like formatting: spaces after `:` and `,`, inside `{}`.
 /// Converts quotes based on the `quote_style` option.
@@ -877,7 +893,7 @@ pub(super) fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<
                 i += ch.len_utf8();
                 continue;
             }
-            if b == target_quote && (i == 0 || bytes[i - 1] != b'\\') {
+            if b == target_quote && !is_escaped(bytes, i) {
                 in_target_quote = false;
             }
             i += 1;
@@ -885,7 +901,7 @@ pub(super) fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<
         }
 
         if in_other_quote {
-            if b == other_quote && (i == 0 || bytes[i - 1] != b'\\') {
+            if b == other_quote && !is_escaped(bytes, i) {
                 result.push(target_quote as char); // Close with target quote
                 in_other_quote = false;
             } else if b.is_ascii() {

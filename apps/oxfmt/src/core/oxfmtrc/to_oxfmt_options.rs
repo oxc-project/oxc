@@ -294,15 +294,25 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         }
         if let Some(ref v) = jsdoc_config.line_wrapping_style {
             opts.line_wrapping_style = match v.as_str() {
+                "greedy" => oxc_formatter::LineWrappingStyle::Greedy,
                 "balance" => oxc_formatter::LineWrappingStyle::Balance,
-                _ => oxc_formatter::LineWrappingStyle::Greedy,
+                other => {
+                    return Err(format!(
+                        "Invalid jsdoc lineWrappingStyle: {other:?}. Expected \"greedy\" or \"balance\"."
+                    ));
+                }
             };
         }
         if let Some(ref v) = jsdoc_config.comment_line_strategy {
             opts.comment_line_strategy = match v.as_str() {
+                "singleLine" => oxc_formatter::CommentLineStrategy::SingleLine,
                 "multiline" => oxc_formatter::CommentLineStrategy::Multiline,
                 "keep" => oxc_formatter::CommentLineStrategy::Keep,
-                _ => oxc_formatter::CommentLineStrategy::SingleLine,
+                other => {
+                    return Err(format!(
+                        "Invalid jsdoc commentLineStrategy: {other:?}. Expected \"singleLine\", \"multiline\", or \"keep\"."
+                    ));
+                }
             };
         }
         if let Some(v) = jsdoc_config.separate_tag_groups {

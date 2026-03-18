@@ -2,65 +2,64 @@ use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use crate::ExternalCallbacks;
 use crate::options::TrailingCommas;
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::serialize::truncate_trim_end;
-
-/// Map fenced code block language tags to external formatter language identifiers.
-/// Returns `None` if the language should be handled by the native JS/TS formatter.
-#[expect(dead_code)]
-pub(super) fn fenced_lang_to_external_language(lang: &str) -> Option<&'static str> {
-    match lang {
-        "css" | "scss" | "less" => Some("tagged-css"),
-        "html" => Some("tagged-html"),
-        "graphql" | "gql" => Some("tagged-graphql"),
-        "markdown" | "md" | "mdx" => Some("tagged-markdown"),
-        "yaml" | "yml" => Some("tagged-yaml"),
-        _ => None,
-    }
-}
 
 /// Returns `true` if the fenced code block language is JS/TS/JSX/TSX.
 pub(super) fn is_js_ts_lang(lang: &str) -> bool {
     matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx")
 }
 
-/// Format code using the external formatter (Prettier) for non-JS/TS languages.
-/// Returns `Some(formatted)` on success, `None` if no callback is available or formatting fails.
-#[expect(dead_code)]
-pub(super) fn format_external_language(
-    code: &str,
-    language: &str,
-    _wrap_width: usize,
-    external_callbacks: &ExternalCallbacks,
-) -> Option<String> {
-    let result = external_callbacks.format_embedded(language, code)?;
-    match result {
-        Ok(mut formatted) => {
-            truncate_trim_end(&mut formatted);
-            Some(formatted)
-        }
-        Err(_) => None,
-    }
-}
-
 /// Count unescaped backticks on a line and update template literal depth.
 /// Returns the new depth after processing the line.
+///
+/// Handles `${...}` expressions inside template literals: when inside a template
+/// (depth > 0) and `${` is encountered, we push a brace depth. Closing `}` at
+/// the template expression level restores the template context.
 pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
     let bytes = line.as_bytes();
     let mut i = 0;
+    // Track nested `${...}` expression brace depth as a stack.
+    // Each entry represents the brace nesting depth within a template expression.
+    let mut expr_brace_depth: Vec<u32> = Vec::new();
     while i < bytes.len() {
         if bytes[i] == b'\\' {
             i += 2; // skip escaped character
             continue;
         }
         if bytes[i] == b'`' {
-            if depth == 0 {
-                depth += 1;
+            if expr_brace_depth.is_empty() {
+                // Not inside a `${...}` expression
+                if depth == 0 {
+                    depth += 1;
+                } else {
+                    depth -= 1;
+                }
             } else {
-                depth -= 1;
+                // Inside a `${...}` expression — this starts a nested template
+                expr_brace_depth.push(0);
+            }
+        } else if depth > 0 && bytes[i] == b'$' && i + 1 < bytes.len() && bytes[i + 1] == b'{' {
+            // Entering a template expression `${`
+            expr_brace_depth.push(0);
+            i += 2;
+            continue;
+        } else if !expr_brace_depth.is_empty() && bytes[i] == b'{' {
+            // Nested brace inside a template expression
+            if let Some(last) = expr_brace_depth.last_mut() {
+                *last += 1;
+            }
+        } else if !expr_brace_depth.is_empty()
+            && bytes[i] == b'}'
+            && let Some(last) = expr_brace_depth.last_mut()
+        {
+            if *last == 0 {
+                // Closing the `${...}` expression
+                expr_brace_depth.pop();
+            } else {
+                *last -= 1;
             }
         }
         i += 1;

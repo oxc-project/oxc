@@ -278,30 +278,28 @@ where
         None | Some(Value::Bool(false)) => Ok(None),
         Some(Value::Object(map)) => {
             let config = JsdocConfig {
-                capitalize_descriptions: map
-                    .get("capitalize_descriptions")
-                    .and_then(Value::as_bool),
-                description_with_dot: map.get("description_with_dot").and_then(Value::as_bool),
+                capitalize_descriptions: map.get("capitalizeDescriptions").and_then(Value::as_bool),
+                description_with_dot: map.get("descriptionWithDot").and_then(Value::as_bool),
                 add_default_to_description: map
-                    .get("add_default_to_description")
+                    .get("addDefaultToDescription")
                     .and_then(Value::as_bool),
-                prefer_code_fences: map.get("prefer_code_fences").and_then(Value::as_bool),
+                prefer_code_fences: map.get("preferCodeFences").and_then(Value::as_bool),
                 line_wrapping_style: map
-                    .get("line_wrapping_style")
+                    .get("lineWrappingStyle")
                     .and_then(Value::as_str)
                     .map(String::from),
                 comment_line_strategy: map
-                    .get("comment_line_strategy")
+                    .get("commentLineStrategy")
                     .and_then(Value::as_str)
                     .map(String::from),
-                separate_tag_groups: map.get("separate_tag_groups").and_then(Value::as_bool),
+                separate_tag_groups: map.get("separateTagGroups").and_then(Value::as_bool),
                 separate_returns_from_param: map
-                    .get("separate_returns_from_param")
+                    .get("separateReturnsFromParam")
                     .and_then(Value::as_bool),
-                bracket_spacing: map.get("bracket_spacing").and_then(Value::as_bool),
-                description_tag: map.get("description_tag").and_then(Value::as_bool),
+                bracket_spacing: map.get("bracketSpacing").and_then(Value::as_bool),
+                description_tag: map.get("descriptionTag").and_then(Value::as_bool),
                 keep_unparsable_example_indent: map
-                    .get("keep_unparsable_example_indent")
+                    .get("keepUnparsableExampleIndent")
                     .and_then(Value::as_bool),
             };
             Ok(Some(config))

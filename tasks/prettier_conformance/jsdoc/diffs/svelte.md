@@ -46,7 +46,7 @@
 
 ## `packages/svelte/src/index-client.js`
 
-```diff
+````diff
 @@ -164,9 +164,9 @@ function create_custom_event(
   *
   * ```ts
@@ -60,7 +60,7 @@
   * }>();
   * ```
   *
-```
+````
 
 ## `packages/svelte/src/index.d.ts`
 

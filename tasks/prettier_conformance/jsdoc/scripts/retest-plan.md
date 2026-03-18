@@ -465,13 +465,13 @@ After fixing 2 bugs: inline comment width measurement for adjacent whitespace (c
 
 ### Performance
 
-| Repository | Without JSDoc | With JSDoc | Overhead        |
-| ---------- | ------------- | ---------- | --------------- |
-| evolu      | 2.56s         | 2.34s      | ~0% (noise)     |
-| wxt        | 2.78s         | 2.55s      | ~0% (noise)     |
-| typedoc    | 1.13s         | 1.13s      | ~0% (noise)     |
-| Chart.js   | 2.24s         | 2.07s      | ~0% (noise)     |
-| svelte     | 883ms         | 825ms      | ~0% (noise)     |
+| Repository | Without JSDoc | With JSDoc | Overhead    |
+| ---------- | ------------- | ---------- | ----------- |
+| evolu      | 2.56s         | 2.34s      | ~0% (noise) |
+| wxt        | 2.78s         | 2.55s      | ~0% (noise) |
+| typedoc    | 1.13s         | 1.13s      | ~0% (noise) |
+| Chart.js   | 2.24s         | 2.07s      | ~0% (noise) |
+| svelte     | 883ms         | 825ms      | ~0% (noise) |
 
 ### Bugs Found (round 6)
 
