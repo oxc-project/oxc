@@ -59,11 +59,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         let mut some_modules_deleted = false;
 
         program.body.retain_mut(|stmt| {
-            let need_retain = match stmt.kind() {
-                StatementKind::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
+            let need_retain = match stmt.kind_mut() {
+                StatementKindMut::ExportNamedDeclaration(decl) if decl.declaration.is_some() => {
                     decl.declaration.as_ref().is_some_and(|decl| !decl.is_typescript_syntax())
                 }
-                StatementKind::ExportNamedDeclaration(decl) => {
+                StatementKindMut::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         false
                     } else if decl.specifiers.is_empty() {
@@ -77,15 +77,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         !decl.specifiers.is_empty()
                     }
                 }
-                StatementKind::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
-                StatementKind::ExportDefaultDeclaration(decl) => {
+                StatementKindMut::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
+                StatementKindMut::ExportDefaultDeclaration(decl) => {
                     !decl.is_typescript_syntax()
                         && !matches!(
                             &decl.declaration,
                             ExportDefaultDeclarationKind::Identifier(ident) if Self::is_refers_to_type(ident, ctx)
                         )
                 }
-                StatementKind::ImportDeclaration(decl) => {
+                StatementKindMut::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
                     } else if let Some(specifiers) = &mut decl.specifiers {
@@ -139,9 +139,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 // `import Binding = X.Y.Z`
                 // `Binding` can be referenced as a value or a type, but here we already know it only as a type
                 // See `TypeScriptModule::transform_ts_import_equals`
-                StatementKind::TSTypeAliasDeclaration(_)
-                | StatementKind::TSExportAssignment(_)
-                | StatementKind::TSNamespaceExportDeclaration(_) => false,
+                StatementKindMut::TSTypeAliasDeclaration(_)
+                | StatementKindMut::TSExportAssignment(_)
+                | StatementKindMut::TSNamespaceExportDeclaration(_) => false,
                 _ => return true,
             };
 
@@ -189,15 +189,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let ChainElement::TSNonNullExpression(e) = element {
-            *element = match e.expression.get_inner_expression_mut().take_in(ctx.ast).kind() {
-                ExpressionKind::CallExpression(call_expr) => ChainElement::CallExpression(call_expr),
-                expr @ match_member_expression!(ExpressionKind) => {
-                    ChainElement::from(expr.into_member_expression())
-                }
-                _ => {
-                    /* syntax error */
-                    return;
-                }
+            let taken = e.expression.get_inner_expression_mut().take_in(ctx.ast);
+            *element = if taken.is_call_expression() {
+                ChainElement::CallExpression(taken.into_call_expression())
+            } else if taken.is_member_expression() {
+                ChainElement::from(taken.into_member_expression())
+            } else {
+                /* syntax error */
+                return;
             }
         }
     }
@@ -258,25 +257,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(expr) = target.get_expression_mut() {
-            match expr.get_inner_expression_mut().kind() {
-                // `foo!++` to `foo++`
-                inner_expr @ ExpressionKind::Identifier(_) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
-                    let Some(ident) = inner_expr.as_identifier() else {
-                        unreachable!();
-                    };
-                    *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
-                }
-                // `foo.bar!++` to `foo.bar++`
-                inner_expr @ match_member_expression!(ExpressionKind) => {
-                    let inner_expr = inner_expr.take_in(ctx.ast);
-                    let member_expr = inner_expr.into_member_expression();
-                    *target = SimpleAssignmentTarget::from(member_expr);
-                }
-                _ => {
-                    // This should be never hit until more syntax is added to the JavaScript/TypeScrips
-                    ctx.state.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
-                }
+            let inner_expr = expr.get_inner_expression_mut();
+            if inner_expr.is_identifier() {
+                let inner_expr = inner_expr.take_in(ctx.ast);
+                let ident = inner_expr.into_identifier();
+                *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
+            } else if inner_expr.is_member_expression() {
+                let inner_expr = inner_expr.take_in(ctx.ast);
+                let member_expr = inner_expr.into_member_expression();
+                *target = SimpleAssignmentTarget::from(member_expr);
+            } else {
+                // This should be never hit until more syntax is added to the JavaScript/TypeScrips
+                ctx.state.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
             }
         }
     }
@@ -379,7 +371,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             return;
         }
 
-        let has_super_call = stmt.as_expression_statement().is_some_and(|stmt| stmt.expression.is_super_call_expression());
+        let has_super_call = stmt
+            .as_expression_statement()
+            .is_some_and(|stmt| stmt.expression.is_super_call_expression());
         if !has_super_call {
             return;
         }
@@ -415,14 +409,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 stmt.consequent = Self::create_block_with_statement(consequent, span, ctx);
             }
 
-            let alternate_span = match stmt.alternate.kind() {
-                Some(StatementKind::ExpressionStatement(expr))
-                    if expr.expression.is_super_call_expression() =>
-                {
-                    Some(expr.span)
+            let alternate_span = stmt.alternate.as_ref().and_then(|alt| {
+                if let Some(expr) = alt.as_expression_statement() {
+                    if expr.expression.is_super_call_expression() {
+                        return Some(expr.span);
+                    }
                 }
-                _ => None,
-            };
+                None
+            });
             if let Some(span) = alternate_span {
                 let alternate = stmt.alternate.take().unwrap();
                 stmt.alternate = Some(Self::create_block_with_statement(alternate, span, ctx));

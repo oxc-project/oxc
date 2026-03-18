@@ -136,7 +136,7 @@ impl NoSelfAssign {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
                 if let Some(id2) = right.without_parentheses().as_identifier() {
-                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(ExpressionKind::Identifier(id1)) if id1.name == id2.name)
+                    let self_assign = simple_assignment_target.get_expression().and_then(Expression::as_identifier).is_some_and(|id1| id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
@@ -295,7 +295,7 @@ impl NoSelfAssign {
                     return;
                 };
                 if key.static_name().is_some_and(|name| name == id1.binding.name)
-                    && let ExpressionKind::Identifier(id2) = expr.without_parentheses()
+                    && let Some(id2) = expr.without_parentheses().as_identifier()
                     && id1.binding.name == id2.name
                 {
                     ctx.diagnostic(no_self_assign_diagnostic(*span));

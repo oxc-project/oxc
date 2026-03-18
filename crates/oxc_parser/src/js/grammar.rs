@@ -42,9 +42,7 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for SimpleAssignmentTarg
         } else if expr.is_parenthesized_expression() {
             let paren = expr.into_parenthesized_expression();
             let span = paren.span;
-            if paren.expression.is_object_expression()
-                || paren.expression.is_array_expression()
-            {
+            if paren.expression.is_object_expression() || paren.expression.is_array_expression() {
                 p.fatal_error(diagnostics::invalid_assignment(span))
             } else {
                 SimpleAssignmentTarget::cover(paren.unbox().expression, p)

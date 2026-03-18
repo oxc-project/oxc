@@ -299,9 +299,15 @@ impl<'a> Expression<'a> {
             // SAFETY: discriminant is 48-50; pointer is valid; reconstruct Box for the enum.
             unsafe {
                 match disc {
-                    48 => Some(MemberExpression::ComputedMemberExpression(Box::from_non_null(self.0.as_ptr()))),
-                    49 => Some(MemberExpression::StaticMemberExpression(Box::from_non_null(self.0.as_ptr()))),
-                    50 => Some(MemberExpression::PrivateFieldExpression(Box::from_non_null(self.0.as_ptr()))),
+                    48 => Some(MemberExpression::ComputedMemberExpression(Box::from_non_null(
+                        self.0.as_ptr(),
+                    ))),
+                    49 => Some(MemberExpression::StaticMemberExpression(Box::from_non_null(
+                        self.0.as_ptr(),
+                    ))),
+                    50 => Some(MemberExpression::PrivateFieldExpression(Box::from_non_null(
+                        self.0.as_ptr(),
+                    ))),
                     _ => std::hint::unreachable_unchecked(),
                 }
             }
@@ -329,7 +335,9 @@ impl<'a> From<MemberExpression<'a>> for Expression<'a> {
     #[inline]
     fn from(value: MemberExpression<'a>) -> Self {
         match value {
-            MemberExpression::ComputedMemberExpression(o) => Expression::computed_member_expression(o),
+            MemberExpression::ComputedMemberExpression(o) => {
+                Expression::computed_member_expression(o)
+            }
             MemberExpression::StaticMemberExpression(o) => Expression::static_member_expression(o),
             MemberExpression::PrivateFieldExpression(o) => Expression::private_field_expression(o),
         }
@@ -1541,10 +1549,16 @@ impl<'a> Statement<'a> {
             match self.0.discriminant() {
                 64 => ModuleDeclaration::ImportDeclaration(Box::from_non_null(self.0.as_ptr())),
                 65 => ModuleDeclaration::ExportAllDeclaration(Box::from_non_null(self.0.as_ptr())),
-                66 => ModuleDeclaration::ExportDefaultDeclaration(Box::from_non_null(self.0.as_ptr())),
-                67 => ModuleDeclaration::ExportNamedDeclaration(Box::from_non_null(self.0.as_ptr())),
+                66 => {
+                    ModuleDeclaration::ExportDefaultDeclaration(Box::from_non_null(self.0.as_ptr()))
+                }
+                67 => {
+                    ModuleDeclaration::ExportNamedDeclaration(Box::from_non_null(self.0.as_ptr()))
+                }
                 68 => ModuleDeclaration::TSExportAssignment(Box::from_non_null(self.0.as_ptr())),
-                69 => ModuleDeclaration::TSNamespaceExportDeclaration(Box::from_non_null(self.0.as_ptr())),
+                69 => ModuleDeclaration::TSNamespaceExportDeclaration(Box::from_non_null(
+                    self.0.as_ptr(),
+                )),
                 _ => std::hint::unreachable_unchecked(),
             }
         })
@@ -1592,10 +1606,14 @@ impl<'a> From<ModuleDeclaration<'a>> for Statement<'a> {
         match value {
             ModuleDeclaration::ImportDeclaration(o) => Statement::import_declaration(o),
             ModuleDeclaration::ExportAllDeclaration(o) => Statement::export_all_declaration(o),
-            ModuleDeclaration::ExportDefaultDeclaration(o) => Statement::export_default_declaration(o),
+            ModuleDeclaration::ExportDefaultDeclaration(o) => {
+                Statement::export_default_declaration(o)
+            }
             ModuleDeclaration::ExportNamedDeclaration(o) => Statement::export_named_declaration(o),
             ModuleDeclaration::TSExportAssignment(o) => Statement::ts_export_assignment(o),
-            ModuleDeclaration::TSNamespaceExportDeclaration(o) => Statement::ts_namespace_export_declaration(o),
+            ModuleDeclaration::TSNamespaceExportDeclaration(o) => {
+                Statement::ts_namespace_export_declaration(o)
+            }
         }
     }
 }

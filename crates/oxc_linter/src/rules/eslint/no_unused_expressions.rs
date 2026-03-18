@@ -122,7 +122,8 @@ impl NoUnusedExpressions {
             | ExpressionKind::PrivateInExpression(_)
             | ExpressionKind::ThisExpression(_)
             | ExpressionKind::Identifier(_) => true,
-            ExpressionKind::ChainExpression(chain_expression) => match &chain_expression.expression {
+            ExpressionKind::ChainExpression(chain_expression) => match &chain_expression.expression
+            {
                 ChainElement::CallExpression(_) => false,
                 ChainElement::TSNonNullExpression(ts_non_null_expression) => {
                     self.is_disallowed(&ts_non_null_expression.expression)
@@ -161,7 +162,9 @@ impl NoUnusedExpressions {
             ExpressionKind::UnaryExpression(unary_expression) => {
                 !matches!(unary_expression.operator, UnaryOperator::Delete | UnaryOperator::Void)
             }
-            ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => self.0.enforce_for_jsx,
+            ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => {
+                self.0.enforce_for_jsx
+            }
             ExpressionKind::TSAsExpression(ts_as_expression) => {
                 self.is_disallowed(&ts_as_expression.expression)
             }

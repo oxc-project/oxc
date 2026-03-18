@@ -90,7 +90,7 @@ fn check_forward_ref_inner<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let (params, span) = match exp {
+    let (params, span) = match exp.kind() {
         ExpressionKind::ArrowFunctionExpression(f) => (&f.params, f.span),
         ExpressionKind::FunctionExpression(f) => (&f.params, f.span),
         _ => return,
@@ -99,7 +99,7 @@ fn check_forward_ref_inner<'a>(
         return;
     }
 
-    let can_remove_forward_ref = match exp {
+    let can_remove_forward_ref = match exp.kind() {
         ExpressionKind::FunctionExpression(f) if f.id.is_none() => !matches!(
             outermost_paren_parent(node, ctx.semantic()).map(AstNode::kind),
             Some(AstKind::ExpressionStatement(_))

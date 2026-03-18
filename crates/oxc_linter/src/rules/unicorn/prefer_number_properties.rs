@@ -190,7 +190,7 @@ impl Rule for PreferNumberProperties {
                             let args_text = ctx.source_range(args_span);
                             fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
                         }
-                        match_member_expression!(Expression) => {
+                        match_member_expression!(ExpressionKind) => {
                             let member_expr = call_expr.callee.to_member_expression();
                             let mut args_span =
                                 Span::new(member_expr.span().end, call_expr.span.end);
@@ -241,7 +241,7 @@ fn find_ancestor_unary<'a>(
 fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
     match expr.kind() {
         ExpressionKind::Identifier(ident_name) => Some(ident_name.name.as_str()),
-        match_member_expression!(Expression) => {
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             let Some(ident_name) = member_expr.object().as_identifier() else {
                 return None;

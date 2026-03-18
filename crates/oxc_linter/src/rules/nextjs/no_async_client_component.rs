@@ -147,7 +147,7 @@ impl Rule for NoAsyncClientComponent {
                 };
                 // `binding_ident.name` MUST be > 0 chars
                 if binding_ident.name.chars().next().unwrap().is_uppercase()
-                    && let Some(arrow_expr) = var_declarator.init.and_then(|e| e.as_arrow_function_expression())
+                    && let Some(arrow_expr) = var_declarator.init.as_ref().and_then(|e| e.as_arrow_function_expression())
                     && arrow_expr.r#async
                 {
                     ctx.diagnostic(no_async_client_component_diagnostic(binding_ident.span));

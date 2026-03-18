@@ -207,7 +207,7 @@ fn is_subset<'a, 'b>(a: &'a [&'a Expression<'b>], b: &'a [&'a Expression<'b>]) -
 }
 
 fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
-    match (a, b).kind() {
+    match (a.kind(), b.kind()) {
         (ExpressionKind::LogicalExpression(a), ExpressionKind::LogicalExpression(b))
             if matches!(a.operator, LogicalOperator::And | LogicalOperator::Or)
                 && a.operator == b.operator =>
@@ -216,7 +216,7 @@ fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
                 || (is_equal(&a.left, &b.right) && is_equal(&a.right, &b.left))
         }
 
-        (a, b) => a.content_eq(b),
+        _ => a.content_eq(b),
     }
 }
 

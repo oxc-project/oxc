@@ -80,7 +80,7 @@ impl Rule for PreferNumericLiterals {
                         check_arguments(call_expr, ctx);
                     }
                 } else if let Some(paren_expr) = member_expr.object.as_parenthesized_expression()
-                    && let ExpressionKind::Identifier(ident) = &paren_expr.expression
+                    && let Some(ident) = paren_expr.expression.as_identifier()
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);
@@ -89,7 +89,7 @@ impl Rule for PreferNumericLiterals {
             ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
                     chain_expr.expression.as_member_expression()
-                    && let ExpressionKind::Identifier(ident) = &member_expr.object
+                    && let Some(ident) = member_expr.object.as_identifier()
                     && is_parse_int_call(ctx, ident, Some(member_expr))
                 {
                     check_arguments(call_expr, ctx);

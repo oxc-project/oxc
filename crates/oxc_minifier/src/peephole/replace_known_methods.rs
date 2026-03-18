@@ -26,7 +26,7 @@ type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
     pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::CallExpression(ce) = node else { return };
+        let Some(ce) = node.as_call_expression_mut() else { return };
 
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
@@ -121,7 +121,7 @@ impl<'a> PeepholeOptimizations {
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
     pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let original_span = if let Expression::CallExpression(root_call_expr) = node {
+        let original_span = if let Some(root_call_expr) = node.as_call_expression_mut() {
             root_call_expr.span
         } else {
             return;
@@ -136,10 +136,10 @@ impl<'a> PeepholeOptimizations {
         let mut collected_arguments = ctx.ast.vec();
         let new_root_callee: &mut Expression<'a>;
         loop {
-            let Expression::CallExpression(ce) = current_node else {
+            let Some(ce) = current_node.as_call_expression_mut() else {
                 return;
             };
-            let Expression::StaticMemberExpression(member) = &ce.callee else {
+            let Some(member) = &ce.callee.as_static_member_expression_mut() else {
                 return;
             };
             if member.optional || member.property.name != "concat" {
@@ -169,7 +169,7 @@ impl<'a> PeepholeOptimizations {
 
             // [].concat() or "".concat()
             let is_root_expr_concat = {
-                let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+                let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
                 matches!(
                     &member.object,
                     Expression::ArrayExpression(_) | Expression::StringLiteral(_)
@@ -180,7 +180,7 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
 
-            let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+            let Some(member) = callee.as_static_member_expression_mut() else { unreachable!() };
             current_node = &mut member.object;
         }
 
@@ -232,7 +232,7 @@ impl<'a> PeepholeOptimizations {
                             if argument.is_literal() {
                                 true
                             } else {
-                                matches!(argument, Expression::ArrayExpression(_))
+                                argument.is_array_expression()
                             }
                         }
                     })
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
                         if argument.is_literal() {
                             array_expr.elements.push(ArrayExpressionElement::from(argument));
                         } else {
-                            let Expression::ArrayExpression(mut argument_array) = argument else {
+                            let Some(mut argument_array) = argument.as_array_expression_mut() else {
                                 unreachable!()
                             };
                             array_expr.elements.append(&mut argument_array.elements);
@@ -594,7 +594,7 @@ impl<'a> PeepholeOptimizations {
         target: &str,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let Expression::Identifier(ident) = expr else { return false };
+        let Some(ident) = expr.as_identifier_mut() else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }
 

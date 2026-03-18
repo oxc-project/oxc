@@ -56,9 +56,9 @@ pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
-mod take_in;
 #[cfg(target_pointer_width = "64")]
 mod tagged_ptr;
+mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 mod tracking;
 mod vec;
@@ -78,9 +78,9 @@ pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use string_builder::StringBuilder;
-pub use take_in::{Dummy, TakeIn};
 #[cfg(target_pointer_width = "64")]
 pub use tagged_ptr::TaggedPtr;
+pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.

@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use cow_utils::CowUtils;
 
-use oxc_ast::ast::{*, StatementKind};
+use oxc_ast::ast::{StatementKind, *};
 use oxc_span::GetSpan;
 use oxc_syntax::{
     operator::UnaryOperator,
@@ -226,33 +226,30 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     p.print_expression(&if_stmt.test);
     p.print_ascii_byte(b')');
 
-    match if_stmt.consequent.kind() {
-        StatementKind::BlockStatement(block) => {
+    if if_stmt.consequent.is_block_statement() {
+        let block = if_stmt.consequent.as_block_statement().unwrap();
+        p.print_soft_space();
+        p.print_block_statement(block, ctx);
+        if if_stmt.alternate.is_some() {
             p.print_soft_space();
-            p.print_block_statement(block, ctx);
-            if if_stmt.alternate.is_some() {
-                p.print_soft_space();
-            } else {
-                p.print_soft_newline();
-            }
+        } else {
+            p.print_soft_newline();
         }
-        stmt if wrap_to_avoid_ambiguous_else(stmt) => {
+    } else if wrap_to_avoid_ambiguous_else(&if_stmt.consequent) {
+        p.print_soft_space();
+        p.print_block_start(if_stmt.consequent.span());
+        if_stmt.consequent.print(p, ctx);
+        p.needs_semicolon = false;
+        p.print_block_end(if_stmt.consequent.span());
+        if if_stmt.alternate.is_some() {
             p.print_soft_space();
-            p.print_block_start(stmt.span());
-            stmt.print(p, ctx);
-            p.needs_semicolon = false;
-            p.print_block_end(stmt.span());
-            if if_stmt.alternate.is_some() {
-                p.print_soft_space();
-            } else {
-                p.print_soft_newline();
-            }
+        } else {
+            p.print_soft_newline();
         }
-        stmt => {
-            p.print_body(stmt, false, ctx);
-            if if_stmt.alternate.is_some() {
-                p.print_indent();
-            }
+    } else {
+        p.print_body(&if_stmt.consequent, false, ctx);
+        if if_stmt.alternate.is_some() {
+            p.print_indent();
         }
     }
     if let Some(alternate) = if_stmt.alternate.as_ref() {
@@ -1759,7 +1756,9 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             p.print_str("=>");
             p.print_soft_space();
             if self.expression {
-                if let Some(stmt) = self.body.statements.first().and_then(|s| s.as_expression_statement()) {
+                if let Some(stmt) =
+                    self.body.statements.first().and_then(|s| s.as_expression_statement())
+                {
                     p.start_of_arrow_expr = p.code_len();
                     stmt.expression.print_expr(p, Precedence::Comma, ctx);
                 }
@@ -1829,13 +1828,16 @@ impl GenExpr for UnaryExpression<'_> {
             // Forbid `delete Infinity`, which is syntax error in strict mode.
             let is_delete_infinity = self.operator == UnaryOperator::Delete
                 && !p.options.minify
-                && self.argument.as_numeric_literal().is_some_and(|lit| lit.value.is_sign_positive() && lit.value.is_infinite());
+                && self
+                    .argument
+                    .as_numeric_literal()
+                    .is_some_and(|lit| lit.value.is_sign_positive() && lit.value.is_infinite());
             if is_delete_infinity {
                 p.print_str("(0,");
                 p.print_soft_space();
             }
             self.argument.print_expr(p, Precedence::Exponentiation, ctx);
-            if is_delete_infinity{
+            if is_delete_infinity {
                 p.print_ascii_byte(b')');
             }
         });

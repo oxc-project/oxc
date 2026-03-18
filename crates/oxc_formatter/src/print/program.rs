@@ -56,9 +56,7 @@ impl<'a> Deref for FormatProgramBody<'a, '_> {
 impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
-        for stmt in
-            self.iter().filter(|stmt| !stmt.as_ref().is_empty_statement())
-        {
+        for stmt in self.iter().filter(|stmt| !stmt.as_ref().is_empty_statement()) {
             let span = match stmt.as_ref().kind() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.

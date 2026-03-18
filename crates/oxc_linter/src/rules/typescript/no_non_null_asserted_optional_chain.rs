@@ -93,7 +93,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                     None
                 }
             }
-            expr @ match_member_expression!(Expression) => {
+            expr @ match_member_expression!(ExpressionKind) => {
                 let member_expr = expr.to_member_expression();
                 if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
                     Some(member_expr.object().span())

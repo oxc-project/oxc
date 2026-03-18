@@ -155,7 +155,7 @@ impl Rule for PreferForOf {
             let array_expr = mem_expr.object();
             let array_name = match mem_expr.object() {
                 ExpressionKind::Identifier(id) => id.name.as_str(),
-                expr @ match_member_expression!(Expression) => {
+                expr @ match_member_expression!(ExpressionKind) => {
                     match expr.to_member_expression().static_property_name() {
                         Some(array_name) => array_name,
                         None => return,

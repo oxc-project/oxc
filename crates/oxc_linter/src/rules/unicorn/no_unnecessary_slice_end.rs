@@ -105,7 +105,7 @@ impl Rule for NoUnnecessarySliceEnd {
                     );
                 }
             }
-            match_member_expression!(Expression) => {
+            match_member_expression!(ExpressionKind) => {
                 let expr = arg_expr.to_member_expression();
                 if let Some(msg) =
                     check_expression_and_get_diagnostic(member_expr, expr, false, ctx)

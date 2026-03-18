@@ -154,7 +154,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.eval_unary_expression(expr, enum_name, prev_members)
             }
             ExpressionKind::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            ExpressionKind::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
+            ExpressionKind::StringLiteral(lit) => {
+                Some(ConstantValue::String(lit.value.to_string()))
+            }
             ExpressionKind::TemplateLiteral(lit) => {
                 let mut value = String::new();
                 for part in &lit.quasis {

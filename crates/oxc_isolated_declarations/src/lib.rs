@@ -10,7 +10,7 @@ use std::{cell::RefCell, iter::repeat_with, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, NONE, ast::*, ast::StatementKind};
+use oxc_ast::{AstBuilder, NONE, ast::StatementKind, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, IdentHashSet, SPAN, SourceType};
@@ -163,7 +163,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Self::remove_function_overloads_implementation(&mut stmts);
 
         self.ast.vec_from_iter(stmts.iter().map(|stmt| {
-            if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
+            if let Some(new_decl) = self.transform_declaration(&stmt.to_declaration(), false) {
                 Statement::from(new_decl)
             } else {
                 stmt.clone_in(self.ast.allocator)
@@ -218,9 +218,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
 
                             // We need to visit the module declaration to collect all references
-                            self.scope.visit_ts_module_declaration(decl.as_ref());
+                            self.scope.visit_ts_module_declaration(&decl);
 
-                            transformed_stmts[idx] = Some(Statement::ts_module_declaration(decl));
+                            transformed_stmts[idx] =
+                                Some(Statement::ts_module_declaration(self.ast.alloc(decl)));
                             transformed_count += 1;
                         }
                     } else if let Some(decl) = stmt.as_ts_global_declaration() {
@@ -228,9 +229,10 @@ impl<'a> IsolatedDeclarations<'a> {
                         // We need to emit it anyway
                         let decl = decl.clone_in(self.ast.allocator);
                         // We need to visit the module declaration to collect all references
-                        self.scope.visit_ts_global_declaration(decl.as_ref());
+                        self.scope.visit_ts_global_declaration(&decl);
 
-                        transformed_stmts[idx] = Some(Statement::ts_global_declaration(decl));
+                        transformed_stmts[idx] =
+                            Some(Statement::ts_global_declaration(self.ast.alloc(decl)));
                         transformed_count += 1;
                     }
                 }
@@ -238,7 +240,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::TSExportAssignment(decl) => {
                             if let Some((var_decl, new_decl)) =
-                                self.transform_ts_export_assignment(decl)
+                                self.transform_ts_export_assignment(&decl)
                             {
                                 if let Some(var_decl) = var_decl {
                                     self.scope.visit_statement(&var_decl);
@@ -248,7 +250,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 self.scope.visit_statement(&new_decl);
                                 transformed_stmts[idx] = Some(new_decl);
                             } else {
-                                self.scope.visit_ts_export_assignment(decl);
+                                self.scope.visit_ts_export_assignment(&decl);
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
                             }
                             transformed_count += 1;
@@ -256,7 +258,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
                             if let Some((var_decl, new_decl)) =
-                                self.transform_export_default_declaration(decl)
+                                self.transform_export_default_declaration(&decl)
                             {
                                 if let Some(var_decl) = var_decl {
                                     self.scope.visit_statement(&var_decl);
@@ -266,7 +268,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 self.scope.visit_statement(&new_decl);
                                 transformed_stmts[idx] = Some(new_decl);
                             } else {
-                                self.scope.visit_export_default_declaration(decl);
+                                self.scope.visit_export_default_declaration(&decl);
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
                             }
                             transformed_count += 1;
@@ -274,7 +276,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            if let Some(new_decl) = self.transform_export_named_declaration(decl) {
+                            if let Some(new_decl) = self.transform_export_named_declaration(&decl) {
                                 self.scope.visit_export_named_declaration(&new_decl);
                                 transformed_stmts[idx] = Some(Statement::from(
                                     ModuleDeclaration::ExportNamedDeclaration(
@@ -283,7 +285,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ));
                             } else if decl.declaration.is_none() {
                                 need_empty_export_marker = false;
-                                self.scope.visit_export_named_declaration(decl);
+                                self.scope.visit_export_named_declaration(&decl);
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
                             } else {
                                 // Declaration couldn't be transformed; preserve as-is
@@ -295,7 +297,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We must transform this in the end, because we need to know all references
                         }
                         module_declaration => {
-                            self.scope.visit_module_declaration(module_declaration);
+                            self.scope.visit_module_declaration(&module_declaration);
                             transformed_stmts[idx] = Some(stmt.clone_in(self.ast.allocator));
                             transformed_count += 1;
                         }
@@ -349,7 +351,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             Some(Statement::variable_declaration(self.ast.alloc(decl)));
                         transformed_count += 1;
                     }
-                } else if let Some(new_decl) = self.transform_declaration(decl, true) {
+                } else if let Some(new_decl) = self.transform_declaration(&decl, true) {
                     self.scope.visit_declaration(&new_decl);
                     transformed_stmts[idx] = Some(Statement::from(new_decl));
                     transformed_count += 1;

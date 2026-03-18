@@ -1,5 +1,5 @@
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
@@ -72,7 +72,9 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
             }
             ExpressionKind::NullLiteral(_) => ValueType::Null,
             ExpressionKind::NumericLiteral(_) => ValueType::Number,
-            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => ValueType::String,
+            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => {
+                ValueType::String
+            }
             ExpressionKind::ObjectExpression(_)
             | ExpressionKind::ArrayExpression(_)
             | ExpressionKind::RegExpLiteral(_)

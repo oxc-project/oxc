@@ -402,9 +402,9 @@ fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {
 /// a[1e310] // (same as a["Infinity"])
 /// ```
 fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool {
-    match ast_kind.kind() {
+    match ast_kind {
         AstKind::BigIntLiteral(_) => true,
- match unary.argument.kind() {
+        AstKind::UnaryExpression(unary) => match unary.argument.kind() {
             ExpressionKind::BigIntLiteral(_) => true,
             ExpressionKind::NumericLiteral(numeric)
                 if unary.operator == UnaryOperator::UnaryNegation =>

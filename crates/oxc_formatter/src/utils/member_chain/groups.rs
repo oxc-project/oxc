@@ -192,7 +192,8 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         // <https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/member-chain.js#L101-L121>
         if let Some(call) = expression.object().as_ref()
             && !call.callee.is_member_expression()
-            && !call.callee.is_call_expression().as_call_expression(){
+            && !call.callee.is_call_expression().as_call_expression()
+        {
             return false;
         }
 

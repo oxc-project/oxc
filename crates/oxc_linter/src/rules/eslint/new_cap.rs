@@ -588,7 +588,9 @@ fn extract_name_from_expression(expression: &Expression) -> Option<(CompactStr, 
         ExpressionKind::StaticMemberExpression(expression) => {
             Some((expression.property.name.into_compact_str(), expression.property.span))
         }
-        ExpressionKind::ComputedMemberExpression(expression) => get_computed_member_name(expression),
+        ExpressionKind::ComputedMemberExpression(expression) => {
+            get_computed_member_name(expression)
+        }
         ExpressionKind::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(call) => extract_name_from_expression(&call.callee),
             ChainElement::TSNonNullExpression(non_null) => {

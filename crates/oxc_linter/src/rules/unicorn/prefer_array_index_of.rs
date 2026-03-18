@@ -101,13 +101,13 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
             if !arrow_function.r#async && arrow_function.params.items.len() == 1 =>
         {
             let query = if arrow_function.expression {
-                if let Some(expr) = arrow_function.body.statements.first().as_expression_statement()
+                if let Some(expr) = arrow_function.body.statements.first().and_then(|s| s.as_expression_statement())
                 {
                     Some(&expr.expression)
                 } else {
                     None
                 }
-            } else if let Some(ret) = arrow_function.body.statements.first().as_return_statement()
+            } else if let Some(ret) = arrow_function.body.statements.first().and_then(|s| s.as_return_statement())
             {
                 ret.argument.as_ref()
             } else {
@@ -119,7 +119,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
         ExpressionKind::FunctionExpression(function)
             if !function.r#async && !function.generator && function.params.items.len() == 1 =>
         {
-            let query = if let Some(ret) = function.body.as_ref().and_then.as_return_statement()(|stmts| stmts.statements.first())
+            let query = if let Some(ret) = function.body.as_ref().and_then(|body| body.statements.first()).and_then(|s| s.as_return_statement())
             {
                 ret.argument.as_ref()
             } else {

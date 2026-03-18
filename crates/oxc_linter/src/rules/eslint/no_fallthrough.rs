@@ -475,7 +475,7 @@ fn get_switch_semantic_cases(
                                 _ => None,
                             })
                     })
-                    .is_some_and(|it| it.consequent.is_empty() || it.consequent.iter().exactly_one().is_ok_and(|it| matches!(it, StatementKind::BlockStatement(b) if b.body.is_empty())));
+                    .is_some_and(|it| it.consequent.is_empty() || it.consequent.iter().exactly_one().is_ok_and(|it| it.as_block_statement().is_some_and(|b| b.body.is_empty())));
                 cfg_ids.push(target);
                 conds.push((target, is_empty));
                 (cfg_ids, conds, exit)

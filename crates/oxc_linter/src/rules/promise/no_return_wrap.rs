@@ -172,7 +172,7 @@ impl Rule for NoReturnWrap {
 
                     // `.bind(this)` is true but `.bind(foo)` is false.
                     let is_this_arg = call.arguments.first().is_some_and(|arg| {
-                        matches!(arg.as_expression(), Some(ExpressionKind::ThisExpression(_)))
+                        arg.as_expression().is_some_and(|e| e.is_this_expression())
                     });
 
                     let property_name = static_memb_expr.property.name;
@@ -223,7 +223,7 @@ fn check_arrow_cb_arg<'a>(
         }
 
         if let Some(r) = only_stmt.as_return_statement()
-            && let Some(returned_call_expr) = r.argument.and_then(|e| e.as_call_expression())
+            && let Some(returned_call_expr) = r.argument.as_ref().and_then(|e| e.as_call_expression())
         {
             check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
         }
@@ -297,7 +297,7 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    let Some(returned_call_expr) = return_stmt.argument.and_then(|e| e.as_call_expression()) else {
+    let Some(returned_call_expr) = return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
         return;
     };
 

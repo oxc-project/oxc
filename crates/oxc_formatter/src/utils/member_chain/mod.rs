@@ -411,7 +411,8 @@ fn chain_members_iter<'a, 'b>(
                 let callee = expr.callee();
 
                 let is_chain = matches!(
-                    callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_)
+                    callee.as_ref().kind(),
+                    ExpressionKind::StaticMemberExpression(_)
                         | ExpressionKind::ComputedMemberExpression(_)
                         | ExpressionKind::CallExpression(_)
                 );
@@ -438,7 +439,8 @@ fn chain_members_iter<'a, 'b>(
             AstNodes::CallExpression(expr) => {
                 let callee = expr.callee();
                 let is_chain = matches!(
-                    callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_)
+                    callee.as_ref().kind(),
+                    ExpressionKind::StaticMemberExpression(_)
                         | ExpressionKind::ComputedMemberExpression(_)
                         | ExpressionKind::CallExpression(_)
                 );

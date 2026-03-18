@@ -15,8 +15,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::StatementKind;
+use oxc_ast::ast::*;
 use oxc_ast::ast_kind::AstKind;
 
 use walk::*;
@@ -1390,7 +1391,9 @@ pub mod walk {
             ExpressionKind::MetaProperty(it) => visitor.visit_meta_property(it),
             ExpressionKind::Super(it) => visitor.visit_super(it),
             ExpressionKind::ArrayExpression(it) => visitor.visit_array_expression(it),
-            ExpressionKind::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
+            ExpressionKind::ArrowFunctionExpression(it) => {
+                visitor.visit_arrow_function_expression(it)
+            }
             ExpressionKind::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
             ExpressionKind::AwaitExpression(it) => visitor.visit_await_expression(it),
             ExpressionKind::BinaryExpression(it) => visitor.visit_binary_expression(it),
@@ -1406,7 +1409,9 @@ pub mod walk {
             ExpressionKind::LogicalExpression(it) => visitor.visit_logical_expression(it),
             ExpressionKind::NewExpression(it) => visitor.visit_new_expression(it),
             ExpressionKind::ObjectExpression(it) => visitor.visit_object_expression(it),
-            ExpressionKind::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
+            ExpressionKind::ParenthesizedExpression(it) => {
+                visitor.visit_parenthesized_expression(it)
+            }
             ExpressionKind::SequenceExpression(it) => visitor.visit_sequence_expression(it),
             ExpressionKind::TaggedTemplateExpression(it) => {
                 visitor.visit_tagged_template_expression(it)
@@ -1427,7 +1432,8 @@ pub mod walk {
             }
             ExpressionKind::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
             match_member_expression!(ExpressionKind) => {
-                { let me = it.to_member_expression(); visitor.visit_member_expression(&me); }
+                let me = it.to_member_expression();
+                visitor.visit_member_expression(&me);
             }
         }
     }
@@ -1494,7 +1500,8 @@ pub mod walk {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                { let expr = it.to_expression(); visitor.visit_expression(&expr); }
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
             }
         }
     }
@@ -1544,7 +1551,10 @@ pub mod walk {
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
-            match_expression!(PropertyKey) => { let expr = it.to_expression(); visitor.visit_expression(&expr); },
+            match_expression!(PropertyKey) => {
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
+            }
         }
     }
 
@@ -1687,7 +1697,10 @@ pub mod walk {
         // No `AstKind` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
-            match_expression!(Argument) => { let expr = it.to_expression(); visitor.visit_expression(&expr); },
+            match_expression!(Argument) => {
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
+            }
         }
     }
 
@@ -1800,7 +1813,8 @@ pub mod walk {
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
             match_member_expression!(SimpleAssignmentTarget) => {
-                { let me = it.to_member_expression(); visitor.visit_member_expression(&me); }
+                let me = it.to_member_expression();
+                visitor.visit_member_expression(&me);
             }
         }
     }
@@ -1983,7 +1997,8 @@ pub mod walk {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
             ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
             match_member_expression!(ChainElement) => {
-                { let me = it.to_member_expression(); visitor.visit_member_expression(&me); }
+                let me = it.to_member_expression();
+                visitor.visit_member_expression(&me);
             }
         }
     }
@@ -2002,28 +2017,47 @@ pub mod walk {
 
     pub fn walk_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &Statement<'a>) {
         // No `AstKind` for this type
-        match it {
-            Statement::BlockStatement(it) => visitor.visit_block_statement(it),
-            Statement::BreakStatement(it) => visitor.visit_break_statement(it),
-            Statement::ContinueStatement(it) => visitor.visit_continue_statement(it),
-            Statement::DebuggerStatement(it) => visitor.visit_debugger_statement(it),
-            Statement::DoWhileStatement(it) => visitor.visit_do_while_statement(it),
-            Statement::EmptyStatement(it) => visitor.visit_empty_statement(it),
-            Statement::ExpressionStatement(it) => visitor.visit_expression_statement(it),
-            Statement::ForInStatement(it) => visitor.visit_for_in_statement(it),
-            Statement::ForOfStatement(it) => visitor.visit_for_of_statement(it),
-            Statement::ForStatement(it) => visitor.visit_for_statement(it),
-            Statement::IfStatement(it) => visitor.visit_if_statement(it),
-            Statement::LabeledStatement(it) => visitor.visit_labeled_statement(it),
-            Statement::ReturnStatement(it) => visitor.visit_return_statement(it),
-            Statement::SwitchStatement(it) => visitor.visit_switch_statement(it),
-            Statement::ThrowStatement(it) => visitor.visit_throw_statement(it),
-            Statement::TryStatement(it) => visitor.visit_try_statement(it),
-            Statement::WhileStatement(it) => visitor.visit_while_statement(it),
-            Statement::WithStatement(it) => visitor.visit_with_statement(it),
-            match_declaration!(Statement) => visitor.visit_declaration(it.to_declaration()),
-            match_module_declaration!(Statement) => {
-                visitor.visit_module_declaration(it.to_module_declaration())
+        match it.kind() {
+            StatementKind::BlockStatement(it) => visitor.visit_block_statement(it),
+            StatementKind::BreakStatement(it) => visitor.visit_break_statement(it),
+            StatementKind::ContinueStatement(it) => visitor.visit_continue_statement(it),
+            StatementKind::DebuggerStatement(it) => visitor.visit_debugger_statement(it),
+            StatementKind::DoWhileStatement(it) => visitor.visit_do_while_statement(it),
+            StatementKind::EmptyStatement(it) => visitor.visit_empty_statement(it),
+            StatementKind::ExpressionStatement(it) => visitor.visit_expression_statement(it),
+            StatementKind::ForInStatement(it) => visitor.visit_for_in_statement(it),
+            StatementKind::ForOfStatement(it) => visitor.visit_for_of_statement(it),
+            StatementKind::ForStatement(it) => visitor.visit_for_statement(it),
+            StatementKind::IfStatement(it) => visitor.visit_if_statement(it),
+            StatementKind::LabeledStatement(it) => visitor.visit_labeled_statement(it),
+            StatementKind::ReturnStatement(it) => visitor.visit_return_statement(it),
+            StatementKind::SwitchStatement(it) => visitor.visit_switch_statement(it),
+            StatementKind::ThrowStatement(it) => visitor.visit_throw_statement(it),
+            StatementKind::TryStatement(it) => visitor.visit_try_statement(it),
+            StatementKind::WhileStatement(it) => visitor.visit_while_statement(it),
+            StatementKind::WithStatement(it) => visitor.visit_with_statement(it),
+            // Declaration variants
+            StatementKind::VariableDeclaration(_)
+            | StatementKind::FunctionDeclaration(_)
+            | StatementKind::ClassDeclaration(_)
+            | StatementKind::TSTypeAliasDeclaration(_)
+            | StatementKind::TSInterfaceDeclaration(_)
+            | StatementKind::TSEnumDeclaration(_)
+            | StatementKind::TSModuleDeclaration(_)
+            | StatementKind::TSGlobalDeclaration(_)
+            | StatementKind::TSImportEqualsDeclaration(_) => {
+                let d = it.to_declaration();
+                visitor.visit_declaration(&d);
+            }
+            // Module declaration variants
+            StatementKind::ImportDeclaration(_)
+            | StatementKind::ExportAllDeclaration(_)
+            | StatementKind::ExportDefaultDeclaration(_)
+            | StatementKind::ExportNamedDeclaration(_)
+            | StatementKind::TSExportAssignment(_)
+            | StatementKind::TSNamespaceExportDeclaration(_) => {
+                let m = it.to_module_declaration();
+                visitor.visit_module_declaration(&m);
             }
         }
     }
@@ -2184,7 +2218,10 @@ pub mod walk {
         // No `AstKind` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            match_expression!(ForStatementInit) => { let expr = it.to_expression(); visitor.visit_expression(&expr); },
+            match_expression!(ForStatementInit) => {
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
+            }
         }
     }
 
@@ -2882,7 +2919,8 @@ pub mod walk {
                 visitor.visit_ts_interface_declaration(it)
             }
             match_expression!(ExportDefaultDeclarationKind) => {
-                { let expr = it.to_expression(); visitor.visit_expression(&expr); }
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
             }
         }
     }
@@ -3089,7 +3127,10 @@ pub mod walk {
         // No `AstKind` for this type
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
-            match_expression!(JSXExpression) => { let expr = it.to_expression(); visitor.visit_expression(&expr); },
+            match_expression!(JSXExpression) => {
+                let expr = it.to_expression();
+                visitor.visit_expression(&expr);
+            }
         }
     }
 
@@ -4300,7 +4341,8 @@ pub mod walk {
                     visitor.visit_spread_element(spread);
                 }
                 _ => {
-                    { let expr = el.to_expression(); visitor.visit_expression(&expr); }
+                    let expr = el.to_expression();
+                    visitor.visit_expression(&expr);
                 }
             }
         }

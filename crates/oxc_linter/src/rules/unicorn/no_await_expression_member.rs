@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind, MemberExpression,
-    ast::{BindingPattern, Expression},
+    ast::{BindingPattern, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

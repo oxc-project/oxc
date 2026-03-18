@@ -121,7 +121,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && method.kind == MethodDefinitionKind::Get
             && !method.r#override
             && let Some(body) = &method.value.body
-            && let Some(return_statement) = body.statements.first().as_return_statement()
+            && let Some(return_statement) = body.statements.first().and_then(|s| s.as_return_statement())
             && let Some(argument) = &return_statement.argument
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)

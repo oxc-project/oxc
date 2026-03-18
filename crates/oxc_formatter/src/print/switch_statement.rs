@@ -99,12 +99,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         // there are no other non-empty statements. Empties may show up when
         // parsing depending on if the input code includes certain newlines.
         let first_statement = consequent.first().unwrap();
-        let is_single_block_statement =
-            first_statement.as_ref().is_block_statement()
-                && consequent
-                    .iter()
-                    .skip(1)
-                    .all(|statement| statement.as_ref().is_empty_statement());
+        let is_single_block_statement = first_statement.as_ref().is_block_statement()
+            && consequent.iter().skip(1).all(|statement| statement.as_ref().is_empty_statement());
 
         // Format dangling comments before default case body.
         if is_default {

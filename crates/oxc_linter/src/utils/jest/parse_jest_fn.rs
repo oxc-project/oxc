@@ -44,16 +44,13 @@ pub fn parse_jest_fn_call<'a>(
     if let Some(last) = chain.last() {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last.is_name_equal("each")
-            && !matches!(
-                callee,
-                ExpressionKind::CallExpression(_) | ExpressionKind::TaggedTemplateExpression(_)
-            )
+            && !callee.is_call_expression()
+            && !callee.is_tagged_template_expression()
         {
             return None;
         }
 
-        if callee.is_tagged_template_expression() && last.is_name_unequal("each")
-        {
+        if callee.is_tagged_template_expression() && last.is_name_unequal("each") {
             return None;
         }
 
@@ -351,7 +348,9 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
             resolve_first_ident(expr.to_member_expression().object())
         }
         ExpressionKind::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
-        ExpressionKind::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
+        ExpressionKind::TaggedTemplateExpression(tagged_expr) => {
+            resolve_first_ident(&tagged_expr.tag)
+        }
         _ => None,
     }
 }
@@ -503,10 +502,10 @@ impl<'a> MemberExpressionElement<'a> {
     }
 
     pub fn is_string_literal(&self) -> bool {
-        matches!(
-            self,
-            Self::Expression(ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
-        )
+        match self {
+            Self::Expression(expr) => expr.is_string_literal() || expr.is_template_literal(),
+            _ => false,
+        }
     }
 }
 

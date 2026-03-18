@@ -18,14 +18,15 @@ fn is_logic_not_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     is_logic_not(&parent.kind())
 }
 pub fn is_boolean_call(kind: &AstKind) -> bool {
-    matches!(
-        kind,
-        AstKind::CallExpression(CallExpression {
-            callee: ExpressionKind::Identifier(ident),
-            arguments,
-            ..
-        }) if ident.name == "Boolean" && arguments.len() == 1
-    )
+    if let AstKind::CallExpression(call) = kind
+        && let Some(ident) = call.callee.as_identifier()
+        && ident.name == "Boolean"
+        && call.arguments.len() == 1
+    {
+        true
+    } else {
+        false
+    }
 }
 pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let arg_id = ctx.nodes().parent_id(node.id());

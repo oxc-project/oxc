@@ -641,8 +641,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             }
 
             let serialized_constituent = self.serialize_type_node(t, ctx);
-            if serialized_constituent.as_identifier().is_some_and(|ident| ident.name == "Object")
-            {
+            if serialized_constituent.as_identifier().is_some_and(|ident| ident.name == "Object") {
                 // One of the individual is global object, return immediately
                 return serialized_constituent;
             }

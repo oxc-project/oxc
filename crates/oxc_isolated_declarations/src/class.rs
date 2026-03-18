@@ -152,7 +152,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.transform_template_to_string(lit).map(Expression::string_literal)
             }
             ExpressionKind::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::unary_expression(ArenaBox::new_in(expr.clone_in(self.ast.allocator), self.ast.allocator)))
+                Some(Expression::unary_expression(ArenaBox::new_in(
+                    expr.clone_in(self.ast.allocator),
+                    self.ast.allocator,
+                )))
             }
             ExpressionKind::ParenthesizedExpression(expr) => {
                 self.get_literal_const_initializer(&expr.expression)

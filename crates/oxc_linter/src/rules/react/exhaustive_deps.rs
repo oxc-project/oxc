@@ -685,7 +685,7 @@ impl Rule for ExhaustiveDeps {
             if let Some(symbol_id) = dep.symbol_id
                 && let AstKind::VariableDeclarator(var_decl) =
                     ctx.semantic().symbol_declaration(symbol_id).kind()
-                && let Some(call_expr) = var_decl.init.as_call_expression()
+                && let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression())
                 && let Some(name) = func_call_without_react_namespace(call_expr)
                 && name == "useEffectEvent"
             {
@@ -1550,7 +1550,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(call_expr) = var_decl.init.as_call_expression() else {
+                    let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression()) else {
                         return;
                     };
 

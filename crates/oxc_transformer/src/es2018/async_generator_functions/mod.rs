@@ -117,9 +117,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let function = match stmt.kind() {
-            StatementKind::FunctionDeclaration(func) => Some(func),
-            StatementKind::ExportDefaultDeclaration(decl) => {
+        let function = match stmt.kind_mut() {
+            StatementKindMut::FunctionDeclaration(func) => Some(func),
+            StatementKindMut::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
@@ -128,7 +128,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
                     None
                 }
             }
-            StatementKind::ExportNamedDeclaration(decl) => {
+            StatementKindMut::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
                     Some(func)
                 } else {

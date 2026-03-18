@@ -1,5 +1,5 @@
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::*;
 
 use crate::{
     GlobalContext,

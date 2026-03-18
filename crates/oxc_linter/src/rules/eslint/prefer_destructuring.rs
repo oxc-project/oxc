@@ -240,8 +240,8 @@ impl Rule for PreferDestructuring {
                                 {
                                     ctx.diagnostic(prefer_object_destructuring(right.span()));
                                 }
-                                if let ExpressionKind::StringLiteral(string_literal) =
-                                    &comp_expr.expression
+                                if let Some(string_literal) =
+                                    comp_expr.expression.as_string_literal()
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {

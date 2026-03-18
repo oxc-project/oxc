@@ -89,7 +89,7 @@ impl Rule for PreferGlobalThis {
                     if let Some(AstKind::CallExpression(call_expr)) =
                         ctx.nodes().ancestor_kinds(node.id()).nth(1)
                     {
-                        if let Some(lit) = call_expr.arguments.first().and_then.as_string_literal()(|arg| arg.as_expression())
+                        if let Some(lit) = call_expr.arguments.first().and_then(|arg| arg.as_expression()).and_then(|e| e.as_string_literal())
                             && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                         {
                             return;

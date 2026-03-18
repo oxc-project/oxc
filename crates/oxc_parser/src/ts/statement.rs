@@ -77,7 +77,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let expr = self.parse_computed_property_name();
                 if expr.is_string_literal() {
                     TSEnumMemberName::ComputedString(expr.into_string_literal())
-                } else if expr.is_template_literal() && expr.to_template_literal().is_no_substitution_template() {
+                } else if expr.is_template_literal()
+                    && expr.to_template_literal().is_no_substitution_template()
+                {
                     TSEnumMemberName::ComputedTemplateString(expr.into_template_literal())
                 } else if expr.is_numeric_literal() {
                     let error = diagnostics::enum_member_cannot_have_numeric_name(expr.span());

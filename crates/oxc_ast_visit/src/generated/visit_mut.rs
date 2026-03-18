@@ -15,8 +15,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKindMut;
+use oxc_ast::ast::StatementKindMut;
+use oxc_ast::ast::*;
 use oxc_ast::ast_kind::AstType;
 
 use walk_mut::*;
@@ -1385,14 +1386,18 @@ pub mod walk_mut {
             ExpressionKindMut::MetaProperty(it) => visitor.visit_meta_property(it),
             ExpressionKindMut::Super(it) => visitor.visit_super(it),
             ExpressionKindMut::ArrayExpression(it) => visitor.visit_array_expression(it),
-            ExpressionKindMut::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
+            ExpressionKindMut::ArrowFunctionExpression(it) => {
+                visitor.visit_arrow_function_expression(it)
+            }
             ExpressionKindMut::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
             ExpressionKindMut::AwaitExpression(it) => visitor.visit_await_expression(it),
             ExpressionKindMut::BinaryExpression(it) => visitor.visit_binary_expression(it),
             ExpressionKindMut::CallExpression(it) => visitor.visit_call_expression(it),
             ExpressionKindMut::ChainExpression(it) => visitor.visit_chain_expression(it),
             ExpressionKindMut::ClassExpression(it) => visitor.visit_class(it),
-            ExpressionKindMut::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
+            ExpressionKindMut::ConditionalExpression(it) => {
+                visitor.visit_conditional_expression(it)
+            }
             ExpressionKindMut::FunctionExpression(it) => {
                 let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
@@ -1401,7 +1406,9 @@ pub mod walk_mut {
             ExpressionKindMut::LogicalExpression(it) => visitor.visit_logical_expression(it),
             ExpressionKindMut::NewExpression(it) => visitor.visit_new_expression(it),
             ExpressionKindMut::ObjectExpression(it) => visitor.visit_object_expression(it),
-            ExpressionKindMut::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
+            ExpressionKindMut::ParenthesizedExpression(it) => {
+                visitor.visit_parenthesized_expression(it)
+            }
             ExpressionKindMut::SequenceExpression(it) => visitor.visit_sequence_expression(it),
             ExpressionKindMut::TaggedTemplateExpression(it) => {
                 visitor.visit_tagged_template_expression(it)
@@ -1414,13 +1421,17 @@ pub mod walk_mut {
             ExpressionKindMut::JSXElement(it) => visitor.visit_jsx_element(it),
             ExpressionKindMut::JSXFragment(it) => visitor.visit_jsx_fragment(it),
             ExpressionKindMut::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            ExpressionKindMut::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
+            ExpressionKindMut::TSSatisfiesExpression(it) => {
+                visitor.visit_ts_satisfies_expression(it)
+            }
             ExpressionKindMut::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
             ExpressionKindMut::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
             ExpressionKindMut::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
-            ExpressionKindMut::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
+            ExpressionKindMut::V8IntrinsicExpression(it) => {
+                visitor.visit_v8_intrinsic_expression(it)
+            }
             ExpressionKindMut::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
             }
@@ -1504,7 +1515,8 @@ pub mod walk_mut {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); }
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
             }
         }
     }
@@ -1557,7 +1569,10 @@ pub mod walk_mut {
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
-            match_expression!(PropertyKey) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
+            match_expression!(PropertyKey) => {
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
+            }
         }
     }
 
@@ -1709,7 +1724,10 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
-            match_expression!(Argument) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
+            match_expression!(Argument) => {
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
+            }
         }
     }
 
@@ -2045,28 +2063,47 @@ pub mod walk_mut {
 
     pub fn walk_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Statement<'a>) {
         // No `AstType` for this type
-        match it {
-            Statement::BlockStatement(it) => visitor.visit_block_statement(it),
-            Statement::BreakStatement(it) => visitor.visit_break_statement(it),
-            Statement::ContinueStatement(it) => visitor.visit_continue_statement(it),
-            Statement::DebuggerStatement(it) => visitor.visit_debugger_statement(it),
-            Statement::DoWhileStatement(it) => visitor.visit_do_while_statement(it),
-            Statement::EmptyStatement(it) => visitor.visit_empty_statement(it),
-            Statement::ExpressionStatement(it) => visitor.visit_expression_statement(it),
-            Statement::ForInStatement(it) => visitor.visit_for_in_statement(it),
-            Statement::ForOfStatement(it) => visitor.visit_for_of_statement(it),
-            Statement::ForStatement(it) => visitor.visit_for_statement(it),
-            Statement::IfStatement(it) => visitor.visit_if_statement(it),
-            Statement::LabeledStatement(it) => visitor.visit_labeled_statement(it),
-            Statement::ReturnStatement(it) => visitor.visit_return_statement(it),
-            Statement::SwitchStatement(it) => visitor.visit_switch_statement(it),
-            Statement::ThrowStatement(it) => visitor.visit_throw_statement(it),
-            Statement::TryStatement(it) => visitor.visit_try_statement(it),
-            Statement::WhileStatement(it) => visitor.visit_while_statement(it),
-            Statement::WithStatement(it) => visitor.visit_with_statement(it),
-            match_declaration!(Statement) => visitor.visit_declaration(it.to_declaration_mut()),
-            match_module_declaration!(Statement) => {
-                visitor.visit_module_declaration(it.to_module_declaration_mut())
+        match it.kind_mut() {
+            StatementKindMut::BlockStatement(it) => visitor.visit_block_statement(it),
+            StatementKindMut::BreakStatement(it) => visitor.visit_break_statement(it),
+            StatementKindMut::ContinueStatement(it) => visitor.visit_continue_statement(it),
+            StatementKindMut::DebuggerStatement(it) => visitor.visit_debugger_statement(it),
+            StatementKindMut::DoWhileStatement(it) => visitor.visit_do_while_statement(it),
+            StatementKindMut::EmptyStatement(it) => visitor.visit_empty_statement(it),
+            StatementKindMut::ExpressionStatement(it) => visitor.visit_expression_statement(it),
+            StatementKindMut::ForInStatement(it) => visitor.visit_for_in_statement(it),
+            StatementKindMut::ForOfStatement(it) => visitor.visit_for_of_statement(it),
+            StatementKindMut::ForStatement(it) => visitor.visit_for_statement(it),
+            StatementKindMut::IfStatement(it) => visitor.visit_if_statement(it),
+            StatementKindMut::LabeledStatement(it) => visitor.visit_labeled_statement(it),
+            StatementKindMut::ReturnStatement(it) => visitor.visit_return_statement(it),
+            StatementKindMut::SwitchStatement(it) => visitor.visit_switch_statement(it),
+            StatementKindMut::ThrowStatement(it) => visitor.visit_throw_statement(it),
+            StatementKindMut::TryStatement(it) => visitor.visit_try_statement(it),
+            StatementKindMut::WhileStatement(it) => visitor.visit_while_statement(it),
+            StatementKindMut::WithStatement(it) => visitor.visit_with_statement(it),
+            // Declaration variants
+            StatementKindMut::VariableDeclaration(_)
+            | StatementKindMut::FunctionDeclaration(_)
+            | StatementKindMut::ClassDeclaration(_)
+            | StatementKindMut::TSTypeAliasDeclaration(_)
+            | StatementKindMut::TSInterfaceDeclaration(_)
+            | StatementKindMut::TSEnumDeclaration(_)
+            | StatementKindMut::TSModuleDeclaration(_)
+            | StatementKindMut::TSGlobalDeclaration(_)
+            | StatementKindMut::TSImportEqualsDeclaration(_) => {
+                let mut d = it.to_declaration();
+                visitor.visit_declaration(&mut d);
+            }
+            // Module declaration variants
+            StatementKindMut::ImportDeclaration(_)
+            | StatementKindMut::ExportAllDeclaration(_)
+            | StatementKindMut::ExportDefaultDeclaration(_)
+            | StatementKindMut::ExportNamedDeclaration(_)
+            | StatementKindMut::TSExportAssignment(_)
+            | StatementKindMut::TSNamespaceExportDeclaration(_) => {
+                let mut m = it.to_module_declaration();
+                visitor.visit_module_declaration(&mut m);
             }
         }
     }
@@ -2233,7 +2270,10 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            match_expression!(ForStatementInit) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
+            match_expression!(ForStatementInit) => {
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
+            }
         }
     }
 
@@ -3001,7 +3041,8 @@ pub mod walk_mut {
                 visitor.visit_ts_interface_declaration(it)
             }
             match_expression!(ExportDefaultDeclarationKind) => {
-                { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); }
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
             }
         }
     }
@@ -3229,7 +3270,10 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
-            match_expression!(JSXExpression) => { let mut expr = it.to_expression_mut(); visitor.visit_expression(&mut expr); },
+            match_expression!(JSXExpression) => {
+                let mut expr = it.to_expression_mut();
+                visitor.visit_expression(&mut expr);
+            }
         }
     }
 
@@ -4536,7 +4580,8 @@ pub mod walk_mut {
                     visitor.visit_spread_element(spread);
                 }
                 _ => {
-                    { let mut expr = el.to_expression_mut(); visitor.visit_expression(&mut expr); }
+                    let mut expr = el.to_expression_mut();
+                    visitor.visit_expression(&mut expr);
                 }
             }
         }

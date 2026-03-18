@@ -386,47 +386,44 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             return;
         }
 
-        let new_expr = match expr.kind() {
-            ExpressionKind::ThisExpression(this) => {
-                self.get_this_identifier(this.span, ctx).map(Expression::identifier)
-            }
-            ExpressionKind::Super(_) => {
-                *self.constructor_super_stack.last_mut() = true;
+        let new_expr = if expr.is_this_expression() {
+            self.get_this_identifier(expr.to_this_expression().span, ctx)
+                .map(Expression::identifier)
+        } else if expr.is_super() {
+            *self.constructor_super_stack.last_mut() = true;
+            return;
+        } else if expr.is_call_expression() {
+            self.transform_call_expression_for_super(expr.to_call_expression_mut(), ctx)
+        } else if expr.is_assignment_expression() {
+            self.transform_assignment_expression_for_super(expr.to_assignment_expression_mut(), ctx)
+        } else if expr.is_member_expression() {
+            self.transform_member_expression_for_super(expr, None, ctx)
+        } else if expr.is_arrow_function_expression() {
+            // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
+            if self.is_async_only()
+                && expr.to_arrow_function_expression().r#async
+                && Self::in_class_property_definition_value(ctx)
+            {
+                // Inside class property definition value, since async arrow function will be
+                // converted to a generator function by `AsyncToGenerator` plugin, ensure
+                // `_this = this` and `super` methods are inserted correctly. We need to
+                // wrap the async arrow function with an normal arrow function IIFE.
+                //
+                // ```js
+                // class A {
+                //   prop = async () => {}
+                // }
+                // // to
+                // class A {
+                //   prop = (() => { return async () => {} })();
+                // }
+                // ```
+                Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
+            } else {
                 return;
             }
-            ExpressionKind::CallExpression(call) => self.transform_call_expression_for_super(call, ctx),
-            ExpressionKind::AssignmentExpression(assignment) => {
-                self.transform_assignment_expression_for_super(assignment, ctx)
-            }
-            match_member_expression!(ExpressionKind) => {
-                self.transform_member_expression_for_super(expr, None, ctx)
-            }
-            ExpressionKind::ArrowFunctionExpression(arrow) => {
-                // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
-                if self.is_async_only()
-                    && arrow.r#async
-                    && Self::in_class_property_definition_value(ctx)
-                {
-                    // Inside class property definition value, since async arrow function will be
-                    // converted to a generator function by `AsyncToGenerator` plugin, ensure
-                    // `_this = this` and `super` methods are inserted correctly. We need to
-                    // wrap the async arrow function with an normal arrow function IIFE.
-                    //
-                    // ```js
-                    // class A {
-                    //   prop = async () => {}
-                    // }
-                    // // to
-                    // class A {
-                    //   prop = (() => { return async () => {} })();
-                    // }
-                    // ```
-                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
-                } else {
-                    return;
-                }
-            }
-            _ => return,
+        } else {
+            return;
         };
 
         if let Some(new_expr) = new_expr {
@@ -446,7 +443,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Some(arrow_function_expr) = expr.take_in(ctx.ast).as_arrow_function_expression() else {
+            let Some(arrow_function_expr) = expr.take_in(ctx.ast).as_arrow_function_expression()
+            else {
                 unreachable!()
             };
 
@@ -738,8 +736,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         let mut argument = None;
         let mut property = "";
-        let init = match expr.to_member_expression_mut().kind() {
-            MemberExpressionKind::ComputedMemberExpression(computed_member) => {
+        let init = match expr.to_member_expression() {
+            MemberExpression::ComputedMemberExpression(computed_member) => {
                 if !computed_member.object.is_super() {
                     return None;
                 }
@@ -749,7 +747,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 argument = Some(computed_member.expression.take_in(ctx.ast));
                 computed_member.object.take_in(ctx.ast)
             }
-            MemberExpressionKind::StaticMemberExpression(static_member) => {
+            MemberExpression::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
                     return None;
                 }
@@ -758,7 +756,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 property = static_member.property.name.as_str();
                 expr.take_in(ctx.ast)
             }
-            MemberExpressionKind::PrivateFieldExpression(_) => {
+            MemberExpression::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
                 return None;
             }

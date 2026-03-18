@@ -343,7 +343,8 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
                 // when the leftmost expression is not a class expression or a function expression
                 callee_span != leftmost.span()
                     && matches!(
-                        leftmost.as_ref().kind(), ExpressionKind::ClassExpression(_) | ExpressionKind::FunctionExpression(_)
+                        leftmost.as_ref().kind(),
+                        ExpressionKind::ClassExpression(_) | ExpressionKind::FunctionExpression(_)
                     )
             }
             _ => self.is_new_callee(),
@@ -1081,7 +1082,8 @@ fn is_first_in_statement(
                     if mode == FirstInStatementMode::ExpressionStatementOrArrow {
                         if is_not_first_iteration
                             && matches!(
-                                stmt.expression.kind(), ExpressionKind::SequenceExpression(_)
+                                stmt.expression.kind(),
+                                ExpressionKind::SequenceExpression(_)
                                     | ExpressionKind::AssignmentExpression(_)
                             )
                         {

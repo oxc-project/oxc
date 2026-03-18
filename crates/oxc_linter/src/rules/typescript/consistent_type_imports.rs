@@ -947,7 +947,6 @@ fn fix_remove_type_specifier_from_import_specifier(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::StatementKind;
 
     fn remove_common_prefix_space(str: &str) -> String {
         let first_content_line = str.lines().find(|line| line.trim() != "").unwrap();

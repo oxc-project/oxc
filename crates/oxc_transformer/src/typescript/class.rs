@@ -320,7 +320,8 @@ impl<'a> TypeScript<'a> {
         statements
             .iter()
             .position(|stmt| {
-                stmt.as_expression_statement().is_some_and(|stmt| stmt.expression.is_super_call_expression())
+                stmt.as_expression_statement()
+                    .is_some_and(|stmt| stmt.expression.is_super_call_expression())
             })
             .map_or(0, |pos| pos + 1)
     }

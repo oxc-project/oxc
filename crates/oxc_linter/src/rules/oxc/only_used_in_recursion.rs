@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
-        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,, ExpressionKind},
+        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

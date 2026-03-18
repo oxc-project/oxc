@@ -373,7 +373,7 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let ExpressionKind::Identifier(ident) = member_expr.object()
+        && let Some(ident) = member_expr.object().as_identifier()
     {
         return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
     }
@@ -394,7 +394,7 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     };
     if let Some(super_class) = &class_expr.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let ExpressionKind::Identifier(ident) = member_expr.object()
+            && let Some(ident) = member_expr.object().as_identifier()
         {
             return ident.name == PRAGMA
                 && member_expr

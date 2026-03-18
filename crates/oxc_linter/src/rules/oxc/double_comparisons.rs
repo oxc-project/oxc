@@ -53,7 +53,7 @@ impl Rule for DoubleComparisons {
             return;
         };
 
-        let (lkind, llhs, lrhs, rkind, rlhs, rrhs) = match (&logical_expr.left, &logical_expr.right)
+        let (lkind, llhs, lrhs, rkind, rlhs, rrhs) = match (logical_expr.left.kind(), logical_expr.right.kind())
         {
             (
                 ExpressionKind::BinaryExpression(left_bin_expr),

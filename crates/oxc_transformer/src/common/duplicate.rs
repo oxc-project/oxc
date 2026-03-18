@@ -3,7 +3,7 @@
 use std::array;
 
 use oxc_allocator::CloneIn;
-use oxc_ast::ast::{AssignmentOperator, Expression};
+use oxc_ast::ast::{AssignmentOperator, Expression, ExpressionKind};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::BoundIdentifier;

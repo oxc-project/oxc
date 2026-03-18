@@ -51,7 +51,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
         if !is_template_literal_single_arg
             && matches!(
-                callee.as_ref().kind(), ExpressionKind::StaticMemberExpression(_) | ExpressionKind::ComputedMemberExpression(_)
+                callee.as_ref().kind(),
+                ExpressionKind::StaticMemberExpression(_)
+                    | ExpressionKind::ComputedMemberExpression(_)
             )
             && !is_simple_module_import(self.arguments(), f.comments())
             && !is_test_call_expression(self)

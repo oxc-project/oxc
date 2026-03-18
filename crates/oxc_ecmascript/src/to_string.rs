@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{

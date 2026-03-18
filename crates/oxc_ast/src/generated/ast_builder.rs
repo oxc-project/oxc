@@ -1010,7 +1010,9 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> Expression<'a> {
-        Expression::update_expression(self.alloc_update_expression(span, operator, prefix, argument))
+        Expression::update_expression(
+            self.alloc_update_expression(span, operator, prefix, argument),
+        )
     }
 
     /// Build an [`Expression::YieldExpression`].
@@ -1158,7 +1160,11 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::ts_type_assertion(self.alloc_ts_type_assertion(span, type_annotation, expression))
+        Expression::ts_type_assertion(self.alloc_ts_type_assertion(
+            span,
+            type_annotation,
+            expression,
+        ))
     }
 
     /// Build an [`Expression::TSNonNullExpression`].
@@ -1213,7 +1219,9 @@ impl<'a> AstBuilder<'a> {
         name: IdentifierName<'a>,
         arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a> {
-        Expression::v8_intrinsic_expression(self.alloc_v8_intrinsic_expression(span, name, arguments))
+        Expression::v8_intrinsic_expression(
+            self.alloc_v8_intrinsic_expression(span, name, arguments),
+        )
     }
 
     /// Build an [`IdentifierName`].

@@ -210,7 +210,7 @@ fn has_no_side_effects_before<'a>(
     let node_span = node.kind().span();
 
     for stmt in &body.statements {
-        let stmt_matches = match stmt {
+        let stmt_matches = match stmt.kind() {
             StatementKind::ExpressionStatement(expr_stmt) => expr_stmt.expression.span() == node_span,
             StatementKind::VariableDeclaration(var_decl) => var_decl.span == node_span,
             _ => stmt.span() == node_span,

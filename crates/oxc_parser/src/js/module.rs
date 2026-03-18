@@ -1365,13 +1365,7 @@ mod test {
         let ret = Parser::new(&allocator, src, source_type).parse();
         assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
         let statements =
-            ret.program
-                .body
-                .iter()
-                .filter_map(|s| {
-                    s.as_import_declaration()
-                })
-                .collect::<Vec<_>>();
+            ret.program.body.iter().filter_map(|s| s.as_import_declaration()).collect::<Vec<_>>();
         f(statements);
     }
 }

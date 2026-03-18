@@ -46,7 +46,7 @@ pub fn as_endpoint_registration<'a, 'n>(
 /// This will yield a lot of false positives if not called on the results of
 /// [`as_endpoint_registration`].
 pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
- match maybe_handler.kind() {
+    let params = match maybe_handler.kind() {
         ExpressionKind::FunctionExpression(f) => &f.params,
         ExpressionKind::ArrowFunctionExpression(arrow) => &arrow.params,
         _ => return false,

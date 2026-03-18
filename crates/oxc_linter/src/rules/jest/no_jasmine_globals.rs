@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, CallExpression, Expression, MemberExpression, SimpleAssignmentTarget,, ExpressionKind},
+        AssignmentExpression, CallExpression, Expression, ExpressionKind, MemberExpression, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

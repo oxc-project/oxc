@@ -112,7 +112,7 @@ impl Rule for SwitchCaseBraces {
             if case.consequent.is_empty() {
                 continue;
             }
-            let missing_braces = match &case.consequent[0] {
+            let missing_braces = match case.consequent[0].kind() {
                 StatementKind::BlockStatement(block_stmt) if case.consequent.len() == 1 => {
                     if block_stmt.body.is_empty() {
                         ctx.diagnostic_with_fix(
@@ -123,11 +123,8 @@ impl Rule for SwitchCaseBraces {
                     }
                     if *self.0 == SwitchCaseBracesConfig::Avoid
                         && !block_stmt.body.iter().any(|stmt| {
-                            matches!(
-                                stmt,
-                                StatementKind::VariableDeclaration(_)
-                                    | StatementKind::FunctionDeclaration(_)
-                            )
+                            stmt.is_variable_declaration()
+                                || stmt.is_function_declaration()
                         })
                     {
                         ctx.diagnostic_with_fix(

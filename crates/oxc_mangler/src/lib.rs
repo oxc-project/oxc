@@ -609,7 +609,7 @@ impl<'t> Mangler<'t> {
         let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
         let mut exported_names = HashSet::new_in(allocator);
         for statement in &program.body {
-            let Statement::ExportNamedDeclaration(v) = statement else { continue };
+            let Some(v) = statement.as_export_named_declaration() else { continue };
             let Some(decl) = &v.declaration else { continue };
             if let Declaration::VariableDeclaration(decl) = decl {
                 for decl in &decl.declarations {

@@ -332,7 +332,8 @@ fn should_group_first_argument(
     }
 
     if matches!(
-        second.kind(), ExpressionKind::ArrowFunctionExpression(_)
+        second.kind(),
+        ExpressionKind::ArrowFunctionExpression(_)
             | ExpressionKind::FunctionExpression(_)
             | ExpressionKind::ConditionalExpression(_)
     ) {
@@ -374,8 +375,14 @@ fn should_group_last_argument_impl(
             (ExpressionKind::ObjectExpression(_), ExpressionKind::ObjectExpression(_))
                 | (ExpressionKind::ArrayExpression(_), ExpressionKind::ArrayExpression(_))
                 | (ExpressionKind::TSAsExpression(_), ExpressionKind::TSAsExpression(_))
-                | (ExpressionKind::TSSatisfiesExpression(_), ExpressionKind::TSSatisfiesExpression(_))
-                | (ExpressionKind::ArrowFunctionExpression(_), ExpressionKind::ArrowFunctionExpression(_))
+                | (
+                    ExpressionKind::TSSatisfiesExpression(_),
+                    ExpressionKind::TSSatisfiesExpression(_)
+                )
+                | (
+                    ExpressionKind::ArrowFunctionExpression(_),
+                    ExpressionKind::ArrowFunctionExpression(_)
+                )
                 | (ExpressionKind::FunctionExpression(_), ExpressionKind::FunctionExpression(_))
         )
     {
@@ -410,8 +417,7 @@ fn should_group_last_argument_impl(
     match last.kind() {
         ExpressionKind::ArrayExpression(array) if penultimate.is_some() => {
             // Not for `useEffect`
-            if args_len == 2 && penultimate.is_some_and(Expression::is_arrow_function_expression)
-            {
+            if args_len == 2 && penultimate.is_some_and(Expression::is_arrow_function_expression) {
                 return false;
             }
 
@@ -627,7 +633,9 @@ fn can_group_arrow_function_expression_argument(
         ExpressionKind::ChainExpression(chain) => {
             matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
         }
-        ExpressionKind::CallExpression(_) | ExpressionKind::ConditionalExpression(_) => !is_arrow_recursion,
+        ExpressionKind::CallExpression(_) | ExpressionKind::ConditionalExpression(_) => {
+            !is_arrow_recursion
+        }
         _ => false,
     })
 }
@@ -985,29 +993,33 @@ pub fn is_simple_module_import(
         AstNodes::ImportExpression(_) => {}
         AstNodes::CallExpression(call) => {
             match &call.callee.kind() {
-                ExpressionKind::StaticMemberExpression(member) => match member.property.name.as_str() {
-                    "resolve" => {
-                        match &member.object.kind() {
-                            ExpressionKind::Identifier(ident) if ident.name.as_str() == "require" => {
-                                // `require.resolve("foo")`
+                ExpressionKind::StaticMemberExpression(member) => {
+                    match member.property.name.as_str() {
+                        "resolve" => {
+                            match &member.object.kind() {
+                                ExpressionKind::Identifier(ident)
+                                    if ident.name.as_str() == "require" =>
+                                {
+                                    // `require.resolve("foo")`
+                                }
+                                ExpressionKind::MetaProperty(_) => {
+                                    // `import.meta.resolve("foo")`
+                                }
+                                _ => return false,
                             }
-                            ExpressionKind::MetaProperty(_) => {
-                                // `import.meta.resolve("foo")`
+                        }
+                        "paths" => {
+                            if !matches!(
+                            &member.object.kind(), ExpressionKind::StaticMemberExpression(member)
+                            if matches!(&member.object.kind(), ExpressionKind::Identifier(ident)
+                                if ident.name == "require") && member.property.name.as_str() == "resolve"
+                            ) {
+                                return false;
                             }
-                            _ => return false,
                         }
+                        _ => return false,
                     }
-                    "paths" => {
-                        if !matches!(
-                        &member.object.kind(), ExpressionKind::StaticMemberExpression(member)
-                        if matches!(&member.object.kind(), ExpressionKind::Identifier(ident)
-                            if ident.name == "require") && member.property.name.as_str() == "resolve"
-                        ) {
-                            return false;
-                        }
-                    }
-                    _ => return false,
-                },
+                }
                 _ => {
                     return false;
                 }

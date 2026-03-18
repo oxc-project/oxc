@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Declaration, Expression, ModuleExportName, VariableDeclaration, VariableDeclarationKind,, ExpressionKind},
+        Declaration, Expression, ModuleExportName, VariableDeclaration, VariableDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

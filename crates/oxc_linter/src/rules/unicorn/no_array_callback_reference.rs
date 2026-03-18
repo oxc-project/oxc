@@ -229,7 +229,7 @@ fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
                 false
             }
         }
-        match_member_expression!(Expression) => {
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             if let Some(obj_ident) = member_expr.object().as_identifier()
                 && obj_ident.name == "React"

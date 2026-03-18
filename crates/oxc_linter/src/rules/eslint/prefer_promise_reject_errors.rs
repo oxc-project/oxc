@@ -193,10 +193,10 @@ fn check_reject_in_function(
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    match arg.as_expression().map(Expression::get_inner_expression).kind() {
-        Some(ExpressionKind::Identifier(ident)) => ident.name == "undefined",
-        _ => false,
-    }
+    arg.as_expression()
+        .map(Expression::get_inner_expression)
+        .and_then(Expression::as_identifier)
+        .is_some_and(|ident| ident.name == "undefined")
 }
 
 #[test]

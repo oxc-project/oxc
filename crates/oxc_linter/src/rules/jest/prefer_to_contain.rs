@@ -114,10 +114,7 @@ impl PreferToContain {
 
         // handle "expect()"
         if expect_call_expr.arguments.is_empty()
-            || !matches!(
-                jest_expect_first_arg.get_inner_expression(),
-                ExpressionKind::BooleanLiteral(_)
-            )
+            || !jest_expect_first_arg.get_inner_expression().is_boolean_literal()
         {
             return;
         }

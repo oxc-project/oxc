@@ -238,7 +238,7 @@ impl<'a, 'b: 'a, 't> NameSymbolCollector<'a, 'b, 't> {
             return true;
         }
 
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = expr.without_parentheses().is_class_expression();
         (self.options.class && is_class) || (self.options.function && !is_class)
     }
 }

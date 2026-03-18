@@ -525,10 +525,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
         if !expr.is_jsx() {
             return;
         }
-        *expr = match expr.take_in(ctx.ast).kind() {
-            ExpressionKind::JSXElement(e) => self.transform_jsx_element(e, ctx),
-            ExpressionKind::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
-            _ => unreachable!(),
+        let taken = expr.take_in(ctx.ast);
+        *expr = if taken.is_jsx_element() {
+            self.transform_jsx_element(taken.to_jsx_element(), ctx)
+        } else if taken.is_jsx_fragment() {
+            let e = taken.into_jsx_fragment().unbox();
+            self.transform_jsx(e.span, None, e.children, ctx)
+        } else {
+            unreachable!()
         };
     }
 }
@@ -650,8 +654,7 @@ impl<'a> JsxImpl<'a> {
                             && !(self.options.jsx_self_plugin || self.options.jsx_source_plugin)
                         {
                             // deopt if spreading an object with `__proto__` key
-                            if !argument.as_object_expression().is_some_and(|o| has_proto(o))
-                            {
+                            if !argument.as_object_expression().is_some_and(|o| has_proto(o)) {
                                 arguments.push(Argument::from(argument));
                                 continue;
                             }

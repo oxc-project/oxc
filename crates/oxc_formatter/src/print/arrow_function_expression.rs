@@ -143,7 +143,9 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if let Some(sequence) = arrow_expression.as_ref().and_then(Expression::as_sequence_expression) {
+                if let Some(sequence) =
+                    arrow_expression.as_ref().and_then(Expression::as_sequence_expression)
+                {
                     return if let Some(format_sequence) =
                         format_sequence_with_leading_comment(sequence.span(), &format_body, f)
                     {
@@ -427,7 +429,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // in its entirety.
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
-                expression.kind(), ExpressionKind::ObjectExpression(_)
+                expression.kind(),
+                ExpressionKind::ObjectExpression(_)
                     | ExpressionKind::ArrayExpression(_)
                     | ExpressionKind::SequenceExpression(_)
                     | ExpressionKind::JSXElement(_)
@@ -552,7 +555,9 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if let Some(sequence) = tail.get_expression().and_then(Expression::as_sequence_expression) {
+            if let Some(sequence) =
+                tail.get_expression().and_then(Expression::as_sequence_expression)
+            {
                 if let Some(format_sequence) =
                     format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
                 {
@@ -649,7 +654,8 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
     // case and added by the object expression itself
     if matches!(&stmt.expression.kind(), ExpressionKind::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref().kind(), ExpressionKind::ObjectExpression(_)
+            ExpressionLeftSide::leftmost(stmt.expression()).as_ref().kind(),
+            ExpressionKind::ObjectExpression(_)
                 | ExpressionKind::FunctionExpression(_)
                 | ExpressionKind::ClassExpression(_)
         )

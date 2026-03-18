@@ -185,24 +185,11 @@ fn is_mergeable<'a>(
         return !options.strict;
     }
 
-    match (consequent, alternate).kind() {
+    match (consequent, alternate) {
         (
-            MergeNode::Body(BodyNode::Statement(StatementKind::ReturnStatement(consequent))),
-            MergeNode::Body(BodyNode::Statement(StatementKind::ReturnStatement(alternate))),
-        ) if !is_ternary_option_expression(consequent.argument.as_ref())
-            && !is_ternary_option_expression(alternate.argument.as_ref()) =>
-        {
-            is_mergeable(
-                consequent.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                MergeOptions { strict: false, ..options },
-                ctx,
-            )
-        }
-        (
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::YieldExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::YieldExpression(alternate))),
-        ) if consequent.delegate == alternate.delegate
+            MergeNode::Body(BodyNode::Statement(cons_stmt)),
+            MergeNode::Body(BodyNode::Statement(alt_stmt)),
+        ) if let (Some(consequent), Some(alternate)) = (cons_stmt.as_return_statement(), alt_stmt.as_return_statement())
             && !is_ternary_option_expression(consequent.argument.as_ref())
             && !is_ternary_option_expression(alternate.argument.as_ref()) =>
         {
@@ -214,9 +201,25 @@ fn is_mergeable<'a>(
             )
         }
         (
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::AwaitExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::AwaitExpression(alternate))),
-        ) if !is_ternary_expression(&consequent.argument)
+            MergeNode::Body(BodyNode::Expression(cons_expr)),
+            MergeNode::Body(BodyNode::Expression(alt_expr)),
+        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_yield_expression(), alt_expr.as_yield_expression())
+            && consequent.delegate == alternate.delegate
+            && !is_ternary_option_expression(consequent.argument.as_ref())
+            && !is_ternary_option_expression(alternate.argument.as_ref()) =>
+        {
+            is_mergeable(
+                consequent.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
+                alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
+                MergeOptions { strict: false, ..options },
+                ctx,
+            )
+        }
+        (
+            MergeNode::Body(BodyNode::Expression(cons_expr)),
+            MergeNode::Body(BodyNode::Expression(alt_expr)),
+        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_await_expression(), alt_expr.as_await_expression())
+            && !is_ternary_expression(&consequent.argument)
             && !is_ternary_expression(&alternate.argument) =>
         {
             is_mergeable(
@@ -227,18 +230,20 @@ fn is_mergeable<'a>(
             )
         }
         (
-            MergeNode::Body(BodyNode::Statement(StatementKind::ThrowStatement(consequent))),
-            MergeNode::Body(BodyNode::Statement(StatementKind::ThrowStatement(alternate))),
-        ) if options.check_throw_statement
+            MergeNode::Body(BodyNode::Statement(cons_stmt)),
+            MergeNode::Body(BodyNode::Statement(alt_stmt)),
+        ) if let (Some(consequent), Some(alternate)) = (cons_stmt.as_throw_statement(), alt_stmt.as_throw_statement())
+            && options.check_throw_statement
             && !is_ternary_expression(&consequent.argument)
             && !is_ternary_expression(&alternate.argument) =>
         {
             true
         }
         (
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::AssignmentExpression(consequent))),
-            MergeNode::Body(BodyNode::Expression(ExpressionKind::AssignmentExpression(alternate))),
-        ) if consequent.operator == alternate.operator
+            MergeNode::Body(BodyNode::Expression(cons_expr)),
+            MergeNode::Body(BodyNode::Expression(alt_expr)),
+        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_assignment_expression(), alt_expr.as_assignment_expression())
+            && consequent.operator == alternate.operator
             && !is_ternary_expression(&consequent.right)
             && !is_ternary_expression(&alternate.right)
             && is_same_assignment_target(&consequent.left, &alternate.left, ctx) =>
@@ -262,13 +267,13 @@ fn same_merge_kind(consequent: MergeNode<'_>, alternate: MergeNode<'_>) -> bool 
             MergeNode::Body(BodyNode::Expression(consequent)),
             MergeNode::Body(BodyNode::Expression(alternate)),
         ) => {
-            discriminant(consequent.get_inner_expression())
-                == discriminant(alternate.get_inner_expression())
+            discriminant(&consequent.get_inner_expression().kind())
+                == discriminant(&alternate.get_inner_expression().kind())
         }
         (
             MergeNode::Body(BodyNode::Statement(consequent)),
             MergeNode::Body(BodyNode::Statement(alternate)),
-        ) => discriminant(consequent) == discriminant(alternate),
+        ) => discriminant(&consequent.kind()) == discriminant(&alternate.kind()),
         _ => false,
     }
 }

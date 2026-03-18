@@ -140,7 +140,7 @@ pub fn is_prototype_property(
 
     // `Object.prototype.method` or `Array.prototype.method`
     if let Some(member_expr_obj) = member_expr.object().as_member_expression()
-        && let ExpressionKind::Identifier(iden) = member_expr_obj.object()
+        && let Some(iden) = member_expr_obj.object().as_identifier()
         && member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
         && object.is_some_and(|val| val == iden.name)
         && !member_expr.optional()
@@ -241,13 +241,13 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
     }
 
     if let Some(left_chain_expr) = left.as_member_expression()
-        && let ExpressionKind::ChainExpression(right_member_expr) = right
+        && let Some(right_member_expr) = right.as_chain_expression()
         && let Some(v) = right_member_expr.expression.as_member_expression()
     {
         return is_same_member_expression(left_chain_expr, v, ctx);
     }
 
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         // super // this
         (ExpressionKind::Super(_), ExpressionKind::Super(_))
         | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
@@ -370,7 +370,7 @@ pub fn is_same_member_expression(
     ) = (left, right)
     {
         // TODO(camc314): refactor this to go through `is_same_reference` and introduce some sort of `context` to indicate how the two values should be compared.
-        match (&left.expression, &right.expression).kind() {
+        match (left.expression.kind(), right.expression.kind()) {
             // x['/regex/'] === x[/regex/]
             // x[/regex/] === x['/regex/']
             (ExpressionKind::StringLiteral(string_lit), ExpressionKind::RegExpLiteral(regex_lit))

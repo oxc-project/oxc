@@ -113,7 +113,7 @@ fn is_document_cookie_reference<'a, 'b>(
             }
             true
         }
-        match_member_expression!(Expression) => {
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             let Some(static_prop_name) = member_expr.static_property_name() else {
                 return false;

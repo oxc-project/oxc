@@ -83,7 +83,7 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     }
 
     let callee = call_expr.callee.without_parentheses();
- match callee.kind() {
+    match callee.kind() {
         match_member_expression!(ExpressionKind) => callee.to_member_expression(),
         ExpressionKind::ChainExpression(chain) => match chain.expression {
             match_member_expression!(ChainElement) => chain.expression.to_member_expression(),

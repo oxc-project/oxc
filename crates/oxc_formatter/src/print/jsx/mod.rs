@@ -286,7 +286,8 @@ pub fn should_inline_jsx_expression(container: &JSXExpressionContainer<'_>) -> b
         }
         JSXExpression::AwaitExpression(await_expression) => {
             matches!(
-                await_expression.argument.kind(), ExpressionKind::ArrayExpression(_)
+                await_expression.argument.kind(),
+                ExpressionKind::ArrayExpression(_)
                     | ExpressionKind::ObjectExpression(_)
                     | ExpressionKind::ArrowFunctionExpression(_)
                     | ExpressionKind::CallExpression(_)

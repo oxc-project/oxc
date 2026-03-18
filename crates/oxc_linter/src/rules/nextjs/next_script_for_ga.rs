@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey,, ExpressionKind},
+        JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

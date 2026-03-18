@@ -888,11 +888,11 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
                     if labeled_statement.body.is_labeled_statement()
-                            || labeled_statement.body.is_do_while_statement()
-                            || labeled_statement.body.is_while_statement()
-                            || labeled_statement.body.is_for_statement()
-                            || labeled_statement.body.is_for_in_statement()
-                            || labeled_statement.body.is_for_of_statement()
+                        || labeled_statement.body.is_do_while_statement()
+                        || labeled_statement.body.is_while_statement()
+                        || labeled_statement.body.is_for_statement()
+                        || labeled_statement.body.is_for_in_statement()
+                        || labeled_statement.body.is_for_of_statement()
                     {
                         break;
                     }

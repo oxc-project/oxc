@@ -157,7 +157,8 @@ fn format_left_trailing_comments(
 
 fn should_print_as_leading(expr: &Expression) -> bool {
     matches!(
-        expr.kind(), ExpressionKind::ObjectExpression(_)
+        expr.kind(),
+        ExpressionKind::ObjectExpression(_)
             | ExpressionKind::ArrayExpression(_)
             | ExpressionKind::TemplateLiteral(_)
             | ExpressionKind::TaggedTemplateExpression(_)
@@ -533,7 +534,8 @@ impl<'a> AssignmentLike<'a, '_> {
         &self,
         right_expression: &Expression,
     ) -> Option<AssignmentLikeLayout> {
-        let right_is_tail = !matches!(right_expression.kind(), ExpressionKind::AssignmentExpression(_));
+        let right_is_tail =
+            !matches!(right_expression.kind(), ExpressionKind::AssignmentExpression(_));
 
         // The chain goes up two levels, by checking up to the great parent if all the conditions
         // are correctly met.
@@ -563,7 +565,10 @@ impl<'a> AssignmentLike<'a, '_> {
                             else {
                                 unreachable!()
                             };
-                            if matches!(&stmt.expression.kind(), ExpressionKind::ArrowFunctionExpression(_)) {
+                            if matches!(
+                                &stmt.expression.kind(),
+                                ExpressionKind::ArrowFunctionExpression(_)
+                            ) {
                                 return Some(AssignmentLikeLayout::ChainTailArrowFunction);
                             }
                         }
@@ -594,10 +599,9 @@ impl<'a> AssignmentLike<'a, '_> {
 
         type_annotation.is_some_and(|ann| is_complex_type_annotation(ann))
             || (left_may_break
-                && declarator
-                    .init
-                    .as_ref()
-                    .is_some_and(|expr| matches!(expr.kind(), ExpressionKind::ArrowFunctionExpression(_))))
+                && declarator.init.as_ref().is_some_and(|expr| {
+                    matches!(expr.kind(), ExpressionKind::ArrowFunctionExpression(_))
+                }))
     }
 
     /// Checks if the current assignment is eligible for [AssignmentLikeLayout::BreakAfterOperator]
@@ -1022,7 +1026,9 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
         ExpressionKind::UnaryExpression(unary_expression) => {
             is_short_argument(&unary_expression.argument, threshold, f)
         }
-        ExpressionKind::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
+        ExpressionKind::RegExpLiteral(regex) => {
+            regex.regex.pattern.text.len() <= threshold as usize
+        }
         ExpressionKind::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),

@@ -104,17 +104,21 @@ fn resolve_global_binding<'a, 'b: 'a>(
             if !parent_decl.id.is_binding_identifier() {
                 return Some(ident.name.as_str());
             }
-            match parent_decl.init.kind() {
-                // handles "let a = JSON; let b = a; a();"
-                Some(ExpressionKind::Identifier(parent_ident)) if parent_ident.name != ident.name => {
-                    let decl_scope = decl.scope_id();
-                    resolve_global_binding(parent_ident, decl_scope, ctx)
+            if let Some(init) = &parent_decl.init {
+                match init.kind() {
+                    // handles "let a = JSON; let b = a; a();"
+                    ExpressionKind::Identifier(parent_ident) if parent_ident.name != ident.name => {
+                        let decl_scope = decl.scope_id();
+                        resolve_global_binding(parent_ident, decl_scope, ctx)
+                    }
+                    // handles "let a = globalThis.JSON; let b = a; a();"
+                    _ if init.is_member_expression() => {
+                        global_this_member(init.to_member_expression())
+                    }
+                    _ => None,
                 }
-                // handles "let a = globalThis.JSON; let b = a; a();"
-                Some(parent_expr) if parent_expr.is_member_expression() => {
-                    global_this_member(parent_expr.to_member_expression())
-                }
-                _ => None,
+            } else {
+                None
             }
         }
         _ => None,

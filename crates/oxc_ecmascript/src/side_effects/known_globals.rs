@@ -4,8 +4,8 @@
 //! side-effect behavior: whether accessing them, reading their properties, or
 //! calling their methods is side-effect-free.
 
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::*;
 
 use super::context::MayHaveSideEffectsContext;
 

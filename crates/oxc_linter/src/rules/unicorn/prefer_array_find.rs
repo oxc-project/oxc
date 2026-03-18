@@ -128,7 +128,7 @@ impl Rule for PreferArrayFind {
                 if let BindingPattern::ArrayPattern(array_pat) = &var_decl.id
                     && array_pat.elements.len() == 1
                     && array_pat.elements[0].is_some()
-                    && let Some(array_filter) = var_decl.init.as_call_expression()
+                    && let Some(array_filter) = var_decl.init.as_ref().and_then(|e| e.as_call_expression())
                     && is_filter_call(array_filter)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(
@@ -137,7 +137,7 @@ impl Rule for PreferArrayFind {
                 }
 
                 // `const foo = array.filter(); foo[0]; [bar] = foo`
-                if let Some(call_expr) = var_decl.init.as_call_expression()
+                if let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression())
                     && is_filter_call(call_expr)
                     && !matches!(
                         ctx.nodes().ancestor_kinds(node.id()).nth(1),

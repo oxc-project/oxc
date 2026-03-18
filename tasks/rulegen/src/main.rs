@@ -459,8 +459,8 @@ impl Context {
 
 struct State<'a> {
     source_text: &'a str,
-    valid_tests: Vec<&'a Expression<'a>>,
-    invalid_tests: Vec<&'a Expression<'a>>,
+    valid_tests: Vec<Expression<'a>>,
+    invalid_tests: Vec<Expression<'a>>,
     expression_to_group_comment_map: FxHashMap<Span, String>,
     group_comment_stack: Vec<String>,
 }
@@ -484,7 +484,7 @@ impl<'a> State<'a> {
         self.get_test_cases(&self.invalid_tests)
     }
 
-    fn get_test_cases(&self, tests: &[&'a Expression<'a>]) -> Vec<TestCase> {
+    fn get_test_cases(&self, tests: &[Expression<'a>]) -> Vec<TestCase> {
         tests
             .iter()
             .map(|arg| {
@@ -502,14 +502,14 @@ impl<'a> State<'a> {
         self.group_comment_stack.join(" ")
     }
 
-    fn add_valid_test(&mut self, expr: &'a Expression<'a>) {
-        self.valid_tests.push(expr);
+    fn add_valid_test(&mut self, expr: Expression<'a>) {
         self.expression_to_group_comment_map.insert(expr.span(), self.get_comment());
+        self.valid_tests.push(expr);
     }
 
-    fn add_invalid_test(&mut self, expr: &'a Expression<'a>) {
-        self.invalid_tests.push(expr);
+    fn add_invalid_test(&mut self, expr: Expression<'a>) {
         self.expression_to_group_comment_map.insert(expr.span(), self.get_comment());
+        self.invalid_tests.push(expr);
     }
 }
 
@@ -530,8 +530,9 @@ impl<'a> Visit<'a> for State<'a> {
                 if let Some(obj_expr) = export_decl
                     .declaration
                     .as_expression()
+                    .as_ref()
                     .map(Expression::get_inner_expression)
-                    .and_then(|e| e.as_object_expression())
+                    .and_then(|e: &Expression<'a>| e.as_object_expression())
                 {
                     self.visit_object_expression(obj_expr);
                 }
@@ -651,10 +652,9 @@ fn find_parser_arguments<'a, 'b>(
         let Some(static_member_expr) = call_expr.callee.as_static_member_expression() else {
             return None;
         };
-        let StaticMemberExpression { object, property, .. } = &**static_member_expr;
-        if let Some(iden) = object.as_identifier()
+        if let Some(iden) = static_member_expr.object.as_identifier()
             && iden.name == "parsers"
-            && property.name == "all"
+            && static_member_expr.property.name == "all"
             && let Some(arg) = call_expr.arguments.first()
         {
             if let Argument::CallExpression(call_expr) = arg {
@@ -667,7 +667,7 @@ fn find_parser_arguments<'a, 'b>(
                 return None;
             }
         }
-        expr = object;
+        expr = &static_member_expr.object;
     }
 }
 
@@ -1241,8 +1241,7 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                     rule_config_element = self.handle_type_property(&object_property.value);
                 }
                 "properties" => {
-                    let Some(object_expression) =
-                        object_property.value.as_object_expression()
+                    let Some(object_expression) = object_property.value.as_object_expression()
                     else {
                         self.log_error(&format!(
                             "Cannot parse `properties` value: {}",
@@ -1254,8 +1253,7 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Object(properties));
                 }
                 "items" => {
-                    let Some(object_expression) =
-                        object_property.value.as_object_expression()
+                    let Some(object_expression) = object_property.value.as_object_expression()
                     else {
                         self.log_error(&format!(
                             "Cannot parse `items` value: {}",
@@ -1292,8 +1290,7 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Set(element));
                 }
                 "enum" => {
-                    let Some(array_expression) = object_property.value.as_array_expression()
-                    else {
+                    let Some(array_expression) = object_property.value.as_array_expression() else {
                         self.log_error(&format!(
                             "Cannot parse `enum` values: {}",
                             object_property.value.span().source_text(self.source_text)
@@ -1304,8 +1301,7 @@ impl<'a> Visit<'a> for RuleConfig<'a> {
                     rule_config_element = Some(RuleConfigElement::Enum(elements));
                 }
                 "anyOf" | "oneOf" => {
-                    let Some(array_expression) = object_property.value.as_array_expression()
-                    else {
+                    let Some(array_expression) = object_property.value.as_array_expression() else {
                         self.log_error(&format!(
                             "Cannot parse `{}` value: {}",
                             identifier.name,

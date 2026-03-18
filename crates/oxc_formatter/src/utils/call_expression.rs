@@ -49,7 +49,9 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
             }
 
             if is_unit_test_set_up_callee(callee) {
-                return argument.as_expression().is_some_and(|e| is_angular_test_wrapper_expression(&e));
+                return argument
+                    .as_expression()
+                    .is_some_and(|e| is_angular_test_wrapper_expression(&e));
             }
 
             false

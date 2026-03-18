@@ -317,10 +317,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             (ctx.ast.vec(), ctx.ast.vec()),
             |(mut program_body, mut inner_block), mut stmt| {
                 let address = stmt.address();
-                match stmt.kind() {
-                    StatementKind::FunctionDeclaration(_)
-                    | StatementKind::ImportDeclaration(_)
-                    | StatementKind::ExportAllDeclaration(_) => {
+                match stmt.kind_mut() {
+                    StatementKindMut::FunctionDeclaration(_)
+                    | StatementKindMut::ImportDeclaration(_)
+                    | StatementKindMut::ExportAllDeclaration(_) => {
                         program_body.push(stmt);
                     }
                     Statement::export_default_declaration(ref mut export_default_decl) => {
@@ -484,7 +484,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             ),
                         ));
                     }
-                    StatementKind::ClassDeclaration(class_decl) => {
+                    StatementKindMut::ClassDeclaration(class_decl) => {
                         inner_block.push(Self::transform_class_decl(class_decl, ctx));
                     }
                     Statement::variable_declaration(ref mut var_declaration) => {

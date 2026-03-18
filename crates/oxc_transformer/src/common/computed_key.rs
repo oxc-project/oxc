@@ -1,6 +1,7 @@
 //! Utilities to computed key expressions.
 
 use oxc_ast::ast::Expression;
+use oxc_ast::ast::ExpressionKind;
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 

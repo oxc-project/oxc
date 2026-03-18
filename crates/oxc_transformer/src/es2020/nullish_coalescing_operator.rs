@@ -48,7 +48,9 @@ impl NullishCoalescingOperator {
 impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
-        if !expr.as_logical_expression().is_some_and(|logical_expr| logical_expr.operator == LogicalOperator::Coalesce)
+        if !expr
+            .as_logical_expression()
+            .is_some_and(|logical_expr| logical_expr.operator == LogicalOperator::Coalesce)
         {
             return;
         }

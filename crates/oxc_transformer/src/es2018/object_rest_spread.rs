@@ -576,7 +576,8 @@ impl<'a> ObjectRestSpread<'a> {
 
                     debug_assert!(arrow.body.statements.len() == 1);
 
-                    let Some(stmt) = arrow.body.statements.pop().unwrap().as_expression_statement() else {
+                    let Some(stmt) = arrow.body.statements.pop().unwrap().as_expression_statement()
+                    else {
                         unreachable!(
                             "`arrow.expression` is true, which means it has only one ExpressionStatement."
                         );

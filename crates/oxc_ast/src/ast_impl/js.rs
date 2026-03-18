@@ -123,8 +123,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        self.as_numeric_literal()
-            .is_some_and(|lit| lit.raw.as_ref().is_some_and(|raw| raw == val))
+        self.as_numeric_literal().is_some_and(|lit| lit.raw.as_ref().is_some_and(|raw| raw == val))
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -391,8 +390,7 @@ impl<'a> Expression<'a> {
 
     /// `a.b` expression where `a` is an identifier.
     pub fn is_property_access_entity_name_expression(&self) -> bool {
-        self.as_static_member_expression()
-            .is_some_and(|e| e.object.is_entity_name_expression())
+        self.as_static_member_expression().is_some_and(|e| e.object.is_entity_name_expression())
     }
 
     /// Returns `true` if this [`Expression`] is a [`JSXElement`] or [`JSXFragment`].
@@ -632,9 +630,7 @@ impl<'a> MemberExpression<'a> {
     /// If you don't need the [`Span`], use [`MemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
-            MemberExpression::ComputedMemberExpression(expr) => {
-                expr.static_property_info()
-            }
+            MemberExpression::ComputedMemberExpression(expr) => expr.static_property_info(),
             MemberExpression::StaticMemberExpression(expr) => {
                 Some((expr.property.span, expr.property.name.as_str()))
             }
@@ -675,7 +671,9 @@ impl<'a> ComputedMemberExpression<'a> {
         use crate::ast::js::ExpressionKind;
         match self.expression.kind() {
             ExpressionKind::StringLiteral(lit) => Some(lit.value),
-            ExpressionKind::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            ExpressionKind::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked
+            }
             ExpressionKind::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -691,7 +689,9 @@ impl<'a> ComputedMemberExpression<'a> {
             ExpressionKind::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
                 lit.quasis[0].value.cooked.map(|cooked: Atom<'_>| (lit.span, cooked.as_str()))
             }
-            ExpressionKind::RegExpLiteral(lit) => lit.raw.map(|raw: Atom<'_>| (lit.span, raw.as_str())),
+            ExpressionKind::RegExpLiteral(lit) => {
+                lit.raw.map(|raw: Atom<'_>| (lit.span, raw.as_str()))
+            }
             _ => None,
         }
     }
@@ -737,11 +737,7 @@ impl<'a> ChainElement<'a> {
                 // we can't return &MemberExpression since Expression is a tagged struct.
                 // Fall through to return None for this case.
                 // TODO: refactor callers to use by-value MemberExpression
-                if e.expression.is_member_expression() {
-                    None
-                } else {
-                    None
-                }
+                if e.expression.is_member_expression() { None } else { None }
             }
             _ => self.as_member_expression(),
         }
@@ -780,15 +776,13 @@ impl<'a> CallExpression<'a> {
         if self.arguments.len() != 1 {
             return false;
         }
-        self.callee
-            .as_identifier()
-            .is_some_and(|id| {
-                id.name == "require"
-                    && matches!(
-                        self.arguments.first(),
-                        Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_)),
-                    )
-            })
+        self.callee.as_identifier().is_some_and(|id| {
+            id.name == "require"
+                && matches!(
+                    self.arguments.first(),
+                    Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_)),
+                )
+        })
     }
 
     /// Returns `true` if this [`CallExpression`] is a call to `Symbol`

@@ -153,7 +153,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(expr_stmt) = first_argument.body.statements.first().as_expression_statement()
+    let Some(expr_stmt) = first_argument.body.statements.first().and_then(|s| s.as_expression_statement())
     else {
         return;
     };

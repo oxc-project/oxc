@@ -260,7 +260,7 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 
             ident.name.as_str()
         }
-        expr @ match_member_expression!(Expression) => {
+        expr @ match_member_expression!(ExpressionKind) => {
             if let Some(v) = expr.to_member_expression().static_property_name() {
                 v
             } else {

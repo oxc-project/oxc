@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{AstKind, ast::*, ast::StatementKind};
+use oxc_ast::{AstKind, ast::StatementKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan, Span};
 

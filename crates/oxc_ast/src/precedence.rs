@@ -1,6 +1,7 @@
 //! [Expression precedence trait](GetPrecedence) implementations.
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
+use crate::ast::js::ExpressionKind;
 use crate::ast::{
     AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression, ChainExpression,
     ComputedMemberExpression, ConditionalExpression, Expression, ImportExpression,
@@ -8,7 +9,6 @@ use crate::ast::{
     StaticMemberExpression, TSTypeAssertion, UnaryExpression, UpdateExpression, YieldExpression,
     match_member_expression,
 };
-use crate::ast::js::ExpressionKind;
 
 impl GetPrecedence for Expression<'_> {
     fn precedence(&self) -> Precedence {

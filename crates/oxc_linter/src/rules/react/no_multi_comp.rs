@@ -323,7 +323,7 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
     let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else {
         return None;
     };
-    let Some(member) = var_decl.init.as_ref().as_static_member_expression()? else {
+    let Some(member) = var_decl.init.as_ref().and_then(|e| e.as_static_member_expression()) else {
         return None;
     };
     let Some(obj) = member.object.as_identifier() else {

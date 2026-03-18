@@ -163,27 +163,20 @@ impl Rule for NoCommonjs {
 
                     match parent_node.kind() {
                         AstKind::ExpressionStatement(expr_statement)
-                            if matches!(
-                                expr_statement.expression,
-                                ExpressionKind::AssignmentExpression(_)
-                            ) =>
+                            if expr_statement.expression.is_assignment_expression() =>
                         {
-                            match expr_statement.expression.kind() {
-                                ExpressionKind::AssignmentExpression(assign_expr) => {
-                                    if !assign_expr.right.is_function()
-                                        && !assign_expr.right.is_string_literal()
-                                    {
-                                        ctx.diagnostic(no_commonjs_diagnostic(
-                                            member_expr_kind.span(),
-                                            "export",
-                                            property_name,
-                                        ));
-                                    }
-
-                                    return;
-                                }
-                                _ => return,
+                            let assign_expr = expr_statement.expression.to_assignment_expression();
+                            if !assign_expr.right.is_function()
+                                && !assign_expr.right.is_string_literal()
+                            {
+                                ctx.diagnostic(no_commonjs_diagnostic(
+                                    member_expr_kind.span(),
+                                    "export",
+                                    property_name,
+                                ));
                             }
+
+                            return;
                         }
                         AstKind::AssignmentExpression(assignment_expr) => {
                             if let Some(_object_expr) = assignment_expr.right.without_parentheses().as_object_expression()

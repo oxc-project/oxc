@@ -14,7 +14,7 @@
 use std::{cell::Cell, marker::PhantomData};
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::{*, StatementKindMut};
+use oxc_ast::ast::{StatementKindMut, *};
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
@@ -108,9 +108,7 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
         ExpressionKindMut::Identifier(node) => {
             walk_identifier_reference(traverser, node as *mut _, ctx)
         }
-        ExpressionKindMut::MetaProperty(node) => {
-            walk_meta_property(traverser, node as *mut _, ctx)
-        }
+        ExpressionKindMut::MetaProperty(node) => walk_meta_property(traverser, node as *mut _, ctx),
         ExpressionKindMut::Super(node) => walk_super(traverser, node as *mut _, ctx),
         ExpressionKindMut::ArrayExpression(node) => {
             walk_array_expression(traverser, node as *mut _, ctx)
@@ -1350,9 +1348,7 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         StatementKindMut::ForOfStatement(node) => {
             walk_for_of_statement(traverser, node as *mut _, ctx)
         }
-        StatementKindMut::ForStatement(node) => {
-            walk_for_statement(traverser, node as *mut _, ctx)
-        }
+        StatementKindMut::ForStatement(node) => walk_for_statement(traverser, node as *mut _, ctx),
         StatementKindMut::IfStatement(node) => walk_if_statement(traverser, node as *mut _, ctx),
         StatementKindMut::LabeledStatement(node) => {
             walk_labeled_statement(traverser, node as *mut _, ctx)
@@ -1366,9 +1362,7 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         StatementKindMut::ThrowStatement(node) => {
             walk_throw_statement(traverser, node as *mut _, ctx)
         }
-        StatementKindMut::TryStatement(node) => {
-            walk_try_statement(traverser, node as *mut _, ctx)
-        }
+        StatementKindMut::TryStatement(node) => walk_try_statement(traverser, node as *mut _, ctx),
         StatementKindMut::WhileStatement(node) => {
             walk_while_statement(traverser, node as *mut _, ctx)
         }

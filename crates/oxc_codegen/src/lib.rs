@@ -7,7 +7,7 @@ use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
 
-use oxc_ast::ast::{*, StatementKind};
+use oxc_ast::ast::{StatementKind, *};
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;

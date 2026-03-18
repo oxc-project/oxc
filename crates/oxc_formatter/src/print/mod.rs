@@ -497,13 +497,14 @@ fn expression_statement_needs_semicolon<'a>(
     }
     // Arrow functions need semicolon only if they will have parentheses
     // e.g., `(a) => {}` needs `;(a) => {}` but `a => {}` doesn't need semicolon
-    if let Some(arrow) = &stmt.expression.as_arrow_function_expression(){
+    if let Some(arrow) = &stmt.expression.as_arrow_function_expression() {
         return !can_avoid_parentheses(arrow, f);
     }
 
     // Expressions starting with keywords don't need ASI protection
     if matches!(
-        &stmt.expression.kind(), ExpressionKind::NewExpression(_)
+        &stmt.expression.kind(),
+        ExpressionKind::NewExpression(_)
             | ExpressionKind::AwaitExpression(_)
             | ExpressionKind::YieldExpression(_)
     ) {
@@ -819,9 +820,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 [
                     "else",
                     line_suffix_boundary(),
-                    group(&FormatStatementBody::new(alternate).with_forced_space(
-                        alternate.as_ref().is_if_statement()
-                    ))
+                    group(
+                        &FormatStatementBody::new(alternate)
+                            .with_forced_space(alternate.as_ref().is_if_statement())
+                    )
                 ]
             );
         }
@@ -1723,7 +1725,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let break_after_cast = !matches!(
-            self.expression.kind(), ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
+            self.expression.kind(),
+            ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
         );
 
         let format_cast = format_with(|f| {

@@ -44,9 +44,9 @@ impl ExportNamespaceFrom {
 impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Early return if there's no `export * as ns from "mod"` to transform
-        let has_export_namespace = program.body.iter().any(
-            |stmt| stmt.as_export_all_declaration().is_some_and(|decl| decl.exported.is_some()),
-        );
+        let has_export_namespace = program.body.iter().any(|stmt| {
+            stmt.as_export_all_declaration().is_some_and(|decl| decl.exported.is_some())
+        });
         if !has_export_namespace {
             return;
         }
@@ -55,7 +55,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
 
         for stmt in program.body.take_in(ctx.ast) {
             match stmt.kind() {
-                StatementKind::ExportAllDeclaration(export_all) if export_all.exported.is_some() => {
+                StatementKind::ExportAllDeclaration(export_all)
+                    if export_all.exported.is_some() =>
+                {
                     // Transform `export * as ns from "mod"` to:
                     // `import * as _ns from "mod"; export { _ns as ns };`
 

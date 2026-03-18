@@ -250,8 +250,7 @@ fn run_fragment(
     let formatted = match kind {
         FragmentKind::VueForBindingLeft | FragmentKind::VueBindings => {
             let params = {
-                let Some(func) =
-                    program.body.first().and_then(|s| s.as_function_declaration())
+                let Some(func) = program.body.first().and_then(|s| s.as_function_declaration())
                 else {
                     unreachable!("Prettier wraps v-for/v-slot as `function _(...) {{}}`");
                 };

@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
-        ForOfStatement, ForStatement, VariableDeclarationKind,, ExpressionKind},
+        ForOfStatement, ForStatement, VariableDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

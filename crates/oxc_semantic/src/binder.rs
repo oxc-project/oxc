@@ -1,7 +1,7 @@
 //! Declare symbol for `BindingIdentifier`s
 
 use oxc_allocator::{GetAddress, UnstableAddress};
-use oxc_ast::{AstKind, ast::*, ast::StatementKind};
+use oxc_ast::{AstKind, ast::StatementKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};

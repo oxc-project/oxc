@@ -245,7 +245,7 @@ fn no_else_return_diagnostic_fix(
 
         // Check if if statement's consequent block could introduce an ASI
         // hazard when `else` is removed.
- match else_stmt_prev.kind() {
+        match else_stmt_prev.kind() {
             StatementKind::ExpressionStatement(s) => !ctx.source_range(s.span).ends_with(';'),
             StatementKind::ReturnStatement(s) => !ctx.source_range(s.span).ends_with(';'),
             _ => false,

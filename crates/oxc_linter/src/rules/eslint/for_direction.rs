@@ -140,7 +140,7 @@ fn extract_counter<'a>(
     left: &'a Expression<'a>,
     right: &'a Expression<'a>,
 ) -> Option<(&'a IdentifierReference<'a>, CounterPosition)> {
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         (ExpressionKind::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
         (_, ExpressionKind::Identifier(counter)) => Some((counter, CounterPosition::Right)),
         _ => None,
@@ -245,7 +245,7 @@ fn get_update_span(update: &Expression) -> Span {
 fn get_assignment_direction(assign: &AssignmentExpression) -> Option<UpdateDirection> {
     let operator = &assign.operator;
     let right = &assign.right;
- match right.kind() {
+    match right.kind() {
         ExpressionKind::NumericLiteral(r) if r.value != 0.0 => r.value.is_sign_positive(),
         ExpressionKind::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
         _ => return None,

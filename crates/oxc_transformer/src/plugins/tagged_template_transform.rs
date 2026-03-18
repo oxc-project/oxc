@@ -78,7 +78,9 @@ impl<'a> TaggedTemplateTransform {
     fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(expr.is_tagged_template_expression());
 
-        if !expr.as_tagged_template_expression().is_some_and(|tagged| Self::contains_closing_script_tag(&tagged.quasi))
+        if !expr
+            .as_tagged_template_expression()
+            .is_some_and(|tagged| Self::contains_closing_script_tag(&tagged.quasi))
         {
             return;
         }

@@ -259,8 +259,9 @@ impl<'a> OptionalChaining<'a> {
         expr: &mut Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let Some(chain_expr) = expr.take_in(ctx.ast).as_chain_expression() else { unreachable!() };
-        match chain_expr.unbox().expression.kind() {
+        let chain_expr = expr.take_in(ctx.ast).into_chain_expression().unbox();
+        let element = chain_expr.expression;
+        match element {
             element @ match_member_expression!(ChainElement) => {
                 Expression::from(element.into_member_expression())
             }
@@ -439,15 +440,15 @@ impl<'a> OptionalChaining<'a> {
     ) -> Option<Expression<'a>> {
         // Skip parenthesized expression or other TS-syntax expressions
         let expr = expr.get_inner_expression_mut();
-        match expr.kind() {
+        if expr.is_chain_expression() {
             // `(foo?.bar)?.baz`
             //  ^^^^^^^^^^ The nested chain expression is always under the ParenthesizedExpression
-            ExpressionKind::ChainExpression(_) => {
-                *expr = Self::convert_chain_expression_to_expression(expr, ctx);
-                self.transform_chain_element_recursion(expr, ctx)
-            }
+            *expr = Self::convert_chain_expression_to_expression(expr, ctx);
+            return self.transform_chain_element_recursion(expr, ctx);
+        }
+        match expr.kind_mut() {
             // `foo?.bar?.baz`
-            ExpressionKind::StaticMemberExpression(member) => {
+            ExpressionKindMut::StaticMemberExpression(member) => {
                 let left = self.transform_chain_element_recursion(&mut member.object, ctx);
                 if member.optional {
                     member.optional = false;
@@ -457,7 +458,7 @@ impl<'a> OptionalChaining<'a> {
                 }
             }
             // `foo?.[bar]?.[baz]`
-            ExpressionKind::ComputedMemberExpression(member) => {
+            ExpressionKindMut::ComputedMemberExpression(member) => {
                 let left = self.transform_chain_element_recursion(&mut member.object, ctx);
                 if member.optional {
                     member.optional = false;
@@ -467,7 +468,7 @@ impl<'a> OptionalChaining<'a> {
                 }
             }
             // `this?.#foo?.bar`
-            ExpressionKind::PrivateFieldExpression(member) => {
+            ExpressionKindMut::PrivateFieldExpression(member) => {
                 let left = self.transform_chain_element_recursion(&mut member.object, ctx);
                 if member.optional {
                     member.optional = false;
@@ -477,7 +478,7 @@ impl<'a> OptionalChaining<'a> {
                 }
             }
             // `foo?.bar?.bar?.()`
-            ExpressionKind::CallExpression(call) => {
+            ExpressionKindMut::CallExpression(call) => {
                 let left = self.transform_chain_element_recursion(&mut call.callee, ctx);
                 if call.optional {
                     call.optional = false;

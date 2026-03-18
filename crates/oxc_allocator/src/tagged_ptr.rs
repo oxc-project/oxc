@@ -311,11 +311,7 @@ mod tests {
             }
 
             fn as_identifier(&self) -> Option<&'a Identifier> {
-                if self.0.discriminant() == 7 {
-                    Some(unsafe { self.0.as_ref() })
-                } else {
-                    None
-                }
+                if self.0.discriminant() == 7 { Some(unsafe { self.0.as_ref() }) } else { None }
             }
 
             /// Optimized GetSpan — single pointer deref, no match needed.
@@ -389,12 +385,11 @@ mod tests {
         assert_eq!(id_expr.span_start(), 20);
 
         // Option<CompactExpression> is also 8 bytes
-        let some_expr: Option<CompactExpression> = Some(CompactExpression::boolean_literal(
-            crate::Box::new_in(
+        let some_expr: Option<CompactExpression> =
+            Some(CompactExpression::boolean_literal(crate::Box::new_in(
                 BooleanLiteral { span_start: 0, span_end: 1, value: false },
                 &allocator,
-            ),
-        ));
+            )));
         assert!(some_expr.is_some());
         let none_expr: Option<CompactExpression> = None;
         assert!(none_expr.is_none());

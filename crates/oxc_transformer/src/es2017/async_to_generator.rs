@@ -109,9 +109,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let function = match stmt.kind() {
-            StatementKind::FunctionDeclaration(func) => Some(func),
-            StatementKind::ExportDefaultDeclaration(decl) => {
+        let function = match stmt.kind_mut() {
+            StatementKindMut::FunctionDeclaration(func) => Some(func),
+            StatementKindMut::ExportDefaultDeclaration(decl) => {
                 if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                     &mut decl.declaration
                 {
@@ -120,7 +120,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
                     None
                 }
             }
-            StatementKind::ExportNamedDeclaration(decl) => {
+            StatementKindMut::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
                     Some(func)
                 } else {
@@ -472,10 +472,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
-            let expression = match statement.kind() {
-                StatementKind::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
-                _ => unreachable!(),
-            };
+            let expression = statement.to_expression_statement_mut().expression.take_in(ctx.ast);
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
@@ -837,7 +834,14 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     /// Check whether the expression could potentially throw an error.
     #[inline]
     fn could_potentially_throw_error_expression(expr: &Expression<'a>) -> bool {
-        !(expr.is_null_literal() || expr.is_boolean_literal() || expr.is_numeric_literal() || expr.is_string_literal() || expr.is_big_int_literal() || expr.is_arrow_function_expression() || expr.is_function_expression() || expr.is_undefined())
+        !(expr.is_null_literal()
+            || expr.is_boolean_literal()
+            || expr.is_numeric_literal()
+            || expr.is_string_literal()
+            || expr.is_big_int_literal()
+            || expr.is_arrow_function_expression()
+            || expr.is_function_expression()
+            || expr.is_undefined())
     }
 
     #[inline]

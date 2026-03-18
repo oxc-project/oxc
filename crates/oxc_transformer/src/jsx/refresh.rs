@@ -201,13 +201,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let signature = match expr.kind() {
-            ExpressionKind::FunctionExpression(func) => self.create_signature_call_expression(
+        let signature = match expr.kind_mut() {
+            ExpressionKindMut::FunctionExpression(func) => self.create_signature_call_expression(
                 func.scope_id(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
-            ExpressionKind::ArrowFunctionExpression(arrow) => {
+            ExpressionKindMut::ArrowFunctionExpression(arrow) => {
                 let call_fn =
                     self.create_signature_call_expression(arrow.scope_id(), &mut arrow.body, ctx);
 
@@ -218,9 +218,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                 call_fn
             }
             // hoc(_c = function() { })
-            ExpressionKind::AssignmentExpression(_) => return,
+            ExpressionKindMut::AssignmentExpression(_) => return,
             // hoc1(hoc2(...))
-            ExpressionKind::CallExpression(_) => self.last_signature.take(),
+            ExpressionKindMut::CallExpression(_) => self.last_signature.take(),
             _ => None,
         };
 
@@ -330,17 +330,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression): (Option<Ident>, _) = match call_expr.callee.kind() {
-                ExpressionKind::Identifier(ident) => (Some(ident.name), false),
-                ExpressionKind::StaticMemberExpression(member) => {
-                    if let Some(object) = member.object.as_identifier() {
-                        (Some(object.name), true)
-                    } else {
-                        (None, false)
+            let (binding_name, is_member_expression): (Option<Ident>, _) =
+                match call_expr.callee.kind() {
+                    ExpressionKind::Identifier(ident) => (Some(ident.name), false),
+                    ExpressionKind::StaticMemberExpression(member) => {
+                        if let Some(object) = member.object.as_identifier() {
+                            (Some(object.name), true)
+                        } else {
+                            (None, false)
+                        }
                     }
-                }
-                _ => unreachable!(),
-            };
+                    _ => unreachable!(),
+                };
 
             if let Some(binding_name) = binding_name {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
@@ -451,15 +452,14 @@ impl<'a> ReactRefresh<'a> {
             ExpressionKind::FunctionExpression(_) => {}
             ExpressionKind::ArrowFunctionExpression(arrow) => {
                 // Don't transform `() => () => {}`
-                if arrow
-                    .get_expression()
-                    .is_some_and(|expr| expr.is_arrow_function_expression())
-                {
+                if arrow.get_expression().is_some_and(|expr| expr.is_arrow_function_expression()) {
                     return false;
                 }
             }
             ExpressionKind::CallExpression(call_expr) => {
-                let allowed_callee = call_expr.callee.is_identifier() || call_expr.callee.is_computed_member_expression() || call_expr.callee.is_static_member_expression();
+                let allowed_callee = call_expr.callee.is_identifier()
+                    || call_expr.callee.is_computed_member_expression()
+                    || call_expr.callee.is_static_member_expression();
 
                 if allowed_callee {
                     let callee_span = call_expr.callee.span();
@@ -662,12 +662,14 @@ impl<'a> ReactRefresh<'a> {
         statement: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        match statement.kind() {
-            StatementKind::VariableDeclaration(variable) => {
+        match statement.kind_mut() {
+            StatementKindMut::VariableDeclaration(variable) => {
                 self.handle_variable_declaration(variable, ctx)
             }
-            StatementKind::FunctionDeclaration(func) => self.handle_function_declaration(func, ctx),
-            StatementKind::ExportNamedDeclaration(export_decl) => {
+            StatementKindMut::FunctionDeclaration(func) => {
+                self.handle_function_declaration(func, ctx)
+            }
+            StatementKindMut::ExportNamedDeclaration(export_decl) => {
                 if let Some(declaration) = &mut export_decl.declaration {
                     match declaration {
                         Declaration::FunctionDeclaration(func) => {
@@ -682,7 +684,7 @@ impl<'a> ReactRefresh<'a> {
                     None
                 }
             }
-            StatementKind::ExportDefaultDeclaration(stmt_decl) => {
+            StatementKindMut::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
                         let expression = declaration.to_expression_mut();

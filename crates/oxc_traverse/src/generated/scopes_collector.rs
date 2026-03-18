@@ -11,7 +11,7 @@
 
 use std::cell::Cell;
 
-use oxc_ast::ast::{*, StatementKind};
+use oxc_ast::ast::{StatementKind, *};
 use oxc_ast_visit::Visit;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
@@ -61,7 +61,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ExpressionKind::ObjectExpression(it) => self.visit_object_expression(it),
             ExpressionKind::ParenthesizedExpression(it) => self.visit_parenthesized_expression(it),
             ExpressionKind::SequenceExpression(it) => self.visit_sequence_expression(it),
-            ExpressionKind::TaggedTemplateExpression(it) => self.visit_tagged_template_expression(it),
+            ExpressionKind::TaggedTemplateExpression(it) => {
+                self.visit_tagged_template_expression(it)
+            }
             ExpressionKind::UnaryExpression(it) => self.visit_unary_expression(it),
             ExpressionKind::UpdateExpression(it) => self.visit_update_expression(it),
             ExpressionKind::YieldExpression(it) => self.visit_yield_expression(it),
@@ -72,9 +74,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ExpressionKind::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
             ExpressionKind::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             ExpressionKind::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
-            ExpressionKind::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
+            ExpressionKind::TSInstantiationExpression(it) => {
+                self.visit_ts_instantiation_expression(it)
+            }
             ExpressionKind::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
-            ExpressionKind::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
+            ExpressionKind::ComputedMemberExpression(it) => {
+                self.visit_computed_member_expression(it)
+            }
             ExpressionKind::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             ExpressionKind::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
             _ => {
@@ -616,7 +622,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             StatementKind::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
             StatementKind::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
             StatementKind::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
-            StatementKind::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
+            StatementKind::ExportDefaultDeclaration(it) => {
+                self.visit_export_default_declaration(it)
+            }
             StatementKind::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
             StatementKind::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {

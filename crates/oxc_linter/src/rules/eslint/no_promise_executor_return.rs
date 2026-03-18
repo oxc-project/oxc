@@ -152,7 +152,7 @@ impl Rule for NoPromiseExecutorReturn {
                     // Arrow function with expression body: `new Promise(r => r(1))`
                     // This is an implicit return, report it unless allowVoid and it's a void expression
                     if self.allow_void
-                        && let ExpressionKind::UnaryExpression(unary) = expr.get_inner_expression()
+                        && let Some(unary) = expr.get_inner_expression().as_unary_expression()
                         && unary.operator == UnaryOperator::Void
                     {
                         return;
@@ -204,7 +204,7 @@ impl Visit<'_> for ReturnStatementFinder {
 
         // Check for void expression if allowVoid is true
         if self.allow_void
-            && let ExpressionKind::UnaryExpression(unary) = argument.get_inner_expression()
+            && let Some(unary) = argument.get_inner_expression().as_unary_expression()
             && unary.operator == UnaryOperator::Void
         {
             return;

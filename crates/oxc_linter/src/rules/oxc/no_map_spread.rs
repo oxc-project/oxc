@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind, ReturnStatement,, ExpressionKind},
+        ObjectPropertyKind, ReturnStatement, ExpressionKind},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};

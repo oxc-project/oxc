@@ -421,7 +421,10 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
             let is_nested_consequent = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
-                    matches!(conditional.consequent.kind(), ExpressionKind::ConditionalExpression(_))
+                    matches!(
+                        conditional.consequent.kind(),
+                        ExpressionKind::ConditionalExpression(_)
+                    )
                 }
                 ConditionalLike::TSConditionalType(conditional) => {
                     matches!(conditional.true_type, TSType::TSConditionalType(_))

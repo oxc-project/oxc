@@ -65,7 +65,9 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 !e.right.value_type(ctx).is_object()
             }
             ExpressionKind::ChainExpression(e) => e.expression.may_have_side_effects(ctx),
-            ExpressionKind::ComputedMemberExpression(_) | ExpressionKind::StaticMemberExpression(_) | ExpressionKind::PrivateFieldExpression(_) => {
+            ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 self.to_member_expression().may_have_side_effects(ctx)
             }
             ExpressionKind::CallExpression(e) => e.may_have_side_effects(ctx),
@@ -491,10 +493,7 @@ fn property_access_may_have_side_effects<'a>(
     }
 
     match property {
-        "length" => {
-            !(object.is_array_expression()
-                || object.value_type(ctx).is_string())
-        }
+        "length" => !(object.is_array_expression() || object.value_type(ctx).is_string()),
         _ => true,
     }
 }
@@ -801,9 +800,7 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
             let Some(unary) = ty_of.as_unary_expression() else {
                 return false;
             };
-            if !(unary.operator == UnaryOperator::Typeof
-                && unary.argument.is_identifier())
-            {
+            if !(unary.operator == UnaryOperator::Typeof && unary.argument.is_identifier()) {
                 return false;
             }
 
@@ -835,9 +832,7 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
             let Some(unary) = ty_of.as_unary_expression() else {
                 return false;
             };
-            if !(unary.operator == UnaryOperator::Typeof
-                && unary.argument.is_identifier())
-            {
+            if !(unary.operator == UnaryOperator::Typeof && unary.argument.is_identifier()) {
                 return false;
             }
 

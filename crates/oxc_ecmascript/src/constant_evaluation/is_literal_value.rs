@@ -1,5 +1,5 @@
-use oxc_ast::ast::*;
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::ast::*;
 
 use crate::GlobalContext;
 
@@ -37,7 +37,9 @@ impl<'a> IsLiteralValue<'a, '_> for Expression<'a> {
             }
             ExpressionKind::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
             ExpressionKind::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
-            ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_) => include_functions,
+            ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_) => {
+                include_functions
+            }
             ExpressionKind::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
             ExpressionKind::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),
             ExpressionKind::LogicalExpression(e) => {
@@ -111,10 +113,8 @@ impl<'a> IsLiteralValue<'a, '_> for BinaryExpression<'a> {
                 {
                     return true;
                 }
-                (self.left.is_numeric_literal()
-                    && self.right.is_numeric_literal())
-                    | (self.left.is_big_int_literal()
-                        && self.right.is_big_int_literal())
+                (self.left.is_numeric_literal() && self.right.is_numeric_literal())
+                    | (self.left.is_big_int_literal() && self.right.is_big_int_literal())
             }
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication
@@ -178,10 +178,16 @@ impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
         match self {
             Self::ObjectProperty(property) => property.is_literal_value(include_functions, ctx),
             Self::SpreadProperty(property) => match property.argument.kind() {
-                ExpressionKind::ArrayExpression(expr) => expr.is_literal_value(include_functions, ctx),
+                ExpressionKind::ArrayExpression(expr) => {
+                    expr.is_literal_value(include_functions, ctx)
+                }
                 ExpressionKind::StringLiteral(_) => true,
-                ExpressionKind::TemplateLiteral(lit) => lit.is_literal_value(include_functions, ctx),
-                ExpressionKind::ObjectExpression(expr) => expr.is_literal_value(include_functions, ctx),
+                ExpressionKind::TemplateLiteral(lit) => {
+                    lit.is_literal_value(include_functions, ctx)
+                }
+                ExpressionKind::ObjectExpression(expr) => {
+                    expr.is_literal_value(include_functions, ctx)
+                }
                 _ => false,
             },
         }
@@ -247,10 +253,8 @@ fn can_convert_to_number_transparently<'a>(
                 {
                     return true;
                 }
-                (e.left.is_numeric_literal()
-                    && e.right.is_numeric_literal())
-                    | (e.left.is_big_int_literal()
-                        && e.right.is_big_int_literal())
+                (e.left.is_numeric_literal() && e.right.is_numeric_literal())
+                    | (e.left.is_big_int_literal() && e.right.is_big_int_literal())
             }
             BinaryOperator::Subtraction
             | BinaryOperator::Multiplication

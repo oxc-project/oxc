@@ -737,9 +737,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let member_expr = expr.into_member_expression();
             self.ast.expression_chain(span, ChainElement::from(member_expr))
         } else if expr.is_call_expression() {
-            self.ast.expression_chain(span, ChainElement::CallExpression(expr.into_call_expression()))
+            self.ast
+                .expression_chain(span, ChainElement::CallExpression(expr.into_call_expression()))
         } else if expr.is_ts_non_null_expression() {
-            self.ast.expression_chain(span, ChainElement::TSNonNullExpression(expr.into_ts_non_null_expression()))
+            self.ast.expression_chain(
+                span,
+                ChainElement::TSNonNullExpression(expr.into_ts_non_null_expression()),
+            )
         } else {
             expr
         }
@@ -847,13 +851,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             if self.cur_kind().is_template_start_of_tagged_template() {
-                let (expr, type_arguments) =
-                    if lhs.is_ts_instantiation_expression() {
-                        let instantiation_expr = lhs.into_ts_instantiation_expression().unbox();
-                        (instantiation_expr.expression, Some(instantiation_expr.type_arguments))
-                    } else {
-                        (lhs, None)
-                    };
+                let (expr, type_arguments) = if lhs.is_ts_instantiation_expression() {
+                    let instantiation_expr = lhs.into_ts_instantiation_expression().unbox();
+                    (instantiation_expr.expression, Some(instantiation_expr.type_arguments))
+                } else {
+                    (lhs, None)
+                };
                 lhs =
                     self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_arguments);
                 continue;

@@ -76,7 +76,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
             // Identifiers: `@decorator` needs no parens
             ExpressionKind::Identifier(_) => false,
             // Call expressions: `@obj.method()` needs no parens, `@(complex().method)()` needs parens
-            ExpressionKind::CallExpression(call) => !is_identifier_or_static_member_only(&call.callee),
+            ExpressionKind::CallExpression(call) => {
+                !is_identifier_or_static_member_only(&call.callee)
+            }
             // Static member expressions: `@obj.prop` needs no parens, `@(complex[key])` needs parens
             ExpressionKind::StaticMemberExpression(static_member) => {
                 !is_identifier_or_static_member_only(&static_member.object)

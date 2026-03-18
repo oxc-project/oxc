@@ -421,7 +421,7 @@ fn is_react_component_node<'a>(
             decl.init.as_ref()?;
 
             // Check for createContext
-            if let Some(call) = decl.init.as_call_expression()
+            if let Some(call) = decl.init.as_ref().and_then(|e| e.as_call_expression())
                 && is_create_context_call(call)
             {
                 if check_context_objects {
@@ -434,7 +434,7 @@ fn is_react_component_node<'a>(
                 return None;
             }
 
-            if let Some(call) = decl.init.as_call_expression()
+            if let Some(call) = decl.init.as_ref().and_then(|e| e.as_call_expression())
                 && let Some(callee_name) = call.callee_name()
             {
                 // Check for HOC patterns
@@ -442,7 +442,7 @@ fn is_react_component_node<'a>(
                     // Handle React.memo(React.forwardRef(...)) - skip if version compatible
                     if callee_name.ends_with("memo")
                         && let Some(first_arg) = call.arguments.first()
-                        && let Some(inner_call) = first_arg.as_expression().as_call_expression()
+                        && let Some(inner_call) = first_arg.as_expression().and_then(|e| e.as_call_expression())
                         && let Some(inner_callee_name) = inner_call.callee_name()
                         && is_hoc_call(inner_callee_name, ctx)
                         && version_cache.get_memo_forwardref_compatible(ctx)
@@ -515,7 +515,7 @@ fn is_react_component_node<'a>(
             }
 
             // Check for object expressions with methods
-            if let Some(obj_expr) = decl.init.as_object_expression()
+            if let Some(obj_expr) = decl.init.as_ref().and_then(|e| e.as_object_expression())
                 && let Some(name) = &name
                 && has_component_methods_in_object(obj_expr, ignore_transpiler_name)
             {
@@ -822,7 +822,7 @@ fn has_create_react_class_display_name(
     ignore_transpiler_name: bool,
 ) -> bool {
     call.arguments.iter().any(|arg| {
-        if let Some(obj_expr) = arg.as_expression().as_object_expression() {
+        if let Some(obj_expr) = arg.as_expression().and_then(|e| e.as_object_expression()) {
             obj_expr.properties.iter().any(|prop| {
                 if let Some((prop_name, _)) = prop.prop_name() {
                     prop_name == "displayName" || (!ignore_transpiler_name && prop_name == "name")

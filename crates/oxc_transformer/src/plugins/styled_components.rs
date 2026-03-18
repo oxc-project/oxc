@@ -359,8 +359,7 @@ impl<'a> StyledComponents<'a> {
             self.is_styled(&tagged.tag, ctx)
         };
 
-        if !is_styled
-            && !tagged.tag.as_identifier().is_some_and(|ident| self.is_helper(ident, ctx))
+        if !is_styled && !tagged.tag.as_identifier().is_some_and(|ident| self.is_helper(ident, ctx))
         {
             return;
         }
@@ -503,16 +502,14 @@ impl<'a> StyledComponents<'a> {
     fn get_with_config<'b>(expr: &'b mut Expression<'a>) -> Option<&'b mut CallExpression<'a>> {
         let mut current = expr;
         loop {
-            match current.kind() {
-                ExpressionKind::CallExpression(call) => {
-                    if let Some(member) = call.callee.as_static_member_expression()
-                        && member.property.name == "withConfig"
-                    {
+            match current.kind_mut() {
+                ExpressionKindMut::CallExpression(call) => {
+                    if call.callee.as_static_member_expression().is_some_and(|member| member.property.name == "withConfig") {
                         return Some(call);
                     }
                     current = &mut call.callee;
                 }
-                ExpressionKind::StaticMemberExpression(member) => {
+                ExpressionKindMut::StaticMemberExpression(member) => {
                     current = &mut member.object;
                 }
                 _ => return None,
@@ -713,7 +710,9 @@ impl<'a> StyledComponents<'a> {
                 } else if let Some(static_member) = member.object.as_static_member_expression() {
                     // Handle `styled.default`
                     static_member.property.name == "default"
-                        && static_member.object.as_identifier().is_some_and(|ident| Self::is_reference_of_styled(self.styled_bindings.namespace, ident, ctx))
+                        && static_member.object.as_identifier().is_some_and(|ident| {
+                            Self::is_reference_of_styled(self.styled_bindings.namespace, ident, ctx)
+                        })
                 } else {
                     false
                 }
@@ -722,7 +721,9 @@ impl<'a> StyledComponents<'a> {
                 ExpressionKind::Identifier(ident) => {
                     Self::is_reference_of_styled(self.styled_bindings.styled, ident, ctx)
                 }
-                ExpressionKind::StaticMemberExpression(member) => self.is_styled(&member.object, ctx),
+                ExpressionKind::StaticMemberExpression(member) => {
+                    self.is_styled(&member.object, ctx)
+                }
                 ExpressionKind::SequenceExpression(sequence) => {
                     if let Some(last) = sequence.expressions.last() {
                         match last.kind() {

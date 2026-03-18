@@ -249,21 +249,25 @@ impl ConstComparisons {
         }
 
         // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
-        match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
-        {
-            (ExpressionKind::UnaryExpression(negated_expr), other_expr)
-            | (other_expr, ExpressionKind::UnaryExpression(negated_expr)) => {
-                if negated_expr.operator == UnaryOperator::LogicalNot
-                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
-                {
-                    ctx.diagnostic(identical_expressions_logical_operator_negated(
-                        matches!(logical_expr.operator, LogicalOperator::Or),
-                        logical_expr.left.span(),
-                        logical_expr.right.span(),
-                    ));
-                }
+        let left_inner = logical_expr.left.get_inner_expression();
+        let right_inner = logical_expr.right.get_inner_expression();
+        let maybe_negated = if let Some(neg) = left_inner.as_unary_expression() {
+            Some((neg, right_inner))
+        } else if let Some(neg) = right_inner.as_unary_expression() {
+            Some((neg, left_inner))
+        } else {
+            None
+        };
+        if let Some((negated_expr, other_expr)) = maybe_negated {
+            if negated_expr.operator == UnaryOperator::LogicalNot
+                && is_same_expression(&negated_expr.argument, other_expr, ctx)
+            {
+                ctx.diagnostic(identical_expressions_logical_operator_negated(
+                    matches!(logical_expr.operator, LogicalOperator::Or),
+                    logical_expr.left.span(),
+                    logical_expr.right.span(),
+                ));
             }
-            _ => {}
         }
     }
 

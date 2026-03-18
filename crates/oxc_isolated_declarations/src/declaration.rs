@@ -74,9 +74,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     } else {
                         init = Some(init_expr.clone_in(self.ast.allocator));
                     }
-                } else if !decl.kind.is_const()
-                    || !init_expr.is_template_literal()
-                {
+                } else if !decl.kind.is_const() || !init_expr.is_template_literal() {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }

@@ -86,7 +86,9 @@ impl Rule for NoNegatedCondition {
 
 fn is_negated_expression(expr: &Expression) -> bool {
     match expr.kind() {
-        ExpressionKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
+        ExpressionKind::UnaryExpression(unary_expr) => {
+            unary_expr.operator == UnaryOperator::LogicalNot
+        }
         ExpressionKind::BinaryExpression(binary_expr) => matches!(
             binary_expr.operator,
             BinaryOperator::Inequality | BinaryOperator::StrictInequality

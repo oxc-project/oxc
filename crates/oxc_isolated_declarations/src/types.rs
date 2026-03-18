@@ -298,19 +298,31 @@ impl<'a> IsolatedDeclarations<'a> {
         match expr.kind() {
             ExpressionKind::BooleanLiteral(lit) => Some(self.ast.ts_type_literal_type(
                 SPAN,
-                TSLiteral::BooleanLiteral(ArenaBox::new_in(lit.clone_in(self.ast.allocator), self.ast.allocator)),
+                TSLiteral::BooleanLiteral(ArenaBox::new_in(
+                    lit.clone_in(self.ast.allocator),
+                    self.ast.allocator,
+                )),
             )),
             ExpressionKind::NumericLiteral(lit) => Some(self.ast.ts_type_literal_type(
                 SPAN,
-                TSLiteral::NumericLiteral(ArenaBox::new_in(lit.clone_in(self.ast.allocator), self.ast.allocator)),
+                TSLiteral::NumericLiteral(ArenaBox::new_in(
+                    lit.clone_in(self.ast.allocator),
+                    self.ast.allocator,
+                )),
             )),
             ExpressionKind::BigIntLiteral(lit) => Some(self.ast.ts_type_literal_type(
                 SPAN,
-                TSLiteral::BigIntLiteral(ArenaBox::new_in(lit.clone_in(self.ast.allocator), self.ast.allocator)),
+                TSLiteral::BigIntLiteral(ArenaBox::new_in(
+                    lit.clone_in(self.ast.allocator),
+                    self.ast.allocator,
+                )),
             )),
             ExpressionKind::StringLiteral(lit) => Some(self.ast.ts_type_literal_type(
                 SPAN,
-                TSLiteral::StringLiteral(ArenaBox::new_in(lit.clone_in(self.ast.allocator), self.ast.allocator)),
+                TSLiteral::StringLiteral(ArenaBox::new_in(
+                    lit.clone_in(self.ast.allocator),
+                    self.ast.allocator,
+                )),
             )),
             ExpressionKind::NullLiteral(lit) => Some(self.ast.ts_type_null_keyword(lit.span)),
             ExpressionKind::Identifier(ident) => match ident.name.as_str() {
@@ -326,7 +338,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 if Self::can_infer_unary_expression(expr) {
                     Some(self.ast.ts_type_literal_type(
                         SPAN,
-                        TSLiteral::UnaryExpression(ArenaBox::new_in(expr.clone_in(self.ast.allocator), self.ast.allocator)),
+                        TSLiteral::UnaryExpression(ArenaBox::new_in(
+                            expr.clone_in(self.ast.allocator),
+                            self.ast.allocator,
+                        )),
                     ))
                 } else {
                     None

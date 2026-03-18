@@ -39,7 +39,9 @@ fn main() {
         assert!(parsed.errors.is_empty(), "Parse errors in {}", f.file_name);
         println!(
             "  {:40} src: {:>10} bytes  parse: {:>10} bytes",
-            f.file_name, f.source_text.len(), alloc.used_bytes(),
+            f.file_name,
+            f.source_text.len(),
+            alloc.used_bytes(),
         );
     }
     println!();
@@ -55,7 +57,9 @@ fn main() {
         let per_iter = start.elapsed() / iterations as u32;
         println!(
             "  {:40} {:>8.2} µs/iter  ({} iters)",
-            f.file_name, per_iter.as_nanos() as f64 / 1000.0, iterations
+            f.file_name,
+            per_iter.as_nanos() as f64 / 1000.0,
+            iterations
         );
     }
 }

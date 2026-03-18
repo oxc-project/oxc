@@ -15,8 +15,8 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
-use oxc_ast::{AstBuilder, ast::*};
 use oxc_ast::ast::ExpressionKind;
+use oxc_ast::{AstBuilder, ast::*};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
@@ -449,9 +449,8 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
                     ValueType::Undefined => "undefined",
                     ValueType::Null => "object",
                     _ => match self.argument.kind() {
-                        ExpressionKind::ObjectExpression(_) | ExpressionKind::ArrayExpression(_) => {
-                            "object"
-                        }
+                        ExpressionKind::ObjectExpression(_)
+                        | ExpressionKind::ArrayExpression(_) => "object",
                         ExpressionKind::ClassExpression(_)
                         | ExpressionKind::FunctionExpression(_)
                         | ExpressionKind::ArrowFunctionExpression(_) => "function",

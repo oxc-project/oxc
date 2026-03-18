@@ -34,11 +34,11 @@ impl TypeScriptEnum<'_> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_stmt = match stmt.kind() {
-            StatementKind::TSEnumDeclaration(ts_enum_decl) => {
+        let new_stmt = match stmt.kind_mut() {
+            StatementKindMut::TSEnumDeclaration(ts_enum_decl) => {
                 self.transform_ts_enum(ts_enum_decl, None, ctx)
             }
-            StatementKind::ExportNamedDeclaration(decl) => {
+            StatementKindMut::ExportNamedDeclaration(decl) => {
                 let span = decl.span;
                 if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &mut decl.declaration {
                     self.transform_ts_enum(ts_enum_decl, Some(span), ctx)

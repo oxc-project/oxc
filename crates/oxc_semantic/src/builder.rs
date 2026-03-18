@@ -2083,7 +2083,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_identifier_reference(it);
             }
             match_expression!(ExportDefaultDeclarationKind) => {
-                { let expr = it.to_expression(); self.visit_expression(&expr); }
+                let expr = it.to_expression();
+                self.visit_expression(&expr);
             }
         }
     }

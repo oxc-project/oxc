@@ -41,8 +41,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
         let mut new_stmts = ctx.ast.vec();
 
         for stmt in program.body.take_in(ctx.ast) {
-            match stmt.kind() {
-                StatementKind::TSModuleDeclaration(decl) => {
+            match stmt.kind_mut() {
+                StatementKindMut::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -50,7 +50,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                     continue;
                 }
-                StatementKind::TSGlobalDeclaration(decl) => {
+                StatementKindMut::TSGlobalDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -197,16 +197,16 @@ impl<'a> TypeScriptNamespace {
         let mut new_stmts = ctx.ast.vec();
 
         for stmt in namespace_top_level {
-            match stmt.kind() {
-                StatementKind::TSModuleDeclaration(decl) => {
+            match stmt.kind_mut() {
+                StatementKindMut::TSModuleDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
-                StatementKind::TSGlobalDeclaration(_) => {
+                StatementKindMut::TSGlobalDeclaration(_) => {
                     // Remove it.
                     // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
                     // where identifier is a string literal: `declare module 'foo' { global {} }`
                 }
-                StatementKind::ExportNamedDeclaration(export_decl) => {
+                StatementKindMut::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
                     // legal syntax in TS namespaces
                     let export_decl = export_decl.unbox();
