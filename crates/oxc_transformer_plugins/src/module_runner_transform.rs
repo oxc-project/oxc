@@ -51,7 +51,7 @@ use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_ast::{NONE, ast::*, ast::ExpressionKind};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::{Ident, SPAN};
@@ -112,10 +112,10 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
 
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
-            Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
+        match expr.kind() {
+            ExpressionKind::Identifier(_) => self.transform_identifier(expr, ctx),
+            ExpressionKind::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
+            ExpressionKind::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
     }
@@ -141,40 +141,38 @@ impl<'a> ModuleRunnerTransform<'a> {
         let mut hoist_exports = Vec::with_capacity(program.body.len());
 
         for stmt in program.body.drain(..) {
-            match stmt {
-                Statement::ImportDeclaration(import) => {
-                    let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
-                    let import_statement = self.transform_import(span, source, specifiers, ctx);
-                    hoist_imports.push(import_statement);
-                }
-                Statement::ExportAllDeclaration(export) => {
-                    self.transform_export_all_declaration(
-                        &mut hoist_imports,
-                        &mut hoist_exports,
-                        export,
-                        ctx,
-                    );
-                }
-                Statement::ExportNamedDeclaration(export) => {
-                    self.transform_export_named_declaration(
-                        &mut new_stmts,
-                        &mut hoist_imports,
-                        &mut hoist_exports,
-                        export,
-                        ctx,
-                    );
-                }
-                Statement::ExportDefaultDeclaration(export) => {
-                    Self::transform_export_default_declaration(
-                        &mut new_stmts,
-                        &mut hoist_exports,
-                        export,
-                        ctx,
-                    );
-                }
-                _ => {
-                    new_stmts.push(stmt);
-                }
+            if stmt.is_import_declaration() {
+                let import = stmt.into_import_declaration();
+                let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
+                let import_statement = self.transform_import(span, source, specifiers, ctx);
+                hoist_imports.push(import_statement);
+            } else if stmt.is_export_all_declaration() {
+                let export = stmt.into_export_all_declaration();
+                self.transform_export_all_declaration(
+                    &mut hoist_imports,
+                    &mut hoist_exports,
+                    export,
+                    ctx,
+                );
+            } else if stmt.is_export_named_declaration() {
+                let export = stmt.into_export_named_declaration();
+                self.transform_export_named_declaration(
+                    &mut new_stmts,
+                    &mut hoist_imports,
+                    &mut hoist_exports,
+                    export,
+                    ctx,
+                );
+            } else if stmt.is_export_default_declaration() {
+                let export = stmt.into_export_default_declaration();
+                Self::transform_export_default_declaration(
+                    &mut new_stmts,
+                    &mut hoist_exports,
+                    export,
+                    ctx,
+                );
+            } else {
+                new_stmts.push(stmt);
             }
         }
 
@@ -209,7 +207,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// (0, __vite_ssr_import_0__.foo)();
     /// ```
     fn transform_identifier(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::Identifier(ident) = expr else {
+        let Some(ident) = expr.as_identifier() else {
             unreachable!();
         };
 
@@ -252,13 +250,11 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
     fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ImportExpression(import_expr) = expr.take_in(ctx.ast) else {
-            unreachable!();
-        };
+        let import_expr = expr.take_in(ctx.ast).into_import_expression();
 
         let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
-        if let Expression::StringLiteral(source) = &source {
+        if let Some(source) = source.as_string_literal() {
             self.dynamic_deps.insert(source.value.to_string());
         }
 
@@ -272,7 +268,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
     fn transform_meta_property(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::MetaProperty(meta) = expr else {
+        let Some(meta) = expr.as_meta_property() else {
             unreachable!();
         };
 
@@ -312,7 +308,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ctx.ast.vec_with_capacity(1 + usize::from(specifiers.is_some()));
-        arguments.push(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
+        arguments.push(Argument::from(Expression::string_literal(ctx.ast.alloc(source))));
         let pattern = if let Some(mut specifiers) = specifiers {
             // `import * as vue from 'vue';` -> `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');`
             if matches!(
@@ -435,7 +431,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     ArrayExpressionElement::from(local_name_expr)
                 }));
                 let arguments = ctx.ast.vec_from_array([
-                    Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
+                    Argument::from(Expression::string_literal(ctx.ast.alloc(source))),
                     Self::create_imported_names_object(imported_names, ctx),
                 ]);
                 hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
@@ -458,7 +454,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     let ModuleExportName::IdentifierReference(ident) = local else {
                         unreachable!()
                     };
-                    Expression::Identifier(ctx.ast.alloc(ident))
+                    Expression::identifier(ctx.ast.alloc(ident))
                 };
                 Self::create_export(span, expr, exported.name().into(), ctx)
             }));
@@ -494,7 +490,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let binding = self.generate_import_binding(ctx);
         let pattern = binding.create_binding_pattern(ctx);
         let arguments =
-            ctx.ast.vec1(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
+            ctx.ast.vec1(Argument::from(Expression::string_literal(ctx.ast.alloc(source))));
         let import = Self::create_import(span, pattern, arguments, ctx);
 
         let ident = binding.create_read_expression(ctx);
@@ -554,11 +550,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    new_stmts.push(Statement::FunctionDeclaration(func));
+                    new_stmts.push(Statement::function_declaration(func));
                     hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
                 } else {
                     func.r#type = FunctionType::FunctionExpression;
-                    let right = Expression::FunctionExpression(func);
+                    let right = Expression::function_expression(func);
                     new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
                     hoist_exports.push(Self::create_export_default(span, ctx));
                 }
@@ -567,11 +563,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             ExportDefaultDeclarationKind::ClassDeclaration(mut class) => {
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    new_stmts.push(Statement::ClassDeclaration(class));
+                    new_stmts.push(Statement::class_declaration(class));
                     hoist_exports.push(Self::create_export(span, ident, DEFAULT, ctx));
                 } else {
                     class.r#type = ClassType::ClassExpression;
-                    let right = Expression::ClassExpression(class);
+                    let right = Expression::class_expression(class);
                     new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
                     hoist_exports.push(Self::create_export_default(span, ctx));
                 }
@@ -637,13 +633,10 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     #[inline]
     fn should_transform_statement(statement: &Statement<'a>) -> bool {
-        matches!(
-            statement,
-            Statement::ImportDeclaration(_)
-                | Statement::ExportAllDeclaration(_)
-                | Statement::ExportNamedDeclaration(_)
-                | Statement::ExportDefaultDeclaration(_)
-        )
+        statement.is_import_declaration()
+            || statement.is_export_all_declaration()
+            || statement.is_export_named_declaration()
+            || statement.is_export_default_declaration()
     }
 
     /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.

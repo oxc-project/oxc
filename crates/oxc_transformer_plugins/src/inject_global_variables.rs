@@ -3,7 +3,7 @@ use std::{borrow::Cow, sync::Arc};
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_ast::{AstBuilder, NONE, ast::*, ast::ExpressionKind};
 use oxc_semantic::Scoping;
 use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
@@ -261,8 +261,8 @@ impl<'a> InjectGlobalVariables<'a> {
     }
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
-        match expr {
-            Expression::StaticMemberExpression(member) => {
+        match expr.kind() {
+            ExpressionKind::StaticMemberExpression(member) => {
                 for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                     if ReplaceGlobalDefines::is_dot_define(
                         ctx.scoping(),
@@ -285,7 +285,7 @@ impl<'a> InjectGlobalVariables<'a> {
                     }
                 }
             }
-            Expression::MetaProperty(meta_property) => {
+            ExpressionKind::MetaProperty(meta_property) => {
                 // Check if this is import.meta and if it should be replaced
                 if meta_property.meta.name == "import" && meta_property.property.name == "meta" {
                     for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
