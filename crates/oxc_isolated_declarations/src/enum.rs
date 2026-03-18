@@ -106,10 +106,10 @@ impl<'a> IsolatedDeclarations<'a> {
         enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
-        match expr {
-            match_member_expression!(Expression) => {
+        match expr.kind() {
+            match_member_expression!(ExpressionKind) => {
                 let expr = expr.to_member_expression();
-                let Expression::Identifier(ident) = expr.object() else { return None };
+                let Some(ident) = expr.object().as_identifier() else { return None };
                 if ident.name == enum_name {
                     let property = expr.static_property_name()?;
                     prev_members.get(property).cloned()
@@ -117,7 +117,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     None
                 }
             }
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 if ident.name == "Infinity" {
                     return Some(ConstantValue::Number(f64::INFINITY));
                 } else if ident.name == "NaN" {
@@ -140,29 +140,29 @@ impl<'a> IsolatedDeclarations<'a> {
         enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
-        match expr {
-            Expression::Identifier(_)
-            | Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(_)
+            | ExpressionKind::ComputedMemberExpression(_)
+            | ExpressionKind::StaticMemberExpression(_)
+            | ExpressionKind::PrivateFieldExpression(_) => {
                 Self::evaluate_ref(expr, enum_name, prev_members)
             }
-            Expression::BinaryExpression(expr) => {
+            ExpressionKind::BinaryExpression(expr) => {
                 self.eval_binary_expression(expr, enum_name, prev_members)
             }
-            Expression::UnaryExpression(expr) => {
+            ExpressionKind::UnaryExpression(expr) => {
                 self.eval_unary_expression(expr, enum_name, prev_members)
             }
-            Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
-            Expression::TemplateLiteral(lit) => {
+            ExpressionKind::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
+            ExpressionKind::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
+            ExpressionKind::TemplateLiteral(lit) => {
                 let mut value = String::new();
                 for part in &lit.quasis {
                     value.push_str(&part.value.raw);
                 }
                 Some(ConstantValue::String(value))
             }
-            Expression::ParenthesizedExpression(expr) => {
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 self.evaluate(&expr.expression, enum_name, prev_members)
             }
             _ => None,

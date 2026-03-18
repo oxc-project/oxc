@@ -52,7 +52,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Some((None, decl.declaration.clone_in(self.ast.allocator)))
             }
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
-                .transform_export_expression(decl.span, declaration.to_expression())
+                .transform_export_expression(decl.span, &declaration.to_expression())
                 .map(|(var_decl, expr)| (var_decl, ExportDefaultDeclarationKind::from(expr))),
         };
 
@@ -90,7 +90,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl_span: Span,
         expr: &Expression<'a>,
     ) -> Option<(Option<Statement<'a>>, Expression<'a>)> {
-        if matches!(expr, Expression::Identifier(_)) {
+        if expr.is_identifier() {
             None
         } else {
             // declare const _default: Type

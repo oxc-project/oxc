@@ -39,10 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
-                    && matches!(
-                        expr.argument,
-                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
-                    )
+                    && (expr.argument.is_numeric_literal() || expr.argument.is_big_int_literal())
             }
             _ => false,
         }
@@ -55,16 +52,16 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         // TODO: Unsupported checking if it is a global Symbol yet
-        match &member.object {
+        match member.object.kind() {
             // `Symbol.iterator`
-            Expression::Identifier(ident) => ident.name == "Symbol",
+            ExpressionKind::Identifier(ident) => ident.name == "Symbol",
             // `global.Symbol.iterator`
-            Expression::StaticMemberExpression(expr) => {
+            ExpressionKind::StaticMemberExpression(expr) => {
                 expr.property.name == "Symbol"
-                    && matches!(
-                        &expr.object, Expression::Identifier(ident)
-                        if matches!(ident.name.as_str(), "window" | "globalThis")
-                    )
+                    && expr
+                        .object
+                        .as_identifier()
+                        .is_some_and(|ident| matches!(ident.name.as_str(), "window" | "globalThis"))
             }
             _ => false,
         }
@@ -146,24 +143,28 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn get_literal_const_initializer(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
-        match expr {
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
-            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                self.transform_template_to_string(lit).map(Expression::StringLiteral)
+        match expr.kind() {
+            ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
+            ExpressionKind::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                self.transform_template_to_string(lit).map(Expression::string_literal)
             }
-            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
-                Some(Expression::UnaryExpression(expr.clone_in(self.ast.allocator)))
+            ExpressionKind::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
+                Some(Expression::unary_expression(ArenaBox::new_in(expr.clone_in(self.ast.allocator), self.ast.allocator)))
             }
-            Expression::ParenthesizedExpression(expr) => {
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 self.get_literal_const_initializer(&expr.expression)
             }
-            Expression::TSAsExpression(expr) if expr.type_annotation.is_const_type_reference() => {
+            ExpressionKind::TSAsExpression(expr)
+                if expr.type_annotation.is_const_type_reference() =>
+            {
                 self.get_literal_const_initializer(&expr.expression)
             }
-            Expression::TSTypeAssertion(expr) if expr.type_annotation.is_const_type_reference() => {
+            ExpressionKind::TSTypeAssertion(expr)
+                if expr.type_annotation.is_const_type_reference() =>
+            {
                 self.get_literal_const_initializer(&expr.expression)
             }
             _ => None,
@@ -171,9 +172,9 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
-        match expr {
-            Expression::ArrayExpression(_) => true,
-            Expression::ParenthesizedExpression(expr) => {
+        match expr.kind() {
+            ExpressionKind::ArrayExpression(_) => true,
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 Self::is_non_const_array_literal(&expr.expression)
             }
             _ => false,
@@ -425,9 +426,9 @@ impl<'a> IsolatedDeclarations<'a> {
         declare: Option<bool>,
     ) -> ArenaBox<'a, Class<'a>> {
         if let Some(super_class) = &decl.super_class {
-            let is_not_allowed = match super_class {
-                Expression::Identifier(_) => false,
-                Expression::StaticMemberExpression(expr) => {
+            let is_not_allowed = match super_class.kind() {
+                ExpressionKind::Identifier(_) => false,
+                ExpressionKind::StaticMemberExpression(expr) => {
                     !expr.get_first_object().is_identifier_reference()
                 }
                 _ => true,

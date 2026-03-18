@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
-    TSTypeAnnotation, UnaryExpression,
+    ArrowFunctionExpression, Expression, ExpressionKind, FormalParameter, Function, Statement,
+    TSType, TSTypeAnnotation, UnaryExpression,
 };
 use oxc_span::SPAN;
 
@@ -17,57 +17,57 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
-        match expr {
-            Expression::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
-            Expression::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
-            Expression::NumericLiteral(_) => Some(self.ast.ts_type_number_keyword(SPAN)),
-            Expression::BigIntLiteral(_) => Some(self.ast.ts_type_big_int_keyword(SPAN)),
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+        match expr.kind() {
+            ExpressionKind::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
+            ExpressionKind::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
+            ExpressionKind::NumericLiteral(_) => Some(self.ast.ts_type_number_keyword(SPAN)),
+            ExpressionKind::BigIntLiteral(_) => Some(self.ast.ts_type_big_int_keyword(SPAN)),
+            ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => {
                 Some(self.ast.ts_type_string_keyword(SPAN))
             }
-            Expression::Identifier(ident) => match ident.name.as_str() {
+            ExpressionKind::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_type_undefined_keyword(SPAN)),
                 _ => None,
             },
-            Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
-            Expression::ArrowFunctionExpression(func) => {
+            ExpressionKind::FunctionExpression(func) => self.transform_function_to_ts_type(func),
+            ExpressionKind::ArrowFunctionExpression(func) => {
                 self.transform_arrow_function_to_ts_type(func)
             }
-            Expression::ObjectExpression(expr) => {
+            ExpressionKind::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
             }
-            Expression::ArrayExpression(expr) => {
+            ExpressionKind::ArrayExpression(expr) => {
                 self.error(array_inferred(expr.span));
                 Some(self.ast.ts_type_unknown_keyword(expr.span))
             }
-            Expression::TSAsExpression(expr) => {
+            ExpressionKind::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
             }
-            Expression::TSTypeAssertion(expr) => {
+            ExpressionKind::TSTypeAssertion(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
             }
-            Expression::ClassExpression(expr) => {
+            ExpressionKind::ClassExpression(expr) => {
                 self.error(inferred_type_of_class_expression(expr.span));
                 Some(self.ast.ts_type_unknown_keyword(SPAN))
             }
-            Expression::ParenthesizedExpression(expr) => {
+            ExpressionKind::ParenthesizedExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::TSNonNullExpression(expr) => {
+            ExpressionKind::TSNonNullExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::TSSatisfiesExpression(expr) => {
+            ExpressionKind::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::UnaryExpression(expr) => {
+            ExpressionKind::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
                     self.infer_type_from_expression(&expr.argument)
                 } else {
@@ -132,12 +132,12 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
-        match expr {
-            Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_) => false,
-            Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
-            Expression::UnaryExpression(expr) => !Self::can_infer_unary_expression(expr),
+        match expr.kind() {
+            ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::StringLiteral(_) => false,
+            ExpressionKind::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+            ExpressionKind::UnaryExpression(expr) => !Self::can_infer_unary_expression(expr),
             _ => true,
         }
     }
