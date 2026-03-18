@@ -22,7 +22,7 @@ import type {
 
 // The same naming convention as `oxlint` for consistency
 export type OxfmtConfig = Oxfmtrc;
-export type { FormatConfig } from "./config.generated";
+export type { FormatConfig, SortImportsConfig, SortPackageJsonConfig, SortTailwindcssConfig } from "./config.generated";
 
 // Backward-compatible type aliases using `Options` suffix.
 
