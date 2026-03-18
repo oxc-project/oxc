@@ -5,6 +5,7 @@
 //! calling their methods is side-effect-free.
 
 use oxc_ast::ast::*;
+use oxc_ast::ast::ExpressionKind;
 
 use super::context::MayHaveSideEffectsContext;
 
@@ -22,11 +23,11 @@ pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
     let pattern = match args.first() {
         // No arguments: `RegExp()` is valid, returns /(?:)/
         None => "",
-        Some(arg) => match arg.as_expression() {
+        Some(arg) => match arg.as_expression().map(|e| e.kind()) {
             // RegExp literal argument: `RegExp(/foo/)` is always valid
-            Some(Expression::RegExpLiteral(_)) => return true,
+            Some(ExpressionKind::RegExpLiteral(_)) => return true,
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) => s.value.as_str(),
+            Some(ExpressionKind::StringLiteral(s)) => s.value.as_str(),
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -35,8 +36,8 @@ pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
     // Extract flags from second argument
     let flags = match args.get(1) {
         None => None,
-        Some(arg) => match arg.as_expression() {
-            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+        Some(arg) => match arg.as_expression().map(|e| e.kind()) {
+            Some(ExpressionKind::StringLiteral(s)) => Some(s.value.as_str()),
             // Non-literal flags: can't statically determine, assume side effects
             _ => return false,
         },
@@ -128,14 +129,14 @@ pub(super) fn is_pure_collection_constructor<'a>(
     match args.first() {
         // No arguments: always pure
         None => true,
-        Some(arg) => match arg.as_expression() {
-            Some(Expression::NullLiteral(_)) => true,
-            Some(Expression::Identifier(id))
+        Some(arg) => match arg.as_expression().map(|e| e.kind()) {
+            Some(ExpressionKind::NullLiteral(_)) => true,
+            Some(ExpressionKind::Identifier(id))
                 if id.name == "undefined" && ctx.is_global_reference(id) =>
             {
                 true
             }
-            Some(Expression::ArrayExpression(arr)) => {
+            Some(ExpressionKind::ArrayExpression(arr)) => {
                 // For Map/WeakMap, each element must also be an array literal (key-value pair)
                 if matches!(name, "Map" | "WeakMap") {
                     arr.elements
