@@ -2,6 +2,7 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
+use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
 
 use crate::{

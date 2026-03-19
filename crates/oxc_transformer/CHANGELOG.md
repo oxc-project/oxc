@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.121.0] - 2026-03-19
+
+### 🚀 Features
+
+- 7215d9e transformer: Support lowering `accessor` with legacy decorators (#20348) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3bbd0cd transformer: Emit `Object` instead of `void 0` for untyped getter/setter `design:type` metadata (#20488) (Dunqing)
+- 11f9695 transformer: Legacy decorator on computed property key leaves variable unassigned (#20430) (bab)
+
 ## [0.120.0] - 2026-03-16
 
 ### 🐛 Bug Fixes

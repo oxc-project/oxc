@@ -971,13 +971,11 @@ mod test {
 
     #[test]
     fn test_overrides() {
-        let args_1 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.js"];
-        let args_2 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/test.ts"];
-        let args_3 =
-            &["-c", "fixtures/cli/overrides/.oxlintrc.json", "fixtures/cli/overrides/other.jsx"];
-        Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+        // This is split into three to avoid creating a snapshot with a filename too large to be usable on Windows.
+        let tester = Tester::new().with_cwd("fixtures/cli/overrides".into());
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.js"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "test.ts"]);
+        tester.test_and_snapshot(&["-c", ".oxlintrc.json", "other.jsx"]);
     }
 
     #[test]
