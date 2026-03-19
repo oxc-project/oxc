@@ -77,7 +77,7 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
 
-        let property_span = match member_expr.kind() {
+        let property_span = match member_expr {
             MemberExpressionKind::Computed(expr) => expr.expression.span(),
             MemberExpressionKind::Static(expr) => expr.property.span,
             MemberExpressionKind::PrivateField(expr) => expr.field.span,

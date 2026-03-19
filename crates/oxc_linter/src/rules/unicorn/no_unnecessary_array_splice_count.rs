@@ -84,7 +84,7 @@ impl Rule for NoUnnecessaryArraySpliceCount {
             return;
         };
 
-        let Some(arg_expr) = second_arg.as_expression().map(Expression::without_parentheses) else {
+        let Some(arg_expr) = second_arg.as_expression().map(|e| e.without_parentheses()) else {
             return;
         };
 

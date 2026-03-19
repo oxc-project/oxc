@@ -359,9 +359,9 @@ pub fn get_array_method_info<'a>(
                 if TARGET_METHODS.contains(&array_method)
                     // Check that current node is parent's first argument
                     && call.arguments.len() == 1
-                    && let Some(call_arg) = call.arguments.first().as_expression()
+                    && let Some(call_arg) = call.arguments.first()
                         && call_arg
-                            
+                            .as_expression()
                             .is_some_and(|arg| arg.span() == current_node.kind().span())
                 {
                     return Some((array_method_span, array_method));

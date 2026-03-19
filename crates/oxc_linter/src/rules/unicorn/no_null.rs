@@ -66,7 +66,7 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
         .arguments
         .get(index)
         .and_then(Argument::as_expression)
-        .map(Expression::get_inner_expression)
+        .map(|e| e.get_inner_expression())
     {
         Some(ExpressionKind::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
         _ => false,

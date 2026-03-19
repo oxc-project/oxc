@@ -115,7 +115,7 @@ impl Rule for NoCallbackInPromise {
             let Some(id) = call_expr
                 .arguments
                 .first()
-                .and_then(|arg| arg.as_expression().and_then(Expression::get_identifier_reference))
+                .and_then(|arg| arg.as_expression().and_then(|e| e.get_identifier_reference()))
             else {
                 return;
             };

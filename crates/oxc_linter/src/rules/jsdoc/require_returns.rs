@@ -259,7 +259,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
             // Get `new Promise(HERE, ...)`
             .first()
             // Expect `new Promise(() => {})` or `new Promise(function() {})`
-            .and_then(|arg| match arg.as_expression().kind() {
+            .and_then(|arg| match arg.as_expression().map(|e| e.kind()).kind() {
                 Some(ExpressionKind::FunctionExpression(func)) => func.params.items.first(),
                 Some(ExpressionKind::ArrowFunctionExpression(arrow_func)) => {
                     arrow_func.params.items.first()

@@ -133,7 +133,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr.kind(), MemberExpressionKind::PrivateField(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -163,7 +163,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr.kind(), MemberExpressionKind::PrivateField(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -264,7 +264,7 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
-    match expr.kind() {
+    match expr {
         MemberExpressionKind::Computed(expr) => {
             expr.static_property_name().map(|name| name.as_str())
         }

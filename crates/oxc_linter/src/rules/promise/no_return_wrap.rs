@@ -150,7 +150,7 @@ impl Rule for NoReturnWrap {
         }
 
         for argument in &call_expr.arguments {
-            let Some(arg_expr) = argument.as_expression().map(Expression::without_parentheses)
+            let Some(arg_expr) = argument.as_expression().map(|e| e.without_parentheses())
             else {
                 continue;
             };

@@ -77,7 +77,7 @@ impl Rule for NoUnnecessarySliceEnd {
         let [first_arg, second_arg] = call_expr.arguments.as_slice() else {
             return;
         };
-        let Some(arg_expr) = second_arg.as_expression().map(Expression::without_parentheses) else {
+        let Some(arg_expr) = second_arg.as_expression().map(|e| e.without_parentheses()) else {
             return;
         };
         match arg_expr.kind() {

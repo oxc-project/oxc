@@ -453,7 +453,7 @@ fn is_react_component_node<'a>(
                     // For HOCs, check if the inner function/component has a name
                     // If the first argument is a named function or identifier, that counts as having a name
                     let inner_has_name = if let Some(first_arg) = call.arguments.first() {
-                        match first_arg.as_expression().kind() {
+                        match first_arg.as_expression().map(|e| e.kind()).kind() {
                             Some(ExpressionKind::FunctionExpression(func)) => func.id.is_some(),
                             Some(ExpressionKind::Identifier(_)) => true, // Reference to named component
                             _ => false,

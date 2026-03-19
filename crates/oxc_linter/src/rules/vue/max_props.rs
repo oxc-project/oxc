@@ -113,7 +113,7 @@ impl MaxProps {
             return;
         }
         if let Some(first_arg) = call_expr.arguments.first() {
-            match first_arg.as_expression().kind() {
+            match first_arg.as_expression().map(|e| e.kind()).kind() {
                 Some(ExpressionKind::ObjectExpression(obj_expr))
                     if obj_expr.properties.len() > self.max_props =>
                 {

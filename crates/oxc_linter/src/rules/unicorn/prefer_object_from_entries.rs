@@ -114,7 +114,7 @@ impl Rule for PreferObjectFromEntries {
             .get(1)
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(oxc_ast::ast::|e| e.get_inner_expression())
         else {
             return;
         };
@@ -128,7 +128,7 @@ impl Rule for PreferObjectFromEntries {
             .first()
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
+            .map(oxc_ast::ast::|e| e.get_inner_expression())
         else {
             return;
         };
@@ -168,7 +168,7 @@ impl Rule for PreferObjectFromEntries {
                 .first()
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(oxc_ast::ast::|e| e.get_inner_expression())
             else {
                 return;
             };
@@ -184,7 +184,7 @@ impl Rule for PreferObjectFromEntries {
                 .get(1)
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(oxc_ast::ast::|e| e.get_inner_expression())
             else {
                 return;
             };
@@ -260,7 +260,7 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .first()
                 .expect("call expression must have 1 argument")
                 .as_expression()
-                .map(oxc_ast::ast::Expression::get_inner_expression)
+                .map(oxc_ast::ast::|e| e.get_inner_expression())
                 .is_some_and(|expr| expr.is_null_literal()) =>
         {
             true

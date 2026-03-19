@@ -753,14 +753,14 @@ pub fn is_default_this_binding<'a>(
                         || call_expr.arguments[0].span() != current_node.span()
                         || call_expr.arguments[1]
                             .as_expression()
-                            .is_some_and(Expression::is_null_or_undefined);
+                            .is_some_and(|e| e.is_null_or_undefined());
                 }
                 if call_expr.callee.is_specific_member_access("Array", "from") {
                     return call_expr.arguments.len() != 3
                         || call_expr.arguments[1].span() != current_node.span()
                         || call_expr.arguments[2]
                             .as_expression()
-                            .is_some_and(Expression::is_null_or_undefined);
+                            .is_some_and(|e| e.is_null_or_undefined());
                 }
                 if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
                     mem_expr
@@ -771,7 +771,7 @@ pub fn is_default_this_binding<'a>(
                         || call_expr.arguments[0].span() != current_node.span()
                         || call_expr.arguments[1]
                             .as_expression()
-                            .is_some_and(Expression::is_null_or_undefined);
+                            .is_some_and(|e| e.is_null_or_undefined());
                 }
                 return true;
             }

@@ -38,8 +38,8 @@ fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &L
 where
     M: FnOnce(&Pattern<'_>, Span),
 {
-    let arg1 = arg1.and_then(Argument::as_expression).map(Expression::get_inner_expression);
-    let arg2 = arg2.and_then(Argument::as_expression).map(Expression::get_inner_expression);
+    let arg1 = arg1.and_then(Argument::as_expression).map(|e| e.get_inner_expression());
+    let arg2 = arg2.and_then(Argument::as_expression).map(|e| e.get_inner_expression());
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
     match (arg1.kind(), arg2.kind()) {

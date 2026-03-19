@@ -184,7 +184,7 @@ fn is_referencing_class(
         .arguments
         .get(1)
         .and_then(|arg| arg.as_expression())
-        .map(Expression::get_inner_expression)
+        .map(|e| e.get_inner_expression())
     else {
         return false;
     };
