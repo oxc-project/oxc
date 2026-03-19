@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
     /// `foo?.['bar']` -> `foo?.bar`
     pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
-        let Some(s) = &e.expression.as_string_literal_mut() else { return };
+        let Some(s) = e.expression.as_string_literal() else { return };
         if is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
             *expr =
@@ -33,7 +33,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
-            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            let span = s.span;
+            e.expression = ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal);
         }
     }
 }

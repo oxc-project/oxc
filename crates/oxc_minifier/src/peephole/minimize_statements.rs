@@ -1580,9 +1580,10 @@ impl<'a> PeepholeOptimizations {
                                     return Some(false);
                                 }
                                 match_expression!(Argument) => {
+                                    let mut expr = arg.to_expression_mut();
                                     if let Some(changed) =
                                         Self::substitute_single_use_symbol_in_expression(
-                                            arg.to_expression_mut(),
+                                            &mut expr,
                                             search_for,
                                             replacement,
                                             replacement_has_side_effect,
@@ -1631,9 +1632,10 @@ impl<'a> PeepholeOptimizations {
                                 return Some(false);
                             }
                             match_expression!(Argument) => {
+                                let mut expr = arg.to_expression_mut();
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
-                                        arg.to_expression_mut(),
+                                        &mut expr,
                                         search_for,
                                         replacement,
                                         replacement_has_side_effect,
@@ -1665,8 +1667,9 @@ impl<'a> PeepholeOptimizations {
                         }
                         ArrayExpressionElement::Elision(_) => {}
                         match_expression!(ArrayExpressionElement) => {
+                            let mut expr = elem.to_expression_mut();
                             if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                                elem.to_expression_mut(),
+                                &mut expr,
                                 search_for,
                                 replacement,
                                 replacement_has_side_effect,
@@ -1708,9 +1711,10 @@ impl<'a> PeepholeOptimizations {
                                 }
                             }
                             match_expression!(PropertyKey) => {
+                                let mut key_expr = prop.key.to_expression_mut();
                                 if let Some(changed) =
                                     Self::substitute_single_use_symbol_in_expression(
-                                        prop.key.to_expression_mut(),
+                                        &mut key_expr,
                                         search_for,
                                         replacement,
                                         replacement_has_side_effect,

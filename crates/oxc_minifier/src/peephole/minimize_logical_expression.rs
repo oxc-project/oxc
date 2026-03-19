@@ -190,7 +190,7 @@ impl<'a> PeepholeOptimizations {
                 return false;
             }
             if let Some(read_expr) = expr.as_member_expression() {
-                return write_expr.content_eq(read_expr);
+                return write_expr.content_eq(&read_expr);
             }
         }
         false

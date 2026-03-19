@@ -148,7 +148,7 @@ impl<'a> PeepholeOptimizations {
                                     // https://github.com/oxc-project/oxc/pull/16802#discussion_r2619369597
                                     && !Self::member_object_may_be_mutated(&assignment_expr.left, ctx)
                                 {
-                                    assignment_expr.span = logical_span;
+                                    assignment_expr.span = *logical_span;
                                     assignment_expr.operator = AssignmentOperator::LogicalNullish;
                                     *e = logical_right.take_in(ctx.ast);
                                     ctx.state.changed = true;
@@ -156,7 +156,7 @@ impl<'a> PeepholeOptimizations {
                                 }
 
                                 *e = ctx.ast.expression_logical(
-                                    logical_span,
+                                    *logical_span,
                                     new_left_hand_expr.take_in(ctx.ast),
                                     LogicalOperator::Coalesce,
                                     logical_right.take_in(ctx.ast),
