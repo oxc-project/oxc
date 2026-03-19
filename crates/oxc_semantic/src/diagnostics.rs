@@ -48,6 +48,12 @@ pub fn class_static_block_for_await(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Cannot use 'await using' in class static initialization block")
+        .with_label(span)
+}
+
+#[cold]
 pub fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1)
 }

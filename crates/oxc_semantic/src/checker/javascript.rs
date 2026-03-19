@@ -561,6 +561,10 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
+    if decl.kind.is_await() && ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block()
+    {
+        ctx.error(diagnostics::class_static_block_await_using(decl.span));
+    }
 }
 
 pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
