@@ -398,7 +398,7 @@ fn check_useless_clone<'a>(
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
-    if matches!(target, ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)) {
+    if matches!(target.kind(), ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)) {
         return;
     }
 

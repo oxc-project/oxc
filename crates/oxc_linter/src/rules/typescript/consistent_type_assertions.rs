@@ -367,8 +367,7 @@ fn expression_text_for_as(expression: &Expression, source_text: &str) -> String 
 }
 
 fn expression_needs_parens_for_as(expression: &Expression) -> bool {
-    matches!(
-        expression.without_parentheses(),
+    matches!(expression.without_parentheses().kind(),
         ExpressionKind::SequenceExpression(_)
             | ExpressionKind::AssignmentExpression(_)
             | ExpressionKind::ConditionalExpression(_)

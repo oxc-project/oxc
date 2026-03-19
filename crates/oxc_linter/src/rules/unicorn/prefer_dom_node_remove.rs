@@ -50,8 +50,7 @@ declare_oxc_lint!(
 /// Returns `true` if the expression is a type that can never be a DOM node
 /// (literals, null, undefined, arrays, arrow functions, classes, functions, objects, template literals).
 fn is_non_dom_node(expr: &Expression) -> bool {
-    matches!(
-        expr,
+    matches!(expr.kind(),
         ExpressionKind::ArrayExpression(_)
             | ExpressionKind::ArrowFunctionExpression(_)
             | ExpressionKind::ClassExpression(_)

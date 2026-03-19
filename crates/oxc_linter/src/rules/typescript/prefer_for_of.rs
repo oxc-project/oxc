@@ -78,7 +78,7 @@ impl ExpressionExt for Expression<'_> {
 
                 match expr.operator.kind() {
                     AssignmentOperator::Addition => {
-                        matches!(&expr.right, ExpressionKind::NumericLiteral(lit)
+                        matches!(expr.right.kind(), ExpressionKind::NumericLiteral(lit)
                             if (lit.value - 1f64).abs() < f64::EPSILON)
                     }
                     AssignmentOperator::Assign => {
@@ -128,7 +128,7 @@ impl Rule for PreferForOf {
             _ => return,
         };
 
-        if !matches!(&decl.init,
+        if !matches!(decl.init.kind(),
             Some(ExpressionKind::NumericLiteral(literal)) if literal.value == 0f64
         ) {
             return;
@@ -138,7 +138,7 @@ impl Rule for PreferForOf {
             return;
         };
 
-        if !matches!((&test_expr.left, test_expr.operator),
+        if !matches!((&test_expr.left, test_expr.operator).kind(),
             (ExpressionKind::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
         ) {
             return;

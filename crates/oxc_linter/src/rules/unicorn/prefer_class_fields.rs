@@ -226,8 +226,7 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     }
 
     // Check if the value is a literal
-    matches!(
-        &assign.right,
+    matches!(assign.right.kind(),
         ExpressionKind::StringLiteral(_)
             | ExpressionKind::NumericLiteral(_)
             | ExpressionKind::BooleanLiteral(_)

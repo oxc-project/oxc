@@ -172,7 +172,7 @@ impl Rule for NoReturnWrap {
 
                     // `.bind(this)` is true but `.bind(foo)` is false.
                     let is_this_arg = call.arguments.first().is_some_and(|arg| {
-                        matches!(arg.as_expression(), Some(ExpressionKind::ThisExpression(_)))
+                        arg.as_expression().is_some_and(|e| e.is_this_expression())
                     });
 
                     let property_name = static_memb_expr.property.name;
@@ -266,7 +266,7 @@ fn check_first_return_statement<'a>(
     let top_level_statements = func_body
         .statements
         .iter()
-        .find(|stmt| matches!(stmt, StatementKind::ReturnStatement(_) | StatementKind::IfStatement(_)));
+        .find(|stmt| matches!(stmt.kind(), StatementKind::ReturnStatement(_) | StatementKind::IfStatement(_)));
 
     let maybe_return_stmt = match top_level_statements.kind() {
         Some(StatementKind::ReturnStatement(r)) => Some(r),

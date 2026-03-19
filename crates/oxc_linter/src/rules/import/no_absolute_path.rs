@@ -138,7 +138,7 @@ impl Rule for NoAbsolutePath {
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
                                 if let Some(el_expr) = el.as_expression()
-                                    && matches!(el_expr, ExpressionKind::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                    && matches!(el_expr.kind(), ExpressionKind::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
                                 {
                                     ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }

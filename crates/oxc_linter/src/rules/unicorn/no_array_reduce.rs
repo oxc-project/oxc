@@ -129,7 +129,7 @@ fn is_simple_operation(node: &CallExpression) -> bool {
             expr.expression.is_binary_expression()
         }
         StatementKind::ReturnStatement(ret) => {
-            matches!(&ret.argument, Some(ExpressionKind::BinaryExpression(_)))
+            ret.argument.is_some_and(|e| e.is_binary_expression())
         }
         StatementKind::BlockStatement(block) => {
             if block.body.len() != 1 {
@@ -138,7 +138,7 @@ fn is_simple_operation(node: &CallExpression) -> bool {
 
             match &block.body[0].kind() {
                 StatementKind::ReturnStatement(ret) => {
-                    matches!(&ret.argument, Some(ExpressionKind::BinaryExpression(_)))
+                    ret.argument.is_some_and(|e| e.is_binary_expression())
                 }
                 _ => false,
             }

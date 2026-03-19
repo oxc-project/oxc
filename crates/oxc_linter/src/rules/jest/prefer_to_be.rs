@@ -224,8 +224,7 @@ impl PreferToBe {
             return false;
         }
 
-        matches!(
-            expr,
+        matches!(expr.kind(),
             ExpressionKind::BigIntLiteral(_)
                 | ExpressionKind::BooleanLiteral(_)
                 | ExpressionKind::NumericLiteral(_)
@@ -254,7 +253,7 @@ impl PreferToBe {
     ) -> (u32, String) {
         if let Some(&not_modifier) = not_modifier {
             let not_is_computed =
-                matches!(not_modifier.parent, Some(ExpressionKind::ComputedMemberExpression(_)));
+                not_modifier.parent.is_some_and(|e| e.is_computed_member_expression());
 
             if not_is_computed {
                 // ["not"]["toBe"](value) -> ["not"]["toBeMatcher"]()

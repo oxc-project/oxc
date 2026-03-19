@@ -43,8 +43,7 @@ pub fn parse_jest_fn_call<'a>(
     if let Some(last) = chain.last() {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last.is_name_equal("each")
-            && !matches!(
-                callee,
+            && !matches!(callee.kind(),
                 ExpressionKind::CallExpression(_) | ExpressionKind::TaggedTemplateExpression(_)
             )
         {
@@ -502,8 +501,7 @@ impl<'a> MemberExpressionElement<'a> {
     }
 
     pub fn is_string_literal(&self) -> bool {
-        matches!(
-            self,
+        matches!(self.kind(),
             Self::Expression(ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
         )
     }

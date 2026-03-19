@@ -221,7 +221,7 @@ fn is_function_with_block_statement(node: &AstNode) -> bool {
 
 fn is_member_call(node: &AstNode, member_name: &str) -> bool {
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        return matches!(&call_expr.callee, ExpressionKind::StaticMemberExpression(member_expr) if member_expr.property.name == member_name);
+        return matches!(call_expr.callee.kind(), ExpressionKind::StaticMemberExpression(member_expr) if member_expr.property.name == member_name);
     }
     false
 }
@@ -300,7 +300,7 @@ fn is_nodejs_terminal_statement(node: &AstNode) -> bool {
             ExpressionKind::CallExpression(call_expr) => {
                 match &call_expr.callee.kind() {
                     ExpressionKind::StaticMemberExpression(member_expr) if PROCESS_METHODS.contains(&member_expr.property.name.as_str()) => {
-                        matches!(&member_expr.object, ExpressionKind::Identifier(identifier) if identifier.name == "process")
+                        matches!(member_expr.object.kind(), ExpressionKind::Identifier(identifier) if identifier.name == "process")
                     },
                     _ => {
                         false

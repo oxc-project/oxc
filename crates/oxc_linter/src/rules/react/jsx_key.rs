@@ -259,10 +259,7 @@ fn is_in_array_or_iter<'a, 'b>(
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                let is_arrow_expr_statement = matches!(
-                    arrow_expr.body.statements.first(),
-                    Some(StatementKind::ExpressionStatement(_))
-                );
+                let is_arrow_expr_statement = arrow_expr.body.statements.first().is_some_and(|e| e.is_expression_statement());
                 if !is_explicit_return && !is_arrow_expr_statement {
                     return None;
                 }

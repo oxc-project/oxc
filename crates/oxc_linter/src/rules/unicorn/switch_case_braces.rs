@@ -123,8 +123,7 @@ impl Rule for SwitchCaseBraces {
                     }
                     if *self.0 == SwitchCaseBracesConfig::Avoid
                         && !block_stmt.body.iter().any(|stmt| {
-                            matches!(
-                                stmt,
+                            matches!(stmt.kind(),
                                 StatementKind::VariableDeclaration(_)
                                     | StatementKind::FunctionDeclaration(_)
                             )

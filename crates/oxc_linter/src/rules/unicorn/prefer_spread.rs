@@ -109,8 +109,7 @@ fn check_unicorn_prefer_spread<'a>(
 
             let member_expr_obj = member_expr.object().without_parentheses();
 
-            if matches!(
-                member_expr_obj,
+            if matches!(member_expr_obj.kind(),
                 ExpressionKind::ArrayExpression(_) | ExpressionKind::ThisExpression(_)
             ) {
                 return;
@@ -225,8 +224,7 @@ fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
 }
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
-    if matches!(
-        expr.without_parentheses(),
+    if matches!(expr.without_parentheses().kind(),
         ExpressionKind::TemplateLiteral(_) | ExpressionKind::BinaryExpression(_)
     ) {
         return true;

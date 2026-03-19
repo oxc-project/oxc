@@ -339,12 +339,10 @@ fn match_token(token: Option<char>) -> bool {
 /// Returns `true` if the expression starts with a keyword (typeof, void, delete,
 /// await, yield, new) that needs a space separator.
 fn is_keyword_expression(expr: &Expression) -> bool {
-    matches!(
-        expr,
+    matches!(expr.kind(),
         ExpressionKind::UnaryExpression(unary)
             if matches!(unary.operator, UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete)
-    ) || matches!(
-        expr,
+    ) || matches!(expr.kind(),
         ExpressionKind::AwaitExpression(_)
             | ExpressionKind::YieldExpression(_)
             | ExpressionKind::NewExpression(_)

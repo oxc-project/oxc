@@ -85,7 +85,7 @@ impl Rule for PreferAwaitToCallbacks {
                     }
 
                     let is_lodash = expr.callee.as_member_expression().is_some_and( |mem_expr| {
-                        matches!(mem_expr.object(), ExpressionKind::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
+                        matches!(mem_expr.object().kind(), ExpressionKind::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
                     });
 
                     let calls_array_method = callee_property_name

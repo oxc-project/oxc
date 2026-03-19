@@ -271,8 +271,7 @@ impl Rule for PreferArraySome {
 }
 
 fn is_node_value_not_function(expr: &Expression) -> bool {
-    if matches!(
-        expr,
+    if matches!(expr.kind(),
         ExpressionKind::ArrayExpression(_)
             | ExpressionKind::BinaryExpression(_)
             | ExpressionKind::ClassExpression(_)
@@ -286,8 +285,7 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
     if expr.is_literal() {
         return true;
     }
-    if matches!(
-        expr,
+    if matches!(expr.kind(),
         ExpressionKind::AssignmentExpression(_)
             | ExpressionKind::AwaitExpression(_)
             | ExpressionKind::LogicalExpression(_)

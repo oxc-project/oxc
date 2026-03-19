@@ -230,9 +230,9 @@ impl RequireHook {
     fn check<'a>(&self, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Some(expr_stmt) = stmt.as_expression_statement() {
             self.check_should_report_in_hook(&expr_stmt.expression, ctx);
-        } else if let Some(var_decl) = stmt
+        } else if let Some(var_decl) = stmt.as_variable_declaration()
             && var_decl.kind != VariableDeclarationKind::Const
-            && var_decl.declarations.iter().any(|decl|.as_variable_declaration() {
+            && var_decl.declarations.iter().any(|decl| {
                 let Some(init_call) = &decl.init else {
                     return false;
                 };

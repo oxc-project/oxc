@@ -79,7 +79,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
     fn is_simple_compare(arg: &FormalParameter, expr: &Expression, ctx: &LintContext) -> bool {
         let Some(ident) = arg.pattern.get_binding_identifier() else { return false };
 
-        if let Some(expr) = expr
+        if let Some(expr) = expr.as_binary_expression()
             && ctx.symbol_references(ident.symbol_id()).count() == 1
             && expr.operator == BinaryOperator::StrictEquality
             && (expr
@@ -87,7 +87,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
                 .get_identifier_reference()
                 .and_then(|ident| ctx.scoping().get_reference(ident.reference_id()).symbol_id())
                 == Some(ident.symbol_id())
-                || expr.right.get_identifier_reference().and_then(|ident|.as_binary_expression() {
+                || expr.right.get_identifier_reference().and_then(|ident| {
                     ctx.scoping().get_reference(ident.reference_id()).symbol_id()
                 }) == Some(ident.symbol_id()))
         {

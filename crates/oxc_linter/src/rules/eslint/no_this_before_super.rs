@@ -261,14 +261,14 @@ impl NoThisBeforeSuper {
         match arg.kind() {
             Argument::Super(_) | Argument::ThisExpression(_) => true,
             Argument::CallExpression(call_expr) => {
-                matches!(&call_expr.callee, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
-                    || matches!(&call_expr.callee,
+                matches!(call_expr.callee.kind(), ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
+                    || matches!(call_expr.callee.kind(),
                     ExpressionKind::StaticMemberExpression(static_member) if
                     matches!(static_member.object, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_)))
                     || Self::contains_this_or_super_in_args(&call_expr.arguments)
             }
             Argument::StaticMemberExpression(call_expr) => {
-                matches!(&call_expr.object, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
+                matches!(call_expr.object.kind(), ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
             }
             _ => false,
         }

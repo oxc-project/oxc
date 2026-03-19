@@ -283,8 +283,7 @@ fn to_strict_eq_operator_str(operator: BinaryOperator) -> (&'static str, &'stati
 }
 
 fn is_type_of(expr: &Expression) -> bool {
-    matches!(
-        expr,
+    matches!(expr.kind(),
         ExpressionKind::UnaryExpression(unary_expr) if matches!(unary_expr.operator, UnaryOperator::Typeof)
     )
 }
@@ -296,8 +295,7 @@ fn is_type_of_binary(binary_expr: &BinaryExpression) -> bool {
 
 /// Checks if operands are literals of the same type
 fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
-    matches!(
-        (left, right),
+    matches!((left, right).kind(),
         (ExpressionKind::BooleanLiteral(_), ExpressionKind::BooleanLiteral(_))
             | (ExpressionKind::NullLiteral(_), ExpressionKind::NullLiteral(_))
             | (ExpressionKind::StringLiteral(_), ExpressionKind::StringLiteral(_))
@@ -309,8 +307,7 @@ fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
 }
 
 fn is_null_check(binary_expr: &BinaryExpression) -> bool {
-    matches!(
-        (&binary_expr.left, &binary_expr.right),
+    matches!((&binary_expr.left, &binary_expr.right).kind(),
         (_, ExpressionKind::NullLiteral(_)) | (ExpressionKind::NullLiteral(_), _)
     )
 }

@@ -382,7 +382,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 }
 
 fn is_same_function<'a>(fn1: &Expression<'a>, fn2: &Function<'a>) -> bool {
-    matches!(fn1, ExpressionKind::FunctionExpression(function_expression)
+    matches!(fn1.kind(), ExpressionKind::FunctionExpression(function_expression)
         if get_function_identifier(function_expression) == get_function_identifier(fn2)
     )
 }

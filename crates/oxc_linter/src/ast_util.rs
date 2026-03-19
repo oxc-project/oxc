@@ -36,12 +36,12 @@ pub fn is_static_boolean<'a>(expr: &Expression<'a>, semantic: &Semantic<'a>) -> 
 
 /// Checks if a branch node of `LogicalExpression` short circuits the whole condition
 fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
+    if expr.is_literal() {
+        let boolean_value = expr.to_boolean(&WithoutGlobalReferenceInformation {});
+        return (op == LogicalOperator::Or && boolean_value == Some(true))
+            || (op == LogicalOperator::And && boolean_value == Some(false));
+    }
     match expr.kind() {
-        expr if expr.is_literal() => {
-            let boolean_value = expr.to_boolean(&WithoutGlobalReferenceInformation {});
-            (op == LogicalOperator::Or && boolean_value == Some(true))
-                || (op == LogicalOperator::And && boolean_value == Some(false))
-        }
         ExpressionKind::UnaryExpression(unary_expr) => {
             op == LogicalOperator::And && unary_expr.operator == UnaryOperator::Void
         }
@@ -77,12 +77,12 @@ pub trait IsConstant<'a, 'b> {
 
 impl<'a> IsConstant<'a, '_> for Expression<'a> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        match self {
-            Self::ArrowFunctionExpression(_)
-            | Self::FunctionExpression(_)
-            | Self::ClassExpression(_)
-            | Self::ObjectExpression(_) => true,
-            Self::TemplateLiteral(template) => {
+        match self.kind() {
+            ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ClassExpression(_)
+            | ExpressionKind::ObjectExpression(_) => true,
+            ExpressionKind::TemplateLiteral(template) => {
                 let test_quasis = in_boolean_position
                     && template.quasis.iter().any(|quasi| {
                         quasi.value.cooked.as_ref().is_some_and(|cooked| !cooked.is_empty())
@@ -91,24 +91,24 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                     template.expressions.iter().all(|expr| expr.is_constant(false, semantic));
                 test_quasis || test_expressions
             }
-            Self::ArrayExpression(expr) => {
+            ExpressionKind::ArrayExpression(expr) => {
                 if in_boolean_position {
                     return true;
                 }
                 expr.elements.iter().all(|element| element.is_constant(false, semantic))
             }
-            Self::UnaryExpression(expr) => match expr.operator {
+            ExpressionKind::UnaryExpression(expr) => match expr.operator {
                 UnaryOperator::Void => true,
                 UnaryOperator::Typeof if in_boolean_position => true,
                 UnaryOperator::LogicalNot => expr.argument.is_constant(true, semantic),
                 _ => expr.argument.is_constant(false, semantic),
             },
-            Self::BinaryExpression(expr) => {
+            ExpressionKind::BinaryExpression(expr) => {
                 expr.operator != BinaryOperator::In
                     && expr.left.is_constant(false, semantic)
                     && expr.right.is_constant(false, semantic)
             }
-            Self::LogicalExpression(expr) => {
+            ExpressionKind::LogicalExpression(expr) => {
                 let is_left_constant = expr.left.is_constant(in_boolean_position, semantic);
                 let is_right_constant = expr.right.is_constant(in_boolean_position, semantic);
                 let is_left_short_circuit =
@@ -120,8 +120,8 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                     || is_left_short_circuit
                     || is_right_short_circuit
             }
-            Self::NewExpression(_) => in_boolean_position,
-            Self::AssignmentExpression(expr) => match expr.operator {
+            ExpressionKind::NewExpression(_) => in_boolean_position,
+            ExpressionKind::AssignmentExpression(expr) => match expr.operator {
                 AssignmentOperator::Assign => expr.right.is_constant(in_boolean_position, semantic),
                 AssignmentOperator::LogicalAnd if in_boolean_position => {
                     is_logical_identity(LogicalOperator::And, &expr.right)
@@ -131,16 +131,16 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 }
                 _ => false,
             },
-            Self::SequenceExpression(sequence_expr) => sequence_expr
+            ExpressionKind::SequenceExpression(sequence_expr) => sequence_expr
                 .expressions
                 .iter()
                 .last()
                 .is_some_and(|last| last.is_constant(in_boolean_position, semantic)),
-            Self::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, semantic),
-            Self::ParenthesizedExpression(paren_expr) => {
+            ExpressionKind::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, semantic),
+            ExpressionKind::ParenthesizedExpression(paren_expr) => {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)
             }
-            Self::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 ident.name == "undefined" && semantic.is_reference_to_global_variable(ident)
             }
             _ if self.is_literal() => true,
@@ -151,7 +151,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
 
 impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        if let Some(ident) = &self.callee.as_identifier()
+        if let Some(ident) = self.callee.as_identifier()
             && ident.name == "Boolean"
             && self.arguments.iter().next().is_none_or(|first| first.is_constant(true, semantic))
         {
@@ -926,7 +926,7 @@ pub fn get_outer_member_expression<'a, 'b>(
                     node.object.as_member_expression()
                     && !object.property.name.is_empty()
                 {
-                    node = object;
+                    node = &object;
 
                     continue;
                 }

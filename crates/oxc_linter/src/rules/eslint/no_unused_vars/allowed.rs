@@ -97,8 +97,7 @@ fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration
     // an export statement, then only exported items are available externally
     if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &namespace.body {
         let has_export = block.body.iter().any(|stmt| {
-            matches!(
-                stmt,
+            matches!(stmt.kind(),
                 StatementKind::ExportAllDeclaration(_)
                     | StatementKind::ExportDefaultDeclaration(_)
                     | StatementKind::ExportNamedDeclaration(_)

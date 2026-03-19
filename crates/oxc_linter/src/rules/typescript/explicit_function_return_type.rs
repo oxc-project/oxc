@@ -582,8 +582,7 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 }
 
 fn is_function(expr: &Expression) -> bool {
-    matches!(
-        expr.get_inner_expression(),
+    matches!(expr.get_inner_expression().kind(),
         ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }

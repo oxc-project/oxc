@@ -391,9 +391,9 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else {
         return false;
     };
-    if let Some(super_class) = &class_expr.super_class {.as_member_expression()
-        if let Some(member_expr) = super_class
-            && let ExpressionKind::Identifier(ident) = member_expr.object()
+    if let Some(super_class) = &class_expr.super_class {
+        if let Some(member_expr) = super_class.as_member_expression()
+            && let Some(ident) = member_expr.object().as_identifier()
         {
             return ident.name == PRAGMA
                 && member_expr

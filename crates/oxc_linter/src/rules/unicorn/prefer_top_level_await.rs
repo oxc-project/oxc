@@ -161,8 +161,8 @@ impl Rule for PreferTopLevelAwait {
             {
                 let Some(init) = &var_decl.init else { return };
 
-                if !matches!(init.get_inner_expression(), ExpressionKind::ArrowFunctionExpression(func) if func.r#async)
-                    && !matches!(init.get_inner_expression(), ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator)
+                if !matches!(init.get_inner_expression().kind(), ExpressionKind::ArrowFunctionExpression(func) if func.r#async)
+                    && !matches!(init.get_inner_expression().kind(), ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator)
                 {
                     return;
                 }

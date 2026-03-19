@@ -195,8 +195,7 @@ impl Rule for PreferObjectSpread {
                         }
                     } else {
                         let span = expression.span();
-                        let replacement = if matches!(
-                            expression,
+                        let replacement = if matches!(expression.kind(),
                             ExpressionKind::ArrowFunctionExpression(_)
                                 | ExpressionKind::AssignmentExpression(_)
                                 | ExpressionKind::ConditionalExpression(_)

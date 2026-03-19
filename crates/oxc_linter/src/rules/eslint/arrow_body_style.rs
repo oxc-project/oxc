@@ -230,7 +230,7 @@ impl ArrowBodyStyle {
         let should_report = *mode == Mode::Always
             || (*mode == Mode::AsNeeded
                 && config.require_return_for_object_literal
-                && matches!(inner_expr, Some(ExpressionKind::ObjectExpression(_))));
+                && inner_expr.is_some_and(|e| e.is_object_expression()));
 
         if !should_report {
             return;
@@ -281,10 +281,7 @@ impl ArrowBodyStyle {
                 if let Some(return_statement) = &body.statements[0].as_return_statement() {
                     // Skip if requireReturnForObjectLiteral and returning an object
                     if self.1.require_return_for_object_literal
-                        && matches!(
-                            return_statement.argument,
-                            Some(ExpressionKind::ObjectExpression(_))
-                        )
+                        && return_statement.argument.is_some_and(|e| e.is_object_expression())
                     {
                         return;
                     }

@@ -241,18 +241,18 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
                                         first_comment.span.start == operator_span.end
                                     } else {
                                         // e.g. x /=/^abc/
-                                        matches!(right_expr, ExpressionKind::RegExpLiteral(regex_literal) if regex_literal.span.start == operator_span.end)
+                                        matches!(right_expr.kind(), ExpressionKind::RegExpLiteral(regex_literal) if regex_literal.span.start == operator_span.end)
                                     }
                                 }
                                 // x+=+y => x=x+ +y;
                                 BinaryOperator::Addition if no_gap => {
-                                    matches!(right_expr, ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryPlus)
-                                        || matches!(right_expr, ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Increment)
+                                    matches!(right_expr.kind(), ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryPlus)
+                                        || matches!(right_expr.kind(), ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Increment)
                                 }
                                 // x-=-y => x= x- -y
                                 BinaryOperator::Subtraction if no_gap => {
-                                    matches!(right_expr, ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryNegation)
-                                        || matches!(right_expr, ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Decrement)
+                                    matches!(right_expr.kind(), ExpressionKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::UnaryNegation)
+                                        || matches!(right_expr.kind(), ExpressionKind::UpdateExpression(update_expr) if update_expr.operator == UpdateOperator::Decrement)
                                 }
                                 _ => false,
                             };
@@ -278,13 +278,12 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     };
     match expr.kind() {
         MemberExpression::ComputedMemberExpression(computed_expr) => {
-            matches!(
-                computed_expr.object,
+            matches!(computed_expr.object.kind(),
                 ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_)
             ) && computed_expr.expression.is_literal()
         }
         MemberExpression::StaticMemberExpression(static_expr) => {
-            matches!(static_expr.object, ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_))
+            matches!(static_expr.object.kind(), ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_))
         }
         MemberExpression::PrivateFieldExpression(_) => false,
     }
@@ -300,7 +299,7 @@ fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
     let Some(simple_assignment_target) = left.as_simple_assignment_target() else { return false };
     if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
-        return matches!(right, ExpressionKind::Identifier(id2) if id2.name == id1.name);
+        return matches!(right.kind(), ExpressionKind::Identifier(id2) if id2.name == id1.name);
     }
 
     let Some(left_member_expr) = simple_assignment_target.as_member_expression() else {

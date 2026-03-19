@@ -75,8 +75,7 @@ impl Rule for PreferReflectApply {
         };
 
         if call_expr.optional
-            || matches!(
-                member_expr.object(),
+            || matches!(member_expr.object().kind(),
                 ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
             )
             || member_expr.object().is_literal()

@@ -357,8 +357,7 @@ fn get_operand_text<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> &'a str
 }
 
 fn is_numeric_literal(expr: &Expression) -> bool {
-    matches!(
-        expr.without_parentheses(),
+    matches!(expr.without_parentheses().kind(),
         ExpressionKind::NumericLiteral(_) | ExpressionKind::BigIntLiteral(_)
     )
 }

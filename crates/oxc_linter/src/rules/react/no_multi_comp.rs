@@ -237,7 +237,7 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
             let prop_name = member.property.name.as_str();
             if is_react_component_name(prop_name) {
                 let is_component = expression_contains_jsx(&assign.right)
-                    || matches!(&assign.right, ExpressionKind::FunctionExpression(func) if returns_component(func));
+                    || matches!(assign.right.kind(), ExpressionKind::FunctionExpression(func) if returns_component(func));
 
                 if is_component {
                     self.record_component(prop_name.to_string(), assign.span, true);
@@ -348,7 +348,7 @@ fn is_passthrough_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> bool {
 
 /// Check if statements consist of a single return with a simple JSX passthrough
 fn is_single_return_passthrough(statements: &[Statement]) -> bool {
-    matches!(statements, [StatementKind::ReturnStatement(ret)] if ret.argument.as_ref().is_some_and(is_simple_jsx_passthrough))
+    matches!(statements.kind(), [StatementKind::ReturnStatement(ret)] if ret.argument.as_ref().is_some_and(is_simple_jsx_passthrough))
 }
 
 /// Check if an expression is a simple JSX element that just renders another component
@@ -374,7 +374,7 @@ fn is_simple_jsx_passthrough(expr: &Expression) -> bool {
 fn returns_component(func: &Function) -> bool {
     func.body.as_ref().is_some_and(|body| {
         body.statements.iter().any(|stmt| {
-            matches!(stmt, StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(expression_contains_jsx))
+            matches!(stmt.kind(), StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(expression_contains_jsx))
         })
     })
 }
@@ -389,12 +389,12 @@ fn is_function_returning_null(expr: &Expression) -> bool {
             }
             // `() => { return null; }`
             arrow.body.statements.iter().any(|stmt| {
-                matches!(stmt, StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
+                matches!(stmt.kind(), StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
         }
         ExpressionKind::FunctionExpression(func) => func.body.as_ref().is_some_and(|body| {
             body.statements.iter().any(|stmt| {
-                matches!(stmt, StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
+                matches!(stmt.kind(), StatementKind::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
         }),
         _ => false,

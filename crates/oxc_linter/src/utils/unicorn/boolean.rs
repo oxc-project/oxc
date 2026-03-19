@@ -18,8 +18,7 @@ fn is_logic_not_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     is_logic_not(&parent.kind())
 }
 pub fn is_boolean_call(kind: &AstKind) -> bool {
-    matches!(
-        kind,
+    matches!(kind.kind(),
         AstKind::CallExpression(CallExpression {
             callee: ExpressionKind::Identifier(ident),
             arguments,

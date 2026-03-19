@@ -123,8 +123,7 @@ impl Rule for VarsOnTop {
 }
 
 fn looks_like_directive(node: &Statement) -> bool {
-    matches!(
-        node,
+    matches!(node.kind(),
         StatementKind::ExpressionStatement(expr_stmt) if &expr_stmt.expression.is_string_literal()
     )
 }

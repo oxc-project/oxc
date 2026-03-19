@@ -122,7 +122,7 @@ impl Rule for PreferExponentiationOperator {
 
 fn does_base_need_parens(expr: &Expression) -> bool {
     let expr = expr.without_parentheses();
-    if matches!(expr, ExpressionKind::UnaryExpression(_) | ExpressionKind::AwaitExpression(_)) {
+    if matches!(expr.kind(), ExpressionKind::UnaryExpression(_) | ExpressionKind::AwaitExpression(_)) {
         return true;
     }
     if let Some(prec) = get_precedence(expr) {

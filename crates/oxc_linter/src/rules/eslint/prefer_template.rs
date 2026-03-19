@@ -76,9 +76,9 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
     let right = expr.right.get_inner_expression();
 
     let left_is_string =
-        matches!(left, ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_));
+        matches!(left.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_));
     let right_is_string =
-        matches!(right, ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_));
+        matches!(right.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_));
 
     match (left_is_string, right_is_string) {
         // 'a' + 'v'

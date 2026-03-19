@@ -156,8 +156,8 @@ impl PreferComparisonMatcher {
     }
 
     fn is_comparing_to_string(expr: &BinaryExpression) -> bool {
-        matches!(expr.left, ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
-            || matches!(expr.right, ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
+        matches!(expr.left.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
+            || matches!(expr.right.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
     }
 
     fn determine_matcher(operator: BinaryOperator, negated: bool) -> Option<&'static str> {

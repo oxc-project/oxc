@@ -403,8 +403,7 @@ fn get_key_name_and_check_literal<'a>(
         {
             false
         } else {
-            matches!(
-                prop_key.as_expression().unwrap(),
+            matches!(prop_key.as_expression().unwrap().kind(),
                 ExpressionKind::BooleanLiteral(_)
                     | ExpressionKind::NullLiteral(_)
                     | ExpressionKind::StringLiteral(_)

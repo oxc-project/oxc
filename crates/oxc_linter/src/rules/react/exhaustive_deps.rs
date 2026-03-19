@@ -1105,8 +1105,7 @@ fn is_stable_value<'a, 'b>(
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
-                && (matches!(
-                    init,
+                && (matches!(init.kind(),
                     ExpressionKind::BooleanLiteral(_)
                         | ExpressionKind::NullLiteral(_)
                         | ExpressionKind::NumericLiteral(_)

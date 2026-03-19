@@ -97,7 +97,7 @@ declare_oxc_lint!(
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, ExpressionKind::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr.kind(), ExpressionKind::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {

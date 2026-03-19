@@ -477,8 +477,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         returns.iter().any(|ret| {
-            matches!(
-                ret.argument,
+            matches!(ret.argument.kind(),
                 Some(ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_))
             )
         })
@@ -737,8 +736,7 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
 }
 
 fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
-    matches!(
-        get_typed_inner_expression(expr),
+    matches!(get_typed_inner_expression(expr).kind(),
         ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }

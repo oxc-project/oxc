@@ -182,8 +182,7 @@ impl Rule for NoUnneededTernary {
 }
 
 fn without_parenthesize(node: &Expression) -> bool {
-    matches!(
-        node,
+    matches!(node.kind(),
         ExpressionKind::Identifier(_)
             | ExpressionKind::UnaryExpression(_)
             | ExpressionKind::StaticMemberExpression(_)

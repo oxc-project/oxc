@@ -614,7 +614,7 @@ fn has_component_methods_in_object(
             && obj_prop.method
             && ignore_transpiler_name
             && is_react_component_name(&ident.name)
-            && matches!(&obj_prop.value, ExpressionKind::FunctionExpression(f) if function_contains_jsx(f))
+            && matches!(obj_prop.value.kind(), ExpressionKind::FunctionExpression(f) if function_contains_jsx(f))
         {
             return true;
         }

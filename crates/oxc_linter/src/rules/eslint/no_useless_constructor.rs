@@ -273,7 +273,7 @@ fn is_matching_identifier_pair<'a>(param: &BindingPattern<'a>, arg: &Argument<'a
 fn is_matching_rest_spread_pair<'a>(rest: &FormalParameterRest<'a>, arg: &Argument<'a>) -> bool {
     match (&rest.rest.argument, arg).kind() {
         (BindingPattern::BindingIdentifier(param), Argument::SpreadElement(spread)) => {
-            matches!(&spread.argument, ExpressionKind::Identifier(ident) if param.name == ident.name)
+            matches!(spread.argument.kind(), ExpressionKind::Identifier(ident) if param.name == ident.name)
         }
         _ => false,
     }

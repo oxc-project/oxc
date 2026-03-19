@@ -315,16 +315,14 @@ impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
 
 impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
     fn visit_expression(&mut self, expression: &Expression<'a>) {
-        let is_group_expression = matches!(
-            expression,
+        let is_group_expression = matches!(expression.kind(),
             ExpressionKind::BinaryExpression(_) | ExpressionKind::ConditionalExpression(_)
         );
         if is_group_expression {
             self.group_stack.push(expression.span());
         }
 
-        if matches!(
-            expression,
+        if matches!(expression.kind(),
             ExpressionKind::CallExpression(_)
                 | ExpressionKind::StaticMemberExpression(_)
                 | ExpressionKind::ComputedMemberExpression(_)
@@ -342,8 +340,7 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
             return;
         }
 
-        if matches!(
-            expression,
+        if matches!(expression.kind(),
             ExpressionKind::FunctionExpression(_)
                 | ExpressionKind::ArrowFunctionExpression(_)
                 | ExpressionKind::ClassExpression(_)

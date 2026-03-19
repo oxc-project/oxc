@@ -113,7 +113,7 @@ fn diagnose_variable_declarator(
     parent_kind: Option<AstKind>,
 ) {
     // `let foo = null;`
-    if matches!(&variable_declarator.init, Some(ExpressionKind::NullLiteral(expr)) if expr.span == null_literal.span)
+    if matches!(variable_declarator.init.kind(), Some(ExpressionKind::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
         ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {

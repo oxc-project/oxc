@@ -160,7 +160,7 @@ impl Rule for ValidTypeof {
         }
 
         if self.require_string_literals
-            && !matches!(sibling, ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
+            && !matches!(sibling.kind(), ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
         {
             ctx.diagnostic(not_string(None, sibling.span()));
         }

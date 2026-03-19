@@ -99,8 +99,7 @@ pub fn is_import_symbol(
 }
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
-    matches!(
-        expr,
+    matches!(expr.kind(),
         ExpressionKind::ArrayExpression(_)
             | ExpressionKind::ArrowFunctionExpression(_)
             | ExpressionKind::ClassExpression(_)
