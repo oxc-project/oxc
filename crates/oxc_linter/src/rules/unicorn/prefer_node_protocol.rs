@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSModuleReference},
+    ast::{Expression, TSModuleReference, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -47,8 +47,8 @@ declare_oxc_lint!(
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
-            AstKind::ImportExpression(import) => match &import.source {
-                Expression::StringLiteral(str_lit) => Some((str_lit.value, str_lit.span)),
+            AstKind::ImportExpression(import) => match import.source.kind() {
+                ExpressionKind::StringLiteral(str_lit) => Some((str_lit.value, str_lit.span)),
                 _ => None,
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {

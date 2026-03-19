@@ -5,8 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
-        match_member_expression,
-    },
+        match_member_expression, ExpressionKind},
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
@@ -275,28 +274,28 @@ pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> CompactStr {
 pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
     let mut chain: Vec<Cow<'a, str>> = Vec::new();
 
-    match expr {
-        Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
-        Expression::StringLiteral(string_literal) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
+        ExpressionKind::StringLiteral(string_literal) => {
             chain.push(Cow::Borrowed(&string_literal.value));
         }
-        Expression::TemplateLiteral(template_literal) => {
+        ExpressionKind::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.single_quasi() {
                 chain.push(Cow::Borrowed(quasi.as_str()));
             }
         }
-        Expression::TaggedTemplateExpression(tagged_expr) => {
+        ExpressionKind::TaggedTemplateExpression(tagged_expr) => {
             chain.extend(get_node_name_vec(&tagged_expr.tag));
         }
-        Expression::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
-        match_member_expression!(Expression) => {
+        ExpressionKind::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
             if let Some(name) = member_expr.static_property_name() {
                 chain.push(Cow::Borrowed(name));
             }
         }
-        Expression::NewExpression(new_expr) => {
+        ExpressionKind::NewExpression(new_expr) => {
             chain.extend(get_node_name_vec(&new_expr.callee));
         }
         _ => {}

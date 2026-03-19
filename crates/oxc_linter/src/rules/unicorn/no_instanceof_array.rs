@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -53,8 +53,8 @@ impl Rule for NoInstanceofArray {
             return;
         }
 
-        match &expr.right.without_parentheses() {
-            Expression::Identifier(identifier) if identifier.name == "Array" => {
+        match &expr.right.without_parentheses().kind() {
+            ExpressionKind::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(no_instanceof_array_diagnostic(expr.span), |fixer| {
                     let argument = fixer.source_range(expr.left.span());
                     let mut code = String::with_capacity(15 + argument.len());

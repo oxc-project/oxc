@@ -56,7 +56,7 @@ impl Rule for NoWebpackLoaderSyntax {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(identifier) = &call_expr.callee {
+                if let Some(identifier) = &call_expr.callee.as_identifier() {
                     if identifier.name != "require" {
                         return;
                     }

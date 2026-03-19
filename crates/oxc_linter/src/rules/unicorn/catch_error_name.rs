@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, Expression},
+    ast::{Argument, BindingPattern, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -175,9 +175,9 @@ impl CatchErrorName {
     fn check_function_arguments(&self, arg: &Argument, ctx: &LintContext) {
         let Some(expr) = arg.as_expression() else { return };
 
-        let first_arg = match expr.without_parentheses() {
-            Expression::ArrowFunctionExpression(arrow_expr) => arrow_expr.params.items.first(),
-            Expression::FunctionExpression(fn_expr) => fn_expr.params.items.first(),
+        let first_arg = match expr.without_parentheses().kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow_expr) => arrow_expr.params.items.first(),
+            ExpressionKind::FunctionExpression(fn_expr) => fn_expr.params.items.first(),
             _ => return,
         };
 

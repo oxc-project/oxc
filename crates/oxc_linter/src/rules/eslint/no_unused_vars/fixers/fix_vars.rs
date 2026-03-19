@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
+    ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator, ExpressionKind},
 };
 use oxc_semantic::NodeId;
 use oxc_span::{CompactStr, GetSpan, Ident};
@@ -148,15 +148,15 @@ impl NoUnusedVars {
 }
 
 fn is_skipped_init<'a>(symbol: &Symbol<'_, 'a>, init: &Expression<'a>) -> bool {
-    match init.get_inner_expression() {
+    match init.get_inner_expression().kind() {
         // Do not delete function expressions or arrow functions declared in the
         // root scope
-        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+        ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_) => {
             symbol.is_root()
         }
         // Skip await expressions, since these are often effectful (e.g.
         // sending a POST request to an API and then not using the response)
-        Expression::AwaitExpression(_) => true,
+        ExpressionKind::AwaitExpression(_) => true,
         _ => false,
     }
 }

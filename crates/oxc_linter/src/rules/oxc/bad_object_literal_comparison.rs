@@ -95,7 +95,7 @@ impl Rule for BadObjectLiteralComparison {
 }
 
 fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
-    if let Expression::ObjectExpression(object_expression) = maybe_empty_obj_expr {
+    if let Some(object_expression) = maybe_empty_obj_expr.as_object_expression() {
         object_expression.properties.is_empty()
     } else {
         false
@@ -103,7 +103,7 @@ fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
 }
 
 fn is_empty_array_expression(maybe_empty_array_expr: &Expression) -> bool {
-    if let Expression::ArrayExpression(array_expression) = maybe_empty_array_expr {
+    if let Some(array_expression) = maybe_empty_array_expr.as_array_expression() {
         array_expression.elements.is_empty()
     } else {
         false

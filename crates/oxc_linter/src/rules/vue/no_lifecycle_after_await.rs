@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression, ObjectPropertyKind,
-    },
+        ObjectExpression, ObjectPropertyKind, ExpressionKind},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -96,10 +95,10 @@ impl Rule for NoLifecycleAfterAwait {
             }
             // e.g. `defineComponent({ setup() {} })`
             AstKind::CallExpression(call_expr) => {
-                if let Some(ident) = call_expr.callee.get_identifier_reference()
+                if let Some(ident) = call_expr.callee.get_identifier_reference().as_expression()
                     && ident.name == "defineComponent"
-                    && let Some(first_arg) = call_expr.arguments.first()
-                    && let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression()
+                    && let Some(first_arg) = call_expr.arguments.first().as_expression()
+                    && let Some(ExpressionKind::ObjectExpression(obj_expr)) = first_arg
                 {
                     check_setup_in_object(obj_expr, ctx);
                 }
@@ -124,9 +123,9 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let function_body_opt = match &setup_prop.value {
-        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
+    let function_body_opt = match setup_prop.value.kind() {
+        ExpressionKind::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+        ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
         _ => None,
     };
     let Some(function_body) = function_body_opt else {

@@ -132,7 +132,7 @@ impl Rule for NoStringRefs {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                if matches!(member_expr.object(), Expression::ThisExpression(_))
+                if member_expr.object().is_this_expression()
                     && member_expr.static_property_name().is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {

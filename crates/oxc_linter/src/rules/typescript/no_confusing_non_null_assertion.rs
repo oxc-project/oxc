@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, SimpleAssignmentTarget},
+    ast::{Expression, SimpleAssignmentTarget, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -71,15 +71,15 @@ fn confusing_non_null_assignment_assertion_diagnostic(op_str: &str, span: Span) 
 }
 
 fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
-    match expr {
-        Expression::TSNonNullExpression(_) => Some(0),
-        Expression::BinaryExpression(binary_expr) => {
+    match expr.kind() {
+        ExpressionKind::TSNonNullExpression(_) => Some(0),
+        ExpressionKind::BinaryExpression(binary_expr) => {
             get_depth_ends_in_bang(&binary_expr.right).map(|x| x + 1)
         }
-        Expression::UnaryExpression(unary_expr) => {
+        ExpressionKind::UnaryExpression(unary_expr) => {
             get_depth_ends_in_bang(&unary_expr.argument).map(|x| x + 1)
         }
-        Expression::AssignmentExpression(assignment_expr) => {
+        ExpressionKind::AssignmentExpression(assignment_expr) => {
             get_depth_ends_in_bang(&assignment_expr.right).map(|x| x + 1)
         }
         _ => None,

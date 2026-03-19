@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -95,9 +95,9 @@ impl Rule for NoAsyncPromiseExecutor {
         else {
             return;
         };
-        let mut span = match expression.get_inner_expression() {
-            Expression::ArrowFunctionExpression(arrow) if arrow.r#async => arrow.span,
-            Expression::FunctionExpression(func) if func.r#async => func.span,
+        let mut span = match expression.get_inner_expression().kind() {
+            ExpressionKind::ArrowFunctionExpression(arrow) if arrow.r#async => arrow.span,
+            ExpressionKind::FunctionExpression(func) if func.r#async => func.span,
             _ => return,
         };
 

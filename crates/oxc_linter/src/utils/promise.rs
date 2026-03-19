@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, NewExpression},
+    ast::{CallExpression, Expression, IdentifierReference, NewExpression, ExpressionKind},
 };
 use oxc_semantic::SymbolId;
 
@@ -68,8 +68,8 @@ fn classify_receiver<'a>(
     ctx: &LintContext<'a>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> ReceiverKind {
-    match expr.get_inner_expression() {
-        Expression::CallExpression(call_expr) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::CallExpression(call_expr) => {
             if is_promise(call_expr).is_some() {
                 ReceiverKind::PromiseLike
             } else {
@@ -77,20 +77,20 @@ fn classify_receiver<'a>(
                 ReceiverKind::Unknown
             }
         }
-        Expression::NewExpression(new_expr) => {
+        ExpressionKind::NewExpression(new_expr) => {
             if is_promise_constructor(new_expr) {
                 ReceiverKind::PromiseLike
             } else {
                 ReceiverKind::NotPromise
             }
         }
-        Expression::Identifier(ident) => classify_identifier_receiver(ident, ctx, visited),
+        ExpressionKind::Identifier(ident) => classify_identifier_receiver(ident, ctx, visited),
         // These expression kinds are never Promise instances.
-        Expression::ObjectExpression(_)
-        | Expression::ArrayExpression(_)
-        | Expression::FunctionExpression(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::ClassExpression(_) => ReceiverKind::NotPromise,
+        ExpressionKind::ObjectExpression(_)
+        | ExpressionKind::ArrayExpression(_)
+        | ExpressionKind::FunctionExpression(_)
+        | ExpressionKind::ArrowFunctionExpression(_)
+        | ExpressionKind::ClassExpression(_) => ReceiverKind::NotPromise,
         _ => ReceiverKind::Unknown,
     }
 }

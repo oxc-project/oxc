@@ -8,8 +8,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
-        ObjectPropertyKind,
-    },
+        ObjectPropertyKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -203,14 +202,14 @@ impl ButtonHasType {
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
-        match expr.without_parentheses() {
-            Expression::StringLiteral(str) => {
+        match expr.without_parentheses().kind() {
+            ExpressionKind::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }
-            Expression::TemplateLiteral(template_literal) => template_literal
+            ExpressionKind::TemplateLiteral(template_literal) => template_literal
                 .single_quasi()
                 .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),
-            Expression::ConditionalExpression(conditional_expr) => {
+            ExpressionKind::ConditionalExpression(conditional_expr) => {
                 self.is_valid_button_type_prop_expression(&conditional_expr.consequent)
                     && self.is_valid_button_type_prop_expression(&conditional_expr.alternate)
             }

@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind,
-    },
+        ObjectPropertyKind, ExpressionKind},
 };
 
 use crate::{ContextSubHost, LintContext};
@@ -91,9 +90,9 @@ pub fn check_define_macro_call_expression(
         return Some(DefineMacroProblem::DefineInBoth);
     }
 
-    match expression {
-        Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
-        Expression::Identifier(identifier) => {
+    match expression.kind() {
+        ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_) => None,
+        ExpressionKind::Identifier(identifier) => {
             if !is_non_local_reference(identifier, ctx) {
                 return Some(DefineMacroProblem::ReferencingLocally);
             }

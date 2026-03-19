@@ -101,7 +101,7 @@ fn get_non_negative_integer_argument(argument: &Argument<'_>) -> Option<f64> {
         return None;
     }
 
-    let Expression::NumericLiteral(number) = argument.to_expression().get_inner_expression() else {
+    let Some(number) = argument.to_expression().get_inner_expression().as_numeric_literal() else {
         return None;
     };
 

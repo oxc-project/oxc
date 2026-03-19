@@ -203,7 +203,7 @@ fn is_allowed_value(value: &str) -> bool {
 }
 
 fn validate_sandbox_property(object_property: &ObjectProperty, ctx: &LintContext) {
-    if let Expression::StringLiteral(str) = object_property.value.without_parentheses() {
+    if let Some(str) = object_property.value.without_parentheses().as_string_literal() {
         validate_sandbox_value(str, ctx);
     }
 }

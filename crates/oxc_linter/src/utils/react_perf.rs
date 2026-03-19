@@ -88,7 +88,7 @@ where
         // check for new objects/arrays/etc declared within the render function,
         // which is effectively the same as passing a new object/array/etc
         // directly as a prop.
-        let Expression::Identifier(ident) = expr else {
+        let Some(ident) = expr.as_identifier() else {
             return;
         };
         let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
@@ -120,7 +120,7 @@ where
 }
 
 pub fn is_constructor_matching_name(callee: &Expression<'_>, name: &str) -> bool {
-    let Expression::Identifier(ident) = callee else {
+    let Some(ident) = callee.as_identifier() else {
         return false;
     };
     ident.name == name

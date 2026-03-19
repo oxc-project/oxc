@@ -129,8 +129,7 @@ impl Rule for InlineScriptId {
                         }
                     }
                     JSXAttributeItem::SpreadAttribute(spread_attr) => {
-                        if let Expression::ObjectExpression(obj_expr) =
-                            spread_attr.argument.without_parentheses()
+                        if let Some(obj_expr) = spread_attr.argument.without_parentheses().as_object_expression()
                         {
                             for prop in &obj_expr.properties {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop

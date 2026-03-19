@@ -10,8 +10,7 @@ use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
-        JSXExpressionContainer,
-    },
+        JSXExpressionContainer, ExpressionKind},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
@@ -461,8 +460,8 @@ impl JsxCurlyBracePresence {
     ) {
         let Some(inner) = container.expression.as_expression() else { return };
         let allowed = if parent_is_attribute { self.props } else { self.children };
-        match inner {
-            Expression::JSXFragment(_) => {
+        match inner.kind() {
+            ExpressionKind::JSXFragment(_) => {
                 if !parent_is_attribute
                     && self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
@@ -470,7 +469,7 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
-            Expression::JSXElement(el) => {
+            ExpressionKind::JSXElement(el) => {
                 if parent_is_attribute {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
                         report_unnecessary_curly_for_attribute_value(ctx, container, inner.span());
@@ -481,7 +480,7 @@ impl JsxCurlyBracePresence {
                     report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
-            Expression::StringLiteral(string) => {
+            ExpressionKind::StringLiteral(string) => {
                 if allowed.is_never() {
                     let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
                     if is_allowed_string_like_in_container(
@@ -500,7 +499,7 @@ impl JsxCurlyBracePresence {
                     }
                 }
             }
-            Expression::TemplateLiteral(template) => {
+            ExpressionKind::TemplateLiteral(template) => {
                 if allowed.is_never() && template.is_no_substitution_template() {
                     let string = template.single_quasi().unwrap();
                     if !parent_is_attribute && contains_quote_characters(string.as_str())
@@ -794,12 +793,12 @@ fn has_adjacent_jsx_expression_containers<'a>(
     // element: &JSXElement<'a>,
 ) -> bool {
     let parent = ctx.nodes().parent_kind(node_id);
-    let children = match parent {
+    let children = match parent.kind() {
         AstKind::JSXElement(el) => &el.children,
         AstKind::JSXFragment(fragment) => &fragment.children,
-        AstKind::ExpressionStatement(expr) => match &expr.expression {
-            Expression::JSXElement(el) => &el.children,
-            Expression::JSXFragment(fragment) => &fragment.children,
+        AstKind::ExpressionStatement(expr) => match expr.expression.kind() {
+            ExpressionKind::JSXElement(el) => &el.children,
+            ExpressionKind::JSXFragment(fragment) => &fragment.children,
             _ => {
                 return false;
             }

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -66,9 +66,9 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        let name = match call_expr.callee.without_parentheses() {
-            Expression::Identifier(v) => v.name,
-            Expression::StaticMemberExpression(v) => v.property.name,
+        let name = match call_expr.callee.without_parentheses().kind() {
+            ExpressionKind::Identifier(v) => v.name,
+            ExpressionKind::StaticMemberExpression(v) => v.property.name,
             _ => return,
         };
 

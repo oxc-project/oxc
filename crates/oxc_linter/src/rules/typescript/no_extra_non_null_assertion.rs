@@ -77,7 +77,7 @@ impl Rule for NoExtraNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let expr = match node.kind() {
             AstKind::TSNonNullExpression(expr) => {
-                if let Expression::TSNonNullExpression(expr) = expr.expression.without_parentheses()
+                if let Some(expr) = expr.expression.without_parentheses().as_ts_non_null_expression()
                 {
                     Some(expr)
                 } else {
@@ -85,21 +85,21 @@ impl Rule for NoExtraNonNullAssertion {
                 }
             }
             AstKind::StaticMemberExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
+                if let Some(expr) = expr.object.without_parentheses().as_ts_non_null_expression() {
                     Some(expr)
                 } else {
                     None
                 }
             }
             AstKind::ComputedMemberExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
+                if let Some(expr) = expr.object.without_parentheses().as_ts_non_null_expression() {
                     Some(expr)
                 } else {
                     None
                 }
             }
             AstKind::CallExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.callee.without_parentheses() {
+                if let Some(expr) = expr.callee.without_parentheses().as_ts_non_null_expression() {
                     Some(expr)
                 } else {
                     None

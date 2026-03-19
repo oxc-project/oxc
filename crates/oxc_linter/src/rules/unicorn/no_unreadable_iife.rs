@@ -58,19 +58,17 @@ impl Rule for NoUnreadableIife {
             return;
         };
 
-        let Expression::ArrowFunctionExpression(arrow_expr) =
-            &call_expr.callee.without_parentheses()
-        else {
+        let Some(arrow_expr) = &call_expr.callee.without_parentheses().as_arrow_function_expression() else {
             return;
         };
 
         if !arrow_expr.expression {
             return;
         }
-        let Statement::ExpressionStatement(expr_stmt) = &arrow_expr.body.statements[0] else {
+        let Some(expr_stmt) = &arrow_expr.body.statements[0].as_expression_statement() else {
             return;
         };
-        if matches!(expr_stmt.expression, Expression::ParenthesizedExpression(_)) {
+        if expr_stmt.expression.is_parenthesized_expression() {
             ctx.diagnostic(no_unreadable_iife_diagnostic(expr_stmt.span));
         }
     }

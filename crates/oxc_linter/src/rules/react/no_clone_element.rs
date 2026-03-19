@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -79,7 +79,7 @@ impl Rule for NoCloneElement {
 
         // import { cloneElement } from 'react';
         // cloneElement(...) / (cloneElement)(...)
-        if let Expression::Identifier(ident) = call_expr.callee.get_inner_expression()
+        if let Some(ident) = call_expr.callee.get_inner_expression().as_identifier()
             && ident.name == "cloneElement"
             && is_import_from_module(ident, "react", ctx)
         {
@@ -92,7 +92,7 @@ impl Rule for NoCloneElement {
         if let Some(member_expr) = call_expr.callee.get_inner_expression().get_member_expr()
             && let Some(name) = member_expr.static_property_name()
             && name == "cloneElement"
-            && let Expression::Identifier(ident) = member_expr.object()
+            && let ExpressionKind::Identifier(ident) = member_expr.object()
             && is_import_from_module(ident, "react", ctx)
         {
             ctx.diagnostic(no_clone_element_diagnostic(call_expr.callee.span()));

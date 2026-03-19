@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
-        VariableDeclarationKind, match_member_expression,
-    },
+        VariableDeclarationKind, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -61,15 +60,15 @@ trait ExpressionExt {
 
 impl ExpressionExt for Expression<'_> {
     fn is_increment_of(&self, var_name: &str) -> bool {
-        match self {
-            Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
+        match self.kind() {
+            ExpressionKind::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
                 (
                     SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
                     UpdateOperator::Increment,
                 ) => id.name == var_name,
                 _ => false,
             },
-            Expression::AssignmentExpression(expr) => {
+            ExpressionKind::AssignmentExpression(expr) => {
                 if !matches!(&expr.left,
                     AssignmentTarget::AssignmentTargetIdentifier(id)
                     if id.name == var_name
@@ -77,13 +76,13 @@ impl ExpressionExt for Expression<'_> {
                     return false;
                 }
 
-                match expr.operator {
+                match expr.operator.kind() {
                     AssignmentOperator::Addition => {
-                        matches!(&expr.right, Expression::NumericLiteral(lit)
+                        matches!(&expr.right, ExpressionKind::NumericLiteral(lit)
                             if (lit.value - 1f64).abs() < f64::EPSILON)
                     }
                     AssignmentOperator::Assign => {
-                        let Expression::BinaryExpression(bin_expr) = &expr.right else {
+                        let Some(bin_expr) = &expr.right.as_binary_expression() else {
                             return false;
                         };
 
@@ -91,9 +90,9 @@ impl ExpressionExt for Expression<'_> {
                             return false;
                         }
 
-                        match (&bin_expr.left, &bin_expr.right) {
-                            (Expression::Identifier(id), Expression::NumericLiteral(lit))
-                            | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
+                        match (&bin_expr.left, &bin_expr.right).kind() {
+                            (ExpressionKind::Identifier(id), ExpressionKind::NumericLiteral(lit))
+                            | (ExpressionKind::NumericLiteral(lit), ExpressionKind::Identifier(id)) => {
                                 id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
                             }
                             _ => false,
@@ -130,17 +129,17 @@ impl Rule for PreferForOf {
         };
 
         if !matches!(&decl.init,
-            Some(Expression::NumericLiteral(literal)) if literal.value == 0f64
+            Some(ExpressionKind::NumericLiteral(literal)) if literal.value == 0f64
         ) {
             return;
         }
 
-        let Some(Expression::BinaryExpression(test_expr)) = &for_stmt.test else {
+        let Some(ExpressionKind::BinaryExpression(test_expr)) = &for_stmt.test else {
             return;
         };
 
         if !matches!((&test_expr.left, test_expr.operator),
-            (Expression::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
+            (ExpressionKind::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
         ) {
             return;
         }
@@ -155,9 +154,9 @@ impl Rule for PreferForOf {
             }
 
             let array_expr = mem_expr.object();
-            let array_name = match mem_expr.object() {
-                Expression::Identifier(id) => id.name.as_str(),
-                expr @ match_member_expression!(Expression) => {
+            let array_name = match mem_expr.object().kind() {
+                ExpressionKind::Identifier(id) => id.name.as_str(),
+                expr @ match_member_expression!(ExpressionKind) => {
                     match expr.to_member_expression().static_property_name() {
                         Some(array_name) => array_name,
                         None => return,
@@ -235,7 +234,7 @@ fn prevents_for_of_array_access(
         return false;
     };
 
-    let Expression::Identifier(id) = mem_expr.object() else {
+    let Some(id) = mem_expr.object().as_identifier() else {
         return false;
     };
 

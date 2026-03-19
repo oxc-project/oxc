@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{AstKind, ast::{StatementKind, Statement}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -67,24 +67,24 @@ declare_oxc_lint!(
 impl Rule for GuardForIn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ForInStatement(for_in_statement) = node.kind() {
-            match &for_in_statement.body {
-                Statement::EmptyStatement(_) | Statement::IfStatement(_) => return,
-                Statement::BlockStatement(block_body) if block_body.body.is_empty() => return,
-                Statement::BlockStatement(block_body)
+            match &for_in_statement.body.kind() {
+                StatementKind::EmptyStatement(_) | StatementKind::IfStatement(_) => return,
+                StatementKind::BlockStatement(block_body) if block_body.body.is_empty() => return,
+                StatementKind::BlockStatement(block_body)
                     if block_body.body.len() == 1
-                        && matches!(block_body.body[0], Statement::IfStatement(_)) =>
+                        && block_body.body[0].is_if_statement() =>
                 {
                     return;
                 }
-                Statement::BlockStatement(block_body) if !block_body.body.is_empty() => {
+                StatementKind::BlockStatement(block_body) if !block_body.body.is_empty() => {
                     let block_statement = &block_body.body[0];
-                    if let Statement::IfStatement(i) = block_statement {
-                        if let Statement::ContinueStatement(_) = &i.consequent {
+                    if let Some(i) = block_statement.as_if_statement() {
+                        if let Some(_) = &i.consequent.as_continue_statement() {
                             return;
                         }
-                        if let Statement::BlockStatement(consequent_block) = &i.consequent
+                        if let Some(consequent_block) = &i.consequent.as_block_statement()
                             && consequent_block.body.len() == 1
-                            && matches!(&consequent_block.body[0], Statement::ContinueStatement(_))
+                            && &consequent_block.body[0].is_continue_statement()
                         {
                             return;
                         }

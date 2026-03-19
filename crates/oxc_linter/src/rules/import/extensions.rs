@@ -504,7 +504,7 @@ impl Rule for Extensions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Process require() calls
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Expression::Identifier(ident) = &call_expr.callee else { return };
+        let Some(ident) = &call_expr.callee.as_identifier() else { return };
         if ident.name.as_str() != "require" {
             return;
         }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, MethodDefinitionKind},
+    ast::{BindingPattern, Expression, MethodDefinitionKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -251,7 +251,7 @@ fn default_exempted_by() -> Vec<String> {
 /// - None: Not a `Promise` but some other expression
 fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option<bool> {
     // `return new Promise(...)`
-    if let Expression::NewExpression(new_expr) = expr
+    if let Some(new_expr) = expr.as_new_expression()
         && new_expr.callee.is_specific_id("Promise")
     {
         return new_expr
@@ -259,9 +259,9 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
             // Get `new Promise(HERE, ...)`
             .first()
             // Expect `new Promise(() => {})` or `new Promise(function() {})`
-            .and_then(|arg| match arg.as_expression() {
-                Some(Expression::FunctionExpression(func)) => func.params.items.first(),
-                Some(Expression::ArrowFunctionExpression(arrow_func)) => {
+            .and_then(|arg| match arg.as_expression().kind() {
+                Some(ExpressionKind::FunctionExpression(func)) => func.params.items.first(),
+                Some(ExpressionKind::ArrowFunctionExpression(arrow_func)) => {
                     arrow_func.params.items.first()
                 }
                 _ => None,

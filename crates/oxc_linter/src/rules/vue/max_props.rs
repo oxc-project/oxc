@@ -3,8 +3,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSSignature, TSType,
-        TSTypeName, TSTypeReference,
-    },
+        TSTypeName, TSTypeReference, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -114,8 +113,8 @@ impl MaxProps {
             return;
         }
         if let Some(first_arg) = call_expr.arguments.first() {
-            match first_arg.as_expression() {
-                Some(Expression::ObjectExpression(obj_expr))
+            match first_arg.as_expression().kind() {
+                Some(ExpressionKind::ObjectExpression(obj_expr))
                     if obj_expr.properties.len() > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
@@ -124,7 +123,7 @@ impl MaxProps {
                         self.max_props,
                     ));
                 }
-                Some(Expression::ArrayExpression(arr_expr))
+                Some(ExpressionKind::ArrayExpression(arr_expr))
                     if arr_expr.elements.len() > self.max_props =>
                 {
                     ctx.diagnostic(max_props_diagnostic(
@@ -165,7 +164,7 @@ impl MaxProps {
             if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
                 && let Some(key) = obj_prop.key.static_name()
                 && key == "props"
-                && let Expression::ObjectExpression(props_expr) =
+                && let ExpressionKind::ObjectExpression(props_expr) =
                     obj_prop.value.get_inner_expression()
             {
                 Some(props_expr)

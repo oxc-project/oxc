@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -121,13 +121,13 @@ impl Rule for NoAbsolutePath {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
+                let Some(ident) = &call_expr.callee.as_identifier() else {
                     return;
                 };
                 let func_name = ident.name.as_str();
                 let count = call_expr.arguments.len();
                 if matches!(func_name, "require" | "define") && count > 0 {
-                    match &call_expr.arguments[0] {
+                    match &call_expr.arguments[0].kind() {
                         Argument::StringLiteral(str_literal)
                             if count == 1 && func_name == "require" && self.commonjs =>
                         {
@@ -138,7 +138,7 @@ impl Rule for NoAbsolutePath {
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
                                 if let Some(el_expr) = el.as_expression()
-                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                    && matches!(el_expr, ExpressionKind::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
                                 {
                                     ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }

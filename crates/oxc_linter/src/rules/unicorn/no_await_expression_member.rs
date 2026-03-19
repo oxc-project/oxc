@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::{ExpressionKind};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -54,11 +55,11 @@ impl Rule for NoAwaitExpressionMember {
             return;
         };
 
-        let Expression::ParenthesizedExpression(paren_expr) = member_expr.object() else {
+        let Some(paren_expr) = member_expr.object().as_parenthesized_expression() else {
             return;
         };
 
-        if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
+        if paren_expr.expression.is_await_expression() {
             let node_span = member_expr.span();
             ctx.diagnostic_with_dangerous_fix(
                 no_await_expression_member_diagnostic(node_span),
@@ -85,11 +86,10 @@ impl Rule for NoAwaitExpressionMember {
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(5);
 
-                    match member_expr {
+                    match member_expr.kind() {
                         // e.g. "const a = (await b())[0]" => "const {a} = await b()"
                         MemberExpressionKind::Computed(computed_member_expr) => {
-                            let Expression::NumericLiteral(prop) = &computed_member_expr.expression
-                            else {
+                            let Some(prop) = &computed_member_expr.expression.as_numeric_literal() else {
                                 return fixer.noop();
                             };
                             let Some(value) = prop.raw.map(|v| v.as_str()) else {

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{CallExpression, Expression, MemberExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -178,9 +178,9 @@ impl NoCallbackInPromise {
         let Some(call_expr) = node.kind().as_call_expression() else {
             return false;
         };
-        match &call_expr.callee {
-            Expression::Identifier(ident) => TIMEOUT_WHITELIST.contains(&ident.name.as_str()),
-            Expression::StaticMemberExpression(static_member_expr) => {
+        match &call_expr.callee.kind() {
+            ExpressionKind::Identifier(ident) => TIMEOUT_WHITELIST.contains(&ident.name.as_str()),
+            ExpressionKind::StaticMemberExpression(static_member_expr) => {
                 TIMEOUT_WHITELIST.contains(&static_member_expr.property.name.as_str())
             }
             _ => false,

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, Expression, MemberExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -77,7 +77,7 @@ impl Rule for PreferReflectApply {
         if call_expr.optional
             || matches!(
                 member_expr.object(),
-                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+                ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
             )
             || member_expr.object().is_literal()
         {
@@ -114,7 +114,7 @@ impl Rule for PreferReflectApply {
                 };
 
                 if is_static_property_name_equal(member_expr_obj_obj, "prototype") {
-                    let Expression::Identifier(iden) = member_expr_obj_obj.object() else {
+                    let Some(iden) = member_expr_obj_obj.object().as_identifier() else {
                         return;
                     };
                     if iden.name == "Function"

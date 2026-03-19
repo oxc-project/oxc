@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BinaryExpression, BinaryOperator, Expression,
-        StaticMemberExpression,
-    },
+        StaticMemberExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -129,8 +128,8 @@ impl Rule for PreferNegativeIndex {
                 continue;
             };
 
-            match arg_expr {
-                Expression::BinaryExpression(binary_expr) => {
+            match arg_expr.kind() {
+                ExpressionKind::BinaryExpression(binary_expr) => {
                     let Some(member_expr) = get_binary_left_expr(binary_expr) else {
                         continue;
                     };
@@ -139,7 +138,7 @@ impl Rule for PreferNegativeIndex {
                         member_exprs.push(member_expr);
                     }
                 }
-                Expression::ArrayExpression(array_expr) => {
+                ExpressionKind::ArrayExpression(array_expr) => {
                     for (j, element) in array_expr.elements.iter().enumerate() {
                         if j >= range_increment {
                             break;
@@ -188,20 +187,20 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         return true;
     }
 
-    match (left, right) {
+    match (left, right).kind() {
         (
-            Expression::ComputedMemberExpression(left_computed_expr),
-            Expression::ComputedMemberExpression(right_computed_expr),
+            ExpressionKind::ComputedMemberExpression(left_computed_expr),
+            ExpressionKind::ComputedMemberExpression(right_computed_expr),
         ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
-        (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
+        (ExpressionKind::StringLiteral(left_lit), ExpressionKind::NumericLiteral(right_lit)) => {
             left_lit.to_string() == right_lit.to_string()
         }
-        (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
+        (ExpressionKind::NumericLiteral(left_lit), ExpressionKind::StringLiteral(right_lit)) => {
             left_lit.to_string() == right_lit.to_string()
         }
         (
-            Expression::TemplateLiteral(left_template_lit),
-            Expression::StringLiteral(right_string_lit),
+            ExpressionKind::TemplateLiteral(left_template_lit),
+            ExpressionKind::StringLiteral(right_string_lit),
         ) => {
             let Some(template_str) = left_template_lit.single_quasi() else {
                 return false;
@@ -210,8 +209,8 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             template_str.as_str() == right_string_lit.to_string()
         }
         (
-            Expression::StringLiteral(left_string_lit),
-            Expression::TemplateLiteral(right_template_lit),
+            ExpressionKind::StringLiteral(left_string_lit),
+            ExpressionKind::TemplateLiteral(right_template_lit),
         ) => {
             let Some(template_str) = right_template_lit.single_quasi() else {
                 return false;
@@ -224,10 +223,10 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
 }
 
 fn get_prototype_callee_type(expression: &Expression) -> TypeOptions {
-    match expression {
-        Expression::ArrayExpression(_) => TypeOptions::Array,
-        Expression::StringLiteral(_) => TypeOptions::String,
-        Expression::StaticMemberExpression(static_member_expr) => {
+    match expression.kind() {
+        ExpressionKind::ArrayExpression(_) => TypeOptions::Array,
+        ExpressionKind::StringLiteral(_) => TypeOptions::String,
+        ExpressionKind::StaticMemberExpression(static_member_expr) => {
             let Some(identifier_ref) = static_member_expr.object.get_identifier_reference() else {
                 return TypeOptions::Unknown;
             };
@@ -258,17 +257,16 @@ fn get_binary_left_expr<'a>(
         return None;
     }
 
-    match &binary_expr.left {
-        Expression::ParenthesizedExpression(paren_expr) => {
-            let Expression::BinaryExpression(paren_inner_binary_expr) = &paren_expr.expression
-            else {
+    match &binary_expr.left.kind() {
+        ExpressionKind::ParenthesizedExpression(paren_expr) => {
+            let Some(paren_inner_binary_expr) = &paren_expr.expression.as_binary_expression() else {
                 return None;
             };
 
             get_binary_left_expr(paren_inner_binary_expr)
         }
-        Expression::BinaryExpression(inner_binary_expr) => get_binary_left_expr(inner_binary_expr),
-        Expression::StaticMemberExpression(member_expr) => {
+        ExpressionKind::BinaryExpression(inner_binary_expr) => get_binary_left_expr(inner_binary_expr),
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             if member_expr.property.name == "length" {
                 return Some(member_expr.as_ref());
             }

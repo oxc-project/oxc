@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, Statement},
+    ast::{BindingPattern, Expression, Statement, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -68,10 +68,10 @@ impl Rule for NoUselessCatch {
         else {
             return;
         };
-        let Some(Statement::ThrowStatement(throw_stmt)) = catch_clause.body.body.first() else {
+        let Some(StatementKind::ThrowStatement(throw_stmt)) = catch_clause.body.body.first() else {
             return;
         };
-        let Expression::Identifier(throw_ident) = &throw_stmt.argument else {
+        let Some(throw_ident) = &throw_stmt.argument.as_identifier() else {
             return;
         };
         if binding_ident.name == throw_ident.name {

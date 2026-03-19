@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -104,9 +104,9 @@ impl Rule for PreferQuerySelector {
                 });
             }
 
-            let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
-                Expression::TemplateLiteral(literal) => {
+            let literal_value = match argument_expr.kind() {
+                ExpressionKind::StringLiteral(literal) => Some(literal.value.trim()),
+                ExpressionKind::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
                         literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
                     } else {
@@ -150,7 +150,7 @@ impl Rule for PreferQuerySelector {
             // Only apply this fix for simple identifiers so we avoid nested template literals
             // and complex expressions like member/call expressions or template literals
             if property_name == "getElementById"
-                && matches!(argument_expr, Expression::Identifier(_))
+                && argument_expr.is_identifier()
             {
                 return ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     let source_text = fixer.source_range(argument_expr.span());

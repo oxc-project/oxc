@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::{ExpressionKind};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -263,7 +264,7 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
-    match expr {
+    match expr.kind() {
         MemberExpressionKind::Computed(expr) => {
             expr.static_property_name().map(|name| name.as_str())
         }

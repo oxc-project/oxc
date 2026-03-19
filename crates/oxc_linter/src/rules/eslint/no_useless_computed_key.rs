@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
@@ -190,8 +190,8 @@ fn check_computed_class_member(
     allow_static: &[&str],
     allow_non_static: &[&str],
 ) {
-    match expr {
-        Expression::StringLiteral(lit) => {
+    match expr.kind() {
+        ExpressionKind::StringLiteral(lit) => {
             let key_name = lit.value.as_str();
             let allowed = if is_static {
                 allow_static.contains(&key_name)
@@ -202,7 +202,7 @@ fn check_computed_class_member(
                 ctx.diagnostic(no_useless_computed_key_diagnostic(span, lit.raw));
             }
         }
-        Expression::NumericLiteral(number_lit) => {
+        ExpressionKind::NumericLiteral(number_lit) => {
             ctx.diagnostic(no_useless_computed_key_diagnostic(span, number_lit.raw));
         }
         _ => {}

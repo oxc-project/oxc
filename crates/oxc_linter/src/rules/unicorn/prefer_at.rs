@@ -8,8 +8,7 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
         ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
-        UnaryOperator,
-    },
+        UnaryOperator, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -178,8 +177,8 @@ impl PreferAt {
         node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
     ) {
-        let call_expr = match &computed.object {
-            Expression::ChainExpression(chain) => {
+        let call_expr = match computed.object.kind() {
+            ExpressionKind::ChainExpression(chain) => {
                 if let ChainElement::CallExpression(call) = &chain.expression {
                     call
                 } else {
@@ -187,7 +186,7 @@ impl PreferAt {
                 }
             }
             expr => {
-                if let Expression::CallExpression(call) = expr.get_inner_expression() {
+                if let Some(call) = expr.get_inner_expression().as_call_expression() {
                     call
                 } else {
                     return;
@@ -279,8 +278,7 @@ impl PreferAt {
             return;
         }
 
-        let Expression::CallExpression(slice_call) = static_member.object.get_inner_expression()
-        else {
+        let Some(slice_call) = static_member.object.get_inner_expression().as_call_expression() else {
             return;
         };
 
@@ -488,19 +486,19 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_positive_number(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value > 0.0,
-        Expression::UnaryExpression(unary) => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) => num.value > 0.0,
+        ExpressionKind::UnaryExpression(unary) => {
             unary.operator == UnaryOperator::UnaryPlus
-                && matches!(unary.argument.get_inner_expression(), Expression::NumericLiteral(_))
+                && unary.argument.get_inner_expression().is_numeric_literal()
         }
         _ => false,
     }
 }
 
 fn get_positive_index(expr: &Expression) -> Option<i64> {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 => {
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             if num.value <= i64::MAX as f64 { Some(num.value as i64) } else { None }
         }
@@ -509,11 +507,11 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
 }
 
 fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option<i64> {
-    let value = match expr.get_inner_expression() {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation =>
+    let value = match expr.get_inner_expression().kind() {
+        ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation =>
         {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            if let Expression::NumericLiteral(num) = unary.argument.get_inner_expression()
+            if let Some(num) = unary.argument.get_inner_expression().as_numeric_literal()
                 && num.value > 0.0
                 && num.value.fract() == 0.0
                 && num.value <= i64::MAX as f64
@@ -523,7 +521,7 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
                 return None;
             }
         }
-        Expression::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
+        ExpressionKind::NumericLiteral(num) if num.value < 0.0 && num.value.fract() == 0.0 => {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             if num.value >= i64::MIN as f64 {
                 num.value as i64
@@ -548,21 +546,21 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
 }
 
 fn is_zero_index(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
         _ => false,
     }
 }
 
 // Extract pattern: expression.length - N
 fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Expression<'a>, i64)> {
-    let binary = match expr.get_inner_expression() {
-        Expression::BinaryExpression(b) if b.operator == BinaryOperator::Subtraction => b,
+    let binary = match expr.get_inner_expression().kind() {
+        ExpressionKind::BinaryExpression(b) if b.operator == BinaryOperator::Subtraction => b,
         _ => return None,
     };
 
-    let length_member = match binary.left.get_inner_expression() {
-        Expression::StaticMemberExpression(m) if m.property.name == "length" => m,
+    let length_member = match binary.left.get_inner_expression().kind() {
+        ExpressionKind::StaticMemberExpression(m) if m.property.name == "length" => m,
         _ => return None,
     };
 
@@ -571,9 +569,9 @@ fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Exp
     }
 
     // Get the numeric value for the negative index
-    let value = match binary.right.get_inner_expression() {
+    let value = match binary.right.get_inner_expression().kind() {
         #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-        Expression::NumericLiteral(num) if num.value > 0.0 && num.value <= i64::MAX as f64 => {
+        ExpressionKind::NumericLiteral(num) if num.value > 0.0 && num.value <= i64::MAX as f64 => {
             -(num.value as i64)
         }
         _ => return None,

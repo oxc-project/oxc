@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName,
-    },
+        ReturnStatement, TSType, TSTypeName, ExpressionKind},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -301,7 +300,7 @@ impl ExplicitFunctionReturnType {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
-        let Expression::UnaryExpression(unary_expr) = expr else { return false };
+        let Some(unary_expr) = expr.as_unary_expression() else { return false };
         matches!(unary_expr.operator, UnaryOperator::Void)
     }
 
@@ -407,14 +406,14 @@ impl ExplicitFunctionReturnType {
 
         let mut expr = expr;
         loop {
-            expr = match expr {
-                Expression::TSSatisfiesExpression(e) => &e.expression,
+            expr = match expr.kind() {
+                ExpressionKind::TSSatisfiesExpression(e) => &e.expression,
                 _ => break,
             };
         }
 
-        match expr {
-            Expression::TSAsExpression(ts_expr) => {
+        match expr.kind() {
+            ExpressionKind::TSAsExpression(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
                     return false;
                 };
@@ -424,7 +423,7 @@ impl ExplicitFunctionReturnType {
 
                 id_ref.name == "const"
             }
-            Expression::TSTypeAssertion(ts_expr) => {
+            ExpressionKind::TSTypeAssertion(ts_expr) => {
                 let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
                     return false;
                 };
@@ -531,12 +530,12 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
         return true;
     }
 
-    match call_expr.callee.without_parentheses() {
-        Expression::FunctionExpression(func_expr) => {
+    match call_expr.callee.without_parentheses().kind() {
+        ExpressionKind::FunctionExpression(func_expr) => {
             let AstKind::Function(callee_func_expr) = callee.unwrap().kind() else { return false };
             func_expr.span != callee_func_expr.span
         }
-        Expression::ArrowFunctionExpression(arrow_func_expr) => {
+        ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => {
             let AstKind::ArrowFunctionExpression(callee_arrow_func_expr) = callee.unwrap().kind()
             else {
                 return false;
@@ -585,7 +584,7 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 fn is_function(expr: &Expression) -> bool {
     matches!(
         expr.get_inner_expression(),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }
 
@@ -593,7 +592,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Expression::ArrowFunctionExpression(func) = &prop.value
+        && let ExpressionKind::ArrowFunctionExpression(func) = &prop.value
         && !func.body.statements.is_empty()
         && func.return_type.is_some()
     {
@@ -619,7 +618,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return def.type_annotation.is_some();
             }
             AstKind::ExpressionStatement(expr) => {
-                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) {
+                if !expr.expression.is_arrow_function_expression() {
                     return false;
                 }
             }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression},
+    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,7 +97,7 @@ declare_oxc_lint!(
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr, ExpressionKind::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
@@ -212,7 +212,7 @@ impl ExplicitLengthCheck {
                 call.arguments
                     .first()
                     .and_then(|arg| arg.as_expression())
-                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .filter(|expr| expr.is_logical_expression())
                     .map_or_else(|| node.span(), |_| static_member_expr.span)
             }
             _ => node.span(),
@@ -268,7 +268,7 @@ impl Rule for ExplicitLengthCheck {
             if property.name != "length" && property.name != "size" {
                 return;
             }
-            if let Expression::ThisExpression(_) = object {
+            if let Some(_) = object.as_this_expression() {
                 return;
             }
 
@@ -290,7 +290,7 @@ impl Rule for ExplicitLengthCheck {
                     AstKind::LogicalExpression(LogicalExpression { operator, right, .. })
                         if *operator == LogicalOperator::And
                             || (*operator == LogicalOperator::Or
-                                && !matches!(right, Expression::NumericLiteral(_))) =>
+                                && !right.is_numeric_literal()) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }

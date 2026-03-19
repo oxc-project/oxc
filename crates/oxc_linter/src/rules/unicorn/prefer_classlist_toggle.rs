@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, IfStatement, MemberExpression, Statement},
+    ast::{CallExpression, ChainElement, Expression, IfStatement, MemberExpression, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -106,15 +106,15 @@ fn check_if_statement<'a>(if_stmt: &'a IfStatement<'a>, node: &AstNode<'a>, ctx:
 }
 
 fn extract_call_expression<'a>(expr: &'a Expression<'a>) -> Option<&'a CallExpression<'a>> {
-    match expr {
-        Expression::ChainExpression(chain) => {
+    match expr.kind() {
+        ExpressionKind::ChainExpression(chain) => {
             if let ChainElement::CallExpression(call) = &chain.expression {
                 Some(call)
             } else {
                 None
             }
         }
-        Expression::CallExpression(call) => Some(call),
+        ExpressionKind::CallExpression(call) => Some(call),
         _ => None,
     }
 }
@@ -169,10 +169,10 @@ fn check_conditional_add_remove_call_expr<'a>(
 fn extract_single_expression_from_statement<'a>(
     stmt: &'a Statement<'a>,
 ) -> Option<&'a Expression<'a>> {
-    match stmt {
-        Statement::ExpressionStatement(e) => Some(&e.expression),
-        Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
-            if let Statement::ExpressionStatement(e) = &block_stmt.body[0] {
+    match stmt.kind() {
+        StatementKind::ExpressionStatement(e) => Some(&e.expression),
+        StatementKind::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
+            if let Some(e) = &block_stmt.body[0].as_expression_statement() {
                 Some(&e.expression)
             } else {
                 None
@@ -211,7 +211,7 @@ fn check_computed_member_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintCont
         return;
     }
 
-    let Expression::ConditionalExpression(cond_expr) = &computed.expression else {
+    let Some(cond_expr) = &computed.expression.as_conditional_expression() else {
         return;
     };
 
@@ -249,12 +249,10 @@ fn identify_add_remove_pair<'a>(
         return None;
     }
 
-    let Expression::StaticMemberExpression(first_member) = first.callee.get_inner_expression()
-    else {
+    let Some(first_member) = first.callee.get_inner_expression().as_static_member_expression() else {
         return None;
     };
-    let Expression::StaticMemberExpression(second_member) = second.callee.get_inner_expression()
-    else {
+    let Some(second_member) = second.callee.get_inner_expression().as_static_member_expression() else {
         return None;
     };
 
@@ -277,14 +275,10 @@ fn identify_add_remove_pair<'a>(
         (&second_member, &first_member)
     };
 
-    let Expression::StaticMemberExpression(classlist_add_member_expr) =
-        classlist_add_callee.object.get_inner_expression()
-    else {
+    let Some(classlist_add_member_expr) = classlist_add_callee.object.get_inner_expression().as_static_member_expression() else {
         return None;
     };
-    let Expression::StaticMemberExpression(classlist_remove_member_expr) =
-        classlist_remove_callee.object.get_inner_expression()
-    else {
+    let Some(classlist_remove_member_expr) = classlist_remove_callee.object.get_inner_expression().as_static_member_expression() else {
         return None;
     };
 
@@ -306,11 +300,11 @@ fn identify_add_remove_pair<'a>(
 }
 
 fn is_classlist_access(expr: &Expression) -> bool {
-    match expr {
-        Expression::StaticMemberExpression(static_member) => {
+    match expr.kind() {
+        ExpressionKind::StaticMemberExpression(static_member) => {
             static_member.property.name == "classList"
         }
-        Expression::ChainExpression(chain) => {
+        ExpressionKind::ChainExpression(chain) => {
             if let Some(member_expr) = chain.expression.as_member_expression() {
                 member_expr.static_property_name() == Some("classList")
             } else {
@@ -322,7 +316,7 @@ fn is_classlist_access(expr: &Expression) -> bool {
 }
 
 fn check_add_remove_ternary(consequent: &Expression, alternate: &Expression) -> Option<bool> {
-    let (Expression::StringLiteral(cons_str), Expression::StringLiteral(alt_str)) =
+    let (ExpressionKind::StringLiteral(cons_str), ExpressionKind::StringLiteral(alt_str)) =
         (consequent.get_inner_expression(), alternate.get_inner_expression())
     else {
         return None;

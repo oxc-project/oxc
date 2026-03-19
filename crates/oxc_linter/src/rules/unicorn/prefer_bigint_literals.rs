@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -76,8 +76,8 @@ impl Rule for PreferBigintLiterals {
             return;
         }
 
-        match argument_expression.get_inner_expression() {
-            Expression::StringLiteral(string_literal) => {
+        match argument_expression.get_inner_expression().kind() {
+            ExpressionKind::StringLiteral(string_literal) => {
                 if let Some(replacement) = bigint_literal_from_string(&string_literal.value) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
@@ -85,7 +85,7 @@ impl Rule for PreferBigintLiterals {
                     );
                 }
             }
-            Expression::NumericLiteral(numeric_literal) => {
+            ExpressionKind::NumericLiteral(numeric_literal) => {
                 if numeric_literal.value.fract() != 0.0 {
                     return;
                 }

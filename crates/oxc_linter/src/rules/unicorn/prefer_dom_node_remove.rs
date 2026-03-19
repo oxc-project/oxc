@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -52,12 +52,12 @@ declare_oxc_lint!(
 fn is_non_dom_node(expr: &Expression) -> bool {
     matches!(
         expr,
-        Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ObjectExpression(_)
-            | Expression::TemplateLiteral(_)
+        ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::ClassExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::TemplateLiteral(_)
     ) || expr.is_literal()
         || expr.is_null_or_undefined()
 }

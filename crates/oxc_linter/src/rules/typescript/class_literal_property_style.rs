@@ -5,8 +5,7 @@ use oxc_ast::{
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
         ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
-        Statement,
-    },
+        Statement, ExpressionKind, StatementKind},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -121,7 +120,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
             && method.kind == MethodDefinitionKind::Get
             && !method.r#override
             && let Some(body) = &method.value.body
-            && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
+            && let Some(StatementKind::ReturnStatement(return_statement)) = body.statements.first()
             && let Some(argument) = &return_statement.argument
             && is_supported_literal(argument)
             && !has_duplicate_setter(class_body, method)
@@ -186,11 +185,11 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
         return true;
     }
 
-    match expression {
-        Expression::TaggedTemplateExpression(tagged_template) => {
+    match expression.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged_template) => {
             tagged_template.quasi.is_no_substitution_template()
         }
-        Expression::TemplateLiteral(template_literal) => {
+        ExpressionKind::TemplateLiteral(template_literal) => {
             template_literal.is_no_substitution_template()
         }
         _ => false,
@@ -198,10 +197,10 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
 }
 
 fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
-    match (a.name(), b.name()) {
+    match (a.name(), b.name()).kind() {
         (Some(a_name), Some(b_name)) => a_name == b_name,
         _ => match (a.as_expression(), b.as_expression()) {
-            (Some(Expression::Identifier(a_ident)), Some(Expression::Identifier(b_ident))) => {
+            (Some(ExpressionKind::Identifier(a_ident)), Some(ExpressionKind::Identifier(b_ident))) => {
                 a_ident.name == b_ident.name
             }
             _ => false,
@@ -211,7 +210,7 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
 
 fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     let is_this_object =
-        |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
+        |expr: &Expression<'_>| expr.without_parentheses().is_this_expression();
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -74,7 +74,7 @@ impl Rule for PreferGlobalThis {
         }
 
         if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
-            && let Expression::Identifier(ident) = &e.object
+            && let ExpressionKind::Identifier(ident) = &e.object
         {
             if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
             {
@@ -89,7 +89,7 @@ impl Rule for PreferGlobalThis {
                     if let Some(AstKind::CallExpression(call_expr)) =
                         ctx.nodes().ancestor_kinds(node.id()).nth(1)
                     {
-                        if let Some(Expression::StringLiteral(lit)) =
+                        if let Some(ExpressionKind::StringLiteral(lit)) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
                             && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                         {
@@ -119,7 +119,7 @@ impl Rule for PreferGlobalThis {
 fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
         && unary.operator == UnaryOperator::Typeof
-        && let Expression::Identifier(arg_ident) = &unary.argument
+        && let ExpressionKind::Identifier(arg_ident) = &unary.argument
     {
         return arg_ident.span == node.span();
     }
@@ -131,7 +131,7 @@ fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_
     let AstKind::ComputedMemberExpression(member_expr) = ctx.nodes().parent_kind(node.id()) else {
         return false;
     };
-    let Expression::Identifier(obj_ident) = &member_expr.object.get_inner_expression() else {
+    let Some(obj_ident) = &member_expr.object.get_inner_expression().as_identifier() else {
         return false;
     };
     obj_ident.span == node.kind().span()

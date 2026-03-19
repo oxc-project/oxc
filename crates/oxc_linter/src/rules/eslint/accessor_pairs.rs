@@ -3,8 +3,7 @@ use oxc_ast::{
     ast::{
         Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
         ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
-        TSSignature, TSTypeLiteral,
-    },
+        TSSignature, TSTypeLiteral, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -314,7 +313,7 @@ impl AccessorPairs {
             return;
         };
 
-        match callee {
+        match callee.kind() {
             DefinePropertyCallee::DefineProperty => {
                 // Object.defineProperty(obj, 'prop', descriptor)
                 // Reflect.defineProperty(obj, 'prop', descriptor)
@@ -330,7 +329,7 @@ impl AccessorPairs {
                 if let Some(Argument::ObjectExpression(props)) = call.arguments.get(1) {
                     for prop in &props.properties {
                         if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                            && let Expression::ObjectExpression(descriptor) = &prop.value
+                            && let ExpressionKind::ObjectExpression(descriptor) = &prop.value
                         {
                             self.check_property_descriptor(descriptor, ctx);
                         }
@@ -348,17 +347,17 @@ impl AccessorPairs {
         let callee = call.callee.without_parentheses();
 
         // Handle optional chaining: Object?.defineProperty
-        let member = match callee {
-            Expression::StaticMemberExpression(m) => m,
-            Expression::ChainExpression(chain) => match &chain.expression {
+        let member = match callee.kind() {
+            ExpressionKind::StaticMemberExpression(m) => m,
+            ExpressionKind::ChainExpression(chain) => match &chain.expression {
                 oxc_ast::ast::ChainElement::StaticMemberExpression(m) => m,
                 _ => return None,
             },
             _ => return None,
         };
 
-        let object_name = match member.object.without_parentheses() {
-            Expression::Identifier(id) => id.name,
+        let object_name = match member.object.without_parentheses().kind() {
+            ExpressionKind::Identifier(id) => id.name,
             _ => return None,
         };
 

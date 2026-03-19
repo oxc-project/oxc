@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, Function, ExpressionKind},
 };
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -349,7 +349,7 @@ fn has_conditional_path_accept_throw(
         //         matches!(
         //             it.kind(),
         //             AstKind::ExpressionStatement(ExpressionStatement {
-        //                 expression: Expression::CallExpression(_),
+        //                 expression: ExpressionKind::CallExpression(_),
         //                 ..
         //             })
         //         )

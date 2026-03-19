@@ -302,9 +302,9 @@ impl Rule for ConstructorSuper {
 impl ConstructorSuper {
     /// Classify the superclass expression to determine if super() is needed/valid
     fn classify_super_class(super_class: Option<&Expression>) -> SuperClassType {
-        match super_class {
+        match super_class.kind() {
             None => SuperClassType::None,
-            Some(Expression::NullLiteral(_)) => SuperClassType::Null,
+            Some(ExpressionKind::NullLiteral(_)) => SuperClassType::Null,
             Some(expr) if Self::is_invalid_super_class(expr) => SuperClassType::Invalid,
             Some(_) => SuperClassType::Valid,
         }
@@ -366,21 +366,21 @@ impl ConstructorSuper {
 
                     match node.kind() {
                         AstKind::CallExpression(call) => {
-                            if matches!(&call.callee, Expression::Super(_)) {
+                            if &call.callee.is_super() {
                                 record_super(call.span);
                             }
                         }
-                        AstKind::ExpressionStatement(expr_stmt) => match &expr_stmt.expression {
-                            Expression::CallExpression(call) => {
-                                if matches!(&call.callee, Expression::Super(_)) {
+                        AstKind::ExpressionStatement(expr_stmt) => match expr_stmt.expression.kind() {
+                            ExpressionKind::CallExpression(call) => {
+                                if &call.callee.is_super() {
                                     record_super(call.span);
                                 }
                             }
                             // Ternary: both branches in same block but only one executes
-                            Expression::ConditionalExpression(cond) => {
+                            ExpressionKind::ConditionalExpression(cond) => {
                                 let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Expression::CallExpression(call) = expr
-                                        && matches!(&call.callee, Expression::Super(_))
+                                    if let Some(call) = expr.as_call_expression()
+                                        && &call.callee.is_super()
                                     {
                                         Some(call.span)
                                     } else {
@@ -403,12 +403,12 @@ impl ConstructorSuper {
                             // 3. The CFG doesn't catch this because it sees only LHS as reachable
                             //
                             // We intentionally match ESLint's behavior here.
-                            Expression::LogicalExpression(logical)
+                            ExpressionKind::LogicalExpression(logical)
                                 if matches!(logical.operator, LogicalOperator::Or) =>
                             {
                                 let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Expression::CallExpression(call) = expr
-                                        && matches!(&call.callee, Expression::Super(_))
+                                    if let Some(call) = expr.as_call_expression()
+                                        && &call.callee.is_super()
                                     {
                                         Some(call.span)
                                     } else {
@@ -629,12 +629,12 @@ impl ConstructorSuper {
     /// identifiers, function calls, or short-circuit expressions that could evaluate
     /// to a valid class).
     fn is_invalid_super_class(expr: &Expression) -> bool {
-        match expr {
-            Expression::ParenthesizedExpression(paren) => {
+        match expr.kind() {
+            ExpressionKind::ParenthesizedExpression(paren) => {
                 Self::is_invalid_super_class(&paren.expression)
             }
 
-            Expression::AssignmentExpression(assign) => match assign.operator {
+            ExpressionKind::AssignmentExpression(assign) => match assign.operator {
                 AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
                     Self::is_invalid_super_class(&assign.right)
                 }
@@ -655,27 +655,27 @@ impl ConstructorSuper {
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
             },
 
-            Expression::LogicalExpression(logical) => match logical.operator {
+            ExpressionKind::LogicalExpression(logical) => match logical.operator {
                 LogicalOperator::And => Self::is_invalid_super_class(&logical.right),
                 LogicalOperator::Or | LogicalOperator::Coalesce => false,
             },
 
-            Expression::ConditionalExpression(cond) => {
+            ExpressionKind::ConditionalExpression(cond) => {
                 Self::is_invalid_super_class(&cond.consequent)
                     && Self::is_invalid_super_class(&cond.alternate)
             }
 
             // Sequence: result is last expression
-            Expression::SequenceExpression(seq) => {
+            ExpressionKind::SequenceExpression(seq) => {
                 seq.expressions.last().is_none_or(|e| Self::is_invalid_super_class(e))
             }
 
             // Literals and binary expressions are invalid
-            Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::BinaryExpression(_) => true,
+            ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::StringLiteral(_)
+            | ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::BinaryExpression(_) => true,
 
             _ => false,
         }
@@ -713,20 +713,20 @@ impl ConstructorSuper {
 
     /// Recursively check if statement contains return with value
     fn statement_returns_value(stmt: &Statement) -> bool {
-        match stmt {
-            Statement::ReturnStatement(ret) => ret.argument.is_some(),
-            Statement::BlockStatement(block) => Self::has_return_with_value(&block.body),
-            Statement::IfStatement(if_stmt) => {
+        match stmt.kind() {
+            StatementKind::ReturnStatement(ret) => ret.argument.is_some(),
+            StatementKind::BlockStatement(block) => Self::has_return_with_value(&block.body),
+            StatementKind::IfStatement(if_stmt) => {
                 Self::statement_returns_value(&if_stmt.consequent)
                     || if_stmt
                         .alternate
                         .as_ref()
                         .is_some_and(|alt| Self::statement_returns_value(alt))
             }
-            Statement::SwitchStatement(switch) => {
+            StatementKind::SwitchStatement(switch) => {
                 switch.cases.iter().any(|case| Self::has_return_with_value(&case.consequent))
             }
-            Statement::TryStatement(try_stmt) => {
+            StatementKind::TryStatement(try_stmt) => {
                 Self::has_return_with_value(&try_stmt.block.body)
                     || try_stmt
                         .handler
@@ -737,11 +737,11 @@ impl ConstructorSuper {
                         .as_ref()
                         .is_some_and(|finalizer| Self::has_return_with_value(&finalizer.body))
             }
-            Statement::WhileStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::DoWhileStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForInStatement(s) => Self::statement_returns_value(&s.body),
-            Statement::ForOfStatement(s) => Self::statement_returns_value(&s.body),
+            StatementKind::WhileStatement(s) => Self::statement_returns_value(&s.body),
+            StatementKind::DoWhileStatement(s) => Self::statement_returns_value(&s.body),
+            StatementKind::ForStatement(s) => Self::statement_returns_value(&s.body),
+            StatementKind::ForInStatement(s) => Self::statement_returns_value(&s.body),
+            StatementKind::ForOfStatement(s) => Self::statement_returns_value(&s.body),
             _ => false,
         }
     }

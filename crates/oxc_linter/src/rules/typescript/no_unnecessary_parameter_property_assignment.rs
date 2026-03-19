@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, MethodDefinitionKind, Statement,
-    },
+        FormalParameter, Function, MethodDefinitionKind, Statement, ExpressionKind},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -131,8 +130,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
         // operator could be unnecessary
 
-        let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
-        else {
+        let Some(right_identifier) = assignment_expr.right.get_inner_expression().as_identifier() else {
             return;
         };
         // the right side of the assignment is an identifier
@@ -187,27 +185,27 @@ fn get_assignments_inside_expression<'a>(
 ) -> Vec<&'a AssignmentExpression<'a>> {
     let mut assignments: Vec<&AssignmentExpression> = Vec::new();
 
-    match expression.without_parentheses() {
-        Expression::CallExpression(call) => {
+    match expression.without_parentheses().kind() {
+        ExpressionKind::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
-            let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
-                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+            let function_body = match call.callee.without_parentheses().kind() {
+                ExpressionKind::ArrowFunctionExpression(expr) => Some(&expr.body),
+                ExpressionKind::FunctionExpression(expr) => expr.body.as_ref(),
                 _ => None,
             };
 
             if let Some(function_body) = function_body {
                 for statement in &function_body.statements {
-                    if let Statement::ExpressionStatement(expr) = statement
-                        && let Expression::AssignmentExpression(assignment) = &expr.expression
+                    if let Some(expr) = statement.as_expression_statement()
+                        && let ExpressionKind::AssignmentExpression(assignment) = &expr.expression
                     {
                         assignments.push(assignment);
                     }
                 }
             }
         }
-        Expression::AssignmentExpression(assignment) => {
+        ExpressionKind::AssignmentExpression(assignment) => {
             assignments.push(assignment);
         }
         _ => (),
@@ -229,16 +227,16 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
 fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
-            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+            if &expr.object.is_this_expression() =>
         {
             // this.property
             Some(expr.property.name.into())
         }
         AssignmentTarget::ComputedMemberExpression(expr)
-            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+            if &expr.object.is_this_expression() =>
         {
             // this["property"]
-            if let Expression::StringLiteral(str) = &expr.expression {
+            if let Some(str) = &expr.expression.as_string_literal() {
                 Some(str.value)
             } else {
                 None

@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Statement, SwitchCase, SwitchStatement},
+    ast::{Statement, SwitchCase, SwitchStatement, StatementKind},
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -345,7 +345,7 @@ impl Rule for NoFallthrough {
 }
 
 fn possible_fallthrough_comment_span(case: &SwitchCase) -> (u32, Option<u32>) {
-    if let Ok(Statement::BlockStatement(block)) = case.consequent.iter().exactly_one() {
+    if let Ok(StatementKind::BlockStatement(block)) = case.consequent.iter().exactly_one() {
         let span = block.span;
         if let Some(last) = block.body.last() {
             (last.span().end, Some(span.end))
@@ -475,7 +475,7 @@ fn get_switch_semantic_cases(
                                 _ => None,
                             })
                     })
-                    .is_some_and(|it| it.consequent.is_empty() || it.consequent.iter().exactly_one().is_ok_and(|it| matches!(it, Statement::BlockStatement(b) if b.body.is_empty())));
+                    .is_some_and(|it| it.consequent.is_empty() || it.consequent.iter().exactly_one().is_ok_and(|it| matches!(it, StatementKind::BlockStatement(b) if b.body.is_empty())));
                 cfg_ids.push(target);
                 conds.push((target, is_empty));
                 (cfg_ids, conds, exit)

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, Statement},
+    ast::{Argument, CallExpression, Expression, Statement, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -100,8 +100,8 @@ impl Rule for PreferMockPromiseShorthand {
         } else if property_name.eq("mockImplementation")
             || property_name.eq("mockImplementationOnce")
         {
-            match expr {
-                Expression::ArrowFunctionExpression(arrow_func) => {
+            match expr.kind() {
+                ExpressionKind::ArrowFunctionExpression(arrow_func) => {
                     if !arrow_func.params.is_empty() {
                         return;
                     }
@@ -111,14 +111,14 @@ impl Rule for PreferMockPromiseShorthand {
 
                     if let Some(expr) = arrow_func.get_expression() {
                         Self::report(is_once, property_span, Some(arrow_func.span), expr, ctx);
-                    } else if let Statement::ReturnStatement(return_stmt) = stmt {
+                    } else if let Some(return_stmt) = stmt.as_return_statement() {
                         let Some(arg_expr) = &return_stmt.argument else {
                             return;
                         };
                         Self::report(is_once, property_span, Some(arrow_func.span), arg_expr, ctx);
                     }
                 }
-                Expression::FunctionExpression(func_expr) => {
+                ExpressionKind::FunctionExpression(func_expr) => {
                     if !func_expr.params.is_empty() {
                         return;
                     }
@@ -128,7 +128,7 @@ impl Rule for PreferMockPromiseShorthand {
                     let Some(stmt) = func_body.statements.first() else {
                         return;
                     };
-                    let Statement::ReturnStatement(return_stmt) = stmt else {
+                    let Some(return_stmt) = stmt.as_return_statement() else {
                         return;
                     };
                     let Some(arg_expr) = &return_stmt.argument else {
@@ -150,7 +150,7 @@ impl PreferMockPromiseShorthand {
         arg_expr: &'a Expression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Expression::CallExpression(call_expr) = arg_expr else {
+        let Some(call_expr) = arg_expr.as_call_expression() else {
             return;
         };
         let arg_name = get_node_name(arg_expr);

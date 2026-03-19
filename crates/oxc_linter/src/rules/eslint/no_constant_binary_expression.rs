@@ -164,43 +164,43 @@ impl NoConstantBinaryExpression {
         if non_nullish && (expr.is_null() || expr.evaluate_to_undefined()) {
             return false;
         }
-        match expr.get_inner_expression() {
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::NewExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::UpdateExpression(_)
-            | Expression::BinaryExpression(_)
-            | Expression::UnaryExpression(_) => true,
+        match expr.get_inner_expression().kind() {
+            ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ClassExpression(_)
+            | ExpressionKind::NewExpression(_)
+            | ExpressionKind::TemplateLiteral(_)
+            | ExpressionKind::UpdateExpression(_)
+            | ExpressionKind::BinaryExpression(_)
+            | ExpressionKind::UnaryExpression(_) => true,
             expr if expr.is_literal() => true,
-            Expression::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+            ExpressionKind::CallExpression(call_expr) => {
+                if let Some(ident) = &call_expr.callee.as_identifier() {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
                         && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
                 }
                 false
             }
-            Expression::LogicalExpression(logical_expr)
+            ExpressionKind::LogicalExpression(logical_expr)
                 if logical_expr.operator == LogicalOperator::Coalesce =>
             {
                 Self::has_constant_nullishness(&logical_expr.right, true, ctx)
             }
-            Expression::AssignmentExpression(assign_expr) => match assign_expr.operator {
+            ExpressionKind::AssignmentExpression(assign_expr) => match assign_expr.operator {
                 AssignmentOperator::Assign => {
                     Self::has_constant_nullishness(&assign_expr.right, non_nullish, ctx)
                 }
                 op if op.is_logical() => false,
                 _ => true,
             },
-            Expression::SequenceExpression(sequence_expr) => sequence_expr
+            ExpressionKind::SequenceExpression(sequence_expr) => sequence_expr
                 .expressions
                 .iter()
                 .last()
                 .is_some_and(|last| Self::has_constant_nullishness(last, non_nullish, ctx)),
-            Expression::Identifier(_) => expr.evaluate_to_undefined(),
+            ExpressionKind::Identifier(_) => expr.evaluate_to_undefined(),
             _ => false,
         }
     }
@@ -242,32 +242,32 @@ impl NoConstantBinaryExpression {
         expr: &Expression<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        match expr {
-            Expression::ObjectExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_) => true,
-            Expression::ArrayExpression(array_expr) => {
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ClassExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_) => true,
+            ExpressionKind::ArrayExpression(array_expr) => {
                 array_expr.elements.is_empty()
                     || array_expr.elements.iter().filter(|e| e.is_expression()).count() > 1
             }
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            ExpressionKind::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Void | UnaryOperator::Typeof => true,
                 UnaryOperator::LogicalNot => unary_expr.argument.is_constant(true, ctx),
                 _ => false,
             },
-            Expression::CallExpression(call_expr) => call_expr.is_constant(true, ctx),
-            Expression::TemplateLiteral(lit) => lit.expressions.is_empty(),
-            Expression::AssignmentExpression(assignment_expr) => {
+            ExpressionKind::CallExpression(call_expr) => call_expr.is_constant(true, ctx),
+            ExpressionKind::TemplateLiteral(lit) => lit.expressions.is_empty(),
+            ExpressionKind::AssignmentExpression(assignment_expr) => {
                 assignment_expr.operator == AssignmentOperator::Assign
                     && Self::has_constant_loose_boolean_comparison(&assignment_expr.right, ctx)
             }
-            Expression::SequenceExpression(sequence_expr) => sequence_expr
+            ExpressionKind::SequenceExpression(sequence_expr) => sequence_expr
                 .expressions
                 .iter()
                 .last()
                 .is_some_and(|last| Self::has_constant_loose_boolean_comparison(last, ctx)),
-            Expression::ParenthesizedExpression(paren_expr) => {
+            ExpressionKind::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_loose_boolean_comparison(&paren_expr.expression, ctx)
             }
             expr if expr.is_literal() => true,
@@ -283,25 +283,25 @@ impl NoConstantBinaryExpression {
         expr: &Expression<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        match expr {
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::NewExpression(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::UpdateExpression(_) => true,
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::NewExpression(_)
+            | ExpressionKind::TemplateLiteral(_)
+            | ExpressionKind::UpdateExpression(_) => true,
             expr if expr.is_literal() => true,
-            Expression::BinaryExpression(binary_expr) => {
+            ExpressionKind::BinaryExpression(binary_expr) => {
                 binary_expr.operator.is_numeric_or_string_binary_operator()
             }
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            ExpressionKind::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Delete => false,
                 UnaryOperator::LogicalNot => unary_expr.argument.is_constant(true, ctx),
                 _ => true,
             },
-            Expression::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+            ExpressionKind::CallExpression(call_expr) => {
+                if let Some(ident) = &call_expr.callee.as_identifier() {
                     let unresolved_references = ctx.scoping().root_unresolved_references();
                     if (ident.name == "String" || ident.name == "Number")
                         && unresolved_references.contains_key(&ident.name)
@@ -319,56 +319,56 @@ impl NoConstantBinaryExpression {
                 }
                 false
             }
-            Expression::AssignmentExpression(assign_expr) => match assign_expr.operator {
+            ExpressionKind::AssignmentExpression(assign_expr) => match assign_expr.operator {
                 AssignmentOperator::Assign => {
                     Self::has_constant_strict_boolean_comparison(&assign_expr.right, ctx)
                 }
                 op if op.is_logical() => false,
                 _ => true,
             },
-            Expression::SequenceExpression(sequence_expr) => sequence_expr
+            ExpressionKind::SequenceExpression(sequence_expr) => sequence_expr
                 .expressions
                 .iter()
                 .last()
                 .is_some_and(|last| Self::has_constant_strict_boolean_comparison(last, ctx)),
-            Expression::ParenthesizedExpression(paren_expr) => {
+            ExpressionKind::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_strict_boolean_comparison(&paren_expr.expression, ctx)
             }
-            Expression::Identifier(_) => expr.evaluate_to_undefined(),
+            ExpressionKind::Identifier(_) => expr.evaluate_to_undefined(),
             _ => false,
         }
     }
 
     /// Test if an AST node will always result in a newly constructed object
     fn is_always_new<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-        match expr {
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ClassExpression(_)
-            | Expression::RegExpLiteral(_) => true,
-            Expression::NewExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+        match expr.kind() {
+            ExpressionKind::ObjectExpression(_)
+            | ExpressionKind::ArrayExpression(_)
+            | ExpressionKind::ArrowFunctionExpression(_)
+            | ExpressionKind::FunctionExpression(_)
+            | ExpressionKind::ClassExpression(_)
+            | ExpressionKind::RegExpLiteral(_) => true,
+            ExpressionKind::NewExpression(call_expr) => {
+                if let Some(ident) = &call_expr.callee.as_identifier() {
                     return ctx.is_ecma_script_global(&ident.name);
                 }
                 false
             }
-            Expression::SequenceExpression(sequence_expr) => sequence_expr
+            ExpressionKind::SequenceExpression(sequence_expr) => sequence_expr
                 .expressions
                 .iter()
                 .last()
                 .is_some_and(|last| Self::is_always_new(last, ctx)),
-            Expression::AssignmentExpression(assignment_expr)
+            ExpressionKind::AssignmentExpression(assignment_expr)
                 if assignment_expr.operator == AssignmentOperator::Assign =>
             {
                 Self::is_always_new(&assignment_expr.right, ctx)
             }
-            Expression::ConditionalExpression(cond_expr) => {
+            ExpressionKind::ConditionalExpression(cond_expr) => {
                 Self::is_always_new(&cond_expr.consequent, ctx)
                     && Self::is_always_new(&cond_expr.alternate, ctx)
             }
-            Expression::ParenthesizedExpression(paren_expr) => {
+            ExpressionKind::ParenthesizedExpression(paren_expr) => {
                 Self::is_always_new(&paren_expr.expression, ctx)
             }
             _ => false,

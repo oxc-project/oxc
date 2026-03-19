@@ -93,7 +93,7 @@ fn is_expr_global_builtin<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b str> {
     let expr = expr.without_parentheses();
-    if let Expression::Identifier(ident) = expr {
+    if let Some(ident) = expr.as_identifier() {
         let name = ident.name.as_str();
         if !ctx.scoping().root_unresolved_references().contains_key(name) {
             return None;
@@ -103,7 +103,7 @@ fn is_expr_global_builtin<'a, 'b>(
     } else {
         let member_expr = expr.as_member_expression()?;
 
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let Some(ident) = member_expr.object().as_identifier() else {
             return None;
         };
 

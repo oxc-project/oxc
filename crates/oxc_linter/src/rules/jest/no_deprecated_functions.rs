@@ -135,7 +135,7 @@ impl Rule for NoDeprecatedFunctions {
             return;
         };
         let mut chain: Vec<Cow<'a, str>> = Vec::new();
-        if let Expression::Identifier(ident) = mem_expr.object() {
+        if let Some(ident) = mem_expr.object().as_identifier() {
             chain.push(Cow::Borrowed(ident.name.as_str()));
         }
 

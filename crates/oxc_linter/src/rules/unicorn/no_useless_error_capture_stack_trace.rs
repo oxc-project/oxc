@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,7 +73,7 @@ impl Rule for NoUselessErrorCaptureStackTrace {
         }
 
         if let Some(member) = call_expr.callee.as_member_expression()
-            && let Expression::Identifier(error_ident) = member.object()
+            && let ExpressionKind::Identifier(error_ident) = member.object()
             && !error_ident.is_global_reference(ctx.scoping())
         {
             return;
@@ -159,7 +159,7 @@ fn is_error_class(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
     };
 
     // Check if super_class is one of the built-in error types
-    if let Expression::Identifier(ident) = super_class.get_inner_expression() {
+    if let Some(ident) = super_class.get_inner_expression().as_identifier() {
         // Check that the name is a built-in error type
         if !BUILT_IN_ERRORS.contains(&ident.name.as_str()) {
             return false;
@@ -189,8 +189,8 @@ fn is_referencing_class(
         return false;
     };
 
-    match expr {
-        Expression::Identifier(ident) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident) => {
             if let Some(expected_symbol) = class_id
                 && let Some(symbol_id) =
                     ctx.scoping().get_reference(ident.reference_id()).symbol_id()
@@ -200,14 +200,14 @@ fn is_referencing_class(
 
             false
         }
-        Expression::MetaProperty(meta)
+        ExpressionKind::MetaProperty(meta)
             if meta.meta.name == "new" && meta.property.name == "target" =>
         {
             true
         }
         _ => {
             if let Some(member) = expr.as_member_expression()
-                && let Expression::ThisExpression(_) = member.object().get_inner_expression()
+                && let ExpressionKind::ThisExpression(_) = member.object().get_inner_expression()
                 && let Some(prop_name) = member.static_property_name()
                 && prop_name == "constructor"
             {

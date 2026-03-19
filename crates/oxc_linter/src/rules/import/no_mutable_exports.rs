@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Declaration, Expression, ModuleExportName, VariableDeclaration, VariableDeclarationKind,
-    },
+        Declaration, Expression, ModuleExportName, VariableDeclaration, VariableDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -91,7 +90,7 @@ impl Rule for NoMutableExports {
             }
             AstKind::ExportDefaultDeclaration(export_default_decl) => {
                 // e.g. "let a = 4; export default a"
-                let Some(Expression::Identifier(ident)) =
+                let Some(ExpressionKind::Identifier(ident)) =
                     export_default_decl.declaration.as_expression()
                 else {
                     return;

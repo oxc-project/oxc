@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ConditionalExpression, Expression},
+    ast::{CallExpression, ConditionalExpression, Expression, ExpressionKind},
 };
 use oxc_semantic::AstNode;
 use oxc_span::GetSpan;
@@ -21,7 +21,7 @@ pub fn is_boolean_call(kind: &AstKind) -> bool {
     matches!(
         kind,
         AstKind::CallExpression(CallExpression {
-            callee: Expression::Identifier(ident),
+            callee: ExpressionKind::Identifier(ident),
             arguments,
             ..
         }) if ident.name == "Boolean" && arguments.len() == 1

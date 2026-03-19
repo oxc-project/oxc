@@ -147,7 +147,7 @@ impl NoCondAssign {
         if self.0 == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
-        if let Expression::AssignmentExpression(expr) = expr {
+        if let Some(expr) = expr.as_assignment_expression() {
             Self::emit_diagnostic(ctx, expr);
         }
     }

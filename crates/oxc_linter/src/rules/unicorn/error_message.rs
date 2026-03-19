@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, NewExpression},
+    ast::{Argument, CallExpression, Expression, NewExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,13 +58,13 @@ impl Rule for ErrorMessage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (callee, span, args) = match node.kind() {
             AstKind::NewExpression(NewExpression {
-                callee: Expression::Identifier(id),
+                callee: ExpressionKind::Identifier(id),
                 span,
                 arguments,
                 ..
             })
             | AstKind::CallExpression(CallExpression {
-                callee: Expression::Identifier(id),
+                callee: ExpressionKind::Identifier(id),
                 span,
                 arguments,
                 ..

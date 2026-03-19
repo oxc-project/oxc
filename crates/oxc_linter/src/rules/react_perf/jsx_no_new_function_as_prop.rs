@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{Expression, MemberExpression, ExpressionKind},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -71,10 +71,10 @@ impl ReactPerfRule for JsxNoNewFunctionAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parentheses() {
-        Expression::ArrowFunctionExpression(expr) => Some(expr.span),
-        Expression::FunctionExpression(expr) => Some(expr.span),
-        Expression::CallExpression(expr) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::ArrowFunctionExpression(expr) => Some(expr.span),
+        ExpressionKind::FunctionExpression(expr) => Some(expr.span),
+        ExpressionKind::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {
                 return Some(expr.span);
             }
@@ -83,17 +83,17 @@ fn check_expression(expr: &Expression) -> Option<Span> {
             let property_name = MemberExpression::static_property_name(member_expr);
             if property_name == Some("bind") { Some(expr.span) } else { None }
         }
-        Expression::NewExpression(expr) => {
+        ExpressionKind::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {
                 Some(expr.span)
             } else {
                 None
             }
         }
-        Expression::LogicalExpression(expr) => {
+        ExpressionKind::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
         _ => None,

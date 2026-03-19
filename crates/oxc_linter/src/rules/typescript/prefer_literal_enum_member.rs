@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -73,13 +73,13 @@ impl Rule for PreferLiteralEnumMember {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = initializer
+        if let Some(template) = initializer.as_template_literal()
             && template.expressions.is_empty()
         {
             return;
         }
 
-        if let Expression::UnaryExpression(unary_expr) = initializer
+        if let Some(unary_expr) = initializer.as_unary_expression()
             && unary_expr.argument.is_literal()
         {
             if matches!(
@@ -97,7 +97,7 @@ impl Rule for PreferLiteralEnumMember {
         }
 
         if self.allow_bitwise_expressions
-            && let Expression::BinaryExpression(binary_expr) = initializer
+            && let ExpressionKind::BinaryExpression(binary_expr) = initializer
             && matches!(
                 binary_expr.operator,
                 BinaryOperator::BitwiseOR

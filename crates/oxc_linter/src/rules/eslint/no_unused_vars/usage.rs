@@ -212,13 +212,13 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
-                | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
-                    Statement::ReturnStatement(_) => return true,
-                    Statement::BlockStatement(b) => {
+                | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body.kind() {
+                    StatementKind::ReturnStatement(_) => return true,
+                    StatementKind::BlockStatement(b) => {
                         return b
                             .body
                             .first()
-                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)));
+                            .is_some_and(|s| s.is_return_statement());
                     }
                     _ => return false,
                 },

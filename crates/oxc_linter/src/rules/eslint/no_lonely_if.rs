@@ -1,6 +1,6 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
-use oxc_ast::ast::{IfStatement, Statement};
+use oxc_ast::ast::{IfStatement, Statement, StatementKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -91,7 +91,7 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        let Some(Statement::BlockStatement(alternate_block)) = &if_stmt.alternate else {
+        let Some(StatementKind::BlockStatement(alternate_block)) = &if_stmt.alternate else {
             return;
         };
 
@@ -103,12 +103,12 @@ impl Rule for NoLonelyIf {
             return;
         }
 
-        match only_stmt {
-            Statement::IfStatement(lonely_if) => {
+        match only_stmt.kind() {
+            StatementKind::IfStatement(lonely_if) => {
                 ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
             }
-            Statement::BlockStatement(inner_block) => {
-                if let [Statement::IfStatement(lonely_if)] = inner_block.body.as_slice() {
+            StatementKind::BlockStatement(inner_block) => {
+                if let [StatementKind::IfStatement(lonely_if)] = inner_block.body.as_slice() {
                     ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
                 }
             }

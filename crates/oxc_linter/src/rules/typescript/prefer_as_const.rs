@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, TSLiteral, TSType, TSTypeAnnotation},
+    ast::{BindingPattern, Expression, TSLiteral, TSType, TSTypeAnnotation, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -113,15 +113,15 @@ fn literal_type_span_if_matches(
     initial_value_expression: &Expression,
 ) -> Option<Span> {
     let TSType::TSLiteralType(literal_type) = &ts_type else { return None };
-    match &literal_type.literal {
-        TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
-            Expression::StringLiteral(initial_string) => {
+    match &literal_type.literal.kind() {
+        TSLiteral::StringLiteral(string_literal) => match initial_value_expression.kind() {
+            ExpressionKind::StringLiteral(initial_string) => {
                 string_literal.value.eq(&initial_string.value).then_some(string_literal.span)
             }
             _ => None,
         },
-        TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
-            Expression::NumericLiteral(initial_number) => {
+        TSLiteral::NumericLiteral(number_literal) => match initial_value_expression.kind() {
+            ExpressionKind::NumericLiteral(initial_number) => {
                 ((number_literal.value - initial_number.value).abs() < f64::EPSILON)
                     .then_some(number_literal.span)
             }

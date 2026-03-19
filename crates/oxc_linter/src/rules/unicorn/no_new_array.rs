@@ -47,7 +47,7 @@ impl Rule for NoNewArray {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee else {
+        let Some(ident) = &new_expr.callee.as_identifier() else {
             return;
         };
 

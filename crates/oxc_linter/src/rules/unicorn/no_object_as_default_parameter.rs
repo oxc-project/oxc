@@ -56,7 +56,7 @@ impl Rule for NoObjectAsDefaultParameter {
 
         let init = init.get_inner_expression();
 
-        let Expression::ObjectExpression(object_expr) = init else {
+        let Some(object_expr) = init.as_object_expression() else {
             return;
         };
 

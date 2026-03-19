@@ -77,7 +77,7 @@ impl Rule for NoRelativeParentImports {
             }
             // Dynamic import expressions: import('../foo')
             AstKind::ImportExpression(import_expr) => {
-                if let Expression::StringLiteral(str_literal) = &import_expr.source
+                if let Some(str_literal) = &import_expr.source.as_string_literal()
                     && is_parent_import(str_literal.value.as_str())
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
@@ -85,7 +85,7 @@ impl Rule for NoRelativeParentImports {
             }
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee
+                if let Some(ident) = &call_expr.callee.as_identifier()
                     && ident.name == "require"
                     && call_expr.arguments.len() == 1
                     && let Argument::StringLiteral(str_literal) = &call_expr.arguments[0]

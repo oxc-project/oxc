@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, match_member_expression},
+    ast::{CallExpression, Expression, MemberExpression, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -56,7 +56,7 @@ impl Rule for PreferTypeError {
             return;
         };
 
-        let Expression::NewExpression(new_expr) = &throw_stmt.argument.without_parentheses() else {
+        let Some(new_expr) = &throw_stmt.argument.without_parentheses().as_new_expression() else {
             return;
         };
 
@@ -88,12 +88,12 @@ impl Rule for PreferTypeError {
 }
 
 fn is_type_checking_expr(expr: &Expression) -> bool {
-    match expr {
-        match_member_expression!(Expression) => {
+    match expr.kind() {
+        match_member_expression!(ExpressionKind) => {
             is_type_checking_member_expr(expr.to_member_expression())
         }
-        Expression::CallExpression(call_expr) => is_typechecking_call_expr(call_expr),
-        Expression::UnaryExpression(unary_expr) => {
+        ExpressionKind::CallExpression(call_expr) => is_typechecking_call_expr(call_expr),
+        ExpressionKind::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Typeof {
                 return true;
             }
@@ -103,13 +103,13 @@ fn is_type_checking_expr(expr: &Expression) -> bool {
             }
             false
         }
-        Expression::BinaryExpression(bin_expr) => {
+        ExpressionKind::BinaryExpression(bin_expr) => {
             if bin_expr.operator == BinaryOperator::Instanceof {
                 return true;
             }
             is_type_checking_expr(&bin_expr.left) || is_type_checking_expr(&bin_expr.right)
         }
-        Expression::LogicalExpression(logical_expr) => {
+        ExpressionKind::LogicalExpression(logical_expr) => {
             is_type_checking_expr(&logical_expr.left) && is_type_checking_expr(&logical_expr.right)
         }
         _ => false,
@@ -121,11 +121,11 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
         return false;
     }
 
-    match &call_expr.callee {
-        Expression::Identifier(ident) => {
+    match &call_expr.callee.kind() {
+        ExpressionKind::Identifier(ident) => {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(&ident.name.as_str())
         }
-        callee @ match_member_expression!(Expression) => {
+        callee @ match_member_expression!(ExpressionKind) => {
             if let Some(ident) = callee.to_member_expression().static_property_name() {
                 return TYPE_CHECKING_IDENTIFIERS.contains(ident);
             }

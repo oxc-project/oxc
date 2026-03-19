@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -63,12 +63,10 @@ impl Rule for RequireDefaultExport {
                 return false;
             };
 
-            match call_expr.callee.get_inner_expression() {
-                Expression::Identifier(identifier) => identifier.name == "defineComponent",
-                Expression::StaticMemberExpression(member_expr) => {
-                    let Expression::Identifier(object_identifier) =
-                        member_expr.object.get_inner_expression()
-                    else {
+            match call_expr.callee.get_inner_expression().kind() {
+                ExpressionKind::Identifier(identifier) => identifier.name == "defineComponent",
+                ExpressionKind::StaticMemberExpression(member_expr) => {
+                    let Some(object_identifier) = member_expr.object.get_inner_expression().as_identifier() else {
                         return false;
                     };
 

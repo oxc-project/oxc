@@ -84,7 +84,7 @@ impl Rule for NoWillUpdateSetState {
 
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
-        if !matches!(member_expr.object(), Expression::ThisExpression(_))
+        if !member_expr.object().is_this_expression()
             || member_expr.static_property_name().is_none_or(|name| name != "setState")
         {
             return;

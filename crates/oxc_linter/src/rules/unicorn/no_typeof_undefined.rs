@@ -70,7 +70,7 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        let Expression::UnaryExpression(unary_expr) = &bin_expr.left else {
+        let Some(unary_expr) = &bin_expr.left.as_unary_expression() else {
             return;
         };
 
@@ -108,7 +108,7 @@ impl Rule for NoTypeofUndefined {
 }
 
 fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    let Expression::Identifier(ident) = ident else {
+    let Some(ident) = ident.as_identifier() else {
         return false;
     };
 

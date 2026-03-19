@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{AstKind, ast::{StatementKind, Statement}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -112,8 +112,8 @@ impl Rule for SwitchCaseBraces {
             if case.consequent.is_empty() {
                 continue;
             }
-            let missing_braces = match &case.consequent[0] {
-                Statement::BlockStatement(block_stmt) if case.consequent.len() == 1 => {
+            let missing_braces = match case.consequent[0].kind() {
+                StatementKind::BlockStatement(block_stmt) if case.consequent.len() == 1 => {
                     if block_stmt.body.is_empty() {
                         ctx.diagnostic_with_fix(
                             switch_case_braces_diagnostic_empty_clause(block_stmt.span),
@@ -125,8 +125,8 @@ impl Rule for SwitchCaseBraces {
                         && !block_stmt.body.iter().any(|stmt| {
                             matches!(
                                 stmt,
-                                Statement::VariableDeclaration(_)
-                                    | Statement::FunctionDeclaration(_)
+                                StatementKind::VariableDeclaration(_)
+                                    | StatementKind::FunctionDeclaration(_)
                             )
                         })
                     {

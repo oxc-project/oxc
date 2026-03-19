@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -90,17 +90,17 @@ fn check_forward_ref_inner<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let (params, span) = match exp {
-        Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
-        Expression::FunctionExpression(f) => (&f.params, f.span),
+    let (params, span) = match exp.kind() {
+        ExpressionKind::ArrowFunctionExpression(f) => (&f.params, f.span),
+        ExpressionKind::FunctionExpression(f) => (&f.params, f.span),
         _ => return,
     };
     if params.parameters_count() != 1 || params.rest.is_some() {
         return;
     }
 
-    let can_remove_forward_ref = match exp {
-        Expression::FunctionExpression(f) if f.id.is_none() => !matches!(
+    let can_remove_forward_ref = match exp.kind() {
+        ExpressionKind::FunctionExpression(f) if f.id.is_none() => !matches!(
             outermost_paren_parent(node, ctx.semantic()).map(AstNode::kind),
             Some(AstKind::ExpressionStatement(_))
         ),

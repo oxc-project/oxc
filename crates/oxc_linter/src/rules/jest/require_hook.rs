@@ -228,11 +228,11 @@ impl RequireHook {
     }
 
     fn check<'a>(&self, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
+        if let Some(expr_stmt) = stmt.as_expression_statement() {
             self.check_should_report_in_hook(&expr_stmt.expression, ctx);
-        } else if let Statement::VariableDeclaration(var_decl) = stmt
+        } else if let Some(var_decl) = stmt
             && var_decl.kind != VariableDeclarationKind::Const
-            && var_decl.declarations.iter().any(|decl| {
+            && var_decl.declarations.iter().any(|decl|.as_variable_declaration() {
                 let Some(init_call) = &decl.init else {
                     return false;
                 };
@@ -244,7 +244,7 @@ impl RequireHook {
     }
 
     fn check_should_report_in_hook<'a>(&self, expr: &'a Expression<'a>, ctx: &LintContext<'a>) {
-        if let Expression::CallExpression(call_expr) = expr {
+        if let Some(call_expr) = expr.as_call_expression() {
             let name = get_node_name(&call_expr.callee);
 
             let node_name_split: Vec<&str> = name.split('.').collect();

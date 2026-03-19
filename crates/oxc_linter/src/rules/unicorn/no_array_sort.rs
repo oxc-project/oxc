@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrayExpressionElement, Expression},
+    ast::{Argument, ArrayExpressionElement, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -105,8 +105,8 @@ impl Rule for NoArraySort {
             return;
         }
 
-        let is_spread = match member_expr.object() {
-            Expression::ArrayExpression(array) => {
+        let is_spread = match member_expr.object().kind() {
+            ExpressionKind::ArrayExpression(array) => {
                 array.elements.len() == 1
                     && matches!(array.elements[0], ArrayExpressionElement::SpreadElement(_))
             }

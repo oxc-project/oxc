@@ -112,7 +112,7 @@ impl Rule for NextScriptForGa {
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#the_google_analytics_tag
         // https://developers.google.com/tag-manager/quickstart
         if let Some(danger_value) = get_dangerously_set_inner_html_prop_value(jsx_opening_element) {
-            let Expression::TemplateLiteral(template_literal) = &danger_value.value else {
+            let Some(template_literal) = &danger_value.value.as_template_literal() else {
                 return;
             };
             let template_literal = template_literal.quasis[0].value.raw.as_str();

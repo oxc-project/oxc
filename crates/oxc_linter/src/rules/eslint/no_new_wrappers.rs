@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, NewExpression},
+    ast::{Argument, Expression, NewExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -72,7 +72,7 @@ impl Rule for NoNewWrappers {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ident) = &expr.callee else {
+        let Some(ident) = &expr.callee.as_identifier() else {
             return;
         };
         if !ctx.is_reference_to_global_variable(ident) {
@@ -112,10 +112,10 @@ fn remove_new_operator<'a>(
         return remove_new_fix;
     };
 
-    match (name, arg.get_inner_expression()) {
-        ("Boolean", Expression::BooleanLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
-        ("String", Expression::StringLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
-        ("Number", Expression::NumericLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
+    match (name, arg.get_inner_expression()).kind() {
+        ("Boolean", ExpressionKind::BooleanLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
+        ("String", ExpressionKind::StringLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
+        ("Number", ExpressionKind::NumericLiteral(lit)) => fixer.replace_with(expr, lit.as_ref()),
         _ => remove_new_fix,
     }
 }

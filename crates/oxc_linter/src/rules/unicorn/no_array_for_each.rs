@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, match_member_expression},
+    ast::{Expression, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -82,13 +82,13 @@ impl Rule for NoArrayForEach {
 
             let object = member_expr.object();
 
-            match object {
-                Expression::Identifier(ident) => {
+            match object.kind() {
+                ExpressionKind::Identifier(ident) => {
                     if IGNORED_OBJECTS.contains(&ident.name.as_str()) {
                         return;
                     }
                 }
-                match_member_expression!(Expression) => {
+                match_member_expression!(ExpressionKind) => {
                     if let Some(name) = object.to_member_expression().static_property_name()
                         && IGNORED_OBJECTS.contains(&name)
                     {

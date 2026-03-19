@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
-    },
+        MethodDefinitionKind, PropertyDefinitionType, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -113,14 +112,14 @@ impl Rule for PreferClassFields {
 
         // Find first non-empty statement in constructor
         let first_statement =
-            body.statements.iter().find(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+            body.statements.iter().find(|stmt| !stmt.is_empty_statement());
 
-        let Some(Statement::ExpressionStatement(expr_stmt)) = first_statement else {
+        let Some(StatementKind::ExpressionStatement(expr_stmt)) = first_statement else {
             return;
         };
 
         // Check if it's a simple assignment to this.property = literal
-        let Expression::AssignmentExpression(assign) = &expr_stmt.expression else {
+        let Some(assign) = &expr_stmt.expression.as_assignment_expression() else {
             return;
         };
 
@@ -218,7 +217,7 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     };
 
     // Check if it's this.property
-    if !matches!(member.object(), Expression::ThisExpression(_)) {
+    if !member.object().is_this_expression() {
         return false;
     }
 
@@ -229,12 +228,12 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     // Check if the value is a literal
     matches!(
         &assign.right,
-        Expression::StringLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NullLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
+        ExpressionKind::StringLiteral(_)
+            | ExpressionKind::NumericLiteral(_)
+            | ExpressionKind::BooleanLiteral(_)
+            | ExpressionKind::NullLiteral(_)
+            | ExpressionKind::BigIntLiteral(_)
+            | ExpressionKind::RegExpLiteral(_)
     )
 }
 

@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget, Expression, IdentifierReference, MemberExpression,
-        VariableDeclarationKind,
-    },
+        VariableDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,9 +80,9 @@ impl Rule for NoMultipleSlotArgs {
             return;
         }
 
-        let member_expr = match call_expr.callee.get_inner_expression() {
-            Expression::StaticMemberExpression(member_expr) => member_expr.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
+        let member_expr = match call_expr.callee.get_inner_expression().kind() {
+            ExpressionKind::StaticMemberExpression(member_expr) => member_expr.as_ref(),
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
                     chain_expr.expression.as_member_expression()
                 {
@@ -92,11 +91,11 @@ impl Rule for NoMultipleSlotArgs {
                     return;
                 }
             }
-            Expression::Identifier(identifier) => {
+            ExpressionKind::Identifier(identifier) => {
                 let Some(member_expr) = get_identifier_resolved_reference(identifier, ctx) else {
                     return;
                 };
-                if let Expression::StaticMemberExpression(member_expr) = member_expr {
+                if let Some(member_expr) = member_expr.as_static_member_expression() {
                     member_expr.as_ref()
                 } else {
                     return;
@@ -105,9 +104,9 @@ impl Rule for NoMultipleSlotArgs {
             _ => return,
         };
 
-        let inner = match member_expr.object.get_inner_expression() {
-            Expression::StaticMemberExpression(inner) => inner.as_ref(),
-            Expression::ChainExpression(chain_expr) => {
+        let inner = match member_expr.object.get_inner_expression().kind() {
+            ExpressionKind::StaticMemberExpression(inner) => inner.as_ref(),
+            ExpressionKind::ChainExpression(chain_expr) => {
                 if let Some(MemberExpression::StaticMemberExpression(inner)) =
                     chain_expr.expression.as_member_expression()
                 {
@@ -119,13 +118,13 @@ impl Rule for NoMultipleSlotArgs {
             _ => return,
         };
 
-        match inner.object.get_inner_expression() {
-            Expression::ThisExpression(_) => {}
-            Expression::Identifier(identifier) => {
+        match inner.object.get_inner_expression().kind() {
+            ExpressionKind::ThisExpression(_) => {}
+            ExpressionKind::Identifier(identifier) => {
                 let Some(expression) = get_identifier_resolved_reference(identifier, ctx) else {
                     return;
                 };
-                if !matches!(expression, Expression::ThisExpression(_)) {
+                if !expression.is_this_expression() {
                     return;
                 }
             }

@@ -273,19 +273,19 @@ fn modifier_from_property(property: &PropertyDefinition<'_>) -> Option<Modifier>
 fn constructor_assignment<'a>(
     statement: &'a Statement<'a>,
 ) -> Option<(&'a AssignmentExpression<'a>, Atom<'a>)> {
-    let Statement::ExpressionStatement(expression_statement) = statement else {
+    let Some(expression_statement) = statement.as_expression_statement() else {
         return None;
     };
-    let Expression::AssignmentExpression(assignment) = &expression_statement.expression else {
+    let Some(assignment) = &expression_statement.expression.as_assignment_expression() else {
         return None;
     };
     let AssignmentTarget::StaticMemberExpression(member_expression) = &assignment.left else {
         return None;
     };
-    if !matches!(member_expression.object.get_inner_expression(), Expression::ThisExpression(_)) {
+    if !member_expression.object.get_inner_expression().is_this_expression() {
         return None;
     }
-    let Expression::Identifier(identifier) = assignment.right.get_inner_expression() else {
+    let Some(identifier) = assignment.right.get_inner_expression().as_identifier() else {
         return None;
     };
     if member_expression.property.name != identifier.name {

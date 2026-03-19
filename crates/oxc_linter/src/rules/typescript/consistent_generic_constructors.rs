@@ -148,10 +148,10 @@ impl ConsistentGenericConstructors {
         ctx: &LintContext<'a>,
     ) {
         let Some(init) = init else { return };
-        let Expression::NewExpression(new_expression) = init.get_inner_expression() else {
+        let Some(new_expression) = init.get_inner_expression().as_new_expression() else {
             return;
         };
-        let Expression::Identifier(identifier) = &new_expression.callee else {
+        let Some(identifier) = &new_expression.callee.as_identifier() else {
             return;
         };
         if is_built_in_typed_array(&identifier.name)
@@ -323,7 +323,7 @@ impl ConsistentGenericConstructors {
         let source_text = ctx.source_text();
 
         // Get the callee name (constructor name)
-        let Expression::Identifier(callee_ident) = &new_expression.callee else {
+        let Some(callee_ident) = &new_expression.callee.as_identifier() else {
             return fixer.noop();
         };
         let callee_name = callee_ident.name.as_str();

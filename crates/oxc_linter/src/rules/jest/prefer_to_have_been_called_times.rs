@@ -107,16 +107,16 @@ impl PreferToHaveBeenCalledTimes {
         let expect_argument = parsed_expect_call.expect_arguments.and_then(|args| args.first());
 
         let expect_argument_mem_expr =
-            expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg {
-                expr @ match_member_expression!(Expression) => Some(expr.to_member_expression()),
+            expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg.kind() {
+                expr @ match_member_expression!(ExpressionKind) => Some(expr.to_member_expression()),
                 _ => None,
             });
 
         let is_expect_argument_mock_calls = expect_argument_mem_expr.is_some_and(|mem_expr| {
             let is_last_member_calls = mem_expr.static_property_name() == Some("calls");
 
-            let is_reversed_second_member_mock = match mem_expr.object() {
-                expr_inner @ match_member_expression!(Expression) => {
+            let is_reversed_second_member_mock = match mem_expr.object().kind() {
+                expr_inner @ match_member_expression!(ExpressionKind) => {
                     let inner_mem_expr = expr_inner.to_member_expression();
                     inner_mem_expr.static_property_name() == Some("mock")
                 }
@@ -167,9 +167,9 @@ impl PreferToHaveBeenCalledTimes {
         expect_argument_mem_expr: Option<&MemberExpression<'_>>,
         fixer: RuleFixer<'_, 'a>,
     ) -> &'a str {
-        if let Some(mem_expr) = expect_argument_mem_expr
+        if let Some(mem_expr) = expect_argument_mem_expr.as_member_expression()
             && mem_expr.static_property_name().unwrap().eq("calls")
-            && let Some(expr) = mem_expr.object().as_member_expression()
+            && let Some(expr) = mem_expr.object()
             && expr.static_property_name() == Some("mock")
         {
             return fixer.source_range(expr.object().span());

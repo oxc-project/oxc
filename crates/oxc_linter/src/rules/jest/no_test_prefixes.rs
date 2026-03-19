@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -91,11 +91,11 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         return;
     }
 
-    let span = match &call_expr.callee {
-        Expression::TaggedTemplateExpression(tagged_template_expr) => {
+    let span = match call_expr.callee.kind() {
+        ExpressionKind::TaggedTemplateExpression(tagged_template_expr) => {
             tagged_template_expr.tag.span()
         }
-        Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
+        ExpressionKind::CallExpression(child_call_expr) => child_call_expr.callee.span(),
         _ => call_expr.callee.span(),
     };
 

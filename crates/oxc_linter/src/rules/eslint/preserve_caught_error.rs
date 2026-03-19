@@ -1,8 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
-};
+    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement, ExpressionKind};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -57,9 +56,9 @@ struct ThrowFinder<'a, 'ctx> {
 
 impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
     fn visit_throw_statement(&mut self, throw_stmt: &ThrowStatement<'a>) {
-        let (callee, args) = match &throw_stmt.argument {
-            Expression::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
-            Expression::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
+        let (callee, args) = match throw_stmt.argument.kind() {
+            ExpressionKind::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
+            ExpressionKind::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
             _ => return,
         };
 
@@ -95,7 +94,7 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
                             throw_stmt.argument.span().start + start_paren_idx as u32,
                             1,
                         );
-                        if let Expression::Identifier(ident) = callee
+                        if let Some(ident) = callee.as_identifier()
                             && is_aggregate_error(ident, self.ctx)
                         {
                             // AggregateError takes options as its third argument
@@ -112,7 +111,7 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
                     let span = args[0].span();
                     // insert comma
                     let mut fix = fixer.new_fix_with_capacity(3);
-                    if let Expression::Identifier(ident) = callee
+                    if let Some(ident) = callee.as_identifier()
                         && is_aggregate_error(ident, self.ctx)
                     {
                         // AggregateError takes options as its third argument
@@ -125,7 +124,7 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
                     return fix.with_message(ADD_CAUSE_PROPERTY);
                 }
                 2 => {
-                    if let Expression::Identifier(ident) = callee
+                    if let Some(ident) = callee.as_identifier()
                         && is_aggregate_error(ident, self.ctx)
                     {
                         // AggregateError takes options as its third argument
@@ -197,7 +196,7 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
 }
 
 fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
-    let Expression::Identifier(ident) = expr else {
+    let Some(ident) = expr.as_identifier() else {
         return false;
     };
 
@@ -240,7 +239,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
         return false;
     };
 
-    let Expression::Identifier(ident) = expr else {
+    let Some(ident) = expr.as_identifier() else {
         return false;
     };
 

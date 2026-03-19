@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, BinaryExpression, CallExpression, Expression, NullLiteral, SwitchStatement,
-        VariableDeclarator,
-    },
+        VariableDeclarator, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -69,7 +68,7 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
         .and_then(Argument::as_expression)
         .map(Expression::get_inner_expression)
     {
-        Some(Expression::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
+        Some(ExpressionKind::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
         _ => false,
     }
 }
@@ -114,7 +113,7 @@ fn diagnose_variable_declarator(
     parent_kind: Option<AstKind>,
 ) {
     // `let foo = null;`
-    if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
+    if matches!(&variable_declarator.init, Some(ExpressionKind::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
         ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
@@ -134,14 +133,14 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     // `Object.create(null)`, `Object.create(null, foo)`
     if is_method_call(call_expr, Some(&["Object"]), Some(&["create"]), Some(1), Some(2))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
+        && !&call_expr.callee.is_computed_member_expression()
         && match_null_arg(call_expr, 0, null_literal.span)
     {
         return true;
     }
 
     // `useRef(null)`
-    if let Expression::Identifier(ident) = &call_expr.callee
+    if let Some(ident) = &call_expr.callee.as_identifier()
         && ident.name == "useRef"
         && call_expr.arguments.len() == 1
         && !call_expr.optional
@@ -163,7 +162,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
             .iter()
             .any(|argument| matches!(argument, Argument::SpreadElement(_)))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
+        && !&call_expr.callee.is_computed_member_expression()
         && match_null_arg(call_expr, 1, null_literal.span)
     {
         return true;

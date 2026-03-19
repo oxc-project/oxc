@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -76,9 +76,9 @@ impl ReactPerfRule for JsxNoNewArrayAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parentheses() {
-        Expression::ArrayExpression(expr) => Some(expr.span),
-        Expression::CallExpression(expr) => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::ArrayExpression(expr) => Some(expr.span),
+        ExpressionKind::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Array")
                 || is_method_call(
                     expr.as_ref(),
@@ -93,17 +93,17 @@ fn check_expression(expr: &Expression) -> Option<Span> {
                 None
             }
         }
-        Expression::NewExpression(expr) => {
+        ExpressionKind::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Array") {
                 Some(expr.span)
             } else {
                 None
             }
         }
-        Expression::LogicalExpression(expr) => {
+        ExpressionKind::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
-        Expression::ConditionalExpression(expr) => {
+        ExpressionKind::ConditionalExpression(expr) => {
             check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
         _ => None,

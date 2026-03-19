@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, MemberExpressionKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_ast::ast::{ExpressionKind};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -76,7 +77,7 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
 
-        let property_span = match member_expr {
+        let property_span = match member_expr.kind() {
             MemberExpressionKind::Computed(expr) => expr.expression.span(),
             MemberExpressionKind::Static(expr) => expr.property.span,
             MemberExpressionKind::PrivateField(expr) => expr.field.span,

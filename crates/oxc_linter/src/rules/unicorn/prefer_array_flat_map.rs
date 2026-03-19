@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -62,8 +62,7 @@ impl Rule for PreferArrayFlatMap {
         let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
             return;
         };
-        let Expression::CallExpression(call_expr) = &member_expr.object().without_parentheses()
-        else {
+        let Some(call_expr) = &member_expr.object().without_parentheses().as_call_expression() else {
             return;
         };
         if !is_method_call(call_expr, None, Some(&["map"]), None, None) {
@@ -109,9 +108,9 @@ fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return false;
     };
-    match member_expr.object().get_inner_expression() {
-        Expression::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
-        Expression::StaticMemberExpression(mem) => {
+    match member_expr.object().get_inner_expression().kind() {
+        ExpressionKind::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
+        ExpressionKind::StaticMemberExpression(mem) => {
             IGNORE_OBJECTS.contains(&mem.property.name.as_str())
         }
         _ => false,

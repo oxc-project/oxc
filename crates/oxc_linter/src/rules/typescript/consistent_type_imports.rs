@@ -602,7 +602,7 @@ fn get_type_only_named_import<'a>(
     let program = ctx.nodes().program();
 
     for stmt in &program.body {
-        let Statement::ImportDeclaration(import_decl) = stmt else {
+        let Some(import_decl) = stmt.as_import_declaration() else {
             return None;
         };
         if import_decl.import_kind.is_type()

@@ -5,7 +5,7 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -126,9 +126,9 @@ impl PreferToHaveBeenCalled {
 }
 
 fn is_zero_arg(expr: &Expression<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(lit) => lit.value == 0.0,
-        Expression::BigIntLiteral(lit) => lit.value == "0",
+    match expr.get_inner_expression().kind() {
+        ExpressionKind::NumericLiteral(lit) => lit.value == 0.0,
+        ExpressionKind::BigIntLiteral(lit) => lit.value == "0",
         _ => false,
     }
 }

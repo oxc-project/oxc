@@ -108,16 +108,13 @@ impl PreferToContain {
         else {
             return;
         };
-        let Expression::CallExpression(expect_call_expr) = parent else {
+        let Some(expect_call_expr) = parent.as_call_expression() else {
             return;
         };
 
         // handle "expect()"
         if expect_call_expr.arguments.is_empty()
-            || !matches!(
-                jest_expect_first_arg.get_inner_expression(),
-                Expression::BooleanLiteral(_)
-            )
+            || !jest_expect_first_arg.get_inner_expression().is_boolean_literal()
         {
             return;
         }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, Statement},
+    ast::{Argument, CallExpression, Expression, Statement, ExpressionKind, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,21 +124,21 @@ fn is_simple_operation(node: &CallExpression) -> bool {
         return false;
     }
 
-    match &function_body.statements[0] {
-        Statement::ExpressionStatement(expr) => {
-            matches!(expr.expression, Expression::BinaryExpression(_))
+    match &function_body.statements[0].kind() {
+        StatementKind::ExpressionStatement(expr) => {
+            expr.expression.is_binary_expression()
         }
-        Statement::ReturnStatement(ret) => {
-            matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
+        StatementKind::ReturnStatement(ret) => {
+            matches!(&ret.argument, Some(ExpressionKind::BinaryExpression(_)))
         }
-        Statement::BlockStatement(block) => {
+        StatementKind::BlockStatement(block) => {
             if block.body.len() != 1 {
                 return false;
             }
 
-            match &block.body[0] {
-                Statement::ReturnStatement(ret) => {
-                    matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
+            match &block.body[0].kind() {
+                StatementKind::ReturnStatement(ret) => {
+                    matches!(&ret.argument, Some(ExpressionKind::BinaryExpression(_)))
                 }
                 _ => false,
             }

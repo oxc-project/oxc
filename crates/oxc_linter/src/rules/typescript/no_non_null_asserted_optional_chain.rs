@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression, match_member_expression},
+    ast::{ChainElement, Expression, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -66,8 +66,8 @@ impl Rule for NoNonNullAssertedOptionalChain {
             return;
         };
 
-        let chain_span = match non_null_expr.expression.get_inner_expression() {
-            Expression::ChainExpression(chain) => match &chain.expression {
+        let chain_span = match non_null_expr.expression.get_inner_expression().kind() {
+            ExpressionKind::ChainExpression(chain) => match &chain.expression {
                 ChainElement::ComputedMemberExpression(member) if member.optional => {
                     Some(member.object.span())
                 }
@@ -80,7 +80,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
                 _ => None,
             },
-            Expression::CallExpression(call) => {
+            ExpressionKind::CallExpression(call) => {
                 if call.optional && !is_parent_member_or_call(node, ctx) {
                     Some(call.callee.span())
                 } else if let Some(member) = call.callee.as_member_expression() {
@@ -93,7 +93,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                     None
                 }
             }
-            expr @ match_member_expression!(Expression) => {
+            expr @ match_member_expression!(ExpressionKind) => {
                 let member_expr = expr.to_member_expression();
                 if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
                     Some(member_expr.object().span())

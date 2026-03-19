@@ -7,8 +7,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind, ReturnStatement,
-    },
+        ObjectPropertyKind, ReturnStatement, ExpressionKind},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -353,7 +352,7 @@ impl Rule for NoMapSpread {
             return;
         }
 
-        match leftmost_identifier_reference(&call_expr.callee) {
+        match leftmost_identifier_reference(&call_expr.callee).kind() {
             Ok(ident) => {
                 let reference_id = ident.reference_id();
                 if self.is_ignored_map_call(ctx, ident.name.as_str(), reference_id, call_expr.span)
@@ -363,15 +362,15 @@ impl Rule for NoMapSpread {
             }
             // Mapped class properties likely have their elements spread to
             // avoid side effects on the class instance.
-            Err(Expression::ThisExpression(_)) => return,
+            Err(ExpressionKind::ThisExpression(_)) => return,
             Err(_) => {}
         }
 
-        let map_call_site = match &call_expr.callee {
-            Expression::StaticMemberExpression(mem) => mem.property.span,
-            Expression::ComputedMemberExpression(mem) => mem.expression.span(),
-            Expression::PrivateFieldExpression(mem) => mem.field.span,
-            Expression::ChainExpression(chain) => chain.expression.span(),
+        let map_call_site = match call_expr.callee.kind() {
+            ExpressionKind::StaticMemberExpression(mem) => mem.property.span,
+            ExpressionKind::ComputedMemberExpression(mem) => mem.expression.span(),
+            ExpressionKind::PrivateFieldExpression(mem) => mem.field.span,
+            ExpressionKind::ChainExpression(chain) => chain.expression.span(),
             expr => expr.span(),
         };
 
@@ -458,8 +457,8 @@ fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Exp
     }
 
     let arg = call_expr.arguments.first()?.as_expression()?.get_inner_expression();
-    match arg {
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => Some(arg),
+    match arg.kind() {
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => Some(arg),
         _ => None,
     }
 }
@@ -592,8 +591,8 @@ where
     F: FnMut(Spread<'a, '_>),
 {
     fn iter_spreads(ctx: &'ctx LintContext<'a>, map_cb: &Expression<'a>, cb: F) -> Option<Self> {
-        let (mut visitor, body) = match map_cb {
-            Expression::ArrowFunctionExpression(f) => {
+        let (mut visitor, body) = match map_cb.kind() {
+            ExpressionKind::ArrowFunctionExpression(f) => {
                 let v = Self {
                     ctx,
                     cb,
@@ -603,7 +602,7 @@ where
                 };
                 (v, f.body.as_ref())
             }
-            Expression::FunctionExpression(f) => {
+            ExpressionKind::FunctionExpression(f) => {
                 let v = Self {
                     ctx,
                     cb,
@@ -649,25 +648,25 @@ where
         if !self.is_in_return {
             return;
         }
-        match expr.get_inner_expression() {
+        match expr.get_inner_expression().kind() {
             // base cases
-            Expression::ObjectExpression(obj) => self.visit_object_expression(obj),
-            Expression::ArrayExpression(arr) => self.visit_array_expression(arr),
+            ExpressionKind::ObjectExpression(obj) => self.visit_object_expression(obj),
+            ExpressionKind::ArrayExpression(arr) => self.visit_array_expression(arr),
             // recursive cases
-            Expression::ConditionalExpression(cond) => {
+            ExpressionKind::ConditionalExpression(cond) => {
                 self.visit_expression(&cond.consequent);
                 self.visit_expression(&cond.alternate);
             }
-            Expression::SequenceExpression(expr) => {
+            ExpressionKind::SequenceExpression(expr) => {
                 if let Some(last) = expr.expressions.last() {
                     self.visit_expression(last);
                 }
             }
-            Expression::LogicalExpression(expr) => self.visit_logical_expression(expr),
+            ExpressionKind::LogicalExpression(expr) => self.visit_logical_expression(expr),
 
             // check if identifier is a reference to a spread-initialized
             // variable declared within the map callback.
-            Expression::Identifier(ident) => {
+            ExpressionKind::Identifier(ident) => {
                 let Some(symbol_id) =
                     self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
                 else {

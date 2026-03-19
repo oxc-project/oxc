@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
+use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind, StatementKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -125,23 +125,20 @@ impl Rule for VarsOnTop {
 fn looks_like_directive(node: &Statement) -> bool {
     matches!(
         node,
-        Statement::ExpressionStatement(expr_stmt) if matches!(
-            &expr_stmt.expression,
-            Expression::StringLiteral(_)
-        )
+        StatementKind::ExpressionStatement(expr_stmt) if &expr_stmt.expression.is_string_literal()
     )
 }
 
 fn looks_like_import(node: &Statement) -> bool {
-    matches!(node, Statement::ImportDeclaration(_))
+    node.is_import_declaration()
 }
 
 fn is_variable_declaration(node: &Statement) -> bool {
-    if matches!(node, Statement::VariableDeclaration(_)) {
+    if node.is_variable_declaration() {
         return true;
     }
 
-    if let Statement::ExportNamedDeclaration(export) = node {
+    if let Some(export) = node.as_export_named_declaration() {
         return matches!(export.declaration, Some(Declaration::VariableDeclaration(_)));
     }
 

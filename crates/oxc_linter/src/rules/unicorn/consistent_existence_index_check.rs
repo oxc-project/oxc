@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
+    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -82,7 +82,7 @@ impl Rule for ConsistentExistenceIndexCheck {
         let right = binary_expression.right.get_inner_expression();
         let operator = binary_expression.operator;
 
-        let Expression::Identifier(identifier) = left else {
+        let Some(identifier) = left.as_identifier() else {
             return;
         };
 
@@ -99,7 +99,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(Expression::CallExpression(call)) = &variables_declarator.init else {
+            let Some(ExpressionKind::CallExpression(call)) = &variables_declarator.init else {
                 return;
             };
 
@@ -204,9 +204,9 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 }
 
 fn is_negative_one(expression: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary_expression) = expression
+    if let Some(unary_expression) = expression.as_unary_expression()
         && unary_expression.operator == UnaryOperator::UnaryNegation
-        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
+        && let ExpressionKind::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
     {
         return value.raw.as_ref().unwrap() == "1";
     }

@@ -78,7 +78,7 @@ impl Rule for BadCharAtComparison {
             &binary_expr.left
         };
 
-        if let Expression::StringLiteral(string_lit) = comparison_with
+        if let Some(string_lit) = comparison_with.as_string_literal()
             && !is_string_valid(string_lit.value.as_str())
         {
             ctx.diagnostic(bad_char_at_comparison_diagnostic(

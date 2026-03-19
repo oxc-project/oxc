@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression},
+    ast::{BinaryExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -285,7 +285,7 @@ fn to_strict_eq_operator_str(operator: BinaryOperator) -> (&'static str, &'stati
 fn is_type_of(expr: &Expression) -> bool {
     matches!(
         expr,
-        Expression::UnaryExpression(unary_expr) if matches!(unary_expr.operator, UnaryOperator::Typeof)
+        ExpressionKind::UnaryExpression(unary_expr) if matches!(unary_expr.operator, UnaryOperator::Typeof)
     )
 }
 
@@ -298,20 +298,20 @@ fn is_type_of_binary(binary_expr: &BinaryExpression) -> bool {
 fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
     matches!(
         (left, right),
-        (Expression::BooleanLiteral(_), Expression::BooleanLiteral(_))
-            | (Expression::NullLiteral(_), Expression::NullLiteral(_))
-            | (Expression::StringLiteral(_), Expression::StringLiteral(_))
-            | (Expression::NumericLiteral(_), Expression::NumericLiteral(_))
-            | (Expression::BigIntLiteral(_), Expression::BigIntLiteral(_))
-            | (Expression::RegExpLiteral(_), Expression::RegExpLiteral(_))
-            | (Expression::TemplateLiteral(_), Expression::TemplateLiteral(_))
+        (ExpressionKind::BooleanLiteral(_), ExpressionKind::BooleanLiteral(_))
+            | (ExpressionKind::NullLiteral(_), ExpressionKind::NullLiteral(_))
+            | (ExpressionKind::StringLiteral(_), ExpressionKind::StringLiteral(_))
+            | (ExpressionKind::NumericLiteral(_), ExpressionKind::NumericLiteral(_))
+            | (ExpressionKind::BigIntLiteral(_), ExpressionKind::BigIntLiteral(_))
+            | (ExpressionKind::RegExpLiteral(_), ExpressionKind::RegExpLiteral(_))
+            | (ExpressionKind::TemplateLiteral(_), ExpressionKind::TemplateLiteral(_))
     )
 }
 
 fn is_null_check(binary_expr: &BinaryExpression) -> bool {
     matches!(
         (&binary_expr.left, &binary_expr.right),
-        (_, Expression::NullLiteral(_)) | (Expression::NullLiteral(_), _)
+        (_, ExpressionKind::NullLiteral(_)) | (ExpressionKind::NullLiteral(_), _)
     )
 }
 

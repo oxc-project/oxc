@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXChild},
+    ast::{Expression, JSXChild, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -146,15 +146,15 @@ fn calculate_expression_jsx_depth(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> usize {
-    match expr {
-        Expression::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
-        Expression::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
-        Expression::Identifier(ident) => ident
+    match expr.kind() {
+        ExpressionKind::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
+        ExpressionKind::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
+        ExpressionKind::Identifier(ident) => ident
             .reference_id
             .get()
             .and_then(|ref_id| ctx.semantic().scoping().get_reference(ref_id).symbol_id())
             .map_or(0, |symbol_id| calculate_variable_jsx_depth(symbol_id, ctx, visited)),
-        Expression::ParenthesizedExpression(paren) => {
+        ExpressionKind::ParenthesizedExpression(paren) => {
             calculate_expression_jsx_depth(&paren.expression, ctx, visited)
         }
         _ => 0,
@@ -186,7 +186,7 @@ fn calculate_jsx_children_depth(
     let mut max_depth = 0;
 
     for child in children {
-        let depth = match child {
+        let depth = match child.kind() {
             JSXChild::Element(elem) => {
                 calculate_jsx_children_depth(&elem.children, ctx, visited_symbols) + 1
             }
@@ -194,7 +194,7 @@ fn calculate_jsx_children_depth(
                 calculate_jsx_children_depth(&frag.children, ctx, visited_symbols) + 1
             }
             JSXChild::ExpressionContainer(container) => {
-                if let Some(Expression::Identifier(ident)) = container.expression.as_expression() {
+                if let Some(ExpressionKind::Identifier(ident)) = container.expression.as_expression() {
                     let depth = ident
                         .reference_id
                         .get()

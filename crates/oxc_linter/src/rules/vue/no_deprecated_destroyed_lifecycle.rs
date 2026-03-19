@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey,
-    },
+        ObjectPropertyKind, PropertyKey, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -95,7 +94,7 @@ fn check_define_component<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression() else {
+    let Some(ExpressionKind::ObjectExpression(obj_expr)) = first_arg.as_expression() else {
         return;
     };
 

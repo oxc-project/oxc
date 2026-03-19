@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{Expression, Statement, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -64,7 +64,7 @@ impl Rule for NoNegatedCondition {
                     return;
                 };
 
-                if matches!(if_stmt_alternate, Statement::IfStatement(_)) {
+                if if_stmt_alternate.is_if_statement() {
                     return;
                 }
 
@@ -85,9 +85,9 @@ impl Rule for NoNegatedCondition {
 }
 
 fn is_negated_expression(expr: &Expression) -> bool {
-    match expr {
-        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
-        Expression::BinaryExpression(binary_expr) => matches!(
+    match expr.kind() {
+        ExpressionKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
+        ExpressionKind::BinaryExpression(binary_expr) => matches!(
             binary_expr.operator,
             BinaryOperator::Inequality | BinaryOperator::StrictInequality
         ),

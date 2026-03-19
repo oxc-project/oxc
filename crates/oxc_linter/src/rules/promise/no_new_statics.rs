@@ -53,7 +53,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        let Expression::Identifier(ident) = &member_expr.object() else {
+        let Some(ident) = &member_expr.object().as_identifier() else {
             return;
         };
 

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
+    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -165,8 +165,8 @@ impl NoUnsafeOptionalChaining {
         error_type: ErrorType,
         ctx: &LintContext<'a>,
     ) {
-        match expr.get_inner_expression() {
-            Expression::LogicalExpression(expr) => match expr.operator {
+        match expr.get_inner_expression().kind() {
+            ExpressionKind::LogicalExpression(expr) => match expr.operator {
                 LogicalOperator::Or | LogicalOperator::Coalesce => {
                     Self::check_undefined_short_circuit(&expr.right, error_type, ctx);
                 }
@@ -175,19 +175,19 @@ impl NoUnsafeOptionalChaining {
                     Self::check_undefined_short_circuit(&expr.right, error_type, ctx);
                 }
             },
-            Expression::AwaitExpression(expr) => {
+            ExpressionKind::AwaitExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.argument, error_type, ctx);
             }
-            Expression::ConditionalExpression(expr) => {
+            ExpressionKind::ConditionalExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.consequent, error_type, ctx);
                 Self::check_undefined_short_circuit(&expr.alternate, error_type, ctx);
             }
-            Expression::SequenceExpression(expr) => {
+            ExpressionKind::SequenceExpression(expr) => {
                 if let Some(expr) = expr.expressions.iter().last() {
                     Self::check_undefined_short_circuit(expr, error_type, ctx);
                 }
             }
-            Expression::ChainExpression(expr) => match error_type {
+            ExpressionKind::ChainExpression(expr) => match error_type {
                 ErrorType::Usage => {
                     ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(expr.span));
                 }

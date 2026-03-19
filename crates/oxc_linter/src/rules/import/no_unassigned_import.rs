@@ -102,7 +102,7 @@ impl Rule for NoUnassignedImport {
                 }
             }
             AstKind::ExpressionStatement(statement) => {
-                let Expression::CallExpression(call_expr) = &statement.expression else {
+                let Some(call_expr) = &statement.expression.as_call_expression() else {
                     return;
                 };
                 if !call_expr.is_require_call() {

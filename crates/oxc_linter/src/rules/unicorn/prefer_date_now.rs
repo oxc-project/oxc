@@ -79,12 +79,12 @@ impl Rule for PreferDateNow {
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Expression::Identifier(ident) = &call_expr.callee
+                if let Some(ident) = &call_expr.callee
                     && matches!(ident.name.as_str(), "Number" | "BigInt")
                     && call_expr.arguments.len() == 1
                     && let Some(expr) =
                         call_expr.arguments.first().and_then(Argument::as_expression)
-                    && is_new_date(expr.get_inner_expression())
+                    && is_new_date(expr.get_inner_expression()).as_identifier()
                 {
                     ctx.diagnostic_with_fix(
                         prefer_date_now_over_number_date_object(call_expr.span),
@@ -146,11 +146,11 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr.get_inner_expression() else {
+    let Some(new_expr) = expr.get_inner_expression().as_new_expression() else {
         return false;
     };
 
-    if let Expression::Identifier(ident) = &new_expr.callee {
+    if let Some(ident) = &new_expr.callee.as_identifier() {
         return ident.name == "Date" && new_expr.arguments.is_empty();
     }
     false

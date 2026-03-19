@@ -61,7 +61,7 @@ impl Rule for PreferCatch {
             return;
         };
 
-        let Expression::CallExpression(ref call_expr) = expr.expression else {
+        let Some(ref call_expr) = expr.expression.as_call_expression() else {
             return;
         };
 

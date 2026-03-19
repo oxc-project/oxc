@@ -117,7 +117,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
 
         match parent.kind() {
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+                if let Some(ident) = &call_expr.callee.as_identifier() {
                     ctx.diagnostic_with_fix(
                         consistent_assert_diagnostic(&ident.name, ident.span),
                         |fixer| fixer.insert_text_after(&ident.span, ".ok"),
@@ -125,7 +125,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
                 }
             }
             AstKind::ParenthesizedExpression(paren_expr) => {
-                let Expression::Identifier(ident) = &paren_expr.expression else {
+                let Some(ident) = &paren_expr.expression.as_identifier() else {
                     continue;
                 };
                 ctx.diagnostic_with_fix(

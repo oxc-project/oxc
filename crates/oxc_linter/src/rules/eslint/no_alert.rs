@@ -66,7 +66,7 @@ fn is_global_this_ref_or_global_window<'a>(
     ctx: &LintContext<'a>,
     expr: &Expression<'a>,
 ) -> bool {
-    if let Expression::ThisExpression(_) = expr
+    if let Some(_) = expr.as_this_expression()
         && ctx.scoping().scope_flags(scope_id).is_top()
     {
         return true;
@@ -98,7 +98,7 @@ impl Rule for NoAlert {
         let scope_id = node.scope_id();
         let callee = &call_expr.callee;
 
-        if let Expression::Identifier(ident) = callee {
+        if let Some(ident) = callee.as_identifier() {
             if !is_shadowed(scope_id, ident.name, ctx) && is_prohibited_identifier(&ident.name) {
                 return ctx.diagnostic(no_alert_diagnostic(ident.span));
             }

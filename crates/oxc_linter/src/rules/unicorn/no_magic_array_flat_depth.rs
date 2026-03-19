@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -63,7 +63,7 @@ impl Rule for NoMagicArrayFlatDepth {
         }
 
         let first_arg = call_expression.arguments.first().expect("missing argument");
-        let Some(Expression::NumericLiteral(arg)) =
+        let Some(ExpressionKind::NumericLiteral(arg)) =
             first_arg.as_expression().map(Expression::without_parentheses)
         else {
             return;

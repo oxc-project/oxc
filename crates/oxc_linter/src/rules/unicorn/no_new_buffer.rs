@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -50,7 +50,7 @@ impl Rule for NoNewBuffer {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee.without_parentheses() else {
+        let Some(ident) = &new_expr.callee.without_parentheses().as_identifier() else {
             return;
         };
         if ident.name != "Buffer" || !ident.is_global_reference(ctx.scoping()) {
@@ -92,13 +92,13 @@ fn determine_buffer_method(new_expr: &oxc_ast::ast::NewExpression) -> Option<&'s
     let first_arg = new_expr.arguments.first()?.as_expression()?;
     let first_arg = first_arg.without_parentheses();
 
-    match first_arg {
+    match first_arg.kind() {
         // Numeric literals → Buffer.alloc
-        Expression::NumericLiteral(_) => Some("alloc"),
+        ExpressionKind::NumericLiteral(_) => Some("alloc"),
         // String/template literals → Buffer.from
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::ArrayExpression(_) => Some("from"),
+        ExpressionKind::StringLiteral(_)
+        | ExpressionKind::TemplateLiteral(_)
+        | ExpressionKind::ArrayExpression(_) => Some("from"),
         // For other expressions, we can't safely determine the type
         _ => None,
     }

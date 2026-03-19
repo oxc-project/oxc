@@ -72,7 +72,7 @@ impl Rule for NoUnsafeFunctionType {
                 }
             }
             AstKind::TSInterfaceHeritage(heritage) => {
-                if let Expression::Identifier(ident) = &heritage.expression {
+                if let Some(ident) = &heritage.expression.as_identifier() {
                     handle_function_type(ident, ctx);
                 }
             }

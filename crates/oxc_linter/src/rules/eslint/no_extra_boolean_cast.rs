@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, NewExpression},
+    ast::{CallExpression, Expression, NewExpression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -237,8 +237,8 @@ fn remove_double_not<'a, 'b>(expr: &'b Expression<'a>) -> &'b Expression<'a> {
 }
 
 fn without_not<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
-    match expr.without_parentheses() {
-        Expression::UnaryExpression(expr) if expr.operator == UnaryOperator::LogicalNot => {
+    match expr.without_parentheses().kind() {
+        ExpressionKind::UnaryExpression(expr) if expr.operator == UnaryOperator::LogicalNot => {
             Some(&expr.argument)
         }
         _ => None,

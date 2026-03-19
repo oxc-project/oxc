@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
+    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -104,9 +104,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
             if !parent_decl.id.is_binding_identifier() {
                 return Some(ident.name.as_str());
             }
-            match &parent_decl.init {
+            match &parent_decl.init.kind() {
                 // handles "let a = JSON; let b = a; a();"
-                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
+                Some(ExpressionKind::Identifier(parent_ident)) if parent_ident.name != ident.name => {
                     let decl_scope = decl.scope_id();
                     resolve_global_binding(parent_ident, decl_scope, ctx)
                 }
@@ -132,8 +132,8 @@ impl Rule for NoObjCalls {
 }
 
 fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    match callee {
-        Expression::Identifier(ident) => {
+    match callee.kind() {
+        ExpressionKind::Identifier(ident) => {
             // handle new Math(), Math(), etc
             if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx)
                 && is_global_obj(top_level_reference)
@@ -142,7 +142,7 @@ fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx:
             }
         }
 
-        match_member_expression!(Expression) => {
+        match_member_expression!(ExpressionKind) => {
             // handle new globalThis.Math(), globalThis.Math(), etc
             if let Some(global_member) = global_this_member(callee.to_member_expression())
                 && is_global_obj(global_member)

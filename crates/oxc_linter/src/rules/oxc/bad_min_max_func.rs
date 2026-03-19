@@ -96,7 +96,7 @@ impl BadMinMaxFunc {
         let CallExpression { callee, arguments, .. } = node;
 
         let member_expr = callee.get_member_expr()?;
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let Some(ident) = member_expr.object().as_identifier() else {
             return None;
         };
         if ident.name != "Math" {

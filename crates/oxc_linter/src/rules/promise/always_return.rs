@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement, UnaryOperator},
+    ast::{AssignmentTarget, Expression, Statement, UnaryOperator, ExpressionKind, StatementKind},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -221,7 +221,7 @@ fn is_function_with_block_statement(node: &AstNode) -> bool {
 
 fn is_member_call(node: &AstNode, member_name: &str) -> bool {
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        return matches!(&call_expr.callee, Expression::StaticMemberExpression(member_expr) if member_expr.property.name == member_name);
+        return matches!(&call_expr.callee, ExpressionKind::StaticMemberExpression(member_expr) if member_expr.property.name == member_name);
     }
     false
 }
@@ -296,11 +296,11 @@ fn is_last_callback(node: &AstNode, ctx: &LintContext) -> bool {
 
 fn is_nodejs_terminal_statement(node: &AstNode) -> bool {
     node.kind().as_expression_statement().is_some_and(|exp| {
-        match &exp.expression {
-            Expression::CallExpression(call_expr) => {
-                match &call_expr.callee {
-                    Expression::StaticMemberExpression(member_expr) if PROCESS_METHODS.contains(&member_expr.property.name.as_str()) => {
-                        matches!(&member_expr.object, Expression::Identifier(identifier) if identifier.name == "process")
+        match &exp.expression.kind() {
+            ExpressionKind::CallExpression(call_expr) => {
+                match &call_expr.callee.kind() {
+                    ExpressionKind::StaticMemberExpression(member_expr) if PROCESS_METHODS.contains(&member_expr.property.name.as_str()) => {
+                        matches!(&member_expr.object, ExpressionKind::Identifier(identifier) if identifier.name == "process")
                     },
                     _ => {
                         false
@@ -383,9 +383,9 @@ fn has_ignored_assignment(
         _ => None,
     };
     body_statements.is_some_and(|statements| {
-        statements.iter().any(|it| match it {
-            Statement::ExpressionStatement(expression) => match &expression.expression {
-                Expression::AssignmentExpression(assignment_expr) => {
+        statements.iter().any(|it| match it.kind() {
+            StatementKind::ExpressionStatement(expression) => match expression.expression.kind() {
+                ExpressionKind::AssignmentExpression(assignment_expr) => {
                     let object_name = get_root_object_name(&assignment_expr.left);
                     object_name.is_some_and(|name| ignore_assignment_variable.contains(name))
                 }
@@ -410,12 +410,12 @@ fn get_root_object_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<
 }
 
 fn get_member_expr_root_object_name<'a>(member_expr: &Expression<'a>) -> Option<&'a str> {
-    match member_expr {
-        Expression::Identifier(id) => Some(id.name.as_str()),
-        Expression::StaticMemberExpression(member_expr) => {
+    match member_expr.kind() {
+        ExpressionKind::Identifier(id) => Some(id.name.as_str()),
+        ExpressionKind::StaticMemberExpression(member_expr) => {
             get_member_expr_root_object_name(&member_expr.object)
         }
-        Expression::ComputedMemberExpression(member_expr) => {
+        ExpressionKind::ComputedMemberExpression(member_expr) => {
             get_member_expr_root_object_name(&member_expr.object)
         }
         _ => None,

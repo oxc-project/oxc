@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, UnaryExpression, UnaryOperator, match_member_expression},
+    ast::{Expression, UnaryExpression, UnaryOperator, match_member_expression, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,7 +97,7 @@ impl Rule for PreferNumberProperties {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                let Expression::Identifier(ident_name) = member_expr.object() else {
+                let Some(ident_name) = member_expr.object().as_identifier() else {
                     return;
                 };
 
@@ -174,14 +174,14 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
-                    if let Expression::Identifier(ident) = &call_expr.callee
+                    if let Some(ident) = &call_expr.callee.as_identifier()
                         && !ctx.is_reference_to_global_variable(ident)
                     {
                         return;
                     }
 
-                    let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {
-                        Expression::Identifier(ident) => {
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match call_expr.callee.kind() {
+                        ExpressionKind::Identifier(ident) => {
                             // Use replace on the full call expression span instead of insert_text_before.
                             // This ensures the fix span overlaps with prefer_numeric_literals fixes,
                             // so the fixer's conflict resolution will skip one of them instead of
@@ -190,7 +190,7 @@ impl Rule for PreferNumberProperties {
                             let args_text = ctx.source_range(args_span);
                             fixer.replace(call_expr.span, format!("Number.{ident_name}{args_text}"))
                         }
-                        match_member_expression!(Expression) => {
+                        match_member_expression!(ExpressionKind) => {
                             let member_expr = call_expr.callee.to_member_expression();
                             let mut args_span =
                                 Span::new(member_expr.span().end, call_expr.span.end);
@@ -239,11 +239,11 @@ fn find_ancestor_unary<'a>(
 }
 
 fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
-    match expr {
-        Expression::Identifier(ident_name) => Some(ident_name.name.as_str()),
-        match_member_expression!(Expression) => {
+    match expr.kind() {
+        ExpressionKind::Identifier(ident_name) => Some(ident_name.name.as_str()),
+        match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
-            let Expression::Identifier(ident_name) = member_expr.object() else {
+            let Some(ident_name) = member_expr.object().as_identifier() else {
                 return None;
             };
 

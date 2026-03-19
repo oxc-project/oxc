@@ -3,8 +3,7 @@ use oxc_ast::{
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
         AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
-        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
-    },
+        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -132,11 +131,11 @@ impl NoSelfAssign {
         right: &'a Expression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        match left {
+        match left.kind() {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
-                if let Expression::Identifier(id2) = right.without_parentheses() {
-                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
+                if let Some(id2) = right.without_parentheses().as_identifier() {
+                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(ExpressionKind::Identifier(id1)) if id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
@@ -158,7 +157,7 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
-                let Expression::ArrayExpression(array_expr) = right.without_parentheses() else {
+                let Some(array_expr) = right.without_parentheses().as_array_expression() else {
                     return;
                 };
                 let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
@@ -167,8 +166,8 @@ impl NoSelfAssign {
                     let left = array_pattern.elements[i].as_ref();
                     let right = &array_expr.elements[i];
 
-                    if let Some(left) = left
-                        && let Some(left_target) = left.as_assignment_target()
+                    if let Some(left) = left.as_assignment_target()
+                        && let Some(left_target) = left
                         && let Some(expr) = right.as_expression()
                     {
                         self.each_self_assignment(left_target, expr, ctx);
@@ -184,7 +183,7 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ObjectAssignmentTarget(object_pattern) => {
-                let Expression::ObjectExpression(object_expr) = right.get_inner_expression() else {
+                let Some(object_expr) = right.get_inner_expression().as_object_expression() else {
                     return;
                 };
 
@@ -224,13 +223,13 @@ impl NoSelfAssign {
 
         if matches!(
             (left, right),
-            (Expression::Super(_), Expression::Super(_))
-                | (Expression::ThisExpression(_), Expression::ThisExpression(_))
+            (ExpressionKind::Super(_), ExpressionKind::Super(_))
+                | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
         ) {
             return true;
         }
 
-        if let (Expression::Identifier(id1), Expression::Identifier(id2)) = (left, right) {
+        if let (ExpressionKind::Identifier(id1), ExpressionKind::Identifier(id2)) = (left, right) {
             return id1.name == id2.name;
         }
 
@@ -282,7 +281,7 @@ impl NoSelfAssign {
         right: &'a ObjectPropertyKind<'a>,
         ctx: &LintContext<'a>,
     ) {
-        match left {
+        match left.kind() {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
@@ -295,7 +294,7 @@ impl NoSelfAssign {
                     return;
                 };
                 if key.static_name().is_some_and(|name| name == id1.binding.name)
-                    && let Expression::Identifier(id2) = expr.without_parentheses()
+                    && let ExpressionKind::Identifier(id2) = expr.without_parentheses()
                     && id1.binding.name == id2.name
                 {
                     ctx.diagnostic(no_self_assign_diagnostic(*span));

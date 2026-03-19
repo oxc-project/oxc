@@ -86,7 +86,7 @@ impl Rule for NoUnsafeNegation {
         let should_check = expr.operator.is_relational()
             || (self.enforce_for_ordering_relations && expr.operator.is_compare());
         if should_check {
-            let Expression::UnaryExpression(left) = &expr.left else {
+            let Some(left) = &expr.left.as_unary_expression() else {
                 return;
             };
             if left.operator == UnaryOperator::LogicalNot {

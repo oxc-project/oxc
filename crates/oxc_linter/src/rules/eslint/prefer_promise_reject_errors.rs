@@ -1,7 +1,7 @@
 use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, FormalParameters},
+    ast::{Argument, CallExpression, Expression, FormalParameters, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,7 +97,7 @@ impl Rule for PreferPromiseRejectErrors {
                 check_reject_call(call_expr, ctx, self.allow_empty_reject);
             }
             AstKind::NewExpression(new_expr) => {
-                let Expression::Identifier(ident) = &new_expr.callee else {
+                let Some(ident) = &new_expr.callee.as_identifier() else {
                     return;
                 };
 
@@ -111,11 +111,11 @@ impl Rule for PreferPromiseRejectErrors {
                     return;
                 };
 
-                match arg {
-                    Expression::FunctionExpression(func) => {
+                match arg.kind() {
+                    ExpressionKind::FunctionExpression(func) => {
                         check_reject_in_function(&func.params, ctx, self.allow_empty_reject);
                     }
-                    Expression::ArrowFunctionExpression(func) => {
+                    ExpressionKind::ArrowFunctionExpression(func) => {
                         check_reject_in_function(&func.params, ctx, self.allow_empty_reject);
                     }
                     _ => {}
@@ -178,7 +178,7 @@ fn check_reject_in_function(
             continue;
         };
 
-        let Expression::NumericLiteral(literal) = &member_expr.expression else {
+        let Some(literal) = &member_expr.expression.as_numeric_literal() else {
             continue;
         };
 
@@ -193,8 +193,8 @@ fn check_reject_in_function(
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    match arg.as_expression().map(Expression::get_inner_expression) {
-        Some(Expression::Identifier(ident)) => ident.name == "undefined",
+    match arg.as_expression().map(Expression::get_inner_expression).kind() {
+        Some(ExpressionKind::Identifier(ident)) => ident.name == "undefined",
         _ => false,
     }
 }

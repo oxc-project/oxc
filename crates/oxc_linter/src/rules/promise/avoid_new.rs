@@ -49,7 +49,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        let Expression::Identifier(ident) = &expr.callee else {
+        let Some(ident) = &expr.callee.as_identifier() else {
             return;
         };
 

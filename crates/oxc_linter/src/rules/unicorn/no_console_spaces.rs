@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -71,13 +71,13 @@ impl Rule for NoConsoleSpaces {
 
         for (i, arg) in call_expr.arguments.iter().enumerate() {
             if let Some(expression_arg) = arg.as_expression() {
-                let (literal_raw, is_template_lit) = match expression_arg {
-                    Expression::StringLiteral(string_lit) => {
+                let (literal_raw, is_template_lit) = match expression_arg.kind() {
+                    ExpressionKind::StringLiteral(string_lit) => {
                         let literal_raw = string_lit.value.as_str();
 
                         (literal_raw, false)
                     }
-                    Expression::TemplateLiteral(string_lit) => {
+                    ExpressionKind::TemplateLiteral(string_lit) => {
                         let literal_raw = string_lit
                             .span
                             .source_text(ctx.source_text().as_ref())

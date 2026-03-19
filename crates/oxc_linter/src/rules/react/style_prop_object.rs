@@ -2,8 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, ObjectPropertyKind, TSType,
-    },
+        JSXElementName, ObjectPropertyKind, TSType, ExpressionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -101,11 +100,11 @@ fn is_invalid_expression<'a>(expression: Option<&Expression<'a>>, ctx: &LintCont
         return false;
     };
 
-    match expression {
-        Expression::StringLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::TemplateLiteral(_) => true,
-        Expression::Identifier(ident) => {
+    match expression.kind() {
+        ExpressionKind::StringLiteral(_)
+        | ExpressionKind::BooleanLiteral(_)
+        | ExpressionKind::TemplateLiteral(_) => true,
+        ExpressionKind::Identifier(ident) => {
             let Some(node) = get_declaration_of_variable(ident, ctx) else {
                 return false;
             };
@@ -187,9 +186,9 @@ impl Rule for StylePropObject {
                     return;
                 };
 
-                let name = match expr {
-                    Expression::StringLiteral(literal) => literal.value.as_str(),
-                    Expression::Identifier(identifier) => identifier.name.as_str(),
+                let name = match expr.kind() {
+                    ExpressionKind::StringLiteral(literal) => literal.value.as_str(),
+                    ExpressionKind::Identifier(identifier) => identifier.name.as_str(),
                     _ => return,
                 };
 

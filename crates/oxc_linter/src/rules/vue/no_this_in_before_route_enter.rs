@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, Function, ObjectPropertyKind, ThisExpression},
+    ast::{ExportDefaultDeclarationKind, Expression, Function, ObjectPropertyKind, ThisExpression, ExpressionKind},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -80,8 +80,8 @@ impl Rule for NoThisInBeforeRouteEnter {
         });
 
         if let Some(before_route_enter_prop) = before_route_enter_prop {
-            let function_body = match &before_route_enter_prop.value {
-                Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+            let function_body = match before_route_enter_prop.value.kind() {
+                ExpressionKind::FunctionExpression(func_expr) => func_expr.body.as_ref(),
                 _ => return,
             };
 
