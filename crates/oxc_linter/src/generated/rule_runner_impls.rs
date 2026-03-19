@@ -2738,7 +2738,7 @@ impl RuleRunner for crate::rules::unicorn::consistent_function_scoping::Consiste
 
 impl RuleRunner for crate::rules::unicorn::custom_error_definition::CustomErrorDefinition {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::AssignmentExpression, AstType::Class]));
+        Some(&AstTypesBitset::from_types(&[AstType::Class]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

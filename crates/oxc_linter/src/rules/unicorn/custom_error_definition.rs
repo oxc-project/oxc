@@ -1,16 +1,16 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget, Class, ClassElement, Expression, MethodDefinitionKind,
         PropertyDefinition, Statement,
     },
+    match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
 fn invalid_class_name_diagnostic(span: Span, expected: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Invalid class name, use `{expected}`.")).with_label(span)
@@ -129,25 +129,8 @@ declare_oxc_lint!(
 
 impl Rule for CustomErrorDefinition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::Class(class) => {
-                check_class(class, ctx);
-            }
-            AstKind::AssignmentExpression(assign) => {
-                if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
-                    && let Expression::Identifier(obj_ident) = &member.object
-                    && obj_ident.name.as_str() == "exports"
-                    && let Expression::ClassExpression(class) = &assign.right
-                {
-                    check_export_assignment(
-                        class,
-                        member.property.span,
-                        member.property.name.as_str(),
-                        ctx,
-                    );
-                }
-            }
-            _ => {}
+        if let AstKind::Class(class) = node.kind() {
+            check_class(class, node, ctx);
         }
     }
 }
@@ -172,9 +155,15 @@ fn check_export_assignment(
     }
 }
 
-fn check_class(class: &Class, ctx: &LintContext) {
+fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     if !has_valid_super_class(class) {
         return;
+    }
+
+    if let Some((exports_property_span, exports_property_name)) =
+        get_export_assignment_info(node, ctx)
+    {
+        check_export_assignment(class, exports_property_span, exports_property_name, ctx);
     }
 
     let Some(id) = &class.id else {
@@ -188,8 +177,16 @@ fn check_class(class: &Class, ctx: &LintContext) {
         ctx.diagnostic(invalid_class_name_diagnostic(id.span, &expected_class_name));
     }
 
-    let constructor = class.body.body.iter().find(|el| {
-        matches!(el, ClassElement::MethodDefinition(m) if m.kind == MethodDefinitionKind::Constructor)
+    let constructor = class.body.body.iter().find_map(|el| match el {
+        ClassElement::MethodDefinition(method)
+            if method.kind == MethodDefinitionKind::Constructor && method.value.body.is_some() =>
+        {
+            Some(method)
+        }
+        _ => None,
+    });
+    let has_constructor_signature = class.body.body.iter().any(|el| {
+        matches!(el, ClassElement::MethodDefinition(method) if method.kind == MethodDefinitionKind::Constructor)
     });
 
     let name_property = class.body.body.iter().find_map(|el| {
@@ -202,7 +199,11 @@ fn check_class(class: &Class, ctx: &LintContext) {
         }
     });
 
-    let Some(ClassElement::MethodDefinition(constructor_method)) = constructor else {
+    let Some(constructor_method) = constructor else {
+        if has_constructor_signature {
+            return;
+        }
+
         if is_valid_name_property(name_property, name) {
             return;
         }
@@ -266,26 +267,70 @@ fn check_class(class: &Class, ctx: &LintContext) {
     }
 }
 
+fn get_export_assignment_info<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(Span, &'a str)> {
+    let AstKind::AssignmentExpression(assign) =
+        ast_util::iter_outer_expressions(ctx.nodes(), node.id()).next()?
+    else {
+        return None;
+    };
+
+    let AssignmentTarget::StaticMemberExpression(member) = &assign.left else {
+        return None;
+    };
+
+    let Expression::Identifier(obj_ident) = &member.object else {
+        return None;
+    };
+
+    (obj_ident.name.as_str() == "exports")
+        .then_some((member.property.span, member.property.name.as_str()))
+}
+
 fn get_class_name(name: &str) -> String {
     let uppered = upper_first(name);
 
-    if let Some(stripped) = uppered.strip_suffix("error") {
-        format!("{stripped}Error")
-    } else if let Some(stripped) = uppered.strip_suffix("Error") {
+    if let Some(stripped) = strip_suffix_case_insensitive(&uppered, "error") {
         format!("{stripped}Error")
     } else {
         format!("{uppered}Error")
     }
 }
 
+fn strip_suffix_case_insensitive<'a>(value: &'a str, suffix: &str) -> Option<&'a str> {
+    let start = value.len().checked_sub(suffix.len())?;
+    value[start..].eq_ignore_ascii_case(suffix).then_some(&value[..start])
+}
+
 fn is_name_property_definition(prop: &PropertyDefinition) -> bool {
     !prop.r#static && !prop.computed && prop.key.is_specific_static_name("name")
 }
 
-static ERROR_REGEX: Lazy<Regex> = lazy_regex!(r"^(?:[A-Z][\da-z]*)*Error$");
-
 fn is_valid_super_class_name(name: &str) -> bool {
-    ERROR_REGEX.is_match(name)
+    let Some(prefix) = name.strip_suffix("Error") else {
+        return false;
+    };
+
+    let bytes = prefix.as_bytes();
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if !bytes[index].is_ascii_uppercase() {
+            return false;
+        }
+
+        index += 1;
+
+        while index < bytes.len()
+            && (bytes[index].is_ascii_lowercase() || bytes[index].is_ascii_digit())
+        {
+            index += 1;
+        }
+    }
+
+    true
 }
 
 fn has_valid_super_class(class: &Class) -> bool {
@@ -293,18 +338,11 @@ fn has_valid_super_class(class: &Class) -> bool {
         return false;
     };
     let name = match super_class.get_inner_expression() {
-        Expression::Identifier(ident) => ident.name.as_str(),
-        expr => {
-            if let Some(member) = expr.as_member_expression()
-                && let Some(name) = member.static_property_name()
-            {
-                name
-            } else {
-                return false;
-            }
-        }
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        e @ match_member_expression!(Expression) => e.to_member_expression().static_property_name(),
+        _ => None,
     };
-    is_valid_super_class_name(name)
+    name.is_some_and(is_valid_super_class_name)
 }
 
 fn upper_first(s: &str) -> String {
@@ -413,6 +451,12 @@ fn test() {
                 this.name = 'FooError';
             }
         };",
+        r"exports.FooError = (class FooError extends TypeError {
+            constructor() {
+                super();
+                this.name = 'FooError';
+            }
+        });",
         r"exports.FooError = class extends Error {
             constructor(error) {
                 super(error);
@@ -476,6 +520,12 @@ fn test() {
                 this.name = 'Foo';
             }
         }",
+        r"class FooERROR extends Error {
+            constructor(message) {
+                super(message);
+                this.name = 'FooERROR';
+            }
+        }",
         r"class fooerror extends Error {
             constructor(message) {
                 super(message);
@@ -494,6 +544,12 @@ fn test() {
         r"class FooError extends Error {
             constructor() {
                 super();
+            }
+        }",
+        r"class FooError extends Error {
+            constructor(message: string);
+            constructor(message: string) {
+                this.name = 'FooError';
             }
         }",
         r"class FooError extends Error {
@@ -547,6 +603,12 @@ fn test() {
                 this.name = 'FooError';
             }
         };",
+        r"exports.fooError = (class FooError extends Error {
+            constructor(error) {
+                super(error);
+                this.name = 'FooError';
+            }
+        });",
         r"exports.FooError = class FooError extends TypeError {
             constructor() {
                 super();

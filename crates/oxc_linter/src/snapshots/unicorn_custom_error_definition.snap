@@ -54,6 +54,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): Invalid class name, use `FooError`.
    ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class FooERROR extends Error {
+   ·       ────────
+ 2 │             constructor(message) {
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(custom-error-definition): Invalid class name, use `FooError`.
+   ╭─[custom_error_definition.tsx:1:7]
  1 │ class fooerror extends Error {
    ·       ────────
  2 │             constructor(message) {
@@ -100,6 +107,15 @@ source: crates/oxc_linter/src/tester.rs
  3 │ │                   super();
  4 │ ╰─▶             }
  5 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(custom-error-definition): Missing call to `super()` in constructor.
+   ╭─[custom_error_definition.tsx:3:42]
+ 2 │                 constructor(message: string);
+ 3 │ ╭─▶             constructor(message: string) {
+ 4 │ │                   this.name = 'FooError';
+ 5 │ ╰─▶             }
+ 6 │             }
    ╰────
 
   ⚠ eslint-plugin-unicorn(custom-error-definition): The `name` property should be set to `FooError`.
@@ -171,6 +187,13 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(custom-error-definition): Exported error name should match error class
    ╭─[custom_error_definition.tsx:1:9]
  1 │ exports.fooError = class FooError extends Error {
+   ·         ────────
+ 2 │             constructor(error) {
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(custom-error-definition): Exported error name should match error class
+   ╭─[custom_error_definition.tsx:1:9]
+ 1 │ exports.fooError = (class FooError extends Error {
    ·         ────────
  2 │             constructor(error) {
    ╰────
