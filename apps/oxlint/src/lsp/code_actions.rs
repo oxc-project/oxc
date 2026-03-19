@@ -64,8 +64,14 @@ pub fn apply_all_fix_code_action(
         return None;
     }
 
+    let title = if fix_kind.is_dangerous() {
+        "fix all fixable oxlint issues"
+    } else {
+        "fix all safe fixable oxlint issues"
+    };
+
     Some(CodeAction {
-        title: "fix all safe fixable oxlint issues".to_string(),
+        title: title.to_string(),
         kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
         is_preferred: Some(true),
         edit: Some(WorkspaceEdit {
@@ -114,6 +120,8 @@ pub fn fix_all_text_edit(
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use tower_lsp_server::ls_types::{Position, Range};
 
     use super::*;
@@ -181,5 +189,35 @@ mod tests {
             FixKind::DangerousFix,
         );
         assert!(!text_edits.is_empty(), "safe fix should also be included when fix_kind is DangerousFix");
+    }
+
+    #[test]
+    fn test_apply_all_fix_code_action_title_safe_by_default() {
+        let action = apply_all_fix_code_action(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            Uri::from_str("file:///test.js").unwrap(),
+            FixKind::SafeFixOrSuggestion,
+        )
+        .unwrap();
+        assert!(
+            action.title.contains("safe"),
+            "title should contain 'safe' when fix_kind is SafeFixOrSuggestion, got: {}",
+            action.title
+        );
+    }
+
+    #[test]
+    fn test_apply_all_fix_code_action_title_dangerous_when_dangerous_fix_kind() {
+        let action = apply_all_fix_code_action(
+            std::iter::once(make_action(FixKind::DangerousFix)),
+            Uri::from_str("file:///test.js").unwrap(),
+            FixKind::DangerousFix,
+        )
+        .unwrap();
+        assert!(
+            !action.title.contains("safe"),
+            "title should not contain 'safe' when fix_kind is DangerousFix, got: {}",
+            action.title
+        );
     }
 }
