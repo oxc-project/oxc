@@ -1,0 +1,10 @@
+{
+  // Exercise JSONC parsing for tsconfig aliases.
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@utils": ["src/utils/index.ts"]
+    }
+  }
+}

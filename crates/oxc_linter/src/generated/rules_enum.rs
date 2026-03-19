@@ -209,6 +209,7 @@ pub use crate::rules::import::no_self_import::NoSelfImport as ImportNoSelfImport
 pub use crate::rules::import::no_unassigned_import::NoUnassignedImport as ImportNoUnassignedImport;
 pub use crate::rules::import::no_webpack_loader_syntax::NoWebpackLoaderSyntax as ImportNoWebpackLoaderSyntax;
 pub use crate::rules::import::prefer_default_export::PreferDefaultExport as ImportPreferDefaultExport;
+pub use crate::rules::import::prefer_shortest_imports::PreferShortestImports as ImportPreferShortestImports;
 pub use crate::rules::import::unambiguous::Unambiguous as ImportUnambiguous;
 pub use crate::rules::jest::consistent_test_it::ConsistentTestIt as JestConsistentTestIt;
 pub use crate::rules::jest::expect_expect::ExpectExpect as JestExpectExpect;
@@ -747,6 +748,7 @@ pub enum RuleEnum {
     ImportNoUnassignedImport(ImportNoUnassignedImport),
     ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax),
     ImportPreferDefaultExport(ImportPreferDefaultExport),
+    ImportPreferShortestImports(ImportPreferShortestImports),
     ImportUnambiguous(ImportUnambiguous),
     EslintAccessorPairs(EslintAccessorPairs),
     EslintArrayCallbackReturn(EslintArrayCallbackReturn),
@@ -1451,7 +1453,8 @@ const IMPORT_NO_SELF_IMPORT_ID: usize = IMPORT_NO_RELATIVE_PARENT_IMPORTS_ID + 1
 const IMPORT_NO_UNASSIGNED_IMPORT_ID: usize = IMPORT_NO_SELF_IMPORT_ID + 1usize;
 const IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID: usize = IMPORT_NO_UNASSIGNED_IMPORT_ID + 1usize;
 const IMPORT_PREFER_DEFAULT_EXPORT_ID: usize = IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID + 1usize;
-const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
+const IMPORT_PREFER_SHORTEST_IMPORTS_ID: usize = IMPORT_PREFER_DEFAULT_EXPORT_ID + 1usize;
+const IMPORT_UNAMBIGUOUS_ID: usize = IMPORT_PREFER_SHORTEST_IMPORTS_ID + 1usize;
 const ESLINT_ACCESSOR_PAIRS_ID: usize = IMPORT_UNAMBIGUOUS_ID + 1usize;
 const ESLINT_ARRAY_CALLBACK_RETURN_ID: usize = ESLINT_ACCESSOR_PAIRS_ID + 1usize;
 const ESLINT_ARROW_BODY_STYLE_ID: usize = ESLINT_ARRAY_CALLBACK_RETURN_ID + 1usize;
@@ -2238,6 +2241,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => IMPORT_NO_UNASSIGNED_IMPORT_ID,
             Self::ImportNoWebpackLoaderSyntax(_) => IMPORT_NO_WEBPACK_LOADER_SYNTAX_ID,
             Self::ImportPreferDefaultExport(_) => IMPORT_PREFER_DEFAULT_EXPORT_ID,
+            Self::ImportPreferShortestImports(_) => IMPORT_PREFER_SHORTEST_IMPORTS_ID,
             Self::ImportUnambiguous(_) => IMPORT_UNAMBIGUOUS_ID,
             Self::EslintAccessorPairs(_) => ESLINT_ACCESSOR_PAIRS_ID,
             Self::EslintArrayCallbackReturn(_) => ESLINT_ARRAY_CALLBACK_RETURN_ID,
@@ -3047,6 +3051,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::NAME,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::NAME,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::NAME,
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::NAME,
             Self::ImportUnambiguous(_) => ImportUnambiguous::NAME,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::NAME,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::NAME,
@@ -3848,6 +3853,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::CATEGORY,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::CATEGORY,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::CATEGORY,
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::CATEGORY,
             Self::ImportUnambiguous(_) => ImportUnambiguous::CATEGORY,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::CATEGORY,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::CATEGORY,
@@ -4692,6 +4698,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::FIX,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::FIX,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::FIX,
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::FIX,
             Self::ImportUnambiguous(_) => ImportUnambiguous::FIX,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::FIX,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::FIX,
@@ -5498,6 +5505,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::documentation(),
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::documentation(),
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::documentation(),
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::documentation(),
             Self::ImportUnambiguous(_) => ImportUnambiguous::documentation(),
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::documentation(),
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::documentation(),
@@ -6541,6 +6549,10 @@ impl RuleEnum {
             Self::ImportPreferDefaultExport(_) => {
                 ImportPreferDefaultExport::config_schema(generator)
                     .or_else(|| ImportPreferDefaultExport::schema(generator))
+            }
+            Self::ImportPreferShortestImports(_) => {
+                ImportPreferShortestImports::config_schema(generator)
+                    .or_else(|| ImportPreferShortestImports::schema(generator))
             }
             Self::ImportUnambiguous(_) => ImportUnambiguous::config_schema(generator)
                 .or_else(|| ImportUnambiguous::schema(generator)),
@@ -8476,6 +8488,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => "import",
             Self::ImportNoWebpackLoaderSyntax(_) => "import",
             Self::ImportPreferDefaultExport(_) => "import",
+            Self::ImportPreferShortestImports(_) => "import",
             Self::ImportUnambiguous(_) => "import",
             Self::EslintAccessorPairs(_) => "eslint",
             Self::EslintArrayCallbackReturn(_) => "eslint",
@@ -9239,6 +9252,9 @@ impl RuleEnum {
             )),
             Self::ImportPreferDefaultExport(_) => Ok(Self::ImportPreferDefaultExport(
                 ImportPreferDefaultExport::from_configuration(value)?,
+            )),
+            Self::ImportPreferShortestImports(_) => Ok(Self::ImportPreferShortestImports(
+                ImportPreferShortestImports::from_configuration(value)?,
             )),
             Self::ImportUnambiguous(_) => {
                 Ok(Self::ImportUnambiguous(ImportUnambiguous::from_configuration(value)?))
@@ -11427,6 +11443,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.to_configuration(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.to_configuration(),
             Self::ImportPreferDefaultExport(rule) => rule.to_configuration(),
+            Self::ImportPreferShortestImports(rule) => rule.to_configuration(),
             Self::ImportUnambiguous(rule) => rule.to_configuration(),
             Self::EslintAccessorPairs(rule) => rule.to_configuration(),
             Self::EslintArrayCallbackReturn(rule) => rule.to_configuration(),
@@ -12134,6 +12151,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.run(node, ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run(node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run(node, ctx),
+            Self::ImportPreferShortestImports(rule) => rule.run(node, ctx),
             Self::ImportUnambiguous(rule) => rule.run(node, ctx),
             Self::EslintAccessorPairs(rule) => rule.run(node, ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run(node, ctx),
@@ -12837,6 +12855,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.run_once(ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_once(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_once(ctx),
+            Self::ImportPreferShortestImports(rule) => rule.run_once(ctx),
             Self::ImportUnambiguous(rule) => rule.run_once(ctx),
             Self::EslintAccessorPairs(rule) => rule.run_once(ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run_once(ctx),
@@ -13544,6 +13563,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportPreferDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportPreferShortestImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportUnambiguous(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintAccessorPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14343,6 +14363,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.should_run(ctx),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.should_run(ctx),
             Self::ImportPreferDefaultExport(rule) => rule.should_run(ctx),
+            Self::ImportPreferShortestImports(rule) => rule.should_run(ctx),
             Self::ImportUnambiguous(rule) => rule.should_run(ctx),
             Self::EslintAccessorPairs(rule) => rule.should_run(ctx),
             Self::EslintArrayCallbackReturn(rule) => rule.should_run(ctx),
@@ -15052,6 +15073,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::IS_TSGOLINT_RULE,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::IS_TSGOLINT_RULE,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::IS_TSGOLINT_RULE,
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::IS_TSGOLINT_RULE,
             Self::ImportUnambiguous(_) => ImportUnambiguous::IS_TSGOLINT_RULE,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::IS_TSGOLINT_RULE,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::IS_TSGOLINT_RULE,
@@ -16046,6 +16068,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::HAS_CONFIG,
             Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::HAS_CONFIG,
             Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::HAS_CONFIG,
+            Self::ImportPreferShortestImports(_) => ImportPreferShortestImports::HAS_CONFIG,
             Self::ImportUnambiguous(_) => ImportUnambiguous::HAS_CONFIG,
             Self::EslintAccessorPairs(_) => EslintAccessorPairs::HAS_CONFIG,
             Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::HAS_CONFIG,
@@ -16915,6 +16938,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.types_info(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.types_info(),
             Self::ImportPreferDefaultExport(rule) => rule.types_info(),
+            Self::ImportPreferShortestImports(rule) => rule.types_info(),
             Self::ImportUnambiguous(rule) => rule.types_info(),
             Self::EslintAccessorPairs(rule) => rule.types_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.types_info(),
@@ -17618,6 +17642,7 @@ impl RuleEnum {
             Self::ImportNoUnassignedImport(rule) => rule.run_info(),
             Self::ImportNoWebpackLoaderSyntax(rule) => rule.run_info(),
             Self::ImportPreferDefaultExport(rule) => rule.run_info(),
+            Self::ImportPreferShortestImports(rule) => rule.run_info(),
             Self::ImportUnambiguous(rule) => rule.run_info(),
             Self::EslintAccessorPairs(rule) => rule.run_info(),
             Self::EslintArrayCallbackReturn(rule) => rule.run_info(),
@@ -18343,6 +18368,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoUnassignedImport(ImportNoUnassignedImport::default()),
         RuleEnum::ImportNoWebpackLoaderSyntax(ImportNoWebpackLoaderSyntax::default()),
         RuleEnum::ImportPreferDefaultExport(ImportPreferDefaultExport::default()),
+        RuleEnum::ImportPreferShortestImports(ImportPreferShortestImports::default()),
         RuleEnum::ImportUnambiguous(ImportUnambiguous::default()),
         RuleEnum::EslintAccessorPairs(EslintAccessorPairs::default()),
         RuleEnum::EslintArrayCallbackReturn(EslintArrayCallbackReturn::default()),
