@@ -1,16 +1,11 @@
 use oxc_linter::FixKind;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
+use tracing::debug;
 
 use crate::lsp::error_with_position::{FixedContent, FixedContentKind, LinterCodeAction};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
-
-/// A custom code action kind for dangerous fix-all operations.
-/// This is intentionally outside the `source.fixAll.*` hierarchy because the LSP spec
-/// restricts `source.fixAll` to safe fixes only.
-pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC: CodeActionKind =
-    CodeActionKind::new("source.fixAllDangerous.oxc");
 
 fn fix_content_to_code_action(
     fixed_content: FixedContent,
@@ -63,21 +58,21 @@ pub fn apply_all_fix_code_action(
     uri: Uri,
     fix_kind: FixKind,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions);
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions, fix_kind);
 
     if quick_fixes.is_empty() {
         return None;
     }
 
-    let (title, kind) = if fix_kind.is_dangerous() {
-        ("fix all fixable oxlint issues", CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC)
+    let title = if fix_kind.is_dangerous() {
+        "fix all fixable oxlint issues"
     } else {
-        ("fix all safe fixable oxlint issues", CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
+        "fix all safe fixable oxlint issues"
     };
 
     Some(CodeAction {
         title: title.to_string(),
-        kind: Some(kind),
+        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
         is_preferred: Some(true),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
@@ -93,7 +88,10 @@ pub fn apply_all_fix_code_action(
 
 /// Collect all text edits from the provided diagnostic reports, which can be applied at once.
 /// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
-pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
+pub fn fix_all_text_edit(
+    actions: impl Iterator<Item = LinterCodeAction>,
+    fix_kind: FixKind,
+) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
     for action in actions {
@@ -104,6 +102,11 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
         }) else {
             continue;
         };
+
+        if !(fix_kind | FixKind::SafeFixOrSuggestion).can_apply(fixed_content.kind) {
+            debug!("Skipping fix for fix all action: {}", fixed_content.message);
+            continue;
+        }
 
         // when source.fixAll.oxc we collect all changes at ones
         // and return them as one workspace edit.
@@ -138,9 +141,58 @@ mod tests {
     }
 
     #[test]
-    fn test_fix_all_text_edit_collects_edits() {
-        let text_edits = fix_all_text_edit(std::iter::once(make_action(FixKind::SafeFix)));
-        assert!(!text_edits.is_empty(), "fix should be collected");
+    fn test_fix_all_text_edit_skips_dangerous_fix_by_default() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::DangerousFix)),
+            FixKind::SafeFixOrSuggestion,
+        );
+        assert!(
+            text_edits.is_empty(),
+            "dangerous fix should be skipped when fix_kind is SafeFixOrSuggestion (default)"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_includes_safe_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            FixKind::SafeFixOrSuggestion,
+        );
+        assert!(!text_edits.is_empty(), "safe fix should be included");
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_dangerous_fix_kind_includes_dangerous_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::DangerousFix)),
+            FixKind::DangerousFix,
+        );
+        assert!(
+            !text_edits.is_empty(),
+            "dangerous fix should be included when fix_kind is DangerousFix"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_none_still_includes_safe_fix() {
+        let text_edits =
+            fix_all_text_edit(std::iter::once(make_action(FixKind::SafeFix)), FixKind::None);
+        assert!(
+            !text_edits.is_empty(),
+            "safe fix should still be included even when fix_kind is None"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_dangerous_fix_kind_also_includes_safe_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            FixKind::DangerousFix,
+        );
+        assert!(
+            !text_edits.is_empty(),
+            "safe fix should also be included when fix_kind is DangerousFix"
+        );
     }
 
     #[test]
@@ -170,36 +222,6 @@ mod tests {
             !action.title.contains("safe"),
             "title should not contain 'safe' when fix_kind is DangerousFix, got: {}",
             action.title
-        );
-    }
-
-    #[test]
-    fn test_apply_all_fix_code_action_kind_safe() {
-        let action = apply_all_fix_code_action(
-            std::iter::once(make_action(FixKind::SafeFix)),
-            Uri::from_str("file:///test.js").unwrap(),
-            FixKind::SafeFixOrSuggestion,
-        )
-        .unwrap();
-        assert_eq!(
-            action.kind,
-            Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
-            "safe fix-all should use source.fixAll.oxc kind"
-        );
-    }
-
-    #[test]
-    fn test_apply_all_fix_code_action_kind_dangerous() {
-        let action = apply_all_fix_code_action(
-            std::iter::once(make_action(FixKind::DangerousFix)),
-            Uri::from_str("file:///test.js").unwrap(),
-            FixKind::DangerousFix,
-        )
-        .unwrap();
-        assert_eq!(
-            action.kind,
-            Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC),
-            "dangerous fix-all should use source.fixAllDangerous.oxc kind, not source.fixAll.oxc"
         );
     }
 }
