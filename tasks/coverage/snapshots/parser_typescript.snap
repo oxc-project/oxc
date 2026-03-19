@@ -13834,7 +13834,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │   }
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use 'for await' in class static initialization block
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:5:5]
  4 │       static {
  5 │ ╭─▶     for await (const nn of nums) {
@@ -13843,7 +13843,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │       }
    ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use 'for await' in class static initialization block
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts:14:7]
  13 │         static {
  14 │ ╭─▶       for await (const nn of nums) {
