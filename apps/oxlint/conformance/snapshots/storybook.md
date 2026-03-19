@@ -18,9 +18,9 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests |   161 | 100.0% |
-| Passing     |   141 |  87.6% |
+| Passing     |   161 | 100.0% |
 | Failing     |     0 |   0.0% |
-| Skipped     |    20 |  12.4% |
+| Skipped     |     0 |   0.0% |
 
 ## Fully Passing Rules
 
@@ -35,7 +35,7 @@
 - `no-renderer-packages` (7 tests)
 - `no-stories-of` (3 tests)
 - `no-title-property-in-meta` (12 tests)
-- `no-uninstalled-addons` (20 tests) (20 skipped)
+- `no-uninstalled-addons` (20 tests)
 - `prefer-pascal-case` (10 tests)
 - `story-exports` (14 tests)
 - `use-storybook-expect` (8 tests)
