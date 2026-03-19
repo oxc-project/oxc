@@ -125,7 +125,7 @@ impl Rule for PreferTopLevelAwait {
             return;
         }
 
-        if let Some(member_expr) = &call_expr.callee.as_static_member_expression()
+        if let Some(member_expr) = call_expr.callee.as_static_member_expression()
             && matches!(member_expr.property.name.as_str(), "then" | "catch" | "finally")
         {
             ctx.diagnostic(prefer_top_level_await_over_promise_chain_diagnostic(call_expr.span));
@@ -141,7 +141,7 @@ impl Rule for PreferTopLevelAwait {
             return;
         }
 
-        let Some(ident) = &call_expr.callee.as_identifier() else {
+        let Some(ident) = call_expr.callee.as_identifier() else {
             return;
         };
 

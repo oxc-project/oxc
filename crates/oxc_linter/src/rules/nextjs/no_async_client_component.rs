@@ -94,7 +94,7 @@ impl Rule for NoAsyncClientComponent {
 
         if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
             for node in &program.body {
-                let Some(export_default_decl) = &node.as_export_default_declaration() else {
+                let Some(export_default_decl) = node.as_export_default_declaration() else {
                     continue;
                 };
 

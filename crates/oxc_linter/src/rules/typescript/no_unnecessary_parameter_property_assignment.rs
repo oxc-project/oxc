@@ -198,7 +198,7 @@ fn get_assignments_inside_expression<'a>(
             if let Some(function_body) = function_body {
                 for statement in &function_body.statements {
                     if let Some(expr) = statement.as_expression_statement()
-                        && let Some(assignment) = &expr.expression.as_assignment_expression()
+                        && let Some(assignment) = expr.expression.as_assignment_expression()
                     {
                         assignments.push(assignment);
                     }
@@ -236,7 +236,7 @@ fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Ato
             if &expr.object.is_this_expression() =>
         {
             // this["property"]
-            if let Some(str) = &expr.expression.as_string_literal() {
+            if let Some(str) = expr.expression.as_string_literal() {
                 Some(str.value)
             } else {
                 None

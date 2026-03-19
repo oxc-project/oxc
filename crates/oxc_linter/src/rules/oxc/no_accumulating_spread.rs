@@ -133,7 +133,7 @@ impl Rule for NoAccumulatingSpread {
         let AstKind::SpreadElement(spread) = node.kind() else {
             return;
         };
-        let Some(ident) = &spread.argument.as_identifier() else {
+        let Some(ident) = spread.argument.as_identifier() else {
             return;
         };
 

@@ -591,7 +591,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind()
-        && let Some(func) = &prop.value.as_arrow_function_expression()
+        && let Some(func) = prop.value.as_arrow_function_expression()
         && !func.body.statements.is_empty()
         && func.return_type.is_some()
     {

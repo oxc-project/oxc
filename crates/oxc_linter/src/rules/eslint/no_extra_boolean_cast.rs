@@ -103,7 +103,7 @@ impl Rule for NoExtraBooleanCast {
                     let Some(arg) = expr.arguments[0]
                         .as_expression()
                         .map(remove_double_not)
-                        .map(|e| e.without_parentheses())
+                        .map(Expression::without_parentheses)
                     else {
                         return fixer.noop();
                     };

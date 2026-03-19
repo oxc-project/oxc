@@ -99,7 +99,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(call) = &variables_declarator.init.as_ref().and_then(|e| e.as_call_expression()) else {
+            let Some(call) = variables_declarator.init.as_ref().and_then(|e| e.as_call_expression()) else {
                 return;
             };
 

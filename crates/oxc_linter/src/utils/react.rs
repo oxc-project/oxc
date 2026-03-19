@@ -561,7 +561,7 @@ pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
 
 // check current node is this.state.xx
 pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
-    if let Some(_) = &expression.object.as_this_expression() {
+    if let Some(_) = expression.object.as_this_expression() {
         return expression.property.name == "state";
     }
 

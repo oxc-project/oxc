@@ -190,7 +190,7 @@ impl Rule for NoImplicitCoercion {
                 if self.boolean
                     && unary_expr.operator == UnaryOperator::LogicalNot
                     && !self.is_allowed(AllowedOperators::DOUBLE_NOT)
-                    && let Some(inner) = &unary_expr.argument.as_unary_expression()
+                    && let Some(inner) = unary_expr.argument.as_unary_expression()
                     && inner.operator == UnaryOperator::LogicalNot
                 {
                     let operand = get_operand_text(ctx, &inner.argument);

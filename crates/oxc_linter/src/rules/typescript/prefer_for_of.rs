@@ -82,7 +82,7 @@ impl ExpressionExt for Expression<'_> {
                             if (lit.value - 1f64).abs() < f64::EPSILON)
                     }
                     AssignmentOperator::Assign => {
-                        let Some(bin_expr) = &expr.right.as_binary_expression() else {
+                        let Some(bin_expr) = expr.right.as_binary_expression() else {
                             return false;
                         };
 
@@ -134,7 +134,7 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let Some(test_expr) = &for_stmt.test.as_ref().and_then(|e| e.as_binary_expression()) else {
+        let Some(test_expr) = for_stmt.test.as_ref().and_then(|e| e.as_binary_expression()) else {
             return;
         };
 

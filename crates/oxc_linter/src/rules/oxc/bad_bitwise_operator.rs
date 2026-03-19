@@ -144,7 +144,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
                 return false;
             }
 
-            let Some(left_ident) = &bin_expr.left.as_identifier() else {
+            let Some(left_ident) = bin_expr.left.as_identifier() else {
                 return false;
             };
 
@@ -165,7 +165,7 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
         return false;
     };
     if binary_expr.operator == BinaryOperator::BitwiseOR
-        && let Some(_) = &binary_expr.left.as_identifier()
+        && let Some(_) = binary_expr.left.as_identifier()
     {
         return !is_numeric_expr(&binary_expr.right, true);
     }

@@ -49,7 +49,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        let Some(ident) = &expr.callee.as_identifier() else {
+        let Some(ident) = expr.callee.as_identifier() else {
             return;
         };
 

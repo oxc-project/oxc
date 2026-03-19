@@ -111,7 +111,7 @@ impl PreferDescribeFunctionTitle {
 
         match title_arg {
             Argument::StaticMemberExpression(title_expression) => {
-                let Some(identifier) = &title_expression.object.as_identifier() else {
+                let Some(identifier) = title_expression.object.as_identifier() else {
                     return;
                 };
 

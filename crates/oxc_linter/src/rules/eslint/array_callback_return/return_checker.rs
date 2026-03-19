@@ -363,7 +363,7 @@ mod tests {
         let stmt = body.first().unwrap();
         let Some(func) = stmt.as_function_declaration() else { unreachable!() };
 
-        let first_statement = &func.body.as_ref().unwrap().statements[0];
+        let first_statement = func.body.as_ref().unwrap().statements[0];
 
         test_match_expected(first_statement, expected);
     }

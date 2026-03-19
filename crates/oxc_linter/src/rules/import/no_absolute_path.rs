@@ -121,7 +121,7 @@ impl Rule for NoAbsolutePath {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                let Some(ident) = &call_expr.callee.as_identifier() else {
+                let Some(ident) = call_expr.callee.as_identifier() else {
                     return;
                 };
                 let func_name = ident.name.as_str();

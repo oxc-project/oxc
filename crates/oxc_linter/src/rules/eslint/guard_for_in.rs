@@ -79,10 +79,10 @@ impl Rule for GuardForIn {
                 StatementKind::BlockStatement(block_body) if !block_body.body.is_empty() => {
                     let block_statement = &block_body.body[0];
                     if let Some(i) = block_statement.as_if_statement() {
-                        if let Some(_) = &i.consequent.as_continue_statement() {
+                        if let Some(_) = i.consequent.as_continue_statement() {
                             return;
                         }
-                        if let Some(consequent_block) = &i.consequent.as_block_statement()
+                        if let Some(consequent_block) = i.consequent.as_block_statement()
                             && consequent_block.body.len() == 1
                             && &consequent_block.body[0].is_continue_statement()
                         {

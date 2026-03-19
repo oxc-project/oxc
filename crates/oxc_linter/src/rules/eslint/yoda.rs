@@ -373,10 +373,10 @@ fn is_parenthesized(parent_logical_expr: &AstNode) -> bool {
 }
 
 fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
-    let Some(left) = &expr.left.as_binary_expression() else {
+    let Some(left) = expr.left.as_binary_expression() else {
         return false;
     };
-    let Some(right) = &expr.right.as_binary_expression() else {
+    let Some(right) = expr.right.as_binary_expression() else {
         return false;
     };
 

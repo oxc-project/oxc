@@ -92,7 +92,7 @@ impl Rule for PreferSetSize {
 
 fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(new_expr) = maybe_set.as_new_expression() {
-        if let Some(identifier) = &new_expr.callee.as_identifier() {
+        if let Some(identifier) = new_expr.callee.as_identifier() {
             return identifier.name == "Set";
         }
         return false;
@@ -127,7 +127,7 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
 
 fn is_new_set(expr: &Expression) -> bool {
     if let Some(new_expr) = expr.as_new_expression() {
-        if let Some(identifier) = &new_expr.callee.as_identifier() {
+        if let Some(identifier) = new_expr.callee.as_identifier() {
             return identifier.name == "Set";
         }
         return false;

@@ -135,8 +135,8 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     if arrow.expression {
         if let Some(first) = arrow.body.statements.first()
             && let Some(expr_stmt) = first.as_expression_statement()
-            && let Some(await_expr) = &expr_stmt.expression.as_await_expression()
-            && let Some(call) = &await_expr.argument.as_call_expression()
+            && let Some(await_expr) = expr_stmt.expression.as_await_expression()
+            && let Some(call) = await_expr.argument.as_call_expression()
         {
             return Some(call.span);
         }
@@ -151,8 +151,8 @@ fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
         && let Some(expr_stmt) = stmt.as_expression_statement()
-        && let Some(await_expr) = &expr_stmt.expression.as_await_expression()
-        && let Some(call) = &await_expr.argument.as_call_expression()
+        && let Some(await_expr) = expr_stmt.expression.as_await_expression()
+        && let Some(call) = await_expr.argument.as_call_expression()
     {
         return Some(call.span);
     }

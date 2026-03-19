@@ -177,7 +177,7 @@ impl NoConstantBinaryExpression {
             | ExpressionKind::UnaryExpression(_) => true,
             expr if expr.is_literal() => true,
             ExpressionKind::CallExpression(call_expr) => {
-                if let Some(ident) = &call_expr.callee.as_identifier() {
+                if let Some(ident) = call_expr.callee.as_identifier() {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
                         && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
                 }
@@ -301,7 +301,7 @@ impl NoConstantBinaryExpression {
                 _ => true,
             },
             ExpressionKind::CallExpression(call_expr) => {
-                if let Some(ident) = &call_expr.callee.as_identifier() {
+                if let Some(ident) = call_expr.callee.as_identifier() {
                     let unresolved_references = ctx.scoping().root_unresolved_references();
                     if (ident.name == "String" || ident.name == "Number")
                         && unresolved_references.contains_key(&ident.name)
@@ -349,7 +349,7 @@ impl NoConstantBinaryExpression {
             | ExpressionKind::ClassExpression(_)
             | ExpressionKind::RegExpLiteral(_) => true,
             ExpressionKind::NewExpression(call_expr) => {
-                if let Some(ident) = &call_expr.callee.as_identifier() {
+                if let Some(ident) = call_expr.callee.as_identifier() {
                     return ctx.is_ecma_script_global(&ident.name);
                 }
                 false

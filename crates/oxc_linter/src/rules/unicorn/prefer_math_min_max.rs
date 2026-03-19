@@ -65,7 +65,7 @@ impl Rule for PreferMathMinMax {
             return;
         };
 
-        let Some(test_expr) = &conditional_expr.test.as_binary_expression() else {
+        let Some(test_expr) = conditional_expr.test.as_binary_expression() else {
             return;
         };
 

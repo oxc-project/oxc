@@ -347,7 +347,7 @@ fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> 
     let Some(stmt) = arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
         return false;
     };
-    let Some(callee_expr) = &stmt.expression.as_call_expression() else {
+    let Some(callee_expr) = stmt.expression.as_call_expression() else {
         return false;
     };
     callee_expr.callee.is_member_expression()
@@ -364,7 +364,7 @@ fn get_event_handler_name_from_static_member_expression(
             (name.into(), span, obj_name == "props") // props.handleChange or obj.handleChange
         }
         ExpressionKind::StaticMemberExpression(expr) => {
-            if let Some(_) = &expr.object.as_this_expression() {
+            if let Some(_) = expr.object.as_this_expression() {
                 let obj_name = expr.property.name.as_str();
                 (name.into(), span, obj_name == "props") // this.props.handleChange or this.obj.handleChange
             } else {
@@ -442,7 +442,7 @@ fn get_event_handler_name_from_arrow_function<'a>(
     let Some(stmt) = arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
         return None;
     };
-    let Some(call_expr) = &stmt.expression.as_call_expression() else {
+    let Some(call_expr) = stmt.expression.as_call_expression() else {
         return None;
     };
 

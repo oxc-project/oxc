@@ -300,7 +300,7 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     }
 
     fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
-        if let Some(block_stmt) = &if_stmt.consequent.as_block_statement() {
+        if let Some(block_stmt) = if_stmt.consequent.as_block_statement() {
             self.visit_block_statement(block_stmt);
         }
         if self.found_assertion {

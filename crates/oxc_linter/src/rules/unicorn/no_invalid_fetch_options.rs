@@ -120,7 +120,7 @@ fn is_invalid_fetch_options<'a>(
             match &obj_prop.value.kind() {
                 ExpressionKind::StaticMemberExpression(s) => {
                     let symbols = ctx.scoping();
-                    let Some(ident_ref) = &s.object.as_identifier() else {
+                    let Some(ident_ref) = s.object.as_identifier() else {
                         method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };

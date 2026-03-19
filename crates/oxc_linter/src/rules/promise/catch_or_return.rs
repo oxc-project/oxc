@@ -128,7 +128,7 @@ impl Rule for CatchOrReturn {
             return;
         };
 
-        let Some(call_expr) = &expr_stmt.expression.as_call_expression() else {
+        let Some(call_expr) = expr_stmt.expression.as_call_expression() else {
             return;
         };
 

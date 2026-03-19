@@ -211,7 +211,7 @@ fn check_computed_member_call<'a>(call_expr: &CallExpression<'a>, ctx: &LintCont
         return;
     }
 
-    let Some(cond_expr) = &computed.expression.as_conditional_expression() else {
+    let Some(cond_expr) = computed.expression.as_conditional_expression() else {
         return;
     };
 

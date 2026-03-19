@@ -89,7 +89,7 @@ impl Rule for NoAwaitExpressionMember {
                     match member_expr.kind() {
                         // e.g. "const a = (await b())[0]" => "const {a} = await b()"
                         MemberExpressionKind::Computed(computed_member_expr) => {
-                            let Some(prop) = &computed_member_expr.expression.as_numeric_literal() else {
+                            let Some(prop) = computed_member_expr.expression.as_numeric_literal() else {
                                 return fixer.noop();
                             };
                             let Some(value) = prop.raw.map(|v| v.as_str()) else {

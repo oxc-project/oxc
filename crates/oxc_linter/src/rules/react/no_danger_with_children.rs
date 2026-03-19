@@ -69,7 +69,7 @@ impl Rule for NoDangerWithChildren {
                 if call_expr.arguments.len() <= 1 {
                     return;
                 }
-                let Some(callee) = &call_expr.callee.as_static_member_expression() else {
+                let Some(callee) = call_expr.callee.as_static_member_expression() else {
                     return;
                 };
 

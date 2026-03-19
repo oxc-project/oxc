@@ -219,7 +219,7 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
             }
         }
         StatementKind::ExpressionStatement(expr_stmt) => {
-            let Some(ident) = &expr_stmt.expression.as_identifier() else {
+            let Some(ident) = expr_stmt.expression.as_identifier() else {
                 return None;
             };
 
@@ -480,8 +480,8 @@ pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
 
 pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
     if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
-        && let Some(member_expr) = &tagged_template_expression.tag.as_static_member_expression()
-        && let Some(ident) = &member_expr.object.as_identifier()
+        && let Some(member_expr) = tagged_template_expression.tag.as_static_member_expression()
+        && let Some(ident) = member_expr.object.as_identifier()
         && member_expr.property.name == "raw"
         && ident.name == "String"
     {

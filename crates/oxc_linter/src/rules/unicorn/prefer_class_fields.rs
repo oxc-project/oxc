@@ -119,7 +119,7 @@ impl Rule for PreferClassFields {
         };
 
         // Check if it's a simple assignment to this.property = literal
-        let Some(assign) = &expr_stmt.expression.as_assignment_expression() else {
+        let Some(assign) = expr_stmt.expression.as_assignment_expression() else {
             return;
         };
 

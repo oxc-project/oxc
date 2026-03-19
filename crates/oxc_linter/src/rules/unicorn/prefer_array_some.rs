@@ -160,7 +160,7 @@ impl Rule for PreferArraySome {
                 }
 
                 if matches_against_zero {
-                    let Some(right_num_lit) = &bin_expr.right.as_numeric_literal() else {
+                    let Some(right_num_lit) = bin_expr.right.as_numeric_literal() else {
                         return;
                     };
 
@@ -193,7 +193,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Some(right_num_lit) = &bin_expr.right.as_numeric_literal() else {
+                let Some(right_num_lit) = bin_expr.right.as_numeric_literal() else {
                     return;
                 };
 

@@ -96,7 +96,7 @@ impl Rule for PreferRegexpTest {
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                let Some(call_expr2) = &conditional_expr.test.as_call_expression() else {
+                let Some(call_expr2) = conditional_expr.test.as_call_expression() else {
                     return;
                 };
 
@@ -106,7 +106,7 @@ impl Rule for PreferRegexpTest {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                let Some(ident) = &call_expr.callee.as_identifier() else {
+                let Some(ident) = call_expr.callee.as_identifier() else {
                     return;
                 };
 

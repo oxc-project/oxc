@@ -174,7 +174,7 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
-                    if let Some(ident) = &call_expr.callee.as_identifier()
+                    if let Some(ident) = call_expr.callee.as_identifier()
                         && !ctx.is_reference_to_global_variable(ident)
                     {
                         return;

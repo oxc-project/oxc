@@ -97,7 +97,7 @@ impl Rule for PreferPromiseRejectErrors {
                 check_reject_call(call_expr, ctx, self.allow_empty_reject);
             }
             AstKind::NewExpression(new_expr) => {
-                let Some(ident) = &new_expr.callee.as_identifier() else {
+                let Some(ident) = new_expr.callee.as_identifier() else {
                     return;
                 };
 
@@ -106,7 +106,7 @@ impl Rule for PreferPromiseRejectErrors {
                 }
 
                 let Some(arg) =
-                    new_expr.arguments[0].as_expression().map(|e| e.get_inner_expression())
+                    new_expr.arguments[0].as_expression().map(Expression::get_inner_expression)
                 else {
                     return;
                 };
@@ -178,7 +178,7 @@ fn check_reject_in_function(
             continue;
         };
 
-        let Some(literal) = &member_expr.expression.as_numeric_literal() else {
+        let Some(literal) = member_expr.expression.as_numeric_literal() else {
             continue;
         };
 
@@ -193,7 +193,7 @@ fn check_reject_in_function(
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    match arg.as_expression().map(|e| e.get_inner_expression()).kind() {
+    match arg.as_expression().map(Expression::get_inner_expression).kind() {
         Some(ExpressionKind::Identifier(ident)) => ident.name == "undefined",
         _ => false,
     }

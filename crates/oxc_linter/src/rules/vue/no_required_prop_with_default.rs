@@ -253,7 +253,7 @@ fn process_define_props_call(
     let Some(first_call_expr) = first_arg_expr.get_inner_expression().as_call_expression() else {
         return;
     };
-    let Some(first_call_ident) = &first_call_expr.callee.as_identifier() else {
+    let Some(first_call_ident) = first_call_expr.callee.as_identifier() else {
         return;
     };
     if first_call_ident.name != "defineProps" {
@@ -409,7 +409,7 @@ fn handle_prop_object(
                         has_default_key = true;
                     }
                     if item_key == "required" {
-                        let Some(inner_value) = &item_obj.value.as_boolean_literal() else {
+                        let Some(inner_value) = item_obj.value.as_boolean_literal() else {
                             continue;
                         };
                         if inner_value.value {

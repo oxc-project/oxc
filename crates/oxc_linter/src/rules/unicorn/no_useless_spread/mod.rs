@@ -269,7 +269,7 @@ fn diagnose_array_in_array_spread<'a>(
                     ctx.diagnostic(diagnostic);
                     return;
                 };
-                let Some(arr) = &spread.argument.as_array_expression() else {
+                let Some(arr) = spread.argument.as_array_expression() else {
                     ctx.diagnostic(diagnostic);
                     return;
                 };

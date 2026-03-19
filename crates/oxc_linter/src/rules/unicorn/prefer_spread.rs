@@ -203,7 +203,7 @@ const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file"
 /// has no iterator) or changes the type (TypedArray → number[]).
 fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
     let Some(new_expr) = expr.as_new_expression() else { return false };
-    let Some(ident) = &new_expr.callee.as_identifier() else { return false };
+    let Some(ident) = new_expr.callee.as_identifier() else { return false };
     matches!(
         ident.name.as_str(),
         "ArrayBuffer"

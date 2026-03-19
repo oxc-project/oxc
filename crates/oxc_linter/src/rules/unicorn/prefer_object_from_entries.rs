@@ -114,7 +114,7 @@ impl Rule for PreferObjectFromEntries {
             .get(1)
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::|e| e.get_inner_expression())
+            .map(oxc_ast::ast::Expression::get_inner_expression)
         else {
             return;
         };
@@ -128,7 +128,7 @@ impl Rule for PreferObjectFromEntries {
             .first()
             .expect("call expr must have exactly 2 arguments")
             .as_expression()
-            .map(oxc_ast::ast::|e| e.get_inner_expression())
+            .map(oxc_ast::ast::Expression::get_inner_expression)
         else {
             return;
         };
@@ -158,7 +158,7 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => Object.assign(object, {key})`
-        if let Some(call_expr) = &stmt.as_call_expression() {
+        if let Some(call_expr) = stmt.as_call_expression() {
             if !is_method_call(call_expr, Some(&["Object"]), Some(&["assign"]), Some(2), Some(2)) {
                 return;
             }
@@ -168,7 +168,7 @@ impl Rule for PreferObjectFromEntries {
                 .first()
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::|e| e.get_inner_expression())
+                .map(oxc_ast::ast::Expression::get_inner_expression)
             else {
                 return;
             };
@@ -184,7 +184,7 @@ impl Rule for PreferObjectFromEntries {
                 .get(1)
                 .expect("call expression should have 2 arguments")
                 .as_expression()
-                .map(oxc_ast::ast::|e| e.get_inner_expression())
+                .map(oxc_ast::ast::Expression::get_inner_expression)
             else {
                 return;
             };
@@ -204,7 +204,7 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => ({...object, key})`
-        if let Some(object_expr) = &stmt.as_object_expression()
+        if let Some(object_expr) = stmt.as_object_expression()
             && object_expr.properties.len() == 2
             && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
             && let Some(spread_ident) = spread.argument.get_inner_expression().as_identifier()
@@ -260,7 +260,7 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .first()
                 .expect("call expression must have 1 argument")
                 .as_expression()
-                .map(oxc_ast::ast::|e| e.get_inner_expression())
+                .map(oxc_ast::ast::Expression::get_inner_expression)
                 .is_some_and(|expr| expr.is_null_literal()) =>
         {
             true

@@ -158,7 +158,7 @@ impl Rule for PreferDestructuring {
                             {
                                 ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
-                            if let Some(string_literal) = &comp_expr.expression.as_string_literal()
+                            if let Some(string_literal) = comp_expr.expression.as_string_literal()
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
@@ -213,7 +213,7 @@ impl Rule for PreferDestructuring {
                 ) {
                     return;
                 }
-                if let Some(init) = &declarator.init.as_member_expression()
+                if let Some(init) = declarator.init.as_member_expression()
                     && let Some(right) = init.without_parentheses()
                 {
                     if !check_expr(right) {
@@ -239,7 +239,7 @@ impl Rule for PreferDestructuring {
                                 {
                                     ctx.diagnostic(prefer_object_destructuring(right.span()));
                                 }
-                                if let Some(string_literal) = &comp_expr.expression.as_string_literal()
+                                if let Some(string_literal) = comp_expr.expression.as_string_literal()
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {

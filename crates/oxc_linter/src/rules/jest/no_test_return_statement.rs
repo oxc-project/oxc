@@ -123,7 +123,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     let Some(stmt) = return_stmt.as_return_statement() else {
         return;
     };
-    let Some(call_expr) = &stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(call_expr) = stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
         return;
     };
     let Some(mem_expr) = call_expr.callee.as_member_expression() else {
@@ -132,7 +132,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     let Some(mem_call_expr) = mem_expr.object().as_call_expression() else {
         return;
     };
-    let Some(ident) = &mem_call_expr.callee.as_identifier() else {
+    let Some(ident) = mem_call_expr.callee.as_identifier() else {
         return;
     };
 

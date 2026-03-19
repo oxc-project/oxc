@@ -71,7 +71,7 @@ impl Rule for PreferLogicalOperatorOverTernary {
         }
 
         // `!bar ? foo : bar` -> `bar || foo`
-        if let Some(unary_expression) = &conditional_expression.test.as_unary_expression()
+        if let Some(unary_expression) = conditional_expression.test.as_unary_expression()
             && unary_expression.operator == UnaryOperator::LogicalNot
             && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
         {
@@ -123,7 +123,7 @@ fn preferred_alternate_expr<'a>(
     if !is_same_node(&outer_unary.argument, alternate, ctx) {
         return alternate;
     }
-    let Some(inner_unary) = &outer_unary.argument.as_unary_expression() else {
+    let Some(inner_unary) = outer_unary.argument.as_unary_expression() else {
         return alternate;
     };
     if inner_unary.operator != UnaryOperator::LogicalNot {

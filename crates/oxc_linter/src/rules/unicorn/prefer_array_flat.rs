@@ -157,7 +157,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Some(concat_call_expr) = &expr_stmt.expression.as_call_expression()
+    if let Some(concat_call_expr) = expr_stmt.expression.as_call_expression()
         && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
         && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
     {
@@ -191,7 +191,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
-    if let Some(array_expr) = &expr_stmt.expression.as_array_expression() {
+    if let Some(array_expr) = expr_stmt.expression.as_array_expression() {
         if array_expr.elements.len() != 2 {
             return;
         }

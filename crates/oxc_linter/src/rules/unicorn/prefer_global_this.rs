@@ -74,7 +74,7 @@ impl Rule for PreferGlobalThis {
         }
 
         if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
-            && let Some(ident) = &e.object.as_identifier()
+            && let Some(ident) = e.object.as_identifier()
         {
             if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
             {
@@ -118,7 +118,7 @@ impl Rule for PreferGlobalThis {
 fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
         && unary.operator == UnaryOperator::Typeof
-        && let Some(arg_ident) = &unary.argument.as_identifier()
+        && let Some(arg_ident) = unary.argument.as_identifier()
     {
         return arg_ident.span == node.span();
     }

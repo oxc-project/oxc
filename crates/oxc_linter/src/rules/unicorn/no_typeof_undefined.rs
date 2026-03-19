@@ -70,7 +70,7 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        let Some(unary_expr) = &bin_expr.left.as_unary_expression() else {
+        let Some(unary_expr) = bin_expr.left.as_unary_expression() else {
             return;
         };
 

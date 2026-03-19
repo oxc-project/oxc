@@ -309,7 +309,7 @@ fn get_prev_declaration<'a>(
         StatementKind::VariableDeclaration(decl) => get_declaration_info(decl, ctx),
         StatementKind::ExpressionStatement(expr_stmt) => {
             // Check for assignment expression: foo = [1, 2]
-            if let Some(assign) = &expr_stmt.expression.as_assignment_expression() {
+            if let Some(assign) = expr_stmt.expression.as_assignment_expression() {
                 get_assignment_info(assign, ctx)
             } else {
                 None

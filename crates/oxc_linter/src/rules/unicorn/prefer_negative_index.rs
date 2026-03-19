@@ -259,7 +259,7 @@ fn get_binary_left_expr<'a>(
 
     match &binary_expr.left.kind() {
         ExpressionKind::ParenthesizedExpression(paren_expr) => {
-            let Some(paren_inner_binary_expr) = &paren_expr.expression.as_binary_expression() else {
+            let Some(paren_inner_binary_expr) = paren_expr.expression.as_binary_expression() else {
                 return None;
             };
 

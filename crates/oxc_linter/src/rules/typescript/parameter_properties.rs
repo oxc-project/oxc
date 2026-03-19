@@ -276,7 +276,7 @@ fn constructor_assignment<'a>(
     let Some(expression_statement) = statement.as_expression_statement() else {
         return None;
     };
-    let Some(assignment) = &expression_statement.expression.as_assignment_expression() else {
+    let Some(assignment) = expression_statement.expression.as_assignment_expression() else {
         return None;
     };
     let AssignmentTarget::StaticMemberExpression(member_expression) = &assignment.left else {

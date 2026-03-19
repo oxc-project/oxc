@@ -66,7 +66,7 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
         .arguments
         .get(index)
         .and_then(Argument::as_expression)
-        .map(|e| e.get_inner_expression())
+        .map(Expression::get_inner_expression)
     {
         Some(ExpressionKind::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
         _ => false,
@@ -140,7 +140,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     }
 
     // `useRef(null)`
-    if let Some(ident) = &call_expr.callee.as_identifier()
+    if let Some(ident) = call_expr.callee.as_identifier()
         && ident.name == "useRef"
         && call_expr.arguments.len() == 1
         && !call_expr.optional

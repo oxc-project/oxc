@@ -72,7 +72,7 @@ impl Rule for NoNewWrappers {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };
-        let Some(ident) = &expr.callee.as_identifier() else {
+        let Some(ident) = expr.callee.as_identifier() else {
             return;
         };
         if !ctx.is_reference_to_global_variable(ident) {

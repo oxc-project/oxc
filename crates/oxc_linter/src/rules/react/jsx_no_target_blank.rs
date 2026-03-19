@@ -325,7 +325,7 @@ fn match_rel_expression<'a>(
         ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);
-            if let Some(identifier) = &expr.test.as_identifier() {
+            if let Some(identifier) = expr.test.as_identifier() {
                 return (
                     consequent.0 && alternate.0,
                     identifier.name.as_str(),
@@ -367,7 +367,7 @@ fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool
         ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
-            if let Some(identifier) = &expr.test.as_identifier() {
+            if let Some(identifier) = expr.test.as_identifier() {
                 return (
                     consequent.0 || alternate.0,
                     identifier.name.as_str(),

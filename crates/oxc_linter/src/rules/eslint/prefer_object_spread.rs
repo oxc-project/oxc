@@ -116,7 +116,7 @@ impl Rule for PreferObjectSpread {
         let arguments_len = call_expr.arguments.len();
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
-            let Some(obj_expr) = arg.as_expression().map(|e| e.get_inner_expression()).as_ref().and_then(|e| e.as_object_expression()) else {
+            let Some(obj_expr) = arg.as_expression().map(Expression::get_inner_expression).as_ref().and_then(|e| e.as_object_expression()) else {
                 if idx == 0 {
                     return;
                 }

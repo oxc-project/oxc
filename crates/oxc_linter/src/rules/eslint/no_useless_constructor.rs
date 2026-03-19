@@ -210,7 +210,7 @@ fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallEx
         return None;
     }
     let Some(expr) = &body.statements[0].as_expression_statement() else { return None };
-    let Some(call) = &expr.expression.as_call_expression() else { return None };
+    let Some(call) = expr.expression.as_call_expression() else { return None };
 
     if call.callee.is_super() { Some(call) } else { None }
 }

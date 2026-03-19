@@ -118,7 +118,7 @@ impl Rule for NoDupeElseIf {
         let AstKind::IfStatement(parent_if_stmt) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(child_if_stmt) = &parent_if_stmt.alternate.as_ref().and_then(|e| e.as_if_statement()) else {
+        let Some(child_if_stmt) = parent_if_stmt.alternate.as_ref().and_then(|e| e.as_if_statement()) else {
             return;
         };
         if child_if_stmt.span != if_stmt.span {
@@ -127,7 +127,7 @@ impl Rule for NoDupeElseIf {
 
         let mut conditions_to_check = vec![&if_stmt.test];
 
-        if let Some(expr) = &if_stmt.test.as_logical_expression()
+        if let Some(expr) = if_stmt.test.as_logical_expression()
             && expr.operator == LogicalOperator::And
         {
             conditions_to_check.extend(split_by_and(&if_stmt.test));

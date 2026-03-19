@@ -224,7 +224,7 @@ impl OnlyExportComponents {
             match js_init.kind() {
                 ExpressionKind::ArrowFunctionExpression(_) => true,
                 ExpressionKind::CallExpression(call_expr) => {
-                    if let Some(callee) = &call_expr.callee.as_identifier() {
+                    if let Some(callee) = call_expr.callee.as_identifier() {
                         self.is_react_hoc(&callee.name)
                     } else {
                         false
@@ -594,14 +594,14 @@ impl OnlyExportComponents {
     fn is_hoc_call_expression(&self, call_expr: &CallExpression) -> bool {
         let is_callee_hoc = match call_expr.callee.kind() {
             ExpressionKind::CallExpression(inner_call) => {
-                if let Some(ident) = &inner_call.callee.as_identifier() {
+                if let Some(ident) = inner_call.callee.as_identifier() {
                     ident.name == "connect"
                 } else {
                     false
                 }
             }
             ExpressionKind::StaticMemberExpression(member) => {
-                if let Some(_) = &member.object.as_identifier() {
+                if let Some(_) = member.object.as_identifier() {
                     self.is_react_hoc(&member.property.name)
                 } else {
                     false

@@ -87,7 +87,7 @@ impl Rule for PreferTodo {
             {
                 let span = call_expr.callee.span();
                 ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
-                    let fix = if let Some(ident) = &call_expr.callee.as_identifier() {
+                    let fix = if let Some(ident) = call_expr.callee.as_identifier() {
                         fixer.insert_text_after_range(ident.span, ".todo")
                     } else {
                         match &call_expr.callee.kind() {

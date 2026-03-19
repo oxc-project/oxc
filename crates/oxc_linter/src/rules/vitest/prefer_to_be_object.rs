@@ -122,7 +122,7 @@ impl PreferToBeObject {
                 return;
             }
 
-            let Some(id) = &binary_expr.right.as_identifier() else {
+            let Some(id) = binary_expr.right.as_identifier() else {
                 return;
             };
 

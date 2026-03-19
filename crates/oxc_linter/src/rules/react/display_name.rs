@@ -292,9 +292,9 @@ fn is_display_name_assignment_for_reference(
 
     // If component_name is provided, verify the object matches
     if let Some(name) = component_name {
-        if let Some(ident) = &member.object.as_identifier() {
+        if let Some(ident) = member.object.as_identifier() {
             return ident.name == name;
-        } else if let Some(_) = &member.object.as_static_member_expression() {
+        } else if let Some(_) = member.object.as_static_member_expression() {
             // Handle nested case like: Namespace.Component.displayName
             let path = extract_member_expression_path(&member.object);
             return path == name;
@@ -387,7 +387,7 @@ fn check_context_assignment_references(
         // Walk up to find the assignment expression
         for ancestor_kind in ctx.nodes().ancestor_kinds(ref_node.id()) {
             if let AstKind::AssignmentExpression(assign) = ancestor_kind
-                && let Some(call) = &assign.right.as_call_expression()
+                && let Some(call) = assign.right.as_call_expression()
                 && is_create_context_call(call)
             {
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
@@ -719,7 +719,7 @@ fn is_module_exports_component(
     check_context_objects: bool,
 ) -> Option<ReactComponentInfo> {
     if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
-        && let Some(ident) = &member.object.as_identifier()
+        && let Some(ident) = member.object.as_identifier()
         && ident.name == "module"
         && member.property.name == "exports"
     {

@@ -121,7 +121,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
             check_multiplication(expr.span, &expr.right, &expr.left, ctx);
         }
         BinaryOperator::Division => {
-            let Some(call_expr) = &expr.left.as_call_expression() else {
+            let Some(call_expr) = expr.left.as_call_expression() else {
                 return;
             };
 

@@ -62,7 +62,7 @@ impl Rule for MisrefactoredAssignOp {
             return;
         };
 
-        if let Some(binary_expr) = &assignment_expr.right.as_binary_expression() {
+        if let Some(binary_expr) = assignment_expr.right.as_binary_expression() {
             if !are_matching_operators(assignment_expr.operator, binary_expr.operator) {
                 return;
             }

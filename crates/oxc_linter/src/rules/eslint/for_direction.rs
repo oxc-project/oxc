@@ -104,7 +104,7 @@ impl Rule for ForDirection {
             return;
         };
 
-        let Some(test) = &for_loop.test.as_ref().and_then(|e| e.as_binary_expression()) else {
+        let Some(test) = for_loop.test.as_ref().and_then(|e| e.as_binary_expression()) else {
             return;
         };
 

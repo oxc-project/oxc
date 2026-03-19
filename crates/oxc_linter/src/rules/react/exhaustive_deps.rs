@@ -851,7 +851,7 @@ impl ExhaustiveDeps {
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr.kind() {
         ExpressionKind::StaticMemberExpression(member) => {
-            if let Some(_ident) = &member.object.as_identifier() {
+            if let Some(_ident) = member.object.as_identifier() {
                 return Some(member.property.name.as_str());
             }
             None
@@ -1116,7 +1116,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let Some(init_expr) = &init.as_call_expression() else {
+            let Some(init_expr) = init.as_call_expression() else {
                 return false;
             };
 
@@ -1548,7 +1548,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(call_expr) = &var_decl.init.as_ref().and_then(|e| e.as_call_expression()) else {
+                    let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression()) else {
                         return;
                     };
 

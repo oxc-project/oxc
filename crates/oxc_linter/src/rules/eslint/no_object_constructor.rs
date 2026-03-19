@@ -56,7 +56,7 @@ impl Rule for NoObjectConstructor {
             _ => return,
         };
 
-        let Some(ident) = &callee.as_identifier() else {
+        let Some(ident) = callee.as_identifier() else {
             return;
         };
 

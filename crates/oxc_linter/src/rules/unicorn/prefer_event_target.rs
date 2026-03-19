@@ -66,7 +66,7 @@ impl Rule for PreferEventTarget {
         match ctx.nodes().parent_kind(node.id()) {
             AstKind::Class(_) => {}
             AstKind::NewExpression(new_expr) => {
-                let Some(callee_ident) = &new_expr.callee.as_identifier() else {
+                let Some(callee_ident) = new_expr.callee.as_identifier() else {
                     return;
                 };
 

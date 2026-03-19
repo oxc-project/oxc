@@ -155,7 +155,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 let Some(expr_stmt) = stmt.as_expression_statement() else {
                     return;
                 };
-                if let Some(call_expr) = &expr_stmt.expression.as_call_expression() {
+                if let Some(call_expr) = expr_stmt.expression.as_call_expression() {
                     diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                 }
             }

@@ -217,7 +217,7 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         // detected again when visiting the function expression.
         if let PropertyKey::StaticIdentifier(id) = &prop.key
             && is_react_component_name(&id.name)
-            && let Some(func) = &prop.value.as_function_expression()
+            && let Some(func) = prop.value.as_function_expression()
             && function_contains_jsx(func)
         {
             self.record_component(id.name.to_string(), prop.span, true);
@@ -311,7 +311,7 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
 
     // Check for aliased imports: const myMemo = React.memo
     // Note: This does not handle destructured aliased imports like `const {memo: myMemo} = React`
-    let Some(ident) = &call.callee.as_identifier() else {
+    let Some(ident) = call.callee.as_identifier() else {
         return None;
     };
 
@@ -325,7 +325,7 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
     let Some(member) = var_decl.init.as_ref()?.as_static_member_expression() else {
         return None;
     };
-    let Some(obj) = &member.object.as_identifier() else {
+    let Some(obj) = member.object.as_identifier() else {
         return None;
     };
 

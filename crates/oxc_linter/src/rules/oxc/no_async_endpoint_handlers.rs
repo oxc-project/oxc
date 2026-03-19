@@ -200,7 +200,7 @@ impl Rule for NoAsyncEndpointHandlers {
             return;
         };
         for arg in
-            args.iter().filter_map(Argument::as_expression).map(|e| e.get_inner_expression())
+            args.iter().filter_map(Argument::as_expression).map(Expression::get_inner_expression)
         {
             self.check_endpoint_arg(ctx, endpoint, arg);
         }

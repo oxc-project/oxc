@@ -87,7 +87,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Some(member_expr) = &call_expr.callee.as_static_member_expression() else {
+        let Some(member_expr) = call_expr.callee.as_static_member_expression() else {
             return;
         };
         let method = member_expr.property.name.as_str();

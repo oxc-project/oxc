@@ -106,7 +106,7 @@ impl Rule for GlobalRequire {
             return;
         };
 
-        let Some(ident) = &call_expr.callee.as_identifier() else {
+        let Some(ident) = call_expr.callee.as_identifier() else {
             return;
         };
 

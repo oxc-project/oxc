@@ -168,7 +168,7 @@ fn is_create_context_call(expr: &Expression) -> bool {
         ExpressionKind::Identifier(ident) => ident.name == "createContext",
         // Member call: React.createContext()
         ExpressionKind::StaticMemberExpression(member) => {
-            if let Some(obj) = &member.object.as_identifier() {
+            if let Some(obj) = member.object.as_identifier() {
                 obj.name == "React" && member.property.name == "createContext"
             } else {
                 false
@@ -228,7 +228,7 @@ fn is_constructed_expression(expr: &Expression, ctx: &LintContext) -> bool {
         | ExpressionKind::ImportExpression(_) => true,
 
         ExpressionKind::CallExpression(call_expr) => {
-            if let Some(ident) = &call_expr.callee.as_identifier() {
+            if let Some(ident) = call_expr.callee.as_identifier() {
                 let name = ident.name.as_str();
                 if name == "useMemo" || name == "useCallback" {
                     return false;
@@ -266,7 +266,7 @@ fn is_constructed_expression(expr: &Expression, ctx: &LintContext) -> bool {
 
         ExpressionKind::ChainExpression(chain_expr) => match &chain_expr.expression {
             oxc_ast::ast::ChainElement::CallExpression(call) => {
-                if let Some(ident) = &call.callee.as_identifier() {
+                if let Some(ident) = call.callee.as_identifier() {
                     let name = ident.name.as_str();
                     if name == "useMemo" || name == "useCallback" {
                         return false;

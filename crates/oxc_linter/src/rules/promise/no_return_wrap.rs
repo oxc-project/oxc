@@ -150,7 +150,7 @@ impl Rule for NoReturnWrap {
         }
 
         for argument in &call_expr.arguments {
-            let Some(arg_expr) = argument.as_expression().map(|e| e.without_parentheses())
+            let Some(arg_expr) = argument.as_expression().map(Expression::without_parentheses)
             else {
                 continue;
             };
@@ -297,7 +297,7 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    let Some(returned_call_expr) = &return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(returned_call_expr) = return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
         return;
     };
 
@@ -306,7 +306,7 @@ fn check_first_return_statement<'a>(
 
 /// Checks for `return Promise.resolve()` or `return Promise.reject()`
 fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &CallExpression) {
-    let Some(stat_expr) = &call_expr.callee.as_static_member_expression() else {
+    let Some(stat_expr) = call_expr.callee.as_static_member_expression() else {
         return;
     };
 

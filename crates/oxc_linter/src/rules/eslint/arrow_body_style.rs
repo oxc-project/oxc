@@ -225,7 +225,7 @@ impl ArrowBodyStyle {
         ctx: &LintContext<'a>,
     ) {
         let ArrowBodyStyle(mode, config) = self;
-        let inner_expr = arrow_func_expr.get_expression().map(|e| e.get_inner_expression());
+        let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
         let should_report = *mode == Mode::Always
             || (*mode == Mode::AsNeeded

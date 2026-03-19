@@ -127,7 +127,7 @@ fn check_function<'a>(
 }
 
 fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str> {
-    if is_arrow && let Some(expr_stmt) = &stmt.as_expression_statement() {
+    if is_arrow && let Some(expr_stmt) = stmt.as_expression_statement() {
         return expr_stmt
             .expression
             .without_parentheses()
@@ -135,13 +135,13 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
             .map(|v| v.name.as_str());
     }
 
-    if let Some(block_stmt) = &stmt.as_block_statement() {
+    if let Some(block_stmt) = stmt.as_block_statement() {
         if block_stmt.body.len() != 1 {
             return None;
         }
         return get_returned_ident(&block_stmt.body[0], is_arrow);
     }
-    if let Some(return_statement) = &stmt.as_return_statement()
+    if let Some(return_statement) = stmt.as_return_statement()
         && let Some(return_expr) = &return_statement.argument
     {
         return return_expr
@@ -165,7 +165,7 @@ fn is_matching_native_coercion_function_call<'a>(
         return None;
     }
 
-    let Some(callee_ident) = &call_expr.callee.as_identifier() else {
+    let Some(callee_ident) = call_expr.callee.as_identifier() else {
         return None;
     };
 

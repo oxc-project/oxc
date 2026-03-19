@@ -329,7 +329,7 @@ impl AccessorPairs {
                 if let Some(Argument::ObjectExpression(props)) = call.arguments.get(1) {
                     for prop in &props.properties {
                         if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                            && let Some(descriptor) = &prop.value.as_object_expression()
+                            && let Some(descriptor) = prop.value.as_object_expression()
                         {
                             self.check_property_descriptor(descriptor, ctx);
                         }

@@ -129,7 +129,7 @@ impl NoHooks {
             return;
         }
 
-        if let Some(ident) = &call_expr.callee.as_identifier() {
+        if let Some(ident) = call_expr.callee.as_identifier() {
             let name = CompactStr::from(ident.name.as_str());
             if !self.allow.contains(&name) {
                 ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));

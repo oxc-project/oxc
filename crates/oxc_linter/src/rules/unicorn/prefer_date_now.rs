@@ -150,7 +150,7 @@ fn is_new_date(expr: &Expression) -> bool {
         return false;
     };
 
-    if let Some(ident) = &new_expr.callee.as_identifier() {
+    if let Some(ident) = new_expr.callee.as_identifier() {
         return ident.name == "Date" && new_expr.arguments.is_empty();
     }
     false

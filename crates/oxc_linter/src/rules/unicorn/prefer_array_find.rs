@@ -204,7 +204,7 @@ impl Rule for PreferArrayFind {
                     &assignment_expr.left
                     && array_assignment_target.elements.len() == 1
                     && array_assignment_target.elements[0].is_some()
-                    && let Some(array_filter) = &assignment_expr.right.as_call_expression()
+                    && let Some(array_filter) = assignment_expr.right.as_call_expression()
                     && is_filter_call(array_filter)
                 {
                     ctx.diagnostic(prefer_array_find_diagnostic(

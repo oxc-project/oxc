@@ -123,8 +123,8 @@ impl GetterReturn {
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
         match callee.without_parentheses().kind() {
-            expr @ match_member_expression!(ExpressionKind) => {
-                Self::handle_member_expression(expr.to_member_expression())
+            match_member_expression!(ExpressionKind) => {
+                Self::handle_member_expression(callee.without_parentheses().to_member_expression())
             }
             ExpressionKind::ChainExpression(ce) => match &ce.expression {
                 match_member_expression!(ChainElement) => {
