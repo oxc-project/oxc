@@ -3,7 +3,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::{ast::*, builder::NONE};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::BoundIdentifier;
@@ -411,13 +411,34 @@ impl<'a> TypeScript<'a> {
             return;
         }
 
-        let params = &constructor.value.params.items;
-        let assignments = Self::convert_constructor_params(params, ctx).collect::<Vec<_>>();
+        let constructor_scope_id = constructor.value.scope_id();
+        let Function { params, body, .. } = &mut *constructor.value;
+        let params = &params.items;
+        if !params
+            .iter()
+            .any(|param| param.has_modifier() && param.pattern.get_binding_identifier().is_some())
+        {
+            return;
+        }
 
-        let constructor_body_statements = &mut constructor.value.body.as_mut().unwrap().statements;
+        let constructor_body_statements = &mut body.as_mut().unwrap().statements;
         let super_call_position = Self::get_super_call_position(constructor_body_statements);
+        if super_call_position > 0 {
+            let statement = &mut constructor_body_statements[super_call_position - 1];
+            if let Statement::IfStatement(stmt) = statement
+                && Self::can_insert_constructor_params_in_if_branches(stmt)
+            {
+                Self::insert_constructor_params_in_if_branches(
+                    stmt,
+                    params,
+                    constructor_scope_id,
+                    ctx,
+                );
+                return;
+            }
+        }
 
-        // Insert the assignments after the `super()` call
+        let assignments = Self::convert_constructor_params(params, ctx);
         constructor_body_statements.splice(super_call_position..super_call_position, assignments);
     }
 
@@ -479,19 +500,111 @@ impl<'a> TypeScript<'a> {
         Self::create_assignment(target, value, ctx)
     }
 
-    /// Find the position of the `super()` call in the constructor body, otherwise return 0.
+    /// Find the position after the `super()` call in the constructor body, otherwise return 0.
     ///
-    /// Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
+    /// If `super()` is nested inside a top-level control flow statement, return the position after
+    /// the containing statement.
     pub fn get_super_call_position(statements: &[Statement<'a>]) -> usize {
-        // Find the position of the `super()` call in the constructor body.
-        // Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
-        statements
-            .iter()
-            .position(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt)
-                        if stmt.expression.is_super_call_expression())
-            })
-            .map_or(0, |pos| pos + 1)
+        statements.iter().position(Self::statement_contains_super_call).map_or(0, |pos| pos + 1)
+    }
+
+    fn statement_contains_super_call(stmt: &Statement<'a>) -> bool {
+        if Self::statement_contains_direct_super_call(stmt) {
+            return true;
+        }
+
+        match stmt {
+            Statement::BlockStatement(stmt) => {
+                stmt.body.iter().any(Self::statement_contains_super_call)
+            }
+            Statement::IfStatement(stmt) => {
+                Self::statement_contains_super_call(&stmt.consequent)
+                    || stmt.alternate.as_ref().is_some_and(Self::statement_contains_super_call)
+            }
+            Statement::SwitchStatement(stmt) => stmt
+                .cases
+                .iter()
+                .any(|case| case.consequent.iter().any(Self::statement_contains_super_call)),
+            Statement::TryStatement(stmt) => {
+                stmt.block.body.iter().any(Self::statement_contains_super_call)
+                    || stmt.handler.as_ref().is_some_and(|handler| {
+                        handler.body.body.iter().any(Self::statement_contains_super_call)
+                    })
+                    || stmt.finalizer.as_ref().is_some_and(|block| {
+                        block.body.iter().any(Self::statement_contains_super_call)
+                    })
+            }
+            Statement::LabeledStatement(stmt) => Self::statement_contains_super_call(&stmt.body),
+            _ => false,
+        }
+    }
+
+    fn can_insert_constructor_params_in_if_branches(stmt: &IfStatement<'a>) -> bool {
+        Self::can_insert_constructor_params_in_if_branch(&stmt.consequent)
+            && stmt.alternate.as_ref().is_some_and(Self::can_insert_constructor_params_in_if_branch)
+    }
+
+    fn can_insert_constructor_params_in_if_branch(stmt: &Statement<'a>) -> bool {
+        Self::statement_contains_direct_super_call(stmt)
+            || matches!(stmt, Statement::BlockStatement(block)
+                if block.body.iter().any(Self::statement_contains_direct_super_call))
+    }
+
+    fn insert_constructor_params_in_if_branches(
+        stmt: &mut IfStatement<'a>,
+        params: &ArenaVec<'a, FormalParameter<'a>>,
+        constructor_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::insert_constructor_params_in_if_branch(
+            &mut stmt.consequent,
+            params,
+            constructor_scope_id,
+            ctx,
+        );
+        Self::insert_constructor_params_in_if_branch(
+            stmt.alternate.as_mut().unwrap(),
+            params,
+            constructor_scope_id,
+            ctx,
+        );
+    }
+
+    fn insert_constructor_params_in_if_branch(
+        stmt: &mut Statement<'a>,
+        params: &ArenaVec<'a, FormalParameter<'a>>,
+        constructor_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        match stmt {
+            Statement::BlockStatement(stmt) => {
+                let position =
+                    stmt.body.iter().position(Self::statement_contains_direct_super_call).unwrap()
+                        + 1;
+                stmt.body.splice(position..position, Self::convert_constructor_params(params, ctx));
+            }
+            _ if Self::statement_contains_direct_super_call(stmt) => {
+                let scope_id = ctx.insert_scope_below_statement_from_scope_id(
+                    stmt,
+                    constructor_scope_id,
+                    ScopeFlags::empty(),
+                );
+                let span = stmt.span();
+                let mut body = ArenaVec::from_array_in([stmt.take_in(ctx)], ctx);
+                body.extend(Self::convert_constructor_params(params, ctx));
+                *stmt = Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx);
+            }
+            _ => {}
+        }
+    }
+
+    fn statement_contains_direct_super_call(stmt: &Statement<'a>) -> bool {
+        matches!(stmt, Statement::ExpressionStatement(stmt) if match &stmt.expression {
+            Expression::SequenceExpression(seq) => {
+                seq.expressions.iter().any(Expression::is_super_call_expression)
+            }
+            expr => expr.is_super_call_expression(),
+        })
     }
 
     /// Convert computed key to sequence expression if there are assignments.
