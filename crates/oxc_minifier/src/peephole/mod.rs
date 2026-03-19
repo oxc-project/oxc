@@ -91,8 +91,8 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        match expr.kind_mut() {
-            ExpressionKindMut::Identifier(id) => {
+        match expr.kind() {
+            ExpressionKind::Identifier(id) => {
                 if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     ctx.scoping().symbol_is_mutated(symbol_id)
@@ -100,7 +100,7 @@ impl<'a> PeepholeOptimizations {
                     true
                 }
             }
-            ExpressionKindMut::ThisExpression(_) => false,
+            ExpressionKind::ThisExpression(_) => false,
             _ => true,
         }
     }
@@ -166,7 +166,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 StatementKindMut::IfStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                     Self::try_fold_if(stmt, ctx);
-                    if let StatementKindMut::IfStatement(if_stmt) = stmt
+                    if let Some(if_stmt) = stmt.as_if_statement_mut()
                         && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
                     {
                         *stmt = folded_stmt;

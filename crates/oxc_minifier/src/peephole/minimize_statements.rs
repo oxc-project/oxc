@@ -879,9 +879,9 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
                 match_expression!(ForStatementInit) => {
-                    let init_expr = init.to_expression_mut();
+                    let mut init_expr = init.to_expression_mut();
                     let changed =
-                        Self::substitute_single_use_symbol_in_statement(init_expr, result, ctx, false);
+                        Self::substitute_single_use_symbol_in_statement(&mut init_expr, result, ctx, false);
                     if changed {
                         ctx.state.changed = true;
                     }
@@ -906,9 +906,9 @@ impl<'a> PeepholeOptimizations {
         if ctx.options().sequences {
             if let Some(prev_expr_stmt) = result.last_mut().and_then(|s| s.as_expression_statement_mut()) {
                 if let Some(init) = &mut for_stmt.init {
-                    if let Some(init_expr) = init.as_expression_mut() {
+                    if let Some(mut init_expr) = init.as_expression_mut() {
                         let a = &mut prev_expr_stmt.expression;
-                        let joined = Self::join_sequence(a, init_expr, ctx);
+                        let joined = Self::join_sequence(a, &mut init_expr, ctx);
                         *init = ForStatementInit::from(joined);
                         result.pop();
                         ctx.state.changed = true;
