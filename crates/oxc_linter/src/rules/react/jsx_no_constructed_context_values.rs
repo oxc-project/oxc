@@ -160,16 +160,16 @@ fn is_react_context(ident: &IdentifierReference, ctx: &LintContext) -> bool {
 
 /// Checks if an expression is a call to createContext() or React.createContext()
 fn is_create_context_call(expr: &Expression) -> bool {
-    let Some(call_expr) = expr.as_call_expression() else {
+    let Expression::CallExpression(call_expr) = expr else {
         return false;
     };
 
-    match call_expr.callee.kind() {
+    match &call_expr.callee {
         // Direct call: createContext()
-        ExpressionKind::Identifier(ident) => ident.name == "createContext",
+        Expression::Identifier(ident) => ident.name == "createContext",
         // Member call: React.createContext()
-        ExpressionKind::StaticMemberExpression(member) => {
-            if let Some(obj) = member.object.as_identifier() {
+        Expression::StaticMemberExpression(member) => {
+            if let Expression::Identifier(obj) = &member.object {
                 obj.name == "React" && member.property.name == "createContext"
             } else {
                 false
@@ -212,24 +212,24 @@ fn is_constructed_value(attr_value: &JSXAttributeValue, ctx: &LintContext) -> bo
 
 fn is_constructed_expression(expr: &Expression, ctx: &LintContext) -> bool {
     let expr = expr.get_inner_expression();
-    match expr.kind() {
-        ExpressionKind::ObjectExpression(_)
-        | ExpressionKind::ArrayExpression(_)
-        | ExpressionKind::ArrowFunctionExpression(_)
-        | ExpressionKind::FunctionExpression(_)
-        | ExpressionKind::JSXElement(_)
-        | ExpressionKind::JSXFragment(_)
-        | ExpressionKind::ClassExpression(_)
-        | ExpressionKind::NewExpression(_)
-        | ExpressionKind::UpdateExpression(_)
-        | ExpressionKind::AssignmentExpression(_)
-        | ExpressionKind::TaggedTemplateExpression(_)
-        | ExpressionKind::AwaitExpression(_)
-        | ExpressionKind::YieldExpression(_)
-        | ExpressionKind::ImportExpression(_) => true,
+    match expr {
+        Expression::ObjectExpression(_)
+        | Expression::ArrayExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::ClassExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::YieldExpression(_)
+        | Expression::ImportExpression(_) => true,
 
-        ExpressionKind::CallExpression(call_expr) => {
-            if let Some(ident) = call_expr.callee.as_identifier() {
+        Expression::CallExpression(call_expr) => {
+            if let Expression::Identifier(ident) = &call_expr.callee {
                 let name = ident.name.as_str();
                 if name == "useMemo" || name == "useCallback" {
                     return false;
@@ -238,36 +238,36 @@ fn is_constructed_expression(expr: &Expression, ctx: &LintContext) -> bool {
             true
         }
 
-        ExpressionKind::TemplateLiteral(template) => !template.expressions.is_empty(),
+        Expression::TemplateLiteral(template) => !template.expressions.is_empty(),
 
-        ExpressionKind::BinaryExpression(bin_expr) => {
+        Expression::BinaryExpression(bin_expr) => {
             is_constructed_expression(&bin_expr.left, ctx)
                 || is_constructed_expression(&bin_expr.right, ctx)
         }
 
-        ExpressionKind::LogicalExpression(log_expr) => {
+        Expression::LogicalExpression(log_expr) => {
             is_constructed_expression(&log_expr.left, ctx)
                 || is_constructed_expression(&log_expr.right, ctx)
         }
 
-        ExpressionKind::ConditionalExpression(cond_expr) => {
+        Expression::ConditionalExpression(cond_expr) => {
             is_constructed_expression(&cond_expr.consequent, ctx)
                 || is_constructed_expression(&cond_expr.alternate, ctx)
         }
 
-        ExpressionKind::UnaryExpression(unary_expr) => {
+        Expression::UnaryExpression(unary_expr) => {
             is_constructed_expression(&unary_expr.argument, ctx)
         }
 
-        ExpressionKind::SequenceExpression(seq_expr) => {
+        Expression::SequenceExpression(seq_expr) => {
             seq_expr.expressions.iter().any(|e| is_constructed_expression(e, ctx))
         }
 
-        ExpressionKind::Identifier(ident) => is_identifier_a_constructed_value(ident, ctx),
+        Expression::Identifier(ident) => is_identifier_a_constructed_value(ident, ctx),
 
-        ExpressionKind::ChainExpression(chain_expr) => match &chain_expr.expression {
+        Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
             oxc_ast::ast::ChainElement::CallExpression(call) => {
-                if let Some(ident) = call.callee.as_identifier() {
+                if let Expression::Identifier(ident) = &call.callee {
                     let name = ident.name.as_str();
                     if name == "useMemo" || name == "useCallback" {
                         return false;
@@ -319,35 +319,35 @@ fn is_identifier_a_constructed_value(ident: &IdentifierReference, ctx: &LintCont
 /// This is used for checking variable initializers.
 fn is_construction_expression(expr: &Expression, ctx: &LintContext) -> bool {
     let expr = expr.get_inner_expression();
-    match expr.kind() {
+    match expr {
         // Direct constructions and regex literals create new objects
-        ExpressionKind::ObjectExpression(_)
-        | ExpressionKind::ArrayExpression(_)
-        | ExpressionKind::ArrowFunctionExpression(_)
-        | ExpressionKind::FunctionExpression(_)
-        | ExpressionKind::ClassExpression(_)
-        | ExpressionKind::NewExpression(_)
-        | ExpressionKind::JSXElement(_)
-        | ExpressionKind::JSXFragment(_)
-        | ExpressionKind::RegExpLiteral(_) => true,
+        Expression::ObjectExpression(_)
+        | Expression::ArrayExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::RegExpLiteral(_) => true,
 
         // Conditional/logical expressions - check if any branch is a construction
-        ExpressionKind::ConditionalExpression(cond_expr) => {
+        Expression::ConditionalExpression(cond_expr) => {
             is_construction_expression(&cond_expr.consequent, ctx)
                 || is_construction_expression(&cond_expr.alternate, ctx)
         }
-        ExpressionKind::LogicalExpression(log_expr) => {
+        Expression::LogicalExpression(log_expr) => {
             is_construction_expression(&log_expr.left, ctx)
                 || is_construction_expression(&log_expr.right, ctx)
         }
 
         // Assignment expressions - check the right side
-        ExpressionKind::AssignmentExpression(assign_expr) => {
+        Expression::AssignmentExpression(assign_expr) => {
             is_construction_expression(&assign_expr.right, ctx)
         }
 
         // For identifiers, recursively check if they refer to constructed values
-        ExpressionKind::Identifier(ident) => is_identifier_a_constructed_value(ident, ctx),
+        Expression::Identifier(ident) => is_identifier_a_constructed_value(ident, ctx),
 
         _ => false,
     }
@@ -356,7 +356,6 @@ fn is_construction_expression(expr: &Expression, ctx: &LintContext) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Original eslint-plugin-react tests

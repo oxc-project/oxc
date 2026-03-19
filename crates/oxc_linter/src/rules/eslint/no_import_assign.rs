@@ -174,7 +174,7 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
         return false;
     };
 
-    if let Some(ident) = member_expr.object().as_identifier() {
+    if let Expression::Identifier(ident) = member_expr.object() {
         let Some(property_name) = member_expr.static_property_name() else {
             return false;
         };
@@ -205,7 +205,7 @@ fn check_namespace_member_assignment(
         return;
     }
 
-    let Some(obj_ident) = member_expr.as_identifier() else { return };
+    let Expression::Identifier(obj_ident) = member_expr else { return };
 
     let ref_node = ctx.nodes().get_node(reference.node_id());
     if let AstKind::IdentifierReference(ref_ident) = ref_node.kind()

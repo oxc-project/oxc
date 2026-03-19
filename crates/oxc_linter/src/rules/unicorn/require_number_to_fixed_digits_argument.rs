@@ -53,7 +53,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
         }
 
         if let Some(member) = expr.callee.get_member_expr() {
-            if let Some(_) = member.object().as_new_expression() {
+            if let Expression::NewExpression(_) = member.object() {
                 return;
             }
 

@@ -48,7 +48,7 @@ impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
             AstKind::ImportExpression(import) => match &import.source {
-                ExpressionKind::StringLiteral(str_lit) => Some((str_lit.value, str_lit.span)),
+                Expression::StringLiteral(str_lit) => Some((str_lit.value, str_lit.span)),
                 _ => None,
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
@@ -98,7 +98,6 @@ impl Rule for PreferNodeProtocol {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r#"import unicorn from "unicorn";"#,

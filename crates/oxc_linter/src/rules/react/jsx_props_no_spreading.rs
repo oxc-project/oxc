@@ -128,7 +128,7 @@ impl Rule for JsxPropsNoSpreading {
         }
 
         if self.explicit_spread == IgnoreEnforceOption::Ignore
-            && let Some(obj_expr) = spread_attr.argument.as_object_expression()
+            && let Expression::ObjectExpression(obj_expr) = &spread_attr.argument
             && obj_expr.properties.iter().all(|prop| !prop.is_spread())
         {
             return;

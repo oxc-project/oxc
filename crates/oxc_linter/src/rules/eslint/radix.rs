@@ -100,22 +100,22 @@ impl Rule for Radix {
             return;
         };
 
-        match call_expr.callee.without_parentheses().kind() {
-            ExpressionKind::Identifier(ident) if Self::is_global_parse_int_ident(ident, ctx) => {
+        match call_expr.callee.without_parentheses() {
+            Expression::Identifier(ident) if Self::is_global_parse_int_ident(ident, ctx) => {
                 Self::check_arguments(call_expr, ctx);
             }
-            ExpressionKind::StaticMemberExpression(member_expr)
+            Expression::StaticMemberExpression(member_expr)
                 if member_expr.property.name == "parseInt" =>
             {
-                if let Some(ident) = member_expr.object.without_parentheses().as_identifier()
+                if let Expression::Identifier(ident) = member_expr.object.without_parentheses()
                     && Self::is_global_number_ident(ident, ctx)
                 {
                     Self::check_arguments(call_expr, ctx);
                 }
             }
-            ExpressionKind::ChainExpression(chain_expr) => {
+            Expression::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression()
-                    && let Some(ident) = member_expr.object().as_identifier()
+                    && let Expression::Identifier(ident) = member_expr.object()
                     && member_expr.static_property_name() == Some("parseInt")
                     && Self::is_global_number_ident(ident, ctx)
                 {
@@ -165,11 +165,11 @@ impl Radix {
 fn is_valid_radix(node: &Argument) -> bool {
     let expr = node.to_expression();
 
-    if let Some(lit) = expr.as_numeric_literal() {
+    if let Expression::NumericLiteral(lit) = expr {
         return lit.value.fract() == 0.0 && lit.value >= 2.0 && lit.value <= 36.0;
     }
 
-    if let Some(_) = expr.as_identifier() {
+    if let Expression::Identifier(_) = expr {
         return !expr.is_undefined();
     }
 

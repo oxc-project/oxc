@@ -55,7 +55,7 @@ impl Rule for NoNewNativeNonconstructor {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };
-        let Some(ident) = expr.callee.as_identifier() else {
+        let Expression::Identifier(ident) = &expr.callee else {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")

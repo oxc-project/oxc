@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ExpressionKind},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -93,7 +93,7 @@ impl PreferEqualityMatcher {
             return;
         };
         let expr = expect_parent.get_inner_expression();
-        let Some(call_expr) = expr.as_call_expression() else {
+        let Expression::CallExpression(call_expr) = expr else {
             return;
         };
         let Some(argument) = call_expr.arguments.first() else {

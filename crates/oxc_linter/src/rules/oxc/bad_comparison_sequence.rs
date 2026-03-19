@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, ExpressionKind},
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -79,13 +79,13 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
 
 fn is_bad_comparison(expr: &BinaryExpression) -> bool {
     if expr.operator.is_equality()
-        && matches!(expr.left.kind(), ExpressionKind::BinaryExpression(left_expr) if left_expr.operator.is_equality())
+        && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_equality())
     {
         return true;
     }
 
     if expr.operator.is_compare()
-        && matches!(expr.left.kind(), ExpressionKind::BinaryExpression(left_expr) if left_expr.operator.is_compare())
+        && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_compare())
     {
         return true;
     }

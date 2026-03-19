@@ -82,7 +82,7 @@ impl Rule for ConsistentExistenceIndexCheck {
         let right = binary_expression.right.get_inner_expression();
         let operator = binary_expression.operator;
 
-        let Some(identifier) = left.as_identifier() else {
+        let Expression::Identifier(identifier) = left else {
             return;
         };
 
@@ -99,7 +99,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(call) = variables_declarator.init.as_ref().and_then(|e| e.as_call_expression()) else {
+            let Some(Expression::CallExpression(call)) = &variables_declarator.init else {
                 return;
             };
 
@@ -204,9 +204,9 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 }
 
 fn is_negative_one(expression: &Expression) -> bool {
-    if let Some(unary_expression) = expression.as_unary_expression()
+    if let Expression::UnaryExpression(unary_expression) = expression
         && unary_expression.operator == UnaryOperator::UnaryNegation
-        && let Some(value) = unary_expression.argument.get_inner_expression().as_numeric_literal()
+        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
     {
         return value.raw.as_ref().unwrap() == "1";
     }

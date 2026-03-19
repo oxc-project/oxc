@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName,
-        PropertyDefinition, StaticBlock, ThisExpression, ExpressionKind},
+        PropertyDefinition, StaticBlock, ThisExpression,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -94,7 +95,7 @@ impl Rule for NoThisInExportedFunction {
                         AstKind::Function(func) => func,
                         AstKind::VariableDeclarator(var_decl) => {
                             if let Some(init) = var_decl.init.as_ref()
-                                && let Some(func) = init.as_function_expression()
+                                && let Expression::FunctionExpression(func) = init
                             {
                                 func
                             } else {

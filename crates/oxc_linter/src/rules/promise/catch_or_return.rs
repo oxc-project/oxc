@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, ExpressionKind},
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -128,7 +128,7 @@ impl Rule for CatchOrReturn {
             return;
         };
 
-        let Some(call_expr) = expr_stmt.expression.as_call_expression() else {
+        let Expression::CallExpression(call_expr) = &expr_stmt.expression else {
             return;
         };
 
@@ -168,7 +168,7 @@ impl CatchOrReturn {
 
         // somePromise.catch().finally(fn)
         if self.allow_finally && prop_name == "finally" {
-            let Some(object_call_expr) = member_expr.object().as_call_expression() else {
+            let Expression::CallExpression(object_call_expr) = member_expr.object() else {
                 return false;
             };
 
@@ -186,12 +186,12 @@ impl CatchOrReturn {
 
         // somePromise['catch']()
         if prop_name == "catch"
-            && call_expr.callee.get_inner_expression().is_string_literal()
+            && matches!(call_expr.callee.get_inner_expression(), Expression::StringLiteral(_))
         {
             return true;
         }
 
-        let Some(object_call_expr) = member_expr.object().as_call_expression() else {
+        let Expression::CallExpression(object_call_expr) = member_expr.object() else {
             return false;
         };
 
@@ -205,7 +205,7 @@ fn is_part_of_promise(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    let Some(object_call_expr) = member_expr.object().as_call_expression() else {
+    let Expression::CallExpression(object_call_expr) = member_expr.object() else {
         return false;
     };
 
@@ -221,7 +221,7 @@ fn is_cypress_call(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    let Some(object_call_expr) = member_expr.object().as_call_expression() else {
+    let Expression::CallExpression(object_call_expr) = member_expr.object() else {
         return false;
     };
 

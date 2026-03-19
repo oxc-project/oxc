@@ -64,9 +64,9 @@ impl Rule for PreferPrototypeMethods {
         if call_expr.optional {
             return;
         }
-        match call_expr.callee.without_parentheses().kind() {
-            ExpressionKind::StaticMemberExpression(member_expr) if !member_expr.optional => {}
-            ExpressionKind::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
+        match call_expr.callee.without_parentheses() {
+            Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
+            Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
             _ => return,
         }
 
@@ -101,8 +101,8 @@ impl Rule for PreferPrototypeMethods {
         }
 
         let constructor_name = match object_expr {
-            ExpressionKind::ArrayExpression(_) => "Array",
-            ExpressionKind::ObjectExpression(_) => "Object",
+            Expression::ArrayExpression(_) => "Array",
+            Expression::ObjectExpression(_) => "Object",
             _ => unreachable!(),
         };
         // TODO: Replace `static_property_name` with a function similar to `getPropertyName`
@@ -127,7 +127,6 @@ impl Rule for PreferPrototypeMethods {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const foo = Array.prototype.push.apply(bar, elements);",

@@ -1,5 +1,4 @@
 use oxc_ast::{AstKind, ast::Expression};
-use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -62,7 +61,7 @@ impl Rule for PreferCatch {
             return;
         };
 
-        let Some(call_expr) = expr.expression.as_call_expression() else {
+        let Expression::CallExpression(ref call_expr) = expr.expression else {
             return;
         };
 

@@ -116,16 +116,14 @@ impl Rule for NoMultiAssign {
         match node.kind() {
             // e.g. `var a = b = c;`
             AstKind::VariableDeclarator(declarator) => {
-                let Some(ExpressionKind::AssignmentExpression(assign_expr)) = &declarator.init
-                else {
+                let Some(Expression::AssignmentExpression(assign_expr)) = &declarator.init else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
             }
             // e.g. `class A { a = b = 1; }`
             AstKind::PropertyDefinition(prop_def) => {
-                let Some(ExpressionKind::AssignmentExpression(assign_expr)) = &prop_def.value
-                else {
+                let Some(Expression::AssignmentExpression(assign_expr)) = &prop_def.value else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
@@ -135,7 +133,7 @@ impl Rule for NoMultiAssign {
                 if self.ignore_non_declaration {
                     return;
                 }
-                let Some(expr) = parent_expr.right.as_assignment_expression() else {
+                let Expression::AssignmentExpression(expr) = &parent_expr.right else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(expr.span));

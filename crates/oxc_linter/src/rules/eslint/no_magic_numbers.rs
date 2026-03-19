@@ -404,9 +404,9 @@ fn is_parse_int_radix(parent_kind: &AstKind<'_>) -> bool {
 fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool {
     match ast_kind {
         AstKind::BigIntLiteral(_) => true,
-        AstKind::UnaryExpression(unary) => match unary.argument.kind() {
-            ExpressionKind::BigIntLiteral(_) => true,
-            ExpressionKind::NumericLiteral(numeric)
+        AstKind::UnaryExpression(unary) => match &unary.argument {
+            Expression::BigIntLiteral(_) => true,
+            Expression::NumericLiteral(numeric)
                 if unary.operator == UnaryOperator::UnaryNegation =>
             {
                 numeric.value == 0.0

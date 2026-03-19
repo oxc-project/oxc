@@ -210,8 +210,8 @@ fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallEx
     if body.statements.len() != 1 {
         return None;
     }
-    let Some(expr) = body.statements[0].as_expression_statement() else { return None };
-    let Some(call) = expr.expression.as_call_expression() else { return None };
+    let Statement::ExpressionStatement(expr) = &body.statements[0] else { return None };
+    let Expression::CallExpression(call) = &expr.expression else { return None };
 
     if call.callee.is_super() { Some(call) } else { None }
 }
@@ -274,7 +274,7 @@ fn is_matching_identifier_pair<'a>(param: &BindingPattern<'a>, arg: &Argument<'a
 fn is_matching_rest_spread_pair<'a>(rest: &FormalParameterRest<'a>, arg: &Argument<'a>) -> bool {
     match (&rest.rest.argument, arg) {
         (BindingPattern::BindingIdentifier(param), Argument::SpreadElement(spread)) => {
-            spread.argument.as_identifier().is_some_and(|ident| param.name == ident.name)
+            matches!(&spread.argument, Expression::Identifier(ident) if param.name == ident.name)
         }
         _ => false,
     }

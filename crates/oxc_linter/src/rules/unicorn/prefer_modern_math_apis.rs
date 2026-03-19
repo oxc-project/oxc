@@ -121,7 +121,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
             check_multiplication(expr.span, &expr.right, &expr.left, ctx);
         }
         BinaryOperator::Division => {
-            let Some(call_expr) = expr.left.as_call_expression() else {
+            let Expression::CallExpression(call_expr) = &expr.left else {
                 return;
             };
 
@@ -180,7 +180,7 @@ fn check_multiplication<'a, 'b>(
     right: &'b Expression<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let Some(call_expr) = left.as_call_expression() else {
+    let Expression::CallExpression(call_expr) = left else {
         return;
     };
 
@@ -222,8 +222,8 @@ fn check_multiplication<'a, 'b>(
 fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expression<'a>> {
     let mut expressions = Vec::new();
 
-    match expression.without_parentheses().kind() {
-        ExpressionKind::BinaryExpression(bin_expr) => {
+    match expression.without_parentheses() {
+        Expression::BinaryExpression(bin_expr) => {
             if matches!(bin_expr.operator, BinaryOperator::Addition) {
                 expressions.append(&mut flat_plus_expression(&bin_expr.left));
                 expressions.append(&mut flat_plus_expression(&bin_expr.right));
@@ -238,10 +238,11 @@ fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expressio
 }
 
 fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
-    if let Some(bin_expr) = expression.without_parentheses().as_binary_expression() {
+    if let Expression::BinaryExpression(bin_expr) = expression.without_parentheses() {
         match bin_expr.operator {
             BinaryOperator::Exponential => {
-                if let Some(number_lit) = bin_expr.right.without_parentheses().as_numeric_literal()
+                if let Expression::NumericLiteral(number_lit) =
+                    &bin_expr.right.without_parentheses()
                 {
                     (number_lit.value - 2_f64).abs() < f64::EPSILON
                 } else {
@@ -281,7 +282,6 @@ fn clean_string(input: &str) -> String {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Prefer `Math.sqrt(x)`

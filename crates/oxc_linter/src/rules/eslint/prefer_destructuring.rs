@@ -146,10 +146,10 @@ impl Rule for PreferDestructuring {
                 }
                 match right {
                     MemberExpression::ComputedMemberExpression(comp_expr) => {
-                        if comp_expr.expression.is_template_literal() {
+                        if matches!(comp_expr.expression, Expression::TemplateLiteral(_)) {
                             return;
                         }
-                        if comp_expr.expression.is_numeric_literal() {
+                        if matches!(comp_expr.expression, Expression::NumericLiteral(_)) {
                             if self.assignment_expression.array {
                                 ctx.diagnostic(prefer_array_destructuring(assign_expr.span));
                             }
@@ -159,7 +159,7 @@ impl Rule for PreferDestructuring {
                             {
                                 ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
-                            if let Some(string_literal) = comp_expr.expression.as_string_literal()
+                            if let Expression::StringLiteral(string_literal) = &comp_expr.expression
                                 && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                             {
@@ -227,10 +227,10 @@ impl Rule for PreferDestructuring {
                     };
                     match right {
                         MemberExpression::ComputedMemberExpression(comp_expr) => {
-                            if comp_expr.expression.is_template_literal() {
+                            if matches!(comp_expr.expression, Expression::TemplateLiteral(_)) {
                                 return;
                             }
-                            if comp_expr.expression.is_numeric_literal() {
+                            if matches!(comp_expr.expression, Expression::NumericLiteral(_)) {
                                 if self.variable_declarator.array {
                                     ctx.diagnostic(prefer_array_destructuring(init.span()));
                                 }
@@ -240,8 +240,8 @@ impl Rule for PreferDestructuring {
                                 {
                                     ctx.diagnostic(prefer_object_destructuring(right.span()));
                                 }
-                                if let Some(string_literal) =
-                                    comp_expr.expression.as_string_literal()
+                                if let Expression::StringLiteral(string_literal) =
+                                    &comp_expr.expression
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
@@ -303,7 +303,7 @@ fn get_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<&'a str> {
 
 fn check_expr(expr: &MemberExpression) -> bool {
     if matches!(expr, MemberExpression::PrivateFieldExpression(_))
-        || expr.object().is_super()
+        || matches!(expr.object(), Expression::Super(_))
     {
         return false;
     }
@@ -316,12 +316,12 @@ fn check_expr(expr: &MemberExpression) -> bool {
 /// For example: `(bar[baz]).foo` -> uses span of `bar[baz]` (without parens)
 /// But: `(a, b).foo` -> uses span of `(a, b)` (keeps parens, comma operator needs them)
 fn get_object_span_without_redundant_parentheses(object: &Expression) -> Span {
-    match object.without_parentheses().kind() {
-        ExpressionKind::CallExpression(_)
-        | ExpressionKind::Identifier(_)
-        | ExpressionKind::StaticMemberExpression(_)
-        | ExpressionKind::ComputedMemberExpression(_)
-        | ExpressionKind::ThisExpression(_) => object.without_parentheses().span(),
+    match object.without_parentheses() {
+        Expression::CallExpression(_)
+        | Expression::Identifier(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::ThisExpression(_) => object.without_parentheses().span(),
         _ => object.span(),
     }
 }

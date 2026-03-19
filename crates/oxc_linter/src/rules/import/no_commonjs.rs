@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ExpressionKind},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -163,23 +163,31 @@ impl Rule for NoCommonjs {
 
                     match parent_node.kind() {
                         AstKind::ExpressionStatement(expr_statement)
-                            if expr_statement.expression.is_assignment_expression() =>
+                            if matches!(
+                                expr_statement.expression,
+                                Expression::AssignmentExpression(_)
+                            ) =>
                         {
-                            let assign_expr = expr_statement.expression.to_assignment_expression();
-                            if !assign_expr.right.is_function()
-                                && !assign_expr.right.is_string_literal()
-                            {
-                                ctx.diagnostic(no_commonjs_diagnostic(
-                                    member_expr_kind.span(),
-                                    "export",
-                                    property_name,
-                                ));
-                            }
+                            match &expr_statement.expression {
+                                Expression::AssignmentExpression(assign_expr) => {
+                                    if !assign_expr.right.is_function()
+                                        && !assign_expr.right.is_string_literal()
+                                    {
+                                        ctx.diagnostic(no_commonjs_diagnostic(
+                                            member_expr_kind.span(),
+                                            "export",
+                                            property_name,
+                                        ));
+                                    }
 
-                            return;
+                                    return;
+                                }
+                                _ => return,
+                            }
                         }
                         AstKind::AssignmentExpression(assignment_expr) => {
-                            if let Some(_object_expr) = assignment_expr.right.without_parentheses().as_object_expression()
+                            if let Expression::ObjectExpression(_object_expr) =
+                                &assignment_expr.right.without_parentheses()
                             {
                                 ctx.diagnostic(no_commonjs_diagnostic(
                                     member_expr_kind.span(),

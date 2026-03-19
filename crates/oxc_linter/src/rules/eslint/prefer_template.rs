@@ -75,14 +75,10 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
     let left = expr.left.get_inner_expression();
     let right = expr.right.get_inner_expression();
 
-    let left_is_string = matches!(
-        left.kind(),
-        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_)
-    );
-    let right_is_string = matches!(
-        right.kind(),
-        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_)
-    );
+    let left_is_string =
+        matches!(left, Expression::StringLiteral(_) | Expression::TemplateLiteral(_));
+    let right_is_string =
+        matches!(right, Expression::StringLiteral(_) | Expression::TemplateLiteral(_));
 
     match (left_is_string, right_is_string) {
         // 'a' + 'v'
@@ -97,23 +93,23 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
 }
 
 fn all_none_string_literal(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match expr {
+        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             all_none_string_literal(binary.left.get_inner_expression())
                 && all_none_string_literal(binary.right.get_inner_expression())
         }
-        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => false,
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
         _ => true,
     }
 }
 
 fn any_none_string_literal(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+    match expr {
+        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             any_none_string_literal(binary.left.get_inner_expression())
                 || any_none_string_literal(binary.right.get_inner_expression())
         }
-        ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_) => false,
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
         _ => true,
     }
 }

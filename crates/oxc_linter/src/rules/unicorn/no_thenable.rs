@@ -237,26 +237,26 @@ fn check_binding_pattern(pat: &BindingPattern, ctx: &LintContext) {
 }
 
 fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span::Span> {
-    match expr.kind() {
-        ExpressionKind::StringLiteral(lit) => {
+    match expr {
+        Expression::StringLiteral(lit) => {
             if lit.value == "then" {
                 Some(lit.span)
             } else {
                 None
             }
         }
-        ExpressionKind::TemplateLiteral(lit) => {
+        Expression::TemplateLiteral(lit) => {
             lit.single_quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
-        ExpressionKind::Identifier(ident) => {
+        Expression::Identifier(ident) => {
             let symbols = ctx.scoping();
             let reference_id = ident.reference_id();
             symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
                 let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
-                match var_decl.init.as_ref().map(|e| e.kind()) {
-                    Some(ExpressionKind::StringLiteral(lit)) => {
+                match &var_decl.init {
+                    Some(Expression::StringLiteral(lit)) => {
                         if lit.value == "then" {
                             Some(lit.span)
                         } else {
@@ -282,7 +282,6 @@ fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const then = {}",

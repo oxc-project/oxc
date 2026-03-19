@@ -148,15 +148,15 @@ impl NoUnusedVars {
 }
 
 fn is_skipped_init<'a>(symbol: &Symbol<'_, 'a>, init: &Expression<'a>) -> bool {
-    match init.get_inner_expression().kind() {
+    match init.get_inner_expression() {
         // Do not delete function expressions or arrow functions declared in the
         // root scope
-        ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_) => {
+        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
             symbol.is_root()
         }
         // Skip await expressions, since these are often effectful (e.g.
         // sending a POST request to an API and then not using the response)
-        ExpressionKind::AwaitExpression(_) => true,
+        Expression::AwaitExpression(_) => true,
         _ => false,
     }
 }

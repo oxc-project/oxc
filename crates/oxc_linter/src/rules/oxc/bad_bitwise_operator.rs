@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, ExpressionKind},
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -144,12 +144,12 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
                 return false;
             }
 
-            let Some(left_ident) = bin_expr.left.as_identifier() else {
+            let Expression::Identifier(left_ident) = &bin_expr.left else {
                 return false;
             };
 
             if let Some(member_expr) = bin_expr.right.as_member_expression()
-                && let Some(ident) = member_expr.object().as_identifier()
+                && let Expression::Identifier(ident) = member_expr.object()
             {
                 return ident.name == left_ident.name;
             }
@@ -165,7 +165,7 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
         return false;
     };
     if binary_expr.operator == BinaryOperator::BitwiseOR
-        && let Some(_) = binary_expr.left.as_identifier()
+        && let Expression::Identifier(_) = &binary_expr.left
     {
         return !is_numeric_expr(&binary_expr.right, true);
     }
@@ -173,20 +173,20 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
 }
 
 fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
-    match expr.kind() {
-        ExpressionKind::NumericLiteral(_)
-        | ExpressionKind::NullLiteral(_)
+    match expr {
+        Expression::NumericLiteral(_)
+        | Expression::NullLiteral(_)
         // TODO: handle type inference
-        | ExpressionKind::Identifier(_) => true,
-        ExpressionKind::UnaryExpression(unary_expr) => {
+        | Expression::Identifier(_) => true,
+        Expression::UnaryExpression(unary_expr) => {
             if is_outer_most {
                 unary_expr.operator != UnaryOperator::Typeof && unary_expr.operator != UnaryOperator::LogicalNot
             } else {
                 unary_expr.operator != UnaryOperator::Typeof
             }
         }
-        ExpressionKind::BinaryExpression(binary_expr) => !is_string_concat(binary_expr),
-        ExpressionKind::ParenthesizedExpression(paren_expr) => {
+        Expression::BinaryExpression(binary_expr) => !is_string_concat(binary_expr),
+        Expression::ParenthesizedExpression(paren_expr) => {
             is_numeric_expr(&paren_expr.expression, false)
         }
         _ => {
@@ -206,12 +206,12 @@ fn is_string_concat(binary_expr: &BinaryExpression) -> bool {
 }
 
 fn contains_string_literal(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::StringLiteral(_) => true,
-        ExpressionKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Typeof,
+    match expr {
+        Expression::StringLiteral(_) => true,
+        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Typeof,
 
-        ExpressionKind::BinaryExpression(binary_expr) => is_string_concat(binary_expr),
-        ExpressionKind::ParenthesizedExpression(paren_expr) => {
+        Expression::BinaryExpression(binary_expr) => is_string_concat(binary_expr),
+        Expression::ParenthesizedExpression(paren_expr) => {
             contains_string_literal(&paren_expr.expression)
         }
         _ => false,

@@ -1,7 +1,7 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSModuleReference, ExpressionKind},
+    ast::{Expression, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -86,9 +86,9 @@ impl Rule for NoNodejsModules {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let module_name = match node.kind() {
-            AstKind::ImportExpression(import) => match import.source.kind() {
-                ExpressionKind::StringLiteral(str_lit) => Some(str_lit.value),
-                ExpressionKind::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
+            AstKind::ImportExpression(import) => match &import.source {
+                Expression::StringLiteral(str_lit) => Some(str_lit.value),
+                Expression::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
                     temp_lit.single_quasi()
                 }
                 _ => None,

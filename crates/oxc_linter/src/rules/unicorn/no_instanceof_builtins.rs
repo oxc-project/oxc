@@ -180,7 +180,7 @@ impl Rule for NoInstanceofBuiltins {
 
         let ctor_expr = bin.right.get_inner_expression();
 
-        let Some(ident) = ctor_expr.as_identifier() else { return };
+        let Expression::Identifier(ident) = ctor_expr else { return };
         let ctor_name = ident.name.as_str();
 
         if self.0.exclude.iter().any(|s| s == ctor_name) {

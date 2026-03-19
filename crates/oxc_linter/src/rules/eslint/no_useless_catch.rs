@@ -68,10 +68,10 @@ impl Rule for NoUselessCatch {
         else {
             return;
         };
-        let Some(StatementKind::ThrowStatement(throw_stmt)) = catch_clause.body.body.first() else {
+        let Some(Statement::ThrowStatement(throw_stmt)) = catch_clause.body.body.first() else {
             return;
         };
-        let Some(throw_ident) = throw_stmt.argument.as_identifier() else {
+        let Expression::Identifier(throw_ident) = &throw_stmt.argument else {
             return;
         };
         if binding_ident.name == throw_ident.name {

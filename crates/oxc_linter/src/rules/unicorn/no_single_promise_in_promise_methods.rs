@@ -71,7 +71,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             return;
         };
         let first_argument = first_argument.get_inner_expression();
-        let Some(first_argument_array_expr) = first_argument.as_array_expression() else {
+        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
             return;
         };
 

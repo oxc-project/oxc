@@ -189,7 +189,7 @@ pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
         return false;
     };
 
-    let Some(expression_return) = statement_return.as_expression_statement() else {
+    let Statement::ExpressionStatement(expression_return) = statement_return else {
         return false;
     };
 
@@ -197,8 +197,8 @@ pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
 }
 
 fn is_expression_void(statement_expression: &Expression<'_>) -> bool {
-    match statement_expression.kind() {
-        ExpressionKind::UnaryExpression(void_expression) => {
+    match statement_expression {
+        Expression::UnaryExpression(void_expression) => {
             void_expression.operator == UnaryOperator::Void
         }
         _ => false,
@@ -208,8 +208,8 @@ fn is_expression_void(statement_expression: &Expression<'_>) -> bool {
 /// Return checkers runs a Control Flow-like Analysis on a statement to see if it
 /// always returns on all paths of execution.
 pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
-    match statement.kind() {
-        StatementKind::ReturnStatement(ret) => {
+    match statement {
+        Statement::ReturnStatement(ret) => {
             if ret.argument.is_some() {
                 StatementReturnStatus::AlwaysExplicit
             } else {
@@ -217,7 +217,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             }
         }
 
-        StatementKind::IfStatement(stmt) => {
+        Statement::IfStatement(stmt) => {
             let test = &stmt.test;
             let left = check_statement(&stmt.consequent);
             let right =
@@ -227,7 +227,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
                 .map_or_else(|| left.join(right), |val| if val { left } else { right })
         }
 
-        StatementKind::WhileStatement(stmt) => {
+        Statement::WhileStatement(stmt) => {
             let test = &stmt.test;
             let inner_return = check_statement(&stmt.body);
             if test.to_boolean(&WithoutGlobalReferenceInformation {}) == Some(true) {
@@ -238,12 +238,12 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
         }
 
         // do while loop always executes at least once
-        StatementKind::DoWhileStatement(stmt) => check_statement(&stmt.body),
+        Statement::DoWhileStatement(stmt) => check_statement(&stmt.body),
 
         // A switch statement always return if:
         // 1. Every branch that eventually breaks out of the switch breaks via return
         // 2. There is a default case that returns
-        StatementKind::SwitchStatement(stmt) => {
+        Statement::SwitchStatement(stmt) => {
             let mut case_statuses = vec![];
             // The default case maybe is not the last case and fallthrough
             let mut default_case_fallthrough_continue = false;
@@ -272,13 +272,13 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             case_statuses.iter().fold(default_case_status, |accum, &lattice| accum.join(lattice))
         }
 
-        StatementKind::BlockStatement(stmt) => check_block_statement(stmt),
+        Statement::BlockStatement(stmt) => check_block_statement(stmt),
 
-        StatementKind::LabeledStatement(stmt) => check_statement(&stmt.body),
+        Statement::LabeledStatement(stmt) => check_statement(&stmt.body),
 
-        StatementKind::WithStatement(stmt) => check_statement(&stmt.body),
+        Statement::WithStatement(stmt) => check_statement(&stmt.body),
 
-        StatementKind::TryStatement(stmt) => {
+        Statement::TryStatement(stmt) => {
             let mut status = check_block_statement(&stmt.block);
             if let Some(catch) = &stmt.handler {
                 status = status.join(check_block_statement(&catch.body));
@@ -289,7 +289,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             status
         }
 
-        StatementKind::ThrowStatement(_) => StatementReturnStatus::AlwaysExplicit,
+        Statement::ThrowStatement(_) => StatementReturnStatus::AlwaysExplicit,
 
         _ => StatementReturnStatus::NotReturn,
     }
@@ -306,7 +306,7 @@ pub fn check_switch_case(
 ) -> bool {
     for s in &case.consequent {
         // This case is over
-        if let Some(_) = s.as_break_statement() {
+        if let Statement::BreakStatement(_) = s {
             return true;
         }
 
@@ -328,7 +328,7 @@ pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
     for s in &block.body {
         // The only case where we can see break is if the block is inside a loop,
         // which means the loop does not return
-        if let Some(_) = s.as_break_statement() {
+        if let Statement::BreakStatement(_) = s {
             break;
         }
 
@@ -362,7 +362,7 @@ mod tests {
         let program = ret.program;
         let Program { body, .. } = program;
         let stmt = body.first().unwrap();
-        let Some(func) = stmt.as_function_declaration() else { unreachable!() };
+        let Statement::FunctionDeclaration(func) = stmt else { unreachable!() };
 
         let first_statement = &func.body.as_ref().unwrap().statements[0];
 

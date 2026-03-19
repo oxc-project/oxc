@@ -106,7 +106,7 @@ impl Rule for NoArraySort {
         }
 
         let is_spread = match member_expr.object() {
-            ExpressionKind::ArrayExpression(array) => {
+            Expression::ArrayExpression(array) => {
                 array.elements.len() == 1
                     && matches!(array.elements[0], ArrayExpressionElement::SpreadElement(_))
             }
@@ -137,7 +137,6 @@ impl Rule for NoArraySort {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("sorted =[...array].toSorted()", None),

@@ -79,7 +79,7 @@ impl Rule for PreferDateNow {
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Some(ident) = call_expr.callee.as_identifier()
+                if let Expression::Identifier(ident) = &call_expr.callee
                     && matches!(ident.name.as_str(), "Number" | "BigInt")
                     && call_expr.arguments.len() == 1
                     && let Some(expr) =
@@ -146,11 +146,11 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Some(new_expr) = expr.get_inner_expression().as_new_expression() else {
+    let Expression::NewExpression(new_expr) = expr.get_inner_expression() else {
         return false;
     };
 
-    if let Some(ident) = new_expr.callee.as_identifier() {
+    if let Expression::Identifier(ident) = &new_expr.callee {
         return ident.name == "Date" && new_expr.arguments.is_empty();
     }
     false

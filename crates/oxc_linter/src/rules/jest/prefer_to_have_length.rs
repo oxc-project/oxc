@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression, match_member_expression, ExpressionKind},
+    ast::{CallExpression, Expression, MemberExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -85,13 +85,13 @@ impl PreferToHaveLength {
             return;
         };
 
-        match static_expr.object().kind() {
-            expr @ match_member_expression!(ExpressionKind) => {
+        match static_expr.object() {
+            expr @ match_member_expression!(Expression) => {
                 let mem_expr = expr.to_member_expression();
-                if let MemberExpressionKind::PrivateFieldExpression(_) = mem_expr {
+                if let MemberExpression::PrivateFieldExpression(_) = mem_expr {
                     return;
                 }
-                let Some(expr_call_expr) = mem_expr.object().as_call_expression() else {
+                let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
                 Self::check_and_fix(
@@ -102,7 +102,7 @@ impl PreferToHaveLength {
                     ctx,
                 );
             }
-            ExpressionKind::CallExpression(expr_call_expr) => {
+            Expression::CallExpression(expr_call_expr) => {
                 Self::check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, None, ctx);
             }
             _ => (),

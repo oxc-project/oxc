@@ -69,7 +69,7 @@ impl Rule for RequireModuleAttributes {
             AstKind::ImportExpression(import_expr) => {
                 let Some(options) = &import_expr.options else { return };
 
-                let Some(obj_expr) = options.get_inner_expression().as_object_expression() else {
+                let Expression::ObjectExpression(obj_expr) = options.get_inner_expression() else {
                     return;
                 };
 

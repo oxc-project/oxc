@@ -42,14 +42,14 @@ where
     let arg2 = arg2.and_then(Argument::as_expression).map(Expression::get_inner_expression);
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-    match (arg1.map(Expression::kind), arg2.map(Expression::kind)) {
-        (Some(ExpressionKind::StringLiteral(pattern)), Some(ExpressionKind::StringLiteral(flags))) => {
+    match (arg1, arg2) {
+        (Some(Expression::StringLiteral(pattern)), Some(Expression::StringLiteral(flags))) => {
             let allocator = Allocator::default();
             if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::StringLiteral(pattern)), Some(ExpressionKind::TemplateLiteral(flags))) => {
+        (Some(Expression::StringLiteral(pattern)), Some(Expression::TemplateLiteral(flags))) => {
             if !flags.is_no_substitution_template() {
                 return;
             }
@@ -58,13 +58,13 @@ where
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::StringLiteral(pattern)), _) => {
+        (Some(Expression::StringLiteral(pattern)), _) => {
             let allocator = Allocator::default();
             if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::TemplateLiteral(pattern)), Some(ExpressionKind::TemplateLiteral(flags))) => {
+        (Some(Expression::TemplateLiteral(pattern)), Some(Expression::TemplateLiteral(flags))) => {
             if !pattern.is_no_substitution_template() || !flags.is_no_substitution_template() {
                 return;
             }
@@ -73,7 +73,7 @@ where
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::TemplateLiteral(pattern)), Some(ExpressionKind::StringLiteral(flags))) => {
+        (Some(Expression::TemplateLiteral(pattern)), Some(Expression::StringLiteral(flags))) => {
             if !pattern.is_no_substitution_template() {
                 return;
             }
@@ -82,7 +82,7 @@ where
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::TemplateLiteral(pattern)), _) => {
+        (Some(Expression::TemplateLiteral(pattern)), _) => {
             if !pattern.is_no_substitution_template() {
                 return;
             }
@@ -101,8 +101,8 @@ fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) ->
         return true;
     }
     // Check for globalThis.RegExp (StaticMemberExpression)
-    if let Some(member) = callee.as_static_member_expression()
-        && let Some(obj) = member.object.as_identifier()
+    if let Expression::StaticMemberExpression(member) = callee
+        && let Expression::Identifier(obj) = &member.object
         && obj.is_global_reference_name(GLOBAL_THIS, ctx.semantic().scoping())
         && member.property.name == "RegExp"
     {

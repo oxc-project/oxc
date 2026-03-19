@@ -75,7 +75,7 @@ impl Rule for PreferTernary {
             return;
         };
 
-        if matches!(if_statement.test.get_inner_expression().kind(), ExpressionKind::ConditionalExpression(_))
+        if matches!(if_statement.test.get_inner_expression(), Expression::ConditionalExpression(_))
             || is_else_if_branch(node, if_statement, ctx)
         {
             return;
@@ -127,15 +127,15 @@ struct MergeOptions {
 }
 
 fn get_node_body_statement<'a>(statement: &'a Statement<'a>) -> BodyNode<'a> {
-    match statement.kind() {
-        StatementKind::ExpressionStatement(expression_statement) => {
+    match statement {
+        Statement::ExpressionStatement(expression_statement) => {
             BodyNode::Expression(expression_statement.expression.get_inner_expression())
         }
-        StatementKind::BlockStatement(block_statement) => {
+        Statement::BlockStatement(block_statement) => {
             let mut non_empty = block_statement
                 .body
                 .iter()
-                .filter(|statement| !matches!(statement.kind(), StatementKind::EmptyStatement(_)));
+                .filter(|statement| !matches!(statement, Statement::EmptyStatement(_)));
             if let Some(single) = non_empty.next()
                 && non_empty.next().is_none()
             {
@@ -187,9 +187,22 @@ fn is_mergeable<'a>(
 
     match (consequent, alternate) {
         (
-            MergeNode::Body(BodyNode::Statement(cons_stmt)),
-            MergeNode::Body(BodyNode::Statement(alt_stmt)),
-        ) if let (Some(consequent), Some(alternate)) = (cons_stmt.as_return_statement(), alt_stmt.as_return_statement())
+            MergeNode::Body(BodyNode::Statement(Statement::ReturnStatement(consequent))),
+            MergeNode::Body(BodyNode::Statement(Statement::ReturnStatement(alternate))),
+        ) if !is_ternary_option_expression(consequent.argument.as_ref())
+            && !is_ternary_option_expression(alternate.argument.as_ref()) =>
+        {
+            is_mergeable(
+                consequent.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
+                alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
+                MergeOptions { strict: false, ..options },
+                ctx,
+            )
+        }
+        (
+            MergeNode::Body(BodyNode::Expression(Expression::YieldExpression(consequent))),
+            MergeNode::Body(BodyNode::Expression(Expression::YieldExpression(alternate))),
+        ) if consequent.delegate == alternate.delegate
             && !is_ternary_option_expression(consequent.argument.as_ref())
             && !is_ternary_option_expression(alternate.argument.as_ref()) =>
         {
@@ -201,25 +214,9 @@ fn is_mergeable<'a>(
             )
         }
         (
-            MergeNode::Body(BodyNode::Expression(cons_expr)),
-            MergeNode::Body(BodyNode::Expression(alt_expr)),
-        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_yield_expression(), alt_expr.as_yield_expression())
-            && consequent.delegate == alternate.delegate
-            && !is_ternary_option_expression(consequent.argument.as_ref())
-            && !is_ternary_option_expression(alternate.argument.as_ref()) =>
-        {
-            is_mergeable(
-                consequent.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                alternate.argument.as_ref().map_or(MergeNode::Undefined, MergeNode::Expression),
-                MergeOptions { strict: false, ..options },
-                ctx,
-            )
-        }
-        (
-            MergeNode::Body(BodyNode::Expression(cons_expr)),
-            MergeNode::Body(BodyNode::Expression(alt_expr)),
-        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_await_expression(), alt_expr.as_await_expression())
-            && !is_ternary_expression(&consequent.argument)
+            MergeNode::Body(BodyNode::Expression(Expression::AwaitExpression(consequent))),
+            MergeNode::Body(BodyNode::Expression(Expression::AwaitExpression(alternate))),
+        ) if !is_ternary_expression(&consequent.argument)
             && !is_ternary_expression(&alternate.argument) =>
         {
             is_mergeable(
@@ -230,20 +227,18 @@ fn is_mergeable<'a>(
             )
         }
         (
-            MergeNode::Body(BodyNode::Statement(cons_stmt)),
-            MergeNode::Body(BodyNode::Statement(alt_stmt)),
-        ) if let (Some(consequent), Some(alternate)) = (cons_stmt.as_throw_statement(), alt_stmt.as_throw_statement())
-            && options.check_throw_statement
+            MergeNode::Body(BodyNode::Statement(Statement::ThrowStatement(consequent))),
+            MergeNode::Body(BodyNode::Statement(Statement::ThrowStatement(alternate))),
+        ) if options.check_throw_statement
             && !is_ternary_expression(&consequent.argument)
             && !is_ternary_expression(&alternate.argument) =>
         {
             true
         }
         (
-            MergeNode::Body(BodyNode::Expression(cons_expr)),
-            MergeNode::Body(BodyNode::Expression(alt_expr)),
-        ) if let (Some(consequent), Some(alternate)) = (cons_expr.as_assignment_expression(), alt_expr.as_assignment_expression())
-            && consequent.operator == alternate.operator
+            MergeNode::Body(BodyNode::Expression(Expression::AssignmentExpression(consequent))),
+            MergeNode::Body(BodyNode::Expression(Expression::AssignmentExpression(alternate))),
+        ) if consequent.operator == alternate.operator
             && !is_ternary_expression(&consequent.right)
             && !is_ternary_expression(&alternate.right)
             && is_same_assignment_target(&consequent.left, &alternate.left, ctx) =>
@@ -267,13 +262,13 @@ fn same_merge_kind(consequent: MergeNode<'_>, alternate: MergeNode<'_>) -> bool 
             MergeNode::Body(BodyNode::Expression(consequent)),
             MergeNode::Body(BodyNode::Expression(alternate)),
         ) => {
-            discriminant(&consequent.get_inner_expression().kind())
-                == discriminant(&alternate.get_inner_expression().kind())
+            discriminant(consequent.get_inner_expression())
+                == discriminant(alternate.get_inner_expression())
         }
         (
             MergeNode::Body(BodyNode::Statement(consequent)),
             MergeNode::Body(BodyNode::Statement(alternate)),
-        ) => discriminant(&consequent.kind()) == discriminant(&alternate.kind()),
+        ) => discriminant(consequent) == discriminant(alternate),
         _ => false,
     }
 }
@@ -283,7 +278,7 @@ fn is_ternary_option_expression(expression: Option<&Expression<'_>>) -> bool {
 }
 
 fn is_ternary_expression(expression: &Expression<'_>) -> bool {
-    matches!(expression.get_inner_expression().kind(), ExpressionKind::ConditionalExpression(_))
+    matches!(expression.get_inner_expression(), Expression::ConditionalExpression(_))
 }
 
 fn is_same_assignment_target(
@@ -335,12 +330,12 @@ fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> 
 }
 
 fn static_string_value(expression: &Expression<'_>) -> Option<String> {
-    match expression.kind() {
-        ExpressionKind::StringLiteral(literal) => Some(literal.value.to_string()),
-        ExpressionKind::TemplateLiteral(literal) => {
+    match expression {
+        Expression::StringLiteral(literal) => Some(literal.value.to_string()),
+        Expression::TemplateLiteral(literal) => {
             literal.single_quasi().map(|quasi| quasi.to_string())
         }
-        ExpressionKind::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
+        Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
             let left = static_string_value(binary.left.get_inner_expression())?;
             let right = static_string_value(binary.right.get_inner_expression())?;
             Some(format!("{left}{right}"))
@@ -352,8 +347,6 @@ fn static_string_value(expression: &Expression<'_>) -> Option<String> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
     let only_single_line_options = vec!["only-single-line"];
 
     let pass = vec![

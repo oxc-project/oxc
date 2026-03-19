@@ -465,7 +465,7 @@ impl NoEmptyFunction {
             PropertyKind::Get => self.allow.contains(Allowed::Getters),
             PropertyKind::Set => self.allow.contains(Allowed::Setters),
             PropertyKind::Init => {
-                let Some(function) = property.value.as_function_expression() else {
+                let Expression::FunctionExpression(function) = &property.value else {
                     return false;
                 };
                 if property.method {

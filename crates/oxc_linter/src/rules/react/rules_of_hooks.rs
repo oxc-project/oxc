@@ -349,7 +349,7 @@ fn has_conditional_path_accept_throw(
         //         matches!(
         //             it.kind(),
         //             AstKind::ExpressionStatement(ExpressionStatement {
-        //                 expression: ExpressionKind::CallExpression(_),
+        //                 expression: Expression::CallExpression(_),
         //                 ..
         //             })
         //         )
@@ -490,7 +490,6 @@ fn test() {
     /// Most of these tests are sourced from the original react `eslint-plugin-react-hooks` package.
     /// https://github.com/facebook/react/blob/5b903cdaa94c78e8fabb985d8daca5bd7d266323/packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Valid because components can use hooks.

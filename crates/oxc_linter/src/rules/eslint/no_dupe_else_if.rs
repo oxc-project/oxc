@@ -118,7 +118,7 @@ impl Rule for NoDupeElseIf {
         let AstKind::IfStatement(parent_if_stmt) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(StatementKind::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else {
+        let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else {
             return;
         };
         if child_if_stmt.span != if_stmt.span {
@@ -127,7 +127,7 @@ impl Rule for NoDupeElseIf {
 
         let mut conditions_to_check = vec![&if_stmt.test];
 
-        if let Some(expr) = if_stmt.test.as_logical_expression()
+        if let Expression::LogicalExpression(expr) = &if_stmt.test
             && expr.operator == LogicalOperator::And
         {
             conditions_to_check.extend(split_by_and(&if_stmt.test));
@@ -189,13 +189,13 @@ fn split_by_logical_operator<'a, 'b>(
     expr: &'a Expression<'b>,
     operator: LogicalOperator,
 ) -> Vec<&'a Expression<'b>> {
-    match expr.kind() {
-        ExpressionKind::LogicalExpression(expr) if expr.operator == operator => [
+    match expr {
+        Expression::LogicalExpression(expr) if expr.operator == operator => [
             split_by_logical_operator(&expr.left, operator),
             split_by_logical_operator(&expr.right, operator),
         ]
         .concat(),
-        ExpressionKind::ParenthesizedExpression(expr) => {
+        Expression::ParenthesizedExpression(expr) => {
             split_by_logical_operator(&expr.expression, operator)
         }
         _ => vec![expr],
@@ -207,8 +207,8 @@ fn is_subset<'a, 'b>(a: &'a [&'a Expression<'b>], b: &'a [&'a Expression<'b>]) -
 }
 
 fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
-    match (a.kind(), b.kind()) {
-        (ExpressionKind::LogicalExpression(a), ExpressionKind::LogicalExpression(b))
+    match (a, b) {
+        (Expression::LogicalExpression(a), Expression::LogicalExpression(b))
             if matches!(a.operator, LogicalOperator::And | LogicalOperator::Or)
                 && a.operator == b.operator =>
         {
@@ -216,7 +216,7 @@ fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
                 || (is_equal(&a.left, &b.right) && is_equal(&a.right, &b.left))
         }
 
-        _ => a.content_eq(b),
+        (a, b) => a.content_eq(b),
     }
 }
 

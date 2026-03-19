@@ -1,5 +1,4 @@
 use oxc_ast::{AstKind, ast::Expression};
-use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -50,7 +49,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        let Some(ident) = expr.callee.as_identifier() else {
+        let Expression::Identifier(ident) = &expr.callee else {
             return;
         };
 

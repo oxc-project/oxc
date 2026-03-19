@@ -120,13 +120,13 @@ impl Rule for NoArrayCallbackReference {
 }
 
 fn should_wrap_callback(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::Identifier(ident) if is_allowed_builtin(&ident.name) => false,
-        ExpressionKind::ConditionalExpression(cond_expr) => {
+    match expr {
+        Expression::Identifier(ident) if is_allowed_builtin(&ident.name) => false,
+        Expression::ConditionalExpression(cond_expr) => {
             should_wrap_callback(&cond_expr.consequent)
                 || should_wrap_callback(&cond_expr.alternate)
         }
-        ExpressionKind::CallExpression(call_expr) => {
+        Expression::CallExpression(call_expr) => {
             if let Some(member_expr) = call_expr.callee.get_member_expr()
                 && let Some(prop_name) = member_expr.static_property_name()
                 && prop_name == "bind"
@@ -136,20 +136,20 @@ fn should_wrap_callback(expr: &Expression) -> bool {
 
             true
         }
-        ExpressionKind::SequenceExpression(seq_expr) => {
+        Expression::SequenceExpression(seq_expr) => {
             seq_expr.expressions.last().is_none_or(|e| should_wrap_callback(e))
         }
-        ExpressionKind::ComputedMemberExpression(_)
-        | ExpressionKind::StaticMemberExpression(_)
-        | ExpressionKind::PrivateFieldExpression(_)
-        | ExpressionKind::Identifier(_)
-        | ExpressionKind::YieldExpression(_)
-        | ExpressionKind::AssignmentExpression(_)
-        | ExpressionKind::LogicalExpression(_)
-        | ExpressionKind::BinaryExpression(_)
-        | ExpressionKind::UnaryExpression(_)
-        | ExpressionKind::UpdateExpression(_)
-        | ExpressionKind::NewExpression(_) => true,
+        Expression::ComputedMemberExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::Identifier(_)
+        | Expression::YieldExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::LogicalExpression(_)
+        | Expression::BinaryExpression(_)
+        | Expression::UnaryExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::NewExpression(_) => true,
 
         // These can't be callbacks, don't need to wrap
         _ => false,
@@ -199,8 +199,8 @@ fn is_allowed_builtin(name: &str) -> bool {
 }
 
 fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
-    match expr.kind() {
-        ExpressionKind::Identifier(ident) => {
+    match expr {
+        Expression::Identifier(ident) => {
             if is_import_symbol(ident, "effect", "Effect", ctx) {
                 return true;
             }
@@ -222,16 +222,16 @@ fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
             )
         }
         // Check for call expressions like $(this) or jQuery(...)
-        ExpressionKind::CallExpression(call_expr) => {
-            if let Some(ident) = call_expr.callee.without_parentheses().as_identifier() {
+        Expression::CallExpression(call_expr) => {
+            if let Expression::Identifier(ident) = call_expr.callee.without_parentheses() {
                 matches!(ident.name.as_str(), "$" | "jQuery")
             } else {
                 false
             }
         }
-        match_member_expression!(ExpressionKind) => {
+        match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
-            if let Some(obj_ident) = member_expr.object().as_identifier()
+            if let Expression::Identifier(obj_ident) = member_expr.object()
                 && obj_ident.name == "React"
                 && let Some(prop_name) = member_expr.static_property_name()
                 && prop_name == "Children"
@@ -248,7 +248,6 @@ fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo.find(Boolean)",

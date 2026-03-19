@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ForInStatement,
-        ForOfStatement, ForStatement, VariableDeclarationKind, ExpressionKind},
+        ForOfStatement, ForStatement, VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -133,7 +134,7 @@ impl Rule for NoAccumulatingSpread {
         let AstKind::SpreadElement(spread) = node.kind() else {
             return;
         };
-        let Some(ident) = spread.argument.as_identifier() else {
+        let Expression::Identifier(ident) = &spread.argument else {
             return;
         };
 
@@ -285,13 +286,13 @@ fn get_spread_containing_expression_type(
     spread_span: Span,
 ) -> Option<SpreadExpressionType> {
     let inner_expr = expr.get_inner_expression();
-    match inner_expr.kind() {
-        ExpressionKind::ArrayExpression(array_expr)
+    match inner_expr {
+        Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) =>
         {
             Some(SpreadExpressionType::Array)
         }
-        ExpressionKind::ObjectExpression(object_expr)
+        Expression::ObjectExpression(object_expr)
             if object_expr.span.contains_inclusive(spread_span) =>
         {
             Some(SpreadExpressionType::Object)
@@ -357,9 +358,9 @@ fn get_reduce_diagnostic<'a>(
 
     if let Some(second_arg) = call_expr.arguments.get(1).and_then(Argument::as_expression) {
         let second_arg = second_arg.get_inner_expression();
-        if second_arg.is_object_expression() {
+        if matches!(second_arg, Expression::ObjectExpression(_)) {
             return reduce_likely_object_spread_diagnostic(spread_span, reduce_call_span);
-        } else if second_arg.is_array_expression() {
+        } else if matches!(second_arg, Expression::ArrayExpression(_)) {
             return reduce_likely_array_spread_diagnostic(spread_span, reduce_call_span);
         }
     }

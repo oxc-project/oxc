@@ -104,21 +104,17 @@ fn resolve_global_binding<'a, 'b: 'a>(
             if !parent_decl.id.is_binding_identifier() {
                 return Some(ident.name.as_str());
             }
-            if let Some(init) = &parent_decl.init {
-                match init.kind() {
-                    // handles "let a = JSON; let b = a; a();"
-                    ExpressionKind::Identifier(parent_ident) if parent_ident.name != ident.name => {
-                        let decl_scope = decl.scope_id();
-                        resolve_global_binding(parent_ident, decl_scope, ctx)
-                    }
-                    // handles "let a = globalThis.JSON; let b = a; a();"
-                    _ if init.is_member_expression() => {
-                        global_this_member(init.to_member_expression())
-                    }
-                    _ => None,
+            match &parent_decl.init {
+                // handles "let a = JSON; let b = a; a();"
+                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
+                    let decl_scope = decl.scope_id();
+                    resolve_global_binding(parent_ident, decl_scope, ctx)
                 }
-            } else {
-                None
+                // handles "let a = globalThis.JSON; let b = a; a();"
+                Some(parent_expr) if parent_expr.is_member_expression() => {
+                    global_this_member(parent_expr.to_member_expression())
+                }
+                _ => None,
             }
         }
         _ => None,
@@ -136,8 +132,8 @@ impl Rule for NoObjCalls {
 }
 
 fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    match callee.kind() {
-        ExpressionKind::Identifier(ident) => {
+    match callee {
+        Expression::Identifier(ident) => {
             // handle new Math(), Math(), etc
             if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx)
                 && is_global_obj(top_level_reference)
@@ -146,7 +142,7 @@ fn check_callee<'a>(callee: &'a Expression, span: Span, node: &AstNode<'a>, ctx:
             }
         }
 
-        match_member_expression!(ExpressionKind) => {
+        match_member_expression!(Expression) => {
             // handle new globalThis.Math(), globalThis.Math(), etc
             if let Some(global_member) = global_this_member(callee.to_member_expression())
                 && is_global_obj(global_member)

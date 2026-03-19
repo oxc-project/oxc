@@ -124,21 +124,21 @@ fn is_simple_operation(node: &CallExpression) -> bool {
         return false;
     }
 
-    match &function_body.statements[0].kind() {
-        StatementKind::ExpressionStatement(expr) => {
-            matches!(expr.expression.kind(), ExpressionKind::BinaryExpression(_))
+    match &function_body.statements[0] {
+        Statement::ExpressionStatement(expr) => {
+            matches!(expr.expression, Expression::BinaryExpression(_))
         }
-        StatementKind::ReturnStatement(ret) => {
-            ret.argument.as_ref().is_some_and(|a| a.is_binary_expression())
+        Statement::ReturnStatement(ret) => {
+            matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
         }
-        StatementKind::BlockStatement(block) => {
+        Statement::BlockStatement(block) => {
             if block.body.len() != 1 {
                 return false;
             }
 
-            match &block.body[0].kind() {
-                StatementKind::ReturnStatement(ret) => {
-                    ret.argument.as_ref().is_some_and(|a| a.is_binary_expression())
+            match &block.body[0] {
+                Statement::ReturnStatement(ret) => {
+                    matches!(&ret.argument, Some(Expression::BinaryExpression(_)))
                 }
                 _ => false,
             }
@@ -152,8 +152,6 @@ fn test() {
     use serde_json::json;
 
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         (r"a[b.reduce]()", None),

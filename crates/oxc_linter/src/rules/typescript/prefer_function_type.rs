@@ -96,7 +96,7 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
     }
 
     let expr = &decl.extends[0].expression;
-    if let Some(identifier) = expr.as_identifier() {
+    if let Expression::Identifier(identifier) = expr {
         return &identifier.name != "Function";
     }
 

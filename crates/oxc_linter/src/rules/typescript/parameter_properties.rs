@@ -273,19 +273,19 @@ fn modifier_from_property(property: &PropertyDefinition<'_>) -> Option<Modifier>
 fn constructor_assignment<'a>(
     statement: &'a Statement<'a>,
 ) -> Option<(&'a AssignmentExpression<'a>, Atom<'a>)> {
-    let Some(expression_statement) = statement.as_expression_statement() else {
+    let Statement::ExpressionStatement(expression_statement) = statement else {
         return None;
     };
-    let Some(assignment) = expression_statement.expression.as_assignment_expression() else {
+    let Expression::AssignmentExpression(assignment) = &expression_statement.expression else {
         return None;
     };
     let AssignmentTarget::StaticMemberExpression(member_expression) = &assignment.left else {
         return None;
     };
-    if !matches!(member_expression.object.get_inner_expression().kind(), ExpressionKind::ThisExpression(_)) {
+    if !matches!(member_expression.object.get_inner_expression(), Expression::ThisExpression(_)) {
         return None;
     }
-    let Some(identifier) = assignment.right.get_inner_expression().as_identifier() else {
+    let Expression::Identifier(identifier) = assignment.right.get_inner_expression() else {
         return None;
     };
     if member_expression.property.name != identifier.name {
@@ -311,7 +311,6 @@ fn type_annotations_match(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

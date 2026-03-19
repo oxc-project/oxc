@@ -50,7 +50,7 @@ impl Rule for NoNewBuffer {
             return;
         };
 
-        let Some(ident) = new_expr.callee.without_parentheses().as_identifier() else {
+        let Expression::Identifier(ident) = &new_expr.callee.without_parentheses() else {
             return;
         };
         if ident.name != "Buffer" || !ident.is_global_reference(ctx.scoping()) {
@@ -92,13 +92,13 @@ fn determine_buffer_method(new_expr: &oxc_ast::ast::NewExpression) -> Option<&'s
     let first_arg = new_expr.arguments.first()?.as_expression()?;
     let first_arg = first_arg.without_parentheses();
 
-    match first_arg.kind() {
+    match first_arg {
         // Numeric literals → Buffer.alloc
-        ExpressionKind::NumericLiteral(_) => Some("alloc"),
+        Expression::NumericLiteral(_) => Some("alloc"),
         // String/template literals → Buffer.from
-        ExpressionKind::StringLiteral(_)
-        | ExpressionKind::TemplateLiteral(_)
-        | ExpressionKind::ArrayExpression(_) => Some("from"),
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::ArrayExpression(_) => Some("from"),
         // For other expressions, we can't safely determine the type
         _ => None,
     }
@@ -107,7 +107,6 @@ fn determine_buffer_method(new_expr: &oxc_ast::ast::NewExpression) -> Option<&'s
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "const buffer = Buffer",

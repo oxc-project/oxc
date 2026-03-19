@@ -104,7 +104,7 @@ impl Rule for PreferObjectHasOwn {
 fn has_left_hand_object(node: &MemberExpression) -> bool {
     let object = node.object().get_inner_expression();
 
-    if let Some(object_expr) = object.as_object_expression() {
+    if let Expression::ObjectExpression(object_expr) = object {
         return object_expr.properties.is_empty();
     }
 
@@ -119,7 +119,7 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
         _ => object,
     };
 
-    if let Some(ident) = object_node_to_check.get_inner_expression().as_identifier() {
+    if let Expression::Identifier(ident) = object_node_to_check.get_inner_expression() {
         return ident.name == "Object";
     }
 

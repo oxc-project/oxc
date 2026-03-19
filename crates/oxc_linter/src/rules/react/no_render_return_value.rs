@@ -59,7 +59,7 @@ impl Rule for NoRenderReturnValue {
         let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
-        let Some(ident) = member_expr.object().as_identifier() else {
+        let Expression::Identifier(ident) = member_expr.object() else {
             return;
         };
         if ident.name == "ReactDOM"

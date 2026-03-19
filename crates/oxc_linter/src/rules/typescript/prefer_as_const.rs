@@ -113,15 +113,15 @@ fn literal_type_span_if_matches(
     initial_value_expression: &Expression,
 ) -> Option<Span> {
     let TSType::TSLiteralType(literal_type) = &ts_type else { return None };
-    match literal_type.literal.kind() {
+    match &literal_type.literal {
         TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
-            ExpressionKind::StringLiteral(initial_string) => {
+            Expression::StringLiteral(initial_string) => {
                 string_literal.value.eq(&initial_string.value).then_some(string_literal.span)
             }
             _ => None,
         },
         TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
-            ExpressionKind::NumericLiteral(initial_number) => {
+            Expression::NumericLiteral(initial_number) => {
                 ((number_literal.value - initial_number.value).abs() < f64::EPSILON)
                     .then_some(number_literal.span)
             }
@@ -169,7 +169,6 @@ fn check_and_report_type_annotation(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "let foo = 'baz' as const;",

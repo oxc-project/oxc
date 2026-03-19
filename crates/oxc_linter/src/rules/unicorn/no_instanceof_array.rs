@@ -53,8 +53,8 @@ impl Rule for NoInstanceofArray {
             return;
         }
 
-        match expr.right.without_parentheses().kind() {
-            ExpressionKind::Identifier(identifier) if identifier.name == "Array" => {
+        match &expr.right.without_parentheses() {
+            Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(no_instanceof_array_diagnostic(expr.span), |fixer| {
                     let argument = fixer.source_range(expr.left.span());
                     let mut code = String::with_capacity(15 + argument.len());
@@ -72,7 +72,6 @@ impl Rule for NoInstanceofArray {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("Array.isArray(arr)", None),

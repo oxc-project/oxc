@@ -91,7 +91,7 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        let Some(StatementKind::BlockStatement(alternate_block)) = &if_stmt.alternate else {
+        let Some(Statement::BlockStatement(alternate_block)) = &if_stmt.alternate else {
             return;
         };
 
@@ -103,14 +103,12 @@ impl Rule for NoLonelyIf {
             return;
         }
 
-        match only_stmt.kind() {
-            StatementKind::IfStatement(lonely_if) => {
+        match only_stmt {
+            Statement::IfStatement(lonely_if) => {
                 ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
             }
-            StatementKind::BlockStatement(inner_block) => {
-                if let [only_inner] = inner_block.body.as_slice()
-                    && let Some(lonely_if) = only_inner.as_if_statement()
-                {
+            Statement::BlockStatement(inner_block) => {
+                if let [Statement::IfStatement(lonely_if)] = inner_block.body.as_slice() {
                     ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
                 }
             }

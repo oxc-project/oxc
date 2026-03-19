@@ -160,9 +160,9 @@ impl Rule for NoLabels {
 
 impl NoLabels {
     fn is_allowed(&self, stmt: &Statement) -> bool {
-        match stmt.kind() {
+        match stmt {
             stmt if stmt.is_iteration_statement() => self.allow_loop,
-            StatementKind::SwitchStatement(_) => self.allow_switch,
+            Statement::SwitchStatement(_) => self.allow_switch,
             _ => false,
         }
     }

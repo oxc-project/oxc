@@ -76,8 +76,8 @@ impl Rule for PreferBigintLiterals {
             return;
         }
 
-        match argument_expression.get_inner_expression().kind() {
-            ExpressionKind::StringLiteral(string_literal) => {
+        match argument_expression.get_inner_expression() {
+            Expression::StringLiteral(string_literal) => {
                 if let Some(replacement) = bigint_literal_from_string(&string_literal.value) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
@@ -85,7 +85,7 @@ impl Rule for PreferBigintLiterals {
                     );
                 }
             }
-            ExpressionKind::NumericLiteral(numeric_literal) => {
+            Expression::NumericLiteral(numeric_literal) => {
                 if numeric_literal.value.fract() != 0.0 {
                     return;
                 }
@@ -186,7 +186,6 @@ fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"1n",

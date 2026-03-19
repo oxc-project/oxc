@@ -123,7 +123,7 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        let Some(reducer) = call_expr.as_arrow_function_expression()
+        let Some(Expression::ArrowFunctionExpression(reducer)) = call_expr
             .arguments
             .first()
             .expect("call expr must have exactly 2 arguments")
@@ -137,7 +137,7 @@ impl Rule for PreferObjectFromEntries {
             return;
         }
 
-        let Some(stmt) = reducer.as_expression_statement()
+        let Statement::ExpressionStatement(stmt) = reducer
             .body
             .statements
             .first()
@@ -158,12 +158,12 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => Object.assign(object, {key})`
-        if let Some(call_expr) = stmt.as_call_expression() {
+        if let Expression::CallExpression(call_expr) = &stmt {
             if !is_method_call(call_expr, Some(&["Object"]), Some(&["assign"]), Some(2), Some(2)) {
                 return;
             }
 
-            let Some(target) = call_expr.as_identifier()
+            let Some(Expression::Identifier(target)) = call_expr
                 .arguments
                 .first()
                 .expect("call expression should have 2 arguments")
@@ -179,7 +179,7 @@ impl Rule for PreferObjectFromEntries {
                 return;
             }
 
-            let Some(source) = call_expr.as_object_expression()
+            let Some(Expression::ObjectExpression(source)) = call_expr
                 .arguments
                 .get(1)
                 .expect("call expression should have 2 arguments")
@@ -204,10 +204,10 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => ({...object, key})`
-        if let Some(object_expr) = stmt.as_object_expression()
+        if let Expression::ObjectExpression(object_expr) = &stmt
             && object_expr.properties.len() == 2
             && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
-            && let Some(spread_ident) = spread.argument.get_inner_expression().as_identifier()
+            && let Expression::Identifier(spread_ident) = spread.argument.get_inner_expression()
         {
             let Some(spread_symbol_id) =
                 ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
@@ -246,9 +246,9 @@ impl Rule for PreferObjectFromEntries {
 }
 
 fn is_empty_object(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::ObjectExpression(o) if o.properties.is_empty() => true,
-        ExpressionKind::CallExpression(call_expr)
+    match expr {
+        Expression::ObjectExpression(o) if o.properties.is_empty() => true,
+        Expression::CallExpression(call_expr)
             if is_method_call(
                 call_expr,
                 Some(&["Object"]),
@@ -261,7 +261,7 @@ fn is_empty_object(expr: &Expression) -> bool {
                 .expect("call expression must have 1 argument")
                 .as_expression()
                 .map(oxc_ast::ast::Expression::get_inner_expression)
-                .is_some_and(|expr| matches!(expr.kind(), ExpressionKind::NullLiteral(_))) =>
+                .is_some_and(|expr| matches!(expr, Expression::NullLiteral(_))) =>
         {
             true
         }
@@ -272,7 +272,6 @@ fn is_empty_object(expr: &Expression) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("pairs.reduce(object => ({...object, key}));", None),

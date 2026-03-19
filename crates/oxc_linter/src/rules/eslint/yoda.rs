@@ -342,13 +342,13 @@ fn match_token(token: Option<char>) -> bool {
 fn is_keyword_expression(expr: &Expression) -> bool {
     matches!(
         expr,
-        ExpressionKind::UnaryExpression(unary)
+        Expression::UnaryExpression(unary)
             if matches!(unary.operator, UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete)
     ) || matches!(
         expr,
-        ExpressionKind::AwaitExpression(_)
-            | ExpressionKind::YieldExpression(_)
-            | ExpressionKind::NewExpression(_)
+        Expression::AwaitExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::NewExpression(_)
     )
 }
 
@@ -376,10 +376,10 @@ fn is_parenthesized(parent_logical_expr: &AstNode) -> bool {
 }
 
 fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
-    let Some(left) = expr.left.as_binary_expression() else {
+    let Expression::BinaryExpression(left) = &expr.left else {
         return false;
     };
-    let Some(right) = expr.right.as_binary_expression() else {
+    let Expression::BinaryExpression(right) = &expr.right else {
         return false;
     };
 
@@ -465,8 +465,8 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
 }
 
 fn is_simple_template_literal(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::TemplateLiteral(template) => template.quasis.len() == 1,
+    match expr {
+        Expression::TemplateLiteral(template) => template.quasis.len() == 1,
         _ => false,
     }
 }
@@ -480,9 +480,9 @@ fn is_target_literal(expr: &Expression) -> bool {
 }
 
 fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
-    match expr.kind() {
-        ExpressionKind::StringLiteral(string) => Some(&string.value),
-        ExpressionKind::TemplateLiteral(template) => {
+    match expr {
+        Expression::StringLiteral(string) => Some(&string.value),
+        Expression::TemplateLiteral(template) => {
             if template.quasis.len() != 1 {
                 return None;
             }
@@ -494,9 +494,9 @@ fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
 }
 
 fn is_number(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::NumericLiteral(_) | ExpressionKind::BigIntLiteral(_) => true,
-        ExpressionKind::UnaryExpression(unary) => {
+    match expr {
+        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_) => true,
+        Expression::UnaryExpression(unary) => {
             if unary.operator == UnaryOperator::UnaryNegation {
                 return is_number(&unary.argument);
             }
@@ -507,9 +507,9 @@ fn is_number(expr: &Expression) -> bool {
 }
 
 fn get_number(expr: &Expression) -> Option<f64> {
-    match expr.kind() {
-        ExpressionKind::NumericLiteral(numeric) => Some(numeric.value),
-        ExpressionKind::BigIntLiteral(big_int) => {
+    match expr {
+        Expression::NumericLiteral(numeric) => Some(numeric.value),
+        Expression::BigIntLiteral(big_int) => {
             let big_int = big_int.to_big_int(&WithoutGlobalReferenceInformation {})?;
 
             let Ok(big_int) = big_int.to_string().parse::<f64>() else {
@@ -518,7 +518,7 @@ fn get_number(expr: &Expression) -> Option<f64> {
 
             Some(big_int)
         }
-        ExpressionKind::UnaryExpression(unary) => {
+        Expression::UnaryExpression(unary) => {
             if unary.operator == UnaryOperator::UnaryNegation {
                 return get_number(&unary.argument).map(|num| -num);
             }

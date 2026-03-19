@@ -123,19 +123,25 @@ impl Rule for VarsOnTop {
 }
 
 fn looks_like_directive(node: &Statement) -> bool {
-    node.as_expression_statement().is_some_and(|expr_stmt| expr_stmt.expression.is_string_literal())
+    matches!(
+        node,
+        Statement::ExpressionStatement(expr_stmt) if matches!(
+            &expr_stmt.expression,
+            Expression::StringLiteral(_)
+        )
+    )
 }
 
 fn looks_like_import(node: &Statement) -> bool {
-    node.is_import_declaration()
+    matches!(node, Statement::ImportDeclaration(_))
 }
 
 fn is_variable_declaration(node: &Statement) -> bool {
-    if node.is_variable_declaration() {
+    if matches!(node, Statement::VariableDeclaration(_)) {
         return true;
     }
 
-    if let Some(export) = node.as_export_named_declaration() {
+    if let Statement::ExportNamedDeclaration(export) = node {
         return matches!(export.declaration, Some(Declaration::VariableDeclaration(_)));
     }
 

@@ -83,9 +83,9 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     }
 
     let callee = call_expr.callee.without_parentheses();
-    match callee.kind() {
-        match_member_expression!(ExpressionKind) => callee.to_member_expression(),
-        ExpressionKind::ChainExpression(chain) => match chain.expression {
+    let callee = match callee {
+        match_member_expression!(Expression) => callee.to_member_expression(),
+        Expression::ChainExpression(chain) => match chain.expression {
             match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
             _ => return,
         },
@@ -100,14 +100,14 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     if args[1].is_spread() {
         return;
     }
-    if let Some(ExpressionKind::ArrayExpression(_)) = args[1].as_expression() {
+    if let Some(Expression::ArrayExpression(_)) = args[1].as_expression() {
         return;
     }
 
     let applied = callee.object().without_parentheses();
 
     if args0.is_null_or_undefined() {
-        if !applied.is_identifier() {
+        if !matches!(applied, Expression::Identifier(_)) {
             return;
         }
     } else if let Some(applied) = as_member_expression_without_chain_expression(applied) {
@@ -136,12 +136,12 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
 fn as_member_expression_without_chain_expression<'a>(
     expr: &'a Expression,
 ) -> Option<&'a MemberExpression<'a>> {
-    match expr.kind() {
-        ExpressionKind::ChainExpression(chain_expr) => match chain_expr.expression {
+    match expr {
+        Expression::ChainExpression(chain_expr) => match chain_expr.expression {
             match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
             _ => None,
         },
-        match_member_expression!(ExpressionKind) => expr.as_member_expression(),
+        match_member_expression!(Expression) => expr.as_member_expression(),
         _ => None,
     }
 }

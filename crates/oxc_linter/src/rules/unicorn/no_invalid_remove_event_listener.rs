@@ -93,7 +93,7 @@ impl Rule for NoInvalidRemoveEventListener {
         }
 
         if let Argument::CallExpression(call_expr) = listener {
-            match call_expr.callee.get_member_expr().kind() {
+            match call_expr.callee.get_member_expr() {
                 Some(MemberExpression::StaticMemberExpression(v)) => {
                     if v.property.name != "bind" {
                         return;

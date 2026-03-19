@@ -7,7 +7,7 @@ use crate::{
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, FunctionBody, Statement, ExpressionKind, StatementKind},
+    ast::{ArrowFunctionExpression, CallExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -155,24 +155,26 @@ impl Rule for NoReturnWrap {
                 continue;
             };
 
-            match arg_expr.kind() {
-                ExpressionKind::ArrowFunctionExpression(arrow) => {
+            match arg_expr {
+                Expression::ArrowFunctionExpression(arrow) => {
                     check_arrow_cb_arg(ctx, self.allow_reject, arrow);
                 }
-                ExpressionKind::FunctionExpression(func_expr) => {
+                Expression::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
                     check_first_return_statement(ctx, func_body, self.allow_reject);
                 }
-                ExpressionKind::CallExpression(call) => {
-                    let Some(static_memb_expr) = call.callee.get_inner_expression().as_static_member_expression() else {
+                Expression::CallExpression(call) => {
+                    let Expression::StaticMemberExpression(static_memb_expr) =
+                        call.callee.get_inner_expression()
+                    else {
                         continue;
                     };
 
                     // `.bind(this)` is true but `.bind(foo)` is false.
                     let is_this_arg = call.arguments.first().is_some_and(|arg| {
-                        arg.as_expression().is_some_and(|e| e.is_this_expression())
+                        matches!(arg.as_expression(), Some(Expression::ThisExpression(_)))
                     });
 
                     let property_name = static_memb_expr.property.name;
@@ -187,9 +189,11 @@ impl Rule for NoReturnWrap {
 
                     let inner_obj = &static_memb_expr.object.get_inner_expression();
 
-                    if let Some(nested_call) = inner_obj.as_call_expression() {
+                    if let Expression::CallExpression(nested_call) = inner_obj {
                         // if not a chained .bind(this) then skip
-                        let Some(nested_expr) = nested_call.callee.get_inner_expression().as_static_member_expression() else {
+                        let Expression::StaticMemberExpression(nested_expr) =
+                            nested_call.callee.get_inner_expression()
+                        else {
                             continue;
                         };
                         check_callback_fn(
@@ -218,21 +222,21 @@ fn check_arrow_cb_arg<'a>(
             return;
         };
 
-        if let Some(_) = only_stmt.as_block_statement() {
+        if let Statement::BlockStatement(_) = only_stmt {
             check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
         }
 
-        if let Some(r) = only_stmt.as_return_statement()
-            && let Some(returned_call_expr) = r.argument.as_ref().and_then(|e| e.as_call_expression())
+        if let Statement::ReturnStatement(r) = only_stmt
+            && let Some(Expression::CallExpression(returned_call_expr)) = &r.argument
         {
             check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
         }
 
-        let Some(expr_stmt) = only_stmt.as_expression_statement() else {
+        let Statement::ExpressionStatement(expr_stmt) = only_stmt else {
             return;
         };
 
-        let Some(returned_call_expr) = expr_stmt.expression.as_call_expression() else {
+        let Expression::CallExpression(ref returned_call_expr) = expr_stmt.expression else {
             return;
         };
         check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
@@ -242,11 +246,11 @@ fn check_arrow_cb_arg<'a>(
 }
 
 fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
-    match expr.kind() {
-        ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
+    match expr {
+        Expression::ArrowFunctionExpression(arrow_expr) => {
             check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
         }
-        ExpressionKind::FunctionExpression(func_expr) => {
+        Expression::FunctionExpression(func_expr) => {
             let Some(func_body) = &func_expr.body else {
                 return;
             };
@@ -266,28 +270,28 @@ fn check_first_return_statement<'a>(
     let top_level_statements = func_body
         .statements
         .iter()
-        .find(|stmt| matches!(stmt.kind(), StatementKind::ReturnStatement(_) | StatementKind::IfStatement(_)));
+        .find(|stmt| matches!(stmt, Statement::ReturnStatement(_) | Statement::IfStatement(_)));
 
-    let maybe_return_stmt = match top_level_statements.map(|s| s.kind()) {
-        Some(StatementKind::ReturnStatement(r)) => Some(r),
-        Some(StatementKind::IfStatement(if_stmt)) => match if_stmt.consequent.kind() {
-            StatementKind::BlockStatement(block_stmt) => {
+    let maybe_return_stmt = match top_level_statements {
+        Some(Statement::ReturnStatement(r)) => Some(r),
+        Some(Statement::IfStatement(if_stmt)) => match &if_stmt.consequent {
+            Statement::BlockStatement(block_stmt) => {
                 // Find first return statement in `if { // here } else { }`
                 let res = block_stmt.body.iter().find_map(|stmt| {
-                    if let Some(r) = stmt.as_return_statement() { Some(r) } else { None }
+                    if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
                 });
 
                 match res {
                     None => {
                         // No return found so now look `if {  } else { // here }`
                         block_stmt.body.iter().find_map(|stmt| {
-                            if let Some(r) = stmt.as_return_statement() { Some(r) } else { None }
+                            if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
                         })
                     }
                     res => res,
                 }
             }
-            StatementKind::ReturnStatement(r) => Some(r),
+            Statement::ReturnStatement(r) => Some(r),
             _ => None,
         },
         _ => None,
@@ -297,7 +301,7 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    let Some(returned_call_expr) = return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(Expression::CallExpression(returned_call_expr)) = &return_stmt.argument else {
         return;
     };
 
@@ -306,7 +310,7 @@ fn check_first_return_statement<'a>(
 
 /// Checks for `return Promise.resolve()` or `return Promise.reject()`
 fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &CallExpression) {
-    let Some(stat_expr) = call_expr.callee.as_static_member_expression() else {
+    let Expression::StaticMemberExpression(stat_expr) = &call_expr.callee else {
         return;
     };
 

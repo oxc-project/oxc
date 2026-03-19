@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentTarget, BindingIdentifier, BindingPattern, BindingProperty,
-        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName, ExpressionKind},
+        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -373,7 +374,7 @@ fn is_recursive_call(
     function_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let Some(identifier) = call_expr.callee.as_identifier()
+    if let Expression::Identifier(identifier) = &call_expr.callee
         && let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
     {
         return symbol_id == function_symbol_id;

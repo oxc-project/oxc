@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, MemberExpression,
+    AstKind, MemberExpressionKind,
     ast::{
         BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
         PropertyKind, UpdateExpression,
@@ -132,7 +132,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpression::PrivateField(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -162,7 +162,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpression::PrivateField(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -262,13 +262,13 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn get_member_expr_key_name<'a>(expr: &'a MemberExpression) -> Option<&'a str> {
-    match expr.kind() {
-        MemberExpression::Computed(expr) => {
+fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
+    match expr {
+        MemberExpressionKind::Computed(expr) => {
             expr.static_property_name().map(|name| name.as_str())
         }
-        MemberExpression::Static(expr) => Some(expr.property.name.as_str()),
-        MemberExpression::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
+        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
+        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
     }
 }
 

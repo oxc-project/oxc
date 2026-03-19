@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement, ExpressionKind, StatementKind},
+    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -218,25 +218,25 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
             return;
         }
 
-        match expr.kind() {
-            ExpressionKind::FunctionExpression(fn_expr) => {
+        match expr {
+            Expression::FunctionExpression(fn_expr) => {
                 if let Some(body) = &fn_expr.body {
                     self.visit_function_body(body);
                 }
             }
-            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
                 self.visit_function_body(&arrow_expr.body);
             }
-            ExpressionKind::CallExpression(call_expr) => {
+            Expression::CallExpression(call_expr) => {
                 self.visit_call_expression(call_expr);
             }
-            ExpressionKind::Identifier(ident) => {
+            Expression::Identifier(ident) => {
                 self.check_identifier(ident);
             }
-            ExpressionKind::AwaitExpression(expr) => {
+            Expression::AwaitExpression(expr) => {
                 self.check_expression(&expr.argument);
             }
-            ExpressionKind::ArrayExpression(array_expr) => {
+            Expression::ArrayExpression(array_expr) => {
                 for element in &array_expr.elements {
                     if let Some(element_expr) = element.as_expression() {
                         self.check_expression(element_expr);
@@ -300,7 +300,7 @@ impl<'a> Visit<'a> for AssertionVisitor<'a, '_> {
     }
 
     fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
-        if let Some(block_stmt) = if_stmt.consequent.as_block_statement() {
+        if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
             self.visit_block_statement(block_stmt);
         }
         if self.found_assertion {

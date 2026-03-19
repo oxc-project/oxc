@@ -1,7 +1,7 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/00e9372987755dece96561ef2eef0785c8742e55/clippy_lints/src/operators/erasing_op.rs
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, ExpressionKind},
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -72,7 +72,7 @@ impl Rule for ErasingOp {
 }
 
 fn is_number_value(expr: &Expression, value: f64) -> bool {
-    if let Some(number_literal) = expr.without_parentheses().as_numeric_literal() {
+    if let Expression::NumericLiteral(number_literal) = expr.without_parentheses() {
         (number_literal.value - value).abs() < f64::EPSILON
     } else {
         false

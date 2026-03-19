@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BinaryExpression, Expression, ExpressionKind},
+    ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -104,7 +104,7 @@ impl PreferComparisonMatcher {
         let Some(parent_node) = parse_expect_jest_fn.head.parent else {
             return;
         };
-        let Some(parent_call_expr) = parent_node.as_call_expression() else {
+        let Expression::CallExpression(parent_call_expr) = parent_node else {
             return;
         };
         let Some(Argument::BinaryExpression(binary_expr)) = parent_call_expr.arguments.first()
@@ -123,7 +123,9 @@ impl PreferComparisonMatcher {
 
         let has_not_modifier =
             parse_expect_jest_fn.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
-        let Some(matcher_arg_value) = first_matcher_arg.get_inner_expression().as_boolean_literal() else {
+        let Expression::BooleanLiteral(matcher_arg_value) =
+            first_matcher_arg.get_inner_expression()
+        else {
             return;
         };
         let negated = matcher_arg_value.value == has_not_modifier;
@@ -156,8 +158,8 @@ impl PreferComparisonMatcher {
     }
 
     fn is_comparing_to_string(expr: &BinaryExpression) -> bool {
-        matches!(expr.left.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
-            || matches!(expr.right.kind(), ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
+        matches!(expr.left, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+            || matches!(expr.right, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
     }
 
     fn determine_matcher(operator: BinaryOperator, negated: bool) -> Option<&'static str> {

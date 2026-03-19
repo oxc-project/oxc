@@ -305,11 +305,11 @@ impl Rule for ConsistentTypeAssertions {
                             if !needs_parentheses
                                 && !matches!(
                                     type_assertion.expression,
-                                    ExpressionKind::ParenthesizedExpression(_)
+                                    Expression::ParenthesizedExpression(_)
                                 )
                                 && matches!(
                                     type_assertion.expression.without_parentheses(),
-                                    ExpressionKind::ObjectExpression(_)
+                                    Expression::ObjectExpression(_)
                                 )
                                 && needs_parens_for_object_literal_replacement(node, ctx)
                             {
@@ -366,7 +366,7 @@ fn check_type(type_annotation: &TSType) -> bool {
 
 fn expression_text_for_as(expression: &Expression, source_text: &str) -> String {
     let text = expression.span().source_text(source_text);
-    if matches!(expression.kind(), ExpressionKind::ParenthesizedExpression(_)) {
+    if matches!(expression, Expression::ParenthesizedExpression(_)) {
         return text.to_string();
     }
     if expression_needs_parens_for_as(expression) { format!("({text})") } else { text.to_string() }
@@ -375,15 +375,15 @@ fn expression_text_for_as(expression: &Expression, source_text: &str) -> String 
 fn expression_needs_parens_for_as(expression: &Expression) -> bool {
     matches!(
         expression.without_parentheses(),
-        ExpressionKind::SequenceExpression(_)
-            | ExpressionKind::AssignmentExpression(_)
-            | ExpressionKind::ConditionalExpression(_)
-            | ExpressionKind::YieldExpression(_)
-            | ExpressionKind::ArrowFunctionExpression(_)
-            | ExpressionKind::TSAsExpression(_)
-            | ExpressionKind::TSSatisfiesExpression(_)
-            | ExpressionKind::TSTypeAssertion(_)
-            | ExpressionKind::TSInstantiationExpression(_)
+        Expression::SequenceExpression(_)
+            | Expression::AssignmentExpression(_)
+            | Expression::ConditionalExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::TSAsExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSInstantiationExpression(_)
     )
 }
 
@@ -459,10 +459,10 @@ fn expression_text_for_replacement<'a>(
     ctx: &LintContext<'a>,
 ) -> String {
     let text = ctx.source_range(expression.span());
-    if matches!(expression.kind(), ExpressionKind::ParenthesizedExpression(_)) {
+    if matches!(expression, Expression::ParenthesizedExpression(_)) {
         return text.to_string();
     }
-    if matches!(expression.without_parentheses().kind(), ExpressionKind::ObjectExpression(_))
+    if matches!(expression.without_parentheses(), Expression::ObjectExpression(_))
         && needs_parens_for_object_literal_replacement(node, ctx)
     {
         return format!("({text})");
@@ -549,7 +549,7 @@ fn check_expression_for_object_assertion<'a>(
         return;
     }
 
-    if !matches!(expression.without_parentheses().kind(), ExpressionKind::ObjectExpression(_)) {
+    if !matches!(expression.without_parentheses(), Expression::ObjectExpression(_)) {
         return;
     }
 
@@ -582,7 +582,7 @@ fn check_expression_for_array_assertion<'a>(
         return;
     }
 
-    if !matches!(expression.without_parentheses().kind(), ExpressionKind::ArrayExpression(_)) {
+    if !matches!(expression.without_parentheses(), Expression::ArrayExpression(_)) {
         return;
     }
 
@@ -607,7 +607,6 @@ fn test() {
     use std::path::PathBuf;
 
     use crate::tester::{TestCase, Tester};
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

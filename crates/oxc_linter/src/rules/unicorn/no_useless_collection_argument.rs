@@ -83,7 +83,8 @@ impl Rule for NoUselessCollectionArgument {
 
         let first_arg_expr_inner = first_arg_expr.get_inner_expression();
 
-        let (useless_expr, logical_expr) = if let Some(logical_expr) = first_arg_expr_inner.as_logical_expression()
+        let (useless_expr, logical_expr) = if let Expression::LogicalExpression(logical_expr) =
+            first_arg_expr_inner
             && logical_expr.operator.is_coalesce()
         {
             (logical_expr.right.get_inner_expression(), Some(logical_expr))

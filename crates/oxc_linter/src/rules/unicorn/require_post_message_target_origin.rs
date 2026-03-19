@@ -79,7 +79,7 @@ impl Rule for RequirePostMessageTargetOrigin {
                 require_post_message_target_origin_diagnostic(Span::new(span.end, span.end)),
                 |fixer| {
                     let text = match member_expr.object() {
-                        ExpressionKind::Identifier(ident) => {
+                        Expression::Identifier(ident) => {
                             format!(", {}.location.origin", ident.name.as_str())
                         }
                         _ => ", self.location.origin".to_string(),
@@ -94,7 +94,7 @@ impl Rule for RequirePostMessageTargetOrigin {
 fn is_message_port_expression(expr: &Expression<'_>) -> bool {
     let mut current_expr = expr.without_parentheses();
     loop {
-        if let Some(ident) = current_expr.as_identifier()
+        if let Expression::Identifier(ident) = current_expr
             && matches!(ident.name.as_str(), "port" | "port1" | "port2" | "messagePort")
         {
             return true;
@@ -126,7 +126,6 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "window.postMessage(message, targetOrigin)",

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::{Expression, ExpressionKind};
+use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -135,7 +135,7 @@ impl Rule for NoDeprecatedFunctions {
             return;
         };
         let mut chain: Vec<Cow<'a, str>> = Vec::new();
-        if let Some(ident) = mem_expr.object().as_identifier() {
+        if let Expression::Identifier(ident) = mem_expr.object() {
             chain.push(Cow::Borrowed(ident.name.as_str()));
         }
 

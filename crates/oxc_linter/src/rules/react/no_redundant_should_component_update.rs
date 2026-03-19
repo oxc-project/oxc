@@ -140,7 +140,7 @@ fn get_should_component_update(class: &Class<'_>) -> Option<Span> {
 fn is_react_pure_component<'a>(class: &'a Class<'a>) -> bool {
     if let Some(super_class) = &class.super_class {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let Some(ident) = member_expr.object().as_identifier()
+            && let Expression::Identifier(ident) = member_expr.object()
         {
             return ident.name == "React"
                 && member_expr.static_property_name().is_some_and(|name| name == "PureComponent");

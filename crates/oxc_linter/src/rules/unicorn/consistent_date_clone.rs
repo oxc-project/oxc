@@ -61,7 +61,7 @@ impl Rule for ConsistentDateClone {
             return;
         };
 
-        let Some(callee) = expr.callee.as_static_member_expression() else {
+        let Expression::StaticMemberExpression(callee) = &expr.callee else {
             return;
         };
 

@@ -345,10 +345,10 @@ impl JsxHandlerNames {
 /// true if the expression is in the form of "foo.bar" or "() => foo.bar()"
 /// like event handler methods in class components.
 fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> bool {
-    let Some(stmt) = arrow_function.body.statements.first().and_then(|s| s.as_expression_statement()) else {
+    let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
         return false;
     };
-    let Some(callee_expr) = stmt.expression.as_call_expression() else {
+    let Expression::CallExpression(callee_expr) = &stmt.expression else {
         return false;
     };
     callee_expr.callee.is_member_expression()
@@ -359,13 +359,13 @@ fn get_event_handler_name_from_static_member_expression(
 ) -> (CompactStr, Span, bool) {
     let name = member_expr.property.name.as_str();
     let span = member_expr.property.span;
-    match member_expr.object.kind() {
-        ExpressionKind::Identifier(ident) => {
+    match &member_expr.object {
+        Expression::Identifier(ident) => {
             let obj_name = ident.name.as_str();
             (name.into(), span, obj_name == "props") // props.handleChange or obj.handleChange
         }
-        ExpressionKind::StaticMemberExpression(expr) => {
-            if let Some(_) = expr.object.as_this_expression() {
+        Expression::StaticMemberExpression(expr) => {
+            if let Expression::ThisExpression(_) = &expr.object {
                 let obj_name = expr.property.name.as_str();
                 (name.into(), span, obj_name == "props") // this.props.handleChange or this.obj.handleChange
             } else {
@@ -440,16 +440,16 @@ fn get_event_handler_name_from_arrow_function<'a>(
         // with a single expression body, such as `() => this.handleChange()`.
         return None;
     }
-    let Some(stmt) = arrow_function.body.statements.first().and_then(|s| s.as_expression_statement()) else {
+    let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
         return None;
     };
-    let Some(call_expr) = stmt.expression.as_call_expression() else {
+    let Expression::CallExpression(call_expr) = &stmt.expression else {
         return None;
     };
 
-    match call_expr.callee.kind() {
-        ExpressionKind::Identifier(ident) => Some((ident.name.as_str().into(), ident.span, false)),
-        ExpressionKind::StaticMemberExpression(member_expr) => {
+    match &call_expr.callee {
+        Expression::Identifier(ident) => Some((ident.name.as_str().into(), ident.span, false)),
+        Expression::StaticMemberExpression(member_expr) => {
             Some(get_event_handler_name_from_static_member_expression(member_expr))
         }
         _ => None,
@@ -459,7 +459,6 @@ fn get_event_handler_name_from_arrow_function<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("<TestComponent onChange={this.handleChange} />", None),

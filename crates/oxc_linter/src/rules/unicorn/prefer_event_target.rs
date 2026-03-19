@@ -66,7 +66,7 @@ impl Rule for PreferEventTarget {
         match ctx.nodes().parent_kind(node.id()) {
             AstKind::Class(_) => {}
             AstKind::NewExpression(new_expr) => {
-                let Some(callee_ident) = new_expr.callee.as_identifier() else {
+                let Expression::Identifier(callee_ident) = &new_expr.callee else {
                     return;
                 };
 
@@ -90,8 +90,8 @@ fn is_ignored_package(source: &str) -> bool {
 }
 
 fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
-    match expr.get_inner_expression().kind() {
-        ExpressionKind::CallExpression(call_expr) => {
+    match expr.get_inner_expression() {
+        Expression::CallExpression(call_expr) => {
             !call_expr.optional
                 && call_expr.callee.is_specific_id("require")
                 && call_expr.arguments.len() == 1
@@ -103,12 +103,12 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
                     _ => false,
                 }
         }
-        ExpressionKind::AwaitExpression(await_expr) => match await_expr.argument.get_inner_expression()
+        Expression::AwaitExpression(await_expr) => match await_expr.argument.get_inner_expression()
         {
-            ExpressionKind::ImportExpression(import_expr) => {
-                match import_expr.source.get_inner_expression().kind() {
-                    ExpressionKind::StringLiteral(source) => is_ignored_package(source.value.as_str()),
-                    ExpressionKind::TemplateLiteral(source) => source
+            Expression::ImportExpression(import_expr) => {
+                match import_expr.source.get_inner_expression() {
+                    Expression::StringLiteral(source) => is_ignored_package(source.value.as_str()),
+                    Expression::TemplateLiteral(source) => source
                         .single_quasi()
                         .is_some_and(|source| is_ignored_package(source.as_str())),
                     _ => false,
@@ -173,7 +173,6 @@ fn is_event_emitter_from_ignored_package<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "class Foo {}",

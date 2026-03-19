@@ -178,11 +178,11 @@ impl Rule for ClassMethodsUseThis {
                 {
                     return;
                 }
-                accessor.value.as_ref().and_then(|value| match value.kind() {
-                    ExpressionKind::ArrowFunctionExpression(arrow_function) => {
+                accessor.value.as_ref().and_then(|value| match value {
+                    Expression::ArrowFunctionExpression(arrow_function) => {
                         Some((&arrow_function.body, &accessor.key))
                     }
-                    ExpressionKind::FunctionExpression(function_expression) => {
+                    Expression::FunctionExpression(function_expression) => {
                         Some((function_expression.body.as_ref()?, &accessor.key))
                     }
                     _ => None,
@@ -217,11 +217,11 @@ impl Rule for ClassMethodsUseThis {
                 {
                     return;
                 }
-                property_definition.value.as_ref().and_then(|value| match value.kind() {
-                    ExpressionKind::ArrowFunctionExpression(arrow_function) => {
+                property_definition.value.as_ref().and_then(|value| match value {
+                    Expression::ArrowFunctionExpression(arrow_function) => {
                         Some((&arrow_function.body, &property_definition.key))
                     }
-                    ExpressionKind::FunctionExpression(function_expression) => {
+                    Expression::FunctionExpression(function_expression) => {
                         Some((function_expression.body.as_ref()?, &property_definition.key))
                     }
                     _ => None,

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement, ExpressionKind, StatementKind},
+    ast::{BindingPattern, ExportDefaultDeclarationKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -94,7 +94,7 @@ impl Rule for NoAsyncClientComponent {
 
         if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
             for node in &program.body {
-                let Some(export_default_decl) = node.as_export_default_declaration() else {
+                let Statement::ExportDefaultDeclaration(export_default_decl) = &node else {
                     continue;
                 };
 
@@ -147,7 +147,8 @@ impl Rule for NoAsyncClientComponent {
                 };
                 // `binding_ident.name` MUST be > 0 chars
                 if binding_ident.name.chars().next().unwrap().is_uppercase()
-                    && let Some(arrow_expr) = var_declarator.init.as_ref().and_then(|e| e.as_arrow_function_expression())
+                    && let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
+                        &var_declarator.init
                     && arrow_expr.r#async
                 {
                     ctx.diagnostic(no_async_client_component_diagnostic(binding_ident.span));

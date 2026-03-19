@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement, ExpressionKind, StatementKind},
+    ast::{CallExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -98,11 +98,11 @@ fn check_call_expression<'a>(
         let Some(arg_expr) = argument.as_expression() else {
             continue;
         };
-        match arg_expr.kind() {
-            ExpressionKind::ArrowFunctionExpression(arrow_expr) => {
+        match arg_expr {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
                 check_test_return_statement(&arrow_expr.body, ctx);
             }
-            ExpressionKind::FunctionExpression(func_expr) => {
+            Expression::FunctionExpression(func_expr) => {
                 let Some(func_body) = &func_expr.body else {
                     continue;
                 };
@@ -115,24 +115,24 @@ fn check_call_expression<'a>(
 
 fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
     let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| stmt.is_return_statement())
+        func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {
         return;
     };
 
-    let Some(stmt) = return_stmt.as_return_statement() else {
+    let Statement::ReturnStatement(stmt) = return_stmt else {
         return;
     };
-    let Some(call_expr) = stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
         return;
     };
     let Some(mem_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
-    let Some(mem_call_expr) = mem_expr.object().as_call_expression() else {
+    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
         return;
     };
-    let Some(ident) = mem_call_expr.callee.as_identifier() else {
+    let Expression::Identifier(ident) = &mem_call_expr.callee else {
         return;
     };
 

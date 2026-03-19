@@ -122,7 +122,7 @@ impl Rule for PreferArraySome {
                         | BinaryOperator::Equality
                 ) && matches!(
                     bin_expr.right.without_parentheses(),
-                    ExpressionKind::UnaryExpression(_)
+                    Expression::UnaryExpression(_)
                 );
 
                 let matches_against_zero = matches!(
@@ -131,12 +131,14 @@ impl Rule for PreferArraySome {
                 );
 
                 if with_negative_one
-                    && let Some(right_unary_expr) = bin_expr.right.without_parentheses().as_unary_expression()
+                    && let Expression::UnaryExpression(right_unary_expr) =
+                        &bin_expr.right.without_parentheses()
                     && matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
                     && right_unary_expr.argument.is_number_literal()
                     && right_unary_expr.argument.is_number_value(1_f64)
                 {
-                    let Some(left_call_expr) = bin_expr.left.without_parentheses().as_call_expression()
+                    let Expression::CallExpression(left_call_expr) =
+                        &bin_expr.left.without_parentheses()
                     else {
                         return;
                     };
@@ -164,11 +166,12 @@ impl Rule for PreferArraySome {
                 }
 
                 if matches_against_zero {
-                    let Some(right_num_lit) = bin_expr.right.as_numeric_literal() else {
+                    let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
                         return;
                     };
 
-                    let Some(left_call_expr) = bin_expr.left.without_parentheses().as_call_expression()
+                    let Expression::CallExpression(left_call_expr) =
+                        &bin_expr.left.without_parentheses()
                     else {
                         return;
                     };
@@ -198,7 +201,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Some(right_num_lit) = bin_expr.right.as_numeric_literal() else {
+                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
                     return;
                 };
 
@@ -220,7 +223,8 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Some(left_call_expr) = left_member_expr.object().without_parentheses().as_call_expression()
+                let Expression::CallExpression(left_call_expr) =
+                    &left_member_expr.object().without_parentheses()
                 else {
                     return;
                 };
@@ -278,13 +282,13 @@ impl Rule for PreferArraySome {
 fn is_node_value_not_function(expr: &Expression) -> bool {
     if matches!(
         expr,
-        ExpressionKind::ArrayExpression(_)
-            | ExpressionKind::BinaryExpression(_)
-            | ExpressionKind::ClassExpression(_)
-            | ExpressionKind::ObjectExpression(_)
-            | ExpressionKind::TemplateLiteral(_)
-            | ExpressionKind::UnaryExpression(_)
-            | ExpressionKind::UpdateExpression(_)
+        Expression::ArrayExpression(_)
+            | Expression::BinaryExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::UnaryExpression(_)
+            | Expression::UpdateExpression(_)
     ) {
         return true;
     }
@@ -293,12 +297,12 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
     }
     if matches!(
         expr,
-        ExpressionKind::AssignmentExpression(_)
-            | ExpressionKind::AwaitExpression(_)
-            | ExpressionKind::LogicalExpression(_)
-            | ExpressionKind::NewExpression(_)
-            | ExpressionKind::TaggedTemplateExpression(_)
-            | ExpressionKind::ThisExpression(_)
+        Expression::AssignmentExpression(_)
+            | Expression::AwaitExpression(_)
+            | Expression::LogicalExpression(_)
+            | Expression::NewExpression(_)
+            | Expression::TaggedTemplateExpression(_)
+            | Expression::ThisExpression(_)
     ) {
         return true;
     }
@@ -347,7 +351,6 @@ fn is_checking_undefined<'a, 'b>(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Not `boolean`

@@ -62,13 +62,13 @@ impl Rule for PreferExponentiationOperator {
 
         let member_expor_obj = member_expr.object();
 
-        match member_expor_obj.kind() {
-            ExpressionKind::Identifier(ident) => {
+        match member_expor_obj {
+            Expression::Identifier(ident) => {
                 if ident.name.as_str() != "Math" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
-            match_member_expression!(ExpressionKind) => {
+            match_member_expression!(Expression) => {
                 let member_expr = member_expor_obj.to_member_expression();
                 let Some(static_prop_name) = member_expr.static_property_name() else {
                     return;
@@ -77,7 +77,7 @@ impl Rule for PreferExponentiationOperator {
                     return;
                 }
 
-                if let Some(ident) = member_expr.object().without_parentheses().as_identifier()
+                if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
                     && GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
                     && ctx.is_reference_to_global_variable(ident)
                 {
@@ -122,7 +122,7 @@ impl Rule for PreferExponentiationOperator {
 
 fn does_base_need_parens(expr: &Expression) -> bool {
     let expr = expr.without_parentheses();
-    if matches!(expr.kind(), ExpressionKind::UnaryExpression(_) | ExpressionKind::AwaitExpression(_)) {
+    if matches!(expr, Expression::UnaryExpression(_) | Expression::AwaitExpression(_)) {
         return true;
     }
     if let Some(prec) = get_precedence(expr) {

@@ -270,7 +270,7 @@ fn diagnose_array_in_array_spread<'a>(
                     ctx.diagnostic(diagnostic);
                     return;
                 };
-                let Some(arr) = spread.argument.as_array_expression() else {
+                let Expression::ArrayExpression(arr) = &spread.argument else {
                     ctx.diagnostic(diagnostic);
                     return;
                 };
@@ -399,7 +399,7 @@ fn check_useless_clone<'a>(
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
-    if matches!(target.kind(), ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)) {
+    if matches!(target, Expression::ArrayExpression(_) | Expression::ObjectExpression(_)) {
         return;
     }
 
@@ -409,7 +409,7 @@ fn check_useless_clone<'a>(
         let name = diagnostic_name(ctx, target);
 
         // `[...new Array(1)]` -> `new Array(1).fill()`
-        if let Some(new_expr) = target.as_new_expression() {
+        if let Expression::NewExpression(new_expr) = target {
             let is_array_constructor = new_expr
                 .callee
                 .without_parentheses()
@@ -439,10 +439,10 @@ fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&
         if snippet.len() > 50 || snippet.contains('\n') { None } else { Some(snippet) }
     }
 
-    match expr.kind() {
-        ExpressionKind::CallExpression(call) => diagnostic_name(ctx, &call.callee),
-        ExpressionKind::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
-        ExpressionKind::SequenceExpression(expr) => {
+    match expr {
+        Expression::CallExpression(call) => diagnostic_name(ctx, &call.callee),
+        Expression::AwaitExpression(expr) => diagnostic_name(ctx, &expr.argument),
+        Expression::SequenceExpression(expr) => {
             let span_with_parens = expr.span().expand(1);
             pretty_snippet(ctx.source_range(span_with_parens))
         }
@@ -516,7 +516,7 @@ fn as_single_obj_spread<'a, 's>(node: &'s ObjectExpression<'a>) -> Option<&'s Sp
 fn get_method_name(call_expr: &CallExpression) -> Option<String> {
     let callee = call_expr.callee.get_member_expr()?;
 
-    let object_name = if let Some(ident) = callee.object().as_identifier() {
+    let object_name = if let Expression::Identifier(ident) = &callee.object() {
         ident.name.as_str()
     } else {
         "unknown"
@@ -528,7 +528,6 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"const array = [[]]",

@@ -82,7 +82,7 @@ impl Rule for ConsistentEmptyArraySpread {
             conditional_expr.consequent.get_inner_expression(),
             conditional_expr.alternate.get_inner_expression(),
         ) {
-            (ExpressionKind::ArrayExpression(_), ExpressionKind::StringLiteral(right_str_lit)) => {
+            (Expression::ArrayExpression(_), Expression::StringLiteral(right_str_lit)) => {
                 if right_str_lit.value.is_empty() {
                     ctx.diagnostic_with_suggestion(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),
@@ -90,7 +90,7 @@ impl Rule for ConsistentEmptyArraySpread {
                     );
                 }
             }
-            (ExpressionKind::StringLiteral(_), ExpressionKind::ArrayExpression(right_array_expr)) => {
+            (Expression::StringLiteral(_), Expression::ArrayExpression(right_array_expr)) => {
                 if right_array_expr.elements.is_empty() {
                     ctx.diagnostic_with_suggestion(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),
@@ -106,7 +106,6 @@ impl Rule for ConsistentEmptyArraySpread {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "[,,,]",

@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey, ExpressionKind},
+        JSXOpeningElement, ObjectProperty, ObjectPropertyKind, PropertyKey,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,7 +112,7 @@ impl Rule for NextScriptForGa {
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#the_google_analytics_tag
         // https://developers.google.com/tag-manager/quickstart
         if let Some(danger_value) = get_dangerously_set_inner_html_prop_value(jsx_opening_element) {
-            let Some(template_literal) = danger_value.value.as_template_literal() else {
+            let Expression::TemplateLiteral(template_literal) = &danger_value.value else {
                 return;
             };
             let template_literal = template_literal.quasis[0].value.raw.as_str();

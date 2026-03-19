@@ -131,7 +131,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
         // operator could be unnecessary
 
-        let Some(right_identifier) = assignment_expr.right.get_inner_expression().as_identifier()
+        let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
         else {
             return;
         };
@@ -187,27 +187,27 @@ fn get_assignments_inside_expression<'a>(
 ) -> Vec<&'a AssignmentExpression<'a>> {
     let mut assignments: Vec<&AssignmentExpression> = Vec::new();
 
-    match expression.without_parentheses().kind() {
-        ExpressionKind::CallExpression(call) => {
+    match expression.without_parentheses() {
+        Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
             let function_body = match call.callee.without_parentheses() {
-                ExpressionKind::ArrowFunctionExpression(expr) => Some(&expr.body),
-                ExpressionKind::FunctionExpression(expr) => expr.body.as_ref(),
+                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
+                Expression::FunctionExpression(expr) => expr.body.as_ref(),
                 _ => None,
             };
 
             if let Some(function_body) = function_body {
                 for statement in &function_body.statements {
-                    if let Some(expr) = statement.as_expression_statement()
-                        && let Some(assignment) = expr.expression.as_assignment_expression()
+                    if let Statement::ExpressionStatement(expr) = statement
+                        && let Expression::AssignmentExpression(assignment) = &expr.expression
                     {
                         assignments.push(assignment);
                     }
                 }
             }
         }
-        ExpressionKind::AssignmentExpression(assignment) => {
+        Expression::AssignmentExpression(assignment) => {
             assignments.push(assignment);
         }
         _ => (),
@@ -227,18 +227,18 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
 }
 
 fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
-    match assignment_target.kind() {
+    match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
-            if matches!(expr.object.kind(), ExpressionKind::ThisExpression(_)) =>
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this.property
             Some(expr.property.name.into())
         }
         AssignmentTarget::ComputedMemberExpression(expr)
-            if matches!(expr.object.kind(), ExpressionKind::ThisExpression(_)) =>
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this["property"]
-            if let Some(str) = expr.expression.as_string_literal() {
+            if let Expression::StringLiteral(str) = &expr.expression {
                 Some(str.value)
             } else {
                 None
@@ -251,7 +251,6 @@ fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Ato
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "

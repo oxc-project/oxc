@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ExpressionKind},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -102,7 +102,7 @@ impl Rule for NoUnassignedImport {
                 }
             }
             AstKind::ExpressionStatement(statement) => {
-                let Some(call_expr) = statement.expression.as_call_expression() else {
+                let Expression::CallExpression(call_expr) = &statement.expression else {
                     return;
                 };
                 if !call_expr.is_require_call() {

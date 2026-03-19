@@ -3,7 +3,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, BindingPattern, Expression, ImportDeclarationSpecifier, ImportOrExportKind,
-        VariableDeclarationKind, VariableDeclarator, ExpressionKind},
+        VariableDeclarationKind, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -198,7 +199,7 @@ impl Rule for NoImportingVitestGlobals {
 }
 
 fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
-    let Some(call_expr) = declaration.init.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
         return false;
     };
 

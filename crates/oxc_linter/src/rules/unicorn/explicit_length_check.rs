@@ -97,7 +97,7 @@ declare_oxc_lint!(
 );
 
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr.kind(), ExpressionKind::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
@@ -212,7 +212,7 @@ impl ExplicitLengthCheck {
                 call.arguments
                     .first()
                     .and_then(|arg| arg.as_expression())
-                    .filter(|expr| matches!(expr.kind(), ExpressionKind::LogicalExpression(_)))
+                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
                     .map_or_else(|| node.span(), |_| static_member_expr.span)
             }
             _ => node.span(),
@@ -268,7 +268,7 @@ impl Rule for ExplicitLengthCheck {
             if property.name != "length" && property.name != "size" {
                 return;
             }
-            if let Some(_) = object.as_this_expression() {
+            if let Expression::ThisExpression(_) = object {
                 return;
             }
 
@@ -286,11 +286,11 @@ impl Rule for ExplicitLengthCheck {
                     self.report(ctx, ancestor, is_negative, static_member_expr, true);
                     return;
                 }
-                match ctx.nodes().parent_kind(node.id()).kind() {
+                match ctx.nodes().parent_kind(node.id()) {
                     AstKind::LogicalExpression(LogicalExpression { operator, right, .. })
                         if *operator == LogicalOperator::And
                             || (*operator == LogicalOperator::Or
-                                && !matches!(right.kind(), ExpressionKind::NumericLiteral(_))) =>
+                                && !matches!(right, Expression::NumericLiteral(_))) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }
@@ -304,7 +304,6 @@ impl Rule for ExplicitLengthCheck {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         // Not `.length`

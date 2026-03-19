@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, LogicalExpression, NumericLiteral, UnaryOperator, ExpressionKind},
+    ast::{BinaryExpression, Expression, LogicalExpression, NumericLiteral, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -249,25 +249,21 @@ impl ConstComparisons {
         }
 
         // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
-        let left_inner = logical_expr.left.get_inner_expression();
-        let right_inner = logical_expr.right.get_inner_expression();
-        let maybe_negated = if let Some(neg) = left_inner.as_unary_expression() {
-            Some((neg, right_inner))
-        } else if let Some(neg) = right_inner.as_unary_expression() {
-            Some((neg, left_inner))
-        } else {
-            None
-        };
-        if let Some((negated_expr, other_expr)) = maybe_negated {
-            if negated_expr.operator == UnaryOperator::LogicalNot
-                && is_same_expression(&negated_expr.argument, other_expr, ctx)
-            {
-                ctx.diagnostic(identical_expressions_logical_operator_negated(
-                    matches!(logical_expr.operator, LogicalOperator::Or),
-                    logical_expr.left.span(),
-                    logical_expr.right.span(),
-                ));
+        match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
+        {
+            (Expression::UnaryExpression(negated_expr), other_expr)
+            | (other_expr, Expression::UnaryExpression(negated_expr)) => {
+                if negated_expr.operator == UnaryOperator::LogicalNot
+                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
+                {
+                    ctx.diagnostic(identical_expressions_logical_operator_negated(
+                        matches!(logical_expr.operator, LogicalOperator::Or),
+                        logical_expr.left.span(),
+                        logical_expr.right.span(),
+                    ));
+                }
             }
+            _ => {}
         }
     }
 
@@ -348,14 +344,14 @@ impl ConstComparisons {
 fn comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<(CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> {
-    if let Some(bin_expr) = expr.as_binary_expression()
+    if let Expression::BinaryExpression(bin_expr) = expr
         && let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator)
     {
-        match (bin_expr.left.get_inner_expression().kind(), bin_expr.right.get_inner_expression().kind()) {
-            (ExpressionKind::NumericLiteral(lit), _) => {
+        match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()) {
+            (Expression::NumericLiteral(lit), _) => {
                 return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
             }
-            (_, ExpressionKind::NumericLiteral(lit)) => {
+            (_, Expression::NumericLiteral(lit)) => {
                 return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
             }
             _ => {}
@@ -368,8 +364,8 @@ fn comparison_to_const<'a, 'b>(
 fn all_and_comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Box<dyn Iterator<Item = (CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> + 'b> {
-    match expr.kind() {
-        ExpressionKind::LogicalExpression(logical_expr)
+    match expr {
+        Expression::LogicalExpression(logical_expr)
             if logical_expr.operator == LogicalOperator::And =>
         {
             let left_iter = all_and_comparison_to_const(logical_expr.left.get_inner_expression());

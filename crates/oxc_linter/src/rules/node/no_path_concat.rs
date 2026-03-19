@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TemplateLiteral, ExpressionKind},
+    ast::{Expression, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -98,7 +98,7 @@ fn is_path_separator(c: char) -> bool {
 }
 
 fn is_dirname_or_filename(expr: &Expression, ctx: &LintContext) -> bool {
-    let Some(ident) = expr.as_identifier() else {
+    let Expression::Identifier(ident) = expr else {
         return false;
     };
     ident.is_global_reference_name(Ident::new_const("__dirname"), ctx.scoping())
@@ -106,26 +106,26 @@ fn is_dirname_or_filename(expr: &Expression, ctx: &LintContext) -> bool {
 }
 
 fn starts_with_path_separator(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::StringLiteral(s) => s.value.chars().next().is_some_and(is_path_separator),
-        ExpressionKind::TemplateLiteral(temp_lit) => {
+    match expr {
+        Expression::StringLiteral(s) => s.value.chars().next().is_some_and(is_path_separator),
+        Expression::TemplateLiteral(temp_lit) => {
             template_element_starts_with_path_separator(temp_lit, 0)
         }
-        ExpressionKind::BinaryExpression(bin) if bin.operator == BinaryOperator::Addition => {
+        Expression::BinaryExpression(bin) if bin.operator == BinaryOperator::Addition => {
             starts_with_path_separator(&bin.left)
         }
-        ExpressionKind::ConditionalExpression(cond) => {
+        Expression::ConditionalExpression(cond) => {
             starts_with_path_separator(&cond.consequent)
                 || starts_with_path_separator(&cond.alternate)
         }
-        ExpressionKind::LogicalExpression(logical) => {
+        Expression::LogicalExpression(logical) => {
             starts_with_path_separator(&logical.left) || starts_with_path_separator(&logical.right)
         }
-        ExpressionKind::AssignmentExpression(assign) => starts_with_path_separator(&assign.right),
-        ExpressionKind::SequenceExpression(seq) => {
+        Expression::AssignmentExpression(assign) => starts_with_path_separator(&assign.right),
+        Expression::SequenceExpression(seq) => {
             seq.expressions.last().is_some_and(|last| starts_with_path_separator(last))
         }
-        ExpressionKind::ParenthesizedExpression(paren) => starts_with_path_separator(&paren.expression),
+        Expression::ParenthesizedExpression(paren) => starts_with_path_separator(&paren.expression),
         _ => is_path_sep(expr),
     }
 }

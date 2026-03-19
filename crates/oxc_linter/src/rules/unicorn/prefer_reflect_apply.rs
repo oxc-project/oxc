@@ -77,7 +77,7 @@ impl Rule for PreferReflectApply {
         if call_expr.optional
             || matches!(
                 member_expr.object(),
-                ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
+                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
             )
             || member_expr.object().is_literal()
         {
@@ -114,7 +114,7 @@ impl Rule for PreferReflectApply {
                 };
 
                 if is_static_property_name_equal(member_expr_obj_obj, "prototype") {
-                    let Some(iden) = member_expr_obj_obj.object().as_identifier() else {
+                    let Expression::Identifier(iden) = member_expr_obj_obj.object() else {
                         return;
                     };
                     if iden.name == "Function"
@@ -157,7 +157,6 @@ fn create_reflect_apply_fix(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo.apply();",

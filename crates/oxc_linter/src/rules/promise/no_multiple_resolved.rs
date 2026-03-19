@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, CallExpression, Expression, ExpressionKind},
+    ast::{BindingIdentifier, CallExpression, Expression},
 };
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
@@ -620,9 +620,9 @@ impl<'a, 'b> MultipleResolvedChecker<'a, 'b> {
 }
 
 fn get_resolve_symbol_id(expr: &Expression) -> (Option<SymbolId>, Option<SymbolId>) {
-    let params = match expr.kind() {
-        ExpressionKind::FunctionExpression(func_expr) => Some(func_expr.params.as_ref()),
-        ExpressionKind::ArrowFunctionExpression(arrow_func_expr) => {
+    let params = match expr {
+        Expression::FunctionExpression(func_expr) => Some(func_expr.params.as_ref()),
+        Expression::ArrowFunctionExpression(arrow_func_expr) => {
             Some(arrow_func_expr.params.as_ref())
         }
         _ => None,
@@ -728,8 +728,8 @@ impl<'a> Visit<'a> for ResolveFinder<'a> {
         }
     }
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
-        match call_expr.callee.kind() {
-            ExpressionKind::Identifier(ident) => {
+        match &call_expr.callee {
+            Expression::Identifier(ident) => {
                 let symbol_id = self.scoping.get_reference(ident.reference_id()).symbol_id();
                 if symbol_id == self.resolve_symbol_id || symbol_id == self.reject_symbol_id {
                     self.resolved.push(self.alloc(call_expr));

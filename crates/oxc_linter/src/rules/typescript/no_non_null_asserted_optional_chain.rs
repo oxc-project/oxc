@@ -67,7 +67,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
         };
 
         let chain_span = match non_null_expr.expression.get_inner_expression() {
-            ExpressionKind::ChainExpression(chain) => match &chain.expression {
+            Expression::ChainExpression(chain) => match &chain.expression {
                 ChainElement::ComputedMemberExpression(member) if member.optional => {
                     Some(member.object.span())
                 }
@@ -80,7 +80,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
                 _ => None,
             },
-            ExpressionKind::CallExpression(call) => {
+            Expression::CallExpression(call) => {
                 if call.optional && !is_parent_member_or_call(node, ctx) {
                     Some(call.callee.span())
                 } else if let Some(member) = call.callee.as_member_expression() {
@@ -93,7 +93,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                     None
                 }
             }
-            expr @ match_member_expression!(ExpressionKind) => {
+            expr @ match_member_expression!(Expression) => {
                 let member_expr = expr.to_member_expression();
                 if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
                     Some(member_expr.object().span())
@@ -130,7 +130,6 @@ fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "foo.bar!;",

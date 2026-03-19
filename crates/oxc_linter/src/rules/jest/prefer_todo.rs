@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, ExpressionKind},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,14 +87,14 @@ impl Rule for PreferTodo {
             {
                 let span = call_expr.callee.span();
                 ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
-                    let fix = if let Some(ident) = call_expr.callee.as_identifier() {
+                    let fix = if let Expression::Identifier(ident) = &call_expr.callee {
                         fixer.insert_text_after_range(ident.span, ".todo")
                     } else {
-                        match call_expr.callee.kind() {
-                            ExpressionKind::StaticMemberExpression(mem_expr) => {
+                        match &call_expr.callee {
+                            Expression::StaticMemberExpression(mem_expr) => {
                                 fixer.replace(mem_expr.property.span, "todo")
                             }
-                            ExpressionKind::ComputedMemberExpression(mem_expr) => {
+                            Expression::ComputedMemberExpression(mem_expr) => {
                                 fixer.replace(mem_expr.expression.span(), "'todo'")
                             }
                             _ => return fixer.delete_range(call_expr.span),
@@ -129,8 +129,8 @@ fn filter_todo_case(expr: &CallExpression) -> bool {
 }
 
 fn should_filter_case(expr: &CallExpression) -> bool {
-    let result = match expr.callee.kind() {
-        ExpressionKind::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
+    let result = match &expr.callee {
+        Expression::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
         _ => false,
     };
     result || filter_todo_case(expr)

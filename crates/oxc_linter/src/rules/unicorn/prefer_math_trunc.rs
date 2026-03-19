@@ -56,14 +56,15 @@ impl Rule for PreferMathTrunc {
                 if !matches!(unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
                 }
-                let Some(inner_unary_expr) = unary_expr.argument.as_unary_expression() else {
+                let Expression::UnaryExpression(inner_unary_expr) = &unary_expr.argument else {
                     return;
                 };
                 if !matches!(inner_unary_expr.operator, UnaryOperator::BitwiseNot) {
                     return;
                 }
 
-                if let Some(inner_inner_unary_expr) = inner_unary_expr.argument.as_unary_expression()
+                if let Expression::UnaryExpression(inner_inner_unary_expr) =
+                    &inner_unary_expr.argument
                     && matches!(inner_inner_unary_expr.operator, UnaryOperator::BitwiseNot)
                 {
                     return;
@@ -72,7 +73,7 @@ impl Rule for PreferMathTrunc {
                 (UnaryOperator::BitwiseNot.as_str(), inner_unary_expr.argument.span(), false)
             }
             AstKind::BinaryExpression(bin_expr) => {
-                let Some(right_num_lit) = bin_expr.right.as_numeric_literal() else {
+                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
                     return;
                 };
                 if right_num_lit.value != 0.0 {
@@ -92,7 +93,7 @@ impl Rule for PreferMathTrunc {
                 (bin_expr.operator.as_str(), bin_expr.left.span(), false)
             }
             AstKind::AssignmentExpression(assignment_expr) => {
-                let Some(right_num_lit) = assignment_expr.right.as_numeric_literal() else {
+                let Expression::NumericLiteral(right_num_lit) = &assignment_expr.right else {
                     return;
                 };
 

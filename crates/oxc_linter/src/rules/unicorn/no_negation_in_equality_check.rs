@@ -57,7 +57,7 @@ declare_oxc_lint!(
 impl Rule for NoNegationInEqualityCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(binary_expr) = node.kind() {
-            let Some(left_unary_expr) = binary_expr.left.as_unary_expression() else {
+            let Expression::UnaryExpression(left_unary_expr) = &binary_expr.left else {
                 return;
             };
 
@@ -65,7 +65,7 @@ impl Rule for NoNegationInEqualityCheck {
                 return;
             }
 
-            if let Some(left_nested_unary_expr) = left_unary_expr.argument.as_unary_expression()
+            if let Expression::UnaryExpression(left_nested_unary_expr) = &left_unary_expr.argument
                 && left_nested_unary_expr.operator == UnaryOperator::LogicalNot
             {
                 return;

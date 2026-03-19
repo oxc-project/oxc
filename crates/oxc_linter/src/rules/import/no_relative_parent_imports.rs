@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, ExpressionKind},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -77,7 +77,7 @@ impl Rule for NoRelativeParentImports {
             }
             // Dynamic import expressions: import('../foo')
             AstKind::ImportExpression(import_expr) => {
-                if let Some(str_literal) = import_expr.source.as_string_literal()
+                if let Expression::StringLiteral(str_literal) = &import_expr.source
                     && is_parent_import(str_literal.value.as_str())
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
@@ -85,7 +85,7 @@ impl Rule for NoRelativeParentImports {
             }
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
-                if let Some(ident) = call_expr.callee.as_identifier()
+                if let Expression::Identifier(ident) = &call_expr.callee
                     && ident.name == "require"
                     && call_expr.arguments.len() == 1
                     && let Argument::StringLiteral(str_literal) = &call_expr.arguments[0]

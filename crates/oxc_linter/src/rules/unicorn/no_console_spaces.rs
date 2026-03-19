@@ -72,12 +72,12 @@ impl Rule for NoConsoleSpaces {
         for (i, arg) in call_expr.arguments.iter().enumerate() {
             if let Some(expression_arg) = arg.as_expression() {
                 let (literal_raw, is_template_lit) = match expression_arg {
-                    ExpressionKind::StringLiteral(string_lit) => {
+                    Expression::StringLiteral(string_lit) => {
                         let literal_raw = string_lit.value.as_str();
 
                         (literal_raw, false)
                     }
-                    ExpressionKind::TemplateLiteral(string_lit) => {
+                    Expression::TemplateLiteral(string_lit) => {
                         let literal_raw = string_lit
                             .span
                             .source_text(ctx.source_text().as_ref())
@@ -146,7 +146,6 @@ fn report_diagnostic<'a>(
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "console.log(\"abc\");",

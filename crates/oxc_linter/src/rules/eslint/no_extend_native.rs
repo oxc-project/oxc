@@ -160,7 +160,7 @@ fn get_define_property_call<'a>(
 fn is_define_property_call(call_expr: &CallExpression) -> bool {
     let callee = call_expr.callee.without_parentheses();
 
-    let member_expression = if let Some(chain_expr) = callee.as_chain_expression() {
+    let member_expression = if let Expression::ChainExpression(chain_expr) = callee {
         chain_expr.expression.as_member_expression()
     } else {
         callee.as_member_expression()

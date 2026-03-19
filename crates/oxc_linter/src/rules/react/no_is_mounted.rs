@@ -58,7 +58,7 @@ impl Rule for NoIsMounted {
             return;
         };
 
-        if !matches!(member_expr.object().kind(), ExpressionKind::ThisExpression(_))
+        if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || member_expr.static_property_name().is_none_or(|str| str != "isMounted")
         {
             return;
@@ -80,7 +80,6 @@ impl Rule for NoIsMounted {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

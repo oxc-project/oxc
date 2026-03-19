@@ -176,8 +176,8 @@ impl CatchErrorName {
         let Some(expr) = arg.as_expression() else { return };
 
         let first_arg = match expr.without_parentheses() {
-            ExpressionKind::ArrowFunctionExpression(arrow_expr) => arrow_expr.params.items.first(),
-            ExpressionKind::FunctionExpression(fn_expr) => fn_expr.params.items.first(),
+            Expression::ArrowFunctionExpression(arrow_expr) => arrow_expr.params.items.first(),
+            Expression::FunctionExpression(fn_expr) => fn_expr.params.items.first(),
             _ => return,
         };
 
@@ -233,7 +233,6 @@ impl CatchErrorName {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("try {} catch (err) {}", Some(serde_json::json!([{"name": "err"}]))),

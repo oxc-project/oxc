@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use oxc_ast::{AstKind, ast::Expression};
-use oxc_ast::ast::ExpressionKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
@@ -242,8 +241,8 @@ impl ConsistentTestIt {
         test_name: &str,
         fix_jest_name: &'s str,
     ) -> Option<(Span, Cow<'s, str>)> {
-        match expr.kind() {
-            ExpressionKind::Identifier(ident) => {
+        match expr {
+            Expression::Identifier(ident) => {
                 if ident.name.eq("fit") {
                     return Some((ident.span(), Cow::Borrowed("test.only")));
                 }
@@ -255,15 +254,15 @@ impl ConsistentTestIt {
                 };
                 Some((ident.span(), prefer_test_name))
             }
-            ExpressionKind::StaticMemberExpression(expr) => {
+            Expression::StaticMemberExpression(expr) => {
                 Self::get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name)
             }
-            ExpressionKind::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
+            Expression::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 test_name,
                 fix_jest_name,
             ),
-            ExpressionKind::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
+            Expression::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
                 expr.tag.get_inner_expression(),
                 test_name,
                 fix_jest_name,

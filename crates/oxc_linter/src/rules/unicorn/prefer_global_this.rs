@@ -74,7 +74,7 @@ impl Rule for PreferGlobalThis {
         }
 
         if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
-            && let Some(ident) = e.object.as_identifier()
+            && let Expression::Identifier(ident) = &e.object
         {
             if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
             {
@@ -89,7 +89,8 @@ impl Rule for PreferGlobalThis {
                     if let Some(AstKind::CallExpression(call_expr)) =
                         ctx.nodes().ancestor_kinds(node.id()).nth(1)
                     {
-                        if let Some(lit) = call_expr.arguments.first().and_then(|arg| arg.as_expression()).and_then(|e| e.as_string_literal())
+                        if let Some(Expression::StringLiteral(lit)) =
+                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
                             && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                         {
                             return;
@@ -118,7 +119,7 @@ impl Rule for PreferGlobalThis {
 fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
         && unary.operator == UnaryOperator::Typeof
-        && let Some(arg_ident) = unary.argument.as_identifier()
+        && let Expression::Identifier(arg_ident) = &unary.argument
     {
         return arg_ident.span == node.span();
     }
@@ -130,7 +131,7 @@ fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_
     let AstKind::ComputedMemberExpression(member_expr) = ctx.nodes().parent_kind(node.id()) else {
         return false;
     };
-    let Some(obj_ident) = member_expr.object.get_inner_expression().as_identifier() else {
+    let Expression::Identifier(obj_ident) = &member_expr.object.get_inner_expression() else {
         return false;
     };
     obj_ident.span == node.kind().span()

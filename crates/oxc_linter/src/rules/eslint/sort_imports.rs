@@ -105,7 +105,7 @@ impl Rule for SortImports {
         let mut import_declarations = vec![];
 
         for statement in &program.body {
-            if let Some(decl) = statement.as_import_declaration() {
+            if let Statement::ImportDeclaration(decl) = statement {
                 import_declarations.push(decl);
             } else {
                 break;

@@ -125,7 +125,7 @@ impl Rule for PreferTopLevelAwait {
             return;
         }
 
-        if let Some(member_expr) = call_expr.callee.as_static_member_expression()
+        if let Expression::StaticMemberExpression(member_expr) = &call_expr.callee
             && matches!(member_expr.property.name.as_str(), "then" | "catch" | "finally")
         {
             ctx.diagnostic(prefer_top_level_await_over_promise_chain_diagnostic(call_expr.span));
@@ -133,15 +133,15 @@ impl Rule for PreferTopLevelAwait {
         }
 
         if match call_expr.callee.get_inner_expression() {
-            ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator => true,
-            ExpressionKind::ArrowFunctionExpression(func) if func.r#async => true,
+            Expression::FunctionExpression(func) if func.r#async && !func.generator => true,
+            Expression::ArrowFunctionExpression(func) if func.r#async => true,
             _ => false,
         } {
             ctx.diagnostic(prefer_top_level_await_over_async_iife_diagnostic(call_expr.span));
             return;
         }
 
-        let Some(ident) = call_expr.callee.as_identifier() else {
+        let Expression::Identifier(ident) = &call_expr.callee else {
             return;
         };
 
@@ -161,8 +161,8 @@ impl Rule for PreferTopLevelAwait {
             {
                 let Some(init) = &var_decl.init else { return };
 
-                if !matches!(init.get_inner_expression().kind(), ExpressionKind::ArrowFunctionExpression(func) if func.r#async)
-                    && !matches!(init.get_inner_expression().kind(), ExpressionKind::FunctionExpression(func) if func.r#async && !func.generator)
+                if !matches!(init.get_inner_expression(), Expression::ArrowFunctionExpression(func) if func.r#async)
+                    && !matches!(init.get_inner_expression(), Expression::FunctionExpression(func) if func.r#async && !func.generator)
                 {
                     return;
                 }
@@ -185,7 +185,6 @@ impl Rule for PreferTopLevelAwait {
 fn test() {
     use crate::tester::Tester;
     use std::path::PathBuf;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         ("a()", None, None, None),

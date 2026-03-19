@@ -1,7 +1,7 @@
 // Inspired by https://github.com/rust-lang/rust-clippy/blob/95f5a00d8628fba223c802251af3c42547927c5a/clippy_lints/src/ifs/branches_sharing_code.rs
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IfStatement, Statement, StatementKind},
+    ast::{Expression, IfStatement, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -117,8 +117,8 @@ impl Rule for BranchesSharingCode {
 }
 
 fn get_block_statements<'a>(stmt: &'a Statement<'a>) -> &'a [Statement<'a>] {
-    match stmt.kind() {
-        StatementKind::BlockStatement(block) => &block.body,
+    match stmt {
+        Statement::BlockStatement(block) => &block.body,
         _ => &[],
     }
 }
@@ -197,8 +197,8 @@ fn extract_if_sequence<'a>(
         bodies.push(&if_node.consequent);
 
         match &if_node.alternate {
-            Some(alt) if alt.is_if_statement() => {
-                current_if = Some(alt.as_if_statement().unwrap());
+            Some(Statement::IfStatement(else_if)) => {
+                current_if = Some(else_if);
             }
             Some(else_stmt) => {
                 bodies.push(else_stmt);

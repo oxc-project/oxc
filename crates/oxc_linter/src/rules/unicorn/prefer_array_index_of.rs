@@ -79,7 +79,7 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
     fn is_simple_compare(arg: &FormalParameter, expr: &Expression, ctx: &LintContext) -> bool {
         let Some(ident) = arg.pattern.get_binding_identifier() else { return false };
 
-        if let Some(expr) = expr.as_binary_expression()
+        if let Expression::BinaryExpression(expr) = expr
             && ctx.symbol_references(ident.symbol_id()).count() == 1
             && expr.operator == BinaryOperator::StrictEquality
             && (expr
@@ -96,18 +96,20 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
         false
     }
 
-    match expr.get_inner_expression().kind() {
-        ExpressionKind::ArrowFunctionExpression(arrow_function)
+    match expr.get_inner_expression() {
+        Expression::ArrowFunctionExpression(arrow_function)
             if !arrow_function.r#async && arrow_function.params.items.len() == 1 =>
         {
             let query = if arrow_function.expression {
-                if let Some(expr) = arrow_function.body.statements.first().and_then(|s| s.as_expression_statement())
+                if let Some(Statement::ExpressionStatement(expr)) =
+                    arrow_function.body.statements.first()
                 {
                     Some(&expr.expression)
                 } else {
                     None
                 }
-            } else if let Some(ret) = arrow_function.body.statements.first().and_then(|s| s.as_return_statement())
+            } else if let Some(Statement::ReturnStatement(ret)) =
+                arrow_function.body.statements.first()
             {
                 ret.argument.as_ref()
             } else {
@@ -116,10 +118,11 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
 
             query.is_some_and(|expr| is_simple_compare(&arrow_function.params.items[0], expr, ctx))
         }
-        ExpressionKind::FunctionExpression(function)
+        Expression::FunctionExpression(function)
             if !function.r#async && !function.generator && function.params.items.len() == 1 =>
         {
-            let query = if let Some(ret) = function.body.as_ref().and_then(|body| body.statements.first()).and_then(|s| s.as_return_statement())
+            let query = if let Some(Statement::ReturnStatement(ret)) =
+                function.body.as_ref().and_then(|stmts| stmts.statements.first())
             {
                 ret.argument.as_ref()
             } else {
@@ -135,7 +138,6 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
     let pass = vec![
         "const findIndex = foo.findIndex",
         "foo.findIndex()",

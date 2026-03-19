@@ -192,8 +192,8 @@ fn is_safe_from_name_collisions(
 ) -> bool {
     let scopes = ctx.scoping();
 
-    match stmt.kind() {
-        StatementKind::BlockStatement(block) => {
+    match stmt {
+        Statement::BlockStatement(block) => {
             let block_scope_id = block.scope_id();
             let bindings = scopes.get_bindings(block_scope_id);
             let parent_bindings = scopes.get_bindings(parent_scope_id);
@@ -210,7 +210,7 @@ fn is_safe_from_name_collisions(
 
             true
         }
-        StatementKind::FunctionDeclaration(_) => false,
+        Statement::FunctionDeclaration(_) => false,
         _ => true,
     }
 }
@@ -237,7 +237,7 @@ fn no_else_return_diagnostic_fix(
 
         // Capture the contents of the `else` statement, removing curly braces
         // for block statements
-        let replacement_span = if let Some(block) = else_stmt.as_block_statement() {
+        let replacement_span = if let Statement::BlockStatement(block) = else_stmt {
             block.span.shrink(1)
         } else {
             else_content_span
@@ -245,9 +245,9 @@ fn no_else_return_diagnostic_fix(
 
         // Check if if statement's consequent block could introduce an ASI
         // hazard when `else` is removed.
-        match else_stmt_prev.kind() {
-            StatementKind::ExpressionStatement(s) => !ctx.source_range(s.span).ends_with(';'),
-            StatementKind::ReturnStatement(s) => !ctx.source_range(s.span).ends_with(';'),
+        let needs_newline = match else_stmt_prev {
+            Statement::ExpressionStatement(s) => !ctx.source_range(s.span).ends_with(';'),
+            Statement::ReturnStatement(s) => !ctx.source_range(s.span).ends_with(';'),
             _ => false,
         };
         if needs_newline {
@@ -260,20 +260,20 @@ fn no_else_return_diagnostic_fix(
 }
 
 fn naive_has_return(node: &Statement) -> Option<Span> {
-    match node.kind() {
-        StatementKind::BlockStatement(block) => {
+    match node {
+        Statement::BlockStatement(block) => {
             let last_child = block.body.last()?;
-            if let Some(r) = last_child.as_return_statement() { Some(r.span) } else { None }
+            if let Statement::ReturnStatement(r) = last_child { Some(r.span) } else { None }
         }
-        StatementKind::ReturnStatement(r) => Some(r.span),
+        Statement::ReturnStatement(r) => Some(r.span),
         _ => None,
     }
 }
 
 fn check_for_return_or_if(node: &Statement) -> Option<Span> {
-    match node.kind() {
-        StatementKind::ReturnStatement(r) => Some(r.span),
-        StatementKind::IfStatement(if_stmt) => {
+    match node {
+        Statement::ReturnStatement(r) => Some(r.span),
+        Statement::IfStatement(if_stmt) => {
             let alternate = if_stmt.alternate.as_ref()?;
             if let (Some(_), Some(ret_span)) =
                 (naive_has_return(alternate), naive_has_return(&if_stmt.consequent))
@@ -288,8 +288,8 @@ fn check_for_return_or_if(node: &Statement) -> Option<Span> {
 }
 
 fn always_returns(stmt: &Statement) -> Option<Span> {
-    match stmt.kind() {
-        StatementKind::BlockStatement(block) => block.body.iter().find_map(check_for_return_or_if),
+    match stmt {
+        Statement::BlockStatement(block) => block.body.iter().find_map(check_for_return_or_if),
         node => check_for_return_or_if(node),
     }
 }
@@ -326,8 +326,8 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
         last_alternate_prev = &current_node.consequent;
         last_alternate = alternate;
         last_return_span = ret_span;
-        match alternate.kind() {
-            StatementKind::IfStatement(if_stmt) => {
+        match alternate {
+            Statement::IfStatement(if_stmt) => {
                 current_node = if_stmt;
             }
             _ => break,

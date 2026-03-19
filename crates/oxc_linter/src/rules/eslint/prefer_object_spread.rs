@@ -89,14 +89,14 @@ impl Rule for PreferObjectSpread {
 
         let unresolved_references = ctx.scoping().root_unresolved_references();
 
-        match callee.object().get_inner_expression().kind() {
-            ExpressionKind::Identifier(ident) => {
+        match callee.object().get_inner_expression() {
+            Expression::Identifier(ident) => {
                 if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
                     return;
                 }
             }
-            ExpressionKind::StaticMemberExpression(member_expr) => {
-                if let Some(ident) = member_expr.object.get_inner_expression().as_identifier() {
+            Expression::StaticMemberExpression(member_expr) => {
+                if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
                     if ident.name != "globalThis"
                         || !unresolved_references.contains_key(&ident.name)
                     {
@@ -116,7 +116,7 @@ impl Rule for PreferObjectSpread {
         let arguments_len = call_expr.arguments.len();
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
-            let Some(ExpressionKind::ObjectExpression(obj_expr)) =
+            let Some(Expression::ObjectExpression(obj_expr)) =
                 arg.as_expression().map(Expression::get_inner_expression)
             else {
                 if idx == 0 {
@@ -171,7 +171,7 @@ impl Rule for PreferObjectSpread {
                         return fixer.noop();
                     };
 
-                    if let Some(obj_expr) = expression.as_object_expression() {
+                    if let Expression::ObjectExpression(obj_expr) = expression {
                         let delete_span_of_left = get_delete_span_of_left(obj_expr, ctx);
 
                         let delete_span_of_right = Span::new(
@@ -197,9 +197,9 @@ impl Rule for PreferObjectSpread {
                         let span = expression.span();
                         let replacement = if matches!(
                             expression,
-                            ExpressionKind::ArrowFunctionExpression(_)
-                                | ExpressionKind::AssignmentExpression(_)
-                                | ExpressionKind::ConditionalExpression(_)
+                            Expression::ArrowFunctionExpression(_)
+                                | Expression::AssignmentExpression(_)
+                                | Expression::ConditionalExpression(_)
                         ) {
                             format!("...({})", ctx.source_range(span))
                         } else {

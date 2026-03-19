@@ -123,25 +123,25 @@ fn check_array_from(call_expr: &CallExpression, ctx: &LintContext) {
 }
 
 fn is_node_not_function(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::ArrayExpression(_)
-        | ExpressionKind::BinaryExpression(_)
-        | ExpressionKind::ClassExpression(_)
-        | ExpressionKind::NullLiteral(_)
-        | ExpressionKind::RegExpLiteral(_)
-        | ExpressionKind::StringLiteral(_)
-        | ExpressionKind::BigIntLiteral(_)
-        | ExpressionKind::NumericLiteral(_)
-        | ExpressionKind::TemplateLiteral(_)
-        | ExpressionKind::UnaryExpression(_)
-        | ExpressionKind::UpdateExpression(_)
-        | ExpressionKind::AssignmentExpression(_)
-        | ExpressionKind::AwaitExpression(_)
-        | ExpressionKind::NewExpression(_)
-        | ExpressionKind::TaggedTemplateExpression(_)
-        | ExpressionKind::ThisExpression(_) => true,
-        ExpressionKind::Identifier(ident) if ident.name == "undefined" => true,
-        ExpressionKind::CallExpression(call_expr) => {
+    match expr {
+        Expression::ArrayExpression(_)
+        | Expression::BinaryExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::NullLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::StringLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::UnaryExpression(_)
+        | Expression::UpdateExpression(_)
+        | Expression::AssignmentExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::ThisExpression(_) => true,
+        Expression::Identifier(ident) if ident.name == "undefined" => true,
+        Expression::CallExpression(call_expr) => {
             !is_method_call(call_expr, None, Some(&["bind"]), None, None)
         }
         _ => false,
@@ -195,7 +195,6 @@ const IGNORED: &[&[&str]] = &[
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "array.unknownMethod(() => {}, thisArgument)",

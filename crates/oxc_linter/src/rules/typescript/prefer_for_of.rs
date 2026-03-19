@@ -61,15 +61,15 @@ trait ExpressionExt {
 
 impl ExpressionExt for Expression<'_> {
     fn is_increment_of(&self, var_name: &str) -> bool {
-        match self.kind() {
-            ExpressionKind::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
+        match self {
+            Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
                 (
                     SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
                     UpdateOperator::Increment,
                 ) => id.name == var_name,
                 _ => false,
             },
-            ExpressionKind::AssignmentExpression(expr) => {
+            Expression::AssignmentExpression(expr) => {
                 if !matches!(&expr.left,
                     AssignmentTarget::AssignmentTargetIdentifier(id)
                     if id.name == var_name
@@ -77,13 +77,13 @@ impl ExpressionExt for Expression<'_> {
                     return false;
                 }
 
-                match expr.operator.kind() {
+                match expr.operator {
                     AssignmentOperator::Addition => {
-                        matches!(expr.right.kind(), ExpressionKind::NumericLiteral(lit)
+                        matches!(&expr.right, Expression::NumericLiteral(lit)
                             if (lit.value - 1f64).abs() < f64::EPSILON)
                     }
                     AssignmentOperator::Assign => {
-                        let Some(bin_expr) = expr.right.as_binary_expression() else {
+                        let Expression::BinaryExpression(bin_expr) = &expr.right else {
                             return false;
                         };
 
@@ -91,9 +91,9 @@ impl ExpressionExt for Expression<'_> {
                             return false;
                         }
 
-                        match (&bin_expr.left, &bin_expr.right).kind() {
-                            (ExpressionKind::Identifier(id), ExpressionKind::NumericLiteral(lit))
-                            | (ExpressionKind::NumericLiteral(lit), ExpressionKind::Identifier(id)) => {
+                        match (&bin_expr.left, &bin_expr.right) {
+                            (Expression::Identifier(id), Expression::NumericLiteral(lit))
+                            | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
                                 id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
                             }
                             _ => false,
@@ -129,16 +129,18 @@ impl Rule for PreferForOf {
             _ => return,
         };
 
-        if !decl.init.as_ref().and_then(|e| e.as_numeric_literal()).is_some_and(|literal| literal.value == 0f64) {
+        if !matches!(&decl.init,
+            Some(Expression::NumericLiteral(literal)) if literal.value == 0f64
+        ) {
             return;
         }
 
-        let Some(test_expr) = for_stmt.test.as_binary_expression() else {
+        let Some(Expression::BinaryExpression(test_expr)) = &for_stmt.test else {
             return;
         };
 
-        if !matches!((test_expr.left.kind(), test_expr.operator),
-            (ExpressionKind::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
+        if !matches!((&test_expr.left, test_expr.operator),
+            (Expression::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
         ) {
             return;
         }
@@ -154,8 +156,8 @@ impl Rule for PreferForOf {
 
             let array_expr = mem_expr.object();
             let array_name = match mem_expr.object() {
-                ExpressionKind::Identifier(id) => id.name.as_str(),
-                expr @ match_member_expression!(ExpressionKind) => {
+                Expression::Identifier(id) => id.name.as_str(),
+                expr @ match_member_expression!(Expression) => {
                     match expr.to_member_expression().static_property_name() {
                         Some(array_name) => array_name,
                         None => return,
@@ -233,7 +235,7 @@ fn prevents_for_of_array_access(
         return false;
     };
 
-    let Some(id) = mem_expr.object().as_identifier() else {
+    let Expression::Identifier(id) = mem_expr.object() else {
         return false;
     };
 
@@ -287,7 +289,6 @@ fn is_direct_assignment_target(kind: &AstKind) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         "for (let i = 0; i < arr1.length; i++) { const x = arr1[i] === arr2[i]; }",

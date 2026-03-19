@@ -84,7 +84,7 @@ impl Rule for NoWillUpdateSetState {
 
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
-        if !matches!(member_expr.object().kind(), ExpressionKind::ThisExpression(_))
+        if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || member_expr.static_property_name().is_none_or(|name| name != "setState")
         {
             return;
@@ -168,7 +168,6 @@ impl Rule for NoWillUpdateSetState {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

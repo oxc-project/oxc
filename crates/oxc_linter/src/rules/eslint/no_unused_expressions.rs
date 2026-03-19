@@ -100,30 +100,29 @@ fn is_parent_arrow_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext
 
 impl NoUnusedExpressions {
     fn is_disallowed(&self, expr: &Expression) -> bool {
-        match expr.kind() {
-            ExpressionKind::BooleanLiteral(_)
-            | ExpressionKind::NullLiteral(_)
-            | ExpressionKind::NumericLiteral(_)
-            | ExpressionKind::BigIntLiteral(_)
-            | ExpressionKind::RegExpLiteral(_)
-            | ExpressionKind::StringLiteral(_)
-            | ExpressionKind::SequenceExpression(_)
-            | ExpressionKind::FunctionExpression(_)
-            | ExpressionKind::ArrayExpression(_)
-            | ExpressionKind::ComputedMemberExpression(_)
-            | ExpressionKind::MetaProperty(_)
-            | ExpressionKind::ObjectExpression(_)
-            | ExpressionKind::PrivateFieldExpression(_)
-            | ExpressionKind::StaticMemberExpression(_)
-            | ExpressionKind::TemplateLiteral(_)
-            | ExpressionKind::ArrowFunctionExpression(_)
-            | ExpressionKind::ClassExpression(_)
-            | ExpressionKind::BinaryExpression(_)
-            | ExpressionKind::PrivateInExpression(_)
-            | ExpressionKind::ThisExpression(_)
-            | ExpressionKind::Identifier(_) => true,
-            ExpressionKind::ChainExpression(chain_expression) => match &chain_expression.expression
-            {
+        match expr {
+            Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::SequenceExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::MetaProperty(_)
+            | Expression::ObjectExpression(_)
+            | Expression::PrivateFieldExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::BinaryExpression(_)
+            | Expression::PrivateInExpression(_)
+            | Expression::ThisExpression(_)
+            | Expression::Identifier(_) => true,
+            Expression::ChainExpression(chain_expression) => match &chain_expression.expression {
                 ChainElement::CallExpression(_) => false,
                 ChainElement::TSNonNullExpression(ts_non_null_expression) => {
                     self.is_disallowed(&ts_non_null_expression.expression)
@@ -132,49 +131,47 @@ impl NoUnusedExpressions {
                 | ChainElement::StaticMemberExpression(_)
                 | ChainElement::PrivateFieldExpression(_) => true,
             },
-            ExpressionKind::AssignmentExpression(_)
-            | ExpressionKind::AwaitExpression(_)
-            | ExpressionKind::NewExpression(_)
-            | ExpressionKind::ImportExpression(_)
-            | ExpressionKind::Super(_)
-            | ExpressionKind::CallExpression(_)
-            | ExpressionKind::V8IntrinsicExpression(_)
-            | ExpressionKind::UpdateExpression(_)
-            | ExpressionKind::TSSatisfiesExpression(_)
-            | ExpressionKind::YieldExpression(_) => false,
-            ExpressionKind::ConditionalExpression(conditional_expression) => {
+            Expression::AssignmentExpression(_)
+            | Expression::AwaitExpression(_)
+            | Expression::NewExpression(_)
+            | Expression::ImportExpression(_)
+            | Expression::Super(_)
+            | Expression::CallExpression(_)
+            | Expression::V8IntrinsicExpression(_)
+            | Expression::UpdateExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::YieldExpression(_) => false,
+            Expression::ConditionalExpression(conditional_expression) => {
                 if self.0.allow_ternary {
                     return self.is_disallowed(&conditional_expression.alternate)
                         || self.is_disallowed(&conditional_expression.consequent);
                 }
                 true
             }
-            ExpressionKind::LogicalExpression(logical_expression) => {
+            Expression::LogicalExpression(logical_expression) => {
                 if self.0.allow_short_circuit {
                     return self.is_disallowed(&logical_expression.right);
                 }
                 true
             }
-            ExpressionKind::ParenthesizedExpression(parenthesized_expression) => {
+            Expression::ParenthesizedExpression(parenthesized_expression) => {
                 self.is_disallowed(&parenthesized_expression.expression)
             }
-            ExpressionKind::TaggedTemplateExpression(_) => !self.0.allow_tagged_templates,
-            ExpressionKind::UnaryExpression(unary_expression) => {
+            Expression::TaggedTemplateExpression(_) => !self.0.allow_tagged_templates,
+            Expression::UnaryExpression(unary_expression) => {
                 !matches!(unary_expression.operator, UnaryOperator::Delete | UnaryOperator::Void)
             }
-            ExpressionKind::JSXElement(_) | ExpressionKind::JSXFragment(_) => {
-                self.0.enforce_for_jsx
-            }
-            ExpressionKind::TSAsExpression(ts_as_expression) => {
+            Expression::JSXElement(_) | Expression::JSXFragment(_) => self.0.enforce_for_jsx,
+            Expression::TSAsExpression(ts_as_expression) => {
                 self.is_disallowed(&ts_as_expression.expression)
             }
-            ExpressionKind::TSTypeAssertion(ts_type_assertion) => {
+            Expression::TSTypeAssertion(ts_type_assertion) => {
                 self.is_disallowed(&ts_type_assertion.expression)
             }
-            ExpressionKind::TSNonNullExpression(ts_non_null_expression) => {
+            Expression::TSNonNullExpression(ts_non_null_expression) => {
                 self.is_disallowed(&ts_non_null_expression.expression)
             }
-            ExpressionKind::TSInstantiationExpression(ts_instantiation_expression) => {
+            Expression::TSInstantiationExpression(ts_instantiation_expression) => {
                 self.is_disallowed(&ts_instantiation_expression.expression)
             }
         }

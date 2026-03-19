@@ -132,7 +132,7 @@ impl Rule for NoStringRefs {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                if matches!(member_expr.object().kind(), ExpressionKind::ThisExpression(_))
+                if matches!(member_expr.object(), Expression::ThisExpression(_))
                     && member_expr.static_property_name().is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {
@@ -151,7 +151,6 @@ impl Rule for NoStringRefs {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         (

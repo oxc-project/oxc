@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, ExpressionKind},
+    ast::{Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -106,7 +106,7 @@ impl Rule for GlobalRequire {
             return;
         };
 
-        let Some(ident) = call_expr.callee.as_identifier() else {
+        let Expression::Identifier(ident) = &call_expr.callee else {
             return;
         };
 

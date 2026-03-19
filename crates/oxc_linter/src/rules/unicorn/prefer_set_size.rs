@@ -57,7 +57,7 @@ impl Rule for PreferSetSize {
             return;
         }
 
-        let Some(array_expr) = member_expr.object.without_parentheses().as_array_expression()
+        let Expression::ArrayExpression(array_expr) = member_expr.object.without_parentheses()
         else {
             return;
         };
@@ -92,14 +92,14 @@ impl Rule for PreferSetSize {
 }
 
 fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Some(new_expr) = maybe_set.as_new_expression() {
-        if let Some(identifier) = new_expr.callee.as_identifier() {
+    if let Expression::NewExpression(new_expr) = maybe_set {
+        if let Expression::Identifier(identifier) = &new_expr.callee {
             return identifier.name == "Set";
         }
         return false;
     }
 
-    let Some(ident) = maybe_set.as_identifier() else {
+    let Expression::Identifier(ident) = maybe_set else {
         return false;
     };
 
@@ -127,8 +127,8 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_new_set(expr: &Expression) -> bool {
-    if let Some(new_expr) = expr.as_new_expression() {
-        if let Some(identifier) = new_expr.callee.as_identifier() {
+    if let Expression::NewExpression(new_expr) = expr {
+        if let Expression::Identifier(identifier) = &new_expr.callee {
             return identifier.name == "Set";
         }
         return false;

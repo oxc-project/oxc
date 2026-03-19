@@ -113,14 +113,14 @@ impl Rule for PreferClassFields {
 
         // Find first non-empty statement in constructor
         let first_statement =
-            body.statements.iter().find(|stmt| !matches!(stmt.kind(), StatementKind::EmptyStatement(_)));
+            body.statements.iter().find(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
 
-        let Some(expr_stmt) = first_statement.as_expression_statement() else {
+        let Some(Statement::ExpressionStatement(expr_stmt)) = first_statement else {
             return;
         };
 
         // Check if it's a simple assignment to this.property = literal
-        let Some(assign) = expr_stmt.expression.as_assignment_expression() else {
+        let Expression::AssignmentExpression(assign) = &expr_stmt.expression else {
             return;
         };
 
@@ -218,7 +218,7 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     };
 
     // Check if it's this.property
-    if !matches!(member.object().kind(), ExpressionKind::ThisExpression(_)) {
+    if !matches!(member.object(), Expression::ThisExpression(_)) {
         return false;
     }
 
@@ -229,17 +229,17 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     // Check if the value is a literal
     matches!(
         &assign.right,
-        ExpressionKind::StringLiteral(_)
-            | ExpressionKind::NumericLiteral(_)
-            | ExpressionKind::BooleanLiteral(_)
-            | ExpressionKind::NullLiteral(_)
-            | ExpressionKind::BigIntLiteral(_)
-            | ExpressionKind::RegExpLiteral(_)
+        Expression::StringLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
     )
 }
 
 fn get_property_name<'a>(member: &MemberExpression<'a>) -> Option<&'a str> {
-    match member.kind() {
+    match member {
         MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
         MemberExpression::PrivateFieldExpression(expr) => Some(expr.field.name.as_str()),
         MemberExpression::ComputedMemberExpression(_) => None,
@@ -249,8 +249,6 @@ fn get_property_name<'a>(member: &MemberExpression<'a>) -> Option<&'a str> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
-use oxc_ast::ast::StatementKind;
 
     let pass = vec![
         "class Foo {bar = 1}",

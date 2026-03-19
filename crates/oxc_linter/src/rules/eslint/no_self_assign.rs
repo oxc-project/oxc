@@ -132,11 +132,11 @@ impl NoSelfAssign {
         right: &'a Expression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        match left.kind() {
+        match left {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
-                if let Some(id2) = right.without_parentheses().as_identifier() {
-                    let self_assign = simple_assignment_target.get_expression().and_then(Expression::as_identifier).is_some_and(|id1| id1.name == id2.name)
+                if let Expression::Identifier(id2) = right.without_parentheses() {
+                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
@@ -158,7 +158,7 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
-                let Some(array_expr) = right.without_parentheses().as_array_expression() else {
+                let Expression::ArrayExpression(array_expr) = right.without_parentheses() else {
                     return;
                 };
                 let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
@@ -184,7 +184,7 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ObjectAssignmentTarget(object_pattern) => {
-                let Some(object_expr) = right.get_inner_expression().as_object_expression() else {
+                let Expression::ObjectExpression(object_expr) = right.get_inner_expression() else {
                     return;
                 };
 
@@ -224,13 +224,13 @@ impl NoSelfAssign {
 
         if matches!(
             (left, right),
-            (ExpressionKind::Super(_), ExpressionKind::Super(_))
-                | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
+            (Expression::Super(_), Expression::Super(_))
+                | (Expression::ThisExpression(_), Expression::ThisExpression(_))
         ) {
             return true;
         }
 
-        if let (ExpressionKind::Identifier(id1), ExpressionKind::Identifier(id2)) = (left, right) {
+        if let (Expression::Identifier(id1), Expression::Identifier(id2)) = (left, right) {
             return id1.name == id2.name;
         }
 
@@ -295,7 +295,7 @@ impl NoSelfAssign {
                     return;
                 };
                 if key.static_name().is_some_and(|name| name == id1.binding.name)
-                    && let Some(id2) = expr.without_parentheses().as_identifier()
+                    && let Expression::Identifier(id2) = expr.without_parentheses()
                     && id1.binding.name == id2.name
                 {
                     ctx.diagnostic(no_self_assign_diagnostic(*span));

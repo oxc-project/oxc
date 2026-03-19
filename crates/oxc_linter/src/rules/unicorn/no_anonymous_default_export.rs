@@ -100,11 +100,11 @@ impl Rule for NoAnonymousDefaultExport {
 
 fn is_anonymous_class_or_function(expr: &Expression) -> Option<(Span, ErrorNodeKind)> {
     Some(match expr.get_inner_expression() {
-        ExpressionKind::ClassExpression(expr) if expr.id.is_none() => (expr.span, ErrorNodeKind::Class),
-        ExpressionKind::FunctionExpression(expr) if expr.id.is_none() => {
+        Expression::ClassExpression(expr) if expr.id.is_none() => (expr.span, ErrorNodeKind::Class),
+        Expression::FunctionExpression(expr) if expr.id.is_none() => {
             (expr.span, ErrorNodeKind::Function)
         }
-        ExpressionKind::ArrowFunctionExpression(expr) => (expr.span, ErrorNodeKind::Function),
+        Expression::ArrowFunctionExpression(expr) => (expr.span, ErrorNodeKind::Function),
         _ => return None,
     })
 }
@@ -137,7 +137,6 @@ enum ErrorNodeKind {
 #[test]
 fn test() {
     use crate::tester::Tester;
-use oxc_ast::ast::ExpressionKind;
 
     let pass = vec![
         r"const foo = () => {}; export default foo;",

@@ -84,13 +84,13 @@ impl Rule for NoAwaitInPromiseMethods {
             return;
         };
         let first_argument = first_argument.without_parentheses();
-        let Some(first_argument_array_expr) = first_argument.as_array_expression() else {
+        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
             return;
         };
 
         for element in &first_argument_array_expr.elements {
             if let Some(element_expr) = element.as_expression()
-                && let Some(await_expr) = element_expr.without_parentheses().as_await_expression()
+                && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
             {
                 let property_name =
                     member_expr.static_property_name().expect("callee is a static property");

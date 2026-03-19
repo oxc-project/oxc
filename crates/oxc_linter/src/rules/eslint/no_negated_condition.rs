@@ -64,7 +64,7 @@ impl Rule for NoNegatedCondition {
                     return;
                 };
 
-                if if_stmt_alternate.is_if_statement() {
+                if matches!(if_stmt_alternate, Statement::IfStatement(_)) {
                     return;
                 }
 
@@ -85,11 +85,9 @@ impl Rule for NoNegatedCondition {
 }
 
 fn is_negated_expression(expr: &Expression) -> bool {
-    match expr.kind() {
-        ExpressionKind::UnaryExpression(unary_expr) => {
-            unary_expr.operator == UnaryOperator::LogicalNot
-        }
-        ExpressionKind::BinaryExpression(binary_expr) => matches!(
+    match expr {
+        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
+        Expression::BinaryExpression(binary_expr) => matches!(
             binary_expr.operator,
             BinaryOperator::Inequality | BinaryOperator::StrictInequality
         ),
