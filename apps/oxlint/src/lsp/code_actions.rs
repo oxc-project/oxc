@@ -89,8 +89,6 @@ pub fn apply_dangerous_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
     uri: Uri,
 ) -> Option<CodeAction> {
-    // No filter needed here: the linter was already configured with a dangerous fix kind,
-    // so it only returns fixes that match that configuration.
     let quick_fixes: Vec<TextEdit> = dangerous_fix_all_text_edit(actions);
 
     if quick_fixes.is_empty() {
@@ -113,9 +111,7 @@ pub fn apply_dangerous_fix_code_action(
     })
 }
 
-/// Collect all text edits from the provided diagnostic reports, which can be applied at once.
-/// Only safe fixes or suggestions are included.
-/// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
+/// Collect safe text edits from the provided diagnostic reports, which can be applied at once.
 pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
@@ -144,8 +140,6 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     text_edits
 }
 
-/// Collect all text edits including dangerous fixes.
-/// The caller is responsible for ensuring the linter was configured with a dangerous fix kind.
 fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
