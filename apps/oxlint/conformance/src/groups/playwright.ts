@@ -30,7 +30,7 @@ const group: TestGroup = {
     mock("../utils/rule-tester", createRuleTesterModule(tsEslintParser));
   },
 
-  ruleTesters: [{ specifier: "eslint", propName: "RuleTester" }],
+  ruleTesters: [],
 
   parsers: [{ specifier: "@typescript-eslint/parser", lang: "ts" }],
 };
