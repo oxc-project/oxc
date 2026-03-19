@@ -8,6 +8,7 @@ SONAR_SHA="8852e2593390e00f9d9aea764b0b0b9a503d1f08" # 3.0.6
 E18E_SHA="1dc399be6eb9dcee207e5cd63ef184bd6c902492" # 0.1.4
 TESTING_LIBRARY_SHA="b8ef3772487a32c886cb5c338da2a144560a437b" # 7.15.4
 STORYBOOK_SHA="99aa48989f6798ae24d9867bc2b5fe6991a2e341" # v10.3.0-alpha.12
+PLAYWRIGHT_SHA="7e16bd565cfccd365a6a8f1f7f6fe29a1c868036" # v2.9.0
 
 # Shallow clone a repo at a specific commit, and `cd` into the cloned directory.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
@@ -210,6 +211,19 @@ cd ..
 
 # Clone `eslint-plugin-storybook` repo into `submodules/storybook`
 clone storybook https://github.com/storybookjs/storybook.git "$STORYBOOK_SHA"
+
+# Install dependencies
+yarn install
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Playwright
+###############################################################################
+
+# Clone `eslint-plugin-playwright` repo into `submodules/playwright`
+clone playwright https://github.com/mskelton/eslint-plugin-playwright.git "$PLAYWRIGHT_SHA"
 
 # Install dependencies
 yarn install
