@@ -648,7 +648,9 @@ impl Tool for ServerLinter {
         for kind in applying_kinds {
             // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
             if kind == CodeActionKind::SOURCE_FIX_ALL {
-                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone(), self.fix_kind) else {
+                let Some(fix_all) =
+                    apply_all_fix_code_action(actions.clone(), uri.clone(), self.fix_kind)
+                else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));

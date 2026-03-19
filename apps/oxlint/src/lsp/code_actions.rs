@@ -175,11 +175,12 @@ mod tests {
 
     #[test]
     fn test_fix_all_text_edit_with_none_still_includes_safe_fix() {
-        let text_edits = fix_all_text_edit(
-            std::iter::once(make_action(FixKind::SafeFix)),
-            FixKind::None,
+        let text_edits =
+            fix_all_text_edit(std::iter::once(make_action(FixKind::SafeFix)), FixKind::None);
+        assert!(
+            !text_edits.is_empty(),
+            "safe fix should still be included even when fix_kind is None"
         );
-        assert!(!text_edits.is_empty(), "safe fix should still be included even when fix_kind is None");
     }
 
     #[test]
@@ -188,7 +189,10 @@ mod tests {
             std::iter::once(make_action(FixKind::SafeFix)),
             FixKind::DangerousFix,
         );
-        assert!(!text_edits.is_empty(), "safe fix should also be included when fix_kind is DangerousFix");
+        assert!(
+            !text_edits.is_empty(),
+            "safe fix should also be included when fix_kind is DangerousFix"
+        );
     }
 
     #[test]
