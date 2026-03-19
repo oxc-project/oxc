@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Statement, ExpressionKind, StatementKind},
+    ast::{ArrowFunctionExpression, Expression, ExpressionKind, Statement, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -406,7 +406,9 @@ impl ArrowBodyStyle {
             ExpressionKind::BinaryExpression(bin) => Self::starts_with_object_literal(&bin.left),
             ExpressionKind::LogicalExpression(log) => Self::starts_with_object_literal(&log.left),
             // Conditional expression: check the test (leftmost part)
-            ExpressionKind::ConditionalExpression(cond) => Self::starts_with_object_literal(&cond.test),
+            ExpressionKind::ConditionalExpression(cond) => {
+                Self::starts_with_object_literal(&cond.test)
+            }
             _ => false,
         }
     }
@@ -445,7 +447,9 @@ impl ArrowBodyStyle {
             ExpressionKind::LogicalExpression(log) => {
                 Self::contains_in_operator(&log.left) || Self::contains_in_operator(&log.right)
             }
-            ExpressionKind::AssignmentExpression(assign) => Self::contains_in_operator(&assign.right),
+            ExpressionKind::AssignmentExpression(assign) => {
+                Self::contains_in_operator(&assign.right)
+            }
             ExpressionKind::SequenceExpression(seq) => {
                 seq.expressions.iter().any(Self::contains_in_operator)
             }

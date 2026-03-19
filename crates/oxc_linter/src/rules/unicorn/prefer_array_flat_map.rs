@@ -62,7 +62,8 @@ impl Rule for PreferArrayFlatMap {
         let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
             return;
         };
-        let Some(call_expr) = &member_expr.object().without_parentheses().as_call_expression() else {
+        let Some(call_expr) = &member_expr.object().without_parentheses().as_call_expression()
+        else {
             return;
         };
         if !is_method_call(call_expr, None, Some(&["map"]), None, None) {

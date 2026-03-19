@@ -1,6 +1,6 @@
 use oxc_allocator::TakeIn;
-use oxc_ast::ast::*;
 use oxc_ast::ast::StatementKind;
+use oxc_ast::ast::*;
 
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
@@ -31,8 +31,8 @@ impl<'a> PeepholeOptimizations {
                 let b = expr_stmt.expression.take_in(ctx.ast);
                 let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(alternate_expr_stmt) = if_stmt.alternate.as_mut()
-                .and_then(|s| s.as_expression_statement_mut())
+            } else if let Some(alternate_expr_stmt) =
+                if_stmt.alternate.as_mut().and_then(|s| s.as_expression_statement_mut())
             {
                 // "if (a) b(); else c();" => "a ? b() : c();"
                 let test = if_stmt.test.take_in(ctx.ast);
@@ -50,8 +50,8 @@ impl<'a> PeepholeOptimizations {
                 let mut expr = if_stmt.test.take_in(ctx.ast);
                 Self::remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-            } else if let Some(expr_stmt) = if_stmt.alternate.as_mut()
-                .and_then(|s| s.as_expression_statement_mut())
+            } else if let Some(expr_stmt) =
+                if_stmt.alternate.as_mut().and_then(|s| s.as_expression_statement_mut())
             {
                 let (op, e) = if let Some(unary_expr) = if_stmt.test.as_unary_expression_mut()
                     && unary_expr.operator.is_not()
@@ -78,11 +78,8 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 } else {
                     // "if (a) {} else return b;" => "if (!a) return b;"
-                    if_stmt.test = Self::minimize_not(
-                        if_stmt.test.span(),
-                        if_stmt.test.take_in(ctx.ast),
-                        ctx,
-                    );
+                    if_stmt.test =
+                        Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx.ast), ctx);
                     if_stmt.consequent = stmt.take_in(ctx.ast);
                     if_stmt.alternate = None;
                     Self::try_minimize_if(if_stmt, ctx);

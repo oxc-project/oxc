@@ -3,10 +3,11 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        ArrowFunctionExpression, CallExpression, Expression, ExpressionKind, Function,
+        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement, Statement, StaticMemberExpression, ExpressionKind, StatementKind},
+        JSXOpeningElement, Statement, StatementKind, StaticMemberExpression,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -620,7 +621,8 @@ pub fn find_innermost_function_with_jsx<'a>(
                 if arrow_func.expression {
                     // Expression-bodied arrow function: () => () => <div />
                     if arrow_func.body.statements.len() == 1
-                        && let Some(expr_stmt) = &arrow_func.body.statements[0].as_expression_statement()
+                        && let Some(expr_stmt) =
+                            &arrow_func.body.statements[0].as_expression_statement()
                     {
                         return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
                     }

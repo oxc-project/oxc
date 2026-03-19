@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BinaryExpression, BinaryOperator, Expression,
-        StaticMemberExpression, ExpressionKind},
+        ExpressionKind, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -265,7 +266,9 @@ fn get_binary_left_expr<'a>(
 
             get_binary_left_expr(paren_inner_binary_expr)
         }
-        ExpressionKind::BinaryExpression(inner_binary_expr) => get_binary_left_expr(inner_binary_expr),
+        ExpressionKind::BinaryExpression(inner_binary_expr) => {
+            get_binary_left_expr(inner_binary_expr)
+        }
         ExpressionKind::StaticMemberExpression(member_expr) => {
             if member_expr.property.name == "length" {
                 return Some(member_expr.as_ref());

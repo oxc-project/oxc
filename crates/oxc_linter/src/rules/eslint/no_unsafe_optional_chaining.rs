@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern, ExpressionKind},
+    ast::{
+        ArrayExpressionElement, AssignmentTarget, Expression, ExpressionKind,
+        match_assignment_target_pattern,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

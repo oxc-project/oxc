@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, SimpleAssignmentTarget, ExpressionKind},
+    ast::{Expression, ExpressionKind, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

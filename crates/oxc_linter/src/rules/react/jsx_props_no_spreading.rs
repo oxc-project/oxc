@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject, ExpressionKind},
+    ast::{
+        Expression, ExpressionKind, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

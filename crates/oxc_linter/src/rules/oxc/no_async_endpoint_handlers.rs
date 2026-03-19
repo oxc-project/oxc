@@ -3,7 +3,7 @@ use std::ops::Deref;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrowFunctionExpression, Expression, Function, ExpressionKind},
+    ast::{Argument, ArrowFunctionExpression, Expression, ExpressionKind, Function},
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
@@ -260,7 +260,8 @@ impl NoAsyncEndpointHandlers {
                                 && decl
                                     .id
                                     .get_identifier_name()
-                                    .is_some_and(|declared| declared == id.name).as_identifier()
+                                    .is_some_and(|declared| declared == id.name)
+                                    .as_identifier()
                             {
                                 return;
                             }

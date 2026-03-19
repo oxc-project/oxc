@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, TSLiteral, TSType, TSTypeAnnotation, ExpressionKind},
+    ast::{BindingPattern, Expression, ExpressionKind, TSLiteral, TSType, TSTypeAnnotation},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

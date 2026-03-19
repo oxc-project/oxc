@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FunctionBody, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, FunctionBody},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;

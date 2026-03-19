@@ -53,10 +53,7 @@ impl Symbol<'_, '_> {
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body.kind() {
                     StatementKind::ReturnStatement(_) => return true,
                     StatementKind::BlockStatement(b) => {
-                        return b
-                            .body
-                            .first()
-                            .is_some_and(|s| s.is_return_statement());
+                        return b.body.first().is_some_and(|s| s.is_return_statement());
                     }
                     _ => return false,
                 },
@@ -97,7 +94,8 @@ fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration
     // an export statement, then only exported items are available externally
     if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &namespace.body {
         let has_export = block.body.iter().any(|stmt| {
-            matches!(stmt.kind(),
+            matches!(
+                stmt.kind(),
                 StatementKind::ExportAllDeclaration(_)
                     | StatementKind::ExportDefaultDeclaration(_)
                     | StatementKind::ExportNamedDeclaration(_)

@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierReference, MemberExpression,
-        StaticMemberExpression, ExpressionKind},
+        Argument, CallExpression, Expression, ExpressionKind, IdentifierReference,
+        MemberExpression, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

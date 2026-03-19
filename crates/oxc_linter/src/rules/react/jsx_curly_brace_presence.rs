@@ -9,8 +9,9 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName, JSXExpression,
-        JSXExpressionContainer, ExpressionKind},
+        Expression, ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
+        JSXExpression, JSXExpressionContainer,
+    },
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};

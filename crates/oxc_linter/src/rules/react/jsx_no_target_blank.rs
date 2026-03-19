@@ -3,8 +3,9 @@ use std::ops::Deref;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression,
-        StringLiteral, match_expression, ExpressionKind},
+        Expression, ExpressionKind, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
+        JSXExpression, StringLiteral, match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -254,7 +255,9 @@ fn match_href_expression(
     is_dynamic_link: &mut bool,
 ) {
     match expr.kind() {
-        ExpressionKind::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
+        ExpressionKind::StringLiteral(str) => {
+            *is_external_link = check_is_external_link(&str.value)
+        }
         ExpressionKind::Identifier(_) => *is_dynamic_link = true,
         ExpressionKind::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
@@ -321,7 +324,9 @@ fn match_rel_expression<'a>(
 ) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
     match expr.kind() {
-        ExpressionKind::StringLiteral(str) => (check_rel_val(str, allow_referrer), "", false, false),
+        ExpressionKind::StringLiteral(str) => {
+            (check_rel_val(str, allow_referrer), "", false, false)
+        }
         ExpressionKind::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);

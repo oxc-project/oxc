@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSType, TSTypeName, ExpressionKind},
+    ast::{Expression, ExpressionKind, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -304,7 +304,10 @@ impl Rule for ConsistentTypeAssertions {
                             );
                             if !needs_parentheses
                                 && !type_assertion.expression.is_parenthesized_expression()
-                                && type_assertion.expression.without_parentheses().is_object_expression()
+                                && type_assertion
+                                    .expression
+                                    .without_parentheses()
+                                    .is_object_expression()
                                 && needs_parens_for_object_literal_replacement(node, ctx)
                             {
                                 expression_text = format!("({expression_text})");
@@ -367,7 +370,8 @@ fn expression_text_for_as(expression: &Expression, source_text: &str) -> String 
 }
 
 fn expression_needs_parens_for_as(expression: &Expression) -> bool {
-    matches!(expression.without_parentheses().kind(),
+    matches!(
+        expression.without_parentheses().kind(),
         ExpressionKind::SequenceExpression(_)
             | ExpressionKind::AssignmentExpression(_)
             | ExpressionKind::ConditionalExpression(_)

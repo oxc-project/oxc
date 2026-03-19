@@ -90,9 +90,7 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         ExpressionKindMut::BooleanLiteral(node) => {
             walk_boolean_literal(traverser, node as *mut _, ctx)
         }
-        ExpressionKindMut::NullLiteral(node) => {
-            walk_null_literal(traverser, node as *mut _, ctx)
-        }
+        ExpressionKindMut::NullLiteral(node) => walk_null_literal(traverser, node as *mut _, ctx),
         ExpressionKindMut::NumericLiteral(node) => {
             walk_numeric_literal(traverser, node as *mut _, ctx)
         }
@@ -111,9 +109,7 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         ExpressionKindMut::Identifier(node) => {
             walk_identifier_reference(traverser, node as *mut _, ctx)
         }
-        ExpressionKindMut::MetaProperty(node) => {
-            walk_meta_property(traverser, node as *mut _, ctx)
-        }
+        ExpressionKindMut::MetaProperty(node) => walk_meta_property(traverser, node as *mut _, ctx),
         ExpressionKindMut::Super(node) => walk_super(traverser, node as *mut _, ctx),
         ExpressionKindMut::ArrayExpression(node) => {
             walk_array_expression(traverser, node as *mut _, ctx)
@@ -136,9 +132,7 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         ExpressionKindMut::ChainExpression(node) => {
             walk_chain_expression(traverser, node as *mut _, ctx)
         }
-        ExpressionKindMut::ClassExpression(node) => {
-            walk_class(traverser, node as *mut _, ctx)
-        }
+        ExpressionKindMut::ClassExpression(node) => walk_class(traverser, node as *mut _, ctx),
         ExpressionKindMut::ConditionalExpression(node) => {
             walk_conditional_expression(traverser, node as *mut _, ctx)
         }
@@ -181,12 +175,8 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         ExpressionKindMut::PrivateInExpression(node) => {
             walk_private_in_expression(traverser, node as *mut _, ctx)
         }
-        ExpressionKindMut::JSXElement(node) => {
-            walk_jsx_element(traverser, node as *mut _, ctx)
-        }
-        ExpressionKindMut::JSXFragment(node) => {
-            walk_jsx_fragment(traverser, node as *mut _, ctx)
-        }
+        ExpressionKindMut::JSXElement(node) => walk_jsx_element(traverser, node as *mut _, ctx),
+        ExpressionKindMut::JSXFragment(node) => walk_jsx_fragment(traverser, node as *mut _, ctx),
         ExpressionKindMut::TSAsExpression(node) => {
             walk_ts_as_expression(traverser, node as *mut _, ctx)
         }
@@ -1359,12 +1349,8 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         StatementKindMut::ForOfStatement(node) => {
             walk_for_of_statement(traverser, node as *mut _, ctx)
         }
-        StatementKindMut::ForStatement(node) => {
-            walk_for_statement(traverser, node as *mut _, ctx)
-        }
-        StatementKindMut::IfStatement(node) => {
-            walk_if_statement(traverser, node as *mut _, ctx)
-        }
+        StatementKindMut::ForStatement(node) => walk_for_statement(traverser, node as *mut _, ctx),
+        StatementKindMut::IfStatement(node) => walk_if_statement(traverser, node as *mut _, ctx),
         StatementKindMut::LabeledStatement(node) => {
             walk_labeled_statement(traverser, node as *mut _, ctx)
         }
@@ -1377,9 +1363,7 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         StatementKindMut::ThrowStatement(node) => {
             walk_throw_statement(traverser, node as *mut _, ctx)
         }
-        StatementKindMut::TryStatement(node) => {
-            walk_try_statement(traverser, node as *mut _, ctx)
-        }
+        StatementKindMut::TryStatement(node) => walk_try_statement(traverser, node as *mut _, ctx),
         StatementKindMut::WhileStatement(node) => {
             walk_while_statement(traverser, node as *mut _, ctx)
         }

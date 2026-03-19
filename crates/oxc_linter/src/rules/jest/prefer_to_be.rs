@@ -224,7 +224,8 @@ impl PreferToBe {
             return false;
         }
 
-        matches!(expr.kind(),
+        matches!(
+            expr.kind(),
             ExpressionKind::BigIntLiteral(_)
                 | ExpressionKind::BooleanLiteral(_)
                 | ExpressionKind::NumericLiteral(_)
@@ -295,9 +296,10 @@ impl PreferToBe {
 
         let is_cmp_mem_expr = match matcher.parent.kind() {
             Some(ExpressionKind::ComputedMemberExpression(_)) => true,
-            Some(ExpressionKind::StaticMemberExpression(_) | ExpressionKind::PrivateFieldExpression(_)) => {
-                false
-            }
+            Some(
+                ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_),
+            ) => false,
             _ => return,
         };
 

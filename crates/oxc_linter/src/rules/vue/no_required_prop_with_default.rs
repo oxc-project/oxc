@@ -1,9 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        BindingPattern, ExportDefaultDeclarationKind, Expression, ExpressionKind, ObjectExpression,
         ObjectPropertyKind, PropertyKey, TSMethodSignatureKind, TSSignature, TSType, TSTypeName,
-        VariableDeclarator, ExpressionKind},
+        VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -108,7 +109,8 @@ impl NoRequiredPropWithDefault {
         };
         if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
             let arg = &call_expr.arguments[0];
-            let Some(obj) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
+            let Some(obj) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression())
+            else {
                 return;
             };
             handle_object_expression(ctx, obj);
@@ -126,7 +128,9 @@ impl NoRequiredPropWithDefault {
         match ident.name.as_str().kind() {
             "defineProps" => {
                 if let Some(arge) = call_expr.arguments.first() {
-                    let Some(obj) = arge.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
+                    let Some(obj) =
+                        arge.as_expression().as_ref().and_then(|e| e.as_object_expression())
+                    else {
                         return;
                     };
                     // Here we need to consider the following two examples
@@ -157,7 +161,9 @@ impl NoRequiredPropWithDefault {
                 if let (Some(first_arg_expr), Some(second_arg_expr)) =
                     (first_arg.as_expression(), second_arg.as_expression())
                 {
-                    let Some(second_obj_expr) = second_arg_expr.get_inner_expression().as_object_expression() else {
+                    let Some(second_obj_expr) =
+                        second_arg_expr.get_inner_expression().as_object_expression()
+                    else {
                         return;
                     };
                     let Some(key_hash) = collect_hash_from_object_expr(second_obj_expr) else {
@@ -390,7 +396,8 @@ fn handle_prop_object(
     obj.properties.iter().for_each(|v| {
         if let ObjectPropertyKind::ObjectProperty(inner_prop) = v
             && let Some(inner_key) = inner_prop.key.static_name()
-            && let Some(inner_prop_value_expr) = inner_prop.value.get_inner_expression().as_object_expression()
+            && let Some(inner_prop_value_expr) =
+                inner_prop.value.get_inner_expression().as_object_expression()
         {
             let mut has_default_key = false;
             let mut required_true_span: Option<Span> = None;

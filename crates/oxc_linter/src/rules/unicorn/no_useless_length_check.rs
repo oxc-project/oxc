@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, LogicalExpression, ExpressionKind},
+    ast::{Expression, ExpressionKind, LogicalExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement, ExpressionKind, StatementKind},
+        AssignmentExpression, AssignmentOperator, ClassElement, Expression, ExpressionKind,
+        MemberExpression, MethodDefinitionKind, PropertyDefinitionType, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,10 +112,10 @@ impl Rule for PreferClassFields {
         };
 
         // Find first non-empty statement in constructor
-        let first_statement =
-            body.statements.iter().find(|stmt| !stmt.is_empty_statement());
+        let first_statement = body.statements.iter().find(|stmt| !stmt.is_empty_statement());
 
-        let Some(expr_stmt) = first_statement.as_ref().and_then(|e| e.as_expression_statement()) else {
+        let Some(expr_stmt) = first_statement.as_ref().and_then(|e| e.as_expression_statement())
+        else {
             return;
         };
 
@@ -226,7 +227,8 @@ fn is_simple_this_assignment_with_literal(assign: &AssignmentExpression) -> bool
     }
 
     // Check if the value is a literal
-    matches!(assign.right.kind(),
+    matches!(
+        assign.right.kind(),
         ExpressionKind::StringLiteral(_)
             | ExpressionKind::NumericLiteral(_)
             | ExpressionKind::BooleanLiteral(_)

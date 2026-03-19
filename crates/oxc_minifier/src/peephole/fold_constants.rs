@@ -23,8 +23,10 @@ impl<'a> PeepholeOptimizations {
             // Do not fold `void 0` back to `undefined`.
             UnaryOperator::Void if e.argument.is_number_0() => {}
             // Do not fold `true` and `false` back to `!0` and `!1`
-            UnaryOperator::LogicalNot if e.argument.as_numeric_literal().is_some_and(|lit| lit.value == 0.0 || lit.value == 1.0) =>
-                {}
+            UnaryOperator::LogicalNot
+                if e.argument
+                    .as_numeric_literal()
+                    .is_some_and(|lit| lit.value == 0.0 || lit.value == 1.0) => {}
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
             _ if e.may_have_side_effects(ctx) => {}
@@ -668,7 +670,9 @@ impl<'a> PeepholeOptimizations {
                 if ctx.is_expression_undefined(e) {
                     continue;
                 }
-                if e.as_object_expression().is_some_and(|o| Self::is_spread_inlineable_object_literal(o, ctx)) {
+                if e.as_object_expression()
+                    .is_some_and(|o| Self::is_spread_inlineable_object_literal(o, ctx))
+                {
                     let o = e.as_object_expression_mut().unwrap();
                     new_properties.extend(o.properties.drain(..).filter(|prop| {
                         match prop {

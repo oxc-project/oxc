@@ -1,7 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{
     AstBuilder, AstKind,
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral, ExpressionKind},
+    ast::{
+        CallExpression, Expression, ExpressionKind, MemberExpression, RegExpFlags, RegExpLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

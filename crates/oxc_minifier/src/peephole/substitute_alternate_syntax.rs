@@ -2,7 +2,10 @@ use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{CloneIn, TakeIn, Vec};
-use oxc_ast::{NONE, ast::{*, ExpressionKind, StatementKindMut}};
+use oxc_ast::{
+    NONE,
+    ast::{ExpressionKind, StatementKindMut, *},
+};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
@@ -642,8 +645,14 @@ impl<'a> PeepholeOptimizations {
         let body_assign_expr = {
             let assign = if for_stmt.body.is_expression_statement() {
                 for_stmt.body.as_expression_statement_mut().unwrap()
-            } else if for_stmt.body.as_block_statement().is_some_and(|b| b.body.len() == 1 && b.body[0].is_expression_statement()) {
-                    for_stmt.body.as_block_statement_mut().unwrap().body[0].as_expression_statement_mut().unwrap()
+            } else if for_stmt
+                .body
+                .as_block_statement()
+                .is_some_and(|b| b.body.len() == 1 && b.body[0].is_expression_statement())
+            {
+                for_stmt.body.as_block_statement_mut().unwrap().body[0]
+                    .as_expression_statement_mut()
+                    .unwrap()
             } else {
                 return;
             };
@@ -672,15 +681,15 @@ impl<'a> PeepholeOptimizations {
             let (base_name, offset) = if let Some(id) = lhs_member_expr.expression.as_identifier() {
                 (id.name, 0.0)
             } else if let Some(b) = lhs_member_expr.expression.as_binary_expression() {
-                    if b.operator != BinaryOperator::Subtraction {
-                        return;
-                    }
-                    let Some(id) = b.left.as_identifier() else { return };
-                    let Some(n) = b.right.as_numeric_literal() else { return };
-                    if n.value.fract() != 0.0 || n.value < 0.0 {
-                        return;
-                    }
-                    (id.name, n.value)
+                if b.operator != BinaryOperator::Subtraction {
+                    return;
+                }
+                let Some(id) = b.left.as_identifier() else { return };
+                let Some(n) = b.right.as_numeric_literal() else { return };
+                if n.value.fract() != 0.0 || n.value < 0.0 {
+                    return;
+                }
+                (id.name, n.value)
             } else {
                 return;
             };
@@ -792,7 +801,9 @@ impl<'a> PeepholeOptimizations {
             if de_id.name != e_id_name {
                 return;
             }
-            let Some(sm) = de.init.as_ref().and_then(|e| e.as_static_member_expression()) else { return };
+            let Some(sm) = de.init.as_ref().and_then(|e| e.as_static_member_expression()) else {
+                return;
+            };
             let Some(id) = sm.object.as_identifier() else { return };
             if id.name != "arguments"
                 || !ctx.is_global_reference(id)
@@ -814,7 +825,12 @@ impl<'a> PeepholeOptimizations {
             if de_id.name != a_id_name {
                 return;
             }
-            if !de_a.init.as_ref().and_then(|e| e.as_numeric_literal()).is_some_and(|n| n.value == offset) {
+            if !de_a
+                .init
+                .as_ref()
+                .and_then(|e| e.as_numeric_literal())
+                .is_some_and(|n| n.value == offset)
+            {
                 return;
             }
             de_id.symbol_id()
@@ -827,24 +843,24 @@ impl<'a> PeepholeOptimizations {
                 .get_mut(idx)
                 .expect("var_init.declarations.len() check above ensures this");
             if let Some(call) = de_r.init.as_ref().and_then(|e| e.as_call_expression()) {
-                    let Some(id) = call.callee.as_identifier() else { return };
-                    if id.name != "Array" || !ctx.is_global_reference(id) {
-                        return;
-                    }
-                    if call.arguments.len() != 1 {
-                        return;
-                    }
-                    let Some((e_id_name, _)) = e_id_info else { return };
-                    let Some(arg_expr) = call.arguments[0].as_expression() else { return };
-                    let result = verify_array_arg(&arg_expr, e_id_name, offset);
-                    if result == VerifyArrayArgResult::Invalid {
-                        return;
-                    }
-                    e_ref_count += if result == VerifyArrayArgResult::WithOffset { 2 } else { 1 };
+                let Some(id) = call.callee.as_identifier() else { return };
+                if id.name != "Array" || !ctx.is_global_reference(id) {
+                    return;
+                }
+                if call.arguments.len() != 1 {
+                    return;
+                }
+                let Some((e_id_name, _)) = e_id_info else { return };
+                let Some(arg_expr) = call.arguments[0].as_expression() else { return };
+                let result = verify_array_arg(&arg_expr, e_id_name, offset);
+                if result == VerifyArrayArgResult::Invalid {
+                    return;
+                }
+                e_ref_count += if result == VerifyArrayArgResult::WithOffset { 2 } else { 1 };
             } else if let Some(arr) = de_r.init.as_ref().and_then(|e| e.as_array_expression()) {
-                    if !arr.elements.is_empty() {
-                        return;
-                    }
+                if !arr.elements.is_empty() {
+                    return;
+                }
             } else {
                 return;
             }
@@ -1036,9 +1052,7 @@ impl<'a> PeepholeOptimizations {
             // `BigInt(1n)` -> `1n`
             "BigInt" => match arg {
                 None => None,
-                Some(mut arg) => {
-                    arg.is_big_int_literal().then(|| arg.take_in(ctx.ast))
-                }
+                Some(mut arg) => arg.is_big_int_literal().then(|| arg.take_in(ctx.ast)),
             },
             _ => None,
         };
@@ -1054,20 +1068,20 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> Option<&'a str> {
         if let Some(e) = callee.as_static_member_expression() {
-                if !e.object.as_identifier().is_some_and(|ident| ident.name == "window") {
-                    return None;
-                }
-                return Some(e.property.name.as_str());
+            if !e.object.as_identifier().is_some_and(|ident| ident.name == "window") {
+                return None;
+            }
+            return Some(e.property.name.as_str());
         }
         if let Some(ident) = callee.as_identifier() {
-                let name = ident.name.as_str();
-                if !matches!(name, "Object" | "Array") {
-                    return None;
-                }
-                if !ctx.is_global_reference(ident) {
-                    return None;
-                }
-                return Some(name);
+            let name = ident.name.as_str();
+            if !matches!(name, "Object" | "Array") {
+                return None;
+            }
+            if !ctx.is_global_reference(ident) {
+                return None;
+            }
+            return Some(name);
         }
         None
     }
@@ -1087,11 +1101,11 @@ impl<'a> PeepholeOptimizations {
         };
         let Some(name) = Self::get_fold_constructor_name(callee, ctx) else { return };
         let (span, callee, args, is_new_expr) = if let Some(e) = expr.as_new_expression_mut() {
-                let NewExpression { span, callee, arguments, .. } = e;
-                (span, callee, arguments, true)
+            let NewExpression { span, callee, arguments, .. } = e;
+            (span, callee, arguments, true)
         } else if let Some(e) = expr.as_call_expression_mut() {
-                let CallExpression { span, callee, arguments, .. } = e;
-                (span, callee, arguments, false)
+            let CallExpression { span, callee, arguments, .. } = e;
+            (span, callee, arguments, false)
         } else {
             return;
         };
@@ -1368,28 +1382,32 @@ impl<'a> PeepholeOptimizations {
     ) {
         match &mut expr.expression {
             ChainElement::StaticMemberExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Some(chain) =
+                    member.object.without_parentheses_mut().as_chain_expression_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::ComputedMemberExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Some(chain) =
+                    member.object.without_parentheses_mut().as_chain_expression_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::PrivateFieldExpression(member) => {
-                if let Some(chain) = member.object.without_parentheses_mut().as_chain_expression_mut()
+                if let Some(chain) =
+                    member.object.without_parentheses_mut().as_chain_expression_mut()
                 {
                     member.object = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
             }
             ChainElement::CallExpression(call) => {
-                if let Some(chain) = call.callee.without_parentheses_mut().as_chain_expression_mut() {
+                if let Some(chain) = call.callee.without_parentheses_mut().as_chain_expression_mut()
+                {
                     call.callee = Expression::from(chain.expression.take_in(ctx.ast));
                     ctx.state.changed = true;
                 }
@@ -1420,7 +1438,9 @@ impl<'a> PeepholeOptimizations {
         if inner_call.optional || inner_call.arguments.len() != 1 {
             return;
         }
-        let is_object_callee = inner_call.callee.as_identifier()
+        let is_object_callee = inner_call
+            .callee
+            .as_identifier()
             .is_some_and(|callee| callee.name == "Object" && ctx.is_global_reference(callee));
         if !is_object_callee {
             return;
@@ -1480,8 +1500,7 @@ impl<'a> PeepholeOptimizations {
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
             return;
         }
-        if e.arguments.len() == 1
-            && e.arguments[0].as_expression().is_some_and(|e| e.is_number_0())
+        if e.arguments.len() == 1 && e.arguments[0].as_expression().is_some_and(|e| e.is_number_0())
         {
             e.arguments.clear();
         }
@@ -1509,9 +1528,10 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        let is_all_string = array.elements.iter().all(|element| {
-            element.as_expression().is_some_and(|expr| expr.is_string_literal())
-        });
+        let is_all_string = array
+            .elements
+            .iter()
+            .all(|element| element.as_expression().is_some_and(|expr| expr.is_string_literal()));
         if !is_all_string {
             return;
         }
@@ -1623,12 +1643,12 @@ impl<'a> PeepholeOptimizations {
         }
 
         let is_empty_iife = if let Some(f) = call_expr.callee.as_function_expression() {
-                f.params.is_empty()
+            f.params.is_empty()
                     && f.body.as_ref().is_some_and(|body| body.is_empty())
                     // ignore async/generator if a return value is not used
                     && ((!f.r#async && !f.generator) || Self::is_expression_result_unused(ctx))
         } else if let Some(f) = call_expr.callee.as_arrow_function_expression() {
-                f.params.is_empty()
+            f.params.is_empty()
                     && f.body.is_empty()
                     // ignore async if a return value is not used
                     && (!f.r#async || Self::is_expression_result_unused(ctx))

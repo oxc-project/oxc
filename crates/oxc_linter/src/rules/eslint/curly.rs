@@ -1,7 +1,10 @@
 use crate::fixer::{RuleFix, RuleFixer};
 use crate::rule::TupleRuleConfig;
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::{StatementKind, IfStatement, Statement}};
+use oxc_ast::{
+    AstKind,
+    ast::{IfStatement, Statement, StatementKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};

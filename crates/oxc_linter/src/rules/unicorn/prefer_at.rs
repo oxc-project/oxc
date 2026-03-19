@@ -7,8 +7,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentTarget, BinaryOperator, CallExpression, ChainElement,
-        ComputedMemberExpression, Expression, MemberExpression, StaticMemberExpression,
-        UnaryOperator, ExpressionKind},
+        ComputedMemberExpression, Expression, ExpressionKind, MemberExpression,
+        StaticMemberExpression, UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -278,7 +279,8 @@ impl PreferAt {
             return;
         }
 
-        let Some(slice_call) = static_member.object.get_inner_expression().as_call_expression() else {
+        let Some(slice_call) = static_member.object.get_inner_expression().as_call_expression()
+        else {
             return;
         };
 
@@ -498,9 +500,14 @@ fn is_positive_number(expr: &Expression) -> bool {
 
 fn get_positive_index(expr: &Expression) -> Option<i64> {
     match expr.get_inner_expression().kind() {
-        ExpressionKind::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 => {
+        ExpressionKind::NumericLiteral(num) if num.value >= 0.0 && num.value.fract() == 0.0 =>
+        {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
-            if num.value <= i64::MAX as f64 { Some(num.value as i64) } else { None }
+            if num.value <= i64::MAX as f64 {
+                Some(num.value as i64)
+            } else {
+                None
+            }
         }
         _ => None,
     }
@@ -508,7 +515,8 @@ fn get_positive_index(expr: &Expression) -> Option<i64> {
 
 fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option<i64> {
     let value = match expr.get_inner_expression().kind() {
-        ExpressionKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation =>
+        ExpressionKind::UnaryExpression(unary)
+            if unary.operator == UnaryOperator::UnaryNegation =>
         {
             #[expect(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
             if let Some(num) = unary.argument.get_inner_expression().as_numeric_literal()

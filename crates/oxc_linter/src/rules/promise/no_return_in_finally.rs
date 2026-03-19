@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FunctionBody, Statement, ExpressionKind},
+    ast::{Expression, ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -81,8 +81,7 @@ impl Rule for NoReturnInFinally {
 }
 
 fn find_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
-    let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| stmt.is_return_statement())
+    let Some(return_stmt) = func_body.statements.iter().find(|stmt| stmt.is_return_statement())
     else {
         return;
     };

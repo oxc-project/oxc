@@ -2,7 +2,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, BindingPattern,
-        CallExpression, Declaration, Expression, ObjectPropertyKind, PropertyKey, match_expression, ExpressionKind},
+        CallExpression, Declaration, Expression, ExpressionKind, ObjectPropertyKind, PropertyKey,
+        match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

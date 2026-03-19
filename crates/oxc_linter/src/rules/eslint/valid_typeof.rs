@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
@@ -115,8 +118,8 @@ impl Rule for ValidTypeof {
             _ => return,
         };
 
-        let ((ExpressionKind::UnaryExpression(_), sibling) | (sibling, ExpressionKind::UnaryExpression(_))) =
-            (&binary_expr.left, &binary_expr.right)
+        let ((ExpressionKind::UnaryExpression(_), sibling)
+        | (sibling, ExpressionKind::UnaryExpression(_))) = (&binary_expr.left, &binary_expr.right)
         else {
             return;
         };

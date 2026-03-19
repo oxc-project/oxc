@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, match_member_expression, ExpressionKind},
+    ast::{CallExpression, Expression, ExpressionKind, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -109,7 +109,8 @@ fn check_unicorn_prefer_spread<'a>(
 
             let member_expr_obj = member_expr.object().without_parentheses();
 
-            if matches!(member_expr_obj.kind(),
+            if matches!(
+                member_expr_obj.kind(),
                 ExpressionKind::ArrayExpression(_) | ExpressionKind::ThisExpression(_)
             ) {
                 return;
@@ -146,8 +147,7 @@ fn check_unicorn_prefer_spread<'a>(
                 return;
             }
 
-            if member_expr.object().without_parentheses().is_array_expression()
-            {
+            if member_expr.object().without_parentheses().is_array_expression() {
                 return;
             }
 
@@ -224,7 +224,8 @@ fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
 }
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
-    if matches!(expr.without_parentheses().kind(),
+    if matches!(
+        expr.without_parentheses().kind(),
         ExpressionKind::TemplateLiteral(_) | ExpressionKind::BinaryExpression(_)
     ) {
         return true;

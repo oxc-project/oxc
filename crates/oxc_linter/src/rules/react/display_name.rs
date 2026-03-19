@@ -4,8 +4,9 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, PropertyKey, Statement, ExpressionKind, StatementKind},
+        AssignmentTarget, ClassElement, ExportDefaultDeclarationKind, Expression, ExpressionKind,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
@@ -441,8 +442,7 @@ fn is_react_component_node<'a>(
                     // Handle React.memo(React.forwardRef(...)) - skip if version compatible
                     if callee_name.ends_with("memo")
                         && let Some(first_arg) = call.arguments.first().as_expression()
-                        && let Some(ExpressionKind::CallExpression(inner_call)) =
-                            first_arg
+                        && let Some(ExpressionKind::CallExpression(inner_call)) = first_arg
                         && let Some(inner_callee_name) = inner_call.callee_name()
                         && is_hoc_call(inner_callee_name, ctx)
                         && version_cache.get_memo_forwardref_compatible(ctx)
@@ -822,7 +822,8 @@ fn has_create_react_class_display_name(
     ignore_transpiler_name: bool,
 ) -> bool {
     call.arguments.iter().any(|arg| {
-        if let Some(obj_expr) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) {
+        if let Some(obj_expr) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression())
+        {
             obj_expr.properties.iter().any(|prop| {
                 if let Some((prop_name, _)) = prop.prop_name() {
                     prop_name == "displayName" || (!ignore_transpiler_name && prop_name == "name")

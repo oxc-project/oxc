@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -52,8 +55,7 @@ impl Rule for NoUnnecessaryAwait {
             }
             if {
                 // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
-                expr.argument.is_function_expression()
-                    || expr.argument.is_class_expression()
+                expr.argument.is_function_expression() || expr.argument.is_class_expression()
             } || {
                 // `+await +1` -> `++1`
                 let parent = ctx.nodes().parent_node(node.id());

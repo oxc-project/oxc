@@ -5,7 +5,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
-    ast::{BindingIdentifier, *, ExpressionKind},
+    ast::{BindingIdentifier, ExpressionKind, *},
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
@@ -136,7 +136,9 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 .iter()
                 .last()
                 .is_some_and(|last| last.is_constant(in_boolean_position, semantic)),
-            ExpressionKind::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, semantic),
+            ExpressionKind::CallExpression(call_expr) => {
+                call_expr.is_constant(in_boolean_position, semantic)
+            }
             ExpressionKind::ParenthesizedExpression(paren_expr) => {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)
             }

@@ -1,7 +1,7 @@
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameter, FormalParameters, ExpressionKind},
+    ast::{BindingPattern, Expression, ExpressionKind, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

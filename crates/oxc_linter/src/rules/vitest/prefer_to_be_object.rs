@@ -101,7 +101,9 @@ impl PreferToBeObject {
         }
 
         if matches!(matcher.name().as_deref(), Some("toBeTruthy" | "toBeFalsy")) {
-            let Some(parent_call_expr) = parsed_expect_call.head.parent.as_ref().and_then(|e| e.as_call_expression()) else {
+            let Some(parent_call_expr) =
+                parsed_expect_call.head.parent.as_ref().and_then(|e| e.as_call_expression())
+            else {
                 return;
             };
 

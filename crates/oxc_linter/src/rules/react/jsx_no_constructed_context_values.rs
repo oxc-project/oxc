@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, IdentifierReference, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXOpeningElement, ExpressionKind},
+        Expression, ExpressionKind, IdentifierReference, JSXAttributeItem, JSXAttributeName,
+        JSXAttributeValue, JSXOpeningElement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

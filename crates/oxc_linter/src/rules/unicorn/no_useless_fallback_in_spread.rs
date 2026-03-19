@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -52,7 +55,9 @@ impl Rule for NoUselessFallbackInSpread {
             return;
         }
 
-        let Some(object_expression) = &logical_expression.right.without_parentheses().as_object_expression() else {
+        let Some(object_expression) =
+            &logical_expression.right.without_parentheses().as_object_expression()
+        else {
             return;
         };
 

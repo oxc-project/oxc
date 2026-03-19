@@ -6,8 +6,10 @@ use oxc_allocator::Box;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
-        TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral, ExpressionKind},
+        Argument, Expression, ExpressionKind, FormalParameter, ObjectExpression,
+        ObjectPropertyKind, PropertyKey, TSLiteral, TSLiteralType, TSType, TSTypeAnnotation,
+        TemplateLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -137,7 +139,10 @@ fn is_invalid_fetch_options<'a>(
                             AstKind::TSEnumDeclaration(enum_decl) => {
                                 let member_string_lit: Option<CompactStr> =
                                     enum_decl.body.members.iter().find_map(|m| {
-                                        if let Some(str_lit) = m.initializer.as_ref().and_then(|e| e.as_string_literal())
+                                        if let Some(str_lit) = m
+                                            .initializer
+                                            .as_ref()
+                                            .and_then(|e| e.as_string_literal())
                                         {
                                             Some(str_lit.value.to_compact_str())
                                         } else {

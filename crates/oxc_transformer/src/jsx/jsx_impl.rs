@@ -662,7 +662,9 @@ impl<'a> JsxImpl<'a> {
                         }
 
                         // Add attribute to prop object
-                        if argument.is_object_expression() && !has_proto(argument.to_object_expression()) {
+                        if argument.is_object_expression()
+                            && !has_proto(argument.to_object_expression())
+                        {
                             let obj = argument.into_object_expression().unbox();
                             properties.extend(obj.properties);
                         } else {

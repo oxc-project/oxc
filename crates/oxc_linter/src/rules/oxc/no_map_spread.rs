@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind, ReturnStatement, ExpressionKind},
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ExpressionKind,
+        ObjectExpression, ObjectPropertyKind, ReturnStatement,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -458,7 +459,9 @@ fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Exp
 
     let arg = call_expr.arguments.first()?.as_expression()?.get_inner_expression();
     match arg.kind() {
-        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => Some(arg),
+        ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
+            Some(arg)
+        }
         _ => None,
     }
 }

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{StatementKind, Statement}};
+use oxc_ast::{
+    AstKind,
+    ast::{Statement, StatementKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -123,7 +126,8 @@ impl Rule for SwitchCaseBraces {
                     }
                     if *self.0 == SwitchCaseBracesConfig::Avoid
                         && !block_stmt.body.iter().any(|stmt| {
-                            matches!(stmt.kind(),
+                            matches!(
+                                stmt.kind(),
                                 StatementKind::VariableDeclaration(_)
                                     | StatementKind::FunctionDeclaration(_)
                             )

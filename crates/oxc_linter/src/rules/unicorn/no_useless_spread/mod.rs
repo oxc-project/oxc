@@ -2,8 +2,9 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, SpreadElement, ExpressionKind},
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ExpressionKind,
+        NewExpression, ObjectExpression, ObjectPropertyKind, SpreadElement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -398,7 +399,10 @@ fn check_useless_clone<'a>(
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
-    if matches!(target.kind(), ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)) {
+    if matches!(
+        target.kind(),
+        ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
+    ) {
         return;
     }
 

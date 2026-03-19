@@ -108,7 +108,9 @@ impl PreferToHaveBeenCalledTimes {
 
         let expect_argument_mem_expr =
             expect_argument.and_then(|arg| arg.as_expression()).and_then(|arg| match arg.kind() {
-                expr @ match_member_expression!(ExpressionKind) => Some(expr.to_member_expression()),
+                expr @ match_member_expression!(ExpressionKind) => {
+                    Some(expr.to_member_expression())
+                }
                 _ => None,
             });
 

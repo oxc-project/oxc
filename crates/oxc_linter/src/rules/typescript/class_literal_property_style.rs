@@ -4,8 +4,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
-        Statement, ExpressionKind, StatementKind},
+        ClassElement, Expression, ExpressionKind, Function, MethodDefinitionKind,
+        PropertyDefinition, PropertyKey, Statement, StatementKind,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -200,17 +201,17 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     match (a.name(), b.name()).kind() {
         (Some(a_name), Some(b_name)) => a_name == b_name,
         _ => match (a.as_expression(), b.as_expression()) {
-            (Some(ExpressionKind::Identifier(a_ident)), Some(ExpressionKind::Identifier(b_ident))) => {
-                a_ident.name == b_ident.name
-            }
+            (
+                Some(ExpressionKind::Identifier(a_ident)),
+                Some(ExpressionKind::Identifier(b_ident)),
+            ) => a_ident.name == b_ident.name,
             _ => false,
         },
     }
 }
 
 fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
-    let is_this_object =
-        |expr: &Expression<'_>| expr.without_parentheses().is_this_expression();
+    let is_this_object = |expr: &Expression<'_>| expr.without_parentheses().is_this_expression();
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};

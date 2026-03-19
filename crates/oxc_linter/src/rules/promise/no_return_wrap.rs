@@ -7,7 +7,10 @@ use crate::{
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Expression, FunctionBody, Statement, ExpressionKind, StatementKind},
+    ast::{
+        ArrowFunctionExpression, CallExpression, Expression, ExpressionKind, FunctionBody,
+        Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -166,7 +169,9 @@ impl Rule for NoReturnWrap {
                     check_first_return_statement(ctx, func_body, self.allow_reject);
                 }
                 ExpressionKind::CallExpression(call) => {
-                    let Some(static_memb_expr) = call.callee.get_inner_expression().as_static_member_expression() else {
+                    let Some(static_memb_expr) =
+                        call.callee.get_inner_expression().as_static_member_expression()
+                    else {
                         continue;
                     };
 
@@ -189,7 +194,9 @@ impl Rule for NoReturnWrap {
 
                     if let Some(nested_call) = inner_obj.as_call_expression() {
                         // if not a chained .bind(this) then skip
-                        let Some(nested_expr) = nested_call.callee.get_inner_expression().as_static_member_expression() else {
+                        let Some(nested_expr) =
+                            nested_call.callee.get_inner_expression().as_static_member_expression()
+                        else {
                             continue;
                         };
                         check_callback_fn(
@@ -263,10 +270,9 @@ fn check_first_return_statement<'a>(
     func_body: &OBox<'_, FunctionBody<'a>>,
     allow_reject: bool,
 ) {
-    let top_level_statements = func_body
-        .statements
-        .iter()
-        .find(|stmt| matches!(stmt.kind(), StatementKind::ReturnStatement(_) | StatementKind::IfStatement(_)));
+    let top_level_statements = func_body.statements.iter().find(|stmt| {
+        matches!(stmt.kind(), StatementKind::ReturnStatement(_) | StatementKind::IfStatement(_))
+    });
 
     let maybe_return_stmt = match top_level_statements.kind() {
         Some(StatementKind::ReturnStatement(r)) => Some(r),
@@ -297,7 +303,9 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    let Some(returned_call_expr) = return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
+    let Some(returned_call_expr) =
+        return_stmt.argument.as_ref().and_then(|e| e.as_call_expression())
+    else {
         return;
     };
 

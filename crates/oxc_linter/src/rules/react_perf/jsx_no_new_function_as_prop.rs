@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, ExpressionKind},
+    ast::{Expression, ExpressionKind, MemberExpression},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;

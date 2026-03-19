@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -175,7 +178,9 @@ impl ValidExpect {
             None => {}
         }
 
-        let Some(call_expr) = jest_fn_call.head.parent.as_ref().and_then(|e| e.as_call_expression()) else {
+        let Some(call_expr) =
+            jest_fn_call.head.parent.as_ref().and_then(|e| e.as_call_expression())
+        else {
             return;
         };
 

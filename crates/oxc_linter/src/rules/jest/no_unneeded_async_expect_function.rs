@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement, ExpressionKind, StatementKind},
+    ast::{Argument, Expression, ExpressionKind, Statement, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,7 +87,9 @@ impl Rule for NoUnneededAsyncExpectFunction {
         }
 
         // Get the expect() CallExpression from head.parent
-        let Some(expect_call_expr) = parsed_expect_call.head.parent.as_ref().and_then(|e| e.as_call_expression()) else {
+        let Some(expect_call_expr) =
+            parsed_expect_call.head.parent.as_ref().and_then(|e| e.as_call_expression())
+        else {
             return;
         };
 

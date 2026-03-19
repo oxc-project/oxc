@@ -1,5 +1,7 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind, StatementKind};
+use oxc_ast::ast::{
+    Declaration, Expression, Program, Statement, StatementKind, VariableDeclarationKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};

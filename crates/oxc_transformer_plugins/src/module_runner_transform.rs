@@ -51,7 +51,7 @@ use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*, ast::ExpressionKind};
+use oxc_ast::{NONE, ast::ExpressionKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::{Ident, SPAN};

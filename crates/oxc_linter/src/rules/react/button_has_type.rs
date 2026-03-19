@@ -7,8 +7,9 @@ use crate::{
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
-        ObjectPropertyKind, ExpressionKind},
+        Argument, Expression, ExpressionKind, JSXAttributeItem, JSXAttributeValue, JSXElementName,
+        ObjectPropertyKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

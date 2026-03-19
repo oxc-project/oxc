@@ -57,7 +57,8 @@ impl Rule for PreferSetSize {
             return;
         }
 
-        let Some(array_expr) = member_expr.object.without_parentheses().as_array_expression() else {
+        let Some(array_expr) = member_expr.object.without_parentheses().as_array_expression()
+        else {
             return;
         };
 

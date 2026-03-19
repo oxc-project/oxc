@@ -3,8 +3,9 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget, PropertyKind, ExpressionKind},
+        AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, ExpressionKind,
+        Function, FunctionType, ObjectAssignmentTarget, PropertyKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

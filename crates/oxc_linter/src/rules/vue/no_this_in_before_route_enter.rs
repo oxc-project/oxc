@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, Function, ObjectPropertyKind, ThisExpression, ExpressionKind},
+    ast::{
+        ExportDefaultDeclarationKind, Expression, ExpressionKind, Function, ObjectPropertyKind,
+        ThisExpression,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;

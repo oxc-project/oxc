@@ -2,8 +2,9 @@ use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, Expression, ImportDeclarationSpecifier, ImportOrExportKind,
-        VariableDeclarationKind, VariableDeclarator, ExpressionKind},
+        Argument, BindingPattern, Expression, ExpressionKind, ImportDeclarationSpecifier,
+        ImportOrExportKind, VariableDeclarationKind, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

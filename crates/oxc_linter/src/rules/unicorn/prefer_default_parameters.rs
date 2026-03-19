@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, Statement, ExpressionKind, StatementKind},
+        AssignmentOperator, AssignmentTarget, BindingPattern, Expression, ExpressionKind,
+        FormalParameter, LogicalOperator, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -210,7 +211,9 @@ fn has_no_side_effects_before<'a>(
 
     for stmt in &body.statements {
         let stmt_matches = match stmt.kind() {
-            StatementKind::ExpressionStatement(expr_stmt) => expr_stmt.expression.span() == node_span,
+            StatementKind::ExpressionStatement(expr_stmt) => {
+                expr_stmt.expression.span() == node_span
+            }
             StatementKind::VariableDeclaration(var_decl) => var_decl.span == node_span,
             _ => stmt.span() == node_span,
         };
@@ -228,7 +231,7 @@ fn has_no_side_effects_before<'a>(
 }
 
 fn is_side_effect_free_statement(stmt: &oxc_ast::ast::Statement, param_name: &str) -> bool {
-    use oxc_ast::ast::{Statement, StatementKind, ExpressionKind};
+    use oxc_ast::ast::{ExpressionKind, Statement, StatementKind};
 
     match stmt.kind() {
         StatementKind::VariableDeclaration(var_decl) => var_decl.declarations.iter().all(|decl| {

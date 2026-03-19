@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement, ExpressionKind},
+    ast::{CallExpression, Expression, ExpressionKind, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -114,8 +114,7 @@ fn check_call_expression<'a>(
 }
 
 fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
-    let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| stmt.is_return_statement())
+    let Some(return_stmt) = func_body.statements.iter().find(|stmt| stmt.is_return_statement())
     else {
         return;
     };

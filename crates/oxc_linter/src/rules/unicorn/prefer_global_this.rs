@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -89,7 +92,12 @@ impl Rule for PreferGlobalThis {
                     if let Some(AstKind::CallExpression(call_expr)) =
                         ctx.nodes().ancestor_kinds(node.id()).nth(1)
                     {
-                        if let Some(lit) = call_expr.arguments.first().and_then(|arg| arg.as_expression()).as_ref().and_then(|e| e.as_string_literal())
+                        if let Some(lit) = call_expr
+                            .arguments
+                            .first()
+                            .and_then(|arg| arg.as_expression())
+                            .as_ref()
+                            .and_then(|e| e.as_string_literal())
                             && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                         {
                             return;

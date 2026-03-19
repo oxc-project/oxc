@@ -185,9 +185,7 @@ impl CatchOrReturn {
         }
 
         // somePromise['catch']()
-        if prop_name == "catch"
-            && call_expr.callee.get_inner_expression().is_string_literal()
-        {
+        if prop_name == "catch" && call_expr.callee.get_inner_expression().is_string_literal() {
             return true;
         }
 

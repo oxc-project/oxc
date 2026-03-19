@@ -1,9 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
-        TSSignature, TSTypeLiteral, ExpressionKind},
+        Argument, CallExpression, ClassBody, ClassElement, Expression, ExpressionKind,
+        MethodDefinitionKind, ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind,
+        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

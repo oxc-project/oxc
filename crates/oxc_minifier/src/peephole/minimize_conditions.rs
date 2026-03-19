@@ -1,5 +1,5 @@
 use oxc_allocator::TakeIn;
-use oxc_ast::ast::{*, ExpressionKind};
+use oxc_ast::ast::{ExpressionKind, *};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
@@ -241,7 +241,7 @@ impl<'a> PeepholeOptimizations {
         if !matches!(e.operator, AssignmentOperator::Subtraction) {
             return;
         }
-        let operator = if let Some(num) = e.right .as_numeric_literal(){
+        let operator = if let Some(num) = e.right.as_numeric_literal() {
             if num.value == 1.0 {
                 UpdateOperator::Decrement
             } else if num.value == -1.0 {

@@ -295,7 +295,9 @@ fn is_type_of_binary(binary_expr: &BinaryExpression) -> bool {
 
 /// Checks if operands are literals of the same type
 fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
-    matches!((left.kind(), right.kind()),(ExpressionKind::BooleanLiteral(_), ExpressionKind::BooleanLiteral(_))
+    matches!(
+        (left.kind(), right.kind()),
+        (ExpressionKind::BooleanLiteral(_), ExpressionKind::BooleanLiteral(_))
             | (ExpressionKind::NullLiteral(_), ExpressionKind::NullLiteral(_))
             | (ExpressionKind::StringLiteral(_), ExpressionKind::StringLiteral(_))
             | (ExpressionKind::NumericLiteral(_), ExpressionKind::NumericLiteral(_))
@@ -306,7 +308,9 @@ fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
 }
 
 fn is_null_check(binary_expr: &BinaryExpression) -> bool {
-    matches!((&binary_expr.left.kind(), &binary_expr.right.kind()),(_, ExpressionKind::NullLiteral(_)) | (ExpressionKind::NullLiteral(_), _)
+    matches!(
+        (&binary_expr.left.kind(), &binary_expr.right.kind()),
+        (_, ExpressionKind::NullLiteral(_)) | (ExpressionKind::NullLiteral(_), _)
     )
 }
 

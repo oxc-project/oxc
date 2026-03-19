@@ -17,11 +17,15 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match e.kind_mut() {
             ExpressionKindMut::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
-            ExpressionKindMut::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
+            ExpressionKindMut::AssignmentExpression(_) => {
+                Self::remove_unused_assignment_expr(e, ctx)
+            }
             ExpressionKindMut::BinaryExpression(_) => Self::remove_unused_binary_expr(e, ctx),
             ExpressionKindMut::CallExpression(_) => Self::remove_unused_call_expr(e, ctx),
             ExpressionKindMut::ClassExpression(_) => Self::remove_unused_class_expr(e, ctx),
-            ExpressionKindMut::ConditionalExpression(_) => Self::remove_unused_conditional_expr(e, ctx),
+            ExpressionKindMut::ConditionalExpression(_) => {
+                Self::remove_unused_conditional_expr(e, ctx)
+            }
             ExpressionKindMut::LogicalExpression(_) => Self::remove_unused_logical_expr(e, ctx),
             ExpressionKindMut::NewExpression(_) => Self::remove_unused_new_expr(e, ctx),
             ExpressionKindMut::ObjectExpression(_) => Self::remove_unused_object_expr(e, ctx),
@@ -89,18 +93,17 @@ impl<'a> PeepholeOptimizations {
                 operator: logical_op,
                 ..
             } = logical_expr;
-            if let Some(binary_expr) = logical_left .as_binary_expression_mut(){
+            if let Some(binary_expr) = logical_left.as_binary_expression_mut() {
                 match (logical_op, binary_expr.operator) {
                     // "a != null && a.b()" => "a?.b()"
                     // "a == null || a.b()" => "a?.b()"
                     (LogicalOperator::And, BinaryOperator::Inequality)
                     | (LogicalOperator::Or, BinaryOperator::Equality) => {
                         if ctx.supports_feature(ESFeature::ES2020OptionalChaining) {
-                            let name_and_id = if let Some(id) = binary_expr.left.as_identifier()
-                            {
+                            let name_and_id = if let Some(id) = binary_expr.left.as_identifier() {
                                 (!ctx.is_global_reference(id) && binary_expr.right.is_null())
                                     .then_some((id.name, &mut binary_expr.left))
-                            } else if let Some(id) = binary_expr.right .as_identifier(){
+                            } else if let Some(id) = binary_expr.right.as_identifier() {
                                 (!ctx.is_global_reference(id) && binary_expr.left.is_null())
                                     .then_some((id.name, &mut binary_expr.right))
                             } else {
@@ -651,10 +654,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Vec<'a, Expression<'a>>> {
         // TypeError `class C extends (() => {}) {}`
-        if c.super_class
-            .as_ref()
-            .is_some_and(|e| e.is_arrow_function_expression())
-        {
+        if c.super_class.as_ref().is_some_and(|e| e.is_arrow_function_expression()) {
             return None;
         }
         // Don't remove classes with decorators - they may have side effects

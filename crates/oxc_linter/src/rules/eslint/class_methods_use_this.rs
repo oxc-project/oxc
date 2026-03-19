@@ -3,7 +3,7 @@ use std::{borrow::Cow, ops::Deref};
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{AccessorProperty, Expression, PropertyDefinition, TSAccessibility, ExpressionKind},
+    ast::{AccessorProperty, Expression, ExpressionKind, PropertyDefinition, TSAccessibility},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;

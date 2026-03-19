@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement, ExpressionKind, StatementKind},
+    ast::{Expression, ExpressionKind, Statement, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -118,7 +118,9 @@ impl Rule for NoDupeElseIf {
         let AstKind::IfStatement(parent_if_stmt) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(child_if_stmt) = parent_if_stmt.alternate.as_ref().and_then(|e| e.as_if_statement()) else {
+        let Some(child_if_stmt) =
+            parent_if_stmt.alternate.as_ref().and_then(|e| e.as_if_statement())
+        else {
             return;
         };
         if child_if_stmt.span != if_stmt.span {

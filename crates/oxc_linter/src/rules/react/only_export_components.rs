@@ -624,7 +624,9 @@ impl OnlyExportComponents {
             match expr_without_ts.kind() {
                 ExpressionKind::Identifier(_) => true,
                 ExpressionKind::FunctionExpression(func) => func.id.is_some(),
-                ExpressionKind::CallExpression(inner_call) => self.is_hoc_call_expression(inner_call),
+                ExpressionKind::CallExpression(inner_call) => {
+                    self.is_hoc_call_expression(inner_call)
+                }
                 _ => false,
             }
         })

@@ -1,9 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
+        BindingPattern, CallExpression, Expression, ExpressionKind, FormalParameters, FunctionBody,
         IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
-        Statement, match_member_expression, ExpressionKind, StatementKind},
+        Statement, StatementKind, match_member_expression,
+    },
 };
 use oxc_semantic::AstNode;
 use oxc_span::{ContentEq, Span};
@@ -99,7 +100,8 @@ pub fn is_import_symbol(
 }
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
-    matches!(expr.kind(),
+    matches!(
+        expr.kind(),
         ExpressionKind::ArrayExpression(_)
             | ExpressionKind::ArrowFunctionExpression(_)
             | ExpressionKind::ClassExpression(_)
@@ -258,8 +260,14 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         (ExpressionKind::StringLiteral(left_str), ExpressionKind::StringLiteral(right_str)) => {
             return left_str.value == right_str.value;
         }
-        (ExpressionKind::StringLiteral(string_lit), ExpressionKind::TemplateLiteral(template_lit))
-        | (ExpressionKind::TemplateLiteral(template_lit), ExpressionKind::StringLiteral(string_lit)) => {
+        (
+            ExpressionKind::StringLiteral(string_lit),
+            ExpressionKind::TemplateLiteral(template_lit),
+        )
+        | (
+            ExpressionKind::TemplateLiteral(template_lit),
+            ExpressionKind::StringLiteral(string_lit),
+        ) => {
             return template_lit.single_quasi().is_some_and(|val| val.as_str() == string_lit.value);
         }
         (ExpressionKind::TemplateLiteral(left_str), ExpressionKind::TemplateLiteral(right_str)) => {
@@ -274,7 +282,10 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         (ExpressionKind::NumericLiteral(left_num), ExpressionKind::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw;
         }
-        (ExpressionKind::RegExpLiteral(left_regexp), ExpressionKind::RegExpLiteral(right_regexp)) => {
+        (
+            ExpressionKind::RegExpLiteral(left_regexp),
+            ExpressionKind::RegExpLiteral(right_regexp),
+        ) => {
             return left_regexp.regex.pattern.text == right_regexp.regex.pattern.text
                 && left_regexp.regex.flags == right_regexp.regex.flags;
         }
@@ -371,16 +382,28 @@ pub fn is_same_member_expression(
         match (&left.expression.kind(), &right.expression.kind()) {
             // x['/regex/'] === x[/regex/]
             // x[/regex/] === x['/regex/']
-            (ExpressionKind::StringLiteral(string_lit), ExpressionKind::RegExpLiteral(regex_lit))
-            | (ExpressionKind::RegExpLiteral(regex_lit), ExpressionKind::StringLiteral(string_lit)) => {
+            (
+                ExpressionKind::StringLiteral(string_lit),
+                ExpressionKind::RegExpLiteral(regex_lit),
+            )
+            | (
+                ExpressionKind::RegExpLiteral(regex_lit),
+                ExpressionKind::StringLiteral(string_lit),
+            ) => {
                 if string_lit.value != regex_lit.raw.as_ref().unwrap() {
                     return false;
                 }
             }
             // ex) x[`/regex/`] === x[/regex/]
             // ex) x[/regex/] === x[`/regex/`]
-            (ExpressionKind::TemplateLiteral(template_lit), ExpressionKind::RegExpLiteral(regex_lit))
-            | (ExpressionKind::RegExpLiteral(regex_lit), ExpressionKind::TemplateLiteral(template_lit)) => {
+            (
+                ExpressionKind::TemplateLiteral(template_lit),
+                ExpressionKind::RegExpLiteral(regex_lit),
+            )
+            | (
+                ExpressionKind::RegExpLiteral(regex_lit),
+                ExpressionKind::TemplateLiteral(template_lit),
+            ) => {
                 if !template_lit
                     .single_quasi()
                     .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap())

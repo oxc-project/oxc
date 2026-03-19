@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Function, ThisExpression, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, Function, ThisExpression},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -74,7 +74,9 @@ impl Rule for NoExtraBind {
         let expr = call_expr.callee.get_inner_expression();
 
         let Some(member_expr) = (match expr.kind() {
-            ExpressionKind::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+            ExpressionKind::ChainExpression(chain_expr) => {
+                chain_expr.expression.as_member_expression()
+            }
             _ => expr.as_member_expression(),
         }) else {
             return;

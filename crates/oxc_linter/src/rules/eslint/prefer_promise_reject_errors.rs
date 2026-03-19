@@ -1,7 +1,7 @@
 use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, FormalParameters, ExpressionKind},
+    ast::{Argument, CallExpression, Expression, ExpressionKind, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

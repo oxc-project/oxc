@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -75,7 +75,8 @@ impl Rule for PreferReflectApply {
         };
 
         if call_expr.optional
-            || matches!(member_expr.object().kind(),
+            || matches!(
+                member_expr.object().kind(),
                 ExpressionKind::ArrayExpression(_) | ExpressionKind::ObjectExpression(_)
             )
             || member_expr.object().is_literal()

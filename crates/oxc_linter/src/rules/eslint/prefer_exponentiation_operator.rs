@@ -1,4 +1,8 @@
-use oxc_ast::{AstKind, match_member_expression, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+    match_member_expression,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -122,7 +126,10 @@ impl Rule for PreferExponentiationOperator {
 
 fn does_base_need_parens(expr: &Expression) -> bool {
     let expr = expr.without_parentheses();
-    if matches!(expr.kind(), ExpressionKind::UnaryExpression(_) | ExpressionKind::AwaitExpression(_)) {
+    if matches!(
+        expr.kind(),
+        ExpressionKind::UnaryExpression(_) | ExpressionKind::AwaitExpression(_)
+    ) {
         return true;
     }
     if let Some(prec) = get_precedence(expr) {

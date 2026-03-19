@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -90,7 +93,10 @@ impl Rule for ConsistentEmptyArraySpread {
                     );
                 }
             }
-            (ExpressionKind::StringLiteral(_), ExpressionKind::ArrayExpression(right_array_expr)) => {
+            (
+                ExpressionKind::StringLiteral(_),
+                ExpressionKind::ArrayExpression(right_array_expr),
+            ) => {
                 if right_array_expr.elements.is_empty() {
                     ctx.diagnostic_with_suggestion(
                         consistent_empty_array_spread_diagnostic(conditional_expr.span),

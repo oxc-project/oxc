@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ChainElement, Expression, match_member_expression, ExpressionKind},
+    ast::{ChainElement, Expression, ExpressionKind, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -123,9 +123,7 @@ impl Rule for PreferRegexpTest {
 
         match name.as_str() {
             "match" => {
-                if member_expr.object().is_literal()
-                    && !member_expr.object().is_reg_exp_literal()
-                {
+                if member_expr.object().is_literal() && !member_expr.object().is_reg_exp_literal() {
                     return;
                 }
 
@@ -137,9 +135,7 @@ impl Rule for PreferRegexpTest {
                 }
             }
             "exec" => {
-                if member_expr.object().is_literal()
-                    && !member_expr.object().is_reg_exp_literal()
-                {
+                if member_expr.object().is_literal() && !member_expr.object().is_reg_exp_literal() {
                     return;
                 }
             }

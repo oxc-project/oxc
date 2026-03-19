@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BinaryExpression, CallExpression, Expression, NullLiteral, SwitchStatement,
-        VariableDeclarator, ExpressionKind},
+        Argument, BinaryExpression, CallExpression, Expression, ExpressionKind, NullLiteral,
+        SwitchStatement, VariableDeclarator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

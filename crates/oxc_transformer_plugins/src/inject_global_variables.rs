@@ -3,7 +3,7 @@ use std::{borrow::Cow, sync::Arc};
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, NONE, ast::*, ast::ExpressionKind};
+use oxc_ast::{AstBuilder, NONE, ast::ExpressionKind, ast::*};
 use oxc_semantic::Scoping;
 use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;

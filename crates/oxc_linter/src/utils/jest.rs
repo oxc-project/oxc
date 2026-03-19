@@ -4,8 +4,9 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
-        match_member_expression, ExpressionKind},
+        CallExpression, Expression, ExpressionKind, ImportDeclaration, ImportDeclarationSpecifier,
+        match_member_expression,
+    },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
@@ -287,7 +288,9 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
         ExpressionKind::TaggedTemplateExpression(tagged_expr) => {
             chain.extend(get_node_name_vec(&tagged_expr.tag));
         }
-        ExpressionKind::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
+        ExpressionKind::CallExpression(call_expr) => {
+            chain.extend(get_node_name_vec(&call_expr.callee))
+        }
         match_member_expression!(ExpressionKind) => {
             let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));

@@ -91,7 +91,8 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        let Some(alternate_block) = if_stmt.alternate.as_ref().and_then(|e| e.as_block_statement()) else {
+        let Some(alternate_block) = if_stmt.alternate.as_ref().and_then(|e| e.as_block_statement())
+        else {
             return;
         };
 

@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression, ExpressionKind},
+    ast::{
+        BinaryExpression, Expression, ExpressionKind, LogicalExpression, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

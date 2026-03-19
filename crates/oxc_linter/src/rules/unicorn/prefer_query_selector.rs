@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -149,9 +152,7 @@ impl Rule for PreferQuerySelector {
             // For non-literal arguments, we can still auto-fix `getElementById(id)` -> `querySelector(`#${id}`)
             // Only apply this fix for simple identifiers so we avoid nested template literals
             // and complex expressions like member/call expressions or template literals
-            if property_name == "getElementById"
-                && argument_expr.is_identifier()
-            {
+            if property_name == "getElementById" && argument_expr.is_identifier() {
                 return ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     let source_text = fixer.source_range(argument_expr.span());
                     let span = property_span.merge(argument_expr.span());

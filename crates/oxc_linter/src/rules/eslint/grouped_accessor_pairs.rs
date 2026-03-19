@@ -4,9 +4,10 @@ use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
-        TSMethodSignatureKind, TSSignature, TSTypeLiteral, ExpressionKind},
+        ClassElement, Expression, ExpressionKind, MethodDefinition, MethodDefinitionKind,
+        ObjectProperty, ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody,
+        TSMethodSignature, TSMethodSignatureKind, TSSignature, TSTypeLiteral,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -403,7 +404,8 @@ fn get_key_name_and_check_literal<'a>(
         {
             false
         } else {
-            matches!(prop_key.as_expression().unwrap().kind(),
+            matches!(
+                prop_key.as_expression().unwrap().kind(),
                 ExpressionKind::BooleanLiteral(_)
                     | ExpressionKind::NullLiteral(_)
                     | ExpressionKind::StringLiteral(_)

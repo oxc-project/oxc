@@ -83,7 +83,7 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(paren_expr) = expr .as_parenthesized_expression_mut(){
+        if let Some(paren_expr) = expr.as_parenthesized_expression_mut() {
             *expr = paren_expr.expression.take_in(ctx.ast);
         }
         if let Some(e) = match expr.kind_mut() {
@@ -161,7 +161,9 @@ impl<'a> Normalize {
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !stmt.is_while_statement() { return };
+        if !stmt.is_while_statement() {
+            return;
+        };
         let while_stmt = stmt.take_in(ctx.ast).into_while_statement().unbox();
         let for_stmt = ctx.ast.alloc_for_statement_with_scope_id(
             while_stmt.span,

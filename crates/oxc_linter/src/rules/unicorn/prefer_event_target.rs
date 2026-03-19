@@ -1,7 +1,7 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, Expression, IdentifierReference, ExpressionKind},
+    ast::{Argument, BindingPattern, Expression, ExpressionKind, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -103,19 +103,22 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
                     _ => false,
                 }
         }
-        ExpressionKind::AwaitExpression(await_expr) => match await_expr.argument.get_inner_expression()
-        {
-            ExpressionKind::ImportExpression(import_expr) => {
-                match import_expr.source.get_inner_expression().kind() {
-                    ExpressionKind::StringLiteral(source) => is_ignored_package(source.value.as_str()),
-                    ExpressionKind::TemplateLiteral(source) => source
-                        .single_quasi()
-                        .is_some_and(|source| is_ignored_package(source.as_str())),
-                    _ => false,
+        ExpressionKind::AwaitExpression(await_expr) => {
+            match await_expr.argument.get_inner_expression() {
+                ExpressionKind::ImportExpression(import_expr) => {
+                    match import_expr.source.get_inner_expression().kind() {
+                        ExpressionKind::StringLiteral(source) => {
+                            is_ignored_package(source.value.as_str())
+                        }
+                        ExpressionKind::TemplateLiteral(source) => source
+                            .single_quasi()
+                            .is_some_and(|source| is_ignored_package(source.as_str())),
+                        _ => false,
+                    }
                 }
+                _ => false,
             }
-            _ => false,
-        },
+        }
         _ => false,
     }
 }

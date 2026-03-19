@@ -38,7 +38,9 @@ impl<'a> PeepholeOptimizations {
             // `!(a != b)` => `a == b`
             // `!(a === b)` => `a !== b`
             // `!(a !== b)` => `a === b`
-            ExpressionKindMut::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+            ExpressionKindMut::BinaryExpression(binary_expr)
+                if binary_expr.operator.is_equality() =>
+            {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
                 *expr = e.argument.take_in(ctx.ast);
                 ctx.state.changed = true;

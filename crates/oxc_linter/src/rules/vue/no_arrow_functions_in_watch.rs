@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
-        ObjectPropertyKind, ExpressionKind},
+        CallExpression, ExportDefaultDeclarationKind, Expression, ExpressionKind, ObjectExpression,
+        ObjectPropertyKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -1,7 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPattern, Expression, MemberExpression, VariableDeclarationKind, ExpressionKind},
+        AssignmentTarget, BindingPattern, Expression, ExpressionKind, MemberExpression,
+        VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -239,7 +241,8 @@ impl Rule for PreferDestructuring {
                                 {
                                     ctx.diagnostic(prefer_object_destructuring(right.span()));
                                 }
-                                if let Some(string_literal) = comp_expr.expression.as_string_literal()
+                                if let Some(string_literal) =
+                                    comp_expr.expression.as_string_literal()
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
@@ -300,9 +303,7 @@ fn get_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<&'a str> {
 }
 
 fn check_expr(expr: &MemberExpression) -> bool {
-    if matches!(expr, MemberExpression::PrivateFieldExpression(_))
-        || expr.object().is_super()
-    {
+    if matches!(expr, MemberExpression::PrivateFieldExpression(_)) || expr.object().is_super() {
         return false;
     }
     true

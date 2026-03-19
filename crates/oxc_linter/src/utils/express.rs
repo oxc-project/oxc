@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameter, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, FormalParameter},
 };
 use oxc_span::Atom;
 

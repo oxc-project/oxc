@@ -77,7 +77,8 @@ impl Rule for NoExtraNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let expr = match node.kind() {
             AstKind::TSNonNullExpression(expr) => {
-                if let Some(expr) = expr.expression.without_parentheses().as_ts_non_null_expression()
+                if let Some(expr) =
+                    expr.expression.without_parentheses().as_ts_non_null_expression()
                 {
                     Some(expr)
                 } else {

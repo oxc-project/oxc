@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression, StaticMemberExpression, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, MemberExpression, StaticMemberExpression},
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;

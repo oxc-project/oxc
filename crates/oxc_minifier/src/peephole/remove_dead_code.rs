@@ -430,7 +430,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Some(e) = expr.as_call_expression_mut() else { return };
-        if let Some(ident) = e.callee .as_identifier(){
+        if let Some(ident) = e.callee.as_identifier() {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
                 && matches!(
@@ -463,7 +463,9 @@ impl<'a> PeepholeOptimizations {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value.kind() {
-                    ExpressionKind::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+                    ExpressionKind::Identifier(id) => {
+                        id.name == "eval" && ctx.is_global_reference(id)
+                    }
                     match_member_expression!(ExpressionKind) => true,
                     _ => false,
                 }

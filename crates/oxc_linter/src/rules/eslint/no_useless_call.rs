@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression, ExpressionKind},
+    ast::{CallExpression, ChainElement, Expression, ExpressionKind, MemberExpression},
     match_member_expression,
 };
 use oxc_diagnostics::OxcDiagnostic;

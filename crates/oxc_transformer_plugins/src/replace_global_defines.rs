@@ -893,7 +893,9 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 ) -> Option<&'b Atom<'a>> {
     match expr.expression.kind() {
         ExpressionKind::StringLiteral(lit) => Some(&lit.value),
-        ExpressionKind::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
+        ExpressionKind::TemplateLiteral(lit)
+            if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+        {
             Some(&lit.quasis[0].value.raw)
         }
         _ => None,

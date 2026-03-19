@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, RegExpFlags, ExpressionKind},
+    ast::{Expression, ExpressionKind, RegExpFlags},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

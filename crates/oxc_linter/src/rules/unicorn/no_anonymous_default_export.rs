@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression, ExpressionKind},
+    ast::{
+        AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression,
+        ExpressionKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -100,7 +103,9 @@ impl Rule for NoAnonymousDefaultExport {
 
 fn is_anonymous_class_or_function(expr: &Expression) -> Option<(Span, ErrorNodeKind)> {
     Some(match expr.get_inner_expression().kind() {
-        ExpressionKind::ClassExpression(expr) if expr.id.is_none() => (expr.span, ErrorNodeKind::Class),
+        ExpressionKind::ClassExpression(expr) if expr.id.is_none() => {
+            (expr.span, ErrorNodeKind::Class)
+        }
         ExpressionKind::FunctionExpression(expr) if expr.id.is_none() => {
             (expr.span, ErrorNodeKind::Function)
         }

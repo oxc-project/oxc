@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXChild, ExpressionKind},
+    ast::{Expression, ExpressionKind, JSXChild},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -147,8 +147,12 @@ fn calculate_expression_jsx_depth(
     visited: &mut FxHashSet<SymbolId>,
 ) -> usize {
     match expr.kind() {
-        ExpressionKind::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
-        ExpressionKind::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
+        ExpressionKind::JSXElement(elem) => {
+            calculate_jsx_children_depth(&elem.children, ctx, visited)
+        }
+        ExpressionKind::JSXFragment(frag) => {
+            calculate_jsx_children_depth(&frag.children, ctx, visited)
+        }
         ExpressionKind::Identifier(ident) => ident
             .reference_id
             .get()
@@ -194,7 +198,9 @@ fn calculate_jsx_children_depth(
                 calculate_jsx_children_depth(&frag.children, ctx, visited_symbols) + 1
             }
             JSXChild::ExpressionContainer(container) => {
-                if let Some(ident) = container.expression.as_expression().as_ref().and_then(|e| e.as_identifier()) {
+                if let Some(ident) =
+                    container.expression.as_expression().as_ref().and_then(|e| e.as_identifier())
+                {
                     let depth = ident
                         .reference_id
                         .get()

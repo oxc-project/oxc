@@ -1,3 +1,4 @@
+use oxc_ast::ast::ExpressionKind;
 use oxc_ast::{
     AstKind, MemberExpressionKind,
     ast::{
@@ -8,7 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_ast::ast::{ExpressionKind};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

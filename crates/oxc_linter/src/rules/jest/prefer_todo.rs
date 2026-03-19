@@ -130,7 +130,9 @@ fn filter_todo_case(expr: &CallExpression) -> bool {
 
 fn should_filter_case(expr: &CallExpression) -> bool {
     let result = match expr.callee.kind() {
-        ExpressionKind::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
+        ExpressionKind::Identifier(ident) => {
+            ident.name.starts_with('x') || ident.name.starts_with('f')
+        }
         _ => false,
     };
     result || filter_todo_case(expr)

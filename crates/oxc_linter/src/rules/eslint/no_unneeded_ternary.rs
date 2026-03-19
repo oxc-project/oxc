@@ -88,9 +88,7 @@ impl Rule for NoUnneededTernary {
         let AstKind::ConditionalExpression(expr) = node.kind() else {
             return;
         };
-        if expr.consequent.is_boolean_literal()
-            && expr.alternate.is_boolean_literal()
-        {
+        if expr.consequent.is_boolean_literal() && expr.alternate.is_boolean_literal() {
             ctx.diagnostic_with_dangerous_fix(no_unneeded_ternary_diagnostic(expr.span), |fixer| {
                 let (ExpressionKind::BooleanLiteral(left), ExpressionKind::BooleanLiteral(right)) =
                     (&expr.consequent, &expr.alternate)
@@ -140,7 +138,9 @@ impl Rule for NoUnneededTernary {
                             };
                         }
                     }
-                    ExpressionKind::UnaryExpression(unary) if left.value && unary.operator.is_not() => {
+                    ExpressionKind::UnaryExpression(unary)
+                        if left.value && unary.operator.is_not() =>
+                    {
                         // !x ? true : false => !x
                         replacement = test_expr_source.to_string();
                     }
@@ -182,7 +182,8 @@ impl Rule for NoUnneededTernary {
 }
 
 fn without_parenthesize(node: &Expression) -> bool {
-    matches!(node.kind(),
+    matches!(
+        node.kind(),
         ExpressionKind::Identifier(_)
             | ExpressionKind::UnaryExpression(_)
             | ExpressionKind::StaticMemberExpression(_)

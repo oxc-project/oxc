@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind, match_member_expression, ExpressionKind},
+        ChainElement, Expression, ExpressionKind, MemberExpression, MethodDefinitionKind,
+        ObjectProperty, PropertyKind, match_member_expression,
+    },
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,

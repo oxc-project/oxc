@@ -1,7 +1,8 @@
 use oxc_allocator::Vec as AllocatorVec;
 use oxc_ast::ast::{
-    ArrowFunctionExpression, BlockStatement, Expression, Function, FunctionBody, ReturnStatement,
-    Statement, SwitchCase, UnaryOperator, ExpressionKind, StatementKind};
+    ArrowFunctionExpression, BlockStatement, Expression, ExpressionKind, Function, FunctionBody,
+    ReturnStatement, Statement, StatementKind, SwitchCase, UnaryOperator,
+};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::ScopeFlags;

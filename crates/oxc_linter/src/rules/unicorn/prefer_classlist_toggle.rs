@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, IfStatement, MemberExpression, Statement, ExpressionKind, StatementKind},
+    ast::{
+        CallExpression, ChainElement, Expression, ExpressionKind, IfStatement, MemberExpression,
+        Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -249,10 +252,12 @@ fn identify_add_remove_pair<'a>(
         return None;
     }
 
-    let Some(first_member) = first.callee.get_inner_expression().as_static_member_expression() else {
+    let Some(first_member) = first.callee.get_inner_expression().as_static_member_expression()
+    else {
         return None;
     };
-    let Some(second_member) = second.callee.get_inner_expression().as_static_member_expression() else {
+    let Some(second_member) = second.callee.get_inner_expression().as_static_member_expression()
+    else {
         return None;
     };
 
@@ -275,10 +280,14 @@ fn identify_add_remove_pair<'a>(
         (&second_member, &first_member)
     };
 
-    let Some(classlist_add_member_expr) = classlist_add_callee.object.get_inner_expression().as_static_member_expression() else {
+    let Some(classlist_add_member_expr) =
+        classlist_add_callee.object.get_inner_expression().as_static_member_expression()
+    else {
         return None;
     };
-    let Some(classlist_remove_member_expr) = classlist_remove_callee.object.get_inner_expression().as_static_member_expression() else {
+    let Some(classlist_remove_member_expr) =
+        classlist_remove_callee.object.get_inner_expression().as_static_member_expression()
+    else {
         return None;
     };
 

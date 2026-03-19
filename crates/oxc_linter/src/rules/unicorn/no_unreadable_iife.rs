@@ -58,7 +58,9 @@ impl Rule for NoUnreadableIife {
             return;
         };
 
-        let Some(arrow_expr) = &call_expr.callee.without_parentheses().as_arrow_function_expression() else {
+        let Some(arrow_expr) =
+            &call_expr.callee.without_parentheses().as_arrow_function_expression()
+        else {
             return;
         };
 

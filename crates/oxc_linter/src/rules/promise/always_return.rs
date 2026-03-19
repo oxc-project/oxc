@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement, UnaryOperator, ExpressionKind, StatementKind},
+    ast::{AssignmentTarget, Expression, ExpressionKind, Statement, StatementKind, UnaryOperator},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,

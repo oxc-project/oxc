@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentTarget, BinaryOperator, Expression, MemberExpression,
-        SimpleAssignmentTarget, UnaryOperator, UpdateOperator, ExpressionKind},
+        AssignmentExpression, AssignmentTarget, BinaryOperator, Expression, ExpressionKind,
+        MemberExpression, SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -278,12 +279,16 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     };
     match expr.kind() {
         MemberExpression::ComputedMemberExpression(computed_expr) => {
-            matches!(computed_expr.object.kind(),
+            matches!(
+                computed_expr.object.kind(),
                 ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_)
             ) && computed_expr.expression.is_literal()
         }
         MemberExpression::StaticMemberExpression(static_expr) => {
-            matches!(static_expr.object.kind(), ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_))
+            matches!(
+                static_expr.object.kind(),
+                ExpressionKind::Identifier(_) | ExpressionKind::ThisExpression(_)
+            )
         }
         MemberExpression::PrivateFieldExpression(_) => false,
     }

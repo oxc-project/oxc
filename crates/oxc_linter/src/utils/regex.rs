@@ -38,18 +38,26 @@ fn run_on_arguments<M>(arg1: Option<&Argument>, arg2: Option<&Argument>, ctx: &L
 where
     M: FnOnce(&Pattern<'_>, Span),
 {
-    let arg1 = arg1.and_then(Argument::as_expression).as_ref().map(Expression::get_inner_expression);
-    let arg2 = arg2.and_then(Argument::as_expression).as_ref().map(Expression::get_inner_expression);
+    let arg1 =
+        arg1.and_then(Argument::as_expression).as_ref().map(Expression::get_inner_expression);
+    let arg2 =
+        arg2.and_then(Argument::as_expression).as_ref().map(Expression::get_inner_expression);
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
     match (arg1.map(|e| e.kind()), arg2.map(|e| e.kind())) {
-        (Some(ExpressionKind::StringLiteral(pattern)), Some(ExpressionKind::StringLiteral(flags))) => {
+        (
+            Some(ExpressionKind::StringLiteral(pattern)),
+            Some(ExpressionKind::StringLiteral(flags)),
+        ) => {
             let allocator = Allocator::default();
             if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::StringLiteral(pattern)), Some(ExpressionKind::TemplateLiteral(flags))) => {
+        (
+            Some(ExpressionKind::StringLiteral(pattern)),
+            Some(ExpressionKind::TemplateLiteral(flags)),
+        ) => {
             if !flags.is_no_substitution_template() {
                 return;
             }
@@ -64,7 +72,10 @@ where
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::TemplateLiteral(pattern)), Some(ExpressionKind::TemplateLiteral(flags))) => {
+        (
+            Some(ExpressionKind::TemplateLiteral(pattern)),
+            Some(ExpressionKind::TemplateLiteral(flags)),
+        ) => {
             if !pattern.is_no_substitution_template() || !flags.is_no_substitution_template() {
                 return;
             }
@@ -73,7 +84,10 @@ where
                 cb(&pat, pattern.span);
             }
         }
-        (Some(ExpressionKind::TemplateLiteral(pattern)), Some(ExpressionKind::StringLiteral(flags))) => {
+        (
+            Some(ExpressionKind::TemplateLiteral(pattern)),
+            Some(ExpressionKind::StringLiteral(flags)),
+        ) => {
             if !pattern.is_no_substitution_template() {
                 return;
             }

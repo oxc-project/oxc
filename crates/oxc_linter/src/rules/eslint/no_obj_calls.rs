@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, IdentifierReference, MemberExpression, match_member_expression, ExpressionKind},
+    ast::{
+        Expression, ExpressionKind, IdentifierReference, MemberExpression, match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -106,7 +108,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
             }
             match &parent_decl.init.kind() {
                 // handles "let a = JSON; let b = a; a();"
-                Some(ExpressionKind::Identifier(parent_ident)) if parent_ident.name != ident.name => {
+                Some(ExpressionKind::Identifier(parent_ident))
+                    if parent_ident.name != ident.name =>
+                {
                     let decl_scope = decl.scope_id();
                     resolve_global_binding(parent_ident, decl_scope, ctx)
                 }

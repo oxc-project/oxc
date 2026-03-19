@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, ObjectPropertyKind, TSType, ExpressionKind},
+        Argument, Expression, ExpressionKind, JSXAttribute, JSXAttributeItem, JSXAttributeName,
+        JSXAttributeValue, JSXElementName, ObjectPropertyKind, TSType,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

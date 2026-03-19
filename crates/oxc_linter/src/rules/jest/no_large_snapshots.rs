@@ -3,7 +3,7 @@ use std::ops::Deref;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ExpressionStatement, MemberExpression, ExpressionKind},
+    ast::{Expression, ExpressionKind, ExpressionStatement, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

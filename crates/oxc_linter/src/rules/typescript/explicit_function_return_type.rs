@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName, ExpressionKind},
+        ArrowFunctionExpression, BindingPattern, Expression, ExpressionKind, FunctionType,
+        PropertyKind, ReturnStatement, TSType, TSTypeName,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -582,7 +583,8 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 }
 
 fn is_function(expr: &Expression) -> bool {
-    matches!(expr.get_inner_expression().kind(),
+    matches!(
+        expr.get_inner_expression().kind(),
         ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }

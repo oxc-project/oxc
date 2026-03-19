@@ -733,7 +733,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         let mut argument = None;
         let mut property = "";
         let init = if expr.is_computed_member_expression() {
-            let mut computed_member = expr.take_in(ctx.ast).into_computed_member_expression().unbox();
+            let mut computed_member =
+                expr.take_in(ctx.ast).into_computed_member_expression().unbox();
             if !computed_member.object.is_super() {
                 return None;
             }

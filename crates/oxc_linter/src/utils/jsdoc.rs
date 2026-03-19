@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FormalParameters, ExpressionKind},
+    ast::{BindingPattern, Expression, ExpressionKind, FormalParameters},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;

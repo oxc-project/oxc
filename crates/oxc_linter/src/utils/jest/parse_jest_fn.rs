@@ -4,8 +4,9 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierName, IdentifierReference,
-        MemberExpression, match_member_expression, ExpressionKind},
+        Argument, CallExpression, Expression, ExpressionKind, IdentifierName, IdentifierReference,
+        MemberExpression, match_member_expression,
+    },
 };
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -43,15 +44,15 @@ pub fn parse_jest_fn_call<'a>(
     if let Some(last) = chain.last() {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last.is_name_equal("each")
-            && !matches!(callee.kind(),
+            && !matches!(
+                callee.kind(),
                 ExpressionKind::CallExpression(_) | ExpressionKind::TaggedTemplateExpression(_)
             )
         {
             return None;
         }
 
-        if callee.is_tagged_template_expression() && last.is_name_unequal("each")
-        {
+        if callee.is_tagged_template_expression() && last.is_name_unequal("each") {
             return None;
         }
 
@@ -349,7 +350,9 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
             resolve_first_ident(expr.to_member_expression().object())
         }
         ExpressionKind::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
-        ExpressionKind::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
+        ExpressionKind::TaggedTemplateExpression(tagged_expr) => {
+            resolve_first_ident(&tagged_expr.tag)
+        }
         _ => None,
     }
 }
@@ -501,7 +504,8 @@ impl<'a> MemberExpressionElement<'a> {
     }
 
     pub fn is_string_literal(&self) -> bool {
-        matches!(self.kind(),
+        matches!(
+            self.kind(),
             Self::Expression(ExpressionKind::StringLiteral(_) | ExpressionKind::TemplateLiteral(_))
         )
     }

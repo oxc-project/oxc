@@ -2,8 +2,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
-        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target, ExpressionKind},
+        AssignmentTargetProperty, Expression, ExpressionKind, MemberExpression, ObjectProperty,
+        ObjectPropertyKind, SimpleAssignmentTarget, match_assignment_target,
+        match_simple_assignment_target,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -221,7 +223,9 @@ impl NoSelfAssign {
         let left = left.get_inner_expression();
         let right = right.get_inner_expression();
 
-        if matches!((left.kind(), right.kind()),(ExpressionKind::Super(_), ExpressionKind::Super(_))
+        if matches!(
+            (left.kind(), right.kind()),
+            (ExpressionKind::Super(_), ExpressionKind::Super(_))
                 | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
         ) {
             return true;

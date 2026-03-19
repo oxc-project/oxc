@@ -8,9 +8,10 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXExpression,
-        JSXFragment, Statement, ExpressionKind, StatementKind},
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ExpressionKind,
+        IdentifierReference, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
+        JSXElement, JSXExpression, JSXFragment, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -201,7 +202,9 @@ fn is_children_from_react<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext
             // Check if this is a VariableDeclarator with ObjectPattern
             if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
                 // Check if init is an identifier imported from React
-                if let Some(init_ident) = var_decl.init.as_ref().as_ref().and_then(|e| e.as_identifier()) {
+                if let Some(init_ident) =
+                    var_decl.init.as_ref().as_ref().and_then(|e| e.as_identifier())
+                {
                     // Check if the init identifier is imported from 'react' module
                     return import_matcher(ctx, init_ident.name.as_str(), REACT_MODULE);
                 }
@@ -259,7 +262,8 @@ fn is_in_array_or_iter<'a, 'b>(
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                let is_arrow_expr_statement = arrow_expr.body.statements.first().is_some_and(|e| e.is_expression_statement());
+                let is_arrow_expr_statement =
+                    arrow_expr.body.statements.first().is_some_and(|e| e.is_expression_statement());
                 if !is_explicit_return && !is_arrow_expr_statement {
                     return None;
                 }

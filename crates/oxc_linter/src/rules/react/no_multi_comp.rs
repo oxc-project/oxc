@@ -2,8 +2,9 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, CallExpression, Class,
-        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectProperty, PropertyKey, Statement, VariableDeclarator, ExpressionKind, StatementKind},
+        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, ExpressionKind,
+        Function, ObjectProperty, PropertyKey, Statement, StatementKind, VariableDeclarator,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;

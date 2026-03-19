@@ -4,8 +4,9 @@ use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
-        Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
-        MemberExpression, PropertyKey, ExpressionKind},
+        Argument, BindingPattern, BindingProperty, CallExpression, Expression, ExpressionKind,
+        Function, MemberExpression, PropertyKey,
+    },
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;

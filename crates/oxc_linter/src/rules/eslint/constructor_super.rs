@@ -370,67 +370,69 @@ impl ConstructorSuper {
                                 record_super(call.span);
                             }
                         }
-                        AstKind::ExpressionStatement(expr_stmt) => match expr_stmt.expression.kind() {
-                            ExpressionKind::CallExpression(call) => {
-                                if &call.callee.is_super() {
-                                    record_super(call.span);
-                                }
-                            }
-                            // Ternary: both branches in same block but only one executes
-                            ExpressionKind::ConditionalExpression(cond) => {
-                                let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Some(call) = expr.as_call_expression()
-                                        && &call.callee.is_super()
-                                    {
-                                        Some(call.span)
-                                    } else {
-                                        None
+                        AstKind::ExpressionStatement(expr_stmt) => {
+                            match expr_stmt.expression.kind() {
+                                ExpressionKind::CallExpression(call) => {
+                                    if &call.callee.is_super() {
+                                        record_super(call.span);
                                     }
-                                };
+                                }
+                                // Ternary: both branches in same block but only one executes
+                                ExpressionKind::ConditionalExpression(cond) => {
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let Some(call) = expr.as_call_expression()
+                                            && &call.callee.is_super()
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
 
-                                if let Some(span) = check_super(&cond.consequent)
-                                    .or_else(|| check_super(&cond.alternate))
+                                    if let Some(span) = check_super(&cond.consequent)
+                                        .or_else(|| check_super(&cond.alternate))
+                                    {
+                                        record_super(span);
+                                    }
+                                }
+                                // Special case: `super() || super()` - report both as duplicate.
+                                //
+                                // Technically, `super()` returns the constructed instance (truthy),
+                                // so the RHS of `||` won't execute at runtime. However:
+                                // 1. ESLint reports this as duplicate for compatibility
+                                // 2. This code pattern is almost certainly a mistake
+                                // 3. The CFG doesn't catch this because it sees only LHS as reachable
+                                //
+                                // We intentionally match ESLint's behavior here.
+                                ExpressionKind::LogicalExpression(logical)
+                                    if matches!(logical.operator, LogicalOperator::Or) =>
                                 {
-                                    record_super(span);
-                                }
-                            }
-                            // Special case: `super() || super()` - report both as duplicate.
-                            //
-                            // Technically, `super()` returns the constructed instance (truthy),
-                            // so the RHS of `||` won't execute at runtime. However:
-                            // 1. ESLint reports this as duplicate for compatibility
-                            // 2. This code pattern is almost certainly a mistake
-                            // 3. The CFG doesn't catch this because it sees only LHS as reachable
-                            //
-                            // We intentionally match ESLint's behavior here.
-                            ExpressionKind::LogicalExpression(logical)
-                                if matches!(logical.operator, LogicalOperator::Or) =>
-                            {
-                                let check_super = |expr: &Expression| -> Option<Span> {
-                                    if let Some(call) = expr.as_call_expression()
-                                        && &call.callee.is_super()
-                                    {
-                                        Some(call.span)
-                                    } else {
-                                        None
-                                    }
-                                };
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let Some(call) = expr.as_call_expression()
+                                            && &call.callee.is_super()
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
 
-                                let left_span = check_super(&logical.left);
-                                let right_span = check_super(&logical.right);
+                                    let left_span = check_super(&logical.left);
+                                    let right_span = check_super(&logical.right);
 
-                                // Report both super() calls as duplicates if both exist
-                                if left_span.is_some() && right_span.is_some() {
-                                    if let Some(span) = left_span {
-                                        record_super(span);
-                                    }
-                                    if let Some(span) = right_span {
-                                        record_super(span);
+                                    // Report both super() calls as duplicates if both exist
+                                    if left_span.is_some() && right_span.is_some() {
+                                        if let Some(span) = left_span {
+                                            record_super(span);
+                                        }
+                                        if let Some(span) = right_span {
+                                            record_super(span);
+                                        }
                                     }
                                 }
+                                _ => {}
                             }
-                            _ => {}
-                        },
+                        }
                         _ => {}
                     }
                 }

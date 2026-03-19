@@ -1,7 +1,9 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement, ExpressionKind};
+    Argument, BindingPattern, CatchClause, Expression, ExpressionKind, Function,
+    IdentifierReference, ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement,
+    TryStatement,
+};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{StatementKind, Statement}};
+use oxc_ast::{
+    AstKind,
+    ast::{Statement, StatementKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;

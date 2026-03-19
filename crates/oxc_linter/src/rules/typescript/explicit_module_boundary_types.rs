@@ -450,7 +450,8 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
 
                     // `export const foo = () => () => (): number => 1`
-                    ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_) => {
+                    ExpressionKind::ArrowFunctionExpression(_)
+                    | ExpressionKind::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
                         walk::walk_function_body(self, &arrow.body);
                         return;
@@ -477,8 +478,12 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         returns.iter().any(|ret| {
-            matches!(ret.argument.kind(),
-                Some(ExpressionKind::FunctionExpression(_) | ExpressionKind::ArrowFunctionExpression(_))
+            matches!(
+                ret.argument.kind(),
+                Some(
+                    ExpressionKind::FunctionExpression(_)
+                        | ExpressionKind::ArrowFunctionExpression(_)
+                )
             )
         })
     }
@@ -729,14 +734,17 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
 /// like [`Expression::get_inner_expression`], but does not skip over most ts syntax
 fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expression<'a> {
     match expr.kind() {
-        ExpressionKind::ParenthesizedExpression(expr) => get_typed_inner_expression(&expr.expression),
+        ExpressionKind::ParenthesizedExpression(expr) => {
+            get_typed_inner_expression(&expr.expression)
+        }
         ExpressionKind::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
         _ => expr,
     }
 }
 
 fn is_wrapped_function_expression(expr: &Expression<'_>) -> bool {
-    matches!(get_typed_inner_expression(expr).kind(),
+    matches!(
+        get_typed_inner_expression(expr).kind(),
         ExpressionKind::ArrowFunctionExpression(_) | ExpressionKind::FunctionExpression(_)
     )
 }

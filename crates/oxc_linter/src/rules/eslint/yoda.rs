@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator,
-        UnaryOperator, ExpressionKind},
+        BinaryExpression, BinaryOperator, Expression, ExpressionKind, LogicalExpression,
+        LogicalOperator, UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
@@ -342,7 +343,8 @@ fn is_keyword_expression(expr: &Expression) -> bool {
     matches!(expr.kind(),
         ExpressionKind::UnaryExpression(unary)
             if matches!(unary.operator, UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete)
-    ) || matches!(expr.kind(),
+    ) || matches!(
+        expr.kind(),
         ExpressionKind::AwaitExpression(_)
             | ExpressionKind::YieldExpression(_)
             | ExpressionKind::NewExpression(_)

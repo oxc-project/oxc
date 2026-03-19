@@ -4,8 +4,8 @@ use cow_utils::CowUtils;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn};
-use oxc_ast::{NONE, ast::*};
 use oxc_ast::ast::{ExpressionKind, ExpressionKindMut};
+use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
@@ -169,7 +169,9 @@ impl<'a> PeepholeOptimizations {
 
             // [].concat() or "".concat()
             let is_root_expr_concat = {
-                let Some(member) = ce.callee.as_static_member_expression_mut() else { unreachable!() };
+                let Some(member) = ce.callee.as_static_member_expression_mut() else {
+                    unreachable!()
+                };
                 member.object.is_array_expression() || member.object.is_string_literal()
             };
             if is_root_expr_concat {
@@ -270,8 +272,10 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                let expression_count =
-                    args.iter().filter(|arg| !arg.is_expression() || !arg.to_expression().is_string_literal()).count();
+                let expression_count = args
+                    .iter()
+                    .filter(|arg| !arg.is_expression() || !arg.to_expression().is_string_literal())
+                    .count();
                 let string_count = args.len() - expression_count;
 
                 // whether it is shorter to use `String::concat`
@@ -442,19 +446,21 @@ impl<'a> PeepholeOptimizations {
                             pattern_modifiers: true,
                         };
 
-                    if regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty()
-                    {
+                    if regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty() {
                         // Need mutable access to parse the pattern
                         let object_mut = match node.kind_mut() {
                             ExpressionKindMut::StaticMemberExpression(member) => &mut member.object,
-                            ExpressionKindMut::ComputedMemberExpression(member) => &mut member.object,
+                            ExpressionKindMut::ComputedMemberExpression(member) => {
+                                &mut member.object
+                            }
                             _ => unreachable!(),
                         };
                         let regex_mut = object_mut.as_reg_exp_literal_mut().unwrap();
                         if regex_mut.regex.pattern.pattern.is_none()
                             && let Ok(pattern) = regex_mut.parse_pattern(ctx.ast.allocator)
                         {
-                            regex_mut.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
+                            regex_mut.regex.pattern.pattern =
+                                Some(Box::new_in(pattern, ctx.ast.allocator));
                         }
                         if let Some(pattern) = &regex_mut.regex.pattern.pattern
                             && !has_unsupported_regular_expression_pattern(

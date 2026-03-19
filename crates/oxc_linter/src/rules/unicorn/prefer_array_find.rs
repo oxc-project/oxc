@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression,
-        SimpleAssignmentTarget, UnaryOperator, ExpressionKind},
+        Argument, AssignmentTarget, BindingPattern, CallExpression, Expression, ExpressionKind,
+        SimpleAssignmentTarget, UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -59,7 +60,8 @@ impl Rule for PreferArrayFind {
             AstKind::ComputedMemberExpression(computed_member_expr) => {
                 // Zero index access
                 if computed_member_expr.expression.is_number_0()
-                    && let Some(call_expr) = computed_member_expr.object.get_inner_expression().as_call_expression()
+                    && let Some(call_expr) =
+                        computed_member_expr.object.get_inner_expression().as_call_expression()
                     && is_filter_call(call_expr)
                     && !is_left_hand_side(node, ctx)
                 {

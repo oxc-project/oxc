@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind, ExpressionKind},
+        CallExpression, ExportDefaultDeclarationKind, Expression, ExpressionKind,
+        IdentifierReference, ObjectPropertyKind,
+    },
 };
 
 use crate::{ContextSubHost, LintContext};

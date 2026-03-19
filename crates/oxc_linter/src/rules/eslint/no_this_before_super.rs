@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind, AstType,
-    ast::{Argument, Expression, MethodDefinitionKind, ExpressionKind},
+    ast::{Argument, Expression, ExpressionKind, MethodDefinitionKind},
 };
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
@@ -261,14 +261,19 @@ impl NoThisBeforeSuper {
         match arg.kind() {
             Argument::Super(_) | Argument::ThisExpression(_) => true,
             Argument::CallExpression(call_expr) => {
-                matches!(call_expr.callee.kind(), ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
-                    || matches!(call_expr.callee.kind(),
+                matches!(
+                    call_expr.callee.kind(),
+                    ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_)
+                ) || matches!(call_expr.callee.kind(),
                     ExpressionKind::StaticMemberExpression(static_member) if
                     matches!(static_member.object, ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_)))
                     || Self::contains_this_or_super_in_args(&call_expr.arguments)
             }
             Argument::StaticMemberExpression(call_expr) => {
-                matches!(call_expr.object.kind(), ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_))
+                matches!(
+                    call_expr.object.kind(),
+                    ExpressionKind::Super(_) | ExpressionKind::ThisExpression(_)
+                )
             }
             _ => false,
         }

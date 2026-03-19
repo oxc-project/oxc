@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
-        VariableDeclarationKind, match_member_expression, ExpressionKind},
+        AssignmentTarget, BindingPattern, Expression, ExpressionKind, ForStatementInit,
+        SimpleAssignmentTarget, VariableDeclarationKind, match_member_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -61,13 +62,15 @@ trait ExpressionExt {
 impl ExpressionExt for Expression<'_> {
     fn is_increment_of(&self, var_name: &str) -> bool {
         match self.kind() {
-            ExpressionKind::UpdateExpression(expr) => match (&expr.argument.kind(), &expr.operator.kind()) {
-                (
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
-                    UpdateOperator::Increment,
-                ) => id.name == var_name,
-                _ => false,
-            },
+            ExpressionKind::UpdateExpression(expr) => {
+                match (&expr.argument.kind(), &expr.operator.kind()) {
+                    (
+                        SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
+                        UpdateOperator::Increment,
+                    ) => id.name == var_name,
+                    _ => false,
+                }
+            }
             ExpressionKind::AssignmentExpression(expr) => {
                 if !matches!(&expr.left,
                     AssignmentTarget::AssignmentTargetIdentifier(id)
@@ -91,10 +94,14 @@ impl ExpressionExt for Expression<'_> {
                         }
 
                         match (&bin_expr.left.kind(), &bin_expr.right.kind()) {
-                            (ExpressionKind::Identifier(id), ExpressionKind::NumericLiteral(lit))
-                            | (ExpressionKind::NumericLiteral(lit), ExpressionKind::Identifier(id)) => {
-                                id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
-                            }
+                            (
+                                ExpressionKind::Identifier(id),
+                                ExpressionKind::NumericLiteral(lit),
+                            )
+                            | (
+                                ExpressionKind::NumericLiteral(lit),
+                                ExpressionKind::Identifier(id),
+                            ) => id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON,
                             _ => false,
                         }
                     }

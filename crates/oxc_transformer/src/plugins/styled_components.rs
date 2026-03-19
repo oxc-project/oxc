@@ -504,7 +504,11 @@ impl<'a> StyledComponents<'a> {
         loop {
             match current.kind_mut() {
                 ExpressionKindMut::CallExpression(call) => {
-                    if call.callee.as_static_member_expression().is_some_and(|member| member.property.name == "withConfig") {
+                    if call
+                        .callee
+                        .as_static_member_expression()
+                        .is_some_and(|member| member.property.name == "withConfig")
+                    {
                         return Some(call);
                     }
                     current = &mut call.callee;

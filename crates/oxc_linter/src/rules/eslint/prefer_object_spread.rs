@@ -2,7 +2,9 @@ use std::cmp::max;
 
 use oxc_allocator::Box;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind, ExpressionKind};
+use oxc_ast::ast::{
+    Expression, ExpressionKind, ObjectExpression, ObjectPropertyKind, PropertyKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -116,7 +118,12 @@ impl Rule for PreferObjectSpread {
         let arguments_len = call_expr.arguments.len();
 
         for (idx, arg) in call_expr.arguments.iter().enumerate() {
-            let Some(obj_expr) = arg.as_expression().map(Expression::get_inner_expression).as_ref().and_then(|e| e.as_object_expression()) else {
+            let Some(obj_expr) = arg
+                .as_expression()
+                .map(Expression::get_inner_expression)
+                .as_ref()
+                .and_then(|e| e.as_object_expression())
+            else {
                 if idx == 0 {
                     return;
                 }
@@ -193,7 +200,8 @@ impl Rule for PreferObjectSpread {
                         }
                     } else {
                         let span = expression.span();
-                        let replacement = if matches!(expression.kind(),
+                        let replacement = if matches!(
+                            expression.kind(),
                             ExpressionKind::ArrowFunctionExpression(_)
                                 | ExpressionKind::AssignmentExpression(_)
                                 | ExpressionKind::ConditionalExpression(_)

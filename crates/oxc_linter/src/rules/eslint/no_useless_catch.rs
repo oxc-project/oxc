@@ -68,7 +68,9 @@ impl Rule for NoUselessCatch {
         else {
             return;
         };
-        let Some(throw_stmt) = catch_clause.body.body.first().as_ref().and_then(|e| e.as_throw_statement()) else {
+        let Some(throw_stmt) =
+            catch_clause.body.body.first().as_ref().and_then(|e| e.as_throw_statement())
+        else {
             return;
         };
         let Some(throw_ident) = throw_stmt.argument.as_identifier() else {

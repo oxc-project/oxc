@@ -1244,10 +1244,7 @@ impl<'a> ClassProperties<'a> {
         } else if let Some(call) = expr.as_call_expression_mut() {
             self.transform_call_expression_of_chain_expression(call, ctx)
         } else {
-            debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
-                expr,
-                &ctx.state.source_path,
-            );
+            debug_assert_expr_is_not_parenthesis_or_typescript_syntax(expr, &ctx.state.source_path);
             None
         }
     }
@@ -1748,7 +1745,9 @@ impl<'a> ClassProperties<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Some(tagged_temp_expr) = expr.as_tagged_template_expression_mut() else { unreachable!() };
+        let Some(tagged_temp_expr) = expr.as_tagged_template_expression_mut() else {
+            unreachable!()
+        };
         let Some(field_expr) = tagged_temp_expr.tag.as_private_field_expression_mut() else {
             return;
         };

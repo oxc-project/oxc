@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, FormalParameterRest,
-        FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility, ExpressionKind},
+        Argument, BindingPattern, CallExpression, Expression, ExpressionKind, FormalParameterRest,
+        FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

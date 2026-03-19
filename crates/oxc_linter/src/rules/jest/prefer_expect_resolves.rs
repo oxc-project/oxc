@@ -104,7 +104,9 @@ impl Rule for PreferExpectResolves {
         else {
             return;
         };
-        let Some(call_expr) = jest_expect_fn_call.head.parent.as_ref().and_then(|e| e.as_call_expression()) else {
+        let Some(call_expr) =
+            jest_expect_fn_call.head.parent.as_ref().and_then(|e| e.as_call_expression())
+        else {
             return;
         };
         let Some(argument) = call_expr.arguments.first() else {

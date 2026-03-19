@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -214,7 +217,8 @@ impl Rule for NoImplicitCoercion {
                 if self.number
                     && unary_expr.operator == UnaryOperator::UnaryNegation
                     && !self.is_allowed(AllowedOperators::DOUBLE_MINUS)
-                    && let Some(inner) = unary_expr.argument.without_parentheses().as_unary_expression()
+                    && let Some(inner) =
+                        unary_expr.argument.without_parentheses().as_unary_expression()
                     && inner.operator == UnaryOperator::UnaryNegation
                     && !is_numeric_literal(&inner.argument)
                     && !is_already_numeric(&inner.argument)
@@ -356,7 +360,8 @@ fn get_operand_text<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> &'a str
 }
 
 fn is_numeric_literal(expr: &Expression) -> bool {
-    matches!(expr.without_parentheses().kind(),
+    matches!(
+        expr.without_parentheses().kind(),
         ExpressionKind::NumericLiteral(_) | ExpressionKind::BigIntLiteral(_)
     )
 }
@@ -427,7 +432,8 @@ fn is_indexof_call(expr: &Expression) -> bool {
         }
         ExpressionKind::ChainExpression(chain) => {
             if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
-                && let Some(member) = call.callee.without_parentheses().as_static_member_expression()
+                && let Some(member) =
+                    call.callee.without_parentheses().as_static_member_expression()
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }

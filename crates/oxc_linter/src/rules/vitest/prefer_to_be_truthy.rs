@@ -44,9 +44,10 @@ pub fn prefer_to_be_simply_bool<'a>(
 
         let is_cmp_mem_expr = match matcher.parent.kind() {
             Some(ExpressionKind::ComputedMemberExpression(_)) => true,
-            Some(ExpressionKind::StaticMemberExpression(_) | ExpressionKind::PrivateFieldExpression(_)) => {
-                false
-            }
+            Some(
+                ExpressionKind::StaticMemberExpression(_)
+                | ExpressionKind::PrivateFieldExpression(_),
+            ) => false,
             _ => return,
         };
 

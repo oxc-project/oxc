@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{StatementKind, Statement}};
+use oxc_ast::{
+    AstKind,
+    ast::{Statement, StatementKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -71,8 +74,7 @@ impl Rule for GuardForIn {
                 StatementKind::EmptyStatement(_) | StatementKind::IfStatement(_) => return,
                 StatementKind::BlockStatement(block_body) if block_body.body.is_empty() => return,
                 StatementKind::BlockStatement(block_body)
-                    if block_body.body.len() == 1
-                        && block_body.body[0].is_if_statement() =>
+                    if block_body.body.len() == 1 && block_body.body[0].is_if_statement() =>
                 {
                     return;
                 }

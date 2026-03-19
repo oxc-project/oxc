@@ -190,8 +190,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 StatementKindMut::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
-                StatementKindMut::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
-                StatementKindMut::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
+                StatementKindMut::ClassDeclaration(_) => {
+                    Self::remove_unused_class_declaration(stmt, ctx)
+                }
+                StatementKindMut::ImportDeclaration(_) => {
+                    Self::remove_unused_import_specifiers(stmt, ctx)
+                }
                 _ => {}
             }
             Self::try_fold_expression_stmt(stmt, ctx);
@@ -332,9 +336,15 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_assignment_to_update_expression(expr, ctx);
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
-                ExpressionKindMut::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
-                ExpressionKindMut::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
-                ExpressionKindMut::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
+                ExpressionKindMut::SequenceExpression(_) => {
+                    Self::remove_sequence_expression(expr, ctx)
+                }
+                ExpressionKindMut::ArrowFunctionExpression(e) => {
+                    Self::substitute_arrow_expression(e, ctx)
+                }
+                ExpressionKindMut::FunctionExpression(e) => {
+                    Self::try_remove_name_from_functions(e, ctx)
+                }
                 ExpressionKindMut::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
                 ExpressionKindMut::NewExpression(e) => {
                     Self::substitute_typed_array_constructor(e, ctx);
@@ -342,7 +352,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
                 ExpressionKindMut::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-                ExpressionKindMut::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
+                ExpressionKindMut::ArrayExpression(_) => {
+                    Self::substitute_array_expression(expr, ctx)
+                }
                 ExpressionKindMut::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }

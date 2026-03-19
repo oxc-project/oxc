@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, Statement, ExpressionKind, StatementKind},
+    ast::{Argument, CallExpression, Expression, ExpressionKind, Statement, StatementKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -125,9 +125,7 @@ fn is_simple_operation(node: &CallExpression) -> bool {
     }
 
     match &function_body.statements[0].kind() {
-        StatementKind::ExpressionStatement(expr) => {
-            expr.expression.is_binary_expression()
-        }
+        StatementKind::ExpressionStatement(expr) => expr.expression.is_binary_expression(),
         StatementKind::ReturnStatement(ret) => {
             ret.argument.is_some_and(|e| e.is_binary_expression())
         }

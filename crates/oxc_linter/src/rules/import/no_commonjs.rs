@@ -183,7 +183,8 @@ impl Rule for NoCommonjs {
                             }
                         }
                         AstKind::AssignmentExpression(assignment_expr) => {
-                            if let Some(_object_expr) = &assignment_expr.right.without_parentheses().as_object_expression()
+                            if let Some(_object_expr) =
+                                &assignment_expr.right.without_parentheses().as_object_expression()
                             {
                                 ctx.diagnostic(no_commonjs_diagnostic(
                                     member_expr_kind.span(),

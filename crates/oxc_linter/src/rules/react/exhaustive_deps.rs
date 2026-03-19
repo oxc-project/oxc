@@ -10,9 +10,11 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
-        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeQuery,
-        TSTypeReference, VariableDeclarationKind, VariableDeclarator, ExpressionKind},
+        ChainElement, Expression, ExpressionKind, FormalParameters, Function, FunctionBody,
+        IdentifierReference, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameterInstantiation, TSTypeQuery, TSTypeReference, VariableDeclarationKind,
+        VariableDeclarator,
+    },
     match_expression,
 };
 use oxc_ast_visit::{
@@ -349,11 +351,13 @@ impl Rule for ExhaustiveDeps {
                             // The function passed as a callback is not written inline.
                             // But perhaps it's in the dependencies array?
                             if dependencies_node.as_expression().is_some_and(|v| {
-                                if let Some(array_expr) = v.get_inner_expression().as_array_expression()
+                                if let Some(array_expr) =
+                                    v.get_inner_expression().as_array_expression()
                                 {
                                     array_expr.elements.iter().any(|elem| {
                                         elem.as_expression().is_some_and(|elem| {
-                                            if let Some(array_el_ident) = elem.get_inner_expression().as_identifier()
+                                            if let Some(array_el_ident) =
+                                                elem.get_inner_expression().as_identifier()
                                             {
                                                 array_el_ident.name == ident.name
                                             } else {
@@ -387,9 +391,9 @@ impl Rule for ExhaustiveDeps {
                                                 ExpressionKind::FunctionExpression(function) => {
                                                     Some(CallbackNode::Function(function))
                                                 }
-                                                ExpressionKind::ArrowFunctionExpression(function) => {
-                                                    Some(CallbackNode::ArrowFunction(function))
-                                                }
+                                                ExpressionKind::ArrowFunctionExpression(
+                                                    function,
+                                                ) => Some(CallbackNode::ArrowFunction(function)),
                                                 _ => {
                                                     ctx.diagnostic(missing_dependency_diagnostic(
                                                         hook_name,
@@ -1105,7 +1109,8 @@ fn is_stable_value<'a, 'b>(
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
-                && (matches!(init.kind(),
+                && (matches!(
+                    init.kind(),
                     ExpressionKind::BooleanLiteral(_)
                         | ExpressionKind::NullLiteral(_)
                         | ExpressionKind::NumericLiteral(_)
@@ -1421,9 +1426,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
 
         // consider `useEffect(() => { console.log(props.foo().foo.bar); }, [props.foo]);`
         // we don't care about `foo.bar`, only `props.foo`
-        if it.object.get_inner_expression().is_call_expression()
-            || self.skip_reporting_dependency
-        {
+        if it.object.get_inner_expression().is_call_expression() || self.skip_reporting_dependency {
             self.visit_expression(&it.object);
             return;
         }
@@ -1548,7 +1551,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(call_expr) = var_decl.init.as_ref().and_then(|e| e.as_call_expression()) else {
+                    let Some(call_expr) =
+                        var_decl.init.as_ref().and_then(|e| e.as_call_expression())
+                    else {
                         return;
                     };
 
@@ -1657,10 +1662,12 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&ExpressionKind::ArrayExpression(ast_builder.alloc_array_expression(
-            deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+        codegen.print_expression(&ExpressionKind::ArrayExpression(
+            ast_builder.alloc_array_expression(
+                deps.span,
+                oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
+            ),
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }

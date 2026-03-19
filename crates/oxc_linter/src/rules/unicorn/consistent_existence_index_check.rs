@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind, ExpressionKind},
+    ast::{BinaryOperator, Expression, ExpressionKind, UnaryOperator, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -99,7 +99,9 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(call) = variables_declarator.init.as_ref().and_then(|e| e.as_call_expression()) else {
+            let Some(call) =
+                variables_declarator.init.as_ref().and_then(|e| e.as_call_expression())
+            else {
                 return;
             };
 

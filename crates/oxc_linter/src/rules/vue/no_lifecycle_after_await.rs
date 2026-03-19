@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression, ObjectPropertyKind, ExpressionKind},
+        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, ExpressionKind,
+        Function, ObjectExpression, ObjectPropertyKind,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;

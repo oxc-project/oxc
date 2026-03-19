@@ -2,8 +2,9 @@ use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
     ast::{
-        ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSSignature, TSType,
-        TSTypeName, TSTypeReference, ExpressionKind},
+        ExportDefaultDeclarationKind, Expression, ExpressionKind, ObjectPropertyKind, TSSignature,
+        TSType, TSTypeName, TSTypeReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -164,7 +165,8 @@ impl MaxProps {
             if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
                 && let Some(key) = obj_prop.key.static_name()
                 && key == "props"
-                && let Some(props_expr) = obj_prop.value.get_inner_expression().as_object_expression()
+                && let Some(props_expr) =
+                    obj_prop.value.get_inner_expression().as_object_expression()
             {
                 Some(props_expr)
             } else {

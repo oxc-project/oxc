@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -94,11 +97,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
             }
         }
         ExpressionKind::NewExpression(expr) => {
-            if is_constructor_matching_name(&expr.callee, "Array") {
-                Some(expr.span)
-            } else {
-                None
-            }
+            if is_constructor_matching_name(&expr.callee, "Array") { Some(expr.span) } else { None }
         }
         ExpressionKind::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))

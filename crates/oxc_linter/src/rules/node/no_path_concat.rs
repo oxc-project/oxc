@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TemplateLiteral, ExpressionKind},
+    ast::{Expression, ExpressionKind, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -125,7 +125,9 @@ fn starts_with_path_separator(expr: &Expression) -> bool {
         ExpressionKind::SequenceExpression(seq) => {
             seq.expressions.last().is_some_and(|last| starts_with_path_separator(last))
         }
-        ExpressionKind::ParenthesizedExpression(paren) => starts_with_path_separator(&paren.expression),
+        ExpressionKind::ParenthesizedExpression(paren) => {
+            starts_with_path_separator(&paren.expression)
+        }
         _ => is_path_sep(expr),
     }
 }

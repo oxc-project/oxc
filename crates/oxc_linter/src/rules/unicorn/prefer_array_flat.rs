@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        MemberExpression, Statement, ExpressionKind, StatementKind},
+        ExpressionKind, MemberExpression, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -152,7 +153,9 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(expr_stmt) = first_argument.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
+    let Some(expr_stmt) =
+        first_argument.body.statements.first().as_ref().and_then(|e| e.as_expression_statement())
+    else {
         return;
     };
 
@@ -165,7 +168,9 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             return;
         }
 
-        let Some(second_argument_ident) = concat_call_expr.callee.get_member_expr().unwrap().object().as_identifier() else {
+        let Some(second_argument_ident) =
+            concat_call_expr.callee.get_member_expr().unwrap().object().as_identifier()
+        else {
             return;
         };
 
@@ -241,7 +246,8 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     if is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
         // `array.concat(maybeArray)`
-        if let Some(array_expr) = call_expr.callee.get_member_expr().unwrap().object().as_array_expression()
+        if let Some(array_expr) =
+            call_expr.callee.get_member_expr().unwrap().object().as_array_expression()
         {
             if !array_expr.elements.is_empty() {
                 return;

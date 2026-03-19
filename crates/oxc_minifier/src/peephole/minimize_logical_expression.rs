@@ -86,10 +86,9 @@ impl<'a> PeepholeOptimizations {
             Undefined,
         }
 
-        let (Some(left_binary_expr), Some(right_binary_expr)) = (
-            left.as_binary_expression_mut(),
-            right.as_binary_expression_mut(),
-        ) else {
+        let (Some(left_binary_expr), Some(right_binary_expr)) =
+            (left.as_binary_expression_mut(), right.as_binary_expression_mut())
+        else {
             return None;
         };
         if left_binary_expr.operator != find_op || right_binary_expr.operator != find_op {
@@ -179,11 +178,9 @@ impl<'a> PeepholeOptimizations {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
                 ExpressionKind::Identifier(ident) => !ctx.is_global_reference(ident),
-                ExpressionKind::ThisExpression(_) => {
-                    expr.as_member_expression().is_some_and(|read_expr| {
-                        read_expr.object().is_this_expression()
-                    })
-                }
+                ExpressionKind::ThisExpression(_) => expr
+                    .as_member_expression()
+                    .is_some_and(|read_expr| read_expr.object().is_this_expression()),
                 _ => false,
             };
             if !has_same_object {

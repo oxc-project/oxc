@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator, ExpressionKind},
+    ast::{Expression, ExpressionKind, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
 use oxc_span::{CompactStr, GetSpan, Ident};

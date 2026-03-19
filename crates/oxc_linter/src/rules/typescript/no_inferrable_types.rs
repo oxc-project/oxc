@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ChainElement, Expression, FormalParameter, TSLiteral, TSType, TSTypeAnnotation, TSTypeName,
-        UnaryOperator, ExpressionKind},
+        ChainElement, Expression, ExpressionKind, FormalParameter, TSLiteral, TSType,
+        TSTypeAnnotation, TSTypeName, UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

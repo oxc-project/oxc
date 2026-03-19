@@ -1,8 +1,10 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
-        Statement, TaggedTemplateExpression, VariableDeclarationKind, ExpressionKind, StatementKind},
+        Argument, CallExpression, Expression, ExpressionKind, IdentifierReference,
+        ImportExpression, NewExpression, Statement, StatementKind, TaggedTemplateExpression,
+        VariableDeclarationKind,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;

@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement, ExpressionKind},
+    ast::{CallExpression, Expression, ExpressionKind, FormalParameter, Function, Statement},
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;

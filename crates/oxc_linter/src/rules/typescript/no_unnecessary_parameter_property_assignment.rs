@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, MethodDefinitionKind, Statement, ExpressionKind},
+        ExpressionKind, FormalParameter, Function, MethodDefinitionKind, Statement,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -130,7 +131,8 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
         // operator could be unnecessary
 
-        let Some(right_identifier) = assignment_expr.right.get_inner_expression().as_identifier() else {
+        let Some(right_identifier) = assignment_expr.right.get_inner_expression().as_identifier()
+        else {
             return;
         };
         // the right side of the assignment is an identifier
@@ -226,21 +228,13 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
 
 fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     match assignment_target {
-        AssignmentTarget::StaticMemberExpression(expr)
-            if &expr.object.is_this_expression() =>
-        {
+        AssignmentTarget::StaticMemberExpression(expr) if &expr.object.is_this_expression() => {
             // this.property
             Some(expr.property.name.into())
         }
-        AssignmentTarget::ComputedMemberExpression(expr)
-            if &expr.object.is_this_expression() =>
-        {
+        AssignmentTarget::ComputedMemberExpression(expr) if &expr.object.is_this_expression() => {
             // this["property"]
-            if let Some(str) = expr.expression.as_string_literal() {
-                Some(str.value)
-            } else {
-                None
-            }
+            if let Some(str) = expr.expression.as_string_literal() { Some(str.value) } else { None }
         }
         _ => None,
     }

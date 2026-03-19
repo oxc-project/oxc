@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{ExpressionKind, Expression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, ExpressionKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -50,7 +53,8 @@ declare_oxc_lint!(
 /// Returns `true` if the expression is a type that can never be a DOM node
 /// (literals, null, undefined, arrays, arrow functions, classes, functions, objects, template literals).
 fn is_non_dom_node(expr: &Expression) -> bool {
-    matches!(expr.kind(),
+    matches!(
+        expr.kind(),
         ExpressionKind::ArrayExpression(_)
             | ExpressionKind::ArrowFunctionExpression(_)
             | ExpressionKind::ClassExpression(_)

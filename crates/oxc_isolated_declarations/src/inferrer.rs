@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, ExpressionKind, FormalParameter, Function,
-    TSType, TSTypeAnnotation, UnaryExpression,
+    ArrowFunctionExpression, Expression, ExpressionKind, FormalParameter, Function, TSType,
+    TSTypeAnnotation, UnaryExpression,
 };
 use oxc_span::SPAN;
 

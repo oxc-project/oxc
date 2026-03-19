@@ -3,7 +3,10 @@ use std::cmp::Ordering;
 
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, LogicalExpression, NumericLiteral, UnaryOperator, ExpressionKind},
+    ast::{
+        BinaryExpression, Expression, ExpressionKind, LogicalExpression, NumericLiteral,
+        UnaryOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -347,7 +350,8 @@ fn comparison_to_const<'a, 'b>(
     if let Some(bin_expr) = expr.as_binary_expression()
         && let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator)
     {
-        match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()).kind() {
+        match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()).kind()
+        {
             (ExpressionKind::NumericLiteral(lit), _) => {
                 return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
             }

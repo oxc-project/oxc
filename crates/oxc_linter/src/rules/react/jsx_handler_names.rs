@@ -3,9 +3,10 @@ use lazy_regex::{Regex, RegexBuilder, regex};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, Expression, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, JSXMemberExpression, JSXMemberExpressionObject, Statement,
-        StaticMemberExpression, ExpressionKind, StatementKind},
+        ArrowFunctionExpression, Expression, ExpressionKind, JSXAttributeName, JSXAttributeValue,
+        JSXElementName, JSXExpression, JSXMemberExpression, JSXMemberExpressionObject, Statement,
+        StatementKind, StaticMemberExpression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -344,7 +345,9 @@ impl JsxHandlerNames {
 /// true if the expression is in the form of "foo.bar" or "() => foo.bar()"
 /// like event handler methods in class components.
 fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> bool {
-    let Some(stmt) = arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
+    let Some(stmt) =
+        arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement())
+    else {
         return false;
     };
     let Some(callee_expr) = stmt.expression.as_call_expression() else {
@@ -439,7 +442,9 @@ fn get_event_handler_name_from_arrow_function<'a>(
         // with a single expression body, such as `() => this.handleChange()`.
         return None;
     }
-    let Some(stmt) = arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
+    let Some(stmt) =
+        arrow_function.body.statements.first().as_ref().and_then(|e| e.as_expression_statement())
+    else {
         return None;
     };
     let Some(call_expr) = stmt.expression.as_call_expression() else {

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Statement, VariableDeclarationKind, StatementKind},
+    ast::{Statement, StatementKind, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

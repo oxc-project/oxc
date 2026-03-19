@@ -5,7 +5,10 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BinaryOperator, Expression, IfStatement, MemberExpression, Statement, ExpressionKind, StatementKind},
+    ast::{
+        AssignmentTarget, BinaryOperator, Expression, ExpressionKind, IfStatement,
+        MemberExpression, Statement, StatementKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -132,10 +135,8 @@ fn get_node_body_statement<'a>(statement: &'a Statement<'a>) -> BodyNode<'a> {
             BodyNode::Expression(expression_statement.expression.get_inner_expression())
         }
         StatementKind::BlockStatement(block_statement) => {
-            let mut non_empty = block_statement
-                .body
-                .iter()
-                .filter(|statement| !statement.is_empty_statement());
+            let mut non_empty =
+                block_statement.body.iter().filter(|statement| !statement.is_empty_statement());
             if let Some(single) = non_empty.next()
                 && non_empty.next().is_none()
             {

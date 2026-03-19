@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Statement, SwitchCase, SwitchStatement, StatementKind},
+    ast::{Statement, StatementKind, SwitchCase, SwitchStatement},
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, InstructionKind,

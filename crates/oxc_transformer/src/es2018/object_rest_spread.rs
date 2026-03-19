@@ -576,9 +576,9 @@ impl<'a> ObjectRestSpread<'a> {
 
                     debug_assert!(arrow.body.statements.len() == 1);
 
-                    let stmt = arrow.body.statements.pop().unwrap().into_expression_statement().unbox();
-                    let return_stmt =
-                        ctx.ast.statement_return(stmt.span, Some(stmt.expression));
+                    let stmt =
+                        arrow.body.statements.pop().unwrap().into_expression_statement().unbox();
+                    let return_stmt = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
                     arrow.body.statements.push(return_stmt);
                 }
                 Self::replace_rest_element(
@@ -1193,7 +1193,8 @@ impl<'a> ReferenceBuilder<'a> {
                 maybe_bound_identifier =
                     MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
             } else {
-                let bound_identifier = ctx.generate_uid_based_on_node(&expr, scope_id, symbol_flags);
+                let bound_identifier =
+                    ctx.generate_uid_based_on_node(&expr, scope_id, symbol_flags);
                 binding = Some(bound_identifier.create_binding_pattern(ctx));
                 maybe_bound_identifier = bound_identifier.to_maybe_bound_identifier();
             }

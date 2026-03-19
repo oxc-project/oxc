@@ -215,10 +215,7 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body.kind() {
                     StatementKind::ReturnStatement(_) => return true,
                     StatementKind::BlockStatement(b) => {
-                        return b
-                            .body
-                            .first()
-                            .is_some_and(|s| s.is_return_statement());
+                        return b.body.first().is_some_and(|s| s.is_return_statement());
                     }
                     _ => return false,
                 },

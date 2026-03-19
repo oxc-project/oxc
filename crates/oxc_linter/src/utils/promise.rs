@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, NewExpression, ExpressionKind},
+    ast::{CallExpression, Expression, ExpressionKind, IdentifierReference, NewExpression},
 };
 use oxc_semantic::SymbolId;
 

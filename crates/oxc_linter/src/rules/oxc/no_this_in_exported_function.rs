@@ -1,8 +1,9 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName,
-        PropertyDefinition, StaticBlock, ThisExpression, ExpressionKind},
+        Declaration, ExportDefaultDeclarationKind, Expression, ExpressionKind, Function,
+        ModuleExportName, PropertyDefinition, StaticBlock, ThisExpression,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
