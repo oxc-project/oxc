@@ -53,17 +53,9 @@ jobs:
           echo "TAG=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          body_path: ./target/CRATES_CHANGELOG
-          name: oxc ${{ steps.run.outputs.TAG }}
-          tag_name: ${{ steps.run.outputs.TAG }}
-          target_commitish: ${{ github.sha }}
-          draft: false
-          make_latest: false # latest is reserved for apps
-
-      # Workaround for https://github.com/softprops/action-gh-release/issues/703
-      - name: Mark release as not latest
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit ${{ steps.run.outputs.TAG }} --latest=false
+          GH_TOKEN: ${{ github.token }}
+          GIT_TAG: ${{ steps.run.outputs.TAG }}
+          GIT_TARGET: ${{ github.sha }}
+          TITLE: "oxc ${{ steps.run.outputs.TAG }}"
+        run: gh release create ${GIT_TAG} --latest=false --title "${TITLE}" --notes-file ./target/CRATES_CHANGELOG --target ${GIT_TARGET}
