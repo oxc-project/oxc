@@ -103,11 +103,9 @@ test('my test', { tag: '@my-tag-123' }, async ({ page }) => {})
 ```json
 {
   "languageOptions": {
-    "parser": {},
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    }
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "parser": {}
   },
   "options": [
     {
@@ -157,11 +155,9 @@ test('@my-tag-123 my test', async ({ page }) => {})
 ```json
 {
   "languageOptions": {
-    "parser": {},
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    }
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "parser": {}
   },
   "options": [
     {
@@ -211,11 +207,9 @@ test('my test', { tag: '@temp-123' }, async ({ page }) => {})
 ```json
 {
   "languageOptions": {
-    "parser": {},
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    }
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "parser": {}
   },
   "errors": [
     {
@@ -259,11 +253,9 @@ test('@temp-123 my test', async ({ page }) => {})
 ```json
 {
   "languageOptions": {
-    "parser": {},
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    }
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "parser": {}
   },
   "errors": [
     {

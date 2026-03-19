@@ -50,19 +50,22 @@ export default group;
  */
 function createRuleTesterModule(tsEslintParser: TSEslintParser) {
   function runRuleTester(name: string, rule: Rule, tests: TestCases) {
-    return new RuleTester().run(name, rule, tests);
+    const languageOptions: LanguageOptions = {
+      ecmaVersion: 2022,
+      sourceType: "module",
+    };
+
+    return new RuleTester({ languageOptions }).run(name, rule, tests);
   }
 
   function runTSRuleTester(name: string, rule: Rule, tests: TestCases) {
-    return new RuleTester({
-      languageOptions: {
-        parser: tsEslintParser,
-        parserOptions: {
-          ecmaVersion: 2022,
-          sourceType: "module",
-        },
-      } as LanguageOptions,
-    }).run(name, rule, tests);
+    const languageOptions: LanguageOptions = {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      parser: tsEslintParser,
+    };
+
+    return new RuleTester({ languageOptions }).run(name, rule, tests);
   }
 
   const test = (input: string) => `test('test', async () => { ${input} })`;
