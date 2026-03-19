@@ -436,7 +436,7 @@ TextEdit: TextEdit {
 
 ########### Fix All Action
 CodeAction: 
-Title: fix all fixable oxlint issues
+Title: fix all safe fixable oxlint issues
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {

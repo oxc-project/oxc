@@ -7,6 +7,12 @@ use crate::lsp::error_with_position::{FixedContent, FixedContentKind, LinterCode
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
 
+/// A custom code action kind for dangerous fix-all operations.
+/// This is intentionally outside the `source.fixAll.*` hierarchy because the LSP spec
+/// restricts `source.fixAll` to safe fixes only.
+pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC: CodeActionKind =
+    CodeActionKind::new("source.fixAllDangerous.oxc");
+
 fn fix_content_to_code_action(
     fixed_content: FixedContent,
     uri: Uri,
@@ -56,23 +62,42 @@ pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAc
 pub fn apply_all_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
     uri: Uri,
-    fix_kind: FixKind,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions, fix_kind);
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions, FixKind::SafeFixOrSuggestion);
 
     if quick_fixes.is_empty() {
         return None;
     }
 
-    let title = if fix_kind.is_dangerous() {
-        "fix all fixable oxlint issues"
-    } else {
-        "fix all safe fixable oxlint issues"
-    };
+    Some(CodeAction {
+        title: "fix all safe fixable oxlint issues".to_string(),
+        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
+        is_preferred: Some(true),
+        edit: Some(WorkspaceEdit {
+            #[expect(clippy::disallowed_types)]
+            changes: Some(std::collections::HashMap::from([(uri, quick_fixes)])),
+            ..WorkspaceEdit::default()
+        }),
+        disabled: None,
+        data: None,
+        diagnostics: None,
+        command: None,
+    })
+}
+
+pub fn apply_dangerous_fix_code_action(
+    actions: impl Iterator<Item = LinterCodeAction>,
+    uri: Uri,
+) -> Option<CodeAction> {
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions, FixKind::DangerousFix);
+
+    if quick_fixes.is_empty() {
+        return None;
+    }
 
     Some(CodeAction {
-        title: title.to_string(),
-        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
+        title: "fix all fixable oxlint issues".to_string(),
+        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC),
         is_preferred: Some(true),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
@@ -196,32 +221,22 @@ mod tests {
     }
 
     #[test]
-    fn test_apply_all_fix_code_action_title_safe_by_default() {
+    fn test_apply_all_fix_code_action_uses_safe_kind() {
         let action = apply_all_fix_code_action(
             std::iter::once(make_action(FixKind::SafeFix)),
             Uri::from_str("file:///test.js").unwrap(),
-            FixKind::SafeFixOrSuggestion,
         )
         .unwrap();
-        assert!(
-            action.title.contains("safe"),
-            "title should contain 'safe' when fix_kind is SafeFixOrSuggestion, got: {}",
-            action.title
-        );
+        assert_eq!(action.kind, Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
     }
 
     #[test]
-    fn test_apply_all_fix_code_action_title_dangerous_when_dangerous_fix_kind() {
-        let action = apply_all_fix_code_action(
+    fn test_apply_dangerous_fix_code_action_uses_dangerous_kind() {
+        let action = apply_dangerous_fix_code_action(
             std::iter::once(make_action(FixKind::DangerousFix)),
             Uri::from_str("file:///test.js").unwrap(),
-            FixKind::DangerousFix,
         )
         .unwrap();
-        assert!(
-            !action.title.contains("safe"),
-            "title should not contain 'safe' when fix_kind is DangerousFix, got: {}",
-            action.title
-        );
+        assert_eq!(action.kind, Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC));
     }
 }
