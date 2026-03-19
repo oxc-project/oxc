@@ -56,8 +56,9 @@ pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAc
 pub fn apply_all_fix_code_action(
     actions: impl Iterator<Item = LinterCodeAction>,
     uri: Uri,
+    fix_kind: FixKind,
 ) -> Option<CodeAction> {
-    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions);
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(actions, fix_kind);
 
     if quick_fixes.is_empty() {
         return None;
@@ -81,7 +82,10 @@ pub fn apply_all_fix_code_action(
 
 /// Collect all text edits from the provided diagnostic reports, which can be applied at once.
 /// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
-pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec<TextEdit> {
+pub fn fix_all_text_edit(
+    actions: impl Iterator<Item = LinterCodeAction>,
+    fix_kind: FixKind,
+) -> Vec<TextEdit> {
     let mut text_edits: Vec<TextEdit> = vec![];
 
     for action in actions {
@@ -93,9 +97,8 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         };
 
-        // Only safe fixes or suggestions are applied in "fix all" action/command.
-        if !FixKind::SafeFixOrSuggestion.can_apply(fixed_content.kind) {
-            debug!("Skipping unsafe fix for fix all action: {}", fixed_content.message);
+        if !(fix_kind | FixKind::SafeFixOrSuggestion).can_apply(fixed_content.kind) {
+            debug!("Skipping fix for fix all action: {}", fixed_content.message);
             continue;
         }
 
@@ -107,4 +110,76 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     }
 
     text_edits
+}
+
+#[cfg(test)]
+mod tests {
+    use tower_lsp_server::ls_types::{Position, Range};
+
+    use super::*;
+    use crate::lsp::error_with_position::FixedContentKind;
+
+    fn make_action(kind: FixKind) -> LinterCodeAction {
+        LinterCodeAction {
+            range: Range::default(),
+            fixed_content: vec![FixedContent {
+                message: "remove unused import".to_string(),
+                code: String::new(),
+                range: Range::new(Position::new(0, 0), Position::new(0, 10)),
+                kind,
+                lsp_kind: FixedContentKind::LintRule,
+            }],
+        }
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_skips_dangerous_fix_by_default() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::DangerousFix)),
+            FixKind::SafeFixOrSuggestion,
+        );
+        assert!(
+            text_edits.is_empty(),
+            "dangerous fix should be skipped when fix_kind is SafeFixOrSuggestion (default)"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_includes_safe_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            FixKind::SafeFixOrSuggestion,
+        );
+        assert!(!text_edits.is_empty(), "safe fix should be included");
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_dangerous_fix_kind_includes_dangerous_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::DangerousFix)),
+            FixKind::DangerousFix,
+        );
+        assert!(
+            !text_edits.is_empty(),
+            "dangerous fix should be included when fix_kind is DangerousFix"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_none_still_includes_safe_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            FixKind::None,
+        );
+        assert!(!text_edits.is_empty(), "safe fix should still be included even when fix_kind is None");
+    }
+
+    #[test]
+    fn test_fix_all_text_edit_with_dangerous_fix_kind_also_includes_safe_fix() {
+        let text_edits = fix_all_text_edit(
+            std::iter::once(make_action(FixKind::SafeFix)),
+            FixKind::DangerousFix,
+        );
+        assert!(!text_edits.is_empty(), "safe fix should also be included when fix_kind is DangerousFix");
+    }
 }

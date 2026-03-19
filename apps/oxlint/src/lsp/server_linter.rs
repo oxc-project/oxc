@@ -226,6 +226,7 @@ impl ServerLinterBuilder {
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
+            fix_kind,
             lint_options.report_unused_directive,
         )
     }
@@ -418,6 +419,7 @@ pub struct ServerLinter {
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
+    fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
 }
 
@@ -579,7 +581,7 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let text_edits = fix_all_text_edit(actions.into_iter());
+        let text_edits = fix_all_text_edit(actions.into_iter(), self.fix_kind);
 
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
@@ -646,7 +648,7 @@ impl Tool for ServerLinter {
         for kind in applying_kinds {
             // `CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC` was filtered out by `applying_kinds`, so we don't need to check it here.
             if kind == CodeActionKind::SOURCE_FIX_ALL {
-                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone()) else {
+                let Some(fix_all) = apply_all_fix_code_action(actions.clone(), uri.clone(), self.fix_kind) else {
                     continue;
                 };
                 code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_all));
@@ -703,6 +705,7 @@ impl ServerLinter {
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
+        fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
     ) -> Self {
         Self {
@@ -713,6 +716,7 @@ impl ServerLinter {
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
+            fix_kind,
             unused_directives_severity,
         }
     }
