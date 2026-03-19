@@ -585,7 +585,7 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let text_edits = fix_all_text_edit(actions.into_iter(), self.fix_kind);
+        let text_edits = fix_all_text_edit(actions.into_iter());
 
         Ok(Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
