@@ -94,7 +94,7 @@ fn check_define_component<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let Some(ExpressionKind::ObjectExpression(obj_expr)) = first_arg.as_expression() else {
+    let Some(obj_expr) = first_arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
         return;
     };
 

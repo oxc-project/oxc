@@ -164,8 +164,7 @@ impl MaxProps {
             if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
                 && let Some(key) = obj_prop.key.static_name()
                 && key == "props"
-                && let ExpressionKind::ObjectExpression(props_expr) =
-                    obj_prop.value.get_inner_expression()
+                && let Some(props_expr) = obj_prop.value.get_inner_expression().as_object_expression()
             {
                 Some(props_expr)
             } else {

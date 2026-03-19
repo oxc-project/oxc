@@ -297,7 +297,7 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    let Some(ExpressionKind::CallExpression(returned_call_expr)) = &return_stmt.argument else {
+    let Some(returned_call_expr) = &return_stmt.argument.as_ref().and_then(|e| e.as_call_expression()) else {
         return;
     };
 

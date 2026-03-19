@@ -198,7 +198,7 @@ impl Rule for NoImportingVitestGlobals {
 }
 
 fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
-    let Some(ExpressionKind::CallExpression(call_expr)) = &declaration.init else {
+    let Some(call_expr) = &declaration.init.as_ref().and_then(|e| e.as_call_expression()) else {
         return false;
     };
 

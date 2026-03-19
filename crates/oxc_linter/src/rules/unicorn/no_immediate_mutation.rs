@@ -169,7 +169,7 @@ fn check_call_mutation<'a>(
     if is_object_assign_call(call, ctx) {
         if let Some(first_arg) = call.arguments.first().as_expression()
             && let Some(arg_expr) = first_arg
-            && let ExpressionKind::Identifier(id) = arg_expr.get_inner_expression()
+            && let Some(id) = arg_expr.get_inner_expression().as_identifier()
             && let Some((var_name, init_type)) = get_prev_declaration(prev_stmt, ctx)
             && var_name == id.name.as_str()
             && init_type == InitType::Object

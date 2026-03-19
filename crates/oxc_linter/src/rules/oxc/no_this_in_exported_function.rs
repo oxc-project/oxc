@@ -94,7 +94,7 @@ impl Rule for NoThisInExportedFunction {
                         AstKind::Function(func) => func,
                         AstKind::VariableDeclarator(var_decl) => {
                             if let Some(init) = var_decl.init.as_ref()
-                                && let ExpressionKind::FunctionExpression(func) = init
+                                && let Some(func) = init.as_function_expression()
                             {
                                 func
                             } else {

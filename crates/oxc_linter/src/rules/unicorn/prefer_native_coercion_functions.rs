@@ -110,7 +110,7 @@ fn check_function<'a>(
         return None;
     }
 
-    if is_arrow && let StatementKind::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
+    if is_arrow && let Some(expr_stmt) = &function_body.statements[0].as_expression_statement() {
         return is_matching_native_coercion_function_call(
             &expr_stmt.expression,
             first_parameter_name,
@@ -127,7 +127,7 @@ fn check_function<'a>(
 }
 
 fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str> {
-    if is_arrow && let StatementKind::ExpressionStatement(expr_stmt) = &stmt {
+    if is_arrow && let Some(expr_stmt) = &stmt.as_expression_statement() {
         return expr_stmt
             .expression
             .without_parentheses()

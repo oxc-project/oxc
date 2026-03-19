@@ -285,7 +285,7 @@ impl fmt::Debug for Symbol<'_, '_> {
             .field("id", &self.id)
             .field("name", &self.name())
             .field("flags", &self.flags)
-            .field("declaration_node", &self.declaration().kind().debug_name())
+            .field("declaration_node", &self.declaration().debug_name())
             .field("references", &self.references().collect::<Vec<_>>())
             .finish()
     }

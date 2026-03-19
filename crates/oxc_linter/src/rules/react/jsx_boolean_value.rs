@@ -135,7 +135,7 @@ impl Rule for JsxBooleanValue {
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if let Some(expr) = container.expression.as_expression()
-                        && let ExpressionKind::BooleanLiteral(expr) = expr.without_parentheses()
+                        && let Some(expr) = expr.without_parentheses().as_boolean_literal()
                     {
                         if expr.value && Self::is_never(mode, options, ident.name.as_str()) {
                             let span = Span::new(ident.span.end, jsx_attr.span.end);

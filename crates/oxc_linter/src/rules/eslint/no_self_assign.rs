@@ -221,14 +221,13 @@ impl NoSelfAssign {
         let left = left.get_inner_expression();
         let right = right.get_inner_expression();
 
-        if matches!((left, right).kind(),
-            (ExpressionKind::Super(_), ExpressionKind::Super(_))
+        if matches!((left.kind(), right.kind()),(ExpressionKind::Super(_), ExpressionKind::Super(_))
                 | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
         ) {
             return true;
         }
 
-        if let (ExpressionKind::Identifier(id1), ExpressionKind::Identifier(id2)) = (left, right) {
+        if let (Some(id1), Some(id2)) = (left.as_identifier(), right.as_identifier()) {
             return id1.name == id2.name;
         }
 
@@ -293,7 +292,7 @@ impl NoSelfAssign {
                     return;
                 };
                 if key.static_name().is_some_and(|name| name == id1.binding.name)
-                    && let ExpressionKind::Identifier(id2) = expr.without_parentheses()
+                    && let Some(id2) = expr.without_parentheses().as_identifier()
                     && id1.binding.name == id2.name
                 {
                     ctx.diagnostic(no_self_assign_diagnostic(*span));

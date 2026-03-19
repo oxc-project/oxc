@@ -100,7 +100,7 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     if args[1].is_spread() {
         return;
     }
-    if let Some(ExpressionKind::ArrayExpression(_)) = args[1].as_expression() {
+    if let Some(_) = args[1].as_expression().as_ref().and_then(|e| e.as_array_expression()) {
         return;
     }
 

@@ -217,7 +217,7 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         // detected again when visiting the function expression.
         if let PropertyKey::StaticIdentifier(id) = &prop.key
             && is_react_component_name(&id.name)
-            && let ExpressionKind::FunctionExpression(func) = &prop.value
+            && let Some(func) = &prop.value.as_function_expression()
             && function_contains_jsx(func)
         {
             self.record_component(id.name.to_string(), prop.span, true);
@@ -405,7 +405,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
 fn is_es6_component_class(class: &Class) -> bool {
     class.super_class.as_ref().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let ExpressionKind::Identifier(ident) = member_expr.object()
+            && let Some(ident) = member_expr.object().as_identifier()
             && ident.name == "React"
         {
             return member_expr
@@ -421,7 +421,7 @@ fn is_es6_component_class(class: &Class) -> bool {
 /// Check if a call expression is createReactClass
 fn is_es5_component_call(call: &CallExpression) -> bool {
     if let Some(member_expr) = call.callee.as_member_expression()
-        && let ExpressionKind::Identifier(ident) = member_expr.object()
+        && let Some(ident) = member_expr.object().as_identifier()
         && ident.name == "React"
     {
         return member_expr.static_property_name() == Some("createReactClass");

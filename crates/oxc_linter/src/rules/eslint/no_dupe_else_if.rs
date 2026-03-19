@@ -118,7 +118,7 @@ impl Rule for NoDupeElseIf {
         let AstKind::IfStatement(parent_if_stmt) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(StatementKind::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else {
+        let Some(child_if_stmt) = &parent_if_stmt.alternate.as_ref().and_then(|e| e.as_if_statement()) else {
             return;
         };
         if child_if_stmt.span != if_stmt.span {
@@ -207,7 +207,7 @@ fn is_subset<'a, 'b>(a: &'a [&'a Expression<'b>], b: &'a [&'a Expression<'b>]) -
 }
 
 fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
-    match (a, b).kind() {
+    match (a.kind(), b.kind()) {
         (ExpressionKind::LogicalExpression(a), ExpressionKind::LogicalExpression(b))
             if matches!(a.operator, LogicalOperator::And | LogicalOperator::Or)
                 && a.operator == b.operator =>

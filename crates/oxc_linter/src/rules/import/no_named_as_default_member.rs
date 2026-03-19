@@ -143,7 +143,7 @@ impl Rule for NoNamedAsDefaultMember {
                     }
                 }
                 AstKind::VariableDeclarator(decl) => {
-                    let Some(ExpressionKind::Identifier(ident)) = &decl.init else {
+                    let Some(ident) = &decl.init.as_ref().and_then(|e| e.as_identifier()) else {
                         continue;
                     };
                     let BindingPattern::ObjectPattern(object_pattern) = &decl.id else {

@@ -90,7 +90,7 @@ impl Rule for NoAwaitInPromiseMethods {
 
         for element in &first_argument_array_expr.elements {
             if let Some(element_expr) = element.as_expression()
-                && let ExpressionKind::AwaitExpression(await_expr) = element_expr.without_parentheses()
+                && let Some(await_expr) = element_expr.without_parentheses().as_await_expression()
             {
                 let property_name =
                     member_expr.static_property_name().expect("callee is a static property");

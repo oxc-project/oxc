@@ -201,7 +201,7 @@ fn is_children_from_react<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext
             // Check if this is a VariableDeclarator with ObjectPattern
             if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
                 // Check if init is an identifier imported from React
-                if let Some(ExpressionKind::Identifier(init_ident)) = var_decl.init.as_ref() {
+                if let Some(init_ident) = var_decl.init.as_ref().as_ref().and_then(|e| e.as_identifier()) {
                     // Check if the init identifier is imported from 'react' module
                     return import_matcher(ctx, init_ident.name.as_str(), REACT_MODULE);
                 }

@@ -90,9 +90,7 @@ impl Rule for NoMutableExports {
             }
             AstKind::ExportDefaultDeclaration(export_default_decl) => {
                 // e.g. "let a = 4; export default a"
-                let Some(ExpressionKind::Identifier(ident)) =
-                    export_default_decl.declaration.as_expression()
-                else {
+                let Some(ident) = export_default_decl.declaration.as_expression().as_ref().and_then(|e| e.as_identifier()) else {
                     return;
                 };
                 let Some(declaration) = get_reference_declaration(ident.reference_id(), ctx) else {

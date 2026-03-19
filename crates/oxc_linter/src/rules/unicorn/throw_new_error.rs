@@ -62,7 +62,7 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        let AstKind::ThrowStatement(_) = outermost_paren(outermost_paren_node, ctx).kind() else {
+        let AstKind::ThrowStatement(_) = outermost_paren(outermost_paren_node, ctx) else {
             return;
         };
 

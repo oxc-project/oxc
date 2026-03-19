@@ -87,8 +87,7 @@ impl Rule for NoUnneededAsyncExpectFunction {
         }
 
         // Get the expect() CallExpression from head.parent
-        let Some(ExpressionKind::CallExpression(expect_call_expr)) = parsed_expect_call.head.parent
-        else {
+        let Some(expect_call_expr) = parsed_expect_call.head.parent.as_ref().and_then(|e| e.as_call_expression()) else {
             return;
         };
 
@@ -135,9 +134,9 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     // Case 1: Arrow function with expression body (async () => await doSomething())
     if arrow.expression {
         if let Some(first) = arrow.body.statements.first()
-            && let StatementKind::ExpressionStatement(expr_stmt) = first
-            && let ExpressionKind::AwaitExpression(await_expr) = &expr_stmt.expression
-            && let ExpressionKind::CallExpression(call) = &await_expr.argument
+            && let Some(expr_stmt) = first.as_expression_statement()
+            && let Some(await_expr) = &expr_stmt.expression.as_await_expression()
+            && let Some(call) = &await_expr.argument.as_call_expression()
         {
             return Some(call.span);
         }
@@ -151,9 +150,9 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
 fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
-        && let StatementKind::ExpressionStatement(expr_stmt) = stmt
-        && let ExpressionKind::AwaitExpression(await_expr) = &expr_stmt.expression
-        && let ExpressionKind::CallExpression(call) = &await_expr.argument
+        && let Some(expr_stmt) = stmt.as_expression_statement()
+        && let Some(await_expr) = &expr_stmt.expression.as_await_expression()
+        && let Some(call) = &await_expr.argument.as_call_expression()
     {
         return Some(call.span);
     }

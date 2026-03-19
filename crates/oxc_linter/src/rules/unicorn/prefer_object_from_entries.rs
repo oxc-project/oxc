@@ -207,7 +207,7 @@ impl Rule for PreferObjectFromEntries {
         if let Some(object_expr) = &stmt.as_object_expression()
             && object_expr.properties.len() == 2
             && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
-            && let ExpressionKind::Identifier(spread_ident) = spread.argument.get_inner_expression()
+            && let Some(spread_ident) = spread.argument.get_inner_expression().as_identifier()
         {
             let Some(spread_symbol_id) =
                 ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()

@@ -92,7 +92,7 @@ impl Rule for NoCloneElement {
         if let Some(member_expr) = call_expr.callee.get_inner_expression().get_member_expr()
             && let Some(name) = member_expr.static_property_name()
             && name == "cloneElement"
-            && let ExpressionKind::Identifier(ident) = member_expr.object()
+            && let Some(ident) = member_expr.object().as_identifier()
             && is_import_from_module(ident, "react", ctx)
         {
             ctx.diagnostic(no_clone_element_diagnostic(call_expr.callee.span()));

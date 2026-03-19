@@ -108,7 +108,7 @@ impl NoRequiredPropWithDefault {
         };
         if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
             let arg = &call_expr.arguments[0];
-            let Some(ExpressionKind::ObjectExpression(obj)) = arg.as_expression() else {
+            let Some(obj) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
                 return;
             };
             handle_object_expression(ctx, obj);
@@ -126,7 +126,7 @@ impl NoRequiredPropWithDefault {
         match ident.name.as_str().kind() {
             "defineProps" => {
                 if let Some(arge) = call_expr.arguments.first() {
-                    let Some(ExpressionKind::ObjectExpression(obj)) = arge.as_expression() else {
+                    let Some(obj) = arge.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
                         return;
                     };
                     // Here we need to consider the following two examples
@@ -390,8 +390,7 @@ fn handle_prop_object(
     obj.properties.iter().for_each(|v| {
         if let ObjectPropertyKind::ObjectProperty(inner_prop) = v
             && let Some(inner_key) = inner_prop.key.static_name()
-            && let ExpressionKind::ObjectExpression(inner_prop_value_expr) =
-                inner_prop.value.get_inner_expression()
+            && let Some(inner_prop_value_expr) = inner_prop.value.get_inner_expression().as_object_expression()
         {
             let mut has_default_key = false;
             let mut required_true_span: Option<Span> = None;

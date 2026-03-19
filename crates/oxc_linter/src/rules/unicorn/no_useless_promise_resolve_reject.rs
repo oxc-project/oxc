@@ -333,13 +333,13 @@ fn generate_fix<'a>(
         let mut text = format!("throw {text}");
 
         if is_yield {
-            replace_range = get_parenthesized_node(parent, ctx).kind().span();
+            replace_range = get_parenthesized_node(parent, ctx).span();
             text
         } else {
             text = format!("{text};");
             // `=> Promise.reject(error)` -> `=> { throw error; }`
             if is_arrow_function_body {
-                replace_range = get_parenthesized_node(parent, ctx).kind().span();
+                replace_range = get_parenthesized_node(parent, ctx).span();
                 text = format!("{{ {text} }}");
             }
             text

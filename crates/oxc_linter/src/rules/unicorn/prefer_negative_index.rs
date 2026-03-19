@@ -187,7 +187,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         return true;
     }
 
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         (
             ExpressionKind::ComputedMemberExpression(left_computed_expr),
             ExpressionKind::ComputedMemberExpression(right_computed_expr),

@@ -61,7 +61,7 @@ trait ExpressionExt {
 impl ExpressionExt for Expression<'_> {
     fn is_increment_of(&self, var_name: &str) -> bool {
         match self.kind() {
-            ExpressionKind::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
+            ExpressionKind::UpdateExpression(expr) => match (&expr.argument.kind(), &expr.operator.kind()) {
                 (
                     SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
                     UpdateOperator::Increment,
@@ -90,7 +90,7 @@ impl ExpressionExt for Expression<'_> {
                             return false;
                         }
 
-                        match (&bin_expr.left, &bin_expr.right).kind() {
+                        match (&bin_expr.left.kind(), &bin_expr.right.kind()) {
                             (ExpressionKind::Identifier(id), ExpressionKind::NumericLiteral(lit))
                             | (ExpressionKind::NumericLiteral(lit), ExpressionKind::Identifier(id)) => {
                                 id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
@@ -134,12 +134,11 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let Some(ExpressionKind::BinaryExpression(test_expr)) = &for_stmt.test else {
+        let Some(test_expr) = &for_stmt.test.as_ref().and_then(|e| e.as_binary_expression()) else {
             return;
         };
 
-        if !matches!((&test_expr.left, test_expr.operator).kind(),
-            (ExpressionKind::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
+        if !matches!((&test_expr.left.kind(), test_expr.operator.kind()),(ExpressionKind::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
         ) {
             return;
         }

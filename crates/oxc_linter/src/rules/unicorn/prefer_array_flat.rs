@@ -152,8 +152,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(StatementKind::ExpressionStatement(expr_stmt)) = first_argument.body.statements.first()
-    else {
+    let Some(expr_stmt) = first_argument.body.statements.first().as_ref().and_then(|e| e.as_expression_statement()) else {
         return;
     };
 
@@ -198,11 +197,11 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         }
 
         let Some((first_element, second_element)) = ({
-            match (&array_expr.elements[0], &array_expr.elements[1]).kind() {
+            match (&array_expr.elements[0].kind(), &array_expr.elements[1].kind()) {
                 (
                     ArrayExpressionElement::SpreadElement(first_element),
                     ArrayExpressionElement::SpreadElement(second_element),
-                ) => match (&first_element.argument, &second_element.argument) {
+                ) => match (&first_element.argument.kind(), &second_element.argument.kind()) {
                     (
                         ExpressionKind::Identifier(first_element),
                         ExpressionKind::Identifier(second_element),

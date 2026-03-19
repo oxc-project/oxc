@@ -372,7 +372,7 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression()
-        && let ExpressionKind::Identifier(ident) = member_expr.object()
+        && let Some(ident) = member_expr.object().as_identifier()
     {
         return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
     }
@@ -620,8 +620,7 @@ pub fn find_innermost_function_with_jsx<'a>(
                 if arrow_func.expression {
                     // Expression-bodied arrow function: () => () => <div />
                     if arrow_func.body.statements.len() == 1
-                        && let StatementKind::ExpressionStatement(expr_stmt) =
-                            &arrow_func.body.statements[0]
+                        && let Some(expr_stmt) = &arrow_func.body.statements[0].as_expression_statement()
                     {
                         return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
                     }

@@ -97,7 +97,7 @@ impl Rule for PreferLiteralEnumMember {
         }
 
         if self.allow_bitwise_expressions
-            && let ExpressionKind::BinaryExpression(binary_expr) = initializer
+            && let Some(binary_expr) = initializer.as_binary_expression()
             && matches!(
                 binary_expr.operator,
                 BinaryOperator::BitwiseOR

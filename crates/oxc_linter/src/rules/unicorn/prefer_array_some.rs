@@ -128,8 +128,7 @@ impl Rule for PreferArraySome {
                 );
 
                 if with_negative_one
-                    && let ExpressionKind::UnaryExpression(right_unary_expr) =
-                        &bin_expr.right.without_parentheses()
+                    && let Some(right_unary_expr) = &bin_expr.right.without_parentheses().as_unary_expression()
                     && matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
                     && right_unary_expr.argument.is_number_literal()
                     && right_unary_expr.argument.is_number_value(1_f64)

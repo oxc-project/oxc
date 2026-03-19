@@ -1548,7 +1548,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    let Some(ExpressionKind::CallExpression(call_expr)) = &var_decl.init else {
+                    let Some(call_expr) = &var_decl.init.as_ref().and_then(|e| e.as_call_expression()) else {
                         return;
                     };
 

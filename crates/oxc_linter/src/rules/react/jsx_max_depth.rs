@@ -194,7 +194,7 @@ fn calculate_jsx_children_depth(
                 calculate_jsx_children_depth(&frag.children, ctx, visited_symbols) + 1
             }
             JSXChild::ExpressionContainer(container) => {
-                if let Some(ExpressionKind::Identifier(ident)) = container.expression.as_expression() {
+                if let Some(ident) = container.expression.as_expression().as_ref().and_then(|e| e.as_identifier()) {
                     let depth = ident
                         .reference_id
                         .get()

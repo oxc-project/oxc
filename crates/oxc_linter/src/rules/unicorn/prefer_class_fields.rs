@@ -114,7 +114,7 @@ impl Rule for PreferClassFields {
         let first_statement =
             body.statements.iter().find(|stmt| !stmt.is_empty_statement());
 
-        let Some(StatementKind::ExpressionStatement(expr_stmt)) = first_statement else {
+        let Some(expr_stmt) = first_statement.as_ref().and_then(|e| e.as_expression_statement()) else {
             return;
         };
 

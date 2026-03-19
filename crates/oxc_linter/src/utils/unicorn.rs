@@ -138,7 +138,7 @@ pub fn is_prototype_property(
 
     // `Object.prototype.method` or `Array.prototype.method`
     if let Some(member_expr_obj) = member_expr.object().as_member_expression()
-        && let ExpressionKind::Identifier(iden) = member_expr_obj.object()
+        && let Some(iden) = member_expr_obj.object().as_identifier()
         && member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
         && object.is_some_and(|val| val == iden.name)
         && !member_expr.optional()
@@ -205,7 +205,7 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
                 return None;
             };
 
-            let Some(ExpressionKind::Identifier(ident)) = return_stmt.argument.as_ref() else {
+            let Some(ident) = return_stmt.argument.as_ref().and_then(|e| e.as_identifier()) else {
                 return None;
             };
 
@@ -231,21 +231,21 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
 
 /// Compares two expressions to see if they are the same.
 pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    if let Some(left_chain_expr) = left.as_member_expression()
-        && let Some(right_member_expr) = right
-        && let Some(v) = left_chain_expr.expression.as_member_expression().as_chain_expression()
+    if let Some(left_chain_expr) = left.as_chain_expression()
+        && let Some(right_member_expr) = right.as_member_expression()
+        && let Some(v) = left_chain_expr.expression.as_member_expression()
     {
         return is_same_member_expression(v, right_member_expr, ctx);
     }
 
-    if let Some(left_chain_expr) = left.as_member_expression()
-        && let ExpressionKind::ChainExpression(right_member_expr) = right
-        && let Some(v) = right_member_expr.expression.as_member_expression()
+    if let Some(left_member_expr) = left.as_member_expression()
+        && let Some(right_chain_expr) = right.as_chain_expression()
+        && let Some(v) = right_chain_expr.expression.as_member_expression()
     {
-        return is_same_member_expression(left_chain_expr, v, ctx);
+        return is_same_member_expression(left_member_expr, v, ctx);
     }
 
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         // super // this
         (ExpressionKind::Super(_), ExpressionKind::Super(_))
         | (ExpressionKind::ThisExpression(_), ExpressionKind::ThisExpression(_))
@@ -368,7 +368,7 @@ pub fn is_same_member_expression(
     ) = (left, right)
     {
         // TODO(camc314): refactor this to go through `is_same_reference` and introduce some sort of `context` to indicate how the two values should be compared.
-        match (&left.expression, &right.expression).kind() {
+        match (&left.expression.kind(), &right.expression.kind()) {
             // x['/regex/'] === x[/regex/]
             // x[/regex/] === x['/regex/']
             (ExpressionKind::StringLiteral(string_lit), ExpressionKind::RegExpLiteral(regex_lit))
@@ -480,8 +480,8 @@ pub fn get_precedence(expr: &Expression) -> Option<Precedence> {
 
 pub fn is_string_raw_tagged_template_expression(node: &AstKind) -> bool {
     if let AstKind::TaggedTemplateExpression(tagged_template_expression) = node
-        && let ExpressionKind::StaticMemberExpression(member_expr) = &tagged_template_expression.tag
-        && let ExpressionKind::Identifier(ident) = &member_expr.object
+        && let Some(member_expr) = &tagged_template_expression.tag.as_static_member_expression()
+        && let Some(ident) = &member_expr.object.as_identifier()
         && member_expr.property.name == "raw"
         && ident.name == "String"
     {

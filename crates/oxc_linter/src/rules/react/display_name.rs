@@ -326,7 +326,7 @@ fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
 fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
     class.super_class.as_ref().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
-            && let ExpressionKind::Identifier(ident) = member_expr.object()
+            && let Some(ident) = member_expr.object().as_identifier()
         {
             return ident.name == "React"
                 && member_expr
@@ -387,7 +387,7 @@ fn check_context_assignment_references(
         // Walk up to find the assignment expression
         for ancestor_kind in ctx.nodes().ancestor_kinds(ref_node.id()) {
             if let AstKind::AssignmentExpression(assign) = ancestor_kind
-                && let ExpressionKind::CallExpression(call) = &assign.right
+                && let Some(call) = &assign.right.as_call_expression()
                 && is_create_context_call(call)
             {
                 return Some(ReactComponentInfo { span: assign.span, is_context: true, name });
@@ -420,7 +420,7 @@ fn is_react_component_node<'a>(
             decl.init.as_ref()?;
 
             // Check for createContext
-            if let Some(ExpressionKind::CallExpression(call)) = &decl.init
+            if let Some(call) = decl.init.as_ref().and_then(|e| e.as_call_expression())
                 && is_create_context_call(call)
             {
                 if check_context_objects {
@@ -433,7 +433,7 @@ fn is_react_component_node<'a>(
                 return None;
             }
 
-            if let Some(ExpressionKind::CallExpression(call)) = &decl.init
+            if let Some(call) = decl.init.as_ref().and_then(|e| e.as_call_expression())
                 && let Some(callee_name) = call.callee_name()
             {
                 // Check for HOC patterns
@@ -515,7 +515,7 @@ fn is_react_component_node<'a>(
             }
 
             // Check for object expressions with methods
-            if let Some(ExpressionKind::ObjectExpression(obj_expr)) = &decl.init
+            if let Some(obj_expr) = decl.init.as_ref().and_then(|e| e.as_object_expression())
                 && let Some(name) = &name
                 && has_component_methods_in_object(obj_expr, ignore_transpiler_name)
             {
@@ -719,7 +719,7 @@ fn is_module_exports_component(
     check_context_objects: bool,
 ) -> Option<ReactComponentInfo> {
     if let AssignmentTarget::StaticMemberExpression(member) = &assign.left
-        && let ExpressionKind::Identifier(ident) = &member.object
+        && let Some(ident) = &member.object.as_identifier()
         && ident.name == "module"
         && member.property.name == "exports"
     {
@@ -822,7 +822,7 @@ fn has_create_react_class_display_name(
     ignore_transpiler_name: bool,
 ) -> bool {
     call.arguments.iter().any(|arg| {
-        if let Some(ExpressionKind::ObjectExpression(obj_expr)) = arg.as_expression() {
+        if let Some(obj_expr) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) {
             obj_expr.properties.iter().any(|prop| {
                 if let Some((prop_name, _)) = prop.prop_name() {
                     prop_name == "displayName" || (!ignore_transpiler_name && prop_name == "name")

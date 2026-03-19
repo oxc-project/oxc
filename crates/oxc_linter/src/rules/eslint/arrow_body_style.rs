@@ -265,7 +265,7 @@ impl ArrowBodyStyle {
 
                 // Check if we can fix (single return with argument)
                 if body.statements.len() == 1
-                    && let StatementKind::ReturnStatement(return_statement) = &body.statements[0]
+                    && let Some(return_statement) = &body.statements[0].as_return_statement()
                     && let Some(return_arg) = &return_statement.argument
                 {
                     ctx.diagnostic_with_fix(unexpected_block_diagnostic(body.span), |fixer| {

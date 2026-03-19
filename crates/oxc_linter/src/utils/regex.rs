@@ -42,7 +42,7 @@ where
     let arg2 = arg2.and_then(Argument::as_expression).map(Expression::get_inner_expression);
     // note: improvements required for strings used via identifier references
     // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-    match (arg1, arg2).kind() {
+    match (arg1.kind(), arg2.kind()) {
         (Some(ExpressionKind::StringLiteral(pattern)), Some(ExpressionKind::StringLiteral(flags))) => {
             let allocator = Allocator::default();
             if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
@@ -102,7 +102,7 @@ fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) ->
     }
     // Check for globalThis.RegExp (StaticMemberExpression)
     if let Some(member) = callee.as_static_member_expression()
-        && let ExpressionKind::Identifier(obj) = &member.object
+        && let Some(obj) = &member.object.as_identifier()
         && obj.is_global_reference_name(GLOBAL_THIS, ctx.semantic().scoping())
         && member.property.name == "RegExp"
     {

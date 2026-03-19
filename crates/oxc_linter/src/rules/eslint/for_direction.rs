@@ -104,7 +104,7 @@ impl Rule for ForDirection {
             return;
         };
 
-        let Some(ExpressionKind::BinaryExpression(test)) = &for_loop.test else {
+        let Some(test) = &for_loop.test.as_ref().and_then(|e| e.as_binary_expression()) else {
             return;
         };
 
@@ -139,7 +139,7 @@ fn extract_counter<'a>(
     left: &'a Expression<'a>,
     right: &'a Expression<'a>,
 ) -> Option<(&'a IdentifierReference<'a>, CounterPosition)> {
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         (ExpressionKind::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
         (_, ExpressionKind::Identifier(counter)) => Some((counter, CounterPosition::Right)),
         _ => None,

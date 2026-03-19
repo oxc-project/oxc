@@ -391,7 +391,7 @@ impl PreferKeyboardEventKey {
         }
 
         // Get the numeric literal from the comparison
-        let number_value = match (&binary.left, &binary.right) {
+        let number_value = match (&binary.left.kind(), &binary.right.kind()) {
             (_, ExpressionKind::NumericLiteral(num)) | (ExpressionKind::NumericLiteral(num), _) => {
                 Some((num.value, num.span))
             }

@@ -114,7 +114,7 @@ fn check_define_component_function<'a>(call_expr: &'a CallExpression<'a>, ctx: &
     };
     if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
         let arg = &call_expr.arguments[0];
-        let Some(ExpressionKind::ObjectExpression(obj)) = arg.as_expression() else {
+        let Some(obj) = arg.as_expression().as_ref().and_then(|e| e.as_object_expression()) else {
             return;
         };
         let Some(watch_obj) = get_watch_object_expression(obj) else {

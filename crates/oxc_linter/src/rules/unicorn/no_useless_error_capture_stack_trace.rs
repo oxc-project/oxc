@@ -73,7 +73,7 @@ impl Rule for NoUselessErrorCaptureStackTrace {
         }
 
         if let Some(member) = call_expr.callee.as_member_expression()
-            && let ExpressionKind::Identifier(error_ident) = member.object()
+            && let Some(error_ident) = member.object().as_identifier()
             && !error_ident.is_global_reference(ctx.scoping())
         {
             return;
@@ -207,7 +207,7 @@ fn is_referencing_class(
         }
         _ => {
             if let Some(member) = expr.as_member_expression()
-                && let ExpressionKind::ThisExpression(_) = member.object().get_inner_expression()
+                && let Some(_) = member.object().get_inner_expression().as_this_expression()
                 && let Some(prop_name) = member.static_property_name()
                 && prop_name == "constructor"
             {

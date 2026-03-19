@@ -151,7 +151,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         return true;
     }
 
-    match (left, right).kind() {
+    match (left.kind(), right.kind()) {
         (
             ExpressionKind::AwaitExpression(left_await_expr),
             ExpressionKind::AwaitExpression(right_await_expr),

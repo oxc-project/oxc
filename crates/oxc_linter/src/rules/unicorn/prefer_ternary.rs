@@ -185,7 +185,7 @@ fn is_mergeable<'a>(
         return !options.strict;
     }
 
-    match (consequent, alternate).kind() {
+    match (consequent.kind(), alternate.kind()) {
         (
             MergeNode::Body(BodyNode::Statement(StatementKind::ReturnStatement(consequent))),
             MergeNode::Body(BodyNode::Statement(StatementKind::ReturnStatement(alternate))),

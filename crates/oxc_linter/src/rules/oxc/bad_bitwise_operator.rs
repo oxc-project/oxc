@@ -149,7 +149,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
             };
 
             if let Some(member_expr) = bin_expr.right.as_member_expression()
-                && let ExpressionKind::Identifier(ident) = member_expr.object()
+                && let Some(ident) = member_expr.object().as_identifier()
             {
                 return ident.name == left_ident.name;
             }
@@ -165,7 +165,7 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
         return false;
     };
     if binary_expr.operator == BinaryOperator::BitwiseOR
-        && let ExpressionKind::Identifier(_) = &binary_expr.left
+        && let Some(_) = &binary_expr.left.as_identifier()
     {
         return !is_numeric_expr(&binary_expr.right, true);
     }
