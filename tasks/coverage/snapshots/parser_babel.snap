@@ -1,9 +1,9 @@
-commit: 87a048db
+commit: 31b3d950
 
 parser_babel Summary:
 AST Parsed     : 2232/2232 (100.00%)
 Positive Passed: 2218/2232 (99.37%)
-Negative Passed: 1688/1704 (99.06%)
+Negative Passed: 1689/1705 (99.06%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -2614,6 +2614,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class A {
  2 │   static prototype() {}
    ·          ─────────
+ 3 │ }
+   ╰────
+
+  × 'new super()' is not allowed
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/disallow-super-call-after-new/input.js:2:23]
+ 1 │ class A extends class {} {
+ 2 │   constructor() { new super() }
+   ·                       ───────
  3 │ }
    ╰────
 
