@@ -140,6 +140,7 @@ struct StructState<'s> {
     layout_64: PlatformLayout,
     layout_32: PlatformLayout,
     struct_def: &'s mut StructDef,
+    field_count: u32,
     current_align_64: u32,
     current_align_32: u32,
 }
@@ -158,6 +159,7 @@ impl<'s> StructState<'s> {
             layout_64: PlatformLayout::from_size_align(0, 1),
             layout_32: PlatformLayout::from_size_align(0, 1),
             struct_def,
+            field_count: 0,
             current_align_64: MAX_ALIGN,
             current_align_32: MAX_ALIGN,
         }
@@ -180,7 +182,9 @@ impl<'s> StructState<'s> {
 
         // Store offset on `field`
         let field = &mut self.struct_def.fields[field_data.index];
-        field.offset = Offset { offset_64, offset_32 };
+        field.offset = Offset { offset_64, offset_32, layout_index: self.field_count };
+
+        self.field_count += 1;
     }
 
     fn update(
@@ -254,11 +258,10 @@ impl LayoutCalculator<'_> {
     ///
     /// 1. `span: Span` goes first.
     /// 2. `node_id: Cell<NodeId>` goes next.
-    /// 3. ZST fields go last.
-    /// 4. Fields with higher alignment on 64-bit systems go first.
-    /// 5. Fields with higher alignment on 32-bit systems go first.
-    /// 6. If the highest-aligned field cannot go next, take the next field which has suitable alignment.
-    /// 7. Otherwise, retain original field order.
+    /// 3. Fields with higher alignment on 64-bit systems go first.
+    /// 4. Fields with higher alignment on 32-bit systems go first.
+    /// 5. If the highest-aligned field cannot go next, take the next field which has suitable alignment.
+    /// 6. Otherwise, retain original field order.
     ///
     /// This ordering scheme does not match `#[repr(Rust)]`, but is equally efficient in terms of packing
     /// structs into as few bytes as possible.
@@ -279,29 +282,15 @@ impl LayoutCalculator<'_> {
     ///
     /// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
     /// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
-    ///
-    /// ZSTs need to go last so that they don't have same offset as another sized field.
-    /// If they did, this would screw up sorting the fields in `generate_struct_details`.
     fn calculate_struct(&mut self, type_id: TypeId) -> Layout {
         // Get layout of fields' types and calculate optimal field order
-        let mut zst_fields = vec![];
-
         let mut fields = self
             .schema
             .struct_def(type_id)
             .field_indices()
-            .filter_map(|index| {
+            .map(|index| {
                 let field = &self.schema.struct_def(type_id).fields[index];
                 let layout = self.calculate_type(field.type_id).clone();
-
-                if layout.layout_64.size == 0 || layout.layout_32.size == 0 {
-                    assert!(
-                        layout.layout_64.size == 0 && layout.layout_32.size == 0,
-                        "ZST field must have 0 size on all platforms"
-                    );
-                    zst_fields.push(FieldData { index, layout, priority: 0 });
-                    return None;
-                }
 
                 let field = &self.schema.struct_def(type_id).fields[index];
                 let priority = if field.type_id == self.span_type_id && field.name() == "span" {
@@ -315,13 +304,13 @@ impl LayoutCalculator<'_> {
                     (u64::from(layout.layout_64.align) << 32) | u64::from(layout.layout_32.align)
                 };
 
-                Some(FieldData { index, layout, priority })
+                FieldData { index, layout, priority }
             })
             .collect::<Vec<_>>();
 
         fields.sort_by(|f1, f2| f1.priority.cmp(&f2.priority).reverse());
 
-        // Add fields (except ZST fields)
+        // Add fields
         let mut state = StructState::new(self.schema.struct_def_mut(type_id));
 
         while !fields.is_empty() {
@@ -356,22 +345,8 @@ impl LayoutCalculator<'_> {
             }
         }
 
-        // Add ZST fields last, in original order.
-        // Order of ZSTs doesn't matter, but keeping in original order is relied on by `generate_struct_details`.
-        let StructState { mut layout_64, mut layout_32, struct_def, .. } = state;
-
-        for field_data in &zst_fields {
-            fn update(layout: &mut PlatformLayout, align: u32) -> u32 {
-                layout.size = layout.size.next_multiple_of(align);
-                layout.align = max(layout.align, align);
-                layout.size
-            }
-            let offset_64 = update(&mut layout_64, field_data.layout.layout_64.align);
-            let offset_32 = update(&mut layout_32, field_data.layout.layout_32.align);
-            struct_def.fields[field_data.index].offset = Offset { offset_64, offset_32 };
-        }
-
         // Round up size to alignment
+        let StructState { mut layout_64, mut layout_32, .. } = state;
         layout_64.size = layout_64.size.next_multiple_of(layout_64.align);
         layout_32.size = layout_32.size.next_multiple_of(layout_32.align);
 
@@ -717,10 +692,9 @@ fn generate_layout_assertions_for_struct<'s>(
         }
     }
 
-    // Sort fields in offset order.
-    // `sort_by` not `sort_unstable_by` to maintain original field order for ZST fields.
+    // Sort fields in memory layout order
     let mut fields = struct_def.fields.iter().collect_vec();
-    fields.sort_by(|f1, f2| f1.offset.offset_64.cmp(&f2.offset.offset_64));
+    fields.sort_by(|f1, f2| f1.offset.layout_index.cmp(&f2.offset.layout_index));
 
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();
@@ -826,37 +800,21 @@ fn generate_struct_details(schema: &Schema) -> Output {
     for type_def in &schema.types {
         let TypeDef::Struct(struct_def) = type_def else { continue };
 
-        // Get indexes of fields in ascending order of offset.
-        // Field index is included in sorting so any ZST fields remain in same order as in source
-        // (multiple ZST fields will have same offset as each other).
-        //
-        // If struct as written already has all fields in offset order then no-reordering is required,
+        // Get layout indexes of fields in source order.
+        // If struct as written already has fields in layout order, then no-reordering is required,
         // in which case output `None`.
-        let mut field_offsets_and_source_indexes = struct_def
-            .fields
-            .iter()
-            .enumerate()
-            .map(|(index, field)| (field.offset.offset_64, index))
-            .collect::<Vec<_>>();
-        field_offsets_and_source_indexes.sort_unstable();
+        let mut new_indexes = vec![0; struct_def.fields.len()];
+        let mut reordering_needed = false;
+        for (index, field) in struct_def.fields.iter().enumerate() {
+            if index != field.offset.layout_index as usize {
+                reordering_needed = true;
+            }
+            new_indexes[index] = field.offset.layout_index;
+        }
 
-        let field_order = if field_offsets_and_source_indexes
-            .iter()
-            .enumerate()
-            .any(|(new_index, &(_, source_index))| source_index != new_index)
-        {
-            // Field order needs to change from source order.
-            // Remap to `Vec` indexed by source field index,
-            // with each entry containing the new index after re-ordering
-            let mut source_and_new_indexes = field_offsets_and_source_indexes
-                .into_iter()
-                .enumerate()
-                .map(|(new_index, (_, source_index))| (source_index, new_index))
-                .collect::<Vec<_>>();
-            source_and_new_indexes.sort_unstable_by_key(|&(source_index, _)| source_index);
-            let new_indexes = source_and_new_indexes
-                .into_iter()
-                .map(|(_, new_index)| number_lit(u8::try_from(new_index).unwrap()));
+        let field_order = if reordering_needed {
+            let new_indexes =
+                new_indexes.into_iter().map(|index| number_lit(u8::try_from(index).unwrap()));
             quote!(Some(&[#(#new_indexes),*]))
         } else {
             // Field order stays as it is in source

@@ -121,7 +121,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("EcmaScriptModule", StructDetails { field_order: Some(&[4, 0, 1, 2, 3]) }),
         ("RegExp", StructDetails { field_order: None }),
         ("SpreadElement", StructDetails { field_order: Some(&[1, 0, 2]) }),
-        ("Span", StructDetails { field_order: None }),
+        ("Span", StructDetails { field_order: Some(&[1, 2, 0]) }),
         ("Disjunction", StructDetails { field_order: None }),
         ("AssignmentTargetPropertyIdentifier", StructDetails { field_order: Some(&[1, 0, 2, 3]) }),
         ("ConditionalExpression", StructDetails { field_order: Some(&[1, 0, 2, 3, 4]) }),
