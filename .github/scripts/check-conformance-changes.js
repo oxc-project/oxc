@@ -63,6 +63,12 @@ function shouldRunConformance(changedFiles) {
     }
   }
 
+  // If no changed files are in crates/, cargo tree check cannot match — skip it
+  if (!changedFiles.some((file) => file.startsWith("crates/"))) {
+    console.error("No files changed in crates/ - will skip conformance");
+    return false;
+  }
+
   // Get dependencies
   const dependencies = getCoverageDependencies();
 
