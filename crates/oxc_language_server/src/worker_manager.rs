@@ -103,6 +103,34 @@ impl WorkerManager {
 
     // ── Lookup helpers (associated functions) ─────────────────────────────────
 
+    /// Return the index of the most specific workspace worker for a given URI,
+    /// or `None` when no worker covers `uri`.
+    ///
+    /// For non-`file://` URIs the first worker (index `0`) is returned when
+    /// the list is non-empty, mirroring the behaviour of rust-analyzer and
+    /// typescript-language-server.
+    fn find_worker_index_for_uri(workers: &[WorkspaceWorker], uri: &Uri) -> Option<usize> {
+        if uri.scheme().as_str() != "file" {
+            return if workers.is_empty() { None } else { Some(0) };
+        }
+
+        let file_path = uri.to_file_path()?;
+
+        workers
+            .iter()
+            .enumerate()
+            .filter_map(|(i, worker)| {
+                let root_path = worker.get_root_uri().to_file_path()?;
+                if file_path.starts_with(&root_path) {
+                    Some((i, root_path.as_os_str().len()))
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|(_, len)| *len)
+            .map(|(i, _)| i)
+    }
+
     /// Find the most specific workspace worker for a given URI.
     ///
     /// When multiple workers are responsible for a URI (e.g., in nested
@@ -115,25 +143,8 @@ impl WorkerManager {
         workers: &'a [WorkspaceWorker],
         uri: &Uri,
     ) -> Option<&'a WorkspaceWorker> {
-        // Non-file URIs (e.g. `untitled:`, `vscode-userdata:`) – use the first worker.
-        if uri.scheme().as_str() != "file" {
-            return workers.first();
-        }
-
-        let file_path = uri.to_file_path()?;
-
-        workers
-            .iter()
-            .filter_map(|worker| {
-                let root_path = worker.get_root_uri().to_file_path()?;
-                if file_path.starts_with(&root_path) {
-                    Some((worker, root_path.as_os_str().len()))
-                } else {
-                    None
-                }
-            })
-            .max_by_key(|(_, len)| *len)
-            .map(|(worker, _)| worker)
+        let index = Self::find_worker_index_for_uri(workers, uri)?;
+        Some(&workers[index])
     }
 
     /// Acquire a read lock and find the most specific worker for `uri`.
@@ -146,30 +157,7 @@ impl WorkerManager {
     /// [`Self::find_worker_for_uri`] for call-sites that only need one worker.
     pub async fn get_worker_for_uri(&self, uri: &Uri) -> Option<WorkerGuard<'_>> {
         let guard = self.workers.read().await;
-
-        let index = if uri.scheme().as_str() == "file" {
-            let file_path = uri.to_file_path()?;
-            guard
-                .iter()
-                .enumerate()
-                .filter_map(|(i, worker)| {
-                    let root_path = worker.get_root_uri().to_file_path()?;
-                    if file_path.starts_with(&root_path) {
-                        Some((i, root_path.as_os_str().len()))
-                    } else {
-                        None
-                    }
-                })
-                .max_by_key(|(_, len)| *len)
-                .map(|(i, _)| i)?
-        } else {
-            // Non-file URIs use the first worker.
-            if guard.is_empty() {
-                return None;
-            }
-            0
-        };
-
+        let index = Self::find_worker_index_for_uri(&guard, uri)?;
         Some(WorkerGuard { guard, index })
     }
 
@@ -247,9 +235,9 @@ impl WorkerManager {
     /// given `file://` URI when the server is in single-file mode.
     ///
     /// The method is a no-op when:
+    /// * the server is not in single-file mode, or
     /// * a suitable worker already exists, or
-    /// * a concurrent call races to insert the same worker first, or
-    /// * the server has since exited single-file mode.
+    /// * a concurrent call races to insert the same worker first.
     ///
     /// Returns `Some(registrations)` with the file-system watcher registrations
     /// that the caller should forward to the client.  Returns `None` when no
@@ -260,6 +248,11 @@ impl WorkerManager {
         diagnostic_mode: DiagnosticMode,
         dynamic_watchers: bool,
     ) -> Option<Vec<Registration>> {
+        // Bail out immediately if we are not in single-file mode.
+        if !self.single_file_mode.load(Ordering::Relaxed) {
+            return None;
+        }
+
         let parent_uri = Self::get_parent_dir_uri(uri)?;
 
         // Fast path: avoid a write lock when a suitable worker already exists.
