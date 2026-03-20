@@ -150,18 +150,6 @@ impl Rule for AnchorIsValid {
             }
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
-            let element_name = get_span().source_text(ctx.source_text());
-            let missing_href_attr_name = ctx
-                .settings()
-                .jsx_a11y
-                .attributes
-                .get("href")
-                .and_then(|attributes| attributes.first().map(CompactStr::as_str))
-                .filter(|name| !name.eq_ignore_ascii_case("href"))
-                .map_or_else(
-                    || CompactStr::from("href"),
-                    |name| CompactStr::from(format!("{name} or href")),
-                );
 
             let href_attr = ctx
                 .settings()
@@ -185,7 +173,7 @@ impl Rule for AnchorIsValid {
                 let Some(value) = attr.value.as_ref() else {
                     ctx.diagnostic(incorrect_href(
                         get_span(),
-                        element_name,
+                        get_span().source_text(ctx.source_text()),
                         href_attr_name.as_ref(),
                     ));
                     return;
@@ -196,14 +184,14 @@ impl Rule for AnchorIsValid {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some() {
                         ctx.diagnostic(cant_be_anchor(
                             get_span(),
-                            element_name,
+                            get_span().source_text(ctx.source_text()),
                             href_attr_name.as_ref(),
                         ));
                         return;
                     }
                     ctx.diagnostic(incorrect_href(
                         get_span(),
-                        element_name,
+                        get_span().source_text(ctx.source_text()),
                         href_attr_name.as_ref(),
                     ));
                     return;
@@ -218,9 +206,20 @@ impl Rule for AnchorIsValid {
             if has_spread_attr {
                 return;
             }
+            let missing_href_attr_name = ctx
+                .settings()
+                .jsx_a11y
+                .attributes
+                .get("href")
+                .and_then(|attributes| attributes.first().map(CompactStr::as_str))
+                .filter(|name| !name.eq_ignore_ascii_case("href"))
+                .map_or_else(
+                    || CompactStr::from("href"),
+                    |name| CompactStr::from(format!("{name} or href")),
+                );
             ctx.diagnostic(missing_href_attribute(
                 get_span(),
-                element_name,
+                get_span().source_text(ctx.source_text()),
                 missing_href_attr_name.as_str(),
             ));
         }
