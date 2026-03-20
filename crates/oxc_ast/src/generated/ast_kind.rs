@@ -1020,6 +1020,10 @@ impl GetSpan for AstKind<'_> {
 }
 
 impl GetAddress for AstKind<'_> {
+    /// Get [`Address`] of an [`AstKind`].
+    // This boils down to 1 instruction.
+    // In all cases, it gets the pointer from the reference in the `AstKind`.
+    #[inline]
     fn address(&self) -> Address {
         match *self {
             Self::Program(it) => it.unstable_address(),
