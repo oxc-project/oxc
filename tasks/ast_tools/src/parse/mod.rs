@@ -18,7 +18,7 @@
 //! 2nd phase involves full parsing of each type, and linking types to each other.
 //!
 //! A [`TypeDef`] is generated for each type. The `IndexVec<TypeId, TypeDef>` that is created is indexed
-//! by [`TypeId`] - same order of entries as the `FxIndexMap<Skeleton>` from phase 1.
+//! by [`TypeId`] - same order of entries as the `FxIndexSet` of type names from phase 1.
 //!
 //! `parse_attr` method is called on [`Derive`]s and [`Generator`]s which handle attributes,
 //! for the derive/generator to parse the attribute and update the [`TypeDef`] accordingly.
@@ -44,15 +44,18 @@
 //!
 //! [`TypeId`]: crate::schema::TypeId
 //! [`TypeDef`]: crate::schema::TypeDef
+//! [`Skeleton`]: skeleton::Skeleton
 //! [`Derive`]: crate::Derive
 //! [`Generator`]: crate::Generator
 
-use std::path::Path;
+use rayon::prelude::*;
+
+use oxc_index::IndexVec;
 
 use crate::{
     Codegen, log, log_success,
     schema::{Derives, File, FileId, Schema},
-    utils::FxIndexMap,
+    utils::FxIndexSet,
 };
 
 pub mod attr;
@@ -62,7 +65,6 @@ mod parse;
 mod skeleton;
 use load::load_file;
 use parse::parse;
-use skeleton::Skeleton;
 
 /// Analyse the files with provided paths, and generate a [`Schema`].
 pub fn parse_files(file_paths: &[String], codegen: &Codegen) -> Schema {
@@ -72,41 +74,70 @@ pub fn parse_files(file_paths: &[String], codegen: &Codegen) -> Schema {
     // Meta types are not part of the AST, but associated with it.
     // `TypeId` is index into `skeletons`.
     // `MetaId` is index into `meta_skeletons`.
-    let mut skeletons = FxIndexMap::default();
-    let mut meta_skeletons = FxIndexMap::default();
-
-    let files = file_paths
-        .iter()
+    log!("Loading files... ");
+    let results = file_paths
+        .par_iter()
         .enumerate()
         .map(|(file_id, file_path)| {
             let file_id = FileId::from_usize(file_id);
-            analyse_file(
-                file_id,
-                file_path,
-                &mut skeletons,
-                &mut meta_skeletons,
-                codegen.root_path(),
-            )
+            let file_skeletons = load_file(file_id, file_path, codegen.root_path());
+            // `Skeleton` contains `syn` types which are `!Send` (see `AssertSend` below)
+            AssertSend((file_path, file_skeletons))
         })
-        .collect();
-
-    // Convert skeletons into schema
-    parse(skeletons, meta_skeletons, files, codegen)
-}
-
-/// Analyse file with provided path and add types to `skeletons` and `meta_skeletons`.
-///
-/// Returns a [`File`].
-fn analyse_file(
-    file_id: FileId,
-    file_path: &str,
-    skeletons: &mut FxIndexMap<String, Skeleton>,
-    meta_skeletons: &mut FxIndexMap<String, Skeleton>,
-    root_path: &Path,
-) -> File {
-    log!("Load {file_path}... ");
-    load_file(file_id, file_path, skeletons, meta_skeletons, root_path);
+        .collect::<Vec<_>>();
     log_success!();
 
-    File::new(file_path)
+    // Sequential phase: merge into name sets + skeleton vecs (preserving deterministic order).
+    let mut type_names = FxIndexSet::default();
+    let mut type_skeletons = Vec::new();
+    let mut meta_names = FxIndexSet::default();
+    let mut meta_skeletons = Vec::new();
+    let mut files = IndexVec::new();
+
+    for AssertSend((file_path, file_skeletons)) in results {
+        for (name, skeleton, is_meta) in file_skeletons {
+            let (names, skeletons) = if is_meta {
+                (&mut meta_names, &mut meta_skeletons)
+            } else {
+                (&mut type_names, &mut type_skeletons)
+            };
+
+            let (index, is_new) = names.insert_full(name);
+            assert!(is_new, "2 types with same name: {}", names.get_index(index).unwrap());
+            skeletons.push(skeleton);
+        }
+        files.push(File::new(file_path));
+    }
+
+    let type_skeletons = IndexVec::from_vec(type_skeletons);
+    let meta_skeletons = IndexVec::from_vec(meta_skeletons);
+
+    // Convert skeletons into schema
+    parse(type_names, type_skeletons, meta_names, meta_skeletons, files, codegen)
 }
+
+/// Wrapper to assert a type is safe to send across threads.
+///
+/// `syn` types are `!Send` because `proc_macro2::Span` contains an `Rc` internally
+/// (when the `proc-macro` feature is enabled on `proc-macro2`).
+///
+/// This crate does not enable the `proc-macro` feature on `syn` crate, which would usually make `syn` types `Send`.
+/// But unfortunately it gets enabled by transitive dependencies (`serde_derive`, `bpaf_derive`, etc),
+/// due to feature unification.
+///
+/// `Span` is embedded throughout the syn AST - in every `Ident`, token, `Type`, `Expr`, and `Attribute` -
+/// so there's no way to extract the data we need without it.
+///
+/// # Why this is sound
+///
+/// `Rc` is `!Send` because two `Rc`s pointing to the same allocation could be used concurrently from different threads,
+/// violating the non-atomic reference count. But that's only a problem if an `Rc` has been *cloned*. A sole owner of
+/// an `Rc` is safe to send - there's no other `Rc` to race with.
+///
+/// `syn::parse_file` parses a `&str` and returns a self-contained AST. The `Span`s in this tree are created fresh
+/// by `proc_macro2` and are not clones of any external `Rc`. So each parsed tree is the sole owner of all its `Rc`s,
+/// and sending it to another thread cannot cause a data race.
+struct AssertSend<T>(T);
+
+// SAFETY: See above
+unsafe impl<T> Send for AssertSend<T> {}

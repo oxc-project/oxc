@@ -1,6 +1,5 @@
 use std::{fs, path::Path};
 
-use indexmap::map::Entry;
 use syn::{
     Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
     Visibility, WhereClause, braced,
@@ -12,7 +11,6 @@ use syn::{
 use crate::{schema::FileId, utils::ident_name};
 
 use super::{
-    FxIndexMap,
     parse::convert_expr_to_string,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
 };
@@ -23,22 +21,22 @@ use super::{
 /// * Name of type.
 /// * Inherits of enums wrapped in `inherit_variants!` macro.
 ///
-/// Inserts [`Skeleton`]s into `skeletons` and `meta_skeletons`.
+/// Returns a list of [`Skeleton`]s found in the file.
+/// Each entry is `(type_name, skeleton, is_meta)`.
 ///
 /// This is the bare minimum to be able to "link up" types to each other in next pass.
 pub fn load_file(
     file_id: FileId,
     file_path: &str,
-    skeletons: &mut FxIndexMap<String, Skeleton>,
-    meta_skeletons: &mut FxIndexMap<String, Skeleton>,
     root_path: &Path,
-) {
+) -> Vec<(String, Skeleton, bool)> {
     let content = fs::read_to_string(root_path.join(file_path)).unwrap();
 
     let file = parse_file(content.as_str()).unwrap();
 
+    let mut results = Vec::new();
     for item in file.items {
-        let (name, skeleton, is_meta) = match item {
+        let entry = match item {
             Item::Struct(item) => {
                 let Some((skeleton, is_meta)) = parse_struct(item, file_id) else { continue };
                 (skeleton.name.clone(), Skeleton::Struct(skeleton), is_meta)
@@ -53,15 +51,9 @@ pub fn load_file(
             }
             _ => continue,
         };
-
-        let use_skeletons = if is_meta { &mut *meta_skeletons } else { &mut *skeletons };
-        match use_skeletons.entry(name) {
-            Entry::Occupied(entry) => panic!("2 types with same name: {}", entry.key()),
-            Entry::Vacant(entry) => {
-                entry.insert(skeleton);
-            }
-        }
+        results.push(entry);
     }
+    results
 }
 
 fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<(StructSkeleton, /* is_meta */ bool)> {
