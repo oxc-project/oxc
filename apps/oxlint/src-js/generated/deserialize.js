@@ -1585,33 +1585,35 @@ function deserializeVariableDeclarationKind(pos) {
 }
 
 function deserializeVariableDeclarator(pos) {
-  let previousParent = parent,
-    variableDeclarator = (parent = {
+  let start,
+    end,
+    previousParent = parent,
+    node = (parent = {
       __proto__: NodeProto,
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: false,
-      start: deserializeU32(pos),
-      end: deserializeU32(pos + 4),
-      range: [deserializeU32(pos), deserializeU32(pos + 4)],
-      parent: previousParent,
-    });
-  variableDeclarator.id = deserializeBindingPattern(pos + 8);
+      definite: deserializeBool(pos + 53),
+      start: (start = deserializeU32(pos)),
+      end: (end = deserializeU32(pos + 4)),
+      range: [start, end],
+      parent,
+    }),
+    pattern = deserializeBindingPattern(pos + 8);
   {
-    parent = variableDeclarator.id;
+    let previousParent = parent;
+    parent = pattern;
     let typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-    variableDeclarator.id.typeAnnotation = typeAnnotation;
     if (typeAnnotation !== null) {
-      variableDeclarator.id.end = typeAnnotation.end;
-      variableDeclarator.id.range[1] = typeAnnotation.end;
+      pattern.typeAnnotation = typeAnnotation;
+      pattern.range[1] = pattern.end = typeAnnotation.end;
     }
-    parent = variableDeclarator;
-    variableDeclarator.definite = deserializeBool(pos + 53);
+    parent = previousParent;
   }
-  variableDeclarator.init = deserializeOptionExpression(pos + 32);
+  node.id = pattern;
+  node.init = deserializeOptionExpression(pos + 32);
   parent = previousParent;
-  return variableDeclarator;
+  return node;
 }
 
 function deserializeEmptyStatement(pos) {

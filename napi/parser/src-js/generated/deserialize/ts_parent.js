@@ -1430,27 +1430,30 @@ function deserializeVariableDeclarationKind(pos) {
 
 function deserializeVariableDeclarator(pos) {
   let previousParent = parent,
-    variableDeclarator = (parent = {
+    node = (parent = {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: false,
+      definite: deserializeBool(pos + 53),
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
-      parent: previousParent,
-    });
-  variableDeclarator.id = deserializeBindingPattern(pos + 8);
+      parent,
+    }),
+    pattern = deserializeBindingPattern(pos + 8);
   {
-    parent = variableDeclarator.id;
+    let previousParent = parent;
+    parent = pattern;
     let typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-    variableDeclarator.id.typeAnnotation = typeAnnotation;
-    typeAnnotation !== null && (variableDeclarator.id.end = typeAnnotation.end);
-    parent = variableDeclarator;
-    variableDeclarator.definite = deserializeBool(pos + 53);
+    if (typeAnnotation !== null) {
+      pattern.typeAnnotation = typeAnnotation;
+      pattern.end = typeAnnotation.end;
+    }
+    parent = previousParent;
   }
-  variableDeclarator.init = deserializeOptionExpression(pos + 32);
+  node.id = pattern;
+  node.init = deserializeOptionExpression(pos + 32);
   parent = previousParent;
-  return variableDeclarator;
+  return node;
 }
 
 function deserializeEmptyStatement(pos) {
