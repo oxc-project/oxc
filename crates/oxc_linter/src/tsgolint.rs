@@ -127,6 +127,30 @@ impl TsGoLintState {
             return Ok(());
         }
 
+        let (all_paths, ts_go_rules) = {
+            let mut paths_buff = vec![];
+            let mut ts_go_rules: FxHashSet<RuleName> = FxHashSet::default();
+            for path in paths {
+                if SourceType::from_path(Path::new(path)).is_ok() {
+                    let path_buf = PathBuf::from(path);
+                    paths_buff.push(path_buf.clone());
+
+                    let resolved_config = resolved_configs
+                        .entry(path_buf.clone())
+                        .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                    resolved_config
+                        .rules
+                        .iter()
+                        .filter(|(rule, status)| status.is_warn_deny() && rule.is_tsgolint_rule())
+                        .for_each(|(rule, _)| {
+                            ts_go_rules.insert(RuleName::new("typescript-eslint", rule.name()));
+                        });
+                }
+            }
+            (Arc::new(paths_buff), Arc::new(ts_go_rules))
+        };
+
         let should_fix = self.fix || self.fix_suggestions;
         let cwd = self.cwd.clone();
         let sender_for_fixes = error_sender.clone();
@@ -137,6 +161,8 @@ impl TsGoLintState {
         let concurrent_tracking_map = suppression_manager.concurrent_map();
         let ignore_suppression = suppression_manager.ignore();
 
+        let value = ts_go_rules.clone();
+        let map_clone = concurrent_tracking_map.clone();
         let handler = std::thread::spawn(move || {
             let mut child = self.spawn_tsgolint(&json_input)?;
 
@@ -218,14 +244,14 @@ impl TsGoLintState {
                         }
                     }
 
-                    if !ignore_suppression && !is_updating_suppression_file {}
-
                     Ok(diagnostic_handler.into_messages_requiring_fixes(
                         ignore_suppression,
                         is_updating_suppression_file,
-                        concurrent_tracking_map,
+                        map_clone,
                         file_exists,
                         sender_for_report_diff,
+                        all_paths.as_ref(),
+                        value,
                     ))
                 },
             );
@@ -289,47 +315,49 @@ impl TsGoLintState {
                             Some(SuppressionFile::default())
                         };
 
-                        let filtered_messages: Vec<OxcDiagnostic> =
-                            if let Some(suppression_file) = suppression_file_check {
-                                let (filtered_diagnostics, runtime_suppression_tracking) =
-                                    SuppressionManager::suppress_lint_diagnostics(
-                                        &suppression_file,
-                                        fix_result.messages.into_iter().collect(),
-                                    );
+                        let filtered_messages: Vec<OxcDiagnostic> = if let Some(suppression_file) =
+                            suppression_file_check
+                        {
+                            let (filtered_diagnostics, runtime_suppression_tracking) =
+                                SuppressionManager::suppress_lint_diagnostics(
+                                    &suppression_file,
+                                    fix_result.messages.into_iter().collect(),
+                                );
 
-                                if let Some(suppression_detected) = runtime_suppression_tracking {
-                                    let filename = Filename::new(&path.strip_prefix(&cwd).unwrap());
+                            if let Some(suppression_detected) = runtime_suppression_tracking {
+                                let filename = Filename::new(&path.strip_prefix(&cwd).unwrap());
 
-                                    let diffs = SuppressionManager::diff_filename(
-                                        &suppression_file,
-                                        &suppression_detected,
-                                        &filename,
-                                        |rule: &RuleName| {
-                                            FxHashSet::from_iter([RuleName::new(
-                                                "typescript-eslint",
-                                                "await-thenable",
-                                            )])
-                                            .contains(rule)
-                                        },
-                                    );
-
-                                    if !diffs.is_empty() && !is_updating_suppression_file {
-                                        let errors = diffs.into_iter().map(Into::into).collect();
-                                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                                            &cwd, &path, "", errors,
+                                let diffs = SuppressionManager::diff_filename(
+                                    &suppression_file,
+                                    &suppression_detected,
+                                    &filename,
+                                    |rule: &RuleName| {
+                                        println!(
+                                            "TO be pruned in fixed tsgo {:?}, and result is {:?}",
+                                            rule,
+                                            ts_go_rules.clone().as_ref().contains(rule)
                                         );
-                                        sender_for_fixes.send(diagnostics).unwrap();
-                                    } else if !diffs.is_empty() && is_updating_suppression_file {
-                                        for diff in diffs {
-                                            suppression_sender.send(diff.clone()).unwrap();
-                                        }
+                                        ts_go_rules.clone().as_ref().contains(rule)
+                                    },
+                                );
+
+                                if !diffs.is_empty() && !is_updating_suppression_file {
+                                    let errors = diffs.into_iter().map(Into::into).collect();
+                                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                                        &cwd, &path, "", errors,
+                                    );
+                                    sender_for_fixes.send(diagnostics).unwrap();
+                                } else if !diffs.is_empty() && is_updating_suppression_file {
+                                    for diff in diffs {
+                                        suppression_sender.send(diff.clone()).unwrap();
                                     }
                                 }
+                            }
 
-                                filtered_diagnostics.into_iter().map(Into::into).collect()
-                            } else {
-                                fix_result.messages.into_iter().map(Into::into).collect()
-                            };
+                            filtered_diagnostics.into_iter().map(Into::into).collect()
+                        } else {
+                            fix_result.messages.into_iter().map(Into::into).collect()
+                        };
 
                         let diagnostics = DiagnosticService::wrap_diagnostics(
                             &cwd,
@@ -340,12 +368,25 @@ impl TsGoLintState {
                         sender_for_fixes.send(diagnostics).expect("Failed to send diagnostics");
                     } else {
                         let filename = Filename::new(&path.strip_prefix(&cwd).unwrap());
+
+                        let Some(suppressions) = concurrent_tracking_map.get(&filename) else {
+                            continue;
+                        };
+
+                        let pruned_rules: Vec<RuleName> = suppressions
+                            .keys()
+                            .filter(|&rule| rule_names.contains(rule))
+                            .cloned()
+                            .collect();
+
+                        println!("TO BE PRUNED fROM THE MAP {:?}", pruned_rules);
+
                         if is_updating_suppression_file {
-                            for diff in SuppressionManager::pruned_rule(&filename, rule_names) {
+                            for diff in SuppressionManager::pruned_rule(&filename, pruned_rules) {
                                 suppression_sender.send(diff).unwrap();
                             }
                         } else {
-                            let errors = SuppressionManager::pruned_rule(&filename, rule_names)
+                            let errors = SuppressionManager::pruned_rule(&filename, pruned_rules)
                                 .into_iter()
                                 .map(Into::into)
                                 .collect();
@@ -1151,8 +1192,12 @@ impl DiagnosticHandler {
         >,
         file_exists: bool,
         suppression_sender: SuppressionSender,
+        paths: &Vec<PathBuf>,
+        ts_go_rules: Arc<FxHashSet<RuleName>>,
     ) -> Vec<(PathBuf, String, Vec<Message>)> {
-        let Self { messages_requiring_fixes, mut source_text_cache, should_fix, silent, .. } = self;
+        let Self {
+            ref messages_requiring_fixes, mut source_text_cache, should_fix, silent, ..
+        } = self;
 
         println!(
             "WHAT ignore {ignore_suppression}, and not {:?}",
@@ -1160,94 +1205,136 @@ impl DiagnosticHandler {
         );
 
         if !ignore_suppression {
-            for (path, messages) in self.messages_not_requiring_fixes.into_iter() {
-                let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
-                    if !silent || should_fix {
-                        read_to_string(&path).unwrap_or_default()
+            let rule_names: Vec<RuleName> = ts_go_rules.iter().map(|rule| rule.clone()).collect();
+
+            for path in paths {
+                if let Some(messages) = self.messages_not_requiring_fixes.get(path) {
+                    let source_text = source_text_cache.0.remove(path).unwrap_or_else(|| {
+                        if !silent || should_fix {
+                            read_to_string(&path).unwrap_or_default()
+                        } else {
+                            String::new()
+                        }
+                    });
+
+                    let suppression_file_check = if let Ok(file_path) = path.strip_prefix(&self.cwd)
+                    {
+                        let filename = Filename::new(file_path);
+                        let suppression_data = concurrent_tracking_map.get(&filename);
+                        Some(SuppressionFile::new(
+                            file_exists,
+                            is_updating_suppression_file,
+                            suppression_data,
+                        ))
                     } else {
-                        String::new()
-                    }
-                });
+                        Some(SuppressionFile::default())
+                    };
 
-                let suppression_file_check = if let Ok(file_path) = path.strip_prefix(&self.cwd) {
-                    let filename = Filename::new(file_path);
-                    let suppression_data = concurrent_tracking_map.get(&filename);
-                    Some(SuppressionFile::new(
-                        file_exists,
-                        is_updating_suppression_file,
-                        suppression_data,
-                    ))
-                } else {
-                    Some(SuppressionFile::default())
-                };
+                    let filtered_messages: Vec<OxcDiagnostic> = if let Some(suppression_file) =
+                        suppression_file_check
+                    {
+                        let (filtered_diagnostics, runtime_suppression_tracking) =
+                            SuppressionManager::suppress_lint_diagnostics(
+                                &suppression_file,
+                                messages
+                                    .iter()
+                                    .cloned()
+                                    .map(|diagnostic| {
+                                        Message::from_tsgo_lint_diagnostic(
+                                            diagnostic,
+                                            source_text.as_str(),
+                                        )
+                                    })
+                                    .collect(),
+                            );
 
-                let filtered_messages: Vec<OxcDiagnostic> = if let Some(suppression_file) =
-                    suppression_file_check
-                {
-                    let (filtered_diagnostics, runtime_suppression_tracking) =
-                        SuppressionManager::suppress_lint_diagnostics(
-                            &suppression_file,
-                            messages
-                                .into_iter()
-                                .map(|diagnostic| {
-                                    Message::from_tsgo_lint_diagnostic(
-                                        diagnostic,
-                                        source_text.as_str(),
-                                    )
-                                })
-                                .collect(),
-                        );
+                        if let Some(suppression_detected) = runtime_suppression_tracking {
+                            let filename = Filename::new(&path.strip_prefix(&self.cwd).unwrap());
 
-                    if let Some(suppression_detected) = runtime_suppression_tracking {
-                        let filename = Filename::new(&path.strip_prefix(&self.cwd).unwrap());
+                            let diffs = SuppressionManager::diff_filename(
+                                &suppression_file,
+                                &suppression_detected,
+                                &filename,
+                                |rule: &RuleName| {
+                                    println!(
+                                        "TO be pruned in thread {:?}, and result is {:?}",
+                                        rule,
+                                        ts_go_rules.contains(rule)
+                                    );
+                                    ts_go_rules.contains(rule)
+                                },
+                            );
 
-                        let diffs = SuppressionManager::diff_filename(
-                            &suppression_file,
-                            &suppression_detected,
-                            &filename,
-                            |_rule: &RuleName| false,
-                        );
+                            println!("AFTER DIFF {:?}", diffs);
 
-                        if !diffs.is_empty() && !is_updating_suppression_file {
-                            let errors = diffs.into_iter().map(Into::into).collect();
-                            let diagnostics =
-                                DiagnosticService::wrap_diagnostics(&self.cwd, &path, "", errors);
-                            self.error_sender
-                                .send(diagnostics)
-                                .expect("Failed to send suppression diagnostics");
-                        } else if !diffs.is_empty() && is_updating_suppression_file {
-                            for diff in diffs {
-                                suppression_sender.send(diff.clone()).unwrap();
+                            if !diffs.is_empty() && !is_updating_suppression_file {
+                                let errors = diffs.into_iter().map(Into::into).collect();
+                                let diagnostics = DiagnosticService::wrap_diagnostics(
+                                    &self.cwd, &path, "", errors,
+                                );
+                                self.error_sender
+                                    .send(diagnostics)
+                                    .expect("Failed to send suppression diagnostics");
+                            } else if !diffs.is_empty() && is_updating_suppression_file {
+                                for diff in diffs {
+                                    suppression_sender.send(diff.clone()).unwrap();
+                                }
                             }
                         }
+
+                        filtered_diagnostics.into_iter().map(Into::into).collect()
+                    } else {
+                        messages.iter().cloned().map(Into::into).collect()
+                    };
+
+                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                        &self.cwd,
+                        &path,
+                        source_text.as_str(),
+                        filtered_messages,
+                    );
+                    self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+                } else if !self.messages_requiring_fixes.contains_key(path) {
+                    let filename = Filename::new(&path.strip_prefix(&self.cwd).unwrap());
+
+                    let Some(suppressions) = concurrent_tracking_map.get(&filename) else {
+                        continue;
+                    };
+
+                    let pruned_rules: Vec<RuleName> = suppressions
+                        .keys()
+                        .filter(|&rule| rule_names.contains(rule))
+                        .cloned()
+                        .collect();
+
+                    if is_updating_suppression_file {
+                        for diff in SuppressionManager::pruned_rule(&filename, pruned_rules) {
+                            suppression_sender.send(diff).unwrap();
+                        }
+                    } else {
+                        let errors = SuppressionManager::pruned_rule(&filename, pruned_rules)
+                            .into_iter()
+                            .map(Into::into)
+                            .collect();
+                        let diagnostics =
+                            DiagnosticService::wrap_diagnostics(&self.cwd, &path, "", errors);
+                        self.error_sender.send(diagnostics).unwrap();
                     }
-
-                    filtered_diagnostics.into_iter().map(Into::into).collect()
-                } else {
-                    messages.into_iter().map(Into::into).collect()
-                };
-
-                let diagnostics = DiagnosticService::wrap_diagnostics(
-                    &self.cwd,
-                    &path,
-                    source_text.as_str(),
-                    filtered_messages,
-                );
-                self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+                }
             }
         }
 
         messages_requiring_fixes
             .into_iter()
-            .map(|(path, messages)| {
-                let source_text = source_text_cache.0.remove(&path).unwrap_or_else(|| {
+            .map(|(path, messages): (&PathBuf, &Vec<Message>)| {
+                let source_text = source_text_cache.0.remove(path).unwrap_or_else(|| {
                     if !silent || should_fix {
-                        read_to_string(&path).unwrap_or_default()
+                        read_to_string(path).unwrap_or_default()
                     } else {
                         String::new()
                     }
                 });
-                (path, source_text, messages)
+                (path.clone(), source_text, messages.clone())
             })
             .collect()
     }
@@ -1266,6 +1353,8 @@ fn should_skip_diagnostic(
     } else {
         tsgolint_diagnostic.span
     };
+
+    println!("MAP {:?}", disable_directives_map);
 
     if let Some(directives) = disable_directives_map.get(path) {
         directives.contains(&tsgolint_diagnostic.rule, span)

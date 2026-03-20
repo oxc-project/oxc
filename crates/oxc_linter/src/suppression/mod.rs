@@ -6,7 +6,7 @@ use std::{
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{Message, tsgolint::Rule};
+use crate::Message;
 
 mod tracking;
 
@@ -144,7 +144,7 @@ impl SuppressionManager {
     }
 
     pub fn write(&self) -> Result<(), OxcDiagnostic> {
-        if !self.file_exists && self.prune_suppression {
+        if !self.file_exists && (self.prune_suppression && !self.suppress_all) {
             return Err(OxcDiagnostic::error(
                 "You can't prune error messages if a bulk suppression file doesn't exist.",
             ));
@@ -217,6 +217,7 @@ impl SuppressionManager {
 
         for rule_key in pruned_rules {
             if prune_predicate_fn(*rule_key) {
+                println!("PUSING PRUNED");
                 diff.push(SuppressionDiff::PrunedRuled {
                     file: filename.clone(),
                     rule: (*rule_key).clone(),

@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "suppressions": {
-    "files/test.js": {
+    "files/test.ts": {
       "eslint/no-eq-null": {
         "count": 1
       }

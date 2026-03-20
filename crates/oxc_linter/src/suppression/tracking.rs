@@ -63,6 +63,10 @@ impl RuleName {
 
         Self(compose_key)
     }
+
+    pub fn is_typescript_rule(&self) -> bool {
+        self.0.contains("await-thenable")
+    }
 }
 
 impl std::fmt::Display for RuleName {
@@ -159,6 +163,7 @@ impl SuppressionTracking {
                     return;
                 };
 
+                // TODO: Make it more safe
                 if file_map.len() == 1 {
                     map.remove(&file);
                 } else {

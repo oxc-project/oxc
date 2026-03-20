@@ -294,12 +294,12 @@ impl Drop for SuppressionTester {
         }
 
         if self.have_files_fixed {
-            let js_file_dest = self.cwd.join("files/test.js");
-            let js_file_source = self.cwd.join("files/test-backup.js");
+            let js_file_dest = self.cwd.join("files/test.ts");
+            let js_file_source = self.cwd.join("files/test-backup.ts");
             match fs::copy(js_file_source, js_file_dest) {
                 Ok(_) => {}
                 Err(err) => panic!(
-                    "Unable to replace the js linted filed with the backup in fixture {} with error {}",
+                    "Unable to replace the linted filed with the backup in fixture {} with error {}",
                     self.cwd
                         .join::<&str>(self.oxlint_suppression_file_name.as_ref())
                         .to_string_lossy(),
