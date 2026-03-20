@@ -84,7 +84,6 @@ impl Generator for AstKindGenerator {
         for type_def in &schema.types {
             let has_kind = match type_def {
                 TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-                TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
                 _ => false,
             };
             if !has_kind {
@@ -101,12 +100,7 @@ impl Generator for AstKindGenerator {
 
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
 
-            let get_address = match type_def {
-                TypeDef::Struct(_) => quote!(it.unstable_address()),
-                TypeDef::Enum(_) => quote!(it.address()),
-                _ => unreachable!(),
-            };
-            address_match_arms.extend(quote!( Self::#type_ident(it) => #get_address, ));
+            address_match_arms.extend(quote!( Self::#type_ident(it) => it.unstable_address(), ));
 
             let set_node_id = match type_def {
                 TypeDef::Struct(struct_def)
@@ -224,8 +218,11 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl GetAddress for AstKind<'_> {
-                // TODO: Once only structs have `AstKind`s (https://github.com/oxc-project/oxc/issues/11490),
-                // mark this method `#[inline]`, because then it'll be boiled down to a single instruction.
+                ///@@line_break
+                /// Get [`Address`] of an [`AstKind`].
+                ///@ This boils down to 1 instruction.
+                ///@ In all cases, it gets the pointer from the reference in the `AstKind`.
+                #[inline]
                 fn address(&self) -> Address {
                     match *self {
                         #address_match_arms
