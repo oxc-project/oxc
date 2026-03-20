@@ -477,7 +477,6 @@ jobs:
         id: filter
         with:
           packages: oxc_minsize
-          paths: .github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -502,7 +501,6 @@ jobs:
         id: filter
         with:
           packages: oxc_track_memory_allocations
-          paths: .github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -556,7 +554,7 @@ jobs:
         id: filter
         with:
           packages: oxc_linter
-          paths: tasks/linter_codegen/,.github/workflows/ci.yml
+          paths: tasks/linter_codegen/
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
