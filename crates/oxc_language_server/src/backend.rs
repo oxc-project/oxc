@@ -1,10 +1,4 @@
-use std::{
-    borrow::Cow,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-};
+use std::{borrow::Cow, sync::Arc};
 
 use futures::future::join_all;
 use rustc_hash::FxBuildHasher;
@@ -32,6 +26,7 @@ use crate::{
     file_system::LSPFileSystem,
     options::WorkspaceOption,
     worker::WorkspaceWorker,
+    worker_manager::WorkerManager,
 };
 
 /// The Backend implements the LanguageServer trait to handle LSP requests and notifications.
@@ -59,16 +54,13 @@ pub struct Backend {
     // Information about the server, such as name and version.
     // The client can use this information for display or logging purposes.
     server_info: ServerInfo,
-    // The available tool builders to create tools like linters and formatters.
-    tool_builders: Arc<[Box<dyn ToolBuilder>]>,
-    // Each Workspace has it own worker with Linter (and in the future the formatter).
-    // We must respect each program inside with its own root folder
-    // and can not use shared programmes across multiple workspaces.
-    // Each Workspace can have its own server configuration and program root configuration.
-    // WorkspaceWorkers are only written on 2 occasions:
+    // Manages all WorkspaceWorkers and single-file mode.
+    // WorkspaceWorkers are only updated on 2 occasions:
     // 1. `initialize` request with workspace folders
     // 2. `workspace/didChangeWorkspaceFolders` request
-    pub(crate) workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
+    // In single-file mode, workers are also created/destroyed dynamically on
+    // `textDocument/didOpen` and `textDocument/didClose`.
+    pub(crate) worker_manager: WorkerManager,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
     capabilities: OnceCell<Capabilities>,
@@ -76,10 +68,6 @@ pub struct Backend {
     // The client will send the content of in-memory files on `textDocument/didOpen` and `textDocument/didChange`.
     // This is only needed when the client supports `textDocument/formatting` request.
     file_system: Arc<RwLock<LSPFileSystem>>,
-    // Whether the server is in single file mode (no workspace folders or root URI were provided during initialize).
-    // In this mode, workspace workers are created dynamically when files are opened
-    // using the file's parent directory as the workspace root.
-    single_file_mode: AtomicBool,
 }
 
 impl LanguageServer for Backend {
@@ -116,7 +104,7 @@ impl LanguageServer for Backend {
 
         let mut capabilities = Capabilities::from(params.capabilities);
         let mut server_capabilities = server_capabilities();
-        for tool_builder in self.tool_builders.iter() {
+        for tool_builder in self.worker_manager.read_tool_builders() {
             tool_builder.server_capabilities(&mut server_capabilities, &mut capabilities);
         }
 
@@ -132,31 +120,24 @@ impl LanguageServer for Backend {
         let workers = if let Some(workspace_folders) = params.workspace_folders {
             let uris: Vec<Uri> =
                 workspace_folders.iter().map(|folder| folder.uri.clone()).collect();
-            Self::assert_workspaces_are_valid_paths(&uris)?;
+            WorkerManager::assert_workspaces_are_valid_paths(&uris)?;
 
             workspace_folders
                 .into_iter()
                 .map(|workspace_folder| {
-                    WorkspaceWorker::new(
-                        workspace_folder.uri,
-                        Arc::clone(&self.tool_builders),
-                        capabilities.diagnostic_mode.clone(),
-                    )
+                    self.worker_manager
+                        .create_worker(workspace_folder.uri, capabilities.diagnostic_mode.clone())
                 })
                 .collect()
         // client sent deprecated root uri
         } else if let Some(root_uri) = params.root_uri {
-            Self::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
+            WorkerManager::assert_workspaces_are_valid_paths(std::slice::from_ref(&root_uri))?;
 
-            vec![WorkspaceWorker::new(
-                root_uri,
-                Arc::clone(&self.tool_builders),
-                capabilities.diagnostic_mode.clone(),
-            )]
+            vec![self.worker_manager.create_worker(root_uri, capabilities.diagnostic_mode.clone())]
         // client is in single file mode, create no workers initially.
         // Workers will be created dynamically in did_open.
         } else {
-            self.single_file_mode.store(true, Ordering::Relaxed);
+            self.worker_manager.set_single_file_mode(true);
             vec![]
         };
 
@@ -181,7 +162,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        *self.workspace_workers.write().await = workers;
+        self.worker_manager.set_all_workers(workers).await;
 
         self.capabilities.set(capabilities).map_err(|err| {
             let message = match err {
@@ -213,7 +194,7 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let workers = &*self.workspace_workers.read().await;
+        let workers = &*self.worker_manager.read_workers().await;
         let needed_configurations =
             ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
         let needed_configurations = needed_configurations.pin_owned();
@@ -250,7 +231,7 @@ impl LanguageServer for Backend {
 
                 for uri in &known_files {
                     // Check if this worker is the most specific one for this URI
-                    let responsible_worker = Self::find_worker_for_uri(workers, uri);
+                    let responsible_worker = WorkerManager::find_worker_for_uri(workers, uri);
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
@@ -309,7 +290,7 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         let mut clearing_diagnostics = Vec::new();
 
-        for worker in &*self.workspace_workers.read().await {
+        for worker in &*self.worker_manager.read_workers().await {
             // shutdown each worker and collect the URIs to clear diagnostics.
             // unregistering file watchers is not necessary, because the client will do it automatically on shutdown.
             // some clients (`helix`) do not expect any requests after shutdown is sent.
@@ -335,7 +316,7 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeConfiguration>
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let workers = self.workspace_workers.read().await;
+        let workers = self.worker_manager.read_workers().await;
         let mut new_diagnostics = Vec::new();
         let mut removing_registrations = vec![];
         let mut adding_registrations = vec![];
@@ -449,7 +430,7 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWatchedFiles>
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workers = self.workspace_workers.read().await;
+        let workers = self.worker_manager.read_workers().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
 
@@ -471,7 +452,7 @@ impl LanguageServer for Backend {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
             // to only restart the internal linter / diagnostics for once
-            let Some(worker) = Self::find_worker_for_uri(&workers, &file_event.uri) else {
+            let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &file_event.uri) else {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) = worker
@@ -528,29 +509,10 @@ impl LanguageServer for Backend {
 
         // === Phase 1: Update worker state (brief write lock, no async I/O) ===
         // Extract workers that need to be shut down and update the mode flags.
-        let mut workers_to_shutdown: Vec<WorkspaceWorker> = vec![];
-        {
-            let mut workers = self.workspace_workers.write().await;
-
-            // When workspace folders are added while we are in single-file mode, exit that mode
-            // and collect all dynamically-created single-file workers for shutdown.
-            if !params.event.added.is_empty() && self.single_file_mode.load(Ordering::Relaxed) {
-                self.single_file_mode.store(false, Ordering::Relaxed);
-                workers_to_shutdown.extend(workers.drain(..));
-            }
-
-            for folder in &params.event.removed {
-                if let Some(idx) = workers.iter().position(|w| w.get_root_uri() == &folder.uri) {
-                    workers_to_shutdown.push(workers.swap_remove(idx));
-                }
-            }
-
-            // If all workspace folders have been removed, enter single-file mode so that
-            // subsequent file opens will create workers dynamically.
-            if workers.is_empty() && params.event.added.is_empty() {
-                self.single_file_mode.store(true, Ordering::Relaxed);
-            }
-        } // write lock released here
+        let workers_to_shutdown = self
+            .worker_manager
+            .update_workspace_folders(&params.event.added, &params.event.removed)
+            .await;
 
         // === Phase 2: Shut down removed workers (no lock held) ===
         let mut cleared_diagnostics = vec![];
@@ -574,11 +536,7 @@ impl LanguageServer for Backend {
         let mut new_workers = vec![];
         let mut added_registrations = vec![];
         for (index, folder) in params.event.added.into_iter().enumerate() {
-            let worker = WorkspaceWorker::new(
-                folder.uri,
-                Arc::clone(&self.tool_builders),
-                diagnostic_mode.clone(),
-            );
+            let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
             worker.start_worker(options.clone()).await;
             added_registrations.extend(worker.init_watchers().await);
@@ -586,7 +544,7 @@ impl LanguageServer for Backend {
         }
 
         // === Phase 4: Insert new workers (brief write lock, no async I/O) ===
-        self.workspace_workers.write().await.extend(new_workers);
+        self.worker_manager.add_workers(new_workers).await;
 
         // === Phase 5: Clear diagnostics and update client watchers (no lock held) ===
         if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
@@ -615,8 +573,8 @@ impl LanguageServer for Backend {
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         let uri = params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
             return;
         };
 
@@ -649,8 +607,8 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -690,12 +648,24 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
 
         // In single file mode, dynamically create a workspace worker for file:// URIs.
-        if self.single_file_mode.load(Ordering::Relaxed) && uri.scheme().as_str() == "file" {
-            self.ensure_worker_for_file_uri(&uri).await;
+        if self.worker_manager.is_single_file_mode() && uri.scheme().as_str() == "file" {
+            let capabilities = self.capabilities.get();
+            let diagnostic_mode =
+                capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+            let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
+            if let Some(registrations) = self
+                .worker_manager
+                .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
+                .await
+                && !registrations.is_empty()
+                && let Err(err) = self.client.register_capability(registrations).await
+            {
+                warn!("registering file watchers for single-file workspace failed: {err}");
+            }
         }
 
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
             return;
         };
 
@@ -735,13 +705,13 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didClose>
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
             return;
         };
 
         // Clone the root URI now so we can use it after dropping the read lock.
-        let worker_root_uri = if self.single_file_mode.load(Ordering::Relaxed) {
+        let worker_root_uri = if self.worker_manager.is_single_file_mode() {
             Some(worker.get_root_uri().clone())
         } else {
             None
@@ -755,7 +725,28 @@ impl LanguageServer for Backend {
         drop(workers);
 
         if let Some(root_uri) = worker_root_uri {
-            self.try_shutdown_empty_workspace(&root_uri).await;
+            let open_uris = self.file_system.read().await.keys();
+            let result =
+                self.worker_manager.try_shutdown_empty_workspace(&root_uri, &open_uris).await;
+
+            if let Some((uris, unregistrations)) = result {
+                let diagnostic_mode = self
+                    .capabilities
+                    .get()
+                    .map(|cap| cap.diagnostic_mode.clone())
+                    .unwrap_or_default();
+
+                if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
+                    self.clear_diagnostics(uris).await;
+                }
+
+                if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
+                    && !unregistrations.is_empty()
+                    && let Err(err) = self.client.unregister_capability(unregistrations).await
+                {
+                    warn!("unregistering file watchers for single-file workspace failed: {err}");
+                }
+            }
         }
     }
 
@@ -765,8 +756,8 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction>
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
 
@@ -788,7 +779,7 @@ impl LanguageServer for Backend {
         &self,
         params: ExecuteCommandParams,
     ) -> Result<Option<serde_json::Value>> {
-        for worker in self.workspace_workers.read().await.iter() {
+        for worker in self.worker_manager.read_workers().await.iter() {
             match worker.execute_command(&params.command, params.arguments.clone()).await {
                 Ok(changes) => {
                     let Some(edit) = changes else {
@@ -815,8 +806,8 @@ impl LanguageServer for Backend {
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReportResult> {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
             return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
@@ -881,8 +872,8 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting>
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.read().await;
-        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
+        let workers = self.worker_manager.read_workers().await;
+        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
 
@@ -914,11 +905,9 @@ impl Backend {
         Self {
             client,
             server_info,
-            tool_builders: Arc::from(tools),
-            workspace_workers: Arc::new(RwLock::new(vec![])),
+            worker_manager: WorkerManager::new(Arc::from(tools)),
             capabilities: OnceCell::new(),
             file_system: Arc::new(RwLock::new(LSPFileSystem::default())),
-            single_file_mode: AtomicBool::new(false),
         }
     }
 
@@ -969,175 +958,6 @@ impl Backend {
         }))
         .await;
     }
-
-    /// Assert that all workspace URIs are valid file paths.
-    /// If any URI is not a valid file path, return an error.
-    ///
-    /// The server requires file paths to work with the local file system, so we need to ensure that all workspace URIs can be converted to valid file paths.
-    fn assert_workspaces_are_valid_paths(workspaces: &[Uri]) -> Result<()> {
-        for uri in workspaces {
-            if uri.to_file_path().is_none() {
-                return Err(Error::invalid_params(format!(
-                    "workspace URI is not a valid file path: {}",
-                    uri.as_str()
-                )));
-            }
-        }
-        Ok(())
-    }
-
-    /// Find the most specific workspace worker for a given URI.
-    /// When multiple workers are responsible for a URI (e.g., in nested workspaces),
-    /// this returns the worker with the longest matching path.
-    ///
-    /// For example, if we have workspaces `[workspace, workspace/deeper]` and the URI is
-    /// `workspace/deeper/file.js`, both workers match, but `workspace/deeper` is more specific.
-    ///
-    /// For non file:// URIs, returns the first workspace worker.
-    /// This matches the behavior of other LSP servers like rust-analyzer and typescript-language-server.
-    fn find_worker_for_uri<'a>(
-        workers: &'a [WorkspaceWorker],
-        uri: &Uri,
-    ) -> Option<&'a WorkspaceWorker> {
-        // Handle non file:// URIs - use first workspace
-        // These are in-memory files that don't have a file path
-        if uri.scheme().as_str() != "file" {
-            return workers.first();
-        }
-
-        // Handle file:// URIs - use path-based matching
-        let file_path = uri.to_file_path()?;
-
-        workers
-            .iter()
-            .filter_map(|worker| {
-                let root_path = worker.get_root_uri().to_file_path()?;
-                if file_path.starts_with(&root_path) {
-                    Some((worker, root_path.as_os_str().len()))
-                } else {
-                    None
-                }
-            })
-            .max_by_key(|(_, len)| *len)
-            .map(|(worker, _)| worker)
-    }
-
-    /// Get the URI for the parent directory of a `file://` URI.
-    /// Returns `None` if the URI has no parent or the path cannot be determined.
-    fn get_parent_dir_uri(file_uri: &Uri) -> Option<Uri> {
-        let file_path = file_uri.to_file_path()?;
-        let parent = file_path.parent()?;
-        Uri::from_file_path(parent)
-    }
-
-    /// In single file mode, ensures a [WorkspaceWorker] exists for the parent directory
-    /// of the given `file://` URI.  If no worker currently covers the URI, a new one is
-    /// created, started, and (if the client supports dynamic watchers) its file-system
-    /// watchers are registered with the client.
-    ///
-    /// The method is a no-op when a suitable worker already exists.
-    async fn ensure_worker_for_file_uri(&self, uri: &Uri) {
-        let Some(parent_uri) = Self::get_parent_dir_uri(uri) else {
-            return;
-        };
-
-        // Fast path: check with a read lock first to avoid taking a write lock when not needed.
-        {
-            let workers = self.workspace_workers.read().await;
-            if Self::find_worker_for_uri(&workers, uri).is_some() {
-                return;
-            }
-        }
-        let capabilities = self.capabilities.get();
-        let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
-
-        // Create and initialize the worker before acquiring the write lock to minimize
-        debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
-        let worker =
-            WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builders), diagnostic_mode);
-        worker.start_worker(Value::Null).await;
-        let registrations = if capabilities.is_some_and(|c| c.dynamic_watchers) {
-            worker.init_watchers().await
-        } else {
-            vec![]
-        };
-
-        // Acquire the write lock to insert the worker.
-        let mut worker = Some(worker);
-        {
-            let mut workers = self.workspace_workers.write().await;
-
-            // Re-check mode: a concurrent did_change_workspace_folders may have exited
-            // single-file mode while we were initializing the worker above.
-            // Also double-check: a concurrent did_open for the same directory may have
-            // already inserted a worker while we held no lock.
-            if self.single_file_mode.load(Ordering::Relaxed)
-                && Self::find_worker_for_uri(&workers, uri).is_none()
-            {
-                workers.push(worker.take().unwrap());
-            }
-        }
-
-        // If we lost the race, shut down the worker we created to release its resources.
-        if let Some(discarded) = worker {
-            discarded.shutdown().await;
-            return;
-        }
-
-        if !registrations.is_empty()
-            && let Err(err) = self.client.register_capability(registrations).await
-        {
-            warn!("registering file watchers for single-file workspace failed: {err}");
-        }
-    }
-
-    /// In single file mode, shuts down and removes the [WorkspaceWorker] whose root URI
-    /// matches `worker_root_uri` when no open files remain associated with that workspace.
-    async fn try_shutdown_empty_workspace(&self, worker_root_uri: &Uri) {
-        // Collect the open file URIs before acquiring the workers write lock to avoid
-        // holding two locks simultaneously (which can cause lock-ordering deadlocks and
-        // increases contention on both locks).
-        let open_uris = self.file_system.read().await.keys();
-
-        let worker = {
-            let mut workers = self.workspace_workers.write().await;
-
-            // Check whether any currently open file is still served by this worker.
-            let has_open_files = open_uris.iter().any(|open_uri| {
-                Self::find_worker_for_uri(&workers, open_uri)
-                    .is_some_and(|w| w.get_root_uri() == worker_root_uri)
-            });
-
-            if has_open_files {
-                return;
-            }
-
-            let Some(idx) = workers.iter().position(|w| w.get_root_uri() == worker_root_uri) else {
-                return;
-            };
-
-            debug!("single file mode: shutting down empty workspace {}", worker_root_uri.as_str());
-
-            workers.swap_remove(idx)
-        }; // write lock released here
-
-        // Shut down the worker without holding the write lock.
-        let (uris, unregistrations) = worker.shutdown().await;
-
-        let diagnostic_mode =
-            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
-
-        if diagnostic_mode == DiagnosticMode::Push && !uris.is_empty() {
-            self.clear_diagnostics(uris).await;
-        }
-
-        if self.capabilities.get().is_some_and(|cap| cap.dynamic_watchers)
-            && !unregistrations.is_empty()
-            && let Err(err) = self.client.unregister_capability(unregistrations).await
-        {
-            warn!("unregistering file watchers for single-file workspace failed: {err}");
-        }
-    }
 }
 
 #[cfg(test)]
@@ -1146,8 +966,7 @@ mod tests {
 
     use tower_lsp_server::ls_types::Uri;
 
-    use super::Backend;
-    use crate::{DiagnosticMode, worker::WorkspaceWorker};
+    use crate::{DiagnosticMode, worker::WorkspaceWorker, worker_manager::WorkerManager};
 
     #[test]
     fn test_find_worker_for_uri_nested_workspaces() {
@@ -1165,19 +984,19 @@ mod tests {
 
         // File in deeper workspace should match the deeper worker
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_deeper);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
 
         // File in parent workspace should match the parent worker
         let file_in_parent: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_parent);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_parent);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
 
         // File outside both workspaces should not match any worker
         let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_outside);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_outside);
         assert!(worker.is_none());
     }
 
@@ -1197,13 +1016,13 @@ mod tests {
 
         // File in workspace-2 should match workspace-2 only
         let file_in_workspace2: Uri = "file:///path/to/workspace-2/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace2);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_workspace2);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace-2");
 
         // File in workspace should match workspace only
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_workspace);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
     }
@@ -1219,13 +1038,13 @@ mod tests {
 
         // File in workspace should match
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_workspace);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
 
         // File outside workspace should not match
         let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_outside);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_outside);
         assert!(worker.is_none());
     }
 
@@ -1234,7 +1053,7 @@ mod tests {
         let workers: Vec<WorkspaceWorker> = vec![];
 
         let file: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file);
         assert!(worker.is_none());
     }
 
@@ -1249,7 +1068,7 @@ mod tests {
 
         // non file URI should use first workspace
         let vscode_userdata_file: Uri = "vscode-userdata:///Untitled-1".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &vscode_userdata_file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &vscode_userdata_file);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
     }
@@ -1265,7 +1084,7 @@ mod tests {
 
         // non file URI should use first workspace
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
     }
@@ -1286,7 +1105,7 @@ mod tests {
 
         // non file URI should use first workspace (not second)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace1");
     }
@@ -1297,7 +1116,7 @@ mod tests {
 
         // Untitled file with no workspaces should return None
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_none());
     }
 
@@ -1317,13 +1136,13 @@ mod tests {
 
         // Untitled file should use first workspace (not nested one)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
 
         // File URIs should still use path-based matching
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
+        let worker = WorkerManager::find_worker_for_uri(&workers, &file_in_deeper);
         assert!(worker.is_some());
         assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
     }
@@ -1332,18 +1151,18 @@ mod tests {
     fn test_get_parent_dir_uri() {
         // Typical file URI
         let file: Uri = "file:///path/to/dir/file.js".parse().unwrap();
-        let parent = Backend::get_parent_dir_uri(&file).unwrap();
+        let parent = WorkerManager::get_parent_dir_uri(&file).unwrap();
         assert_eq!(parent.as_str(), "file:///path/to/dir");
 
         // File directly under root
         let root_file: Uri = "file:///file.js".parse().unwrap();
-        let parent = Backend::get_parent_dir_uri(&root_file).unwrap();
+        let parent = WorkerManager::get_parent_dir_uri(&root_file).unwrap();
         // Parent of /file.js is /
         assert_eq!(parent.to_file_path().unwrap().to_string_lossy(), "/");
 
         // File URI pointing to the root ("/") has no parent — get_parent_dir_uri should return None.
         let no_path_file: Uri = "file:///".parse().unwrap();
         // Path is "/", so parent() returns None
-        assert!(Backend::get_parent_dir_uri(&no_path_file).is_none());
+        assert!(WorkerManager::get_parent_dir_uri(&no_path_file).is_none());
     }
 }
