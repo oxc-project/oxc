@@ -1063,9 +1063,25 @@ impl Backend {
         };
 
         // Acquire the write lock to insert the worker.
+        let mut worker = Some(worker);
         {
             let mut workers = self.workspace_workers.write().await;
-            workers.push(worker);
+
+            // Re-check mode: a concurrent did_change_workspace_folders may have exited
+            // single-file mode while we were initializing the worker above.
+            // Also double-check: a concurrent did_open for the same directory may have
+            // already inserted a worker while we held no lock.
+            if self.single_file_mode.load(Ordering::Relaxed)
+                && Self::find_worker_for_uri(&workers, uri).is_none()
+            {
+                workers.push(worker.take().unwrap());
+            }
+        }
+
+        // If we lost the race, shut down the worker we created to release its resources.
+        if let Some(discarded) = worker {
+            discarded.shutdown().await;
+            return;
         }
 
         if !registrations.is_empty()
@@ -1078,13 +1094,15 @@ impl Backend {
     /// In single file mode, shuts down and removes the [WorkspaceWorker] whose root URI
     /// matches `worker_root_uri` when no open files remain associated with that workspace.
     async fn try_shutdown_empty_workspace(&self, worker_root_uri: &Uri) {
-        // Check open files and extract the worker to shut down — all under the write lock
-        // but without performing any async I/O while the lock is held.
+        // Collect the open file URIs before acquiring the workers write lock to avoid
+        // holding two locks simultaneously (which can cause lock-ordering deadlocks and
+        // increases contention on both locks).
+        let open_uris = self.file_system.read().await.keys();
+
         let worker = {
             let mut workers = self.workspace_workers.write().await;
 
             // Check whether any currently open file is still served by this worker.
-            let open_uris = self.file_system.read().await.keys();
             let has_open_files = open_uris.iter().any(|open_uri| {
                 Self::find_worker_for_uri(&workers, open_uri)
                     .is_some_and(|w| w.get_root_uri() == worker_root_uri)
@@ -1323,9 +1341,9 @@ mod tests {
         // Parent of /file.js is /
         assert_eq!(parent.to_file_path().unwrap().to_string_lossy(), "/");
 
-        // Non-file URI (should still work, we only skip calling this for non-file URIs at the call site)
+        // File URI pointing to the root ("/") has no parent — get_parent_dir_uri should return None.
         let no_path_file: Uri = "file:///".parse().unwrap();
-        // Path is "/", parent is None
+        // Path is "/", so parent() returns None
         assert!(Backend::get_parent_dir_uri(&no_path_file).is_none());
     }
 }
