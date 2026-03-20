@@ -211,6 +211,10 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl GetSpan for AstKind<'_> {
+                ///@@line_break
+                /// Get [`Span`] of an [`AstKind`].
+                ///@ `span` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+                #[inline]
                 fn span(&self) -> Span {
                     match self {
                         #span_match_arms
