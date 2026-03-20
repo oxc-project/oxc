@@ -206,7 +206,6 @@ jobs:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
-          rustup target add wasm32-wasip1-threads
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
@@ -312,7 +311,6 @@ jobs:
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
-          rustup target add wasm32-wasip1-threads
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
           pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
