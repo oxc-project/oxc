@@ -90,6 +90,8 @@ If you are unable to contribute by code, you can still participate by:
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).
 
+Thank you to [namespace.so](https://namespace.so) for powering our CI/CD pipelines with fast, free macOS and Linux runners.
+
 Oxc ports or copies code from other open source projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
