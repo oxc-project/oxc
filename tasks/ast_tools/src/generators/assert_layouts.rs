@@ -6,7 +6,7 @@
 
 use std::{
     borrow::Cow,
-    cmp::{Ordering, max, min},
+    cmp::{max, min},
     num,
     sync::atomic,
 };
@@ -55,13 +55,17 @@ impl Generator for AssertLayouts {
 struct LayoutCalculator<'s> {
     schema: &'s mut Schema,
     span_type_id: TypeId,
+    node_id_cell_type_id: TypeId,
 }
 
 impl LayoutCalculator<'_> {
     /// Calculate layouts of all types.
     fn calculate(schema: &mut Schema) {
         let span_type_id = schema.type_names["Span"];
-        let mut calculator = LayoutCalculator { schema, span_type_id };
+        let node_id_cell_type_id =
+            schema.type_by_name("NodeId").as_primitive().unwrap().containers.cell_id.unwrap();
+
+        let mut calculator = LayoutCalculator { schema, span_type_id, node_id_cell_type_id };
 
         for type_id in calculator.schema.types.indices() {
             calculator.calculate_type(type_id);
@@ -130,7 +134,103 @@ impl LayoutCalculator<'_> {
             }
         }
     }
+}
 
+struct StructState<'s> {
+    layout_64: PlatformLayout,
+    layout_32: PlatformLayout,
+    struct_def: &'s mut StructDef,
+    current_align_64: u32,
+    current_align_32: u32,
+}
+
+struct FieldData {
+    index: usize,
+    layout: Layout,
+    priority: u64,
+}
+
+const MAX_ALIGN: u32 = 1 << 31;
+
+impl<'s> StructState<'s> {
+    fn new(struct_def: &'s mut StructDef) -> Self {
+        Self {
+            layout_64: PlatformLayout::from_size_align(0, 1),
+            layout_32: PlatformLayout::from_size_align(0, 1),
+            struct_def,
+            current_align_64: MAX_ALIGN,
+            current_align_32: MAX_ALIGN,
+        }
+    }
+
+    fn add_field(&mut self, field_data: &FieldData) {
+        let struct_name = self.struct_def.name();
+        let offset_64 = Self::update(
+            &mut self.layout_64,
+            &field_data.layout.layout_64,
+            &mut self.current_align_64,
+            struct_name,
+        );
+        let offset_32 = Self::update(
+            &mut self.layout_32,
+            &field_data.layout.layout_32,
+            &mut self.current_align_32,
+            struct_name,
+        );
+
+        // Store offset on `field`
+        let field = &mut self.struct_def.fields[field_data.index];
+        field.offset = Offset { offset_64, offset_32 };
+    }
+
+    fn update(
+        layout: &mut PlatformLayout,
+        field_layout: &PlatformLayout,
+        current_align: &mut u32,
+        struct_name: &str,
+    ) -> u32 {
+        // Check alignment is correct for this field
+        let offset = layout.size;
+        assert!(
+            offset.is_multiple_of(field_layout.align),
+            "Incorrect alignment for struct fields in `{struct_name}`"
+        );
+
+        // Update alignment
+        layout.align = max(layout.align, field_layout.align);
+
+        // Update niche.
+        // Take the largest niche. Preference for (in order):
+        // * Largest single range of niche values.
+        // * Largest number of niche values at start of range.
+        // * Earlier field (earlier after re-ordering).
+        if let Some(field_niche) = &field_layout.niche
+            && layout.niche.as_ref().is_none_or(|niche| {
+                field_niche.count_max() > niche.count_max()
+                    || (field_niche.count_max() == niche.count_max()
+                        && field_niche.count_start > niche.count_start)
+            })
+        {
+            let mut niche = field_niche.clone();
+            niche.offset += offset;
+            layout.niche = Some(niche);
+        }
+
+        // Next field starts after this one
+        if field_layout.size > 0 {
+            let next_offset = offset + field_layout.size;
+            layout.size = next_offset;
+
+            // Get highest alignment next field can have
+            *current_align = next_offset & next_offset.wrapping_neg();
+        }
+
+        // Return offset of this field
+        offset
+    }
+}
+
+impl LayoutCalculator<'_> {
     /// Calculate layout for a struct.
     ///
     /// All structs in AST are `#[repr(C)]`. In a `#[repr(C)]` struct, compiler does not re-order the fields,
@@ -152,11 +252,13 @@ impl LayoutCalculator<'_> {
     ///
     /// Fields are ordered according to the following rules, in order:
     ///
-    /// 1. If field is `span: Span` it goes first.
-    /// 2. If field is ZST, it goes last.
-    /// 3. Fields with higher alignment on 64-bit systems go first.
-    /// 4. Fields with higher alignment on 32-bit systems go first.
-    /// 5. Otherwise, retain original field order.
+    /// 1. `span: Span` goes first.
+    /// 2. `node_id: Cell<NodeId>` goes next.
+    /// 3. ZST fields go last.
+    /// 4. Fields with higher alignment on 64-bit systems go first.
+    /// 5. Fields with higher alignment on 32-bit systems go first.
+    /// 6. If the highest-aligned field cannot go next, take the next field which has suitable alignment.
+    /// 7. Otherwise, retain original field order.
     ///
     /// This ordering scheme does not match `#[repr(Rust)]`, but is equally efficient in terms of packing
     /// structs into as few bytes as possible.
@@ -167,6 +269,8 @@ impl LayoutCalculator<'_> {
     ///
     /// `span: Span` is always first to make `Expression::get_span` etc branchless, because the `span` field
     /// is in the same position for all of `Expression`'s variants.
+    /// `node_id: Cell<NodeId>` goes after `span: Span` for the same reason - so it has consistent position
+    /// in all AST structs, which makes `AstKind::node_id` and `AstKind::set_node_id` branchless.
     ///
     /// Ordering by 64-bit alignment first, then 32-alignment creates a layout that is optimally packed
     /// on both platforms. Fields will be ordered `u64`, `usize`, `u32`, so `usize` will have same alignment
@@ -180,97 +284,91 @@ impl LayoutCalculator<'_> {
     /// If they did, this would screw up sorting the fields in `generate_struct_details`.
     fn calculate_struct(&mut self, type_id: TypeId) -> Layout {
         // Get layout of fields' types and calculate optimal field order
-        struct FieldData {
-            index: usize,
-            layout: Layout,
-            is_span: bool,
-            is_zst: bool,
-        }
+        let mut zst_fields = vec![];
 
-        let mut field_order = self
+        let mut fields = self
             .schema
             .struct_def(type_id)
             .field_indices()
-            .map(|index| {
+            .filter_map(|index| {
                 let field = &self.schema.struct_def(type_id).fields[index];
-                let is_span = field.type_id == self.span_type_id && field.name() == "span";
-                let layout = self.calculate_type(field.type_id);
-                let is_zst = layout.layout_64.size == 0 && layout.layout_32.size == 0;
-                FieldData { index, layout: layout.clone(), is_span, is_zst }
+                let layout = self.calculate_type(field.type_id).clone();
+
+                if layout.layout_64.size == 0 || layout.layout_32.size == 0 {
+                    assert!(
+                        layout.layout_64.size == 0 && layout.layout_32.size == 0,
+                        "ZST field must have 0 size on all platforms"
+                    );
+                    zst_fields.push(FieldData { index, layout, priority: 0 });
+                    return None;
+                }
+
+                let field = &self.schema.struct_def(type_id).fields[index];
+                let priority = if field.type_id == self.span_type_id && field.name() == "span" {
+                    // Highest priority
+                    u64::MAX
+                } else if field.type_id == self.node_id_cell_type_id && field.name() == "node_id" {
+                    // 2nd highest priority
+                    u64::MAX - 1
+                } else {
+                    // Prioritize fields with higher alignment on 64-bit systems, then 32-bit systems
+                    (u64::from(layout.layout_64.align) << 32) | u64::from(layout.layout_32.align)
+                };
+
+                Some(FieldData { index, layout, priority })
             })
             .collect::<Vec<_>>();
 
-        field_order.sort_unstable_by(|f1, f2| {
-            let mut order = f1.is_span.cmp(&f2.is_span).reverse();
-            if order == Ordering::Equal {
-                order = f1.is_zst.cmp(&f2.is_zst);
-                if order == Ordering::Equal {
-                    order = f1.layout.layout_64.align.cmp(&f2.layout.layout_64.align).reverse();
-                    if order == Ordering::Equal {
-                        order = f1.layout.layout_32.align.cmp(&f2.layout.layout_32.align).reverse();
-                        if order == Ordering::Equal {
-                            order = f1.index.cmp(&f2.index);
-                        }
-                    }
+        fields.sort_by(|f1, f2| f1.priority.cmp(&f2.priority).reverse());
+
+        // Add fields (except ZST fields)
+        let mut state = StructState::new(self.schema.struct_def_mut(type_id));
+
+        while !fields.is_empty() {
+            // Find next field with alignment <= current alignment for both 32 bit and 64 bit.
+            // `other_fields` is sorted by alignment in descending order,
+            // so this will pick the next field with largest alignment which can be placed at current offset.
+            let index = fields.iter().position(|f| {
+                f.layout.layout_64.align <= state.current_align_64
+                    && f.layout.layout_32.align <= state.current_align_32
+            });
+
+            if let Some(index) = index {
+                // Found field with suitable alignment - add it to struct
+                let field_data = fields.remove(index);
+                state.add_field(&field_data);
+            } else {
+                // No field with suitable alignment found.
+                // Double desired alignment, and add padding so it's aligned.
+                // Go round loop again to find next field which satisfies new looser alignment requirements.
+                let smallest_align_64 = fields.last().unwrap().layout.layout_64.align;
+                if state.current_align_64 < smallest_align_64 {
+                    // No field meets alignment requirement for 64 bit
+                    state.current_align_64 *= 2;
+                    state.layout_64.size =
+                        state.layout_64.size.next_multiple_of(state.current_align_64);
+                } else {
+                    // No field meets alignment requirement for 32 bit
+                    state.current_align_32 *= 2;
+                    state.layout_32.size =
+                        state.layout_32.size.next_multiple_of(state.current_align_32);
                 }
             }
-            order
-        });
+        }
 
-        // Calculate offset of each field, and size + alignment of struct
-        let mut layout_64 = PlatformLayout::from_size_align(0, 1);
-        let mut layout_32 = PlatformLayout::from_size_align(0, 1);
+        // Add ZST fields last, in original order.
+        // Order of ZSTs doesn't matter, but keeping in original order is relied on by `generate_struct_details`.
+        let StructState { mut layout_64, mut layout_32, struct_def, .. } = state;
 
-        let struct_def = self.schema.struct_def_mut(type_id);
-        for field_data in &field_order {
-            fn update(
-                layout: &mut PlatformLayout,
-                field_layout: &PlatformLayout,
-                struct_name: &str,
-            ) -> u32 {
-                // Field should already be aligned as we've re-ordered fields to ensure they're tightly packed.
-                // This shouldn't break as long as all fields are aligned on `< 16`.
-                // If we introduce a `u128` into AST, we might need to change the field ordering algorithm
-                // to fill in the gap between `span` and the `u128` field.
-                let offset = layout.size;
-                assert!(
-                    offset.is_multiple_of(field_layout.align),
-                    "Incorrect alignment for struct fields in `{struct_name}`"
-                );
-
-                // Update alignment
-                layout.align = max(layout.align, field_layout.align);
-
-                // Update niche.
-                // Take the largest niche. Preference for (in order):
-                // * Largest single range of niche values.
-                // * Largest number of niche values at start of range.
-                // * Earlier field (earlier after re-ordering).
-                if let Some(field_niche) = &field_layout.niche
-                    && layout.niche.as_ref().is_none_or(|niche| {
-                        field_niche.count_max() > niche.count_max()
-                            || (field_niche.count_max() == niche.count_max()
-                                && field_niche.count_start > niche.count_start)
-                    })
-                {
-                    let mut niche = field_niche.clone();
-                    niche.offset += offset;
-                    layout.niche = Some(niche);
-                }
-
-                // Next field starts after this one
-                layout.size = offset + field_layout.size;
-
-                // Return offset of this field
-                offset
+        for field_data in &zst_fields {
+            fn update(layout: &mut PlatformLayout, align: u32) -> u32 {
+                layout.size = layout.size.next_multiple_of(align);
+                layout.align = max(layout.align, align);
+                layout.size
             }
-
-            let offset_64 = update(&mut layout_64, &field_data.layout.layout_64, struct_def.name());
-            let offset_32 = update(&mut layout_32, &field_data.layout.layout_32, struct_def.name());
-
-            // Store offset on `field`
-            let field = &mut struct_def.fields[field_data.index];
-            field.offset = Offset { offset_64, offset_32 };
+            let offset_64 = update(&mut layout_64, field_data.layout.layout_64.align);
+            let offset_32 = update(&mut layout_32, field_data.layout.layout_32.align);
+            struct_def.fields[field_data.index].offset = Offset { offset_64, offset_32 };
         }
 
         // Round up size to alignment

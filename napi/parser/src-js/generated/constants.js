@@ -54,22 +54,22 @@ export const PROGRAM_OFFSET = 0;
 /**
  * Byte offset of pointer to start of source text, relative to start of `Program`.
  */
-export const SOURCE_START_OFFSET = 8;
+export const SOURCE_START_OFFSET = 16;
 
 /**
  * Byte offset of length of source text, relative to start of `Program`.
  */
-export const SOURCE_LEN_OFFSET = 16;
+export const SOURCE_LEN_OFFSET = 24;
 
 /**
  * Byte offset of comments `Vec` pointer, relative to start of `Program`.
  */
-export const COMMENTS_OFFSET = 24;
+export const COMMENTS_OFFSET = 32;
 
 /**
  * Byte offset of comments `Vec` length, relative to start of `Program`.
  */
-export const COMMENTS_LEN_OFFSET = 32;
+export const COMMENTS_LEN_OFFSET = 40;
 
 /**
  * Size of `Comment` struct in bytes.
