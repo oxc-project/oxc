@@ -31,3 +31,17 @@ exports[`--stdin-filepath > should not report \`WouldBlock\` error on large file
   "stderr": "",
 }
 `;
+
+exports[`--stdin-filepath > should respect ignorePatterns for stdin-filepath 1`] = `
+{
+  "exitCode": 0,
+  "stdout": "const   x:number=1",
+}
+`;
+
+exports[`--stdin-filepath > should respect ignorePatterns for stdin-filepath 2`] = `
+{
+  "exitCode": 0,
+  "stdout": "const x: number = 1;",
+}
+`;

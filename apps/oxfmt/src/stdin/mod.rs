@@ -1,8 +1,10 @@
 use std::{
     env,
     io::{self, BufWriter, Read},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
+
+use ignore::gitignore::GitignoreBuilder;
 
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
@@ -72,12 +74,19 @@ impl StdinRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        match config_resolver.build_and_validate() {
-            Ok(_) => {}
+        let ignore_patterns = match config_resolver.build_and_validate() {
+            Ok(patterns) => patterns,
             Err(err) => {
                 utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
+        };
+
+        // Check if the stdin filepath matches any ignore pattern.
+        // If ignored, output the source text unchanged (like Prettier).
+        if is_ignored_by_patterns(&ignore_patterns, config_resolver.config_dir(), &filepath, &cwd) {
+            utils::print_and_flush(stdout, &source_text);
+            return CliRunResult::FormatSucceeded;
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
@@ -124,4 +133,36 @@ impl StdinRunner {
             }
         }
     }
+}
+
+/// Check if a filepath should be ignored based on `ignorePatterns` from the config.
+fn is_ignored_by_patterns(
+    ignore_patterns: &[String],
+    config_dir: Option<&Path>,
+    filepath: &Path,
+    cwd: &Path,
+) -> bool {
+    if ignore_patterns.is_empty() {
+        return false;
+    }
+    let Some(config_dir) = config_dir else {
+        return false;
+    };
+
+    let mut builder = GitignoreBuilder::new(config_dir);
+    for pattern in ignore_patterns {
+        if builder.add_line(None, pattern).is_err() {
+            return false;
+        }
+    }
+    let Ok(gitignore) = builder.build() else {
+        return false;
+    };
+
+    // Resolve filepath relative to cwd for matching
+    let full_path =
+        if filepath.is_absolute() { filepath.to_path_buf() } else { cwd.join(filepath) };
+
+    let matched = gitignore.matched_path_or_any_parents(&full_path, false);
+    matched.is_ignore() && !matched.is_whitelist()
 }

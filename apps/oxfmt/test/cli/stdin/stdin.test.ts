@@ -30,6 +30,34 @@ describe("--stdin-filepath", () => {
     }).toMatchSnapshot();
   });
 
+  it("should respect ignorePatterns for stdin-filepath", async () => {
+    const fixtureCwd = join(fixturesDir, "ignore-patterns");
+    const input = "const   x:number=1";
+
+    const ignored = await runCliStdin(input, "ignored/file.ts", {
+      cwd: fixtureCwd,
+      extraArgs: ["--config=.oxfmtrc.json"],
+    });
+
+    expect({
+      exitCode: ignored.exitCode,
+      stdout: ignored.stdout,
+    }).toMatchSnapshot();
+
+    expect(ignored.stdout).toBe(input);
+
+    const formatted = await runCliStdin(input, "src/file.ts", {
+      cwd: fixtureCwd,
+      extraArgs: ["--config=.oxfmtrc.json"],
+    });
+    expect({
+      exitCode: formatted.exitCode,
+      stdout: formatted.stdout,
+    }).toMatchSnapshot();
+
+    expect(formatted.stdout).not.toBe(input);
+  });
+
   // https://github.com/oxc-project/oxc/issues/17939
   it("should not report `WouldBlock` error on large file piped to wc", async () => {
     const largeFile = await readFile(join(fixturesDir, "parser.ts"), "utf-8");

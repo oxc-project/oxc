@@ -23,10 +23,21 @@ export function runCli(cwd: string, args: string[]) {
   });
 }
 
-export function runCliStdin(input: string, filepath: string, pipe?: string) {
+export function runCliStdin(
+  input: string,
+  filepath: string,
+  pipeOrOptions?: string | { cwd?: string; extraArgs?: string[] },
+) {
+  const pipe = typeof pipeOrOptions === "string" ? pipeOrOptions : undefined;
+  const options = typeof pipeOrOptions === "object" ? pipeOrOptions : undefined;
+
   let cmd = `node ${CLI_PATH} --stdin-filepath=${filepath}`;
+
+  if (options?.extraArgs) cmd += ` ${options.extraArgs.join(" ")}`;
+
   if (pipe) cmd += ` | ${pipe}`;
-  return execa({ shell: true, reject: false, input })`${cmd}`;
+
+  return execa({ shell: true, reject: false, input, cwd: options?.cwd })`${cmd}`;
 }
 
 // Test function for running the CLI with various arguments
