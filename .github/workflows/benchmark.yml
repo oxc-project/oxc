@@ -58,7 +58,7 @@ jobs:
   benchmark:
     needs: determine-matrix
     if: needs.determine-matrix.outputs.matrix != '[]'
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-linux-x64-default
     permissions:
       id-token: write # required for OIDC authentication with CodSpeed
     strategy:
