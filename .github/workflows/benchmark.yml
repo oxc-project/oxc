@@ -84,8 +84,7 @@ jobs:
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           else
             cargo build --release -p oxc_benchmark \
-              --bench lexer --bench parser --bench transformer --bench semantic \
-              --bench minifier --bench codegen --bench formatter --bench pipeline \
+              --bench ${{ matrix.component }} \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           fi
           mkdir -p target/codspeed/analysis/oxc_benchmark
