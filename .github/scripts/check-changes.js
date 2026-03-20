@@ -55,6 +55,22 @@ function shouldRunInclude(changedFiles, packages, paths) {
     return false;
   }
 
+  // Check additional trigger paths first (no cargo tree needed)
+  for (const file of changedFiles) {
+    for (const p of paths) {
+      if (file.startsWith(p)) {
+        console.error(`File ${file} matches trigger path ${p} - will run`);
+        return true;
+      }
+    }
+  }
+
+  // If no changed files are in crates/, cargo tree check cannot match — skip it
+  if (!changedFiles.some((file) => file.startsWith("crates/"))) {
+    console.error("No files changed in crates/ - will skip");
+    return false;
+  }
+
   // Resolve transitive dependencies via cargo tree
   let allCrates;
   try {
@@ -71,7 +87,7 @@ function shouldRunInclude(changedFiles, packages, paths) {
     return true;
   }
 
-  return checkFilesAffectCrates(changedFiles, allCrates, paths);
+  return checkFilesAffectCrates(changedFiles, allCrates);
 }
 
 /**
