@@ -1301,23 +1301,25 @@ function deserializeVariableDeclarationKind(pos) {
 }
 
 function deserializeVariableDeclarator(pos) {
-  let variableDeclarator = {
-    type: "VariableDeclarator",
-    id: null,
-    init: null,
-    definite: false,
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
-  variableDeclarator.id = deserializeBindingPattern(pos + 8);
+  let node = {
+      type: "VariableDeclarator",
+      id: null,
+      init: null,
+      definite: deserializeBool(pos + 53),
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    },
+    pattern = deserializeBindingPattern(pos + 8);
   {
     let typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
-    variableDeclarator.id.typeAnnotation = typeAnnotation;
-    typeAnnotation !== null && (variableDeclarator.id.end = typeAnnotation.end);
-    variableDeclarator.definite = deserializeBool(pos + 53);
+    if (typeAnnotation !== null) {
+      pattern.typeAnnotation = typeAnnotation;
+      pattern.end = typeAnnotation.end;
+    }
   }
-  variableDeclarator.init = deserializeOptionExpression(pos + 32);
-  return variableDeclarator;
+  node.id = pattern;
+  node.init = deserializeOptionExpression(pos + 32);
+  return node;
 }
 
 function deserializeEmptyStatement(pos) {

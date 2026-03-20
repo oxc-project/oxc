@@ -1351,18 +1351,18 @@ function deserializeVariableDeclarationKind(pos) {
 
 function deserializeVariableDeclarator(pos) {
   let previousParent = parent,
-    variableDeclarator = (parent = {
+    node = (parent = {
       type: "VariableDeclarator",
       id: null,
       init: null,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
-      parent: previousParent,
+      parent,
     });
-  variableDeclarator.id = deserializeBindingPattern(pos + 8);
-  variableDeclarator.init = deserializeOptionExpression(pos + 32);
+  node.id = deserializeBindingPattern(pos + 8);
+  node.init = deserializeOptionExpression(pos + 32);
   parent = previousParent;
-  return variableDeclarator;
+  return node;
 }
 
 function deserializeEmptyStatement(pos) {
