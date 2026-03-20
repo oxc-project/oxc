@@ -95,15 +95,14 @@ pub fn parse_files(file_paths: &[String], codegen: &Codegen) -> Schema {
     let mut files = IndexVec::new();
 
     for AssertSend((file_path, file_skeletons)) in results {
-        for (name, skeleton, is_meta) in file_skeletons {
-            let (names, skeletons) = if is_meta {
+        for skeleton in file_skeletons {
+            let (names, skeletons) = if skeleton.is_meta() {
                 (&mut meta_names, &mut meta_skeletons)
             } else {
                 (&mut type_names, &mut type_skeletons)
             };
-
-            let (index, is_new) = names.insert_full(name);
-            assert!(is_new, "2 types with same name: {}", names.get_index(index).unwrap());
+            let is_new = names.insert(skeleton.name().to_string());
+            assert!(is_new, "2 types with same name: {}", skeleton.name());
             skeletons.push(skeleton);
         }
         files.push(File::new(file_path));
