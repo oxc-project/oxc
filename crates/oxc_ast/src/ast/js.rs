@@ -2638,6 +2638,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
     pub node_id: Cell<NodeId>,
+    #[estree(skip)]
     pub span: Span,
     #[estree(skip)]
     pub keyword: WithClauseKeyword,

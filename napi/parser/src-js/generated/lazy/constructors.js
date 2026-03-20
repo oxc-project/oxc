@@ -5800,16 +5800,6 @@ export class WithClause {
     nodes.set(pos, this);
   }
 
-  get start() {
-    const internal = this.#internal;
-    return constructU32(internal.pos, internal.ast);
-  }
-
-  get end() {
-    const internal = this.#internal;
-    return constructU32(internal.pos + 4, internal.ast);
-  }
-
   get attributes() {
     const internal = this.#internal,
       cached = internal.$attributes;
@@ -5819,8 +5809,6 @@ export class WithClause {
 
   toJSON() {
     return {
-      start: this.start,
-      end: this.end,
       attributes: this.attributes,
     };
   }
