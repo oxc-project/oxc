@@ -22,54 +22,39 @@ use super::{
 /// * Inherits of enums wrapped in `inherit_variants!` macro.
 ///
 /// Returns a list of [`Skeleton`]s found in the file.
-/// Each entry is `(type_name, skeleton, is_meta)`.
 ///
 /// This is the bare minimum to be able to "link up" types to each other in next pass.
-pub fn load_file(
-    file_id: FileId,
-    file_path: &str,
-    root_path: &Path,
-) -> Vec<(String, Skeleton, bool)> {
+pub fn load_file(file_id: FileId, file_path: &str, root_path: &Path) -> Vec<Skeleton> {
     let content = fs::read_to_string(root_path.join(file_path)).unwrap();
 
     let file = parse_file(content.as_str()).unwrap();
+    file.items.into_iter().filter_map(|item| parse_item(item, file_id)).collect()
+}
 
-    let mut results = Vec::new();
-    for item in file.items {
-        let entry = match item {
-            Item::Struct(item) => {
-                let Some((skeleton, is_meta)) = parse_struct(item, file_id) else { continue };
-                (skeleton.name.clone(), Skeleton::Struct(skeleton), is_meta)
-            }
-            Item::Enum(item) => {
-                let Some((skeleton, is_meta)) = parse_enum(item, file_id) else { continue };
-                (skeleton.name.clone(), Skeleton::Enum(skeleton), is_meta)
-            }
-            Item::Macro(item) => {
-                let Some((name, skeleton, is_meta)) = parse_macro(&item, file_id) else { continue };
-                (name, skeleton, is_meta)
-            }
-            _ => continue,
-        };
-        results.push(entry);
+fn parse_item(item: Item, file_id: FileId) -> Option<Skeleton> {
+    match item {
+        Item::Struct(item) => parse_struct(item, file_id),
+        Item::Enum(item) => parse_enum(item, file_id),
+        Item::Macro(item) => parse_macro(&item, file_id),
+        _ => None,
     }
-    results
 }
 
-fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<(StructSkeleton, /* is_meta */ bool)> {
+fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<Skeleton> {
     let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    Some((StructSkeleton { name, is_foreign, file_id, item }, is_meta))
+    let skeleton = StructSkeleton { name, file_id, is_foreign, is_meta, item };
+    Some(Skeleton::Struct(skeleton))
 }
 
-fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<(EnumSkeleton, /* is_meta */ bool)> {
+fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<Skeleton> {
     let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    Some((EnumSkeleton { name, is_foreign, file_id, item, inherits: vec![] }, is_meta))
+    let skeleton = EnumSkeleton { name, file_id, is_foreign, is_meta, item, inherits: vec![] };
+    Some(Skeleton::Enum(skeleton))
 }
 
-fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<(String, Skeleton, bool)> {
+fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
     if item.mac.path.is_ident("inherit_variants") {
-        let skeleton = parse_inherit_variants_macro(item, file_id);
-        return Some((skeleton.name.clone(), Skeleton::Enum(skeleton), false));
+        return Some(parse_inherit_variants_macro(item, file_id));
     }
     if item.mac.path.is_ident("define_nonmax_u32_index_type")
         || item.mac.path.is_ident("define_index_type")
@@ -79,7 +64,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<(String, Skeleton, b
     None
 }
 
-fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> EnumSkeleton {
+fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Skeleton {
     item.mac
         .parse_body_with(|input: &ParseBuffer| {
             // Because of `@inherit`s we can't use the actual `ItemEnum` parse.
@@ -127,12 +112,14 @@ fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> EnumSkelet
             }
 
             let item = ItemEnum { attrs, vis, enum_token, ident, generics, brace_token, variants };
-            Ok(EnumSkeleton { name, is_foreign: false, file_id, item, inherits })
+            let skeleton =
+                EnumSkeleton { name, file_id, is_foreign: false, is_meta: false, item, inherits };
+            Ok(Skeleton::Enum(skeleton))
         })
         .expect("Failed to parse contents of `inherit_variants!` macro")
 }
 
-fn parse_index_type_macro(item: &ItemMacro, file_id: FileId) -> Option<(String, Skeleton, bool)> {
+fn parse_index_type_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
     item.mac
         .parse_body_with(|input: &ParseBuffer| {
             let attrs = input.call(Attribute::parse_outer)?;
@@ -174,9 +161,8 @@ fn parse_index_type_macro(item: &ItemMacro, file_id: FileId) -> Option<(String, 
                 semi_token: None,
             };
 
-            let skeleton =
-                StructSkeleton { name: name.clone(), is_foreign, file_id, item: item_struct };
-            Ok(Some((name, Skeleton::Struct(skeleton), is_meta)))
+            let skeleton = StructSkeleton { name, file_id, is_foreign, is_meta, item: item_struct };
+            Ok(Some(Skeleton::Struct(skeleton)))
         })
         .ok()?
 }
