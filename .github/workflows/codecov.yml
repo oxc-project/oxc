@@ -21,7 +21,7 @@ jobs:
   coverage:
     if: github.repository == 'oxc-project/oxc'
     name: Code Coverage
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-linux-x64-default
     steps:
       - name: Checkout
         uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1

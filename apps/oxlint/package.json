@@ -33,13 +33,13 @@
     "generate-config-types": "node scripts/generate-config-types.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
-    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx ./conformance/src/index.ts"
+    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx --conditions=code ./conformance/src/index.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
     "@babel/code-frame": "^7.28.6",
     "@napi-rs/cli": "catalog:",
-    "@oxc-project/types": "^0.120.0",
+    "@oxc-project/types": "^0.121.0",
     "@type-challenges/utils": "^0.1.1",
     "@types/babel__code-frame": "^7.27.0",
     "@types/esquery": "^1.5.4",
@@ -58,7 +58,7 @@
     "execa": "^9.6.0",
     "json-schema-to-typescript": "catalog:",
     "json-stable-stringify-without-jsonify": "^1.0.1",
-    "oxc-parser": "^0.120.0",
+    "oxc-parser": "^0.121.0",
     "rolldown": "catalog:",
     "serialize-javascript": "^7.0.4",
     "tsdown": "catalog:",
