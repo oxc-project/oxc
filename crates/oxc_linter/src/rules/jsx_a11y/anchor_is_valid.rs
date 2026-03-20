@@ -14,25 +14,33 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_type, get_jsx_attribute_name, has_jsx_prop_ignore_case},
 };
 
-fn missing_href_attribute(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
-        .with_help("Provide an `href` for the `a` element.")
-        .with_label(span)
+fn missing_href_attribute(span: Span, element_name: &str, href_attr_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Missing `{href_attr_name}` attribute for the `{element_name}` element."
+    ))
+    .with_help(format!(
+        "Provide the `{href_attr_name}` attribute for the `{element_name}` element."
+    ))
+    .with_label(span)
 }
 
-fn incorrect_href(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use of incorrect `href` for the 'a' element.")
-        .with_help("Provide a correct `href` for the `a` element.")
-        .with_label(span)
+fn incorrect_href(span: Span, element_name: &str, href_attr_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Use of incorrect `{href_attr_name}` for the `{element_name}` element."
+    ))
+    .with_help(format!("Provide a correct `{href_attr_name}` for the `{element_name}` element."))
+    .with_label(span)
 }
 
-fn cant_be_anchor(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The `a` element has `href` and `onClick`.")
-        .with_help("Use a `button` element instead of an `a` element.")
-        .with_label(span)
+fn cant_be_anchor(span: Span, element_name: &str, href_attr_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The `{element_name}` element has `{href_attr_name}` and `onClick`."
+    ))
+    .with_help(format!("Use a `button` element instead of `{element_name}`."))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -142,24 +150,62 @@ impl Rule for AnchorIsValid {
             }
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
-            if let Some(href_attr) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "href") {
+            let element_name = get_span().source_text(ctx.source_text());
+            let missing_href_attr_name = ctx
+                .settings()
+                .jsx_a11y
+                .attributes
+                .get("href")
+                .and_then(|attributes| attributes.first().map(CompactStr::as_str))
+                .filter(|name| !name.eq_ignore_ascii_case("href"))
+                .map_or_else(
+                    || CompactStr::from("href"),
+                    |name| CompactStr::from(format!("{name} or href")),
+                );
+
+            let href_attr = ctx
+                .settings()
+                .jsx_a11y
+                .attributes
+                .get("href")
+                .and_then(|attributes| {
+                    attributes.iter().find_map(|attr| {
+                        has_jsx_prop_ignore_case(&jsx_el.opening_element, attr.as_str())
+                    })
+                })
+                .or_else(|| has_jsx_prop_ignore_case(&jsx_el.opening_element, "href"));
+
+            if let Some(href_attr) = href_attr {
                 let JSXAttributeItem::Attribute(attr) = href_attr else {
                     return;
                 };
+                let href_attr_name = get_jsx_attribute_name(&attr.name);
 
                 // Check if the 'a' element has a correct href attribute
                 let Some(value) = attr.value.as_ref() else {
-                    ctx.diagnostic(incorrect_href(get_span()));
+                    ctx.diagnostic(incorrect_href(
+                        get_span(),
+                        element_name,
+                        href_attr_name.as_ref(),
+                    ));
                     return;
                 };
 
                 let is_empty = self.check_value_is_empty_or_invalid(value);
                 if is_empty {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some() {
-                        ctx.diagnostic(cant_be_anchor(get_span()));
+                        ctx.diagnostic(cant_be_anchor(
+                            get_span(),
+                            element_name,
+                            href_attr_name.as_ref(),
+                        ));
                         return;
                     }
-                    ctx.diagnostic(incorrect_href(get_span()));
+                    ctx.diagnostic(incorrect_href(
+                        get_span(),
+                        element_name,
+                        href_attr_name.as_ref(),
+                    ));
                     return;
                 }
                 return;
@@ -172,7 +218,11 @@ impl Rule for AnchorIsValid {
             if has_spread_attr {
                 return;
             }
-            ctx.diagnostic(missing_href_attribute(get_span()));
+            ctx.diagnostic(missing_href_attribute(
+                get_span(),
+                element_name,
+                missing_href_attr_name.as_str(),
+            ));
         }
     }
 }
@@ -314,6 +364,26 @@ fn test() {
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
+        ),
+        (
+            r"<Link to='#foo' />",
+            Some(serde_json::json!([{ "validHrefs": ["#foo"] }])),
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Anchor": "a", "Link": "a" },
+                    "attributes": { "href": ["to"] }
+                } }
+            })),
+        ),
+        (
+            r"<Link href='#foo' />",
+            Some(serde_json::json!([{ "validHrefs": ["#foo"] }])),
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "components": { "Anchor": "a", "Link": "a" },
+                    "attributes": { "href": ["to", "href"] }
+                } }
+            })),
         ),
         // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft='foo' />"#, Some(serde_json::json!(specialLink))),
@@ -614,6 +684,24 @@ fn test() {
             Some(
                 serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
+        ),
+        (
+            r"<a href='#' />",
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "attributes": { "href": [] }
+                } }
+            })),
+        ),
+        (
+            r"<a href='#' />",
+            None,
+            Some(serde_json::json!({
+                "settings": { "jsx-a11y": {
+                    "attributes": { "href": ["to"] }
+                } }
+            })),
         ),
         // (r#"<a hrefLeft={undefined} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft={null} />"#, Some(serde_json::json!(specialLink))),
