@@ -1297,10 +1297,8 @@ mod test {
 
     #[test]
     fn test_fix_all_dangerous_returns_dangerous_fix_action() {
-        let tester = Tester::new(
-            "fixtures/lsp/dangerous_fix",
-            json!({ "fixKind": "dangerous_fix" }),
-        );
+        let tester =
+            Tester::new("fixtures/lsp/dangerous_fix", json!({ "fixKind": "dangerous_fix" }));
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("unused_var.js");
@@ -1315,10 +1313,7 @@ mod test {
                 ..Default::default()
             },
         );
-        assert!(
-            safe_actions.is_empty(),
-            "source.fixAll should not apply dangerous fixes"
-        );
+        assert!(safe_actions.is_empty(), "source.fixAll should not apply dangerous fixes");
 
         // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
         let dangerous_actions = linter.get_code_actions_or_commands(
