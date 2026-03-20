@@ -822,6 +822,9 @@ impl AstKind<'_> {
 }
 
 impl GetSpan for AstKind<'_> {
+    /// Get [`Span`] of an [`AstKind`].
+    // `span` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+    #[inline]
     fn span(&self) -> Span {
         match self {
             Self::Program(it) => it.span(),
