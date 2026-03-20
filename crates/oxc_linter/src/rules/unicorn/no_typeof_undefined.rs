@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.")
+    OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.").with_help("Use `x === undefined` instead of `typeof x === \"undefined\"`.")
         .with_label(span)
 }
 

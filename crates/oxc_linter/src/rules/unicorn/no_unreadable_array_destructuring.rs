@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unreadable_array_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Array destructuring may not contain consecutive ignored values.")
+    OxcDiagnostic::warn("Array destructuring may not contain consecutive ignored values.").with_help("Use a single `.slice()` or index access instead of skipping multiple elements.")
         .with_label(span)
 }
 
