@@ -11,6 +11,7 @@ use std::{
     sync::atomic,
 };
 
+use itertools::Itertools;
 use phf_codegen::Map as PhfMapGen;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -21,8 +22,8 @@ use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
-        Def, Discriminant, EnumDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
-        Visibility,
+        Def, Discriminant, EnumDef, FieldDef, PointerKind, PrimitiveDef, Schema, StructDef,
+        TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -578,6 +579,7 @@ fn generate_layout_assertions_for_struct<'s>(
 ) {
     fn r#gen(
         struct_def: &StructDef,
+        fields: &[&FieldDef],
         is_64: bool,
         struct_ident: &Ident,
         schema: &Schema,
@@ -595,7 +597,7 @@ fn generate_layout_assertions_for_struct<'s>(
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
-        let offset_asserts = struct_def.fields.iter().filter_map(|field| {
+        let offset_asserts = fields.iter().map(|&field| {
             if struct_def.is_foreign || field.visibility == Visibility::Private {
                 // Cannot create assertions for private fields (cant access them)
                 // or foreign types (we don't know what fields they have)
@@ -617,12 +619,17 @@ fn generate_layout_assertions_for_struct<'s>(
         }
     }
 
+    // Sort fields in offset order.
+    // `sort_by` not `sort_unstable_by` to maintain original field order for ZST fields.
+    let mut fields = struct_def.fields.iter().collect_vec();
+    fields.sort_by(|f1, f2| f1.offset.offset_64.cmp(&f2.offset.offset_64));
+
     let (assertions_64, assertions_32) =
         assertions.entry(struct_def.file(schema).krate()).or_default();
 
     let ident = struct_def.ident();
-    assertions_64.extend(r#gen(struct_def, true, &ident, schema));
-    assertions_32.extend(r#gen(struct_def, false, &ident, schema));
+    assertions_64.extend(r#gen(struct_def, &fields, true, &ident, schema));
+    assertions_32.extend(r#gen(struct_def, &fields, false, &ident, schema));
 }
 
 /// Generate layout assertions for an enum.
