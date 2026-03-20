@@ -84,7 +84,12 @@ impl StdinRunner {
 
         // Check if the stdin filepath matches any ignore pattern.
         // If ignored, output the source text unchanged (like Prettier).
-        match is_ignored_by_patterns(&ignore_patterns, config_resolver.config_dir(), &filepath, &cwd) {
+        match is_ignored_by_patterns(
+            &ignore_patterns,
+            config_resolver.config_dir(),
+            &filepath,
+            &cwd,
+        ) {
             Ok(true) => {
                 utils::print_and_flush(stdout, &source_text);
                 return CliRunResult::FormatSucceeded;
