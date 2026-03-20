@@ -11802,6 +11802,89 @@ export class Comment {
 
 const DebugComment = class Comment {};
 
+export class SourceType {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get sourceType() {
+    const internal = this.#internal;
+    return constructModuleKind(internal.pos + 1, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      sourceType: this.sourceType,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSourceType.prototype);
+  }
+}
+
+const DebugSourceType = class SourceType {};
+
+function constructModuleKind(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return "script";
+    case 1:
+      return "module";
+    case 3:
+      return "commonjs";
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleKind`);
+  }
+}
+
+export class Span {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      start: this.start,
+      end: this.end,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSpan.prototype);
+  }
+}
+
+const DebugSpan = class Span {};
+
 export class NameSpan {
   #internal;
 
@@ -12193,89 +12276,6 @@ function constructUpdateOperator(pos, ast) {
   }
 }
 
-export class Span {
-  #internal;
-
-  constructor(pos, ast) {
-    if (ast?.token !== TOKEN) constructorError();
-
-    const { nodes } = ast;
-    const cached = nodes.get(pos);
-    if (cached !== void 0) return cached;
-
-    this.#internal = { pos, ast };
-    nodes.set(pos, this);
-  }
-
-  get start() {
-    const internal = this.#internal;
-    return constructU32(internal.pos, internal.ast);
-  }
-
-  get end() {
-    const internal = this.#internal;
-    return constructU32(internal.pos + 4, internal.ast);
-  }
-
-  toJSON() {
-    return {
-      start: this.start,
-      end: this.end,
-    };
-  }
-
-  [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugSpan.prototype);
-  }
-}
-
-const DebugSpan = class Span {};
-
-export class SourceType {
-  #internal;
-
-  constructor(pos, ast) {
-    if (ast?.token !== TOKEN) constructorError();
-
-    const { nodes } = ast;
-    const cached = nodes.get(pos);
-    if (cached !== void 0) return cached;
-
-    this.#internal = { pos, ast };
-    nodes.set(pos, this);
-  }
-
-  get sourceType() {
-    const internal = this.#internal;
-    return constructModuleKind(internal.pos + 1, internal.ast);
-  }
-
-  toJSON() {
-    return {
-      sourceType: this.sourceType,
-    };
-  }
-
-  [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugSourceType.prototype);
-  }
-}
-
-const DebugSourceType = class SourceType {};
-
-function constructModuleKind(pos, ast) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      return "script";
-    case 1:
-      return "module";
-    case 3:
-      return "commonjs";
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleKind`);
-  }
-}
-
 export class RawTransferData {
   #internal;
 
@@ -12629,14 +12629,6 @@ export class StaticExport {
 }
 
 const DebugStaticExport = class StaticExport {};
-
-function constructU32(pos, ast) {
-  return ast.buffer.uint32[pos >> 2];
-}
-
-function constructU8(pos, ast) {
-  return ast.buffer[pos];
-}
 
 function constructStr(pos, ast) {
   const pos32 = pos >> 2,
@@ -13431,6 +13423,10 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
+function constructU8(pos, ast) {
+  return ast.buffer[pos];
+}
+
 function constructBoxJSXOpeningElement(pos, ast) {
   return new JSXOpeningElement(ast.buffer.uint32[pos >> 2], ast);
 }
@@ -13772,10 +13768,8 @@ function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function constructOptionNameSpan(pos, ast) {
-  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
-    return null;
-  return new NameSpan(pos, ast);
+function constructU32(pos, ast) {
+  return ast.buffer.uint32[pos >> 2];
 }
 
 function constructU64(pos, ast) {
@@ -13787,6 +13781,12 @@ function constructU64(pos, ast) {
 function constructOptionU64(pos, ast) {
   if (ast.buffer[pos] === 0) return null;
   return constructU64(pos + 8, ast);
+}
+
+function constructOptionNameSpan(pos, ast) {
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0)
+    return null;
+  return new NameSpan(pos, ast);
 }
 
 function constructVecError(pos, ast) {

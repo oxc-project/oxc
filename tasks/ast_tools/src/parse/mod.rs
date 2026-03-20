@@ -49,8 +49,6 @@
 
 use std::path::Path;
 
-use oxc_index::IndexVec;
-
 use crate::{
     Codegen, log, log_success,
     schema::{Derives, File, FileId, Schema},
@@ -67,7 +65,7 @@ use parse::parse;
 use skeleton::Skeleton;
 
 /// Analyse the files with provided paths, and generate a [`Schema`].
-pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
+pub fn parse_files(file_paths: &[String], codegen: &Codegen) -> Schema {
     // Load files and populate `skeletons` and `meta_skeletons` + mapping from type name to `TypeId`.
     // `skeletons` contains details of types marked with `#[ast]` attribute.
     // `meta_skeletons` contains details of types marked with `#[ast_meta]` attribute.
@@ -80,7 +78,7 @@ pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
     let files = file_paths
         .iter()
         .enumerate()
-        .map(|(file_id, &file_path)| {
+        .map(|(file_id, file_path)| {
             let file_id = FileId::from_usize(file_id);
             analyse_file(
                 file_id,
@@ -90,7 +88,7 @@ pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
                 codegen.root_path(),
             )
         })
-        .collect::<IndexVec<_, _>>();
+        .collect();
 
     // Convert skeletons into schema
     parse(skeletons, meta_skeletons, files, codegen)

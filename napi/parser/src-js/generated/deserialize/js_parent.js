@@ -4660,6 +4660,26 @@ function deserializeComment(pos) {
   };
 }
 
+function deserializeModuleKind(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return "script";
+    case 1:
+      return "module";
+    case 3:
+      return "commonjs";
+    default:
+      throw Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
+  }
+}
+
+function deserializeSpan(pos) {
+  return {
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+  };
+}
+
 function deserializeNameSpan(pos) {
   return {
     value: deserializeStr(pos + 8),
@@ -4957,26 +4977,6 @@ function deserializeUpdateOperator(pos) {
   }
 }
 
-function deserializeSpan(pos) {
-  return {
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
-}
-
-function deserializeModuleKind(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return "script";
-    case 1:
-      return "module";
-    case 3:
-      return "commonjs";
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
-  }
-}
-
 function deserializeRawTransferData(pos) {
   return {
     program: deserializeProgram(pos),
@@ -5042,14 +5042,6 @@ function deserializeStaticExport(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-}
-
-function deserializeU32(pos) {
-  return uint32[pos >> 2];
-}
-
-function deserializeU8(pos) {
-  return uint8[pos];
 }
 
 function deserializeStr(pos) {
@@ -5882,6 +5874,10 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
+function deserializeU8(pos) {
+  return uint8[pos];
+}
+
 function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(uint32[pos >> 2]);
 }
@@ -6259,6 +6255,10 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(uint32[pos >> 2]);
+}
+
+function deserializeU32(pos) {
+  return uint32[pos >> 2];
 }
 
 function deserializeOptionNameSpan(pos) {

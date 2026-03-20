@@ -14,12 +14,12 @@ use crate::{
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<CommentNodeId>() == 4);
     assert!(align_of::<CommentNodeId>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 24);
@@ -87,27 +87,27 @@ const _: () = {
     assert!(align_of::<UpdateOperator>() == 1);
 
     // Padding: 0 bytes
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<ScopeId>() == 4);
     assert!(align_of::<ScopeId>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<SymbolId>() == 4);
     assert!(align_of::<SymbolId>() == 4);
-
-    // Padding: 0 bytes
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    // Padding: 0 bytes
     assert!(size_of::<CommentNodeId>() == 4);
     assert!(align_of::<CommentNodeId>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<NameSpan>() == 16);
@@ -175,16 +175,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<UpdateOperator>() == 1);
 
     // Padding: 0 bytes
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
+
+    // Padding: 0 bytes
     assert!(size_of::<ScopeId>() == 4);
     assert!(align_of::<ScopeId>() == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<SymbolId>() == 4);
     assert!(align_of::<SymbolId>() == 4);
-
-    // Padding: 0 bytes
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
