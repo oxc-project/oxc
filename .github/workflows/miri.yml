@@ -33,7 +33,7 @@ concurrency:
 jobs:
   miri:
     name: Miri
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-linux-x64-default
     env:
       # FIXME: cargo-miri is broken on nightly-2026-02-12.
       # https://github.com/rust-lang/miri/issues/4855
