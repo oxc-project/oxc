@@ -17,7 +17,7 @@ use crate::{
         PointerDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef,
         VecDef, Visibility,
     },
-    utils::{FxIndexMap, FxIndexSet, ident_name},
+    utils::{FxIndexSet, ident_name},
 };
 
 use super::{
@@ -28,18 +28,15 @@ use super::{
 
 /// Parse [`Skeleton`]s into [`TypeDef`]s.
 pub fn parse(
-    skeletons: FxIndexMap<String, Skeleton>,
-    meta_skeletons: FxIndexMap<String, Skeleton>,
+    type_names: FxIndexSet<String>,
+    type_skeletons: IndexVec<TypeId, Skeleton>,
+    meta_names: FxIndexSet<String>,
+    meta_skeletons: IndexVec<MetaId, Skeleton>,
     files: IndexVec<FileId, File>,
     codegen: &Codegen,
 ) -> Schema {
-    // Split `skeletons` into an `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
-    let (type_names, skeletons_vec) = skeletons.into_iter().unzip();
-    // Split `meta_skeletons` into an `IndexSet<String>` (meta names) and `IndexVec<MetaId, Skeleton>` (skeletons)
-    let (meta_names, meta_skeletons_vec) = meta_skeletons.into_iter().unzip();
-
     let parser = Parser::new(type_names, meta_names, files, codegen);
-    parser.parse_all(skeletons_vec, meta_skeletons_vec)
+    parser.parse_all(type_skeletons, meta_skeletons)
 }
 
 /// Types parser.
