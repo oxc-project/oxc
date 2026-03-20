@@ -49,6 +49,30 @@ function githubApi(path) {
 }
 
 /**
+ * Get all changed files for a PR, paginating through all pages
+ * @param {string} repository - Repository name (owner/repo)
+ * @param {string} prNumber - Pull request number
+ * @returns {Promise<string[]>} Array of changed file paths
+ */
+async function getPrChangedFiles(repository, prNumber) {
+  const perPage = 100;
+  const files = [];
+  let page = 1;
+  let prFiles;
+  do {
+    // oxlint-disable-next-line no-await-in-loop -- sequential pagination requires await in loop
+    prFiles = await githubApi(
+      `/repos/${repository}/pulls/${prNumber}/files?per_page=${perPage}&page=${page}`,
+    );
+    for (const f of prFiles) {
+      files.push(f.filename);
+    }
+    page++;
+  } while (prFiles.length >= perPage);
+  return files;
+}
+
+/**
  * Get changed files based on the GitHub event type
  * @returns {Promise<string[] | null>} Array of changed file paths, or null to signal "run all"
  */
@@ -75,20 +99,7 @@ async function getChangedFiles() {
     if (eventName === "pull_request" && prNumber) {
       // For PR, use GitHub API to get changed files (paginated)
       console.error(`Getting changed files for PR #${prNumber}`);
-      const perPage = 100;
-      let page = 1;
-      while (true) {
-        const prFiles = await githubApi(
-          `/repos/${repository}/pulls/${prNumber}/files?per_page=${perPage}&page=${page}`,
-        );
-        for (const f of prFiles) {
-          files.push(f.filename);
-        }
-        if (prFiles.length < perPage) {
-          break;
-        }
-        page++;
-      }
+      files = await getPrChangedFiles(repository, prNumber);
     } else if (sha && repository) {
       // For push to main, get the commit and compare with parent
       console.error(`Getting changed files for commit ${sha}`);
