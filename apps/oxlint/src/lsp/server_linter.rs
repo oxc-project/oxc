@@ -1265,7 +1265,9 @@ mod test {
     };
 
     use crate::lsp::{
-        code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+        },
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
@@ -1291,6 +1293,46 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[test]
+    fn test_fix_all_dangerous_returns_dangerous_fix_action() {
+        let tester = Tester::new(
+            "fixtures/lsp/dangerous_fix",
+            json!({ "fixKind": "dangerous_fix" }),
+        );
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        let uri = tester.get_file_uri("unused_var.js");
+        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+
+        // source.fixAll should only return safe fixes, not dangerous ones
+        let safe_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CodeActionKind::SOURCE_FIX_ALL]),
+                ..Default::default()
+            },
+        );
+        assert!(
+            safe_actions.is_empty(),
+            "source.fixAll should not apply dangerous fixes"
+        );
+
+        // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
+        let dangerous_actions = linter.get_code_actions_or_commands(
+            &uri,
+            &range,
+            &CodeActionContext {
+                only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC]),
+                ..Default::default()
+            },
+        );
+        assert!(
+            !dangerous_actions.is_empty(),
+            "source.fixAllDangerous.oxc should return dangerous fix action when fix_kind is dangerous"
+        );
     }
 
     #[test]
