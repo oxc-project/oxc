@@ -73,10 +73,22 @@ async function getChangedFiles() {
 
   try {
     if (eventName === "pull_request" && prNumber) {
-      // For PR, use GitHub API to get changed files
+      // For PR, use GitHub API to get changed files (paginated)
       console.error(`Getting changed files for PR #${prNumber}`);
-      const prFiles = await githubApi(`/repos/${repository}/pulls/${prNumber}/files?per_page=100`);
-      files = prFiles.map((f) => f.filename);
+      const perPage = 100;
+      let page = 1;
+      while (true) {
+        const prFiles = await githubApi(
+          `/repos/${repository}/pulls/${prNumber}/files?per_page=${perPage}&page=${page}`,
+        );
+        for (const f of prFiles) {
+          files.push(f.filename);
+        }
+        if (prFiles.length < perPage) {
+          break;
+        }
+        page++;
+      }
     } else if (sha && repository) {
       // For push to main, get the commit and compare with parent
       console.error(`Getting changed files for commit ${sha}`);
