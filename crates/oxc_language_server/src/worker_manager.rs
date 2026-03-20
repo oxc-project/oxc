@@ -13,6 +13,24 @@ use tracing::debug;
 
 use crate::{capabilities::DiagnosticMode, tool::ToolBuilder, worker::WorkspaceWorker};
 
+/// A RAII guard that holds a shared read lock over the workers list and exposes
+/// a reference to a single [`WorkspaceWorker`] inside it.
+///
+/// Obtained from [`WorkerManager::get_worker_for_uri`].
+/// The read lock is held for as long as this guard is alive.
+pub struct WorkerGuard<'a> {
+    guard: RwLockReadGuard<'a, Vec<WorkspaceWorker>>,
+    index: usize,
+}
+
+impl std::ops::Deref for WorkerGuard<'_> {
+    type Target = WorkspaceWorker;
+
+    fn deref(&self) -> &Self::Target {
+        &self.guard[self.index]
+    }
+}
+
 /// Manages the lifecycle of [`WorkspaceWorker`]s for the language server.
 ///
 /// Responsibilities:
@@ -116,6 +134,43 @@ impl WorkerManager {
             })
             .max_by_key(|(_, len)| *len)
             .map(|(worker, _)| worker)
+    }
+
+    /// Acquire a read lock and find the most specific worker for `uri`.
+    ///
+    /// Returns a [`WorkerGuard`] that keeps the read lock alive and
+    /// dereferences to the matched [`WorkspaceWorker`].  Returns `None` when no
+    /// worker covers `uri`.
+    ///
+    /// This is a convenience wrapper around [`Self::read_workers`] +
+    /// [`Self::find_worker_for_uri`] for call-sites that only need one worker.
+    pub async fn get_worker_for_uri(&self, uri: &Uri) -> Option<WorkerGuard<'_>> {
+        let guard = self.workers.read().await;
+
+        let index = if uri.scheme().as_str() == "file" {
+            let file_path = uri.to_file_path()?;
+            guard
+                .iter()
+                .enumerate()
+                .filter_map(|(i, worker)| {
+                    let root_path = worker.get_root_uri().to_file_path()?;
+                    if file_path.starts_with(&root_path) {
+                        Some((i, root_path.as_os_str().len()))
+                    } else {
+                        None
+                    }
+                })
+                .max_by_key(|(_, len)| *len)
+                .map(|(i, _)| i)?
+        } else {
+            // Non-file URIs use the first worker.
+            if guard.is_empty() {
+                return None;
+            }
+            0
+        };
+
+        Some(WorkerGuard { guard, index })
     }
 
     /// Return the URI for the parent directory of a `file://` URI, or `None`

@@ -54,12 +54,14 @@ pub struct Backend {
     // Information about the server, such as name and version.
     // The client can use this information for display or logging purposes.
     server_info: ServerInfo,
-    // Manages all WorkspaceWorkers and single-file mode.
-    // WorkspaceWorkers are only updated on 2 occasions:
-    // 1. `initialize` request with workspace folders
-    // 2. `workspace/didChangeWorkspaceFolders` request
-    // In single-file mode, workers are also created/destroyed dynamically on
-    // `textDocument/didOpen` and `textDocument/didClose`.
+    // Manages all WorkspaceWorkers for the language server.
+    // The server operates in one of two modes:
+    //   - Workspace mode: one or more workspace folders (or a root URI) were
+    //     provided during `initialize`. Workers are created once and updated
+    //     only on `workspace/didChangeWorkspaceFolders`.
+    //   - Single-file mode: no workspace folder or root URI was provided.
+    //     Workers are created dynamically when a file is opened and torn down
+    //     when its last open file is closed.
     pub(crate) worker_manager: WorkerManager,
     // Capabilities of the language server, set once during `initialize` request.
     // Depending on the client capabilities, the server supports different capabilities.
@@ -573,8 +575,7 @@ impl LanguageServer for Backend {
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         let uri = params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
         };
 
@@ -607,8 +608,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -664,8 +664,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, &uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return;
         };
 
@@ -705,8 +704,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didClose>
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return;
         };
 
@@ -722,7 +720,7 @@ impl LanguageServer for Backend {
 
         // Drop the read lock before potentially acquiring the write lock in
         // try_shutdown_empty_workspace.
-        drop(workers);
+        drop(worker);
 
         if let Some(root_uri) = worker_root_uri {
             let open_uris = self.file_system.read().await.keys();
@@ -756,8 +754,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction>
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(None);
         };
 
@@ -806,8 +803,7 @@ impl LanguageServer for Backend {
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReportResult> {
         let uri = &params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
@@ -872,8 +868,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting>
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
         let uri = &params.text_document.uri;
-        let workers = self.worker_manager.read_workers().await;
-        let Some(worker) = WorkerManager::find_worker_for_uri(&workers, uri) else {
+        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(None);
         };
 
