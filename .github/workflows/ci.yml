@@ -176,8 +176,8 @@ jobs:
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir
 
-  test-napi:
-    name: Test NAPI
+  test-napi-compiler:
+    name: Test NAPI Compiler
     runs-on: namespace-profile-linux-x64-default
     steps:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
@@ -185,7 +185,7 @@ jobs:
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
-          paths: napi/,npm/,apps/,tasks/e2e/,pnpm-lock.yaml,package.json,editors/
+          paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
@@ -201,14 +201,14 @@ jobs:
           babel: false
           prettier: false
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests in workspace
+        name: Run tests
         env:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm run build-test
-          pnpm run test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: tasks/e2e
@@ -217,19 +217,15 @@ jobs:
         run: |
           git diff --exit-code # Must commit everything
 
-  test-napi-windows:
-    name: Test NAPI (windows)
-    runs-on: windows-latest
-    if: ${{ github.ref_name == 'main' }}
+  test-napi-oxlint:
+    name: Test NAPI Oxlint
+    runs-on: namespace-profile-linux-x64-default
     steps:
-      - name: Enable long paths on Windows
-        run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: ./.github/actions/check-changes
         id: filter
         with:
-          exclude: oxc_linter,oxc_language_server
-          paths: napi/,npm/,apps/,tasks/e2e/,pnpm-lock.yaml,package.json,editors/
+          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
@@ -239,26 +235,174 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
         if: steps.filter.outputs.changed == 'true'
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        run: |
+          pnpm --filter "./apps/oxlint" build-test
+          pnpm --filter "./apps/oxlint" test
+      - if: steps.filter.outputs.changed == 'true'
+        run: |
+          git diff --exit-code # Must commit everything
+
+  test-napi-oxfmt:
+    name: Test NAPI Oxfmt
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.changed == 'true'
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        run: |
+          pnpm --filter "./apps/oxfmt" build-test
+          pnpm --filter "./apps/oxfmt" test
+      - if: steps.filter.outputs.changed == 'true'
+        run: |
+          git diff --exit-code # Must commit everything
+
+  test-napi-compiler-windows:
+    name: Test NAPI Compiler (windows)
+    runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          exclude: oxc_linter,oxc_language_server
+          paths: napi/parser/,napi/minify/,napi/transform/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.changed == 'true'
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          workspace-copy: true
+          drive-size: 12GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
           prettier: false
       - if: steps.filter.outputs.changed == 'true'
-        name: Run tests in workspace
+        name: Run tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm run build-test
-          pnpm run test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
         run: |
           pnpm install --frozen-lockfile
           pnpm run test
-        working-directory: tasks/e2e
       - if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          git diff --exit-code # Must commit everything
+
+  test-napi-oxlint-windows:
+    name: Test NAPI Oxlint (windows)
+    runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          paths: apps/oxlint/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.changed == 'true'
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          workspace-copy: true
+          drive-size: 12GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxlint" build-test
+          pnpm --filter "./apps/oxlint" test
+      - if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          git diff --exit-code # Must commit everything
+
+  test-napi-oxfmt-windows:
+    name: Test NAPI Oxfmt (windows)
+    runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+        if: steps.filter.outputs.changed == 'true'
+      - uses: samypr100/setup-dev-drive@30f0f98ae5636b2b6501e181dfb3631b9974818d # v4.0.0
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          workspace-copy: true
+          drive-size: 12GB
+          drive-format: ReFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      - uses: oxc-project/setup-rust@4f86b5d871ae7d24bc420e578be68964ab09e5cc # v1.0.15
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          pnpm --filter "./apps/oxfmt" build-test
+          pnpm --filter "./apps/oxfmt" test
+      - if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
           git diff --exit-code # Must commit everything
 
