@@ -1,10 +1,11 @@
 use std::{fs, path::Path};
 
+use quote::quote;
 use syn::{
     Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
     Visibility, WhereClause, braced,
     parse::{Parse, ParseBuffer},
-    parse_file,
+    parse_file, parse_quote,
     punctuated::Punctuated,
 };
 
@@ -53,15 +54,12 @@ fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<Skeleton> {
 }
 
 fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
-    if item.mac.path.is_ident("inherit_variants") {
-        return Some(parse_inherit_variants_macro(item, file_id));
-    }
-    if item.mac.path.is_ident("define_nonmax_u32_index_type")
-        || item.mac.path.is_ident("define_index_type")
-    {
-        return parse_index_type_macro(item, file_id);
-    }
-    None
+    item.mac.path.get_ident().and_then(|macro_name| match macro_name.to_string().as_str() {
+        "inherit_variants" => Some(parse_inherit_variants_macro(item, file_id)),
+        "define_nonmax_u32_index_type" => parse_index_type_macro(item, file_id, true),
+        "define_index_type" => parse_index_type_macro(item, file_id, false),
+        _ => None,
+    })
 }
 
 fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Skeleton {
@@ -119,52 +117,41 @@ fn parse_inherit_variants_macro(item: &ItemMacro, file_id: FileId) -> Skeleton {
         .expect("Failed to parse contents of `inherit_variants!` macro")
 }
 
-fn parse_index_type_macro(item: &ItemMacro, file_id: FileId) -> Option<Skeleton> {
+fn parse_index_type_macro(
+    item: &ItemMacro,
+    file_id: FileId,
+    is_nonmax_u32: bool,
+) -> Option<Skeleton> {
     item.mac
         .parse_body_with(|input: &ParseBuffer| {
             let attrs = input.call(Attribute::parse_outer)?;
-            let vis = input.parse::<Visibility>()?;
+            let vis = input.parse::<Visibility>().ok();
             let _ = input.parse::<Token![struct]>()?;
             let ident = input.parse::<Ident>()?;
-            // Handle optional `= Type` for define_index_type
-            if input.parse::<Token![=]>().is_ok() {
-                let _ = input.parse::<Ident>()?;
-            }
+
+            // `define_nonmax_u32_index_type`'s inner type is always `NonMaxU32`.
+            // `define_index_type` specifies inner type with `= Type`.
+            let ty_ident = if is_nonmax_u32 {
+                quote!(NonMaxU32)
+            } else {
+                let _ = input.parse::<Token![=]>()?;
+                let ty_ident = input.parse::<Ident>()?;
+                quote!(#ty_ident)
+            };
             let _ = input.parse::<Token![;]>()?;
 
             let Some((name, is_foreign, is_meta)) = get_type_name(&attrs, &ident) else {
                 return Ok(None);
             };
 
-            // Create minimal ItemStruct - the field type doesn't matter since these are primitives
-            let item_struct = ItemStruct {
-                attrs,
-                vis,
-                struct_token: <_>::default(),
-                ident,
-                generics: <_>::default(),
-                fields: syn::Fields::Unnamed(syn::FieldsUnnamed {
-                    paren_token: <_>::default(),
-                    unnamed: {
-                        let mut punct = Punctuated::new();
-                        punct.push(syn::Field {
-                            attrs: vec![],
-                            vis: syn::Visibility::Inherited,
-                            mutability: syn::FieldMutability::None,
-                            ident: None,
-                            colon_token: None,
-                            ty: syn::parse_quote!(NonMaxU32),
-                        });
-                        punct
-                    },
-                }),
-                semi_token: None,
+            let item = parse_quote! {
+                #(#attrs)*
+                #vis struct #ident (#ty_ident);
             };
 
-            let skeleton = StructSkeleton { name, file_id, is_foreign, is_meta, item: item_struct };
-            Ok(Some(Skeleton::Struct(skeleton)))
+            Ok(Some(Skeleton::Struct(StructSkeleton { name, file_id, is_foreign, is_meta, item })))
         })
-        .ok()?
+        .unwrap()
 }
 
 /// Get name of type, and whether it has an `#[ast_meta]` attribute on it.
