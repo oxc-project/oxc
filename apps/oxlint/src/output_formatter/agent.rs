@@ -39,15 +39,15 @@ impl DiagnosticReporter for AgentReporter {
         match (errors, warnings) {
             (0, 0) => {}
             (e, 0) => {
-                let _ = write!(output, "{e} error{}\n", if e == 1 { "" } else { "s" });
+                let _ = writeln!(output, "{e} error{}", if e == 1 { "" } else { "s" });
             }
             (0, w) => {
-                let _ = write!(output, "{w} warning{}\n", if w == 1 { "" } else { "s" });
+                let _ = writeln!(output, "{w} warning{}", if w == 1 { "" } else { "s" });
             }
             (e, w) => {
-                let _ = write!(
+                let _ = writeln!(
                     output,
-                    "{e} error{}, {w} warning{}\n",
+                    "{e} error{}, {w} warning{}",
                     if e == 1 { "" } else { "s" },
                     if w == 1 { "" } else { "s" }
                 );
