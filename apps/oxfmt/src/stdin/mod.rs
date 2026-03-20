@@ -84,9 +84,16 @@ impl StdinRunner {
 
         // Check if the stdin filepath matches any ignore pattern.
         // If ignored, output the source text unchanged (like Prettier).
-        if is_ignored_by_patterns(&ignore_patterns, config_resolver.config_dir(), &filepath, &cwd) {
-            utils::print_and_flush(stdout, &source_text);
-            return CliRunResult::FormatSucceeded;
+        match is_ignored_by_patterns(&ignore_patterns, config_resolver.config_dir(), &filepath, &cwd) {
+            Ok(true) => {
+                utils::print_and_flush(stdout, &source_text);
+                return CliRunResult::FormatSucceeded;
+            }
+            Err(err) => {
+                utils::print_and_flush(stderr, &format!("{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+            Ok(false) => {}
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
@@ -141,28 +148,26 @@ fn is_ignored_by_patterns(
     config_dir: Option<&Path>,
     filepath: &Path,
     cwd: &Path,
-) -> bool {
+) -> Result<bool, String> {
     if ignore_patterns.is_empty() {
-        return false;
+        return Ok(false);
     }
     let Some(config_dir) = config_dir else {
-        return false;
+        return Ok(false);
     };
 
     let mut builder = GitignoreBuilder::new(config_dir);
     for pattern in ignore_patterns {
-        if builder.add_line(None, pattern).is_err() {
-            return false;
-        }
+        builder.add_line(None, pattern).map_err(|_| {
+            format!("Failed to add ignore pattern `{pattern}` from `.ignorePatterns`")
+        })?;
     }
-    let Ok(gitignore) = builder.build() else {
-        return false;
-    };
+    let gitignore = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
 
     // Resolve filepath relative to cwd for matching
     let full_path =
         if filepath.is_absolute() { filepath.to_path_buf() } else { cwd.join(filepath) };
 
     let matched = gitignore.matched_path_or_any_parents(&full_path, false);
-    matched.is_ignore() && !matched.is_whitelist()
+    Ok(matched.is_ignore() && !matched.is_whitelist())
 }
