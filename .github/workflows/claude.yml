@@ -43,3 +43,9 @@ jobs:
             - If the issue is unclear, ask for more context
             - If fixable, provide a concrete implementation plan with specific steps
             - Any potential concerns or blockers
+
+      - name: Unassign boshen
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue edit ${{ github.event.issue.number }} --remove-assignee boshen
