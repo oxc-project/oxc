@@ -429,6 +429,7 @@ impl AstKind<'_> {
     }
 
     /// Get [`NodeId`] of an [`AstKind`].
+    // `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         match self {
@@ -624,11 +625,8 @@ impl AstKind<'_> {
     }
 
     /// Set [`NodeId`] of an [`AstKind`].
-    #[expect(
-        clippy::inline_always,
-        reason = "enables compile-time match elimination in semantic builder"
-    )]
-    #[inline(always)]
+    // `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.
+    #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         match self {
             Self::Program(it) => it.set_node_id(node_id),
