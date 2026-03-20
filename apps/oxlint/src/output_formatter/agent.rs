@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt::Write;
 
 use oxc_diagnostics::{
     Error, Severity,
@@ -37,16 +38,19 @@ impl DiagnosticReporter for AgentReporter {
         output.push('\n');
         match (errors, warnings) {
             (0, 0) => {}
-            (e, 0) => output.push_str(&format!("{e} error{}\n", if e == 1 { "" } else { "s" })),
+            (e, 0) => {
+                let _ = write!(output, "{e} error{}\n", if e == 1 { "" } else { "s" });
+            }
             (0, w) => {
-                output.push_str(&format!("{w} warning{}\n", if w == 1 { "" } else { "s" }));
+                let _ = write!(output, "{w} warning{}\n", if w == 1 { "" } else { "s" });
             }
             (e, w) => {
-                output.push_str(&format!(
+                let _ = write!(
+                    output,
                     "{e} error{}, {w} warning{}\n",
                     if e == 1 { "" } else { "s" },
                     if w == 1 { "" } else { "s" }
-                ));
+                );
             }
         }
 
@@ -81,12 +85,13 @@ fn format_agent(diagnostics: &mut Vec<Error>) -> String {
                 _ => "warning",
             };
             let rule = info.rule_id.as_deref().unwrap_or("-");
-            output.push_str(&format!(
-                "  {}:{} {} {}: {}\n",
+            let _ = writeln!(
+                output,
+                "  {}:{} {} {}: {}",
                 info.start.line, info.start.column, severity, rule, info.message
-            ));
+            );
             if let Some(help) = help {
-                output.push_str(&format!("    help: {help}\n"));
+                let _ = writeln!(output, "    help: {help}");
             }
         }
     }
