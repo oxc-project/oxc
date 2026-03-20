@@ -19,11 +19,12 @@ use crate::{context::TraverseCtx, state::TransformState};
 
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
+    optimize_enums: bool,
 }
 
 impl TypeScriptEnum {
-    pub fn new(optimize_const_enums: bool) -> Self {
-        Self { optimize_const_enums }
+    pub fn new(optimize_const_enums: bool, optimize_enums: bool) -> Self {
+        Self { optimize_const_enums, optimize_enums }
     }
 }
 
@@ -33,7 +34,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
             Statement::TSEnumDeclaration(decl) => {
                 // Defer removable enums — they'll be handled in exit_statements
                 // after enter_expression has inlined member accesses and deleted references.
-                if self.is_removable_const_enum(decl, ctx) {
+                if self.may_remove_enum(decl, ctx) {
                     return;
                 }
                 if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
@@ -57,7 +58,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.optimize_const_enums {
+        if !self.optimize_const_enums && !self.optimize_enums {
             return;
         }
 
@@ -67,11 +68,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
         // Transform or remove deferred enum declarations.
         for stmt in stmts.iter_mut() {
             let Statement::TSEnumDeclaration(decl) = stmt else { continue };
-            if self.is_removable_const_enum(decl, ctx) {
+            if self.can_remove_enum(decl, ctx) {
                 has_removable_enum = true;
                 continue;
             }
-            // Not removable after all — transform now.
+            // Not removable after all (still has value references) — transform now.
             if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
                 *stmt = new_stmt;
             }
@@ -96,7 +97,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.optimize_const_enums {
+        if !self.optimize_const_enums && !self.optimize_enums {
             return;
         }
 
@@ -106,14 +107,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                     .object
                     .get_identifier_reference()
                     .and_then(|i| i.reference_id.get());
-                (Self::try_inline_enum_member(member_expr, ctx), ref_id)
+                (self.try_inline_enum_member(member_expr, ctx), ref_id)
             }
             Expression::ComputedMemberExpression(member_expr) => {
                 let ref_id = member_expr
                     .object
                     .get_identifier_reference()
                     .and_then(|i| i.reference_id.get());
-                (Self::try_inline_computed_enum_member(member_expr, ctx), ref_id)
+                (self.try_inline_computed_enum_member(member_expr, ctx), ref_id)
             }
             _ => return,
         };
@@ -395,12 +396,29 @@ impl<'a> TypeScriptEnum {
         statements
     }
 
-    /// Check if a const enum declaration can be removed (all members have known values).
-    fn is_removable_const_enum(&self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        !decl.declare
-            && decl.r#const
-            && self.optimize_const_enums
-            && Self::all_members_evaluable(decl, ctx)
+    /// Check if an enum declaration might be removable (pre-inlining).
+    /// Used by `enter_statement` to defer transformation of potential removal candidates.
+    fn may_remove_enum(&self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if decl.declare {
+            return false;
+        }
+        if decl.r#const {
+            if !self.optimize_const_enums {
+                return false;
+            }
+        } else if !self.optimize_enums {
+            return false;
+        }
+        Self::all_members_evaluable(decl, ctx)
+    }
+
+    /// Check if an enum declaration can be safely removed (post-inlining).
+    /// Const enums are always removed when `optimize_const_enums` is set.
+    /// Regular enums are removed only if all references were inlined away by `enter_expression`.
+    fn can_remove_enum(&self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        self.may_remove_enum(decl, ctx)
+            && (decl.r#const
+                || ctx.scoping().get_resolved_reference_ids(decl.id.symbol_id()).is_empty())
     }
 
     /// Check if all members of an enum declaration have known constant values.
@@ -447,25 +465,30 @@ impl<'a> TypeScriptEnum {
 
     /// Try to inline `Direction.Up` to its literal value.
     fn try_inline_enum_member(
+        &self,
         expr: &StaticMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<ConstantValue> {
         let Expression::Identifier(ident) = &expr.object else { return None };
-        Self::resolve_enum_member(ident, expr.property.name.as_str(), ctx)
+        self.resolve_enum_member(ident, expr.property.name.as_str(), ctx)
     }
 
     /// Try to inline `Foo["%/*"]` to its literal value.
     fn try_inline_computed_enum_member(
+        &self,
         expr: &ComputedMemberExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<ConstantValue> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
-        Self::resolve_enum_member(ident, prop.value.as_str(), ctx)
+        self.resolve_enum_member(ident, prop.value.as_str(), ctx)
     }
 
-    /// Resolve a const enum member value by identifier and property name.
+    /// Resolve an enum member value by identifier and property name.
+    /// Inlines const enums when `optimize_const_enums` is set,
+    /// and regular enums when `optimize_enums` is set.
     fn resolve_enum_member(
+        &self,
         ident: &IdentifierReference<'a>,
         property_name: &str,
         ctx: &TraverseCtx<'a>,
@@ -473,7 +496,10 @@ impl<'a> TypeScriptEnum {
         let ref_id = ident.reference_id.get()?;
         let symbol_id = ctx.scoping().get_reference(ref_id).symbol_id()?;
 
-        if !ctx.scoping().symbol_flags(symbol_id).is_const_enum() {
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+        let is_const_enum = flags.is_const_enum() && self.optimize_const_enums;
+        let is_regular_enum = flags.contains(SymbolFlags::RegularEnum) && self.optimize_enums;
+        if !is_const_enum && !is_regular_enum {
             return None;
         }
 
