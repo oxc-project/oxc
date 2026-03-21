@@ -25,7 +25,9 @@ jobs:
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
           restore-cache: false
@@ -56,7 +58,9 @@ jobs:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
@@ -160,7 +164,9 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -199,7 +205,9 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -241,7 +249,9 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -270,7 +280,9 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -437,7 +449,9 @@ jobs:
       - uses: taiki-e/checkout-action@83ed61bfbe2b8abbb3c66e8b65b1335484c70009 # v1.4.1
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
       - uses: oxc-project/setup-node@b8d296d30eafd1ae2968fab67aead472a1dbf6d4 # v1.0.7
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         with:
@@ -467,7 +481,9 @@ jobs:
 
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.changed == 'true'
@@ -559,7 +575,9 @@ jobs:
 
       - uses: namespacelabs/nscloud-cache-action@a90bb5d4b27522ce881c6e98eebd7d7e6d1653f9 # v1
         with:
-          cache: rust
+          cache: |
+            rust
+            pnpm
 
       - uses: oxc-project/setup-rust@23f38cfb0c04af97a055f76acee94d5be71c7c82 # v1.0.16
         if: steps.filter.outputs.src == 'true'
